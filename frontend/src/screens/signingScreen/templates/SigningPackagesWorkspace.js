@@ -1,3 +1,4 @@
+import SigningBackButton from './SigningBackButton';
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import signingPackagesApi from '../../../api/signingPackagesApi';
@@ -289,7 +290,7 @@ export default function SigningPackagesWorkspace({ onClose, onCreate, api = sign
         const next = new Set(previous); if (next.has(id)) next.delete(id); else next.add(id); return next;
     });
     return <section className="lw-signingPackages" dir={direction} aria-labelledby="signing-packages-title">
-        {onClose && <SecondaryButton onPress={onClose}>{t('signingV2.backToDocuments')}</SecondaryButton>}
+        {onClose && <SigningBackButton onPress={onClose}>{t('signingV2.backToDocuments')}</SigningBackButton>}
         <header className="lw-signingPackages__heading">
             <div><h1 id="signing-packages-title">{t('signingV2.title')}</h1><p>{t('signingV2.subtitle')}</p></div>
             <div className="lw-signingPackages__actions">

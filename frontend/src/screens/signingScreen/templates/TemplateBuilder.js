@@ -1,8 +1,8 @@
+import SigningBackButton from './SigningBackButton';
 import React, { useEffect, useRef, useState } from 'react';
 import PdfViewer from '../../../components/specializedComponents/signFiles/pdfViewer/PdfViewer';
 import { uploadFileToR2 } from '../../../utils/fileUploadUtils';
 import StatusNotice from '../../../components/ui/StatusNotice';
-import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
 import api from '../../../api/signingTemplatesApi';
 import useSigningLocale from './useSigningLocale';
 import TemplateRoles from './TemplateRoles';
@@ -62,7 +62,7 @@ export default function TemplateBuilder({ template, onBack, onSaved }) {
         catch (e) { setError(e.message); } finally { saving.current = false; setBusy(false); }
     }
     return <section className="lw-templates" dir={direction}>
-        <SecondaryButton onPress={leave} disabled={busy}>{t('back')}</SecondaryButton>
+        <SigningBackButton onPress={leave} disabled={busy}>{t('back')}</SigningBackButton>
         <header className="lw-templates__heading"><div><h1>{t(template ? 'edit' : 'new')}</h1><p>{t('intro')}</p></div></header>
         {error && <StatusNotice><p>{error}</p></StatusNotice>}
         <nav className="lw-templates__steps" aria-label={t('review')}>
@@ -111,7 +111,7 @@ export default function TemplateBuilder({ template, onBack, onSaved }) {
             {!draft.requireOtp && <label className="lw-templates__check"><input type="checkbox" checked={!!draft.otpWaiverAcknowledged} onChange={e => change({ otpWaiverAcknowledged: e.target.checked })} />{t('waiver')}</label>}
             {template && <p>{t('futureOnly')}</p>}</div>
             <button type="button" hidden={step !== 2} className="is-primary" disabled={busy || !draft.name.trim() || !draft.documents.length || draft.roles.some(role => !draft.documents.some(doc => doc.fields.some(field => field.roleId === role.id)))} onClick={save}>{t(busy ? 'saving' : 'save')}</button>
-            {step > 0 && <SecondaryButton onPress={() => setStep(step - 1)} disabled={busy}>{t('previous')}</SecondaryButton>}
+            {step > 0 && <SigningBackButton onPress={() => setStep(step - 1)} disabled={busy}>{t('previous')}</SigningBackButton>}
             {step < 2 && <button type="button" className="is-primary" disabled={busy || !draft.name.trim() || draft.roles.some(role => !role.name.trim()) || (step === 1 && !draft.documents.length)} onClick={() => setStep(step + 1)}>{t('next')}</button>}
         </footer>
     </section>;

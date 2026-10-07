@@ -1,3 +1,5 @@
+import SigningBackButton from './SigningBackButton';
+import { ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import signingPackagesApi from '../../../api/signingPackagesApi';
 import PrimaryButton from '../../../components/styledComponents/buttons/PrimaryButton';
@@ -11,6 +13,8 @@ import SimpleCard from '../../../components/simpleComponents/SimpleCard';
 import useSigningLocale from './useSigningLocale';
 import { newKey } from './ParticipantActionDialog';
 import StatusNotice from '../../../components/ui/StatusNotice';
+import SelectedTemplateEntry from './SelectedTemplateEntry';
+import WorkbookImport from './WorkbookImport';
 import './signingPackages.scss';
 import './signingCompose.scss';
 
@@ -18,7 +22,6 @@ const STEPS = ['template', 'recipients', 'review', 'done'];
 const FIELDS = ['name', 'email', 'phone', 'channel'];
 const LOCALES = new Set(['he', 'ar', 'en']);
 const MAX_ROWS = 200;
-const MAX_WORKBOOK_BYTES = 2 * 1024 * 1024;
 
 let localId = 0;
 const blankPerson = () => ({ name: '', email: '', phone: '', channel: '' });
@@ -31,15 +34,6 @@ const clean = (person, language) => ({
     locale: LOCALES.has(language) ? language : 'he',
 });
 const fieldId = (scope, roleKey, field) => `compose-${scope}-${roleKey}-${field}`;
-
-function readBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
-        reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(file);
-    });
-}
 
 function Field({ id, label, help, error, className = '', children }) {
     const { t, direction } = useSigningLocale();
@@ -131,7 +125,7 @@ const RecipientRow = memo(function RecipientRow({ row, index, roles, errors, onC
             {errors?.row?.key && <p className="lw-signingCompose__fieldError" role="note">{t(`signingV2.compose.rowErrors.${errors.row.key}`, { defaultValue: t('signingV2.compose.rowErrors.INVALID_ROW') })}</p>}
             {roles.map(role => <div key={role.key} className="lw-signingCompose__roleBlock">
                 {roles.length > 1 && <h4>{role.label}</h4>}
-                <PersonFields scope={row.id} roleKey={role.key} person={row.recipients[role.key]} errors={errors?.[role.key]} onChange={change} suggestLawyers={role.key === 'lawyer'} compact />
+                <PersonFields scope={row.id} roleKey={role.key} person={row.recipients[role.key] || blankPerson()} errors={errors?.[role.key]} onChange={change} suggestLawyers={role.key === 'lawyer'} compact />
             </div>)}
         </fieldset>
     </li>;
@@ -148,31 +142,21 @@ function Stepper({ step }) {
     </ol>;
 }
 
-function TemplateStep({ api, selected, onSelect, initialTemplateId }) {
+function TemplateStep({ api, selected, onSelect }) {
     const { t, number, language, errorMessage } = useSigningLocale();
     const [catalog, setCatalog] = useState(null);
     const [error, setError] = useState(null);
     const [converting, setConverting] = useState(null);
     const [filter, setFilter] = useState('');
-    const seeded = useRef(false);
     const load = useCallback(async () => {
         setError(null);
         try { setCatalog(await api.templates()); } catch (failure) { setError(failure); }
     }, [api]);
     useEffect(() => { load(); }, [load]);
-    useEffect(() => {
-        if (!catalog || !initialTemplateId || seeded.current) return;
-        seeded.current = true;
-        const unpublished = catalog.legacy.find(item => item.id === initialTemplateId);
-        if (unpublished) { setFilter(unpublished.name); return; }
-        const published = catalog.templates.filter(item => item.origin?.templateId === initialTemplateId)
-            .sort((a, b) => (b.origin.version || 0) - (a.origin.version || 0))[0];
-        if (published) onSelect(published);
-    }, [catalog, initialTemplateId, onSelect]);
     const convert = async legacy => {
         setConverting(legacy.id); setError(null);
         try {
-            const imported = await api.importLegacy(legacy.id, language);
+            const imported = await api.importLegacy(legacy.id, language, legacy.version);
             const next = await api.templates();
             setCatalog(next);
             const template = next.templates.find(item => item.versionId === imported.versionId);
@@ -235,7 +219,7 @@ function indexErrors(errors, sentIds) {
 }
 
 function SigningOrderFields({ mode, roles, onMode, onMove }) {
-    const { t } = useSigningLocale();
+    const { t, number } = useSigningLocale();
     const drag = useRef(null);
     return <fieldset className="lw-signingCompose__order">
         <legend>{t('signing.upload.signingOrderLabel')}</legend>
@@ -254,11 +238,11 @@ function SigningOrderFields({ mode, roles, onMode, onMove }) {
                     onDragStart={() => { drag.current = index; }}
                     onDragOver={event => event.preventDefault()}
                     onDrop={() => { if (drag.current != null && drag.current !== index) onMove(drag.current, index); drag.current = null; }}>
-                    <span className="lw-signingCompose__orderHandle" aria-hidden="true">☰</span>
-                    <span className="lw-signingCompose__orderNum">{index + 1}</span>
+                    <GripVertical className="lw-signingCompose__orderHandle" size={18} aria-hidden="true" />
+                    <span className="lw-signingCompose__orderNum">{number(index + 1)}</span>
                     <span className="lw-signingCompose__orderName">{role.label}</span>
-                    <button type="button" disabled={index === 0} aria-label={t('signingV2.compose.order.up', { name: role.label })} onClick={() => onMove(index, index - 1)}>↑</button>
-                    <button type="button" disabled={index === roles.length - 1} aria-label={t('signingV2.compose.order.down', { name: role.label })} onClick={() => onMove(index, index + 1)}>↓</button>
+                    <button type="button" disabled={index === 0} aria-label={t('signingV2.compose.order.up', { name: role.label })} onClick={() => onMove(index, index - 1)}><ChevronUp size={18} aria-hidden="true" /></button>
+                    <button type="button" disabled={index === roles.length - 1} aria-label={t('signingV2.compose.order.down', { name: role.label })} onClick={() => onMove(index, index + 1)}><ChevronDown size={18} aria-hidden="true" /></button>
                 </li>)}
             </ol>
         </div>}
@@ -273,14 +257,16 @@ function templateOrder(roles) {
     };
 }
 
-export default function PackageComposer({ api = signingPackagesApi, onBack, onCreated, initialTemplateId }) {
+export default function PackageComposer({ api = signingPackagesApi, onBack, onCreated, initialTemplateId, initialTemplateVersion }) {
     const { t, direction, number, language, errorMessage } = useSigningLocale();
     const heading = useRef(null);
     const errorSummary = useRef(null);
-    const [step, setStep] = useState('template');
+    const [step, setStep] = useState(initialTemplateId ? 'opening' : 'template');
+    const [replacement, setReplacement] = useState(null);
     const [template, setTemplate] = useState(null);
     const [name, setName] = useState('');
     const [shared, setShared] = useState({});
+    const [roleAudience, setRoleAudience] = useState({});
     const [rows, setRows] = useState([]);
     const [omitted, setOmitted] = useState(() => new Set());
     const [orderMode, setOrderMode] = useState('parallel');
@@ -294,10 +280,13 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const [leaving, setLeaving] = useState(false);
     const createKey = useRef(null);
     const creating = useRef(false);
+    const checking = useRef(false);
+    const inputGeneration = useRef(0);
 
     // Stable arrays keep memoized rows from re-rendering on every keystroke with 200 rows.
-    const shareRoles = useMemo(() => template ? template.roles.filter(role => role.audience === 'shared') : [], [template]);
-    const eachRoles = useMemo(() => template ? template.roles.filter(role => role.audience !== 'shared') : [], [template]);
+    const sendRoles = useMemo(() => (template?.roles || []).map(role => ({ ...role, audience: roleAudience[role.key] || role.audience })), [template, roleAudience]);
+    const shareRoles = useMemo(() => sendRoles.filter(role => role.audience === 'shared'), [sendRoles]);
+    const eachRoles = useMemo(() => sendRoles.filter(role => role.audience !== 'shared'), [sendRoles]);
     const activeShare = useMemo(() => shareRoles.filter(role => !omitted.has(role.key)), [shareRoles, omitted]);
     const activeEach = useMemo(() => eachRoles.filter(role => !omitted.has(role.key)), [eachRoles, omitted]);
     const dirty = rows.some(rowFilled) || Object.values(shared).some(filled) || !!name.trim();
@@ -309,13 +298,14 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         document.getElementById(pendingFocus.current)?.focus();
         pendingFocus.current = null;
     }, [rows]);
-    const invalidate = () => { setCheck(null); createKey.current = null; };
+    const invalidate = () => { inputGeneration.current += 1; setCheck(null); createKey.current = null; };
 
-    const chooseTemplate = selected => {
+    const applyTemplate = selected => {
         if (selected.versionId === template?.versionId) return;
         const roles = selected.roles.filter(role => role.audience !== 'shared');
         const order = templateOrder(selected.roles);
         setTemplate(selected);
+        setRoleAudience({});
         setShared(Object.fromEntries(selected.roles.filter(role => role.audience === 'shared').map(role => [role.key, blankPerson()])));
         setRows([blankRow(roles)]);
         setOmitted(new Set());
@@ -324,24 +314,30 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         setName(current => current || selected.name);
         setImportNote(null); invalidate();
     };
+    const chooseTemplate = selected => {
+        if (selected.versionId === template?.versionId) return;
+        if (template && (rows.some(rowFilled) || Object.values(shared).some(filled))) { setReplacement(selected); return; }
+        applyTemplate(selected);
+    };
     const changeRow = useCallback((rowId, roleKey, field, value) => {
         setRows(current => current.map(row => {
             if (row.id !== rowId) return row;
             if (!roleKey) return { ...row, [field]: value };
             return { ...row, recipients: { ...row.recipients, [roleKey]: { ...row.recipients[roleKey], [field]: value } } };
         }));
-        setCheck(null); createKey.current = null;
+        inputGeneration.current += 1; setCheck(null); createKey.current = null;
     }, []);
-    const removeRow = useCallback(rowId => { setRows(current => current.filter(row => row.id !== rowId)); setCheck(null); createKey.current = null; }, []);
+    const removeRow = useCallback(rowId => { setRows(current => current.filter(row => row.id !== rowId)); inputGeneration.current += 1; setCheck(null); createKey.current = null; }, []);
     const changeShared = useCallback((roleKey, field, value) => {
         setShared(current => ({ ...current, [roleKey]: { ...current[roleKey], [field]: value } }));
-        setCheck(null); createKey.current = null;
+        inputGeneration.current += 1; setCheck(null); createKey.current = null;
     }, []);
 
+    const layout = () => ({ ...(Object.keys(roleAudience).length ? { roleAudience } : {}), ...(omitted.size ? { omittedRoles: [...omitted] } : {}) });
     const downloadWorkbook = async () => {
         setBusy('download'); setError(null);
         try {
-            const blob = await api.workbook(template.versionId, language);
+            const blob = await api.workbook(template.versionId, language, layout());
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url; link.download = `${template.name}.xlsx`;
@@ -349,22 +345,12 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             setTimeout(() => URL.revokeObjectURL(url), 1000);
         } catch (failure) { setError(failure); } finally { setBusy(null); }
     };
-    const uploadWorkbook = async file => {
-        if (!file) return;
-        setError(null); setImportNote(null);
-        if (file.size > MAX_WORKBOOK_BYTES) { setError({ code: 'WORKBOOK_TOO_LARGE' }); return; }
-        setBusy('upload');
-        try {
-            const parsed = await api.parseWorkbook(template.versionId, await readBase64(file));
-            const imported = parsed.rows.map(row => ({
-                id: `row-${++localId}`, key: row.key || '',
-                recipients: Object.fromEntries(eachRoles.map(role => [role.key, { ...blankPerson(), ...Object.fromEntries(Object.entries(row.recipients[role.key] || {}).map(([key, value]) => [key, value || ''])) }])),
-            }));
-            setRows(imported.length ? imported : [blankRow(eachRoles)]);
-            setImportNote({ count: imported.length, issues: parsed.errors });
-            invalidate();
-        } catch (failure) { setError(failure); } finally { setBusy(null); }
+    const applyWorkbook = parsed => {
+        const imported = parsed.rows.map(row => ({ id: `row-${++localId}`, key: row.key || '',
+            recipients: Object.fromEntries(eachRoles.map(role => [role.key, { ...blankPerson(), ...row.recipients[role.key] }])) }));
+        setRows(imported); setImportNote({ count: imported.length, issues: parsed.errors }); invalidate();
     };
+    const importPending = useCallback(pending => setBusy(pending ? 'upload' : null), []);
 
     const omitSigner = key => {
         setOmitted(current => {
@@ -406,6 +392,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             sentIds: sent.map(row => row.id),
             body: {
                 templateVersionId: template.versionId, name: name.trim(),
+                ...(Object.keys(roleAudience).length ? { roleAudience } : {}),
                 omittedRoles: [...omitted].sort(),
                 signingOrder: orderMode === 'sequential'
                     ? { mode: 'sequential', roles: orderRoles.filter(key => !omitted.has(key)) }
@@ -416,19 +403,23 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         };
     };
     const runCheck = async () => {
+        if (checking.current) return;
         setError(null);
         const { body, sentIds } = payload();
         if (!body.name) { setError({ code: 'RUN_NAME_REQUIRED' }); return; }
         if (!body.rows.length) { setError({ code: 'ROWS_REQUIRED' }); return; }
         if (body.rows.length > MAX_ROWS) { setError({ code: 'CAPACITY_BUDGET_EXCEEDED' }); return; }
+        checking.current = true;
+        const generation = inputGeneration.current;
         setBusy('check');
         try {
             const preview = await api.previewCreation(body);
+            if (generation !== inputGeneration.current) return;
             const next = { preview, body, sentIds, indexed: indexErrors(preview.errors || [], sentIds) };
             setCheck(next);
             if (preview.valid) { createKey.current = newKey(); setStep('review'); }
             else requestAnimationFrame(() => errorSummary.current?.focus());
-        } catch (failure) { setError(failure); } finally { setBusy(null); }
+        } catch (failure) { if (generation === inputGeneration.current) setError(failure); } finally { checking.current = false; setBusy(null); }
     };
     const create = async () => {
         if (creating.current || !check?.preview.valid) return;
@@ -466,7 +457,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     return <section className="lw-signingPackages lw-signingCompose" dir={direction} aria-labelledby="signing-compose-title">
         <header className="lw-signingPackages__heading">
             <div>
-                <SecondaryButton onPress={leave}>{t('signingV2.compose.back')}</SecondaryButton>
+                <SigningBackButton onPress={leave}>{t('signingV2.compose.back')}</SigningBackButton>
                 <h1 id="signing-compose-title" ref={heading} tabIndex={-1}>{t('signingV2.compose.title')}</h1>
                 <p>{t('signingV2.compose.subtitle')}</p>
             </div>
@@ -479,13 +470,25 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 <PrimaryButton onPress={() => onBack?.()}>{t('signingV2.compose.discardConfirm')}</PrimaryButton>
             </div>
         </div>}
-        <Stepper step={step} />
+        <Stepper step={step === 'opening' ? 'template' : step} />
         {error && <StatusNotice><p>{t(`signingV2.compose.errors.${error.code}`, { defaultValue: errorMessage(error) })}</p></StatusNotice>}
 
+        {step === 'opening' && <SimpleCard className="lw-signingCompose__card">
+            <SelectedTemplateEntry api={api} templateId={initialTemplateId} expectedVersion={initialTemplateVersion}
+                onReady={selected => { applyTemplate(selected); setStep('recipients'); }} onChoose={() => setStep('template')} />
+        </SimpleCard>}
+        {replacement && <div className="lw-signingCompose__confirm" role="alertdialog" aria-labelledby="compose-replace-title">
+            <strong id="compose-replace-title">{t('signingV2.compose.template.replaceTitle')}</strong>
+            <p>{t('signingV2.compose.template.replaceBody')}</p>
+            <div className="lw-signingPackages__actions">
+                <SecondaryButton onPress={() => setReplacement(null)}>{t('signingV2.compose.keepEditing')}</SecondaryButton>
+                <PrimaryButton onPress={() => { applyTemplate(replacement); setReplacement(null); }}>{t('signingV2.compose.template.replaceConfirm')}</PrimaryButton>
+            </div>
+        </div>}
         {step === 'template' && <SimpleCard className="lw-signingCompose__card">
-            <TemplateStep api={api} initialTemplateId={initialTemplateId} selected={template} onSelect={chooseTemplate} />
+            <TemplateStep api={api} selected={template} onSelect={chooseTemplate} />
             <footer className="lw-signingCompose__footer">
-                <PrimaryButton onPress={() => setStep('recipients')} disabled={!template}>{t('signingV2.compose.next')}</PrimaryButton>
+                <PrimaryButton onPress={() => setStep('recipients')} disabled={!template || !!replacement}>{t('signingV2.compose.next')}</PrimaryButton>
             </footer>
         </SimpleCard>}
 
@@ -498,9 +501,12 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 <p className="lw-signingPackages__caption">{t('signingV2.compose.templateSummary', { name: template.name })}</p>
                 <details className="lw-signingCompose__optionalRoles"><summary>{t('signingV2.compose.signers.heading')}</summary>
                 <p className="lw-signingCompose__hintLine">{t('signingV2.compose.signers.help')}</p>
+                <p className="lw-signingCompose__hintLine">{t('signingV2.compose.audience.help')}</p>
                 <ul className="lw-signingCompose__signers">
                     {template.roles.filter(role => !omitted.has(role.key)).map(role => <li key={role.key}>
-                        <span>{role.label}</span>
+                        <SegmentedSwitch title={role.label} ariaLabel={t('signingV2.compose.audience.label', { name: role.label })}
+                            value={roleAudience[role.key] || role.audience} onChange={value => { setRoleAudience(current => ({ ...current, [role.key]: value })); invalidate(); }}
+                            options={[{ value: 'each', label: t('signingV2.compose.audience.each') }, { value: 'shared', label: t('signingV2.compose.audience.shared') }]} />
                         {template.roles.length - omitted.size > 1 && <SecondaryButton onPress={() => omitSigner(role.key)} aria-label={t('signingV2.compose.signers.remove', { name: role.label })}>
                             {t('signingV2.compose.rows.removeShort')}
                         </SecondaryButton>}
@@ -541,14 +547,9 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                     <ol>
                         <li>{t('signingV2.compose.excel.stepDownload')} <SecondaryButton onPress={downloadWorkbook} disabled={!!busy}>{busy === 'download' ? t('common.loading') : t('signingV2.compose.excel.download')}</SecondaryButton></li>
                         <li>{t('signingV2.compose.excel.stepFill', { max: number(MAX_ROWS) })}</li>
-                        <li>
-                            <label className="lw-signingCompose__file">
-                                <span>{busy === 'upload' ? t('signingV2.compose.excel.reading') : t('signingV2.compose.excel.upload')}</span>
-                                <input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" disabled={!!busy}
-                                    onChange={event => { uploadWorkbook(event.target.files?.[0]); event.target.value = ''; }} />
-                            </label>
-                        </li>
                     </ol>
+                    <WorkbookImport key={JSON.stringify(layout())} api={api} versionId={template.versionId} roles={activeEach} layout={layout()}
+                        hasRecipients={rows.some(rowFilled)} onApply={applyWorkbook} onPending={importPending} />
                     {importNote && <div role="status" className="lw-signingCompose__importNote">
                         <p>{t('signingV2.compose.excel.imported', { count: importNote.count, formattedCount: number(importNote.count) })}</p>
                         {importNote.issues.length > 0 && <>
@@ -569,7 +570,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                     })}</ul>
                     {errorCount > 30 && <p>{t('signingV2.compose.moreErrors', { count: errorCount - 30, formattedCount: number(errorCount - 30) })}</p>}
                 </StatusNotice>}
-                {activeEach.length > 0 && <ol className="lw-signingCompose__rows">{rows.map((row, index) =>
+                {activeEach.length > 0 && busy !== 'upload' && <ol className="lw-signingCompose__rows">{rows.map((row, index) =>
                     <RecipientRow key={row.id} row={row} index={index} roles={activeEach} errors={check?.indexed.byRow[row.id]} onChange={changeRow} onRemove={removeRow} canRemove={rows.length > 1} />)}
                 </ol>}
                 <div className="lw-signingPackages__actions">
@@ -577,12 +578,12 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                         const row = blankRow(activeEach.length ? activeEach : eachRoles);
                         pendingFocus.current = fieldId(row.id, activeEach[0]?.key, 'name');
                         setRows(current => [...current, row]); invalidate();
-                    }} disabled={rows.length >= MAX_ROWS}>{t('signingV2.compose.rows.add')}</SecondaryButton>
+                    }} disabled={rows.length >= MAX_ROWS || busy === 'upload'}>{t('signingV2.compose.rows.add')}</SecondaryButton>
                     <span className="lw-signingPackages__caption" aria-live="polite">{t('signingV2.compose.rows.count', { count: filledRows, formattedCount: number(filledRows), max: number(MAX_ROWS) })}</span>
                 </div>
             </SimpleCard>}
             <footer className="lw-signingCompose__footer is-sticky">
-                <SecondaryButton onPress={() => setStep('template')} disabled={!!busy}>{t('signingV2.compose.previous')}</SecondaryButton>
+                <SigningBackButton onPress={() => setStep('template')} disabled={!!busy}>{t('signingV2.compose.previous')}</SigningBackButton>
                 <PrimaryButton onPress={runCheck} disabled={!!busy}>{busy === 'check' ? t('signingV2.compose.checking') : t('signingV2.compose.check')}</PrimaryButton>
             </footer>
         </>}
@@ -613,12 +614,12 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 </li>)}</ul>
                 <h3>{t('signing.upload.signingOrderLabel')}</h3>
                 <p className="lw-signingCompose__note">{orderMode === 'sequential' ? t('signing.upload.signingOrderSequential') : t('signing.upload.signingOrderParallel')}</p>
-                {orderMode === 'sequential' && orderedRoles.length >= 2 && <ol className="lw-signingCompose__plainList">{orderedRoles.map((role, index) => <li key={role.key}>{index + 1}. {role.label}</li>)}</ol>}
+                {orderMode === 'sequential' && orderedRoles.length >= 2 && <ol className="lw-signingCompose__plainList">{orderedRoles.map(role => <li key={role.key}>{role.label}</li>)}</ol>}
                 <p className="lw-signingCompose__note">{t('signingV2.compose.review.otp')}</p>
                 <p className="lw-signingCompose__note">{t('signingV2.compose.review.effect')}</p>
             </SimpleCard>
             <footer className="lw-signingCompose__footer is-sticky">
-                <SecondaryButton onPress={() => setStep('recipients')} disabled={busy === 'create'}>{t('signingV2.compose.review.edit')}</SecondaryButton>
+                <SigningBackButton onPress={() => setStep('recipients')} disabled={busy === 'create'}>{t('signingV2.compose.review.edit')}</SigningBackButton>
                 <PrimaryButton onPress={create} disabled={busy === 'create'} aria-busy={busy === 'create'}>
                     {busy === 'create' ? t('signingV2.compose.review.creating') : t('signingV2.compose.review.confirm', { count: preview.packageCount, formattedCount: number(preview.packageCount) })}
                 </PrimaryButton>

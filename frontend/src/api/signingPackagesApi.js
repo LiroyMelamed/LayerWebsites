@@ -21,9 +21,10 @@ const signingPackagesApi = {
         { headers: { 'Idempotency-Key': idempotencyKey } }),
     operation: (id, config) => signingRequest('get', `${root}/operations/${id}`, null, config),
     templates: config => signingRequest('get', `${root}/templates`, null, config),
-    importLegacy: (id, locale) => signingRequest('post', `${root}/templates/legacy/${id}/import`, { locale }),
-    workbook: (versionId, locale) => signingRequest('get', `${root}/templates/${versionId}/workbook?${query({ locale })}`, null, { responseType: 'blob' }),
-    parseWorkbook: (versionId, base64) => signingRequest('post', `${root}/templates/${versionId}/workbook`, { base64 }),
+    importLegacy: (id, locale, expectedVersion) => signingRequest('post', `${root}/templates/legacy/${id}/import`, { locale, ...(expectedVersion != null ? { expectedVersion } : {}) }),
+    workbook: (versionId, locale, layout) => signingRequest('get', `${root}/templates/${versionId}/workbook?${query({ locale, ...(layout ? { layout: JSON.stringify(layout) } : {}) })}`, null, { responseType: 'blob' }),
+    inspectWorkbook: (versionId, base64, layout) => signingRequest('post', `${root}/templates/${versionId}/workbook/inspect`, { base64, ...layout }),
+    parseWorkbook: (versionId, base64, layout) => signingRequest('post', `${root}/templates/${versionId}/workbook`, { base64, ...layout }),
     previewCreation: body => signingRequest('post', `${root}/creation/preview`, body),
     create: (body, idempotencyKey) => signingRequest('post', `${root}/creation`, body, { headers: { 'Idempotency-Key': idempotencyKey } }),
 };

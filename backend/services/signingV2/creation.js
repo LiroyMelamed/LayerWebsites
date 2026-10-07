@@ -7,8 +7,14 @@ const { transaction } = require('./transaction');
 const { validateSources } = require('./templates');
 const { createSubmission, loadDirectory, previewHash } = require('./submissions');
 const { loadPerson } = require('./people');
+const { recipientRoles } = require('../../lib/signingV2/recipientLayout');
 
 const LEGACY_FIELD_TYPES = { signature: 'signature', initials: 'initials', text: 'text', date: 'date', checkbox: 'checkbox', number: 'text' };
+// An imported revision must not resurrect an archived source template for a new send.
+// Existing packages keep their snapshots and remain readable/signable.
+const availableOriginSql = `(v.definition->'origin'->>'kind' IS DISTINCT FROM 'legacy_template' OR EXISTS (
+    SELECT 1 FROM signing_templates source WHERE source.id::text=v.definition->'origin'->>'templateId'
+    AND NOT source.archived AND source.law_firm_tenant_id IS NOT DISTINCT FROM t.law_firm_tenant_id))`;
 const CHANNELS = { email: ['email'], sms: ['sms'], both: ['email', 'sms'] };
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -30,7 +36,7 @@ async function loadVersion(db, scope, versionId) {
     expect(UUID.test(versionId), 'INVALID_TEMPLATE');
     const result = await db.query(`SELECT v.*,t.name AS template_name FROM signing_template_versions v
         JOIN signing_templates t ON t.owner_context_id=v.owner_context_id AND t.id=v.template_id
-        WHERE v.owner_context_id=$1 AND v.id=$2 AND v.state='published' AND NOT t.archived AND ($3::boolean OR t.owner_userid=$4)`,
+        WHERE v.owner_context_id=$1 AND v.id=$2 AND v.state='published' AND NOT t.archived AND ($3::boolean OR t.owner_userid=$4) AND ${availableOriginSql}`,
     [scope.contextId, versionId, scope.all, scope.userId]);
     if (!result.rowCount) fail('NOT_FOUND', 404);
     const template = result.rows[0];
@@ -49,7 +55,7 @@ async function listTemplates(db, scope) {
     const current = (await db.query(`SELECT t.id AS template_id,t.name,v.id AS version_id,v.version,v.definition,v.published_at
         FROM signing_templates t JOIN LATERAL (SELECT * FROM signing_template_versions v WHERE v.owner_context_id=t.owner_context_id
             AND v.template_id=t.id AND v.state='published' ORDER BY v.version DESC LIMIT 1) v ON TRUE
-        WHERE t.owner_context_id=$1 AND NOT t.archived AND ($2::boolean OR t.owner_userid=$3) ORDER BY t.name,t.id`,
+        WHERE t.owner_context_id=$1 AND NOT t.archived AND ($2::boolean OR t.owner_userid=$3) AND ${availableOriginSql} ORDER BY t.name,t.id`,
     [scope.contextId, scope.all, scope.userId])).rows;
     const imported = new Set(current.map(row => row.definition.origin?.templateId && `${row.definition.origin.templateId}:${row.definition.origin.version}`).filter(Boolean));
     const legacy = (await db.query(`SELECT id,name,version,definition FROM signing_templates t WHERE t.owner_context_id IS NULL
@@ -104,13 +110,14 @@ async function findImport(db, scope, legacyId, version) {
         ORDER BY v.version DESC LIMIT 1`, [scope.contextId, legacyId, version])).rows[0] || null;
 }
 
-async function importLegacyTemplate(pool, scope, legacyId, { storage, readPdf, locale = 'he' }) {
+async function importLegacyTemplate(pool, scope, legacyId, { storage, readPdf, locale = 'he', expectedVersion }) {
     expect(UUID.test(legacyId) && LOCALES.has(locale), 'INVALID_TEMPLATE');
     const legacy = (await pool.query(`SELECT * FROM signing_templates t WHERE t.id=$1 AND t.owner_context_id IS NULL
         AND COALESCE(t.definition->>'schemaVersion','1')='1' AND NOT t.archived
         AND t.law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid AND ($3::boolean OR t.owner_userid=$4)`,
     [legacyId, scope.tenantId, scope.all, scope.userId])).rows[0];
     if (!legacy) fail('NOT_FOUND', 404);
+    if (expectedVersion != null && (!Number.isInteger(expectedVersion) || expectedVersion !== legacy.version)) fail('SELECTED_TEMPLATE_CHANGED', 409);
     const existing = await findImport(pool, scope, legacy.id, legacy.version);
     if (existing) return { ...existing, reused: true };
     // Object keys are content addressed, so a retry after a crash rewrites identical bytes and the database row decides.
@@ -125,6 +132,9 @@ async function importLegacyTemplate(pool, scope, legacyId, { storage, readPdf, l
     }
     return transaction(pool, async db => {
         await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [`signing-v2-import:${scope.contextId}:${legacy.id}`]);
+        const current = (await db.query('SELECT version,archived FROM signing_templates WHERE id=$1 FOR SHARE', [legacy.id])).rows[0];
+        if (!current || current.archived) fail('NOT_FOUND', 404);
+        if (current.version !== legacy.version) fail('SELECTED_TEMPLATE_CHANGED', 409);
         const again = await findImport(db, scope, legacy.id, legacy.version);
         if (again) return { ...again, reused: true };
         const sources = [];
@@ -205,8 +215,9 @@ function normalize(definition, input) {
     expect(Array.isArray(input.rows) && input.rows.length > 0, 'INVALID_SUBMISSION');
     expect(input.rows.length <= limits.packages, 'CAPACITY_BUDGET_EXCEEDED');
     const omitted = omittedRoles(definition, input, errors);
-    const shared = {}, each = definition.roles.filter(role => role.audience !== 'shared' && !omitted.has(role.key));
-    for (const role of definition.roles.filter(item => item.audience === 'shared' && !omitted.has(item.key))) {
+    const roles = recipientRoles(definition, input.roleAudience, [...omitted]);
+    const shared = {}, each = roles.filter(role => role.audience !== 'shared');
+    for (const role of roles.filter(item => item.audience === 'shared')) {
         shared[role.key] = recipient(input.shared?.[role.key], definition, `shared.${role.key}`, errors);
         if (shared[role.key].personId) expect(UUID.test(shared[role.key].personId), 'INVALID_PERSON');
     }
@@ -217,14 +228,13 @@ function normalize(definition, input) {
         keys.add(key);
         return { key, recipients: Object.fromEntries(each.map(role => [role.key, recipient(row?.recipients?.[role.key], definition, `rows.${index}.${role.key}`, errors)])) };
     });
-    return { name: input.name.trim(), shared, rows, omitted, signingOrder: signingOrder(definition, input, omitted, errors), errors };
+    return { name: input.name.trim(), roles, shared, rows, omitted, signingOrder: signingOrder(definition, input, omitted, errors), errors };
 }
 
 function packagesFor(definition, plan, personFor) {
     return plan.rows.map((row, index) => {
         const roles = {}, delivery = {};
-        for (const role of definition.roles) {
-            if (plan.omitted.has(role.key)) continue;
+        for (const role of plan.roles) {
             const person = role.audience === 'shared' ? plan.shared[role.key] : row.recipients[role.key];
             const ids = personFor(role, person, index);
             roles[role.key] = [{ personId: ids.personId, partyId: ids.partyId }];
@@ -237,7 +247,7 @@ function packagesFor(definition, plan, personFor) {
 }
 
 function rowsHash(template, plan) {
-    return digest({ templateVersionId: template.id, definitionHash: template.definition_hash, name: plan.name, omitted: [...plan.omitted].sort(), signingOrder: plan.signingOrder, shared: plan.shared, rows: plan.rows });
+    return digest({ templateVersionId: template.id, definitionHash: template.definition_hash, name: plan.name, roleAudience: Object.fromEntries(plan.roles.map(role => [role.key, role.audience])), omitted: [...plan.omitted].sort(), signingOrder: plan.signingOrder, shared: plan.shared, rows: plan.rows });
 }
 
 async function previewCreation(pool, scope, input) {
@@ -293,7 +303,7 @@ async function createFromRows(pool, scope, input, { reserveCapacity }) {
     const packages = packagesFor(definition, plan, personFor);
     await transaction(pool, async db => {
         await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [`signing-v2-people:${seed.join(':')}`]);
-        for (const role of definition.roles.filter(item => item.audience === 'shared' && plan.shared[item.key]?.personId)) {
+        for (const role of plan.roles.filter(item => item.audience === 'shared' && plan.shared[item.key]?.personId)) {
             const person = await loadPerson(db, scope, plan.shared[role.key].personId);
             const party = (await db.query(`SELECT id FROM signing_parties WHERE owner_context_id=$1 AND person_id=$2 AND kind='person' ORDER BY id LIMIT 1`,
                 [scope.contextId, person.id])).rows[0];

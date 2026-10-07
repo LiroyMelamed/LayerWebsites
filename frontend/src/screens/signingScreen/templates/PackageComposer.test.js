@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, waitFor, act } from '@testing-library/react';
 import { createInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import PackageComposer from './PackageComposer';
@@ -27,6 +27,12 @@ function fakeApi() {
     return {
         templates: jest.fn(async () => catalog),
         importLegacy: jest.fn(async () => { catalog = { templates: [converted], legacy: [] }; return { versionId: 'v-1', reused: false }; }),
+        inspectWorkbook: jest.fn(async () => ({ sheets: [{ id: 1, name: 'People', columns: [
+            { index: 1, header: 'ID', suggestedKey: 'key', samples: ['E1'] },
+            { index: 2, header: 'Name', suggestedKey: 'first.name', samples: ['Synthetic one'] },
+            { index: 3, header: 'Email', suggestedKey: 'first.email', samples: ['one@example.invalid'] },
+            { index: 4, header: 'Phone', suggestedKey: 'first.phone', samples: ['0501234567'] },
+        ] }] })),
         parseWorkbook: jest.fn(),
         workbook: jest.fn(),
         previewCreation: jest.fn(),
@@ -43,7 +49,7 @@ async function toRecipients(i18n, api) {
     const version = new Intl.NumberFormat({ he: 'he-IL', ar: 'ar-IL', en: 'en-GB' }[i18n.language]).format(1);
     fireEvent.click(await screen.findByRole('button', { name: i18n.t('signingV2.compose.template.convertNamed', { name: 'Employment pack', version }) }));
     await screen.findByRole('button', { name: /Employment pack/, pressed: true });
-    expect(api.importLegacy).toHaveBeenCalledWith(7, i18n.language);
+    expect(api.importLegacy).toHaveBeenCalledWith(7, i18n.language, 1);
     fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.next') }));
     await screen.findByRole('heading', { name: i18n.t('signingV2.compose.rows.heading') });
     expect(screen.queryByLabelText(i18n.t('signingV2.compose.rows.key'))).not.toBeInTheDocument();
@@ -55,6 +61,9 @@ test('every creation string exists in Hebrew, Arabic and English', () => {
     const reference = new Set(keys(he.signingV2.compose));
     for (const locale of [ar, en]) expect(new Set(keys(locale.signingV2.compose))).toEqual(reference);
     for (const locale of [he, ar, en]) expect(locale.signingManager.signingRuns).toBeTruthy();
+    for (const locale of [he, ar, en]) for (const key of ['signingOrderLabel', 'signingOrderParallel', 'signingOrderSequential', 'sequentialOrderTitle']) {
+        expect(locale.signing.upload[key]).toBeTruthy();
+    }
 });
 
 test.each(['he', 'ar', 'en'])('explicit conversion, field errors linked to their input, one approved creation in %s', async language => {
@@ -137,8 +146,10 @@ test('Excel rows replace manual rows and skipped rows are reported by their shee
     });
     const upload = screen.getByLabelText(i18n.t('signingV2.compose.excel.upload'));
     fireEvent.change(upload, { target: { files: [new File([new Uint8Array([80, 75, 3, 4])], 'people.xlsx')] } });
+    fireEvent.click(await screen.findByRole('button', { name: i18n.t('signingV2.compose.mapping.preview') }));
+    fireEvent.click(await screen.findByRole('button', { name: i18n.t('signingV2.compose.mapping.apply') }));
     await screen.findByText(i18n.t('signingV2.compose.excel.imported', { count: 2, formattedCount: '2' }));
-    expect(api.parseWorkbook).toHaveBeenCalledWith('v-1', expect.any(String));
+    expect(api.parseWorkbook).toHaveBeenCalledWith('v-1', expect.any(String), { mapping: { sheetId: 1, columns: { key: 1, 'first.name': 2, 'first.email': 3, 'first.phone': 4 } } });
     expect(screen.getByText(new RegExp(i18n.t('signingV2.compose.rowErrors.UNSUPPORTED_CELL')))).toBeInTheDocument();
     expect(screen.getAllByDisplayValue(/Synthetic (one|three)/)).toHaveLength(2);
     expect(screen.getByDisplayValue('0501234567')).toHaveAttribute('dir', 'ltr');
@@ -211,16 +222,106 @@ test('sending from an existing template preselects its latest published import',
         { ...converted, versionId: 'newer', name: 'Latest version', origin: { templateId: 'legacy-1', version: 2 } },
     ] });
     render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialTemplateId="legacy-1" onBack={jest.fn()} /></I18nextProvider>);
-    await screen.findByRole('button', { name: /Latest version/, pressed: true });
+    await screen.findByLabelText('Run name');
+    expect(screen.getByLabelText('Run name')).toHaveValue('Latest version');
+    expect(screen.queryByRole('heading', { name: en.signingV2.compose.template.heading })).not.toBeInTheDocument();
     expect(api.importLegacy).not.toHaveBeenCalled();
 });
 
-test('a newer unimported version keeps conversion explicit and never sends the older revision', async () => {
+test('a newer selected version is prepared once and opens recipients, never the older revision', async () => {
     const i18n = await translations('he'), api = fakeApi();
-    api.templates.mockResolvedValue({ legacy: [{ id: 'legacy-1', name: 'Needs conversion', version: 2, documentCount: 1, roles: [] }],
-        templates: [{ ...converted, origin: { templateId: 'legacy-1', version: 1 } }] });
-    render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialTemplateId="legacy-1" onBack={jest.fn()} /></I18nextProvider>);
-    await screen.findByRole('button', { name: /Needs conversion/ });
-    expect(screen.queryByRole('button', { pressed: true })).toBeNull();
+    api.templates.mockResolvedValueOnce({ legacy: [{ id: 'legacy-1', name: 'Updated agreement', version: 2 }],
+        templates: [{ ...converted, origin: { templateId: 'legacy-1', version: 1 } }] })
+        .mockResolvedValue({ legacy: [], templates: [{ ...converted, versionId: 'new-v2', name: 'Updated agreement', origin: { templateId: 'legacy-1', version: 2 } }] });
+    api.importLegacy.mockResolvedValue({ versionId: 'new-v2' });
+    render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialTemplateId="legacy-1" initialTemplateVersion="2" onBack={jest.fn()} /></I18nextProvider>);
+    await screen.findByRole('heading', { name: i18n.t('signingV2.compose.rows.heading') });
+    expect(screen.getByLabelText(i18n.t('signingV2.compose.runName'))).toHaveValue('Updated agreement');
+    expect(api.importLegacy).toHaveBeenCalledTimes(1);
+    expect(api.importLegacy).toHaveBeenCalledWith('legacy-1', 'he', 2);
+    expect(api.create).not.toHaveBeenCalled();
+});
+
+test('a changed or missing selection is explained without picking another template silently', async () => {
+    const i18n = await translations('en'), api = fakeApi();
+    api.templates.mockResolvedValue({ legacy: [], templates: [{ ...converted, origin: { templateId: 'legacy-1', version: 2 } }] });
+    render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialTemplateId="legacy-1" initialTemplateVersion="1" /></I18nextProvider>);
+    await screen.findByText(en.signingV2.compose.errors.SELECTED_TEMPLATE_CHANGED);
+    expect(screen.queryByLabelText('Run name')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Choose another template' }));
+    expect(await screen.findByRole('button', { name: /Employment pack/ })).toHaveAttribute('aria-pressed', 'false');
     expect(api.importLegacy).not.toHaveBeenCalled();
+});
+
+test('opening retry recovers a network failure and does not create a submission', async () => {
+    const i18n = await translations('en'), api = fakeApi();
+    api.templates.mockRejectedValueOnce(new Error('offline')).mockResolvedValue({ legacy: [], templates: [converted] });
+    render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialTemplateId="t-1" /></I18nextProvider>);
+    fireEvent.click(await screen.findByRole('button', { name: i18n.t('common.retry') }));
+    await screen.findByLabelText('Run name');
+    expect(api.create).not.toHaveBeenCalled();
+});
+
+test('back to templates retains entered data; replacing a template requires an explicit choice', async () => {
+    const i18n = await translations('en'), api = fakeApi();
+    api.templates.mockResolvedValue({ legacy: [], templates: [converted, { ...converted, versionId: 'different', name: 'Another agreement' }] });
+    render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialTemplateId="t-1" /></I18nextProvider>);
+    const name = await screen.findByLabelText('Run name');
+    fireEvent.change(name, { target: { value: 'Keep my send name' } });
+    fireEvent.change(field(screen.getByRole('group', { name: 'Row 1' }), 'Full name'), { target: { value: 'Synthetic client' } });
+    fireEvent.click(screen.getByRole('button', { name: en.signingV2.compose.previous }));
+    fireEvent.click(await screen.findByRole('button', { name: /Another agreement/ }));
+    const confirmation = await screen.findByRole('alertdialog');
+    fireEvent.click(within(confirmation).getByRole('button', { name: en.signingV2.compose.keepEditing }));
+    fireEvent.click(screen.getByRole('button', { name: en.signingV2.compose.next }));
+    expect(screen.getByDisplayValue('Synthetic client')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Keep my send name')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: en.signingV2.compose.previous }));
+    fireEvent.click(await screen.findByRole('button', { name: /Another agreement/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Replace template and clear signers' }));
+    fireEvent.click(screen.getByRole('button', { name: en.signingV2.compose.next }));
+    expect(screen.queryByDisplayValue('Synthetic client')).not.toBeInTheDocument();
+});
+
+test('abandoned template load cannot replace the currently open draft', async () => {
+    const i18n = await translations('en'), api = fakeApi();
+    let resolve;
+    api.templates.mockReturnValueOnce(new Promise(done => { resolve = done; }));
+    const view = render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialTemplateId="old" /></I18nextProvider>);
+    view.unmount();
+    api.templates.mockResolvedValue({ legacy: [], templates: [converted] });
+    render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialTemplateId="t-1" /></I18nextProvider>);
+    await screen.findByLabelText('Run name');
+    await act(async () => resolve({ legacy: [], templates: [{ ...converted, templateId: 'old', name: 'Old response' }] }));
+    await waitFor(() => expect(screen.getByLabelText('Run name')).toHaveValue('Employment pack'));
+});
+
+test('audience is chosen per send and changing it never copies one person to every package', async () => {
+    const i18n = await translations('en'), api = fakeApi();
+    await toRecipients(i18n, api);
+    fireEvent.change(field(screen.getByRole('group', { name: 'Row 1' }), 'Full name'), { target: { value: 'Keep individual client' } });
+    const choose = screen.getByRole('radiogroup', { name: 'Who fills Employee' });
+    fireEvent.click(within(choose).getByRole('radio', { name: 'Same person in every package' }));
+    const shared = screen.getByRole('group', { name: 'Employee', exact: true });
+    expect(field(shared, 'Full name')).toHaveValue('');
+    fireEvent.change(field(shared, 'Full name'), { target: { value: 'Shared client' } });
+    fireEvent.click(within(choose).getByRole('radio', { name: 'Different person per package' }));
+    expect(field(screen.getByRole('group', { name: 'Row 1' }), 'Full name')).toHaveValue('Keep individual client');
+    fireEvent.click(within(choose).getByRole('radio', { name: 'Same person in every package' }));
+    expect(field(screen.getByRole('group', { name: 'Employee', exact: true }), 'Full name')).toHaveValue('Shared client');
+});
+
+test('a preview response for earlier field values cannot advance to confirmation', async () => {
+    const i18n = await translations('en'), api = fakeApi();
+    await toRecipients(i18n, api);
+    const name = field(screen.getByRole('group', { name: 'Row 1' }), 'Full name');
+    fireEvent.change(name, { target: { value: 'Earlier' } });
+    let resolve;
+    api.previewCreation.mockReturnValue(new Promise(done => { resolve = done; }));
+    fireEvent.click(screen.getByRole('button', { name: 'Check data' }));
+    fireEvent.change(name, { target: { value: 'Current' } });
+    await act(async () => resolve(validPreview(1)));
+    expect(screen.queryByRole('heading', { name: en.signingV2.compose.review.heading })).not.toBeInTheDocument();
+    expect(name).toHaveValue('Current');
+    expect(api.create).not.toHaveBeenCalled();
 });

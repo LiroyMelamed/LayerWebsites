@@ -1124,7 +1124,11 @@
         "duplicateSignerContact": "This email or phone is already used by another signer on this document. Each signer needs a unique email/phone.",
         "manualSignerPhoneRequired": "To save a signer as a new client, enter a unique phone number.",
         "manualSignerCreateFailed": "Could not create a new client. Check that the phone number is not already in the system."
-      }
+      },
+      "signingOrderLabel": "Signing order",
+      "signingOrderParallel": "Everyone can sign at the same time",
+      "signingOrderSequential": "Signers take turns in the order below",
+      "sequentialOrderTitle": "Signer order (drag or use the arrows to reorder):"
     }
   },
   "verifyEvidence": {
@@ -1575,7 +1579,7 @@
     },
     "compose": {
       "title": "New signing run",
-      "subtitle": "Choose a template, add recipients by hand or from an Excel file, check, and approve. Each row becomes its own package.",
+      "subtitle": "Complete the signers, review who signs each document, and confirm the send.",
       "back": "Back to signing runs",
       "stepsLabel": "Creation steps",
       "steps": {
@@ -1604,7 +1608,13 @@
         "legacyHeading": "Existing templates",
         "legacyHelp": "Converting creates a copy for bulk sending. The original template does not change, and its documents and fields stay exactly as they are.",
         "convert": "Convert and choose",
-        "converting": "Converting…"
+        "converting": "Converting…",
+        "opening": "Preparing your selected template…",
+        "openFailed": "The template could not be opened. You can retry without creating another send.",
+        "chooseAnother": "Choose another template",
+        "replaceTitle": "Replace this template?",
+        "replaceBody": "Replacing the template clears the signers entered for this send. Cancel to keep them.",
+        "replaceConfirm": "Replace template and clear signers"
       },
       "details": "Run details",
       "runName": "Run name",
@@ -1665,9 +1675,9 @@
         "en": "English"
       },
       "excel": {
-        "stepDownload": "Download a sample file that matches this template.",
+        "stepDownload": "Use an existing recipient file, or download a sample.",
         "download": "Download sample file",
-        "stepFill": "Fill in one row per recipient, up to {{max}} rows. Do not change the column headings.",
+        "stepFill": "Up to {{max}} packages. Each row includes all signers for that package; shared signers are entered once above.",
         "upload": "Upload the completed file",
         "reading": "Reading the file…",
         "imported_one": "1 row was loaded from the file and replaced the previous list.",
@@ -1698,8 +1708,8 @@
         "confirm_one": "Create 1 package",
         "confirm_other": "Create {{formattedCount}} packages",
         "creating": "Creating…",
-        "sharedInvitations_one": "{{name}} will receive an invitation for 1 package.",
-        "sharedInvitations_other": "{{name}} will receive one invitation covering all {{formattedCount}} packages and can sign them together."
+        "sharedInvitations_one": "{{name}} will receive one link for all {{formattedCount}} packages. Only documents whose signing turn has arrived can be signed together.",
+        "sharedInvitations_other": "{{name}} will receive one link for all {{formattedCount}} packages. Only documents whose signing turn has arrived can be signed together."
       },
       "done": {
         "heading": "The run was created",
@@ -1738,7 +1748,37 @@
         "INVALID_ROWS": "Some rows have errors. Check them again",
         "INVALID_SUBMISSION": "The run details are not valid",
         "PARTICIPANT_NOT_AVAILABLE": "One of the signers is not available in this office",
-        "INVALID_SOURCE": "One of the template documents is not available. Check the template"
+        "INVALID_SOURCE": "One of the template documents is not available. Check the template",
+        "SELECTED_TEMPLATE_CHANGED": "The template has changed since you selected it. Choose the updated version and review its documents and signers before sending.",
+        "SELECTED_TEMPLATE_UNAVAILABLE": "This template is unavailable or you do not have access. Choose another template or contact your office administrator.",
+        "NOT_FOUND": "This template is unavailable or you do not have access. Choose another template or contact your office administrator.",
+        "INVALID_RECIPIENT_LAYOUT": "The role assignments do not match the template. Review the signers for this send.",
+        "INVALID_COLUMN_MAPPING": "Map each column to one field only. Check for duplicate columns.",
+        "INCOMPLETE_COLUMN_MAPPING": "Map a name and an email or phone for every role that varies by package.",
+        "WORKBOOK_TOO_COMPLEX": "This file is too complex. Use up to 10 sheets, 128 columns and 5,000 rows per sheet, with at most 200 packages per import."
+      },
+      "audience": {
+        "label": "Who fills {{name}}",
+        "each": "Different person per package",
+        "shared": "Same person in every package",
+        "help": "This choice applies to this send only. Changing it preserves previous entries but never copies a person into other packages automatically."
+      },
+      "mapping": {
+        "heading": "Who is in each column?",
+        "help": "Each row creates a separate package. Match columns to roles using their headings and samples. People in the same package must be in columns on the same row.",
+        "required": "required",
+        "skip": "Not mapped",
+        "noHeader": "No heading",
+        "noSample": "No sample in the first rows",
+        "sheet": "Worksheet",
+        "contactRequired": "Map a name and at least an email or phone for every role. Column headings must be in the first row.",
+        "preview": "Review mapping",
+        "previewTitle": "{{formattedCount}} packages read from the file",
+        "previewHelp": "These are the first five rows at most. Check each person and contact under the correct role. All data will be validated before sending.",
+        "replaceWarning": "Confirming this import replaces your current recipient list. Shared signers are kept.",
+        "edit": "Edit mapping",
+        "replace": "Replace recipients with file data",
+        "apply": "Use these recipients"
       }
     },
     "public": {
