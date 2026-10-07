@@ -69,7 +69,36 @@
 .lw-signingPackages__panelSummary { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; margin-block-end: 1.5rem; p { flex-basis: 100%; font-size: .875rem; } }
 .lw-signingPackages__people > li { padding-block: 1.25rem; border-block-end: 1px solid #e2e8f0; }
 .lw-signingPackages__tasks > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; margin-block-start: .75rem; font-size: .875rem; time { grid-column: 1 / -1; } }
+.lw-signingPackages__personActions {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem;
+  margin-block-start: 1rem; padding-block-start: .75rem; border-block-start: 1px dashed #e2e8f0; font-size: .8125rem;
+  p { margin: 0; color: #4a5568; }
+}
+.lw-signingPackages__actionDialog {
+  inline-size: min(32rem, calc(100% - 2rem)); max-block-size: calc(100dvh - 2rem); box-sizing: border-box;
+  border: 1px solid #e2e8f0; border-radius: .5rem; padding: 1.25rem; background: #fff; overflow: auto;
+  color: var(--lw-color-text, #2d3748); text-align: start; box-shadow: 0 12px 32px rgb(45 55 72 / 18%);
+  &::backdrop { background: rgb(26 54 93 / 30%); }
+  h2 { font-size: 1.125rem; margin: 0 0 1rem; }
+  p { line-height: 1.6; margin: .5rem 0; font-size: .875rem; }
+  bdi { unicode-bidi: isolate; }
+  [tabindex="-1"]:focus:not(:focus-visible) { outline: none; }
+}
+.lw-signingPackages__actionBody {
+  dl { margin: 0 0 .75rem; display: grid; gap: .75rem; }
+  dl > div { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); gap: .75rem; font-size: .875rem; }
+  dt { color: #4a5568; }
+  dd { margin: 0; display: flex; flex-direction: column; gap: .25rem; overflow-wrap: anywhere; }
+  small { font-size: .8125rem; color: #4a5568; }
+  ul { margin: .25rem 0 0; padding-inline-start: 1.1rem; }
+  p > span { color: #4a5568; }
+}
+.lw-signingPackages__actionButtons { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: flex-end; margin-block-start: 1.25rem; }
 @media (max-width: 48rem) {
+  .lw-signingPackages__toolbar .lw-segmentedSwitch__track { max-inline-size: 100%; box-sizing: border-box; flex-wrap: wrap; border-radius: 1.375rem; }
+  .lw-signingPackages__toolbar .lw-segmentedSwitch__option { padding-inline: .5rem; flex: 1 0 auto; }
+  .lw-signingPackages__actionBody dl > div { grid-template-columns: minmax(0, 1fr); gap: .25rem; }
+  .lw-signingPackages__actionButtons > * { flex: 1 1 100%; }
   .lw-signingPackages__row { grid-template-columns: minmax(0,1fr); gap: .75rem; }
   .lw-signingPackages__metrics, .lw-signingPackages__rowStatus { padding-inline-start: 1.75rem; }
   .lw-signingPackages__rowStatus { flex-direction: row; flex-wrap: wrap; }

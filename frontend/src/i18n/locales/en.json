@@ -78,6 +78,7 @@
   },
   "signingManager": {
     "searchTitle": "Search document / customer / case",
+    "templatesAndBulk": "Templates and bulk sending",
     "dateFrom": "From date",
     "dateTo": "To date",
     "tabs": {
@@ -1424,6 +1425,7 @@
     "cancelledPackages": "Cancelled: {{formattedCount}}",
     "filter": {
       "pending": "In progress",
+      "attention": "Needs attention",
       "complete": "Completed",
       "cancelled": "Cancelled",
       "all": "All"
@@ -1508,7 +1510,55 @@
       "DISTINCT_PEOPLE_REQUIRED": "Choose two different people as authorized signers.",
       "SOURCE_CHANGED": "The source file changed. Select it and review the template again.",
       "INVALID_FILTER": "This filter is invalid. Select it again.",
-      "INVALID_CURSOR": "The list changed. Return to the first page."
+      "INVALID_CURSOR": "The list changed. Return to the first page.",
+      "REVISION_INACTIVE": "This package is not active, so there is nobody to ask for a signature.",
+      "DEADLINE_EXPIRED": "The signing deadline for this package has passed. It must be renewed under the package rules.",
+      "ALREADY_COMPLETED": "This signer has completed all of their signatures. No signing request will be sent.",
+      "WAITING_FOR_PREVIOUS_STAGE": "This signer's tasks are still waiting for an earlier stage, so there is nothing to remind them about yet.",
+      "CHANNEL_UNAVAILABLE": "This signer has no available delivery channel in this package. Correct the contact details.",
+      "LINK_UNAVAILABLE": "This signer has no valid signing link. The link needs to be renewed.",
+      "PREVIOUS_OUTCOME_UNCERTAIN": "We do not know whether the previous message went out. Check delivery before sending another.",
+      "MESSAGE_ALREADY_QUEUED": "A message to this signer is already waiting to go out. Track it in the Delivery tab.",
+      "COOLDOWN_ACTIVE": "A message was just sent to this signer. Wait a little before sending another.",
+      "INVALID_ACTION": "This request is invalid. Refresh and try again."
+    },
+    "action": {
+      "reminder": {
+        "open": "Send reminder",
+        "title": "Send a reminder to this signer",
+        "confirm": "Send reminder",
+        "effect": "Only this signer receives the reminder, with the same signing link. Signatures already accepted do not change."
+      },
+      "resend": {
+        "open": "Send again",
+        "title": "Send the signing request again",
+        "confirm": "Send again",
+        "effect": "Only this signer receives the invitation again. No new package is created and accepted signatures do not change."
+      },
+      "recipient": "Recipient",
+      "package": "Package",
+      "documents": "Documents",
+      "destination": "Channel and destination",
+      "noDestination": "No destination available",
+      "lastInvitation": "Last invitation",
+      "lastFollowUp": "Last reminder or resend",
+      "sending": "Saving the request…",
+      "queued": "Request saved and waiting to go out",
+      "queuedHelp": "The status updates here when the provider confirms receipt. You can close this window; sending continues in the background.",
+      "failedHelp": "The provider rejected the message. Check the contact details before trying again.",
+      "tasks_one": "1 document waiting for their signature",
+      "tasks_other": "{{formattedCount}} documents waiting for their signature"
+    },
+    "reasons": {
+      "REVISION_INACTIVE": "This package is not active, so there is nobody to ask for a signature.",
+      "DEADLINE_EXPIRED": "The signing deadline for this package has passed. It must be renewed under the package rules.",
+      "ALREADY_COMPLETED": "This signer has completed all of their signatures. No signing request will be sent.",
+      "WAITING_FOR_PREVIOUS_STAGE": "This signer's tasks are still waiting for an earlier stage, so there is nothing to remind them about yet.",
+      "CHANNEL_UNAVAILABLE": "This signer has no available delivery channel in this package. Correct the contact details.",
+      "LINK_UNAVAILABLE": "This signer has no valid signing link. The link needs to be renewed.",
+      "PREVIOUS_OUTCOME_UNCERTAIN": "We do not know whether the previous message went out. Check delivery before sending another.",
+      "MESSAGE_ALREADY_QUEUED": "A message to this signer is already waiting to go out. Track it in the Delivery tab.",
+      "COOLDOWN_ACTIVE": "A message was just sent to this signer. You can send again from {{time}}."
     }
   }
 }

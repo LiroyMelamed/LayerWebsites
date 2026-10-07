@@ -7,6 +7,7 @@ import SegmentedSwitch from '../../../components/styledComponents/SegmentedSwitc
 import SearchInput from '../../../components/specializedComponents/containers/SearchInput';
 import SimpleCard from '../../../components/simpleComponents/SimpleCard';
 import useSigningLocale from './useSigningLocale';
+import ParticipantActionDialog from './ParticipantActionDialog';
 import './signingPackages.scss';
 
 function useDebounced(value, delay = 250) {
@@ -91,13 +92,17 @@ function PackageChildren({ api, batchId, state, query, onOpen }) {
     useEffect(() => setCursors([null]), [state, query]);
     return <div className="lw-signingPackages__children" id={`packages-${batchId}`} aria-busy={resource.busy}>
         <ErrorNotice error={resource.error} onRetry={resource.refresh} />
-        <p className="lw-signingPackages__caption">{t('signingV2.matchingPackages', { count: resource.data.total, formattedCount: number(resource.data.total) })}</p>
-        {resource.busy && !resource.data.rows.length && <p role="status">{t('common.loading')}</p>}
+        {resource.busy && !resource.data.rows.length
+            ? <p className="lw-signingPackages__caption" role="status">{t('common.loading')}</p>
+            : <p className="lw-signingPackages__caption">{t('signingV2.matchingPackages', { count: resource.data.total, formattedCount: number(resource.data.total) })}</p>}
         <ul className="lw-signingPackages__childList">{resource.data.rows.map(item => <li key={item.id}>
             <div className="lw-signingPackages__childName"><button type="button" className="lw-signingPackages__textButton" onClick={() => onOpen(item.id)}>{item.name}</button>
                 {query && item.match_reason !== 'package' && <small>{t(`signingV2.match.${item.match_reason}`)}</small>}
             </div>
-            <span>{t(`signingV2.workflow.${item.workflow_state}`, { defaultValue: t('signingV2.workflow.attention') })}</span>
+            <span className="lw-signingPackages__rowStatus">
+                <span>{t(`signingV2.workflow.${item.workflow_state}`, { defaultValue: t('signingV2.workflow.attention') })}</span>
+                {item.issue_count > 0 && item.workflow_state !== 'attention' && <span className="lw-signingPackages__attention">{t('signingV2.workflow.attention')}</span>}
+            </span>
             <Progress accepted={item.accepted_count} required={item.required_count} />
             <SecondaryButton onPress={() => onOpen(item.id)}>{t('signingV2.openPackage')}</SecondaryButton>
         </li>)}</ul>
@@ -107,11 +112,26 @@ function PackageChildren({ api, batchId, state, query, onOpen }) {
     </div>;
 }
 
+// One action entry per person, even when the same person signs in two capacities.
+function PersonActions({ person, detail, onAction }) {
+    const { t, date } = useSigningLocale();
+    const latest = detail.deliveries.find(item => item.personId === person.personId);
+    if (!person.tasks.some(task => task.state === 'ready')) return null;
+    const purpose = latest?.state === 'failed' ? 'resend' : 'reminder';
+    return <div className="lw-signingPackages__personActions">
+        {latest && <p>{t(`signingV2.delivery.${latest.state}`)}{latest.attemptedAt && <> · <time dateTime={latest.attemptedAt}>{date(latest.attemptedAt)}</time></>}</p>}
+        <SecondaryButton onPress={() => onAction(person.personId, purpose)}>{t(`signingV2.action.${purpose}.open`)}</SecondaryButton>
+    </div>;
+}
+
 function PackagePanel({ id, api, onClose }) {
     const { t, direction, number, date } = useSigningLocale();
     const dialog = useRef(null);
     const [tab, setTab] = useState('people');
+    const [action, setAction] = useState(null);
     const resource = usePagedResource(config => api.details(id, config), [api, id]);
+    const actionRows = new Map();
+    (resource.data.participants || []).forEach(person => { if (!actionRows.has(person.personId)) actionRows.set(person.personId, person.id); });
     useEffect(() => {
         const previousFocus = document.activeElement;
         const element = dialog.current;
@@ -120,7 +140,8 @@ function PackagePanel({ id, api, onClose }) {
     }, []);
     const detail = resource.data;
     return <dialog ref={dialog} className="lw-signingPackages__panel" dir={direction} aria-labelledby="signing-package-title"
-        onCancel={event => { event.preventDefault(); onClose(); }}>
+        onCancel={event => { event.preventDefault(); onClose(); }}
+        onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); onClose(); } }}>
         <header className="lw-signingPackages__panelHeader">
             <h2 id="signing-package-title">{detail.package?.external_key || t('signingV2.packageDetails')}</h2>
             <SecondaryButton onPress={onClose}>{t('common.close')}</SecondaryButton>
@@ -142,6 +163,9 @@ function PackagePanel({ id, api, onClose }) {
                     <span>{t(`signingV2.task.${taskDisplayState(task, detail.package)}`)}</span>
                     {task.acceptedAt && <time dateTime={task.acceptedAt}>{date(task.acceptedAt)}</time>}
                 </li>)}</ul>
+                {actionRows.get(person.personId) === person.id && <PersonActions detail={detail}
+                    person={{ personId: person.personId, tasks: detail.participants.filter(item => item.personId === person.personId).flatMap(item => item.tasks) }}
+                    onAction={(personId, purpose) => setAction({ personId, purpose })} />}
             </li>)}</ul>}
             {tab === 'documents' && <ul className="lw-signingPackages__people">{detail.documents.map(document => <li key={document.id}>
                 <h3>{document.name}</h3><p>{t(`signingV2.document.${document.state}`)}</p>
@@ -154,6 +178,8 @@ function PackagePanel({ id, api, onClose }) {
                 {delivery.state === 'uncertain' && <p>{t('signingV2.uncertainHelp')}</p>}
             </li>)}</ul>}
         </>}
+        {action && <ParticipantActionDialog key={`${action.personId}:${action.purpose}`} api={api} packageId={id} {...action}
+            onClose={changed => { setAction(null); if (changed) resource.refresh(); }} />}
     </dialog>;
 }
 
@@ -182,7 +208,7 @@ export default function SigningPackagesWorkspace({ onClose, onCreate, api = sign
         <div className="lw-signingPackages__toolbar">
             <SearchInput title={t('signingV2.search')} value={query} onSearch={setQuery} containerDir={direction} textStyle={{ textAlign: 'start' }} />
             <SegmentedSwitch value={state} onChange={setState} ariaLabel={t('signingV2.statusFilter')}
-                options={['pending', 'complete', 'cancelled', 'all'].map(value => ({ value, label: t(`signingV2.filter.${value}`) }))} />
+                options={['pending', 'attention', 'complete', 'cancelled', 'all'].map(value => ({ value, label: t(`signingV2.filter.${value}`) }))} />
             <SecondaryButton disabled={resource.busy} onPress={resource.refresh}>{t('signingV2.refresh')}</SecondaryButton>
         </div>
         <ErrorNotice error={resource.error} onRetry={resource.refresh} />
