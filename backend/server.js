@@ -40,6 +40,13 @@ const server = app.listen(PORT, HOST, async () => {
     await signingSchemaStartupCheck();
     await assertRuntimeTenantMatchesBranch(pool);
 
+    // Own flag: SIGNING_V2_WORKER_ENABLED. Do not hide it behind calendar/reminder crons.
+    try {
+        signingV2Runtime = require('./services/signingV2/runtime').startFromEnvironment({ pool });
+    } catch (e) {
+        console.error('[signing-v2] worker not started:', e?.errorCode || e?.message);
+    }
+
     // QA can disable the complete delivery/job boundary without changing provider credentials.
     if (!require('./lib/backgroundJobsEnabled')(process.env)) {
         console.log('[scheduled-jobs] disabled by BACKGROUND_JOBS_ENABLED');
@@ -56,11 +63,6 @@ const server = app.listen(PORT, HOST, async () => {
     startDailyAgendaScheduler();
     startHebcalHolidaysScheduler();
     initBillingRenewalScheduler();
-    try {
-        signingV2Runtime = require('./services/signingV2/runtime').startFromEnvironment({ pool });
-    } catch (e) {
-        console.error('[signing-v2] worker not started:', e?.errorCode || e?.message);
-    }
 });
 
 // Hard timeouts at the Node server layer (useful behind Nginx).
