@@ -84,9 +84,10 @@ test.each(['he', 'ar', 'en'])('explicit conversion, field errors linked to their
     api.previewCreation.mockResolvedValueOnce(validPreview(1));
     fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.check') }));
     await screen.findByRole('heading', { name: i18n.t('signingV2.compose.review.heading') });
+    expect(screen.queryByRole('radio', { name: i18n.t('signingV2.compose.locale.template') })).not.toBeInTheDocument();
     expect(api.previewCreation).toHaveBeenLastCalledWith({ templateVersionId: 'v-1', name: 'Employment pack',
-        shared: { lawyer: { name: 'Synthetic lawyer', email: 'lawyer@example.invalid', phone: '' } },
-        rows: [{ recipients: { first: { name: 'Synthetic employee', email: '', phone: '050-123-4567', channel: 'sms' } } }] });
+        shared: { lawyer: { name: 'Synthetic lawyer', email: 'lawyer@example.invalid', phone: '', locale: language } },
+        rows: [{ recipients: { first: { name: 'Synthetic employee', email: '', phone: '050-123-4567', channel: 'sms', locale: language } } }] });
 
     let finish;
     api.create.mockReturnValueOnce(new Promise(resolve => { finish = resolve; }));

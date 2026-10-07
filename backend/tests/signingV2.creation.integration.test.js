@@ -47,13 +47,13 @@ test('v2 creation from the product: explicit legacy import, row validation, appr
     const sheet = book.getWorksheet('recipients');
     assert.equal(sheet.getRow(1).getCell(1).value, 'معرّف الصف');
     assert.equal(sheet.views[0].rightToLeft, true);
-    sheet.getRow(2).values = ['E1', 'موظف تجريبي', '', 501234567, 'sms', 'ar'];
-    sheet.getRow(3).values = ['E2', { formula: '1+1' }, 'x@example.invalid', '', 'email', ''];
-    sheet.getRow(4).values = ['E3', 'Synthetic Three', 'three@example.invalid', '', '', 'en'];
+    sheet.getRow(2).values = ['E1', 'موظف تجريبي', '', 501234567, 'sms'];
+    sheet.getRow(3).values = ['E2', { formula: '1+1' }, 'x@example.invalid', '', 'email'];
+    sheet.getRow(4).values = ['E3', 'Synthetic Three', 'three@example.invalid', '', ''];
     const parsed = ok(await as(request(f.app).post(`/api/signing-v2/templates/${versionId}/workbook`)).send({ base64: Buffer.from(await book.xlsx.writeBuffer()).toString('base64') }), 200);
     assert.deepEqual(parsed.errors, [{ row: 3, code: 'UNSUPPORTED_CELL' }], 'formulas are rejected per row, never evaluated');
     assert.deepEqual(parsed.rows.map(row => [row.key, row.recipients.first.phone, row.recipients.first.channel || null, row.recipients.first.locale]),
-        [['E1', '0501234567', 'sms', 'ar'], ['E3', '', null, 'en']], 'a numeric mobile number keeps its leading zero');
+        [['E1', '0501234567', 'sms', undefined], ['E3', '', null, undefined]], 'a numeric mobile number keeps its leading zero');
 
     const lawyer = { name: 'עו״ד בדיקה', email: 'lawyer@example.invalid', channel: 'email', locale: 'he' };
     const employee = index => ({ key: `E${String(index).padStart(3, '0')}`,
