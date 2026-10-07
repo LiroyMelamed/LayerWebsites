@@ -27,6 +27,16 @@ router.get('/submissions', view, run(async (req, res) => res.json(await manageme
 router.get('/submissions/:id/packages', view, run(async (req, res) =>
     res.json(await management.listPackages(pool, await actorScope(pool, req, 'view'), req.params.id, req.query))));
 router.get('/packages/:id', view, run(async (req, res) => res.json(await management.packageDetails(pool, await actorScope(pool, req, 'view'), req.params.id))));
+const pdf = (res, file, name) => res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': `inline; filename="${name}"`, 'X-Content-Type-Options': 'nosniff' }).send(file.bytes);
+router.get('/packages/:id/documents/:documentId', view, run(async (req, res) => {
+    const { r2, BUCKET } = require('../utils/r2');
+    const file = await management.packageDocumentFile(pool, await actorScope(pool, req, 'view'), req.params.id, req.params.documentId, objectStorage({ client: r2, bucket: BUCKET }));
+    pdf(res.set('X-Document-Final', String(file.final)), file, 'document.pdf');
+}));
+router.get('/packages/:id/evidence', view, run(async (req, res) => {
+    const { r2, BUCKET } = require('../utils/r2');
+    pdf(res, await management.packageEvidenceFile(pool, await actorScope(pool, req, 'view'), req.params.id, objectStorage({ client: r2, bucket: BUCKET })), 'evidence.pdf');
+}));
 router.post('/packages/:id/participants/:personId/action-preview', send, run(async (req, res) =>
     res.json(await actions.previewParticipantAction(pool, await actorScope(pool, req, 'upload'), target(req)))));
 router.post('/packages/:id/participants/:personId/actions', send, run(async (req, res) => {

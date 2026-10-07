@@ -3,6 +3,9 @@ import { render, screen, fireEvent, waitFor, within } from '@testing-library/rea
 import { createInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import SigningPackagesWorkspace from './SigningPackagesWorkspace';
+
+jest.mock('../../../components/specializedComponents/signFiles/pdfViewer/PdfViewer', () => ({ spots = [] }) =>
+    <div data-testid="package-pdf">{spots.map(spot => spot.signerName).join('|')}</div>);
 import he from '../../../i18n/locales/he.json';
 import ar from '../../../i18n/locales/ar.json';
 import en from '../../../i18n/locales/en.json';
@@ -24,7 +27,8 @@ function fixture() {
     const child = { id: 'package-1', name: 'Employee 001', workflow_state: 'active', accepted_count: 1, required_count: 9, match_reason: 'person' };
     const detail = {
         package: { id: child.id, external_key: child.name, workflow_state: 'active', accepted_count: 1, required_count: 9, prepared_count: 3, document_count: 3 },
-        documents: [{ id: 'doc-1', name: 'Employment agreement', state: 'ready', informational: false }],
+        documents: [{ id: 'doc-1', name: 'Employment agreement', state: 'ready', informational: false, final: false,
+            spots: [{ id: 'sig', pageNum: 2, x: 30, y: 100, width: 200, height: 60, type: 'signature', required: true, signerName: 'Synthetic employee', signerIndex: 0 }] }],
         participants: [{ id: 'participation-1', personId: 'person-1', name: 'Synthetic employee', partyName: 'Synthetic corporation', capacity: 'representative',
             tasks: [{ id: 'task-1', documentId: 'doc-1', state: 'accepted', required: true, acceptedAt: '2026-10-07T08:30:00Z' }] }],
         deliveries: [{ id: 'delivery-1', personId: 'person-1', purpose: 'invitation', channel: 'email', state: 'uncertain', attemptedAt: '2026-10-07T08:00:00Z' }],
@@ -188,6 +192,25 @@ test('no action is offered when the person has nothing ready to sign', async () 
     await within(panel).findByText('Synthetic employee');
     expect(within(panel).queryByRole('button', { name: i18n.t('signingV2.action.reminder.open') })).toBeNull();
     expect(within(panel).queryByRole('button', { name: i18n.t('signingV2.action.resend.open') })).toBeNull();
+});
+
+test('opening a package shows each signer position and the finished-document actions', async () => {
+    const i18n = await translations('en'), { api, detail } = fixture();
+    detail.documents[0].final = true;
+    detail.package.workflow_state = 'complete';
+    api.documentFile = jest.fn().mockResolvedValue(new Blob(['%PDF']));
+    api.evidenceFile = jest.fn().mockResolvedValue(new Blob(['%PDF']));
+    render(<I18nextProvider i18n={i18n}><SigningPackagesWorkspace api={api} /></I18nextProvider>);
+    fireEvent.click(await screen.findByRole('button', { name: /October employees/ }));
+    fireEvent.click(await screen.findByRole('button', { name: i18n.t('signingV2.openPackage') }));
+    const panel = await screen.findByRole('dialog');
+    await within(panel).findByText('Synthetic employee');
+    expect(within(panel).getByRole('button', { name: i18n.t('signingV2.public.downloadEvidence') })).toBeTruthy();
+    fireEvent.click(within(panel).getByRole('button', { name: `${i18n.t('signingV2.public.view')}: Employment agreement` }));
+    expect(await within(panel).findByText('Synthetic employee · Signature · page 2')).toBeTruthy();
+    expect(await within(panel).findByTestId('package-pdf')).toHaveTextContent('Synthetic employee');
+    expect(api.documentFile).toHaveBeenCalledWith('package-1', 'doc-1');
+    expect(within(panel).getByRole('button', { name: `${i18n.t('signingV2.public.downloadFinal')}: Employment agreement` })).toBeTruthy();
 });
 
 test('all locale plural forms resolve for 0/1/2/3/11/200 without falling back to another language or a key', async () => {

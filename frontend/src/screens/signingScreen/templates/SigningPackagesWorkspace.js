@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import signingPackagesApi from '../../../api/signingPackagesApi';
+import PdfViewer from '../../../components/specializedComponents/signFiles/pdfViewer/PdfViewer';
 import PrimaryButton from '../../../components/styledComponents/buttons/PrimaryButton';
 import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
 import SegmentedSwitch from '../../../components/styledComponents/SegmentedSwitch';
@@ -81,6 +82,13 @@ function Progress({ accepted, required }) {
     </span>;
 }
 
+function saveBlob(blob, name) {
+    const url = URL.createObjectURL(blob), link = document.createElement('a');
+    link.href = url; link.download = `${String(name || 'document').replace(/[\\/:*?"<>|]+/g, ' ').trim()}.pdf`;
+    document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function taskDisplayState(task, pkg) {
     if (task.state !== 'blocked') return task.state;
     if (pkg.workflow_state === 'authorized_preparing') return 'preparing';
@@ -128,11 +136,50 @@ function PersonActions({ person, detail, onAction }) {
     </div>;
 }
 
+function PackageDocuments({ detail, openId, files, busy, onView, onDownload, message }) {
+    const { t, number } = useSigningLocale();
+    const seen = new Set();
+    return <ul className="lw-signingPackages__people">{detail.documents.map(document => {
+        if (seen.has(document.id)) return null;
+        seen.add(document.id);
+        const open = openId === document.id;
+        const file = files[document.id];
+        const spots = document.spots || [];
+        return <li key={document.id}>
+            <h3><bdi>{document.name}</bdi></h3>
+            <p>{t(`signingV2.document.${document.state}`)}</p>
+            {document.informational && <small>{t('signingV2.informational')}</small>}
+            <div className="lw-signingPackages__docActions">
+                <SecondaryButton onPress={() => onView(document.id)} aria-expanded={open} aria-controls={`package-viewer-${document.id}`}
+                    aria-label={`${t(open ? 'signingV2.public.hide' : 'signingV2.public.view')}: ${document.name}`}>
+                    {t(open ? 'signingV2.public.hide' : 'signingV2.public.view')}
+                </SecondaryButton>
+                {document.final && <SecondaryButton onPress={() => onDownload(document)} disabled={busy === `document-${document.id}`}
+                    aria-label={`${t('signingV2.public.downloadFinal')}: ${document.name}`}>{t('signingV2.public.downloadFinal')}</SecondaryButton>}
+            </div>
+            {open && <div id={`package-viewer-${document.id}`}>
+                {spots.length > 0 && <ul className="lw-signingPackages__spots">{spots.map(spot => <li key={spot.id}>
+                    {t('signingV2.spot', { name: spot.signerName || t('signingV2.unknownSigner'), type: t(`signingV2.fieldType.${spot.type}`, { defaultValue: spot.type }), page: number(spot.pageNum) })}
+                </li>)}</ul>}
+                <div className="lw-signingPackages__viewer lw-signing-pdfViewerMain">
+                    {file?.blob ? <PdfViewer pdfFile={file.blob} spots={spots.map(spot => ({ ...spot, fieldType: spot.type, isRequired: spot.required, fieldLabel: spot.label }))} />
+                        : file?.error ? <StatusNotice embedded><p>{message(file.error)}</p></StatusNotice>
+                            : <p role="status">{t('signingV2.public.loadingDocument')}</p>}
+                </div>
+            </div>}
+        </li>;
+    })}</ul>;
+}
+
 function PackagePanel({ id, api, onClose }) {
-    const { t, direction, number, date } = useSigningLocale();
+    const { t, direction, number, date, errorMessage } = useSigningLocale();
     const dialog = useRef(null);
     const [tab, setTab] = useState('people');
     const [action, setAction] = useState(null);
+    const [openId, setOpenId] = useState(null);
+    const [files, setFiles] = useState({});
+    const [busy, setBusy] = useState('');
+    const [fileError, setFileError] = useState(null);
     const resource = usePagedResource(config => api.details(id, config), [api, id]);
     const actionRows = new Map();
     (resource.data.participants || []).forEach(person => { if (!actionRows.has(person.personId)) actionRows.set(person.personId, person.id); });
@@ -143,6 +190,36 @@ function PackagePanel({ id, api, onClose }) {
         return () => { if (previousFocus?.isConnected) previousFocus.focus?.(); };
     }, []);
     const detail = resource.data;
+    const showDocument = documentId => {
+        setFileError(null);
+        setTab('documents');
+        setOpenId(current => (current === documentId ? null : documentId));
+    };
+    useEffect(() => {
+        if (!openId) return undefined;
+        let cancelled = false;
+        let skip = false;
+        setFiles(previous => {
+            if (previous[openId]?.blob || previous[openId]?.loading || previous[openId]?.error) { skip = true; return previous; }
+            return { ...previous, [openId]: { loading: true } };
+        });
+        if (skip) return undefined;
+        api.documentFile(id, openId).then(blob => { if (!cancelled) setFiles(previous => ({ ...previous, [openId]: { blob } })); })
+            .catch(error => { if (!cancelled) setFiles(previous => ({ ...previous, [openId]: { error } })); });
+        return () => { cancelled = true; };
+    }, [openId, id, api]);
+    const downloadDocument = async document => {
+        setBusy(`document-${document.id}`); setFileError(null);
+        try { saveBlob(files[document.id]?.blob || await api.documentFile(id, document.id), document.name); }
+        catch (error) { setFileError(error); }
+        finally { setBusy(''); }
+    };
+    const downloadEvidence = async () => {
+        setBusy('evidence'); setFileError(null);
+        try { saveBlob(await api.evidenceFile(id), detail.package?.external_key || t('signingV2.public.evidenceName')); }
+        catch (error) { setFileError(error); }
+        finally { setBusy(''); }
+    };
     return <dialog ref={dialog} className="lw-signingPackages__panel" dir={direction} aria-labelledby="signing-package-title"
         onCancel={event => { event.preventDefault(); onClose(); }}
         onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); onClose(); } }}>
@@ -157,24 +234,34 @@ function PackagePanel({ id, api, onClose }) {
                 <span>{t(`signingV2.workflow.${detail.package.workflow_state}`)}</span>
                 <Progress accepted={detail.package.accepted_count} required={detail.package.required_count} />
                 <p>{t('signingV2.preparedFraction', { ready: number(detail.package.prepared_count), total: number(detail.package.document_count) })}</p>
+                {detail.package.workflow_state === 'complete' && <SecondaryButton onPress={downloadEvidence} disabled={busy === 'evidence'}
+                    aria-label={t('signingV2.public.downloadEvidence')}>{t('signingV2.public.downloadEvidence')}</SecondaryButton>}
             </div>
+            {fileError && <StatusNotice embedded><p>{errorMessage(fileError)}</p></StatusNotice>}
             <SegmentedSwitch value={tab} onChange={setTab} ariaLabel={t('signingV2.packageDetails')}
                 options={['people', 'documents', 'delivery'].map(value => ({ value, label: t(`signingV2.tabs.${value}`) }))} />
             {tab === 'people' && <ul className="lw-signingPackages__people">{detail.participants.map(person => <li key={person.id}>
                 <h3>{person.name}</h3><p>{t(`signingV2.capacity.${person.capacity}`)} · {person.partyName}</p>
-                <ul className="lw-signingPackages__tasks">{person.tasks.map(task => <li key={task.id}>
-                    <span>{detail.documents.find(document => document.id === task.documentId)?.name}</span>
-                    <span>{t(`signingV2.task.${taskDisplayState(task, detail.package)}`)}</span>
-                    {task.acceptedAt && <time dateTime={task.acceptedAt}>{date(task.acceptedAt)}</time>}
-                </li>)}</ul>
+                <ul className="lw-signingPackages__tasks">{person.tasks.map(task => {
+                    const document = detail.documents.find(item => item.id === task.documentId);
+                    return <li key={task.id}>
+                        <span>{document?.name}</span>
+                        <span>{t(`signingV2.task.${taskDisplayState(task, detail.package)}`)}</span>
+                        {document && <div className="lw-signingPackages__docActions">
+                            <SecondaryButton onPress={() => showDocument(document.id)}
+                                aria-label={`${t('signingV2.public.view')}: ${document.name}`}>{t('signingV2.public.view')}</SecondaryButton>
+                            {document.final && <SecondaryButton onPress={() => downloadDocument(document)} disabled={busy === `document-${document.id}`}
+                                aria-label={`${t('signingV2.public.downloadFinal')}: ${document.name}`}>{t('signingV2.public.downloadFinal')}</SecondaryButton>}
+                        </div>}
+                        {task.acceptedAt && <time dateTime={task.acceptedAt}>{date(task.acceptedAt)}</time>}
+                    </li>;
+                })}</ul>
                 {actionRows.get(person.personId) === person.id && <PersonActions detail={detail}
                     person={{ personId: person.personId, tasks: detail.participants.filter(item => item.personId === person.personId).flatMap(item => item.tasks) }}
                     onAction={(personId, purpose) => setAction({ personId, purpose })} />}
             </li>)}</ul>}
-            {tab === 'documents' && <ul className="lw-signingPackages__people">{detail.documents.map(document => <li key={document.id}>
-                <h3>{document.name}</h3><p>{t(`signingV2.document.${document.state}`)}</p>
-                {document.informational && <small>{t('signingV2.informational')}</small>}
-            </li>)}</ul>}
+            {tab === 'documents' && <PackageDocuments detail={detail} openId={openId} files={files} busy={busy} message={errorMessage}
+                onView={showDocument} onDownload={downloadDocument} />}
             {tab === 'delivery' && <ul className="lw-signingPackages__people">{detail.deliveries.map(delivery => <li key={delivery.id}>
                 <h3>{detail.participants.find(person => person.personId === delivery.personId)?.name}</h3>
                 <p>{t(`signingV2.channel.${delivery.channel}`)} · {t(`signingV2.delivery.${delivery.state}`)}</p>

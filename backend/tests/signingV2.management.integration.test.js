@@ -31,6 +31,9 @@ test('pending management groups sends, sums obligations and never exposes inacce
         assert.equal(batch.document_count, 18); assert.equal(batch.accepted_messages, 0);
         const detail = await packageDetails(pool, f.scope, packages[0].id);
         assert.equal(detail.documents.length, 9); assert.equal(detail.participants.length, 1);
+        assert.equal(detail.documents[0].bindings, undefined);
+        assert.equal(detail.documents[0].spots[0].signerName, detail.participants[0].name);
+        assert.equal(detail.documents[0].spots[0].pageNum, 1);
         assert.equal(detail.participants[0].tasks.length, 9); assert.equal(detail.deliveries[0].state, 'pending');
     });
     await t.test('a person search finds the send but its summary still includes all authorized children', async () => {

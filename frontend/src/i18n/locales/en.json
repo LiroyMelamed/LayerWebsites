@@ -1436,6 +1436,16 @@
       "documents": "Documents",
       "delivery": "Delivery"
     },
+    "spot": "{{name}} · {{type}} · page {{page}}",
+    "unknownSigner": "Signer",
+    "fieldType": {
+      "signature": "Signature",
+      "initials": "Initials",
+      "text": "Text",
+      "date": "Date",
+      "number": "Number",
+      "checkbox": "Checkbox"
+    },
     "match": {
       "person": "Matched signer name",
       "party": "Matched party name"
