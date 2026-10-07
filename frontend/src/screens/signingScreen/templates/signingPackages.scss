@@ -5,10 +5,11 @@
   padding: 1.25rem clamp(.75rem, 2vw, 2rem) 5rem;
   text-align: start;
   font-variant-numeric: tabular-nums;
+  font-size: 0.875rem;
 
-  h1 { font-size: 1.5rem; line-height: 1.4; margin: 0; }
-  h2 { font-size: 1.125rem; margin: 0; }
-  h3 { font-size: 1rem; margin: 0; }
+  h1 { font-size: 1.25rem; line-height: 1.4; margin: 0; font-weight: 500; }
+  h2 { font-size: 1rem; margin: 0; font-weight: 500; }
+  h3 { font-size: 0.875rem; margin: 0; font-weight: 500; }
   p:not(.lw-simpleText) { margin: .375rem 0; line-height: 1.6; max-inline-size: 72ch; }
   button, input { font: inherit; }
   button:focus-visible, input:focus-visible { outline: 2px solid var(--lw-color-primary, #2a4365); outline-offset: 3px; }
@@ -40,7 +41,7 @@
   border: 0; color: inherit; padding: .375rem 0; min-block-size: 2.75rem; cursor: pointer; min-inline-size: 0;
   svg { flex: none; color: var(--lw-color-primary, #2a4365); }
   span { min-inline-size: 0; }
-  strong { display: block; font-size: .9375rem; overflow-wrap: anywhere; }
+  strong { display: block; font-size: inherit; overflow-wrap: anywhere; }
   time { display: block; font-size: .8125rem; color: #4a5568; margin-block-start: .375rem; }
 }
 .lw-signingPackages__metrics { display: flex; gap: .8rem 1.5rem; flex-wrap: wrap; font-size: .8125rem; align-items: center; }
@@ -72,7 +73,7 @@
   color: var(--lw-color-text, #2d3748); box-sizing: border-box; text-align: start; overflow: auto;
   box-shadow: -4px 0 18px rgb(45 55 72 / 12%);
   &::backdrop { background: rgb(26 54 93 / 25%); }
-  h2 { font-size: 1.25rem; margin: 0; }
+  h2 { font-size: 1rem; margin: 0; font-weight: 500; }
   h3 { font-size: 1rem; margin: 0; }
   p:not(.lw-simpleText) { line-height: 1.6; margin: .375rem 0; }
   time, small { font-size: .8125rem; color: #4a5568; }
@@ -91,7 +92,7 @@
   border: 1px solid #e2e8f0; border-radius: .5rem; padding: 1.25rem; background: #fff; overflow: auto;
   color: var(--lw-color-text, #2d3748); text-align: start; box-shadow: 0 12px 32px rgb(45 55 72 / 18%);
   &::backdrop { background: rgb(26 54 93 / 30%); }
-  h2 { font-size: 1.125rem; margin: 0 0 1rem; }
+  h2 { font-size: 1rem; margin: 0 0 1rem; font-weight: 500; }
   p:not(.lw-simpleText) { line-height: 1.6; margin: .5rem 0; font-size: .875rem; }
   bdi { unicode-bidi: isolate; }
   [tabindex="-1"]:focus:not(:focus-visible) { outline: none; }
