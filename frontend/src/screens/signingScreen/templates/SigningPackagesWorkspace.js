@@ -6,6 +6,9 @@ import SecondaryButton from '../../../components/styledComponents/buttons/Second
 import SegmentedSwitch from '../../../components/styledComponents/SegmentedSwitch';
 import SearchInput from '../../../components/specializedComponents/containers/SearchInput';
 import SimpleCard from '../../../components/simpleComponents/SimpleCard';
+import SimpleContainer from '../../../components/simpleComponents/SimpleContainer';
+import { Text14, TextBold14 } from '../../../components/specializedComponents/text/AllTextKindFile';
+import { colors } from '../../../constant/colors';
 import useSigningLocale from './useSigningLocale';
 import ParticipantActionDialog from './ParticipantActionDialog';
 import StatusNotice from '../../../components/ui/StatusNotice';
@@ -213,11 +216,15 @@ export default function SigningPackagesWorkspace({ onClose, onCreate, api = sign
             <SecondaryButton disabled={resource.busy} onPress={resource.refresh}>{t('signingV2.refresh')}</SecondaryButton>
         </div>
         <ErrorNotice error={resource.error} onRetry={resource.refresh} />
-        <div className="lw-signingPackages__resultSummary" aria-live="polite">
+        {resource.busy || resource.data.rows.length || resource.error ? <div className="lw-signingPackages__resultSummary" aria-live="polite">
             {resource.busy ? t('common.loading') : t('signingV2.results', { count: resource.data.total, formattedCount: number(resource.data.total) })}
-        </div>
-        <SimpleCard className="lw-signingPackages__list" aria-busy={resource.busy}>
-            {!resource.busy && !resource.data.rows.length && !resource.error && <div className="lw-signingPackages__empty"><h2>{t('signingV2.emptyTitle')}</h2><p>{t('signingV2.emptyBody')}</p></div>}
+        </div> : null}
+        {!resource.busy && !resource.data.rows.length && !resource.error
+            ? <SimpleContainer className="lw-signingPackages__empty">
+                <TextBold14 color={colors.winter}>{t('signingV2.emptyTitle')}</TextBold14>
+                <Text14 color={colors.winter}>{t('signingV2.emptyBody')}</Text14>
+            </SimpleContainer>
+            : (<SimpleCard className="lw-signingPackages__list" aria-busy={resource.busy}>
             <ul>{resource.data.rows.map(batch => <li className="lw-signingPackages__group" key={batch.id}>
                 <div className="lw-signingPackages__row">
                     <button type="button" className="lw-signingPackages__groupTitle" onClick={() => batch.is_batch ? toggle(batch.id) : setSelectedPackage(batch.id)}
@@ -242,7 +249,7 @@ export default function SigningPackagesWorkspace({ onClose, onCreate, api = sign
                     <PackageChildren api={api} batchId={batch.id} state={state} query={search} onOpen={setSelectedPackage} />
                 </>}
             </li>)}</ul>
-        </SimpleCard>
+        </SimpleCard>)}
         <Pager previous={cursors.length > 1} next={resource.data.nextCursor} busy={resource.busy}
             onPrevious={() => setCursors(values => values.slice(0, -1))} onNext={() => setCursors(values => [...values, resource.data.nextCursor])} />
         {selectedPackage && <PackagePanel key={selectedPackage} id={selectedPackage} api={api} onClose={() => setSelectedPackage(null)} />}
