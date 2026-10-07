@@ -28,6 +28,7 @@ parentPort.on('message', async message => {
         parentPort.postMessage({ id: message.id, result });
     } catch (error) {
         parentPort.postMessage({ id: message.id, error: { code: error.errorCode || 'RENDER_FAILED',
+            message: String(error.message || '').replace(/[\r\n]+/g, ' ').slice(0, 180),
             fieldErrors: error.extras?.fieldErrors || [], retryable: !error.errorCode } });
     } finally {
         running = false;

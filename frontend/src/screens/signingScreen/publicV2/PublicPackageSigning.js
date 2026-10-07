@@ -16,12 +16,14 @@ export const latinDigits = value => String(value).replace(/[\u0660-\u0669\u06F0-
 function documentsOf(view) {
     const items = [];
     (view?.packages || []).forEach(pkg => (pkg.documents || []).forEach(document => {
-        const task = (document.tasks || []).find(item => item.state === 'ready')
-            || (document.tasks || []).find(item => item.state === 'waiting');
+        const task = (document.tasks || []).find(item => item.state === 'ready');
         if (task) items.push({ pkg, document, task });
     }));
-    items.sort((a, b) => Number(b.task.state === 'ready') - Number(a.task.state === 'ready'));
     return items;
+}
+
+function hasWaiting(view) {
+    return (view?.packages || []).some(pkg => (pkg.documents || []).some(document => (document.tasks || []).some(task => task.state === 'waiting')));
 }
 
 export default function PublicPackageSigning() {
@@ -83,6 +85,13 @@ export default function PublicPackageSigning() {
             ) : !view ? (
                 <SimpleContainer className="lw-publicSigningScreen__container">
                     <Text14>{t('common.loading')}</Text14>
+                </SimpleContainer>
+            ) : !current && hasWaiting(view) ? (
+                <SimpleContainer className="lw-publicSigningScreen__container">
+                    <SimpleContainer className="lw-publicSigningScreen__stack">
+                        <TextBold24>{t('signing.canvas.waitingForPreviousSigners')}</TextBold24>
+                        <Text14>{t('signing.canvas.waitingForPreviousSignersDesc')}</Text14>
+                    </SimpleContainer>
                 </SimpleContainer>
             ) : closed || !current ? (
                 <SimpleContainer className="lw-publicSigningScreen__container">

@@ -49,7 +49,7 @@ class RenderPool {
             const task = slot.task;
             slot.task = null; clearTimeout(slot.timer); this.bytes -= task.bytes;
             if (message.error) {
-                const error = Object.assign(new Error(message.error.code), { errorCode: message.error.code, extras: { fieldErrors: message.error.fieldErrors }, retryable: message.error.retryable });
+                const error = Object.assign(new Error(message.error.message || message.error.code), { errorCode: message.error.code, extras: { fieldErrors: message.error.fieldErrors }, retryable: message.error.retryable });
                 task.reject(error);
             } else task.resolve({ ...message.result, bytes: Buffer.from(message.result.bytes) });
             this.drain();
