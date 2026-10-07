@@ -381,7 +381,7 @@ export default function SigningManagerScreen() {
                 />
 
                 <SimpleContainer className="lw-signingManagerScreen__topRow">
-                    <SecondaryButton onPress={() => setShowTemplates(true)}>תבניות ושליחה מרוכזת</SecondaryButton>
+                    <SecondaryButton onPress={() => setShowTemplates(true)}>{t('signingManager.templatesAndBulk')}</SecondaryButton>
                     <SimpleContainer className="lw-signingManagerScreen__searchContainer">
                         <SearchInput
                             onSearch={handleSearch}

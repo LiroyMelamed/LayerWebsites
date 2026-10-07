@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import api from '../../../api/signingTemplatesApi';
 import TemplateBuilder from './TemplateBuilder';
 import BatchComposer from './BatchComposer';
@@ -8,7 +8,7 @@ import './templates.scss';
 const STATUS = { draft: 'טיוטה — טרם פורסם לנמען', ready: 'מפורסם — ממתין לחתימות', sending: 'השליחה מתבצעת', sent: 'ההזמנות נשלחו', partial: 'נדרשת בדיקת מסירה', pending: 'ממתין', uncertain: 'המסירה לא אושרה', signed: 'נחתם', rejected: 'נדחה', cancelled: 'בוטל' };
 export default function TemplatesWorkspace({ onClose, canUpload, canManage }) {
     const [mode, setMode] = useState('list');const [templates, setTemplates] = useState([]);const [batches, setBatches] = useState([]);
-    const [current, setCurrent] = useState(null);const [batch, setBatch] = useState(null);const [busy, setBusy] = useState(false);const [error, setError] = useState('');const [link, setLink] = useState('');
+    const [current, setCurrent] = useState(null);const [batch, setBatch] = useState(null);const [busy, setBusy] = useState(false);const [error, setError] = useState('');const [link, setLink] = useState('');const sending = useRef(false);
     async function refresh() { setBusy(true);setError('');try { const [t, b] = await Promise.all([api.list(), api.batches()]);setTemplates(t.templates);setBatches(b.batches); } catch (e) { setError(e.message); } finally { setBusy(false); } }
     useEffect(() => { refresh(); }, []);
     async function openTemplate(id, next) { setBusy(true);setError('');try { setCurrent((await api.load(id)).template);setMode(next); } catch (e) { setError(e.message); } finally { setBusy(false); } }
@@ -33,7 +33,7 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage }) {
         </> : <>
             <div className="lw-templates__toolbar"><div><strong>{STATUS[batch.batch.status]}</strong><p>{batch.files.length} מסמכים · {batch.recipients.length} נמענים · גרסת תבנית {batch.batch.template_version}</p></div><div className="lw-templates__actions">
                 <button type="button" disabled={busy} onClick={() => openBatch(batch.batch.id)}>רענון מצב</button>
-                {batch.canDeliver && batch.recipients.some(r => r.status === 'pending') && <button type="button" className="is-primary" disabled={busy} onClick={async () => { setBusy(true);setError('');try { setBatch(await api.send(batch.batch.id)); } catch (e) { setError(e.message); } finally { setBusy(false); } }}>שליחת ההזמנות לנמענים</button>}
+                {batch.canDeliver && batch.recipients.some(r => r.status === 'pending') && <button type="button" className="is-primary" disabled={busy} onClick={async () => { if (sending.current) return;sending.current = true;setBusy(true);setError('');try { setBatch(await api.send(batch.batch.id)); } catch (e) { setError(e.message); } finally { setBusy(false);sending.current = false; } }}>שליחת ההזמנות לנמענים</button>}
             </div></div>
             <h2>הזמנות</h2><ul className="lw-templates__list">{batch.recipients.map(person => <li key={person.id}><div><strong>{person.name}</strong><p>{STATUS[person.status] || person.status} · {person.delivery_method === 'email' ? 'אימייל' : person.delivery_method === 'phone' ? 'SMS' : 'אימייל ו־SMS'}</p>{person.status === 'uncertain' && <p>ייתכן שההודעה התקבלה. לא נשלחת הזמנה חוזרת אוטומטית.</p>}</div>{batch.canDeliver && <button type="button" onClick={async () => { try { const result = await api.link(batch.batch.id, person.id);setLink(result.url);setBatch(await api.batch(batch.batch.id)); } catch (e) { setError(e.message); } }}>קישור לחתימה</button>}</li>)}</ul>
             {link && <label>קישור למסירה לנמען<input readOnly dir="ltr" value={link} onFocus={e => e.target.select()} /><button type="button" onClick={async () => { try { await navigator.clipboard.writeText(link); } catch { setError('בחר את הקישור והעתק אותו ידנית'); } }}>העתקת הקישור</button></label>}

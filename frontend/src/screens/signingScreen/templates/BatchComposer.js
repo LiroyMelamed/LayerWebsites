@@ -9,7 +9,7 @@ export default function BatchComposer({ template, onBack, onCreated }) {
     const [rows, setRows] = useState([emptyRow()]);const [shared, setShared] = useState({});const [name, setName] = useState(template.name);
     const [busy, setBusy] = useState(false);const [error, setError] = useState('');const [importErrors, setImportErrors] = useState([]);
     const [importPreview, setImportPreview] = useState(null);const [locked, setLocked] = useState(false);
-    const requestId = useRef(crypto.randomUUID());
+    const requestId = useRef(crypto.randomUUID());const creating = useRef(false);
     async function importFile(file) {
         if (!file) return;if (file.size > 2 * 1024 * 1024) { setError('יש לבחור קובץ Excel עד 2MB');return; }
         setBusy(true);setError('');setImportErrors([]);setImportPreview(null);
@@ -19,6 +19,8 @@ export default function BatchComposer({ template, onBack, onCreated }) {
         } catch (e) { setError(e.message); } finally { setBusy(false); }
     }
     async function create() {
+        // A double click lands twice before React disables the button.
+        if (creating.current) return;creating.current = true;
         setBusy(true);setLocked(true);setError('');
         try {
             const result = await api.create({ templateId: template.id, templateVersion: template.version, idempotencyKey: requestId.current, name, sharedSigners: shared, packages: rows });onCreated(result.batch.id);
@@ -26,7 +28,7 @@ export default function BatchComposer({ template, onBack, onCreated }) {
             // Validation can be corrected; an unknown server outcome must retain the exact request.
             if ([400, 402, 403, 404, 422].includes(e.status)) setLocked(false);
             setError(e.status >= 500 ? 'לא התקבל אישור ליצירת החבילות. אפשר ללחוץ שוב כדי לברר את אותה יצירה, ללא שכפול.' : e.message);
-        } finally { setBusy(false); }
+        } finally { setBusy(false);creating.current = false; }
     }
     const editRow = (index, patch) => setRows(prev => prev.map((row, i) => index === i ? { ...row, ...patch } : row));
     return <section className="lw-templates" dir="rtl">
