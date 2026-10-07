@@ -29,22 +29,50 @@ function createGrantService({ encryptionKey, keyId = '1' }) {
         return token;
     }
 
+    // A person who takes part in several packages of one run shares a single
+    // grant for all of them, so one link and one invitation cover the run.
+    async function sharedGrant(db,revision,profile,submissionId) {
+        const token=randomBytes(32).toString('base64url');
+        const grant={id:randomUUID(),owner_context_id:revision.owner_context_id,person_id:profile.person_id,purpose:'sign',
+            token_hash:bytesHash(Buffer.from(token))};
+        grant.encrypted_token=seal(token,grant);
+        await db.query(`INSERT INTO signing_public_grants(id,owner_context_id,person_id,purpose,token_hash,encrypted_token,expires_at,submission_id)
+            VALUES($1,$2,$3,'sign',$4,$5,LEAST(clock_timestamp()+make_interval(secs=>$6),COALESCE($7::timestamptz,'infinity')),$8)
+            ON CONFLICT (owner_context_id,submission_id,person_id,purpose) WHERE submission_id IS NOT NULL AND revoked_at IS NULL DO NOTHING`,
+        [grant.id,grant.owner_context_id,grant.person_id,grant.token_hash,grant.encrypted_token,grantSeconds,revision.deadline,submissionId]);
+        return (await db.query(`SELECT id FROM signing_public_grants WHERE owner_context_id=$1 AND submission_id=$2 AND person_id=$3
+            AND purpose='sign' AND revoked_at IS NULL`,[grant.owner_context_id,submissionId,grant.person_id])).rows[0].id;
+    }
+
     async function issueRevisionGrants(db,revision,documents) {
-        const profiles=(await db.query(`SELECT * FROM signing_delivery_profiles WHERE owner_context_id=$1 AND revision_id=$2 ORDER BY id`,
-            [revision.owner_context_id,revision.id])).rows;
-        const grants=[],items=[];
+        const profiles=(await db.query(`SELECT dp.*,pk.submission_id,(SELECT count(DISTINCT other.id) FROM signing_participations op
+                JOIN signing_package_revisions other ON other.owner_context_id=op.owner_context_id AND other.id=op.revision_id
+                JOIN signing_packages opk ON opk.owner_context_id=other.owner_context_id AND opk.id=other.package_id AND opk.active_revision_id=other.id
+                WHERE op.owner_context_id=dp.owner_context_id AND op.person_id=dp.person_id AND opk.submission_id=pk.submission_id) AS run_packages
+            FROM signing_delivery_profiles dp
+            JOIN signing_package_revisions r ON r.owner_context_id=dp.owner_context_id AND r.id=dp.revision_id
+            JOIN signing_packages pk ON pk.owner_context_id=r.owner_context_id AND pk.id=r.package_id
+            WHERE dp.owner_context_id=$1 AND dp.revision_id=$2 ORDER BY dp.id`,
+        [revision.owner_context_id,revision.id])).rows;
+        const grants=[],items=[],links=[];
         for(const profile of profiles) {
-            const token=randomBytes(32).toString('base64url');
-            const grant={id:randomUUID(),owner_context_id:revision.owner_context_id,person_id:profile.person_id,purpose:'sign',
-                token_hash:bytesHash(Buffer.from(token)),profile_id:profile.id};
-            grant.encrypted_token=seal(token,grant);grants.push(grant);
+            let grantId;
+            if(profile.submission_id && Number(profile.run_packages)>1) {
+                grantId=await sharedGrant(db,revision,profile,profile.submission_id);
+            } else {
+                const token=randomBytes(32).toString('base64url');
+                const grant={id:randomUUID(),owner_context_id:revision.owner_context_id,person_id:profile.person_id,purpose:'sign',
+                    token_hash:bytesHash(Buffer.from(token))};
+                grant.encrypted_token=seal(token,grant);grants.push(grant);grantId=grant.id;
+            }
+            links.push({id:grantId,profile_id:profile.id});
             for(const source of revision.snapshot.documents.filter(doc=>doc.readPersonIds.includes(profile.person_id))) {
                 const document=documents.find(doc=>doc.document_key===source.key);
                 expect(document,'PREFLIGHT_MISMATCH');
-                items.push({grant_id:grant.id,person_id:profile.person_id,document_id:document.id,
+                items.push({grant_id:grantId,person_id:profile.person_id,document_id:document.id,
                     delivery_profile_id:profile.id,delivery_profile_version:profile.version});
             }
-            expect(items.some(item=>item.grant_id===grant.id),'EMPTY_GRANT');
+            expect(items.some(item=>item.grant_id===grantId && item.delivery_profile_id===profile.id),'EMPTY_GRANT');
         }
         await db.query(`INSERT INTO signing_public_grants(id,owner_context_id,person_id,purpose,token_hash,encrypted_token,expires_at)
             SELECT id,$1,person_id,'sign',token_hash,encrypted_token,LEAST(clock_timestamp()+make_interval(secs=>$3),COALESCE($4::timestamptz,'infinity'))
@@ -56,8 +84,8 @@ function createGrantService({ encryptionKey, keyId = '1' }) {
         [revision.owner_context_id,revision.id,JSON.stringify(items)]);
         await db.query(`UPDATE signing_deliveries d SET grant_id=g.id FROM jsonb_to_recordset($2::jsonb) AS g(id uuid,profile_id uuid)
             WHERE d.owner_context_id=$1 AND d.profile_id=g.profile_id AND d.state='pending' AND d.purpose='invitation' AND d.grant_id IS NULL`,
-        [revision.owner_context_id,JSON.stringify(grants)]);
-        return {grantCount:grants.length};
+        [revision.owner_context_id,JSON.stringify(links)]);
+        return {grantCount:new Set(links.map(link=>link.id)).size};
     }
     return { issueRevisionGrants,tokenForDelivery };
 }

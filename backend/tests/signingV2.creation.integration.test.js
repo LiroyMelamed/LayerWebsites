@@ -114,6 +114,10 @@ test('v2 creation from the product: explicit legacy import, row validation, appr
     const sent = provider.calls.filter(call => call.url.startsWith('https://qa.example.invalid/ViewSignedDocument/Sign#'));
     assert.equal(sent.length, provider.calls.length);
     assert.ok(provider.calls.some(call => call.channel === 'sms' && call.endpoint === '+972501234567' && call.locale === 'ar'));
-    assert.equal(provider.calls.filter(call => call.endpoint === 'lawyer@example.invalid').length, 400,
-        'known gap until bulk signing exists: the shared signer receives one invitation per package and run');
+    const lawyerLinks = provider.calls.filter(call => call.endpoint === 'lawyer@example.invalid').map(call => call.url);
+    assert.equal(lawyerLinks.length, 2, 'the shared signer receives one invitation per run, not one per package');
+    assert.equal(new Set(lawyerLinks).size, 2, 'each run has its own link');
+    const bundled = (await f.pool.query(`SELECT count(*)::integer AS count FROM signing_deliveries WHERE owner_context_id=$1
+        AND state='bundled' AND (target_snapshot->>'endpoint')='lawyer@example.invalid'`, [contextId])).rows[0].count;
+    assert.equal(bundled, 398);
 });

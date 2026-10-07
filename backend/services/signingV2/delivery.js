@@ -74,6 +74,18 @@ function createDeliveryService({ pool, grantService, provider, linkFor }) {
             const endpoint = delivery.channel === 'email' ? delivery.endpoints_snapshot.email
                 : delivery.channel === 'sms' ? delivery.endpoints_snapshot.phone : null;
             if (!endpoint || endpoint !== delivery.target_snapshot.endpoint) return skip('cancelled', 'CONTACT_CHANGED');
+            if (delivery.purpose === 'invitation') {
+                // Packages of one run share the grant of a shared signer. The grant row serializes
+                // their dispatches so exactly one invitation per channel leaves for that link.
+                const shared = await db.query(`SELECT submission_id FROM signing_public_grants WHERE owner_context_id=$1 AND id=$2 FOR UPDATE`,
+                    [lease.owner_context_id, delivery.live_grant_id]);
+                if (shared.rows[0]?.submission_id) {
+                    const sent = await db.query(`SELECT 1 FROM signing_deliveries WHERE owner_context_id=$1 AND grant_id=$2 AND channel=$3
+                        AND purpose='invitation' AND id<>$4 AND state IN ('dispatching','provider_accepted','delivered','uncertain') LIMIT 1`,
+                    [lease.owner_context_id, delivery.live_grant_id, delivery.channel, delivery.id]);
+                    if (sent.rowCount) return skip('bundled', 'BUNDLED_INVITATION');
+                }
+            }
             await db.query(`UPDATE signing_deliveries SET state='dispatching',attempted_at=clock_timestamp()
                 WHERE owner_context_id=$1 AND id=$2`, [lease.owner_context_id, delivery.id]);
             return { send: true, delivery, endpoint };
