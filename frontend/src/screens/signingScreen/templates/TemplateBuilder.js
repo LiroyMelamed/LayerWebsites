@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import PdfViewer from '../../../components/specializedComponents/signFiles/pdfViewer/PdfViewer';
 import { uploadFileToR2 } from '../../../utils/fileUploadUtils';
 import StatusNotice from '../../../components/ui/StatusNotice';
+import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
 import api from '../../../api/signingTemplatesApi';
 
 const FIELD_LABELS = { signature: 'חתימה', initials: 'ראשי תיבות', text: 'טקסט', date: 'תאריך', number: 'מספר', checkbox: 'תיבת סימון' };
@@ -45,7 +46,8 @@ export default function TemplateBuilder({ template, onBack, onSaved }) {
         catch (e) { setError(e.message); } finally { setBusy(false); }
     }
     return <section className="lw-templates" dir="rtl">
-        <header className="lw-templates__heading"><div><h1>{template ? 'עריכת תבנית' : 'תבנית חתימה חדשה'}</h1><p>מגדירים מסמכים ותפקידי חותמים פעם אחת. בוחרים את האנשים בכל שליחה.</p></div><button type="button" onClick={onBack} disabled={busy}>חזרה לתבניות</button></header>
+        <SecondaryButton onPress={onBack} disabled={busy}>חזרה לתבניות</SecondaryButton>
+        <header className="lw-templates__heading"><div><h1>{template ? 'עריכת תבנית' : 'תבנית חתימה חדשה'}</h1><p>מגדירים מסמכים ותפקידי חותמים פעם אחת. בוחרים את האנשים בכל שליחה.</p></div></header>
         {error && <StatusNotice><p>{error}</p></StatusNotice>}
         <div className="lw-templates__setup">
             <label>שם התבנית<input value={draft.name} maxLength={120} onChange={e => change({ name: e.target.value })} placeholder="לדוגמה: הסכם התקשרות וייפוי כוח" /></label>

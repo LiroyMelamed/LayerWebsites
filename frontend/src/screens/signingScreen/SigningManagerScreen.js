@@ -1,7 +1,7 @@
 import { downloadBlobAsFile } from "../../utils/downloadBlobAsFile";
 // src/screens/signingScreen/SigningManagerScreen.js
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import useHttpRequest from "../../hooks/useHttpRequest";
@@ -65,8 +65,16 @@ export default function SigningManagerScreen() {
 
     const { isFromApp } = useFromApp();
     const [activeTab, setActiveTab] = useState("pending");
-    const [showTemplates, setShowTemplates] = useState(false);
-    const [showRuns, setShowRuns] = useState(false);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const panel = searchParams.get("panel") || "";
+    const setPanel = (value) => {
+        const next = new URLSearchParams(searchParams);
+        if (value) next.set("panel", value);
+        else next.delete("panel");
+        setSearchParams(next);
+    };
+    const showTemplates = panel.startsWith("template");
+    const showRuns = panel === "runs" || panel === "compose";
     const signingV2Available = useSigningV2Available();
     const [scope, setScope] = useState("mine");
     useEffect(() => {
@@ -360,8 +368,8 @@ export default function SigningManagerScreen() {
         );
     };
 
-    if (showTemplates) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><TemplatesWorkspace canUpload={canSignUpload} canManage={canSignManage} onClose={() => { setShowTemplates(false);reloadFiles(); }} /></SimpleScrollView></SimpleScreen>;
-    if (showRuns) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><SigningPackagesHub canCreate={canSignUpload} onClose={() => { setShowRuns(false);reloadFiles(); }} /></SimpleScrollView></SimpleScreen>;
+    if (showTemplates) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><TemplatesWorkspace canUpload={canSignUpload} canManage={canSignManage} onClose={() => { setPanel(null); reloadFiles(); }} /></SimpleScrollView></SimpleScreen>;
+    if (showRuns) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><SigningPackagesHub canCreate={canSignUpload} onClose={() => { setPanel(null); reloadFiles(); }} /></SimpleScrollView></SimpleScreen>;
 
     return (
         <SimpleScreen
@@ -490,8 +498,8 @@ export default function SigningManagerScreen() {
                     {t('signingManager.actions.uploadNew')}
                 </PrimaryButton>
                 )}
-                <SecondaryButton onPress={() => setShowTemplates(true)}>{t('signingManager.templatesAndBulk')}</SecondaryButton>
-                {signingV2Available && <SecondaryButton onPress={() => setShowRuns(true)}>{t('signingManager.signingRuns')}</SecondaryButton>}
+                <SecondaryButton onPress={() => setPanel("templates")}>{t('signingManager.templatesAndBulk')}</SecondaryButton>
+                {signingV2Available && <SecondaryButton onPress={() => setPanel("runs")}>{t('signingManager.signingRuns')}</SecondaryButton>}
             </SimpleContainer>
         </SimpleScreen>
     );

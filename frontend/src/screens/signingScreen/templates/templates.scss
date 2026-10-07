@@ -33,6 +33,7 @@
   .lw-templates__unboxed { border: 0; padding: 0; margin: 0; }
 }
 .lw-templates__heading, .lw-templates__toolbar, .lw-templates__footer { display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; flex-wrap: wrap; }
+.lw-templates > .lw-textButtonWithTwoOptionalIcons { margin-block-end: 1rem; }
 .lw-templates__heading { margin-bottom: 1.5rem; }
 .lw-templates__toolbar { margin: 1rem 0; h2 { margin: 0; } }
 .lw-templates__actions, .lw-templates__tabs { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }

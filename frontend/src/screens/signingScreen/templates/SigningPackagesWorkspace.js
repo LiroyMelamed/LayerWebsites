@@ -202,11 +202,11 @@ export default function SigningPackagesWorkspace({ onClose, onCreate, api = sign
         const next = new Set(previous); if (next.has(id)) next.delete(id); else next.add(id); return next;
     });
     return <section className="lw-signingPackages" dir={direction} aria-labelledby="signing-packages-title">
+        {onClose && <SecondaryButton onPress={onClose}>{t('signingV2.backToDocuments')}</SecondaryButton>}
         <header className="lw-signingPackages__heading">
             <div><h1 id="signing-packages-title">{t('signingV2.title')}</h1><p>{t('signingV2.subtitle')}</p></div>
             <div className="lw-signingPackages__actions">
                 {onCreate && <PrimaryButton onPress={onCreate}>{t('signingV2.newPackage')}</PrimaryButton>}
-                {onClose && <SecondaryButton onPress={onClose}>{t('signingV2.backToDocuments')}</SecondaryButton>}
             </div>
         </header>
         <div className="lw-signingPackages__toolbar">

@@ -3,6 +3,7 @@ import api from '../../../api/signingTemplatesApi';
 import TemplateBuilder from './TemplateBuilder';
 import BatchComposer from './BatchComposer';
 import { downloadBlobAsFile } from '../../../utils/downloadBlobAsFile';
+import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
 import StatusNotice from '../../../components/ui/StatusNotice';
 import './templates.scss';
 
@@ -18,7 +19,8 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage }) {
     if (mode === 'builder') return <TemplateBuilder template={current} onBack={back} onSaved={back} />;
     if (mode === 'compose') return <BatchComposer template={current} onBack={back} onCreated={openBatch} />;
     return <section className="lw-templates" dir="rtl">
-        <header className="lw-templates__heading"><div><h1>{mode === 'batch' ? batch.batch.name : 'תבניות ושליחה מרוכזת'}</h1><p>{mode === 'batch' ? 'חבילות, הזמנות והתקדמות החתימות' : 'מסמכים מוכנים לשימוש חוזר, עם שדות ותפקידי חותמים קבועים.'}</p></div><button type="button" onClick={mode === 'batch' ? back : onClose}>חזרה {mode === 'batch' ? 'לתבניות' : 'למסמכים'}</button></header>
+        <SecondaryButton onPress={mode === 'batch' ? back : onClose}>{mode === 'batch' ? 'חזרה לתבניות' : 'חזרה למסמכים'}</SecondaryButton>
+        <header className="lw-templates__heading"><div><h1>{mode === 'batch' ? batch.batch.name : 'תבניות ושליחה מרוכזת'}</h1><p>{mode === 'batch' ? 'חבילות, הזמנות והתקדמות החתימות' : 'מסמכים מוכנים לשימוש חוזר, עם שדות ותפקידי חותמים קבועים.'}</p></div></header>
         {error && <StatusNotice onAction={() => mode === 'batch' ? openBatch(batch.batch.id) : refresh()} actionLabel="רענון"><p>{error}</p></StatusNotice>}
         {busy && <p role="status">טוען…</p>}
         {mode === 'list' ? <>
