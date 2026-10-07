@@ -32,7 +32,7 @@ function scopeClause(scope, alias = 't') {
 async function loadTemplate(req, id, { db = pool, lock = false, includeArchived = false } = {}) {
     if (!UUID.test(String(id))) invalid('מזהה התבנית אינו תקין');
     const scope = await actorScope(req, db);const filter = scopeClause(scope);
-    const { rows } = await db.query(`SELECT t.* FROM signing_templates t WHERE ${filter.sql} AND t.id=$4::uuid ${includeArchived ? '' : 'AND NOT t.archived'} ${lock ? 'FOR UPDATE' : ''}`, [...filter.params, id]);
+    const { rows } = await db.query(`SELECT t.* FROM signing_templates t WHERE ${filter.sql} AND COALESCE(t.definition->>'schemaVersion','1')='1' AND t.id=$4::uuid ${includeArchived ? '' : 'AND NOT t.archived'} ${lock ? 'FOR UPDATE' : ''}`, [...filter.params, id]);
     if (!rows[0]) throw createAppError('NOT_FOUND', 404, 'התבנית אינה זמינה');
     return { template: rows[0], scope };
 }
@@ -98,7 +98,7 @@ async function listTemplates(req) {
     const filter = scopeClause(await actorScope(req));
     const { rows } = await pool.query(`SELECT id,name,version,created_at,updated_at,
         jsonb_array_length(definition->'documents') AS document_count, definition->'roles' AS roles
-        FROM signing_templates t WHERE ${filter.sql} AND NOT archived ORDER BY updated_at DESC LIMIT 200`, filter.params);
+        FROM signing_templates t WHERE ${filter.sql} AND COALESCE(t.definition->>'schemaVersion','1')='1' AND NOT archived ORDER BY updated_at DESC LIMIT 200`, filter.params);
     return rows;
 }
 async function archiveTemplate(req, id) {
