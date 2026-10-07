@@ -9,7 +9,7 @@ test('batch reminders group documents, respect existing toggle and offset, claim
     await settings.upsertSetting('signing', 'SIGN_REMINDER_AUTO_ENABLED', 'true', { valueType: 'boolean' });
     await settings.upsertSetting('signing', 'SIGN_REMINDER_OFFSET_HOURS', '2', { valueType: 'number' });
     const auth = req => req.set('Authorization', `Bearer ${f.token}`);
-    const ok = response => { assert.ok(response.status < 300, JSON.stringify(response.body));return response.body; };
+    const ok = response => { assert.ok(response.status < 300, JSON.stringify({ status: response.status, body: response.body }));return response.body; };
     const definition = { ...f.definition, roles: [f.definition.roles[0]], documents: [0, 1].map(index => ({ ...f.definition.documents[0], id: crypto.randomUUID(), name: `Synthetic ${index}`, fields: [f.definition.documents[0].fields[0]] })) };
     const template = ok(await auth(request(f.app).post('/api/signing-templates')).send(definition)).template;
     const batch = ok(await auth(request(f.app).post('/api/signing-batches')).send({ templateId: template.id, templateVersion: 1, idempotencyKey: crypto.randomUUID(), packages: [{ signers: { first: { userId: f.users[1].userid, deliveryMethod: 'email' } } }] })).batch;
