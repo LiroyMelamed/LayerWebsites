@@ -29,7 +29,9 @@ router.get('/contacts', upload, run(async (req, res) => {
     const scope = await templates.actorScope(req);const query = String(req.query.q || '').trim().slice(0, 100);
     const { rows } = await pool.query(`SELECT userid AS "userId",name,email,phonenumber AS phone,role FROM users
         WHERE law_firm_tenant_id IS NOT DISTINCT FROM $1::uuid AND role<>'Deleted'
-        AND (name ILIKE $2 OR email ILIKE $2 OR phonenumber ILIKE $2) AND ($3::boolean=false OR role IN ('Admin','Lawyer')) ORDER BY name LIMIT 30`, [scope.tenantId, `%${query.replace(/[%_\\]/g, '\\$&')}%`, req.query.lawyer === '1']);
+        AND (name ILIKE $2 OR email ILIKE $2 OR phonenumber ILIKE $2)
+        AND (($3::boolean AND role IN ('Admin','Lawyer')) OR ($4::boolean AND role = 'Client') OR (NOT $3::boolean AND NOT $4::boolean))
+        ORDER BY name LIMIT 30`, [scope.tenantId, `%${query.replace(/[%_\\]/g, '\\$&')}%`, req.query.lawyer === '1', req.query.clients === '1']);
     res.json({ contacts: rows });
 }));
 router.get('/', view, run(async (req, res) => {

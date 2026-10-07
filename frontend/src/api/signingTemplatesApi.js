@@ -19,7 +19,11 @@ const api = {
     save: (definition, id, version) => signingRequest(id ? 'put' : 'post', id ? `${templates}/${id}` : templates, { ...definition, expectedVersion: version }),
     archive: (id, version) => signingRequest('post', `${templates}/${id}/archive`, { expectedVersion: version }),
     pdf: (id, documentId) => signingRequest('get', `${templates}/${id}/documents/${documentId}/pdf`, null, { responseType: 'blob' }),
-    contacts: (q, lawyer) => signingRequest('get', `${batches}/contacts?q=${encodeURIComponent(q)}&lawyer=${lawyer ? 1 : 0}`),
+    contacts: (q, audience) => {
+        const lawyer = audience === true || audience === 'lawyer';
+        const clients = audience === 'client';
+        return signingRequest('get', `${batches}/contacts?q=${encodeURIComponent(q)}&lawyer=${lawyer ? 1 : 0}&clients=${clients ? 1 : 0}`);
+    },
     workbook: id => signingRequest('get', `${batches}/workbook/${id}`, null, { responseType: 'blob' }),
     importWorkbook: (id, base64) => signingRequest('post', `${batches}/workbook/${id}/preview`, { base64 }),
     create: payload => signingRequest('post', batches, payload),

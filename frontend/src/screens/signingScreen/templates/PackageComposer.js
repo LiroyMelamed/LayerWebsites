@@ -62,7 +62,7 @@ function SuggestField({ id, label, value, error, errorText, dir, type, inputMode
         timer.current = setTimeout(async () => {
             setBusy(true);
             try {
-                const data = await signingTemplatesApi.contacts(query, suggestLawyers);
+                const data = await signingTemplatesApi.contacts(query, suggestLawyers ? 'lawyer' : 'client');
                 setResults(Array.isArray(data?.contacts) ? data.contacts : []);
             } catch { setResults([]); } finally { setBusy(false); }
         }, 150);
@@ -101,6 +101,7 @@ function PersonFields({ scope, roleKey, person, errors, onChange, compact, sugge
             {choice('channel', t('signingV2.compose.channel.auto'), ['email', 'sms', 'both'])}
             {choice('locale', t('signingV2.compose.locale.template'), ['he', 'ar', 'en'])}
         </div>
+        <p className="lw-signingCompose__note">{t(suggestLawyers ? 'signingV2.compose.directoryHelp.lawyer' : 'signingV2.compose.directoryHelp.client')}</p>
     </div>;
 }
 
@@ -122,7 +123,7 @@ const RecipientRow = memo(function RecipientRow({ row, index, roles, errors, onC
             {errors?.row?.general && <p className="lw-signingCompose__fieldError" role="note">{t(`signingV2.compose.rowErrors.${errors.row.general}`, { defaultValue: t('signingV2.compose.rowErrors.INVALID_ROW') })}</p>}
             {roles.map(role => <div key={role.key} className="lw-signingCompose__roleBlock">
                 {roles.length > 1 && <h4>{role.label}</h4>}
-                <PersonFields scope={row.id} roleKey={role.key} person={row.recipients[role.key]} errors={errors?.[role.key]} onChange={change} suggestLawyers={role.audience === 'shared' || role.key === 'lawyer'} compact />
+                <PersonFields scope={row.id} roleKey={role.key} person={row.recipients[role.key]} errors={errors?.[role.key]} onChange={change} suggestLawyers={role.key === 'lawyer'} compact />
             </div>)}
         </fieldset>
     </li>;
@@ -397,7 +398,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 <p>{t('signingV2.compose.shared.help')}</p>
                 {shareRoles.map(role => <fieldset key={role.key} className="lw-signingCompose__shared">
                     <legend>{role.label}</legend>
-                    <PersonFields scope="shared" roleKey={role.key} person={shared[role.key] || blankPerson()} errors={check?.indexed.shared[role.key]} onChange={changeShared} suggestLawyers={role.audience === 'shared' || role.key === 'lawyer'} />
+                    <PersonFields scope="shared" roleKey={role.key} person={shared[role.key] || blankPerson()} errors={check?.indexed.shared[role.key]} onChange={changeShared} suggestLawyers={role.key === 'lawyer'} />
                 </fieldset>)}
             </SimpleCard>}
             <SimpleCard className="lw-signingCompose__card">

@@ -1624,6 +1624,10 @@
         "channel": "Channel",
         "locale": "Language"
       },
+      "directoryHelp": {
+        "client": "Pick a client from the list, or type a name, email and phone that are not in the system.",
+        "lawyer": "Pick a lawyer from the office, or type the details manually."
+      },
       "channel": {
         "auto": "Automatic",
         "email": "Email",
