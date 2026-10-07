@@ -5,16 +5,21 @@ const limits = require('./limits');
 
 const SHEET = 'recipients';
 const LABELS = {
-    he: { key: 'מזהה שורה', name: 'שם', email: 'אימייל', phone: 'טלפון', channel: 'ערוץ (email / sms / both)', locale: 'שפה (he / ar / en)' },
-    ar: { key: 'معرّف الصف', name: 'الاسم', email: 'البريد الإلكتروني', phone: 'الهاتف', channel: 'القناة (email / sms / both)', locale: 'اللغة (he / ar / en)' },
-    en: { key: 'Row ID', name: 'Name', email: 'Email', phone: 'Phone', channel: 'Channel (email / sms / both)', locale: 'Language (he / ar / en)' },
+    he: { key: 'מזהה שורה', name: 'שם', email: 'אימייל', phone: 'טלפון', channel: 'ערוץ (email / sms / both)' },
+    ar: { key: 'معرّف الصف', name: 'الاسم', email: 'البريد الإلكتروني', phone: 'الهاتف', channel: 'القناة (email / sms / both)' },
+    en: { key: 'Row ID', name: 'Name', email: 'Email', phone: 'Phone', channel: 'Channel (email / sms / both)' },
 };
-const FIELDS = ['name', 'email', 'phone', 'channel', 'locale'];
+const FIELDS = ['name', 'email', 'phone', 'channel'];
+const LEGACY_LOCALE = { he: 'שפה (he / ar / en)', ar: 'اللغة (he / ar / en)', en: 'Language (he / ar / en)' };
 
-function columns(definition, locale) {
+function columns(definition, locale, includeLocale = false) {
     const labels = LABELS[locale] || LABELS.he;
+    const fields = includeLocale ? [...FIELDS, 'locale'] : FIELDS;
     return [{ key: 'key', header: labels.key }, ...definition.roles.filter(role => role.audience !== 'shared').flatMap(role =>
-        FIELDS.map(field => ({ key: `${role.key}.${field}`, header: `${role.label} — ${labels[field]}` })))];
+        fields.map(field => ({
+            key: `${role.key}.${field}`,
+            header: `${role.label} — ${field === 'locale' ? (LEGACY_LOCALE[locale] || LEGACY_LOCALE.he) : labels[field]}`,
+        })))];
 }
 
 async function makeWorkbook(definition, locale) {
@@ -35,7 +40,7 @@ async function parseWorkbook(buffer, definition) {
     const sheet = book.getWorksheet(SHEET);
     expect(sheet, 'WORKBOOK_HEADERS_CHANGED');
     const header = index => String(sheet.getRow(1).getCell(index + 1).value ?? '').trim();
-    const expected = Object.keys(LABELS).map(locale => columns(definition, locale))
+    const expected = Object.keys(LABELS).flatMap(locale => [false, true].map(includeLocale => columns(definition, locale, includeLocale)))
         .find(candidate => sheet.actualColumnCount <= candidate.length && candidate.every((column, index) => header(index) === column.header));
     expect(expected, 'WORKBOOK_HEADERS_CHANGED');
     expect(sheet.rowCount <= limits.packages + 1, 'CAPACITY_BUDGET_EXCEEDED');
@@ -53,11 +58,11 @@ async function parseWorkbook(buffer, definition) {
         if (unsupported) { errors.push({ row: index, code: 'UNSUPPORTED_CELL' }); continue; }
         const recipients = {};
         for (const role of definition.roles.filter(item => item.audience !== 'shared')) {
-            const person = Object.fromEntries(FIELDS.map(field => [field, values[`${role.key}.${field}`]]));
+            const person = Object.fromEntries(FIELDS.map(field => [field, values[`${role.key}.${field}`] || '']));
             // Spreadsheets drop the leading zero of a numeric Israeli mobile number.
             if (/^5\d{8}$/.test(person.phone)) person.phone = `0${person.phone}`;
             recipients[role.key] = { name: person.name, email: person.email, phone: person.phone,
-                ...(person.channel ? { channel: person.channel.toLowerCase() } : {}), ...(person.locale ? { locale: person.locale.toLowerCase() } : {}) };
+                ...(person.channel ? { channel: person.channel.toLowerCase() } : {}) };
         }
         rows.push({ sourceRow: index, ...(values.key ? { key: values.key } : {}), recipients });
     }

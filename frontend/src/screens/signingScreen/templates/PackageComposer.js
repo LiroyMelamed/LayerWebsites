@@ -13,18 +13,20 @@ import './signingPackages.scss';
 import './signingCompose.scss';
 
 const STEPS = ['template', 'recipients', 'review', 'done'];
-const FIELDS = ['name', 'email', 'phone', 'channel', 'locale'];
+const FIELDS = ['name', 'email', 'phone', 'channel'];
+const LOCALES = new Set(['he', 'ar', 'en']);
 const MAX_ROWS = 200;
 const MAX_WORKBOOK_BYTES = 2 * 1024 * 1024;
 
 let localId = 0;
-const blankPerson = () => ({ name: '', email: '', phone: '', channel: '', locale: '' });
+const blankPerson = () => ({ name: '', email: '', phone: '', channel: '' });
 const blankRow = roles => ({ id: `row-${++localId}`, key: '', recipients: Object.fromEntries(roles.map(role => [role.key, blankPerson()])) });
 const filled = person => FIELDS.some(field => String(person?.[field] || '').trim());
 const rowFilled = row => row.key.trim() || Object.values(row.recipients).some(filled);
-const clean = person => ({
+const clean = (person, language) => ({
     name: person.name.trim(), email: person.email.trim(), phone: person.phone.trim(),
-    ...(person.channel ? { channel: person.channel } : {}), ...(person.locale ? { locale: person.locale } : {}),
+    ...(person.channel ? { channel: person.channel } : {}),
+    locale: LOCALES.has(language) ? language : 'he',
 });
 const fieldId = (scope, roleKey, field) => `compose-${scope}-${roleKey}-${field}`;
 
@@ -99,7 +101,6 @@ function PersonFields({ scope, roleKey, person, errors, onChange, compact, sugge
         {suggest('phone', { type: 'tel', inputMode: 'tel', maxLength: 20, dir: 'ltr' })}
         <div className="lw-signingCompose__choices">
             {choice('channel', t('signingV2.compose.channel.auto'), ['email', 'sms', 'both'])}
-            {choice('locale', t('signingV2.compose.locale.template'), ['he', 'ar', 'en'])}
         </div>
         <p className="lw-signingCompose__note">{t(suggestLawyers ? 'signingV2.compose.directoryHelp.lawyer' : 'signingV2.compose.directoryHelp.client')}</p>
     </div>;
@@ -306,8 +307,8 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             sentIds: sent.map(row => row.id),
             body: {
                 templateVersionId: template.versionId, name: name.trim(),
-                shared: Object.fromEntries(Object.entries(shared).map(([key, person]) => [key, clean(person)])),
-                rows: sent.map(row => ({ ...(row.key.trim() ? { key: row.key.trim() } : {}), recipients: Object.fromEntries(Object.entries(row.recipients).map(([key, person]) => [key, clean(person)])) })),
+                shared: Object.fromEntries(Object.entries(shared).map(([key, person]) => [key, clean(person, language)])),
+                rows: sent.map(row => ({ ...(row.key.trim() ? { key: row.key.trim() } : {}), recipients: Object.fromEntries(Object.entries(row.recipients).map(([key, person]) => [key, clean(person, language)])) })),
             },
         };
     };
