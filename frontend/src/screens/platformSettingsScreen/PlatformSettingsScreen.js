@@ -2513,7 +2513,13 @@ export default function PlatformSettingsScreen() {
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground} className="lw-platformSettings">
-            {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={AdminStackName + MainScreenName} GetNavBarData={getNavBarData} />}
+            {isSmallScreen && (
+                <TopToolBarSmallScreen
+                    chosenNavKey="platformSettings"
+                    LogoNavigate={AdminStackName + MainScreenName}
+                    GetNavBarData={getNavBarData}
+                />
+            )}
             <SimpleScrollView className="lw-platformSettings__scroll">
                 <SimpleContainer className="lw-platformSettings__header">
                     <TextBold24>{t("platformSettings.title")}</TextBold24>
