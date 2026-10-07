@@ -30,7 +30,7 @@
   inline-size: 100%; min-block-size: 6.5rem; display: flex; flex-direction: column; align-items: flex-start; gap: .375rem;
   padding: 1rem; text-align: start; background: #fff; color: inherit; cursor: pointer;
   border: 1px solid #e2e8f0; border-radius: .5rem; transition: border-color .15s ease, box-shadow .15s ease;
-  strong { font-size: .9375rem; overflow-wrap: anywhere; }
+  strong { font-size: inherit; overflow-wrap: anywhere; }
   span { font-size: .8125rem; color: #4a5568; overflow-wrap: anywhere; }
   &:hover { border-color: #a0aec0; }
   &.is-selected { border-color: var(--lw-color-primary, #2a4365); box-shadow: inset 0 0 0 1px var(--lw-color-primary, #2a4365); }
@@ -117,7 +117,7 @@
   display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); gap: .75rem; margin: 0 0 1.25rem;
   > div { border: 1px solid #e2e8f0; border-radius: .5rem; padding: .75rem; min-inline-size: 0; }
   dt { font-size: .8125rem; color: #4a5568; }
-  dd { margin: .25rem 0 0; font-size: 1.125rem; font-weight: 700; overflow-wrap: anywhere; }
+  dd { margin: .25rem 0 0; font-size: 1rem; font-weight: 500; overflow-wrap: anywhere; }
 }
 .lw-signingCompose__plainList { margin: .375rem 0 1rem; padding-inline-start: 1.25rem; font-size: .875rem; line-height: 1.6; li { overflow-wrap: anywhere; } }
 .lw-signingCompose__note { font-size: .875rem; color: #2d3748; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: .375rem; padding: .625rem .75rem; max-inline-size: none !important; }
