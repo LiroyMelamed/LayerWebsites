@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { createInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import signingPublicApi from '../../../api/signingPublicApi';
@@ -43,7 +44,7 @@ test('a package link signs only the document whose turn has arrived', async () =
     signingPublicApi.describe.mockResolvedValue({ person: { name: 'לירוי' }, locale: 'he', consentVersion: 'consent-v',
         packages: [documentFor(1, 'ready'), documentFor(2, 'ready')] });
     window.history.replaceState({}, '', `/ViewSignedDocument/Sign#${TOKEN}`);
-    render(<I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider>);
+    render(<MemoryRouter><I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider></MemoryRouter>);
     expect(await screen.findByTestId('signing-canvas')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: i18n.t('signing.canvas.nextDocument') }));
     await waitFor(() => expect(signingPublicApi.describe).toHaveBeenCalledTimes(2));
@@ -55,7 +56,7 @@ test('a document that is still waiting for someone else is not offered', async (
     signingPublicApi.describe.mockResolvedValue({ person: { name: 'לירוי' }, locale: 'he', consentVersion: 'consent-v',
         packages: [documentFor(1, 'waiting')] });
     window.history.replaceState({}, '', `/ViewSignedDocument/Sign#${'B'.repeat(43)}`);
-    render(<I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider>);
+    render(<MemoryRouter><I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider></MemoryRouter>);
     expect(await screen.findByTestId('signing-canvas')).toBeTruthy();
     expect(screen.queryByRole('button', { name: i18n.t('signing.canvas.nextDocument') })).toBeNull();
 });
@@ -65,7 +66,7 @@ test('an already signed document stays on the regular completion screen', async 
     signingPublicApi.describe.mockResolvedValue({ person: { name: 'לירוי' }, locale: 'he', consentVersion: 'consent-v',
         packages: [documentFor(1, 'accepted')] });
     window.history.replaceState({}, '', `/ViewSignedDocument/Sign#${'C'.repeat(43)}`);
-    render(<I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider>);
+    render(<MemoryRouter><I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider></MemoryRouter>);
     expect(await screen.findByTestId('signing-canvas')).toBeTruthy();
     expect(screen.queryByText(i18n.t('signing.public.closedTitle'))).toBeNull();
 });
@@ -74,7 +75,7 @@ test('a link without its token never calls the server', async () => {
     const i18n = await translations();
     window.history.replaceState({}, '', '/ViewSignedDocument/Sign');
     window.sessionStorage.removeItem('lw-signing-v2-grant');
-    render(<I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider>);
+    render(<MemoryRouter><I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider></MemoryRouter>);
     expect(await screen.findByText(i18n.t('signing.invalidLinkTitle'))).toBeTruthy();
     expect(signingPublicApi.describe).not.toHaveBeenCalled();
 });

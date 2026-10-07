@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { sessionHomePath } from '../../../navigation/LoginStack';
 import SimpleScreen from '../../../components/simpleComponents/SimpleScreen';
 import SimpleContainer from '../../../components/simpleComponents/SimpleContainer';
 import { Text14, TextBold24 } from '../../../components/specializedComponents/text/AllTextKindFile';
@@ -43,6 +45,7 @@ function waitingDocumentOf(view) {
 
 export default function PublicPackageSigning() {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const [token] = useState(readGrantToken);
     const [view, setView] = useState(null);
     const [loadError, setLoadError] = useState(token ? null : { code: 'MISSING_TOKEN' });
@@ -115,7 +118,10 @@ export default function PublicPackageSigning() {
                     filesApi={adapter}
                     loadPublicPdf={() => signingPublicApi.document(token, current.document.documentId)}
                     nextDocument={documents.length > 1 && index < documents.length - 1 ? { onPress: openNext, label: t('signing.canvas.nextDocument') } : null}
-                    onClose={() => { if (documents.length > 1 && index < documents.length - 1) openNext(); }}
+                    onClose={() => {
+                        if (documents.length > 1 && index < documents.length - 1) openNext();
+                        else navigate(sessionHomePath(), { replace: true });
+                    }}
                 />
             )}
         </SimpleScreen>

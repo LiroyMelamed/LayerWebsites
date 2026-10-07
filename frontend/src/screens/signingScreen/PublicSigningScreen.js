@@ -7,7 +7,7 @@ import { Text14, TextBold24 } from "../../components/specializedComponents/text/
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import SignatureCanvas from "../../components/specializedComponents/signFiles/SignatureCanvas";
 import { images } from "../../assets/images/images";
-import { LoginStackName } from "../../navigation/LoginStack";
+import { LoginStackName, sessionHomePath } from "../../navigation/LoginStack";
 import { LoginScreenName } from "../loginScreen/LoginScreen";
 import { useTranslation } from "react-i18next";
 
@@ -53,7 +53,7 @@ export default function PublicSigningScreen() {
                     <SignatureCanvas
                         publicToken={token}
                         variant="screen"
-                        onClose={() => setClosed(true)}
+                        onClose={() => navigate(sessionHomePath(), { replace: true })}
                     />
                 )}
             </SimpleContainer>
