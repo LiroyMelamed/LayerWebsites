@@ -105,7 +105,7 @@
 }
 .lw-signingCompose__confirm {
   border: 1px solid #f6ad55; background: #fffaf0; border-radius: .5rem; padding: 1rem; margin-block-end: 1rem;
-  p { margin-block: .25rem .75rem; }
+  p:not(.lw-simpleText) { margin-block: .25rem .75rem; }
 }
 .lw-signingCompose__summary {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); gap: .75rem; margin: 0 0 1.25rem;

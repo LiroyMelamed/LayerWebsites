@@ -40,7 +40,8 @@ const validPreview = rows => ({ valid: true, errors: [], errorCount: 0, previewH
 
 async function toRecipients(i18n, api) {
     render(<I18nextProvider i18n={i18n}><PackageComposer api={api} onBack={jest.fn()} onCreated={api.onCreated} /></I18nextProvider>);
-    fireEvent.click(await screen.findByRole('button', { name: i18n.t('signingV2.compose.template.convert') }));
+    const version = new Intl.NumberFormat({ he: 'he-IL', ar: 'ar-IL', en: 'en-GB' }[i18n.language]).format(1);
+    fireEvent.click(await screen.findByRole('button', { name: i18n.t('signingV2.compose.template.convertNamed', { name: 'Employment pack', version }) }));
     await screen.findByRole('button', { name: /Employment pack/, pressed: true });
     expect(api.importLegacy).toHaveBeenCalledWith(7, i18n.language);
     fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.next') }));
@@ -149,4 +150,8 @@ test('requires a run name and at least one recipient before asking the server', 
     fireEvent.click(screen.getByRole('button', { name: 'Check data' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Give this run a name');
     expect(api.previewCreation).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Add row' }));
+    expect(field(screen.getByRole('group', { name: 'Row 2' }), 'Full name')).toHaveFocus();
+    fireEvent.click(screen.getByRole('button', { name: 'Remove row 2' }));
+    expect(screen.queryByRole('group', { name: 'Row 2' })).not.toBeInTheDocument();
 });

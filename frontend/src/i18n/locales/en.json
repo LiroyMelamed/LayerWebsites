@@ -1579,6 +1579,11 @@
       "discardConfirm": "Leave without saving",
       "keepEditing": "Keep editing",
       "template": {
+        "filter": "Find a template by name",
+        "matches_one": "1 template found",
+        "matches_other": "{{formattedCount}} templates found",
+        "version": "Version {{version}}",
+        "convertNamed": "Convert and choose: {{name}}, version {{version}}",
         "heading": "Choose a template",
         "empty": "There are no templates ready for bulk sending yet. You can convert an existing template below.",
         "documents_one": "1 document",
@@ -1619,7 +1624,7 @@
         "locale": "Language"
       },
       "channel": {
-        "auto": "Based on the details entered",
+        "auto": "Automatic",
         "email": "Email",
         "sms": "SMS",
         "both": "Email and SMS"
@@ -1669,8 +1674,8 @@
       },
       "done": {
         "heading": "The run was created",
-        "body_one": "1 package was saved and is ready for preparation and sending.",
-        "body_other": "{{formattedCount}} packages were saved and are ready for preparation and sending.",
+        "body_one": "1 package was saved. Its documents are being prepared, and invitations go out when they are ready.",
+        "body_other": "{{formattedCount}} packages were saved. Their documents are being prepared, and invitations go out when they are ready.",
         "reused": "This run was already created by an earlier request. No duplicate packages were created.",
         "open": "Open the run",
         "another": "Create another run"
