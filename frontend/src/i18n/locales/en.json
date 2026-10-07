@@ -1044,6 +1044,7 @@
       "signingCompleteFieldsRemainSubtitle": "Signatures are done. {{count}} fields still need to be filled.",
       "signingCompleteContinueFields": "Continue to remaining fields",
       "signingCompleteClose": "Done",
+      "nextDocument": "Next document",
       "rejectDocument": "Reject document",
       "failedToLoadSignatureImage": "Failed to load signature image",
       "clientStampSavedSuccess": "Client stamp saved successfully",

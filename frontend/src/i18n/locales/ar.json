@@ -1110,6 +1110,7 @@
       "signingCompleteFieldsRemainSubtitle": "اكتملت التواقيع. تبقى {{count}} حقول للتعبئة.",
       "signingCompleteContinueFields": "متابعة تعبئة الحقول",
       "signingCompleteClose": "إنهاء",
+      "nextDocument": "المستند التالي",
       "rejectDocument": "رفض المستند",
       "failedToLoadSignatureImage": "فشل تحميل صورة التوقيع",
       "clientStampSavedSuccess": "تم حفظ الختم بنجاح",
