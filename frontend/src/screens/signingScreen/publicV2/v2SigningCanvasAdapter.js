@@ -5,14 +5,15 @@ const ok = (data = {}) => ({ success: true, data });
 
 // One package document, presented in the shape the regular signing screen already understands.
 export function createV2DocumentAdapter({ token, document, task, personName, consentVersion, locale }) {
-    const waiting = task.state !== 'ready';
+    const finished = task.state === 'accepted';
+    const waiting = task.state === 'waiting' || task.state === 'blocked';
     const fields = task.fields || [];
     const bySpot = new Map(fields.map((field, index) => [index + 1, field]));
     const signed = new Set();
     const textValues = new Map();
     let signatureImage = null;
     let sessionId = null;
-    let accepted = false;
+    let accepted = finished;
     const idempotencyKey = crypto.randomUUID();
 
     const spots = () => fields.map((field, index) => ({

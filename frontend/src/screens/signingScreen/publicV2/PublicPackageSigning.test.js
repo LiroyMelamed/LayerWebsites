@@ -61,6 +61,16 @@ test('a document that is still waiting for someone else is not offered', async (
     expect(screen.queryByRole('button', { name: i18n.t('signing.canvas.nextDocument') })).toBeNull();
 });
 
+test('an already signed document stays on the regular completion screen', async () => {
+    const i18n = await translations();
+    signingPublicApi.describe.mockResolvedValue({ person: { name: 'לירוי' }, locale: 'he', consentVersion: 'consent-v',
+        packages: [documentFor(1, 'accepted')] });
+    window.history.replaceState({}, '', `/ViewSignedDocument/Sign#${'C'.repeat(43)}`);
+    render(<I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider>);
+    expect(await screen.findByTestId('signing-canvas')).toBeTruthy();
+    expect(screen.queryByText(i18n.t('signing.public.closedTitle'))).toBeNull();
+});
+
 test('a link without its token never calls the server', async () => {
     const i18n = await translations();
     window.history.replaceState({}, '', '/ViewSignedDocument/Sign');
