@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import SimpleScreen from '../../../components/simpleComponents/SimpleScreen';
 import SimpleContainer from '../../../components/simpleComponents/SimpleContainer';
 import { Text14, TextBold24 } from '../../../components/specializedComponents/text/AllTextKindFile';
-import PrimaryButton from '../../../components/styledComponents/buttons/PrimaryButton';
 import SignatureCanvas from '../../../components/specializedComponents/signFiles/SignatureCanvas';
 import { images } from '../../../assets/images/images';
 import signingPublicApi, { readGrantToken } from '../../../api/signingPublicApi';
@@ -22,6 +21,16 @@ function documentsOf(view) {
     return items;
 }
 
+function signedDocumentOf(view) {
+    for (const pkg of view?.packages || []) {
+        for (const document of pkg.documents || []) {
+            const task = (document.tasks || []).find(item => item.state === 'accepted');
+            if (task) return { pkg, document, task };
+        }
+    }
+    return null;
+}
+
 function hasWaiting(view) {
     return (view?.packages || []).some(pkg => (pkg.documents || []).some(document => (document.tasks || []).some(task => task.state === 'waiting')));
 }
@@ -32,7 +41,6 @@ export default function PublicPackageSigning() {
     const [view, setView] = useState(null);
     const [loadError, setLoadError] = useState(token ? null : { code: 'MISSING_TOKEN' });
     const [index, setIndex] = useState(0);
-    const [closed, setClosed] = useState(false);
 
     const load = useCallback(async () => {
         if (!token) return null;
@@ -55,7 +63,7 @@ export default function PublicPackageSigning() {
     }, []);
 
     const documents = useMemo(() => documentsOf(view), [view]);
-    const current = documents[index] || null;
+    const current = documents[index] || signedDocumentOf(view);
     const adapter = useMemo(() => (current ? createV2DocumentAdapter({
         token,
         document: current.document,
@@ -93,25 +101,22 @@ export default function PublicPackageSigning() {
                         <Text14>{t('signing.canvas.waitingForPreviousSignersDesc')}</Text14>
                     </SimpleContainer>
                 </SimpleContainer>
-            ) : closed || !current ? (
+            ) : !current ? (
                 <SimpleContainer className="lw-publicSigningScreen__container">
                     <SimpleContainer className="lw-publicSigningScreen__stack">
                         <TextBold24>{t('signing.public.closedTitle')}</TextBold24>
                         <Text14>{t('signing.public.closedHint')}</Text14>
-                        {documents.length > 0 && closed && (
-                            <PrimaryButton onPress={() => { setClosed(false); setIndex(0); }}>{t('signing.canvas.nextDocument')}</PrimaryButton>
-                        )}
                     </SimpleContainer>
                 </SimpleContainer>
             ) : (
                 <SignatureCanvas
-                    key={`${current.document.documentId}:${current.task.taskId}:${index}`}
+                    key={`${current.document.documentId}:${current.task.taskId}:${current.task.state}`}
                     publicToken={token}
                     variant="screen"
                     filesApi={adapter}
                     loadPublicPdf={() => signingPublicApi.document(token, current.document.documentId)}
-                    nextDocument={index < documents.length - 1 ? { onPress: openNext, label: t('signing.canvas.nextDocument') } : null}
-                    onClose={() => setClosed(true)}
+                    nextDocument={documents.length > 1 && index < documents.length - 1 ? { onPress: openNext, label: t('signing.canvas.nextDocument') } : null}
+                    onClose={() => { if (documents.length > 1 && index < documents.length - 1) openNext(); }}
                 />
             )}
         </SimpleScreen>
