@@ -385,8 +385,6 @@ export default function SigningManagerScreen() {
                 />
 
                 <SimpleContainer className="lw-signingManagerScreen__topRow">
-                    <SecondaryButton onPress={() => setShowTemplates(true)}>{t('signingManager.templatesAndBulk')}</SecondaryButton>
-                    {signingV2Available && <SecondaryButton onPress={() => setShowRuns(true)}>{t('signingManager.signingRuns')}</SecondaryButton>}
                     <SimpleContainer className="lw-signingManagerScreen__searchContainer">
                         <SearchInput
                             onSearch={handleSearch}
@@ -483,16 +481,18 @@ export default function SigningManagerScreen() {
                 </>}
             </SimpleScrollView>
 
-            {canSignUpload && (
             <SimpleContainer className="lw-signingManagerScreen__footer">
+                {canSignUpload && (
                 <PrimaryButton
                     className="lw-signingManagerScreen__addButton"
                     onPress={handleGoToUpload}
                 >
                     {t('signingManager.actions.uploadNew')}
                 </PrimaryButton>
+                )}
+                <SecondaryButton onPress={() => setShowTemplates(true)}>{t('signingManager.templatesAndBulk')}</SecondaryButton>
+                {signingV2Available && <SecondaryButton onPress={() => setShowRuns(true)}>{t('signingManager.signingRuns')}</SecondaryButton>}
             </SimpleContainer>
-            )}
         </SimpleScreen>
     );
 }
