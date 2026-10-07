@@ -1,0 +1,12 @@
+Isolated signing template QA ready at http://127.0.0.1:5188/qa-login
+[signing] publicSignFileBatch ok {
+  signingFileId: 23,
+  count: 2,
+  remaining: 0,
+  timings: { uploadMs: 1, dbMs: 3, totalMs: 40 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=50 for file 23
+[signingFinalize] done { signingFileId: 23, ms: 1283 }
+[pg-pool] Retryable connection error, waiting 5 s then retrying… Connection terminated due to connection timeout
+[pg-pool] Retryable connection error, waiting 5 s then retrying… Connection terminated due to connection timeout

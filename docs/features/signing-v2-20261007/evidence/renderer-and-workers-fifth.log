@@ -1,0 +1,11 @@
+✔ real worker PDF preparation persists verified artifacts and leaves later activation blocked until preflight (1793.785625ms)
+✔ source cache shares only immutable verified source bytes and never mutable personal data (0.728958ms)
+✔ real Chromium text shaping/overflow and PDF geometry across Hebrew, Arabic, English and rotated crop boxes (1641.434792ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2015.531292

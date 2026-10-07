@@ -1,0 +1,20 @@
+[
+  {
+    "repository": "LawyerApp-MelamedLaw",
+    "sourceSha256": "b03fd528708a7d527e136b9c295b71b7ef47ea82a9594df985f16835e844613e",
+    "packagePathHandledByExistingBrowserSheet": true,
+    "verification": "Executed current URL classification source with a standard HTTPS parser; not device UI automation."
+  },
+  {
+    "repository": "LawyerApp-MorLevi",
+    "sourceSha256": "b03fd528708a7d527e136b9c295b71b7ef47ea82a9594df985f16835e844613e",
+    "packagePathHandledByExistingBrowserSheet": true,
+    "verification": "Executed current URL classification source with a standard HTTPS parser; not device UI automation."
+  },
+  {
+    "repository": "LawyerApp",
+    "sourceSha256": "b03fd528708a7d527e136b9c295b71b7ef47ea82a9594df985f16835e844613e",
+    "packagePathHandledByExistingBrowserSheet": true,
+    "verification": "Executed current URL classification source with a standard HTTPS parser; not device UI automation."
+  }
+]

@@ -1,0 +1,40 @@
+
+> lawyer-website@0.1.0 test
+> react-scripts test --watch=false --runInBand --testPathPattern=SigningPackagesWorkspace.test.js
+
+  console.info
+    🌐 i18next is made possible by our own product, Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+
+      at I18n.init (node_modules/i18next/dist/cjs/i18next.js:1781:90)
+
+  console.error
+    Warning: `ReactDOMTestUtils.act` is deprecated in favor of `React.act`. Import `act` from `react` instead of `react-dom/test-utils`. See https://react.dev/warnings/react-dom-test-utils for more info.
+
+      36 | test.each(['he', 'ar', 'en'])('uses existing translated controls, correct direction and actual delivery state in %s', async language => {
+      37 |     const i18n = await translations(language), { api } = fixture();
+    > 38 |     const { container } = render(<I18nextProvider i18n={i18n}><SigningPackagesWorkspace api={api} /></I18nextProvider>);
+         |                                 ^
+      39 |     expect(container.querySelector('.lw-signingPackages').getAttribute('dir')).toBe(language === 'en' ? 'ltr' : 'rtl');
+      40 |     expect(container.querySelector('input').getAttribute('dir')).toBe(language === 'en' ? 'ltr' : 'rtl');
+      41 |     await screen.findByText('October employees');
+
+      at printWarning (node_modules/react-dom/cjs/react-dom-test-utils.development.js:71:30)
+      at error (node_modules/react-dom/cjs/react-dom-test-utils.development.js:45:7)
+      at actWithWarning (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1736:7)
+      at node_modules/@testing-library/react/dist/act-compat.js:63:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:159:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:246:10)
+      at src/screens/signingScreen/templates/SigningPackagesWorkspace.test.js:38:33
+
+PASS src/screens/signingScreen/templates/SigningPackagesWorkspace.test.js
+  ✓ uses existing translated controls, correct direction and actual delivery state in he (87 ms)
+  ✓ uses existing translated controls, correct direction and actual delivery state in ar (35 ms)
+  ✓ uses existing translated controls, correct direction and actual delivery state in en (33 ms)
+  ✓ refresh preserves the expanded send and panel while a translated error retains current results (45 ms)
+  ✓ all locale plural forms resolve for 0/1/2/3/11/200 without falling back to another language or a key (3 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       5 passed, 5 total
+Snapshots:   0 total
+Time:        0.992 s, estimated 1 s
+Ran all test suites matching /SigningPackagesWorkspace.test.js/i.

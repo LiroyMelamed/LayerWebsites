@@ -37,6 +37,7 @@ const PublicSigningScreen = lazy(() => import('./screens/signingScreen/PublicSig
 const ShortSignRedirectScreen = lazy(() => import('./screens/signingScreen/ShortSignRedirectScreen'));
 const ShortNavRedirectScreen = lazy(() => import('./screens/calendarScreen/ShortNavRedirectScreen'));
 const ViewSignedDocument = lazy(() => import('./screens/viewSignedDocument/ViewSignedDocument'));
+const PublicPackageSigning = lazy(() => import('./screens/signingScreen/publicV2/PublicPackageSigning'));
 const EvidenceVerifyScreen = lazy(() => import('./screens/verify/EvidenceVerifyScreen'));
 const PricingScreen = lazy(() => import('./screens/pricingScreen/PricingScreen'));
 const SecurityScreen = lazy(() => import('./screens/compliance/SecurityScreen'));
@@ -67,6 +68,7 @@ const App = () => {
       /(?:^|\/)(SigningScreen|SigningManagerScreen)(?:$|\/)/i.test(p) ||
       /(?:^|\/)(upload-file-for-signing)(?:$|\/)/i.test(p) ||
       /(?:^|\/)(PublicSignScreen)(?:$|\/)/i.test(p) ||
+      /^\/ViewSignedDocument\/(?:Package|Sign)(?:$|\/)/i.test(p) ||
       /(?:^|\/)s(?:$|\/)/i.test(p) ||
       /(?:^|\/)(Verify\/Evidence)(?:$|\/)/i.test(p);
 
@@ -165,6 +167,8 @@ const App = () => {
     <Suspense fallback={<RouteFallback />}>
       <Routes>
         <Route path={PublicSignScreenName} element={<PublicSigningScreen />} />
+        <Route path="/ViewSignedDocument/Package" element={<PublicSigningScreen />} />
+        <Route path="/ViewSignedDocument/Sign" element={<PublicPackageSigning />} />
         <Route path={ShortSignRedirectScreenName} element={<ShortSignRedirectScreen />} />
         <Route path={ShortNavRedirectScreenName} element={<ShortNavRedirectScreen />} />
         <Route path={ViewSignedDocumentName} element={<ViewSignedDocument />} />

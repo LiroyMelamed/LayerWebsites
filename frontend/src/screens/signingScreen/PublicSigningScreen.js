@@ -12,6 +12,7 @@ import { LoginScreenName } from "../loginScreen/LoginScreen";
 import { useTranslation } from "react-i18next";
 
 import "./PublicSigningScreen.scss";
+import PublicBatchSigning from './templates/PublicBatchSigning';
 
 export const PublicSignScreenName = "/PublicSignScreen";
 
@@ -26,10 +27,13 @@ export default function PublicSigningScreen() {
     }, [location.search]);
 
     const [closed, setClosed] = useState(false);
+    const batchToken = new URLSearchParams(location.search).get('batch');
 
     const goToLogin = () => {
         navigate(LoginStackName + LoginScreenName, { replace: true });
     };
+
+    if (batchToken) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><PublicBatchSigning key={batchToken} token={batchToken} /></SimpleScreen>;
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground} className="lw-publicSigningScreen">

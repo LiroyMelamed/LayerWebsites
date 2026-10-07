@@ -1,0 +1,11 @@
+{
+  "tenant": "idm",
+  "sourceCommit": "6332edb244b16f3f2991c6243a9e8c9893634c07",
+  "build": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/reminder-layout-idm-20261006/frontend/build",
+  "archive": "idm.tar.gz",
+  "archiveSha256": "e8a3086e2ac31cd9049009d9ad7e0c64ea0453eaf464d8a51e88d5ac0ba886bf",
+  "manifest": "idm-files.json",
+  "manifestSha256": "a54650326434b721347cacf7a55228ad9fb6a75a4c3ce64fd2c771117759ccd0",
+  "files": 232,
+  "scope": "frontend only; no API, database, scheduling or native changes"
+}

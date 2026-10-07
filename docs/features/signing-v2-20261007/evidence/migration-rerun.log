@@ -1,0 +1,84 @@
+BEGIN
+NOTICE:  relation "signing_owner_contexts" already exists, skipping
+CREATE TABLE
+NOTICE:  relation "signing_people" already exists, skipping
+NOTICE:  relation "signing_parties" already exists, skipping
+CREATE TABLE
+CREATE TABLE
+NOTICE:  relation "signing_artifacts" already exists, skipping
+CREATE TABLE
+CREATE TABLE
+NOTICE:  relation "signing_authorities" already exists, skipping
+NOTICE:  column "owner_context_id" of relation "signing_templates" already exists, skipping
+ALTER TABLE
+CREATE INDEX
+NOTICE:  relation "signing_templates_context_id" already exists, skipping
+NOTICE:  relation "signing_template_versions" already exists, skipping
+CREATE TABLE
+CREATE TABLE
+NOTICE:  relation "signing_submissions" already exists, skipping
+NOTICE:  relation "signing_packages" already exists, skipping
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+NOTICE:  relation "signing_package_assignments" already exists, skipping
+NOTICE:  relation "signing_package_revisions" already exists, skipping
+DO
+NOTICE:  relation "signing_participations" already exists, skipping
+CREATE TABLE
+CREATE TABLE
+NOTICE:  relation "signing_documents" already exists, skipping
+NOTICE:  relation "signing_tasks" already exists, skipping
+CREATE TABLE
+NOTICE:  relation "signing_delivery_profiles" already exists, skipping
+CREATE TABLE
+CREATE TABLE
+NOTICE:  relation "signing_public_grants" already exists, skipping
+NOTICE:  relation "signing_grant_items" already exists, skipping
+CREATE TABLE
+NOTICE:  relation "signing_sessions_v2" already exists, skipping
+CREATE TABLE
+CREATE TABLE
+NOTICE:  relation "signing_actions" already exists, skipping
+NOTICE:  relation "signing_approvals" already exists, skipping
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+NOTICE:  relation "signing_operations" already exists, skipping
+NOTICE:  relation "signing_jobs" already exists, skipping
+NOTICE:  relation "signing_job_dependencies" already exists, skipping
+CREATE TABLE
+NOTICE:  relation "signing_deliveries" already exists, skipping
+CREATE TABLE
+NOTICE:  relation "signing_events_v2" already exists, skipping
+NOTICE:  relation "signing_selections" already exists, skipping
+CREATE TABLE
+CREATE TABLE
+NOTICE:  relation "signing_selection_items" already exists, skipping
+CREATE TABLE
+NOTICE:  column "workflow_generation" of relation "signingfiles" already exists, skipping
+ALTER TABLE
+NOTICE:  relation "signing_packages_scope_cursor" already exists, skipping
+CREATE INDEX
+CREATE INDEX
+NOTICE:  relation "signing_packages_submission" already exists, skipping
+NOTICE:  relation "signing_packages_case" already exists, skipping
+CREATE INDEX
+CREATE INDEX
+NOTICE:  relation "signing_tasks_person_state" already exists, skipping
+CREATE INDEX
+NOTICE:  relation "signing_tasks_revision_state" already exists, skipping
+NOTICE:  relation "signing_jobs_ready" already exists, skipping
+CREATE INDEX
+NOTICE:  relation "signing_jobs_expired" already exists, skipping
+CREATE INDEX
+CREATE INDEX
+NOTICE:  relation "signing_deliveries_profile" already exists, skipping
+NOTICE:  relation "signing_events_package" already exists, skipping
+CREATE INDEX
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+DO
+DO
+COMMIT
