@@ -138,7 +138,13 @@ function linkFor(env) {
 
 function createRuntime({ pool, env = process.env, storage, provider, renderer, contextIds = null, log = console }) {
     const grantService = createGrantService({ encryptionKey: grantKey(env), keyId: env.SIGNING_V2_GRANT_KEY_ID || '1' });
-    const pool_ = renderer || new RenderPool({ concurrency: Math.min(4, Math.max(1, Number(env.SIGNING_V2_RENDERERS) || 2)) });
+    const pool_ = renderer || new RenderPool({
+        concurrency: Math.min(4, Math.max(1, Number(env.SIGNING_V2_RENDERERS) || 2)),
+        executablePath: String(env.PUPPETEER_EXECUTABLE_PATH || '').trim() || undefined,
+        // Same rule as v1 evidence PDFs: production (and root) Chrome needs --no-sandbox.
+        noSandbox: String(env.PUPPETEER_NO_SANDBOX || '').toLowerCase() === 'true'
+            || String(env.IS_PRODUCTION || '').toLowerCase() === 'true',
+    });
     const workflow = createWorkflowService({ pool, grantService, authorizeActivation });
     const completion = createCompletionService({ pool, renderer: pool_, storage });
     const handlers = {
