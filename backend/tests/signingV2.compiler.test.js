@@ -63,7 +63,7 @@ test('optional role needs an authored inactive treatment; informational annex is
     definition.documents[0].fields.push({ ...definition.documents[0].fields[1], id: 'optional', roleKey: 'optional' });
     assert.throws(() => validateDefinition(definition), error('OPTIONAL_ROLE_TREATMENT_REQUIRED'));
     definition.documents[0].fields.at(-1).inactiveTreatment = 'authored_inactive';
-    definition.documents.push({ key: 'annex', name: 'Information', sourceArtifactId: f.sourceId, sourceHash: 'a'.repeat(64), informational: true, fields: [] });
+    definition.documents.push({ key: 'annex', name: 'Information', sourceArtifactId: f.sourceId, sourceHash: 'a'.repeat(64), informational: true, viewRoles: ['employee'], fields: [] });
     const compiled = compilePackage(validateDefinition(definition), f.input, f.directory);
     assert.equal(compiled.snapshot.documents.length, 4);
     assert.equal(compiled.snapshot.tasks.length, 3);

@@ -102,6 +102,10 @@ function validateDefinition(input) {
     for (const document of documents.values()) {
         text(document.name, 200, `documents.${document.key}.name`);
         expect(document.informational === undefined || typeof document.informational === 'boolean', 'INVALID_DEFINITION', document.key);
+        const viewRoles = document.viewRoles || [];
+        expect(Array.isArray(viewRoles) && viewRoles.length <= roles.size && new Set(viewRoles).size === viewRoles.length
+            && viewRoles.every(key => roles.has(key)), 'INVALID_DOCUMENT_VISIBILITY', document.key);
+        expect(!document.informational || viewRoles.length > 0, 'DOCUMENT_VIEW_ROLES_REQUIRED', document.key);
         expect(UUID.test(document.sourceArtifactId) && /^[a-f0-9]{64}$/.test(document.sourceHash), 'INVALID_SOURCE', document.key);
         validateCondition(document.when, keys, document.key);
         const fields = list(document.fields || [], limits.fieldsPerDocument, `${document.key}.fields`);
@@ -238,11 +242,18 @@ function compilePackage(definition, input, directory, now = new Date()) {
             tasks.push({ documentKey: document.key, roleKey: participant.roleKey, occurrence: participant.occurrence,
                 stage: participant.stage, required: obligations.some(field => field.required), fieldIds: obligations.map(field => field.id) });
         }
+        const readPersonIds = [...new Set(participants.filter(person => document.viewRoles?.includes(person.roleKey)
+            || byParticipant.has(`${person.roleKey}:${person.occurrence}`)).map(person => person.personId))].sort();
+        expect(readPersonIds.length > 0, 'INVALID_DOCUMENT_VISIBILITY', document.key);
         documents.push({ key: document.key, name: document.name, sourceArtifactId: source.id, sourceHash: source.content_sha256,
             sourceBytes: Number(source.bytes), pages, informational: Boolean(document.informational), fields,
+            readPersonIds,
             inclusionReason: { rule: document.when || null, result: true } });
     }
     expect(documents.length > 0 && tasks.some(task => task.required), 'NO_SIGNING_OBLIGATIONS');
+    for (const rule of definition.signingRules) for (const ref of rule.roles) {
+        expect(tasks.some(task => task.roleKey === ref.key && task.occurrence === ref.occurrence && task.required), 'RULE_WITHOUT_REQUIRED_TASK');
+    }
     // Every selected participant must have an actual task. Hidden, unused recipients cannot get an invite.
     for (const participant of participants) expect(tasks.some(task => task.roleKey === participant.roleKey && task.occurrence === participant.occurrence), 'ROLE_WITHOUT_DOCUMENTS', participant.roleKey);
     const personIds = [...new Set(participants.map(person => person.personId))];

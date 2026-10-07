@@ -30,7 +30,7 @@ function compilerFixture({ documentCount = 3 } = {}) {
     return { definition, directory, input, personId, partyId, sourceId };
 }
 
-async function databaseFixture(pool, { packageCount = 1, documentCount = 3, sourceBytes } = {}) {
+async function databaseFixture(pool, { packageCount = 1, documentCount = 3, sourceBytes, configure } = {}) {
     const fixture = compilerFixture({ documentCount });
     if (sourceBytes) {
         const { PDFDocument } = require('pdf-lib');
@@ -70,6 +70,9 @@ async function databaseFixture(pool, { packageCount = 1, documentCount = 3, sour
     await pool.query(`INSERT INTO signing_artifacts(id,owner_context_id,kind,inputs_hash,content_sha256,object_key,bytes,state,metadata,ready_at)
         VALUES($1,$2,'source',$3,$3,$4,$5,'ready',$6,now())`,
     [source.id, contextId, source.content_sha256, `synthetic/${contextId}/source.pdf`, source.bytes, source.metadata]);
+    if (configure) fixture.definition = validateDefinition(await configure({
+        definition: JSON.parse(JSON.stringify(fixture.definition)), packages, people, parties, contextId, userId: user.userid, source, pool,
+    }));
     await pool.query(`INSERT INTO signing_templates(id,owner_context_id,owner_userid,name,definition)
         VALUES($1,$2,$3,$4,$5)`, [templateId, contextId, user.userid, fixture.definition.name, fixture.definition]);
     const definitionHash = digest(fixture.definition);
@@ -77,6 +80,9 @@ async function databaseFixture(pool, { packageCount = 1, documentCount = 3, sour
         VALUES($1,$2,$3,1,'published',$4,$5,$6,$6,now())`, [versionId, contextId, templateId, fixture.definition, definitionHash, user.userid]);
     const directory = { ...fixture.directory, people: new Map(people.map(person => [person.id, person])),
         parties: new Map(parties.map(party => [party.id, { ...party, kind: 'person' }])) };
+    if (configure) for (const [key, table] of [['people','signing_people'],['parties','signing_parties'],['authorities','signing_authorities']]) {
+        directory[key] = new Map((await pool.query(`SELECT * FROM ${table} WHERE owner_context_id=$1`, [contextId])).rows.map(row => [row.id,row]));
+    }
     const revisionHashes = packages.map(item => compilePackage(fixture.definition, item, directory).hash);
     const input = { name: 'Synthetic capacity', templateVersionId: versionId, idempotencyKey: randomUUID(), packages,
         previewHash: digest({ templateVersionId: versionId, definitionHash, packages, revisionHashes }) };
