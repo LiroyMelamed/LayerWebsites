@@ -424,6 +424,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         } catch (err) {
             console.error("Failed to load PDF", err);
             setPdfFile(null);
+            setPdfReady(true);
         }
     };
 
@@ -2799,7 +2800,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                             </div>
 
                             <SimpleContainer className="lw-signing-pdfContainer" ref={pdfScrollRef}>
-                                {pdfFile && fileDetails.file?.FileKey ? (
+                                {pdfFile && (fileDetails.file?.FileKey || loadPublicPdf) ? (
                                     <PdfViewer
                                         pdfFile={pdfFile}
                                         spots={spots}
@@ -2871,7 +2872,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
                     <SimpleContainer className="lw-signing-modalBody">
                         <SimpleContainer className="lw-signing-pdfContainer" ref={pdfScrollRef}>
-                            {pdfFile && fileDetails.file?.FileKey ? (
+                            {pdfFile && (fileDetails.file?.FileKey || loadPublicPdf) ? (
                                 <PdfViewer
                                     pdfFile={pdfFile}
                                     spots={spots}
