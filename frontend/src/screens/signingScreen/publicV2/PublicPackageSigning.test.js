@@ -38,16 +38,27 @@ test('codes typed on an Arabic keypad stay available as latin digits', () => {
     expect(latinDigits('\u0668\u0660\u0669\u0666\u0662\u0660')).toBe('809620');
 });
 
-test('a package link opens the regular signing screen, one document at a time', async () => {
+test('a package link signs only the document whose turn has arrived', async () => {
     const i18n = await translations();
     signingPublicApi.describe.mockResolvedValue({ person: { name: 'לירוי' }, locale: 'he', consentVersion: 'consent-v',
-        packages: [documentFor(1, 'ready'), documentFor(2, 'waiting')] });
+        packages: [documentFor(1, 'ready'), documentFor(2, 'ready')] });
     window.history.replaceState({}, '', `/ViewSignedDocument/Sign#${TOKEN}`);
     render(<I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider>);
     expect(await screen.findByTestId('signing-canvas')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: i18n.t('signing.canvas.nextDocument') }));
     await waitFor(() => expect(signingPublicApi.describe).toHaveBeenCalledTimes(2));
     expect(screen.getByTestId('signing-canvas')).toBeTruthy();
+});
+
+test('a document that is still waiting for someone else is not offered', async () => {
+    const i18n = await translations();
+    signingPublicApi.describe.mockResolvedValue({ person: { name: 'לירוי' }, locale: 'he', consentVersion: 'consent-v',
+        packages: [documentFor(1, 'waiting')] });
+    window.history.replaceState({}, '', `/ViewSignedDocument/Sign#${'B'.repeat(43)}`);
+    render(<I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider>);
+    expect(await screen.findByText(i18n.t('signing.canvas.waitingForPreviousSigners'))).toBeTruthy();
+    expect(screen.queryByTestId('signing-canvas')).toBeNull();
+    expect(screen.queryByRole('button', { name: i18n.t('signing.canvas.nextDocument') })).toBeNull();
 });
 
 test('a link without its token never calls the server', async () => {

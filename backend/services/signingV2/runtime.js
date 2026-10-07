@@ -168,7 +168,8 @@ function createRuntime({ pool, env = process.env, storage, provider, renderer, c
             try { await jobs.failed(pool, lease, { code, retryable: !['REVISION_INACTIVE', 'ACTIVATION_NOT_AUTHORIZED', 'INVALID_SOURCE', 'REVISION_CHANGED'].includes(code) }); }
             catch (failure) { if (failure?.errorCode !== 'WORKER_LEASE_LOST') throw failure; }
             // Messages may carry personal data; only the class and the SQLSTATE are logged.
-            log.error('[signing-v2] job failed', kind, code, error?.constructor?.name || 'Error', /^[0-9A-Z]{5}$/.test(error?.code || '') ? error.code : '-');
+            const detail = String(error?.message || '').replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+/gi, '[email]').slice(0, 160);
+            log.error('[signing-v2] job failed', kind, code, detail || '-');
         }
     }
 
