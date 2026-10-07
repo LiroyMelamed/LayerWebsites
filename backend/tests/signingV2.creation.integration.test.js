@@ -38,6 +38,23 @@ test('v2 creation from the product: explicit legacy import, row validation, appr
         f.definition.documents[0].fields.map(field => [field.pageNum, field.x, field.y, field.roleId]), 'coordinates are carried over unchanged');
     assert.equal(version.policy.otpRequired, true);
 
+    const ExcelJS = require('exceljs');
+    const download = await as(request(f.app).get(`/api/signing-v2/templates/${versionId}/workbook?locale=ar`)).buffer(true).parse((response, done) => {
+        const chunks = []; response.on('data', chunk => chunks.push(chunk)); response.on('end', () => done(null, Buffer.concat(chunks)));
+    });
+    assert.equal(download.status, 200);
+    const book = new ExcelJS.Workbook(); await book.xlsx.load(download.body);
+    const sheet = book.getWorksheet('recipients');
+    assert.equal(sheet.getRow(1).getCell(1).value, 'معرّف الصف');
+    assert.equal(sheet.views[0].rightToLeft, true);
+    sheet.getRow(2).values = ['E1', 'موظف تجريبي', '', 501234567, 'sms', 'ar'];
+    sheet.getRow(3).values = ['E2', { formula: '1+1' }, 'x@example.invalid', '', 'email', ''];
+    sheet.getRow(4).values = ['E3', 'Synthetic Three', 'three@example.invalid', '', '', 'en'];
+    const parsed = ok(await as(request(f.app).post(`/api/signing-v2/templates/${versionId}/workbook`)).send({ base64: Buffer.from(await book.xlsx.writeBuffer()).toString('base64') }), 200);
+    assert.deepEqual(parsed.errors, [{ row: 3, code: 'UNSUPPORTED_CELL' }], 'formulas are rejected per row, never evaluated');
+    assert.deepEqual(parsed.rows.map(row => [row.key, row.recipients.first.phone, row.recipients.first.channel || null, row.recipients.first.locale]),
+        [['E1', '0501234567', 'sms', 'ar'], ['E3', '', null, 'en']], 'a numeric mobile number keeps its leading zero');
+
     const lawyer = { name: 'עו״ד בדיקה', email: 'lawyer@example.invalid', channel: 'email', locale: 'he' };
     const employee = index => ({ key: `E${String(index).padStart(3, '0')}`,
         recipients: { first: { name: `עובד ${index}`, email: `employee-${index}@example.invalid`, channel: 'email', locale: ['he', 'ar', 'en'][index % 3] } } });

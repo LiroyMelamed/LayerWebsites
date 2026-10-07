@@ -7,6 +7,7 @@ const { actorScope } = require('../services/signingV2/access');
 const management = require('../services/signingV2/management');
 const actions = require('../services/signingV2/actions');
 const creation = require('../services/signingV2/creation');
+const workbook = require('../lib/signingV2/workbook');
 const { objectStorage, officeQuota } = require('../services/signingV2/runtime');
 const { createAppError } = require('../utils/appError');
 
@@ -40,6 +41,18 @@ router.post('/templates/legacy/:id/import', send, run(async (req, res) => {
     const result = await creation.importLegacyTemplate(pool, await actorScope(pool, req, 'upload'), req.params.id, {
         storage: objectStorage({ client: r2, bucket: BUCKET }), readPdf: require('../services/signingTemplateService').readPdf, locale: req.body?.locale });
     res.status(result.reused ? 200 : 201).json(result);
+}));
+const workbookLocale = value => (['he', 'ar', 'en'].includes(value) ? value : 'he');
+router.get('/templates/:versionId/workbook', view, run(async (req, res) => {
+    const { definition } = await creation.loadVersion(pool, await actorScope(pool, req, 'view'), req.params.versionId);
+    res.set({ 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Content-Disposition': 'attachment; filename="recipients.xlsx"' })
+        .send(await workbook.makeWorkbook(definition, workbookLocale(req.query.locale)));
+}));
+router.post('/templates/:versionId/workbook', send, run(async (req, res) => {
+    const { definition } = await creation.loadVersion(pool, await actorScope(pool, req, 'upload'), req.params.versionId);
+    const base64 = req.body?.base64;
+    if (typeof base64 !== 'string' || base64.length > 2800000 || !/^[A-Za-z0-9+/]*={0,2}$/.test(base64)) throw createAppError('INVALID_WORKBOOK', 422);
+    res.json(await workbook.parseWorkbook(Buffer.from(base64, 'base64'), definition));
 }));
 router.post('/creation/preview', send, run(async (req, res) => res.json(await creation.previewCreation(pool, await actorScope(pool, req, 'upload'), req.body || {}))));
 router.post('/creation', send, run(async (req, res) => {

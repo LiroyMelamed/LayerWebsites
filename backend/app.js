@@ -67,6 +67,7 @@ app.use(helmet({
 }));
 // A bounded 2MB workbook becomes up to 2.8MB when encoded for preview.
 app.use('/api/signing-batches/workbook', bodyParser.json({ limit: '3mb' }));
+app.use(/^\/api\/signing-v2\/templates\/[^/]+\/workbook$/, bodyParser.json({ limit: '3mb' }));
 app.use(bodyParser.json({ limit: API_JSON_LIMIT }));
 app.use(bodyParser.urlencoded({ limit: API_URLENCODED_LIMIT, extended: true }));
 app.use(compression({ threshold: 1024 }));

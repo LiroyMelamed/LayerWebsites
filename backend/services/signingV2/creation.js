@@ -281,4 +281,4 @@ async function createFromRows(pool, scope, input, { reserveCapacity }) {
         previewHash: previewHash(template, packages, compiled) }, { reserveCapacity });
 }
 
-module.exports = { listTemplates, importLegacyTemplate, previewCreation, createFromRows, convertLegacy, normalizePhone, stableUuid };
+module.exports = { listTemplates, loadVersion, importLegacyTemplate, previewCreation, createFromRows, convertLegacy, normalizePhone, stableUuid };
