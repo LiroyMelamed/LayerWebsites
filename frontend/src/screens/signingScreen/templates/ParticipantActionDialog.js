@@ -11,7 +11,7 @@ export function newKey() {
     return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
-const FINAL_STATES = new Set(['provider_accepted', 'delivered', 'failed', 'uncertain', 'cancelled', 'skipped_completed']);
+const FINAL_STATES = new Set(['provider_accepted', 'delivered', 'failed', 'uncertain', 'cancelled', 'skipped_completed', 'bundled']);
 const POLL_MS = 1500;
 
 function LastContact({ label, item }) {
