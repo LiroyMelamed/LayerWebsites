@@ -1599,6 +1599,15 @@
       "runName": "Run name",
       "runNameHelp": "The name appears in the list of pending runs",
       "templateSummary": "Template: {{name}}",
+      "signers": {
+        "heading": "Signers for this send",
+        "help": "A signer can be left out of this send only. The template itself stays as it is.",
+        "remove": "Remove {{name}} from this send",
+        "restore": "Put {{name}} back on this send",
+        "restoreShort": "Restore",
+        "aside": "Not in this send",
+        "review": "Left out of this send: {{names}}. The template was not changed."
+      },
       "shared": {
         "heading": "Shared signer",
         "help": "This signer signs in every package of this run."
@@ -1687,6 +1696,8 @@
       },
       "rowErrors": {
         "NAME_REQUIRED": "Name is missing",
+        "ROLE_REQUIRED": "This signer cannot be left out of the send",
+        "NO_SIGNING_OBLIGATIONS": "Without this signer nobody is left to sign the document",
         "INVALID_EMAIL": "The email address is not valid",
         "INVALID_PHONE": "The phone number is not valid",
         "INVALID_CHANNEL": "The delivery channel is not valid",

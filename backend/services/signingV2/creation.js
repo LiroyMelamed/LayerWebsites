@@ -168,13 +168,30 @@ function recipient(input, definition, path, errors) {
         ...(value.personId ? { personId: String(value.personId) } : {}) };
 }
 
+function omittedRoles(definition, input, errors) {
+    if (input.omittedRoles == null) return new Set();
+    const known = new Set(definition.roles.map(role => role.key));
+    const omitted = new Set();
+    if (!Array.isArray(input.omittedRoles) || input.omittedRoles.length > definition.roles.length) {
+        errors.push({ path: 'omittedRoles', code: 'INVALID_ROLE' });
+        return omitted;
+    }
+    input.omittedRoles.forEach((key, index) => {
+        if (typeof key !== 'string' || !known.has(key) || omitted.has(key)) errors.push({ path: `omittedRoles.${index}`, code: 'INVALID_ROLE' });
+        else omitted.add(key);
+    });
+    if (omitted.size >= definition.roles.length) errors.push({ path: 'omittedRoles', code: 'ROLE_REQUIRED' });
+    return omitted;
+}
+
 function normalize(definition, input) {
     const errors = [];
     expect(typeof input.name === 'string' && input.name.trim().length > 0 && input.name.length <= 300, 'INVALID_SUBMISSION');
     expect(Array.isArray(input.rows) && input.rows.length > 0, 'INVALID_SUBMISSION');
     expect(input.rows.length <= limits.packages, 'CAPACITY_BUDGET_EXCEEDED');
-    const shared = {}, each = definition.roles.filter(role => role.audience !== 'shared');
-    for (const role of definition.roles.filter(item => item.audience === 'shared')) {
+    const omitted = omittedRoles(definition, input, errors);
+    const shared = {}, each = definition.roles.filter(role => role.audience !== 'shared' && !omitted.has(role.key));
+    for (const role of definition.roles.filter(item => item.audience === 'shared' && !omitted.has(item.key))) {
         shared[role.key] = recipient(input.shared?.[role.key], definition, `shared.${role.key}`, errors);
         if (shared[role.key].personId) expect(UUID.test(shared[role.key].personId), 'INVALID_PERSON');
     }
@@ -185,7 +202,7 @@ function normalize(definition, input) {
         keys.add(key);
         return { key, recipients: Object.fromEntries(each.map(role => [role.key, recipient(row?.recipients?.[role.key], definition, `rows.${index}.${role.key}`, errors)])) };
     });
-    return { name: input.name.trim(), shared, rows, errors };
+    return { name: input.name.trim(), shared, rows, omitted, errors };
 }
 
 function packagesFor(definition, plan, personFor) {
@@ -197,12 +214,12 @@ function packagesFor(definition, plan, personFor) {
             roles[role.key] = [{ personId: ids.personId, partyId: ids.partyId }];
             delivery[ids.personId] = { locale: person.locale, channels: person.channels, ...(person.email ? { email: person.email } : {}), ...(person.phone ? { phone: person.phone } : {}) };
         }
-        return { externalKey: row.key, data: {}, roles, delivery };
+        return { externalKey: row.key, data: {}, roles, delivery, ...(plan.omitted.size ? { omitRoles: [...plan.omitted].sort() } : {}) };
     });
 }
 
 function rowsHash(template, plan) {
-    return digest({ templateVersionId: template.id, definitionHash: template.definition_hash, name: plan.name, shared: plan.shared, rows: plan.rows });
+    return digest({ templateVersionId: template.id, definitionHash: template.definition_hash, name: plan.name, omitted: [...plan.omitted].sort(), shared: plan.shared, rows: plan.rows });
 }
 
 async function previewCreation(pool, scope, input) {
@@ -233,6 +250,7 @@ async function previewCreation(pool, scope, input) {
         packageCount: plan.rows.length,
         documentCount: capacity?.documents ?? null,
         recipientCount: new Set(plan.rows.flatMap(row => Object.values(row.recipients).map(person => `${person.name}|${person.email}|${person.phone}`))).size,
+        omitted: [...plan.omitted].sort(),
         shared: Object.entries(plan.shared).map(([roleKey, person]) => ({ roleKey, name: person.name, channels: person.channels })),
         sample: plan.rows.slice(0, 5).map(row => ({ key: row.key, recipients: Object.entries(row.recipients).map(([roleKey, person]) => ({ roleKey, name: person.name, channels: person.channels })) })),
         template: { versionId: template.id, name: definition.name, documents: definition.documents.map(document => ({ key: document.key, name: document.name })), roles: roleSummary(definition) },
@@ -257,7 +275,7 @@ async function createFromRows(pool, scope, input, { reserveCapacity }) {
     const packages = packagesFor(definition, plan, personFor);
     await transaction(pool, async db => {
         await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [`signing-v2-people:${seed.join(':')}`]);
-        for (const role of definition.roles.filter(item => item.audience === 'shared' && plan.shared[item.key].personId)) {
+        for (const role of definition.roles.filter(item => item.audience === 'shared' && plan.shared[item.key]?.personId)) {
             const person = await loadPerson(db, scope, plan.shared[role.key].personId);
             const party = (await db.query(`SELECT id FROM signing_parties WHERE owner_context_id=$1 AND person_id=$2 AND kind='person' ORDER BY id LIMIT 1`,
                 [scope.contextId, person.id])).rows[0];

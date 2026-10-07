@@ -56,6 +56,32 @@ test('unknown people, changed sources, overflow geometry and unknown data keys a
     assert.throws(() => compilePackage(validateDefinition(definition), f.input, f.directory), error('INVALID_GEOMETRY'));
 });
 
+test('one send can leave out a signer while the published template stays unchanged', () => {
+    const f = compilerFixture();
+    const definition = clone(f.definition);
+    definition.roles.push({ key: 'witness', label: 'Witness', capacity: 'personal', min: 1, max: 1, stage: 0 });
+    definition.documents[0].fields.push({ ...definition.documents[0].fields[1], id: 'witness', roleKey: 'witness' });
+    const published = validateDefinition(definition);
+    const input = clone(f.input);
+    input.omitRoles = ['witness'];
+    const compiled = compilePackage(published, input, f.directory);
+    assert.equal(compiled.snapshot.definitionHash, digest(published));
+    assert.deepEqual(compiled.snapshot.participants.map(person => person.roleKey), ['employee']);
+    assert.equal(compiled.snapshot.documents[0].fields.find(field => field.id === 'witness').active, false);
+    assert.equal(compiled.snapshot.tasks.every(task => task.roleKey !== 'witness'), true);
+    assert.throws(() => compilePackage(published, { ...input, omitRoles: ['employee', 'witness'] }, f.directory), error('INVALID_ROLE_BINDING'));
+    const witnessId = randomUUID(), witnessParty = randomUUID();
+    f.directory.people.set(witnessId, { id: witnessId, name: 'Witness', identity_key: null });
+    f.directory.parties.set(witnessParty, { id: witnessParty, kind: 'person', person_id: witnessId, name: 'Witness' });
+    const withoutEmployee = clone(f.input);
+    delete withoutEmployee.roles.employee;
+    withoutEmployee.roles.witness = [{ personId: witnessId, partyId: witnessParty }];
+    withoutEmployee.delivery[witnessId] = clone(withoutEmployee.delivery[f.personId]);
+    delete withoutEmployee.delivery[f.personId];
+    withoutEmployee.omitRoles = ['employee'];
+    assert.throws(() => compilePackage(published, withoutEmployee, f.directory), error('ROLE_REQUIRED'));
+});
+
 test('optional role needs an authored inactive treatment; informational annex is never counted signed', () => {
     const f = compilerFixture();
     const definition = clone(f.definition);

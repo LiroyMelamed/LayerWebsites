@@ -87,7 +87,7 @@ test.each(['he', 'ar', 'en'])('explicit conversion, field errors linked to their
     fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.check') }));
     await screen.findByRole('heading', { name: i18n.t('signingV2.compose.review.heading') });
     expect(screen.queryByRole('radio', { name: i18n.t('signingV2.compose.locale.template') })).not.toBeInTheDocument();
-    expect(api.previewCreation).toHaveBeenLastCalledWith({ templateVersionId: 'v-1', name: 'Employment pack',
+    expect(api.previewCreation).toHaveBeenLastCalledWith({ templateVersionId: 'v-1', name: 'Employment pack', omittedRoles: [],
         shared: { lawyer: { name: 'Synthetic lawyer', email: 'lawyer@example.invalid', phone: '', locale: language } },
         rows: [{ recipients: { first: { name: 'Synthetic employee', email: '', phone: '050-123-4567', channel: 'sms', locale: language } } }] });
 
@@ -102,6 +102,26 @@ test.each(['he', 'ar', 'en'])('explicit conversion, field errors linked to their
     finish({ submissionId: 'sub-1', reused: false });
     fireEvent.click(await screen.findByRole('button', { name: i18n.t('signingV2.compose.done.open') }));
     expect(api.onCreated).toHaveBeenCalledWith('sub-1');
+});
+
+test('a signer can be left out of this send and put back without changing the template', async () => {
+    const i18n = await translations('he'), api = fakeApi();
+    await toRecipients(i18n, api);
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.signers.remove', { name: 'Lawyer' }) }));
+    expect(screen.queryByRole('group', { name: 'Lawyer' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: i18n.t('signingV2.compose.signers.remove', { name: 'Employee' }) })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.signers.restore', { name: 'Lawyer' }) }));
+    expect(screen.getByRole('group', { name: 'Lawyer' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.signers.remove', { name: 'Lawyer' }) }));
+    const row = screen.getByRole('group', { name: i18n.t('signingV2.compose.rows.row', { number: '1' }) });
+    fireEvent.change(field(row, i18n.t('signingV2.compose.fields.name')), { target: { value: 'Synthetic employee' } });
+    fireEvent.change(field(row, i18n.t('signingV2.compose.fields.email')), { target: { value: 'employee@example.invalid' } });
+    api.previewCreation.mockResolvedValueOnce(validPreview(1));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.check') }));
+    await screen.findByText(i18n.t('signingV2.compose.signers.review', { names: 'Lawyer' }));
+    expect(api.previewCreation).toHaveBeenLastCalledWith({ templateVersionId: 'v-1', name: 'Employment pack', omittedRoles: ['lawyer'],
+        shared: {},
+        rows: [{ recipients: { first: { name: 'Synthetic employee', email: 'employee@example.invalid', phone: '', locale: 'he' } } }] });
 });
 
 test('Excel rows replace manual rows and skipped rows are reported by their sheet row', async () => {

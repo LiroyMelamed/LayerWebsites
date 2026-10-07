@@ -230,6 +230,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const [name, setName] = useState('');
     const [shared, setShared] = useState({});
     const [rows, setRows] = useState([]);
+    const [omitted, setOmitted] = useState(() => new Set());
     const [source, setSource] = useState('manual');
     const [importNote, setImportNote] = useState(null);
     const [check, setCheck] = useState(null);
@@ -243,6 +244,8 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     // Stable arrays keep memoized rows from re-rendering on every keystroke with 200 rows.
     const shareRoles = useMemo(() => template ? template.roles.filter(role => role.audience === 'shared') : [], [template]);
     const eachRoles = useMemo(() => template ? template.roles.filter(role => role.audience !== 'shared') : [], [template]);
+    const activeShare = useMemo(() => shareRoles.filter(role => !omitted.has(role.key)), [shareRoles, omitted]);
+    const activeEach = useMemo(() => eachRoles.filter(role => !omitted.has(role.key)), [eachRoles, omitted]);
     const dirty = rows.some(rowFilled) || Object.values(shared).some(filled) || !!name.trim();
 
     const pendingFocus = useRef(null);
@@ -260,6 +263,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         setTemplate(selected);
         setShared(Object.fromEntries(selected.roles.filter(role => role.audience === 'shared').map(role => [role.key, blankPerson()])));
         setRows([blankRow(roles)]);
+        setOmitted(new Set());
         setName(current => current || selected.name);
         setImportNote(null); invalidate();
     };
@@ -305,14 +309,35 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         } catch (failure) { setError(failure); } finally { setBusy(null); }
     };
 
+    const omitSigner = key => {
+        setOmitted(current => {
+            if (!template || template.roles.length - current.size <= 1 || current.has(key)) return current;
+            const next = new Set(current);
+            next.add(key);
+            return next;
+        });
+        invalidate();
+    };
+    const restoreSigner = key => {
+        setOmitted(current => {
+            if (!current.has(key)) return current;
+            const next = new Set(current);
+            next.delete(key);
+            return next;
+        });
+        invalidate();
+    };
     const payload = () => {
-        const sent = rows.filter(rowFilled);
+        const keptEach = new Set(activeEach.map(role => role.key));
+        const sent = keptEach.size ? rows.filter(row => row.key.trim() || [...keptEach].some(key => filled(row.recipients[key]))) : rows.slice(0, 1);
+        const people = recipients => Object.fromEntries(Object.entries(recipients).filter(([key]) => keptEach.has(key)).map(([key, person]) => [key, clean(person, language)]));
         return {
             sentIds: sent.map(row => row.id),
             body: {
                 templateVersionId: template.versionId, name: name.trim(),
-                shared: Object.fromEntries(Object.entries(shared).map(([key, person]) => [key, clean(person, language)])),
-                rows: sent.map(row => ({ ...(row.key.trim() ? { key: row.key.trim() } : {}), recipients: Object.fromEntries(Object.entries(row.recipients).map(([key, person]) => [key, clean(person, language)])) })),
+                omittedRoles: [...omitted].sort(),
+                shared: Object.fromEntries(activeShare.map(role => [role.key, clean(shared[role.key] || blankPerson(), language)])),
+                rows: sent.map(row => ({ ...(row.key.trim() ? { key: row.key.trim() } : {}), recipients: people(row.recipients) })),
             },
         };
     };
@@ -397,20 +422,41 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                     <input value={name} maxLength={300} onChange={event => { setName(event.target.value); invalidate(); }} />
                 </Field>
                 <p className="lw-signingPackages__caption">{t('signingV2.compose.templateSummary', { name: template.name })}</p>
+                <h3>{t('signingV2.compose.signers.heading')}</h3>
+                <p className="lw-signingCompose__hintLine">{t('signingV2.compose.signers.help')}</p>
+                <ul className="lw-signingCompose__signers">
+                    {template.roles.filter(role => !omitted.has(role.key)).map(role => <li key={role.key}>
+                        <span>{role.label}</span>
+                        {template.roles.length - omitted.size > 1 && <SecondaryButton onPress={() => omitSigner(role.key)} aria-label={t('signingV2.compose.signers.remove', { name: role.label })}>
+                            {t('signingV2.compose.rows.removeShort')}
+                        </SecondaryButton>}
+                    </li>)}
+                </ul>
+                {omitted.size > 0 && <div className="lw-signingCompose__restored">
+                    <p>{t('signingV2.compose.signers.aside')}</p>
+                    <ul className="lw-signingCompose__signers">
+                        {template.roles.filter(role => omitted.has(role.key)).map(role => <li key={role.key}>
+                            <span>{role.label}</span>
+                            <SecondaryButton onPress={() => restoreSigner(role.key)} aria-label={t('signingV2.compose.signers.restore', { name: role.label })}>
+                                {t('signingV2.compose.signers.restoreShort')}
+                            </SecondaryButton>
+                        </li>)}
+                    </ul>
+                </div>}
             </SimpleCard>
-            {shareRoles.length > 0 && <SimpleCard className="lw-signingCompose__card">
+            {activeShare.length > 0 && <SimpleCard className="lw-signingCompose__card">
                 <h2>{t('signingV2.compose.shared.heading')}</h2>
                 <p>{t('signingV2.compose.shared.help')}</p>
-                {shareRoles.map(role => <fieldset key={role.key} className="lw-signingCompose__shared">
+                {activeShare.map(role => <fieldset key={role.key} className="lw-signingCompose__shared">
                     <legend>{role.label}</legend>
                     <PersonFields scope="shared" roleKey={role.key} person={shared[role.key] || blankPerson()} errors={check?.indexed.shared[role.key]} onChange={changeShared} suggestLawyers={role.key === 'lawyer'} />
                 </fieldset>)}
             </SimpleCard>}
-            <SimpleCard className="lw-signingCompose__card">
+            {activeEach.length > 0 && <SimpleCard className="lw-signingCompose__card">
                 <div className="lw-signingCompose__rowsHeading">
                     <div>
                         <h2>{t('signingV2.compose.rows.heading')}</h2>
-                        <p>{t('signingV2.compose.rows.help', { roles: eachRoles.map(role => role.label).join(' · '), max: number(MAX_ROWS) })}</p>
+                        <p>{t('signingV2.compose.rows.help', { roles: activeEach.map(role => role.label).join(' · '), max: number(MAX_ROWS) })}</p>
                     </div>
                     <SegmentedSwitch value={source} onChange={setSource} ariaLabel={t('signingV2.compose.rows.source')}
                         options={[{ value: 'manual', label: t('signingV2.compose.rows.manual') }, { value: 'excel', label: t('signingV2.compose.rows.excel') }]} />
@@ -447,18 +493,18 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                     })}</ul>
                     {errorCount > 30 && <p>{t('signingV2.compose.moreErrors', { count: errorCount - 30, formattedCount: number(errorCount - 30) })}</p>}
                 </StatusNotice>}
-                <ol className="lw-signingCompose__rows">{rows.map((row, index) =>
-                    <RecipientRow key={row.id} row={row} index={index} roles={eachRoles} errors={check?.indexed.byRow[row.id]} onChange={changeRow} onRemove={removeRow} canRemove={rows.length > 1} />)}
-                </ol>
+                {activeEach.length > 0 && <ol className="lw-signingCompose__rows">{rows.map((row, index) =>
+                    <RecipientRow key={row.id} row={row} index={index} roles={activeEach} errors={check?.indexed.byRow[row.id]} onChange={changeRow} onRemove={removeRow} canRemove={rows.length > 1} />)}
+                </ol>}
                 <div className="lw-signingPackages__actions">
                     <SecondaryButton onPress={() => {
-                        const row = blankRow(eachRoles);
-                        pendingFocus.current = fieldId(row.id, eachRoles[0]?.key, 'name');
+                        const row = blankRow(activeEach.length ? activeEach : eachRoles);
+                        pendingFocus.current = fieldId(row.id, activeEach[0]?.key, 'name');
                         setRows(current => [...current, row]); invalidate();
                     }} disabled={rows.length >= MAX_ROWS}>{t('signingV2.compose.rows.add')}</SecondaryButton>
                     <span className="lw-signingPackages__caption" aria-live="polite">{t('signingV2.compose.rows.count', { count: filledRows, formattedCount: number(filledRows), max: number(MAX_ROWS) })}</span>
                 </div>
-            </SimpleCard>
+            </SimpleCard>}
             <footer className="lw-signingCompose__footer is-sticky">
                 <SecondaryButton onPress={() => setStep('template')} disabled={!!busy}>{t('signingV2.compose.previous')}</SecondaryButton>
                 <PrimaryButton onPress={runCheck} disabled={!!busy}>{busy === 'check' ? t('signingV2.compose.checking') : t('signingV2.compose.check')}</PrimaryButton>
@@ -482,6 +528,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                     <ul className="lw-signingCompose__plainList">{preview.shared.map(item => <li key={item.roleKey}><bdi>{roleLabel(item.roleKey)}</bdi>: <bdi>{item.name}</bdi></li>)}</ul>
                     <p className="lw-signingCompose__note">{t('signingV2.compose.review.sharedInvitations', { name: sharedNames, count: preview.packageCount, formattedCount: number(preview.packageCount) })}</p>
                 </>}
+                {omitted.size > 0 && <p className="lw-signingCompose__note">{t('signingV2.compose.signers.review', { names: template.roles.filter(role => omitted.has(role.key)).map(role => role.label).join(', ') })}</p>}
                 <h3>{t('signingV2.compose.review.sample', { count: preview.sample.length, formattedCount: number(preview.sample.length) })}</h3>
                 <ul className="lw-signingCompose__plainList">{preview.sample.map(item => <li key={item.key}>
                     {item.recipients.map((person, index) => <React.Fragment key={person.roleKey}>{index > 0 && ' · '}
