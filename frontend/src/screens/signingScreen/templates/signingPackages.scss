@@ -9,18 +9,19 @@
   h1 { font-size: 1.5rem; line-height: 1.4; margin: 0; }
   h2 { font-size: 1.125rem; margin: 0; }
   h3 { font-size: 1rem; margin: 0; }
-  p { margin: .375rem 0; line-height: 1.6; max-inline-size: 72ch; }
+  p:not(.lw-simpleText) { margin: .375rem 0; line-height: 1.6; max-inline-size: 72ch; }
   button, input { font: inherit; }
   button:focus-visible, input:focus-visible { outline: 2px solid var(--lw-color-primary, #2a4365); outline-offset: 3px; }
   ::selection { color: #fff; background: var(--lw-color-primary, #2a4365); }
   input { caret-color: var(--lw-color-primary, #2a4365); }
 }
+.lw-signingPackages .lw-segmentedSwitch__option { min-block-size: 2.75rem; }
 .lw-signingPackages__heading, .lw-signingPackages__actions, .lw-signingPackages__toolbar,
 .lw-signingPackages__panelHeader, .lw-signingPackages__pager {
   display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
 }
 .lw-signingPackages__heading { justify-content: space-between; margin-block-end: 1.5rem; }
-.lw-signingPackages__heading p, .lw-signingPackages__caption { color: #4a5568; font-size: .875rem; }
+.lw-signingPackages__heading p:not(.lw-simpleText), .lw-signingPackages__caption { color: #4a5568; font-size: .875rem; }
 .lw-signingPackages__toolbar { margin-block-end: 1rem; > :first-child { flex: 1 1 18rem; } }
 .lw-signingPackages__toolbar .lw-simpleInput { inline-size: 100%; min-block-size: 2.75rem; margin-block-start: 0; }
 .lw-signingPackages__resultSummary { min-block-size: 1.75rem; margin-block: .75rem; font-size: .875rem; }
@@ -62,7 +63,7 @@
   &::backdrop { background: rgb(26 54 93 / 25%); }
   h2 { font-size: 1.25rem; margin: 0; }
   h3 { font-size: 1rem; margin: 0; }
-  p { line-height: 1.6; margin: .375rem 0; }
+  p:not(.lw-simpleText) { line-height: 1.6; margin: .375rem 0; }
   time, small { font-size: .8125rem; color: #4a5568; }
 }
 .lw-signingPackages__panelHeader { justify-content: space-between; gap: 1rem; margin-block-end: 1.5rem; }
@@ -72,7 +73,7 @@
 .lw-signingPackages__personActions {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem;
   margin-block-start: 1rem; padding-block-start: .75rem; border-block-start: 1px dashed #e2e8f0; font-size: .8125rem;
-  p { margin: 0; color: #4a5568; }
+  p:not(.lw-simpleText) { margin: 0; color: #4a5568; }
 }
 .lw-signingPackages__actionDialog {
   inline-size: min(32rem, calc(100% - 2rem)); max-block-size: calc(100dvh - 2rem); box-sizing: border-box;
@@ -80,7 +81,7 @@
   color: var(--lw-color-text, #2d3748); text-align: start; box-shadow: 0 12px 32px rgb(45 55 72 / 18%);
   &::backdrop { background: rgb(26 54 93 / 30%); }
   h2 { font-size: 1.125rem; margin: 0 0 1rem; }
-  p { line-height: 1.6; margin: .5rem 0; font-size: .875rem; }
+  p:not(.lw-simpleText) { line-height: 1.6; margin: .5rem 0; font-size: .875rem; }
   bdi { unicode-bidi: isolate; }
   [tabindex="-1"]:focus:not(:focus-visible) { outline: none; }
 }
