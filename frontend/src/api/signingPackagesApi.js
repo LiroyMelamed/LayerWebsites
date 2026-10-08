@@ -11,6 +11,12 @@ function query(params = {}) {
 const participant = (packageId, personId) => `${root}/packages/${packageId}/participants/${personId}`;
 
 const signingPackagesApi = {
+    matchingPackages: (filters, config) => signingRequest('get', `${root}/packages?${query(filters)}`, null, config),
+    freezeSelection: (body, key, config) => signingRequest('post', `${root}/selections`, body, { ...config, headers: { 'Idempotency-Key': key } }),
+    previewBulk: (id, body, key, config) => signingRequest('post', `${root}/selections/${id}/preview`, body, { ...config, headers: { 'Idempotency-Key': key } }),
+    executeBulk: (body, key) => signingRequest('post', `${root}/bulk-actions`, body, { headers: { 'Idempotency-Key': key } }),
+    bulkOperation: (id, config) => signingRequest('get', `${root}/bulk-actions/${id}`, null, config),
+    bulkOperations: config => signingRequest('get', `${root}/bulk-actions`, null, config),
     list: (filters, config) => signingRequest('get', `${root}/submissions?${query(filters)}`, null, config),
     packages: (id, filters, config) => signingRequest('get', `${root}/submissions/${id}/packages?${query(filters)}`, null, config),
     details: (id, config) => signingRequest('get', `${root}/packages/${id}`, null, config),

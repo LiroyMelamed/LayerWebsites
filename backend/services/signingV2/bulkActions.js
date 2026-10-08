@@ -52,7 +52,7 @@ async function bulkOperationStatus(db,scope,id) {
     const op=(await db.query(`SELECT * FROM signing_operations WHERE owner_context_id=$1 AND id=$2 AND actor_key=$3 AND kind='bulk_action'`,
         [scope.contextId,id,`user:${scope.userId}`])).rows[0];
     if(!op)fail('NOT_FOUND',404);
-    const rows=(await db.query(`SELECT i.package_id AS "packageId",i.person_id AS "personId",i.delivery_id AS "deliveryId",
+    const rows=(await db.query(`SELECT i.package_id AS "packageId",p.external_key AS "packageName",i.person_id AS "personId",i.delivery_id AS "deliveryId",
         (${packageScopeSql('p')}) AS authorized,
         CASE WHEN i.state<>'included' THEN i.state WHEN d.state IN ('pending','dispatching') THEN 'queued' ELSE d.state END AS state,
         COALESCE(i.error_code,d.error_code) AS "errorCode",d.provider_accepted_at AS "providerAcceptedAt"
@@ -132,4 +132,14 @@ async function executeBulkAction(pool,scope,input) {
     });
 }
 
-module.exports={executeBulkAction,bulkOperationStatus,lockTargets};
+async function listBulkOperations(db,scope) {
+    if(!scope.send)fail('FORBIDDEN',403);
+    // The owner can recover a lost HTTP response without browser-stored tokens or
+    // another user's local history. Current package visibility is checked on open.
+    return {rows:(await db.query(`SELECT o.id,o.created_at AS "createdAt",r.purpose FROM signing_operations o
+        JOIN signing_bulk_reviews r ON r.owner_context_id=o.owner_context_id AND r.id=(o.result->>'reviewId')::uuid
+        WHERE o.owner_context_id=$1 AND o.actor_key=$2 AND o.kind='bulk_action'
+        ORDER BY o.created_at DESC,o.id DESC LIMIT 20`,[scope.contextId,`user:${scope.userId}`])).rows};
+}
+
+module.exports={executeBulkAction,bulkOperationStatus,listBulkOperations,lockTargets};

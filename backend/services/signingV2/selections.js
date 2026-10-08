@@ -52,7 +52,8 @@ async function matchingItems(db,scope,normalized) {
         SELECT * FROM projected p WHERE ${queryMatchesSql()} AND ${stateMatchesSql('p',6)}
             AND ($7::uuid IS NULL OR p.group_id=$7) AND ($8::uuid[] IS NULL OR p.id=ANY($8::uuid[]))
         ORDER BY p.id LIMIT $9
-    ), ${itemCtes()}`, [...scopeParams(scope),normalized.pattern,normalized.source.state,normalized.source.submissionId,
+    ), ${itemCtes()}`, [...scopeParams(scope),normalized.packageIds ? '%%' : normalized.pattern,
+        normalized.packageIds ? 'all' : normalized.source.state,normalized.packageIds ? null : normalized.source.submissionId,
         normalized.packageIds,MAX_PACKAGES+1])).rows;
 }
 

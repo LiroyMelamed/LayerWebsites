@@ -111,7 +111,38 @@
 }
 .lw-signingPackages__actionButtons button { min-block-size: 44px; }
 .lw-signingPackages__actionButtons { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: flex-end; margin-block-start: 1.25rem; }
+.lw-signingBulk {
+  button { min-block-size: 2.75rem; min-inline-size: 2.75rem; }
+  bdi, strong { overflow-wrap: anywhere; }
+  .lw-segmentedSwitch__track { flex-wrap: wrap; }
+  .lw-segmentedSwitch__option { white-space: normal; }
+  [tabindex="-1"]:focus:not(:focus-visible) { outline: none; }
+  &__buttons, &__selection { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; margin-block: 1rem; }
+  &__selection > p, &__selection > small { flex-basis: 100%; color: #4a5568; }
+  &__card.lw-simpleCard { display: block; padding: 0; margin: 0; border-radius: .5rem; &:hover { transform: none; } }
+  &__packages, &__messages, &__excluded, &__outcomes, &__recent > ul { list-style: none; padding: 0; margin: 0; }
+  &__packages > li { display: flex; align-items: center; gap: 1rem; padding: .5rem 1rem; border-block-end: 1px solid #e2e8f0; }
+  &__packages label { display: flex; gap: .75rem; align-items: center; min-block-size: 3rem; flex: 1; min-inline-size: 0; cursor: pointer; }
+  &__packages input { inline-size: 1.125rem; block-size: 1.125rem; flex: none; accent-color: var(--lw-color-primary, #2a4365); }
+  &__packages small { display: block; margin-block-start: .25rem; color: #4a5568; }
+  &__setup { display: flex; align-items: flex-start; gap: 1rem; flex-direction: column; padding-block: 1.5rem; }
+  &__recent { margin-block-start: 1.5rem; border-block-start: 1px solid #e2e8f0; padding-block-start: 1.25rem; }
+  &__recent > ul { display: flex; flex-wrap: wrap; gap: .75rem; margin-block-start: .75rem; }
+  &__summary { display: flex; flex-wrap: wrap; gap: 1.25rem 2rem; border-block: 1px solid #e2e8f0; padding-block: 1rem; margin: 0 0 1rem; }
+  &__summary dt { color: #4a5568; }
+  &__summary dd { margin: .375rem 0 0; font-size: 1.125rem; font-weight: 600; }
+  &__messages > li { padding-block: 1.25rem; border-block-end: 1px solid #e2e8f0; }
+  &__messages ul { padding-inline-start: 1.25rem; margin-block: .5rem; }
+  &__messages > li > ul > li { margin-block: .75rem; }
+  &__capacity { display: inline-block; margin-inline-end: .75rem; color: #4a5568; }
+  &__excluded { margin-block: 1rem; border-inline-start: 3px solid #b7791f; padding-inline-start: 1rem; }
+  &__excluded > li { display: grid; gap: .375rem; padding-block: .5rem; }
+  &__outcomes > li { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: .5rem 1rem; padding-block: 1rem; border-block-end: 1px solid #e2e8f0; > p { grid-column: 1 / -1; } }
+}
 @media (max-width: 48rem) {
+  .lw-signingBulk__setup, .lw-signingBulk__setup > *, .lw-signingBulk__setup .lw-segmentedSwitch { inline-size: 100%; box-sizing: border-box; }
+  .lw-signingBulk__buttons > * { flex: 1 1 100%; }
+  .lw-signingBulk__outcomes > li { grid-template-columns: minmax(0,1fr); }
   .lw-signingPackages__toolbar .lw-segmentedSwitch__track { max-inline-size: 100%; box-sizing: border-box; flex-wrap: wrap; border-radius: 1.375rem; }
   .lw-signingPackages__toolbar .lw-segmentedSwitch__option { padding-inline: .5rem; flex: 1 0 auto; }
   .lw-signingPackages__actionBody dl > div { grid-template-columns: minmax(0, 1fr); gap: .25rem; }

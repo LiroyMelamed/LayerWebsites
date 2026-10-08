@@ -72,6 +72,7 @@ function frozenReason(item,target,purpose) {
     const profile=item.profiles.find(profile=>profile.personId===target.person_id);
     if(!profile || profile.profileId!==target.profile.id || profile.version!==target.profile.version) return 'CONTACT_CHANGED';
     if(purpose==='completed_copy') return item.workflowState==='complete' ? null : 'COMPLETED_COPY_NOT_READY';
+    if(target.workflow_state==='complete') return 'ALREADY_COMPLETED';
     const frozen=item.tasks.filter(task=>task.personId===target.person_id && task.state==='ready');
     if(frozen.length && frozen.every(task=>target.tasks.some(now=>now.taskId===task.taskId && now.state==='accepted'))) return 'ALREADY_COMPLETED';
     const current=target.tasks.filter(task=>task.state==='ready');
@@ -97,6 +98,10 @@ function buildPlan(selection,targets,input) {
         const publicItem={packageId:target.id,personId,package:preview.package,recipient:preview.recipient,
             tasks:preview.tasks,documents:input.purpose==='completed_copy'?preview.documents:[],
             destination:preview.destination,lastInvitation:preview.lastInvitation,lastFollowUp:preview.lastFollowUp};
+        if(input.purpose!=='completed_copy') {
+            const readyParticipations=new Set(item.tasks.filter(task=>task.personId===personId && task.state==='ready').map(task=>task.participationId));
+            publicItem.recipient={...preview.recipient,participations:preview.recipient.participations.filter(part=>readyParticipations.has(part.id))};
+        }
         if(reason) {
             excluded.push({...publicItem,reason,cooldownUntil:preview.cooldownUntil});continue;
         }

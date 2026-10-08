@@ -141,11 +141,11 @@ async function listSubmissions(db, scope, input) {
     const hasMore = rows.length > filter.limit;
     if (hasMore) rows.pop();
     return { rows, total: Number(result.rows[0].total), nextCursor: hasMore ? encodeCursor(rows.at(-1)) : null,
-        summaryScope: 'all_authorized_children', state: filter.state };
+        summaryScope: 'all_authorized_children', state: filter.state, capabilities: { send: Boolean(scope.send) } };
 }
 
 async function listPackages(db, scope, groupId, input) {
-    expect(UUID.test(groupId), 'INVALID_SUBMISSION');
+    expect(groupId === null || UUID.test(groupId), 'INVALID_SUBMISSION');
     const filter = filters(input);
     const result = await db.query(`WITH ${projectionCte(scope)}, matches AS (
         SELECT p.id,p.external_key AS name,p.created_at,p.created_at::text AS created_cursor,p.active_revision_id AS revision_id,
@@ -153,18 +153,19 @@ async function listPackages(db, scope, groupId, input) {
             p.document_count,p.prepared_count,p.final_count,p.accepted_messages,p.delivered_messages,p.pending_messages,p.last_message_at,p.issue_count,
             CASE WHEN p.person_names ILIKE $5 AND $5<>'%%' THEN 'person'
                  WHEN p.party_names ILIKE $5 AND $5<>'%%' THEN 'party' ELSE 'package' END AS match_reason
-        FROM projected p WHERE p.group_id=$7 AND ${queryMatchesSql()} AND ${stateMatchesSql('p', 6)}
+        FROM projected p WHERE ($7::uuid IS NULL OR p.group_id=$7) AND ${queryMatchesSql()} AND ${stateMatchesSql('p', 6)}
     ), page AS (
         SELECT * FROM matches WHERE ($8::timestamptz IS NULL OR (created_at,id)<($8::timestamptz,$9::uuid))
         ORDER BY created_at DESC,id DESC LIMIT $10
     ) SELECT (SELECT count(*) FROM matches) AS total,
-        EXISTS(SELECT 1 FROM authorized WHERE group_id=$7) AS group_exists,
+        ($7::uuid IS NULL OR EXISTS(SELECT 1 FROM authorized WHERE group_id=$7)) AS group_exists,
         COALESCE((SELECT jsonb_agg(to_jsonb(page) ORDER BY created_at DESC,id DESC) FROM page),'[]') AS rows`,
     [...scopeParams(scope), filter.pattern, filter.state, groupId, filter.cursor?.createdAt || null, filter.cursor?.id || null, filter.limit + 1]);
     if (!result.rows[0].group_exists) fail('NOT_FOUND', 404);
     const rows = result.rows[0].rows, hasMore = rows.length > filter.limit;
     if (hasMore) rows.pop();
-    return { rows, total: Number(result.rows[0].total), nextCursor: hasMore ? encodeCursor(rows.at(-1)) : null, summaryScope: 'matching_children' };
+    return { rows, total: Number(result.rows[0].total), nextCursor: hasMore ? encodeCursor(rows.at(-1)) : null,
+        summaryScope: 'matching_children', capabilities: { send: Boolean(scope.send) } };
 }
 
 function documentSpots(bindings, participants) {

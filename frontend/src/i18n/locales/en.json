@@ -1548,7 +1548,12 @@
       "ISSUE_NOTE_REQUIRED": "Enter an explanation of up to 2,000 characters.",
       "ISSUE_ALREADY_RESOLVED": "This request has already been handled. Refresh the page.",
       "TASK_STAGE_PASSED": "This signing stage is closed. Document changes require a new revision.",
-      "TASK_REQUIRES_ATTENTION": "Signing is waiting for a refusal or clarification request to be handled."
+      "TASK_REQUIRES_ATTENTION": "Signing is waiting for a refusal or clarification request to be handled.",
+      "SELECTION_EXPIRED": "The selection expired. Review these packages again before sending.",
+      "SELECTION_ACCESS_CHANGED": "Your access changed. Clear the selection and reload your authorized packages.",
+      "EMPTY_SELECTION": "No authorized packages match this selection.",
+      "SELECTION_TOO_LARGE": "Select up to 1,000 packages at a time.",
+      "INVALID_SELECTION": "The selection could not be read. Select the packages again."
     },
     "actionCancelledReason": {
       "ACTION_SCOPE_CHANGED": "The signing tasks changed while this message was waiting. Review the current selection before sending again.",
@@ -1604,7 +1609,11 @@
       "COOLDOWN_ACTIVE": "A message was just sent to this signer. You can send again from {{time}}.",
       "COMPLETED_COPY_NOT_READY": "The copy is not ready. Signatures and final document preparation must finish first.",
       "COMPLETED_COPY_CHANGED": "The prepared documents changed. Reopen the send details and review the copy before sending.",
-      "TASK_REQUIRES_ATTENTION": "Signing is waiting for a refusal or clarification request to be handled."
+      "TASK_REQUIRES_ATTENTION": "Signing is waiting for a refusal or clarification request to be handled.",
+      "ACCESS_CHANGED": "You no longer have access to this package.",
+      "REVISION_CHANGED": "The package was replaced or revised. Review it again.",
+      "CONTACT_CHANGED": "The contact details changed. Review the new destination.",
+      "ACTION_SCOPE_CHANGED": "The ready signing tasks changed. Review the package again."
     },
     "compose": {
       "title": "New signing run",
@@ -2263,6 +2272,45 @@
       "clarificationStatus": "Your clarification request was sent to the office",
       "pausedHelp": "Signing this document is paused for the office to respond. Existing signatures are preserved.",
       "officePaused": "This needs attention before signing can continue. A signed document cannot be changed."
+    },
+    "bulk": {
+      "title": "Bulk actions",
+      "back": "Back to signing runs",
+      "help": "Select packages, review the recipients and message count, then confirm. Nothing is selected automatically.",
+      "reviewTitle": "Review before sending",
+      "reviewHelp": "Only the documents listed here are included. Compatible packages for the same person share one message.",
+      "resultTitle": "Request progress",
+      "resultHelp": "Processing continues when you leave this screen. Return through Recent requests to see the current outcome.",
+      "selected": "Selected packages: {{value}}",
+      "clear": "Clear selection",
+      "expires": "Selection valid until {{time}}",
+      "previousFilter": "This selection belongs to the previous filter. Review it as selected, or clear it before selecting from the new results.",
+      "selectPage": "Select packages on this page ({{value}})",
+      "selectAll": "Select all matching packages ({{value}})",
+      "narrow": "More than 1,000 packages match. Narrow the search before selecting all.",
+      "action": "Action",
+      "policyChannel": "Existing delivery channel",
+      "review": "Review recipients",
+      "recent": "Recent requests",
+      "noRecent": "No bulk requests yet.",
+      "excludedChanged": "This package changed and is excluded. Review its current details before trying again.",
+      "packageNumber": "Package {{value}}",
+      "excluded": "Excluded recipients: {{value}}",
+      "reviewAgain": "Review updated selection",
+      "confirm": "Confirm messages ({{value}})",
+      "editSelection": "Edit selection",
+      "processing": "Processing your request",
+      "finished": "Request processing finished",
+      "accepted": "Messages accepted by the provider: {{value}}",
+      "updated": "Last updated: {{time}}",
+      "newSelection": "Start a new selection",
+      "count": {
+        "packages": "Packages",
+        "participations": "Signing capacities",
+        "people": "People",
+        "documents": "Documents",
+        "messages": "Messages"
+      }
     }
   },
   "calendar": {

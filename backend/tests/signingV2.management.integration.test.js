@@ -27,6 +27,15 @@ test('pending management groups sends, sums obligations and never exposes inacce
         assert.equal(page2.total, 2); assert.notEqual(page1.rows[0].id, page2.rows[0].id); assert.equal(page2.nextCursor, null);
         assert.deepEqual(new Set([page1.rows[0].id, page2.rows[0].id]), new Set([first.submissionId, second.submissionId]));
     });
+    await t.test('flat bulk picker scopes before count, paginates across runs and exposes only send capability', async () => {
+        const one = await listPackages(pool, { ...f.scope, send: true }, null, { state: 'all', limit: 1 });
+        assert.equal(one.total, 4); assert.equal(one.capabilities.send, true); assert.ok(one.nextCursor);
+        const two = await listPackages(pool, f.scope, null, { state: 'all', limit: 1, cursor: one.nextCursor });
+        assert.notEqual(one.rows[0].id, two.rows[0].id); assert.equal(two.total, 4); assert.equal(two.capabilities.send, false);
+        const hidden = await listPackages(pool, { ...f.scope, all: false, userId: -1 }, null, { state: 'all' });
+        assert.equal(hidden.total, 0); assert.deepEqual(hidden.rows, []);
+        assert.equal((await listSubmissions(pool, { ...f.scope, send: true }, {})).capabilities.send, true);
+    });
     await t.test('1/1 plus 1/9 is 2/10, not averaged percentages, and completion is not inferred from signatures alone', async () => {
         for (let index = 0; index < packages.length; index += 1) {
             const tasks = (await pool.query('SELECT id FROM signing_tasks WHERE revision_id=$1 ORDER BY id', [packages[index].active_revision_id])).rows;

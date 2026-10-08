@@ -69,6 +69,14 @@ test('bulk reviews bind exact authorized selection and compatible destinations w
         assert.equal(changed.excluded.find(x=>x.packageId===pkgs[2].id).reason,'ACTION_SCOPE_CHANGED');
         await assert.rejects(previewBulkAction(pool,scope,input),{errorCode:'PREVIEW_CHANGED'});
     });
+    await t.test('explicit package selection preserves a newly completed row and reports exclusion despite the old pending filter',async()=>{
+        await pool.query("UPDATE signing_package_revisions SET workflow_state='complete' WHERE id=$1",[pkgs[0].active_revision_id]);
+        const frozen=await freezeSelection(pool,scope,{mode:'explicit',packageIds:[pkgs[0].id],filter:{state:'pending',query:'old search'},idempotencyKey:randomUUID()});
+        assert.equal(frozen.packages.length,1);
+        const result=await previewBulkAction(pool,scope,{selectionId:frozen.selectionId,purpose:'reminder',idempotencyKey:randomUUID()});
+        assert.equal(result.counts.messages,0);assert.equal(result.excluded[0].reason,'ALREADY_COMPLETED');
+        await assert.rejects(freezeSelection(pool,{...scope,all:false,userId:-1},{mode:'explicit',packageIds:[pkgs[0].id],idempotencyKey:randomUUID()}),{errorCode:'NOT_FOUND'});
+    });
     await t.test('current contact history prevents queued, cooldown and uncertain duplicates with no automatic fallback',async()=>{
         const one=pkgs[4];const profile=(await pool.query('SELECT * FROM signing_delivery_profiles WHERE revision_id=$1',[one.active_revision_id])).rows[0];
         const selected=await freezeSelection(pool,scope,{mode:'explicit',packageIds:[one.id],idempotencyKey:randomUUID()});

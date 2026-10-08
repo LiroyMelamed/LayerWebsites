@@ -32,6 +32,9 @@ router.use(auth, requireSigningEnabledForUser);
 const target = req => ({ packageId: req.params.id, personId: req.params.personId, purpose: req.body?.purpose, channel: req.body?.channel });
 
 router.get('/submissions', view, run(async (req, res) => res.json(await management.listSubmissions(pool, await actorScope(pool, req, 'view'), req.query))));
+router.get('/packages',view,run(async(req,res)=>res.json(await management.listPackages(pool,
+    await actorScope(pool,req,'view'),req.query.submissionId||null,req.query))));
+router.get('/bulk-actions',send,run(async(req,res)=>res.json(await bulkActions.listBulkOperations(pool,await actorScope(pool,req,'upload')))));
 router.post('/selections', send, run(async (req,res) => {
     const selection = await selections.freezeSelection(pool,await actorScope(pool,req,'upload'),
         {...(req.body || {}),idempotencyKey:req.get('Idempotency-Key')});

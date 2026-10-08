@@ -14,6 +14,7 @@ import { colors } from '../../../constant/colors';
 import useSigningLocale from './useSigningLocale';
 import ParticipantActionDialog from './ParticipantActionDialog';
 import TaskIssueDialog from './TaskIssueDialog';
+import BulkActionsWorkspace from './BulkActionsWorkspace';
 import StatusNotice from '../../../components/ui/StatusNotice';
 import { downloadBlobAsFile } from '../../../utils/downloadBlobAsFile';
 import './signingPackages.scss';
@@ -302,6 +303,7 @@ export default function SigningPackagesWorkspace({ onClose, onCreate, api = sign
     const [state, setState] = useState(initialSubmissionId ? 'all' : 'pending');
     const [expanded, setExpanded] = useState(() => new Set(initialSubmissionId ? [initialSubmissionId] : []));
     const [selectedPackage, setSelectedPackage] = useState(null);
+    const [bulkOpen, setBulkOpen] = useState(false);
     const [cursors, setCursors] = useState([null]);
     const cursor = cursors.at(-1);
     const resource = usePagedResource(config => api.list({ state, query: search, cursor, ...(focused ? { submissionId: focused } : {}) }, config), [api, state, search, cursor, focused]);
@@ -309,11 +311,14 @@ export default function SigningPackagesWorkspace({ onClose, onCreate, api = sign
     const toggle = id => setExpanded(previous => {
         const next = new Set(previous); if (next.has(id)) next.delete(id); else next.add(id); return next;
     });
+    if (bulkOpen) return <BulkActionsWorkspace api={api} initialFilter={{ state, query: search, ...(focused ? { submissionId: focused } : {}) }}
+        onClose={() => { setBulkOpen(false); resource.refresh(); }} />;
     return <section className="lw-signingPackages" dir={direction} aria-labelledby="signing-packages-title">
         {onClose && <SigningBackButton onPress={onClose}>{backLabel || t('signingV2.backToDocuments')}</SigningBackButton>}
         <header className="lw-signingPackages__heading">
             <div><h1 id="signing-packages-title">{t('signingV2.title')}</h1><p>{t('signingV2.subtitle')}</p></div>
             <div className="lw-signingPackages__actions">
+                {resource.data.capabilities?.send && <SecondaryButton onPress={() => setBulkOpen(true)}>{t('signingV2.bulk.title')}</SecondaryButton>}
                 {onCreate && <PrimaryButton onPress={onCreate}>{t('signingV2.newPackage')}</PrimaryButton>}
             </div>
         </header>
