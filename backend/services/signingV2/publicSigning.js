@@ -40,7 +40,7 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
         .update(`signing-v2-otp|${salt}|${session.id}|${session.manifest_hash}|${code}`).digest('hex');
 
     async function describe(token) {
-        const grant = await loadPublicGrant(pool, token);
+        const grant = await loadPublicGrant(pool, token, { purpose: ['sign', 'download'] });
         const rows = (await pool.query(`SELECT d.id AS document_id,d.name,d.state AS document_state,d.document_key,d.field_bindings,
                 d.final_artifact_id,r.id AS revision_id,r.package_id,r.workflow_state,r.snapshot->>'locale' AS locale,r.deadline,
                 pk.external_key,s.name AS run_name,owner.name AS owner_name,person.name AS person_name,
@@ -74,7 +74,7 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
                 item.documents.set(row.document_id, { documentId: row.document_id, name: row.name, pages: row.pages || [],
                     final: Boolean(row.final_artifact_id), tasks: [] });
             }
-            if (!row.task_id) continue;
+            if (!row.task_id || grant.purpose === 'download') continue;
             const state = row.task_state === 'blocked' ? 'waiting' : row.task_state;
             if (state in counts) counts[state] += 1;
             const ids = new Set(row.field_ids);
@@ -82,6 +82,7 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
                 fields: row.field_bindings.filter(field => ids.has(field.id)).map(visibleField) });
         }
         return {
+            readOnly: grant.purpose === 'download',
             person: { name: rows[0]?.person_name || '' },
             locale: LOCALES.has(profile?.locale) ? profile.locale : 'he',
             consentVersion: CONSENT_VERSION, expiresAt: grant.expires_at, counts, maxTasksPerSession: limits.manifestTasks,
@@ -100,20 +101,20 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
 
     // The newest version this person may see: the final PDF, else the stage they sign on, else the prepared one.
     async function documentPdf(token, documentId) {
-        const grant = await loadPublicGrant(pool, token);
+        const grant = await loadPublicGrant(pool, token, { purpose: ['sign', 'download'] });
         if (!UUID.test(String(documentId)) || !grant.items.some(item => item.document_id === documentId)) fail('NOT_FOUND', 404);
         const row = (await pool.query(`SELECT d.name,d.final_artifact_id,d.prepared_artifact_id,(SELECT t.stage_artifact_id FROM signing_tasks t
                 JOIN signing_participations p ON p.owner_context_id=t.owner_context_id AND p.id=t.participation_id
                 WHERE t.owner_context_id=d.owner_context_id AND t.document_id=d.id AND p.person_id=$3 AND t.stage_artifact_id IS NOT NULL
                 ORDER BY t.stage DESC LIMIT 1) AS task_artifact_id
             FROM signing_documents d WHERE d.owner_context_id=$1 AND d.id=$2`, [grant.owner_context_id, documentId, grant.person_id])).rows[0];
-        const artifactId = row.final_artifact_id || row.task_artifact_id || row.prepared_artifact_id;
+        const artifactId = grant.purpose === 'download' ? row.final_artifact_id : row.final_artifact_id || row.task_artifact_id || row.prepared_artifact_id;
         if (!artifactId) fail('ARTIFACT_NOT_READY', 409);
         return { ...(await readArtifact(grant.owner_context_id, artifactId)), name: row.name, final: Boolean(row.final_artifact_id) };
     }
 
     async function evidencePdf(token, packageId) {
-        const grant = await loadPublicGrant(pool, token);
+        const grant = await loadPublicGrant(pool, token, { purpose: ['sign', 'download'] });
         const revision = (await pool.query(`SELECT r.id,r.revision_hash FROM signing_package_revisions r
             JOIN signing_packages pk ON pk.owner_context_id=r.owner_context_id AND pk.id=r.package_id AND pk.active_revision_id=r.id
             WHERE r.owner_context_id=$1 AND pk.id=$2 AND r.workflow_state='complete' AND r.id=ANY($3::uuid[])`,

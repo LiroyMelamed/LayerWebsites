@@ -87,13 +87,29 @@ function createGrantService({ encryptionKey, keyId = '1' }) {
         [revision.owner_context_id,JSON.stringify(links)]);
         return {grantCount:new Set(links.map(link=>link.id)).size};
     }
-    return { issueRevisionGrants,tokenForDelivery };
+    // Issued only by the fenced delivery worker after checking exact final
+    // artifacts and profile version. No submission-wide aggregation for copies.
+    async function issueDownloadGrant(db, { contextId, revisionId, personId, profileId, profileVersion, documents }) {
+        expect(documents.length > 0, 'EMPTY_GRANT');
+        const token = randomBytes(32).toString('base64url');
+        const grant = { id: randomUUID(), owner_context_id: contextId, person_id: personId, purpose: 'download',
+            token_hash: bytesHash(Buffer.from(token)) };
+        grant.encrypted_token = seal(token, grant);
+        await db.query(`INSERT INTO signing_public_grants(id,owner_context_id,person_id,purpose,token_hash,encrypted_token,expires_at)
+            VALUES($1,$2,$3,'download',$4,$5,clock_timestamp()+make_interval(secs=>$6))`,
+        [grant.id, contextId, personId, grant.token_hash, grant.encrypted_token, grantSeconds]);
+        await db.query(`INSERT INTO signing_grant_items(owner_context_id,grant_id,person_id,document_id,revision_id,delivery_profile_id,delivery_profile_version)
+            SELECT $1,$2,$3,unnest($4::uuid[]),$5,$6,$7`,
+        [contextId, grant.id, personId, documents.map(document => document.documentId), revisionId, profileId, profileVersion]);
+        return grant;
+    }
+    return { issueRevisionGrants, tokenForDelivery, issueDownloadGrant };
 }
 
 async function loadPublicGrant(db,token,{purpose='sign'}={}) {
     if(typeof token !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(token)) fail('LINK_UNAVAILABLE',404);
     const result=await db.query(`SELECT id,owner_context_id,person_id,purpose,expires_at FROM signing_public_grants
-        WHERE token_hash=$1 AND purpose=$2 AND revoked_at IS NULL AND expires_at > clock_timestamp()`,[bytesHash(Buffer.from(token)),purpose]);
+        WHERE token_hash=$1 AND purpose=ANY($2::text[]) AND revoked_at IS NULL AND expires_at > clock_timestamp()`,[bytesHash(Buffer.from(token)),Array.isArray(purpose) ? purpose : [purpose]]);
     if(!result.rowCount) fail('LINK_UNAVAILABLE',404);
     const grant=result.rows[0];
     const items=(await db.query(`SELECT i.* FROM signing_grant_items i
@@ -102,7 +118,11 @@ async function loadPublicGrant(db,token,{purpose='sign'}={}) {
         JOIN signing_packages p ON p.owner_context_id=r.owner_context_id AND p.id=r.package_id
         WHERE i.owner_context_id=$1 AND i.grant_id=$2 AND i.person_id=$3 AND dp.version=i.delivery_profile_version
         AND p.active_revision_id=r.id AND r.workflow_state IN ('active','attention','complete')
-        AND (r.deadline IS NULL OR r.deadline > clock_timestamp()) ORDER BY i.document_id`,[grant.owner_context_id,grant.id,grant.person_id])).rows;
+        AND (($4='sign' AND (r.deadline IS NULL OR r.deadline > clock_timestamp()))
+            OR ($4='download' AND r.workflow_state='complete' AND EXISTS (SELECT 1 FROM signing_documents d
+                JOIN signing_artifacts a ON a.owner_context_id=d.owner_context_id AND a.id=d.final_artifact_id AND a.state='ready'
+                WHERE d.owner_context_id=i.owner_context_id AND d.id=i.document_id AND d.state='final')))
+        ORDER BY i.document_id`,[grant.owner_context_id,grant.id,grant.person_id,grant.purpose])).rows;
     if(!items.length) fail('LINK_UNAVAILABLE',404);
     return {...grant,items};
 }

@@ -7,10 +7,13 @@ import signingPublicApi from '../../../api/signingPublicApi';
 import PublicPackageSigning, { latinDigits, readyDocumentGroup } from './PublicPackageSigning';
 import he from '../../../i18n/locales/he.json';
 import en from '../../../i18n/locales/en.json';
+import ar from '../../../i18n/locales/ar.json';
+import { downloadBlobAsFile } from '../../../utils/downloadBlobAsFile';
+jest.mock('../../../utils/downloadBlobAsFile', () => ({ downloadBlobAsFile: jest.fn().mockResolvedValue(undefined) }));
 
 jest.mock('../../../api/signingPublicApi', () => {
     const actual = jest.requireActual('../../../api/signingPublicApi');
-    return { __esModule: true, ...actual, default: { describe: jest.fn(), document: jest.fn() } };
+    return { __esModule: true, ...actual, default: { describe: jest.fn(), document: jest.fn(), evidence: jest.fn(), session: jest.fn() } };
 });
 jest.mock('../../../components/specializedComponents/signFiles/SignatureCanvas', () => (props) => (
     <div data-testid="signing-canvas">
@@ -27,7 +30,7 @@ const TOKEN = 'A'.repeat(43);
 async function translations() {
     const instance = createInstance();
     await instance.use(initReactI18next).init({
-        resources: { he: { translation: he }, en: { translation: en } },
+        resources: { he: { translation: he }, ar: { translation: ar }, en: { translation: en } },
         lng: 'he', fallbackLng: false, interpolation: { escapeValue: false },
     });
     return instance;
@@ -164,4 +167,39 @@ test('only multiple distinct ready PDFs offer grouping, still through the regula
     expect(await screen.findByTestId('group')).toHaveTextContent('d-1,d-2');
     expect(screen.queryByRole('button', { name: i18n.t('signing.canvas.nextDocument') })).toBeNull();
     expect(screen.getByTestId('signing-canvas')).toBeTruthy();
+});
+
+
+test.each(['he', 'ar', 'en'])('a read-only completed copy downloads fresh authorized PDFs without mounting a signing flow in %s', async language => {
+    const i18n = await translations(); await i18n.changeLanguage(language);
+    const file = new Blob(['final-pdf'], { type: 'application/pdf' });
+    signingPublicApi.document.mockResolvedValue(file); signingPublicApi.evidence.mockResolvedValue(file);
+    signingPublicApi.describe.mockResolvedValue({ readOnly: true, person: { name: 'Synthetic recipient' }, packages: [{
+        packageId: 'one-package', reference: 'Employee 1', evidence: true,
+        documents: [{ documentId: 'one-doc', name: 'Final agreement', final: true, tasks: [] }],
+    }] });
+    window.history.replaceState({}, '', `/ViewSignedDocument/Sign#${TOKEN}`);
+    render(<MemoryRouter><I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider></MemoryRouter>);
+    await screen.findByText(i18n.t('signingV2.completedCopy.title'));
+    expect(screen.queryByTestId('signing-canvas')).not.toBeInTheDocument();
+    expect(signingPublicApi.session).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: `${i18n.t('signingV2.public.downloadFinal')}: Final agreement` }));
+    await waitFor(() => expect(downloadBlobAsFile).toHaveBeenCalledWith(file, 'Final agreement.pdf'));
+    await waitFor(() => expect(screen.getByRole('button', { name: i18n.t('signingV2.completedCopy.receipt') })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.completedCopy.receipt') }));
+    await waitFor(() => expect(signingPublicApi.evidence).toHaveBeenCalledWith(TOKEN, 'one-package'));
+});
+
+test('a revoked final-document request reports failure and never downloads stale cached content', async () => {
+    const i18n = await translations(); await i18n.changeLanguage('en');
+    signingPublicApi.document.mockRejectedValue({ code: 'LINK_UNAVAILABLE', status: 404 });
+    signingPublicApi.describe.mockResolvedValue({ readOnly: true, packages: [{ packageId: 'p', reference: 'Synthetic package',
+        documents: [{ documentId: 'd', name: 'Agreement', final: true, tasks: [] }] }] });
+    window.history.replaceState({}, '', `/ViewSignedDocument/Sign#${TOKEN}`);
+    const downloads = downloadBlobAsFile.mock.calls.length;
+    render(<MemoryRouter><I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider></MemoryRouter>);
+    fireEvent.click(await screen.findByRole('button', { name: `${i18n.t('signingV2.public.downloadFinal')}: Agreement` }));
+    await screen.findByRole('alert');
+    expect(downloadBlobAsFile).toHaveBeenCalledTimes(downloads);
+    expect(screen.getByRole('button', { name: `${i18n.t('signingV2.public.downloadFinal')}: Agreement` })).toBeEnabled();
 });

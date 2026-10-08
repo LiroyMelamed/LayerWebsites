@@ -7,6 +7,7 @@ import SimpleContainer from '../../../components/simpleComponents/SimpleContaine
 import { Text14, TextBold24 } from '../../../components/specializedComponents/text/AllTextKindFile';
 import SignatureCanvas from '../../../components/specializedComponents/signFiles/SignatureCanvas';
 import { images } from '../../../assets/images/images';
+import CompletedPackageCopy from './CompletedPackageCopy';
 import signingPublicApi, { readGrantToken } from '../../../api/signingPublicApi';
 import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
 import { createV2DocumentAdapter } from './v2SigningCanvasAdapter';
@@ -134,6 +135,8 @@ export default function PublicPackageSigning() {
                 <SimpleContainer className="lw-publicSigningScreen__container">
                     <Text14>{t('common.loading')}</Text14>
                 </SimpleContainer>
+            ) : view.readOnly ? (
+                <CompletedPackageCopy token={token} view={view} onClose={() => navigate(sessionHomePath(), { replace: true })} />
             ) : !current ? (
                 <SimpleContainer className="lw-publicSigningScreen__container">
                     <SimpleContainer className="lw-publicSigningScreen__stack">

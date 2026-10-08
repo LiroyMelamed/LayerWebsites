@@ -2,7 +2,8 @@ const { expect, fail } = require('../../lib/signingV2/errors');
 const { complete } = require('./jobs');
 const { transaction } = require('./transaction');
 
-const SENDABLE_PURPOSES = new Set(['invitation', 'reminder', 'resend']);
+const { completedDocuments, manifestHash, copiesReady } = require('./completedCopy');
+const SENDABLE_PURPOSES = new Set(['invitation', 'reminder', 'resend', 'completed_copy']);
 
 // Provider contract: send({ deliveryId, channel, endpoint, locale, purpose, url })
 // resolves { providerId } once the provider acknowledged the request. A known
@@ -61,19 +62,36 @@ function createDeliveryService({ pool, grantService, provider, linkFor }) {
             const skip = (state, code) => ({ skip: { state, code }, delivery });
             if (delivery.state !== 'pending') return { done: true, delivery };
             if (!SENDABLE_PURPOSES.has(delivery.purpose)) return skip('cancelled', 'PURPOSE_NOT_SUPPORTED');
-            if (delivery.active_revision_id !== delivery.revision_id || !['active', 'attention'].includes(delivery.workflow_state)) {
+            const completedCopy = delivery.purpose === 'completed_copy';
+            if (delivery.active_revision_id !== delivery.revision_id || !(completedCopy ? ['complete'] : ['active', 'attention']).includes(delivery.workflow_state)) {
                 return skip('cancelled', 'REVISION_INACTIVE');
             }
             if (delivery.profile_version !== delivery.current_profile_version) return skip('cancelled', 'CONTACT_CHANGED');
-            if (Number(delivery.ready_tasks) === 0) {
+            if (!completedCopy && Number(delivery.ready_tasks) === 0) {
                 // Someone who completed while the job waited gets no signing request.
                 if (Number(delivery.open_required) === 0) return skip('skipped_completed', 'ALREADY_COMPLETED');
                 return { deferred: 'BLOCKED_ON_STAGE', delivery };
             }
-            if (!delivery.live_grant_id) return skip('failed', 'LINK_UNAVAILABLE');
+            if (!completedCopy && (!delivery.live_grant_id || delivery.grant_purpose !== 'sign')) return skip('failed', 'LINK_UNAVAILABLE');
             const endpoint = delivery.channel === 'email' ? delivery.endpoints_snapshot.email
                 : delivery.channel === 'sms' ? delivery.endpoints_snapshot.phone : null;
             if (!endpoint || endpoint !== delivery.target_snapshot.endpoint) return skip('cancelled', 'CONTACT_CHANGED');
+            if (completedCopy) {
+                const documents = await completedDocuments(db, lease.owner_context_id, delivery.revision_id, delivery.person_id);
+                if (!copiesReady(documents) || manifestHash(documents) !== manifestHash(delivery.target_snapshot.documents || [])) {
+                    return skip('cancelled', 'COMPLETED_COPY_CHANGED');
+                }
+                // Creating the capability and committing dispatching share the same
+                // transaction; an expired lease cannot issue another copy on retry.
+                const grant = await grantService.issueDownloadGrant(db, { contextId: lease.owner_context_id,
+                    revisionId: delivery.revision_id, personId: delivery.person_id, profileId: delivery.profile_id,
+                    profileVersion: delivery.profile_version, documents });
+                await db.query('UPDATE signing_deliveries SET grant_id=$3 WHERE owner_context_id=$1 AND id=$2',
+                    [lease.owner_context_id, delivery.id, grant.id]);
+                Object.assign(delivery, { live_grant_id: grant.id, grant_context_id: grant.owner_context_id,
+                    grant_person_id: grant.person_id, grant_purpose: grant.purpose,
+                    encrypted_token: grant.encrypted_token, token_hash: grant.token_hash });
+            }
             if (delivery.purpose === 'invitation') {
                 // Packages of one run share the grant of a shared signer. The grant row serializes
                 // their dispatches so exactly one invitation per channel leaves for that link.

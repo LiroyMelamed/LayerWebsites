@@ -80,6 +80,7 @@ export default function ParticipantActionDialog({ api, packageId, personId, purp
     };
 
     const item = operation?.items?.[0];
+    const documents = purpose === 'completed_copy' ? preview?.documents || [] : preview?.tasks || [];
     const titleId = `signing-action-${personId}`;
     const dismiss = event => { event.preventDefault(); event.stopPropagation(); if (phase !== 'sending') onClose(Boolean(operation)); };
     return <dialog ref={dialog} className="lw-signingPackages__actionDialog" dir={direction} aria-labelledby={titleId}
@@ -94,14 +95,14 @@ export default function ParticipantActionDialog({ api, packageId, personId, purp
                         {t(`signingV2.capacity.${item.capacity}`)}{item.partyName ? ` · ${item.partyName}` : ''}</small>)}</dd></div>
                 <div><dt>{t('signingV2.action.package')}</dt><dd>{preview.package.name}{preview.package.caseName ? ` · ${preview.package.caseName}` : ''}</dd></div>
                 <div><dt>{t('signingV2.action.documents')}</dt><dd>
-                    <span>{t('signingV2.action.tasks', { count: preview.tasks.length, formattedCount: number(preview.tasks.length) })}</span>
-                    <ul>{preview.tasks.map(task => <li key={task.taskId}>{task.documentName}</li>)}</ul></dd></div>
+                    <span>{t(purpose === 'completed_copy' ? 'signingV2.action.finalDocuments' : 'signingV2.action.tasks', { count: documents.length, formattedCount: number(documents.length) })}</span>
+                    <ul>{documents.map(document => <li key={document.documentId || document.taskId}>{document.documentName}</li>)}</ul></dd></div>
                 <div><dt>{t('signingV2.action.destination')}</dt><dd>{preview.destination
                     ? <span>{t(`signingV2.channel.${preview.destination.channel}`)} · <bdi dir="ltr">{preview.destination.masked}</bdi></span>
                     : t('signingV2.action.noDestination')}</dd></div>
             </dl>
-            <LastContact label={t('signingV2.action.lastInvitation')} item={preview.lastInvitation} />
-            <LastContact label={t('signingV2.action.lastFollowUp')} item={preview.lastFollowUp} />
+            {purpose !== 'completed_copy' && <LastContact label={t('signingV2.action.lastInvitation')} item={preview.lastInvitation} />}
+            <LastContact label={t(purpose === 'completed_copy' ? 'signingV2.completedCopy.lastCopy' : 'signingV2.action.lastFollowUp')} item={preview.lastFollowUp} />
             {!preview.eligible && <p className="lw-signingPackages__attention" role="status">
                 {t(`signingV2.reasons.${preview.reason}`, { time: preview.cooldownUntil ? date(preview.cooldownUntil) : '' })}</p>}
             {preview.eligible && <p>{t(`signingV2.action.${purpose}.effect`)}</p>}

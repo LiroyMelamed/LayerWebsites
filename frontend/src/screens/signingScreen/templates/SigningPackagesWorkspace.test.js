@@ -327,3 +327,21 @@ test('a file bridge failure is shown as a localized error and allows retry', asy
         expect(within(panel).queryByText(i18n.t('signingV2.errors.REQUEST_FAILED'))).not.toBeInTheDocument();
     } finally { failedReader.mockRestore(); delete window.ReactNativeWebView; }
 });
+
+
+test.each(['he', 'ar', 'en'])('a completed package offers a copy of scoped final documents, not another signing request in %s', async language => {
+    const i18n = await translations(language), { api, detail, preview } = actionFixture();
+    detail.package.workflow_state = 'complete';
+    detail.participants.forEach(person => person.tasks.forEach(task => { task.state = 'accepted'; }));
+    preview.tasks = [];
+    preview.documents = [{ documentId: 'doc-1', documentName: 'Final employment agreement' }];
+    const dialog = await openAction(i18n, api, 'completed_copy');
+    expect(await within(dialog).findByText('Final employment agreement')).toBeInTheDocument();
+    expect(within(dialog).getByText(i18n.t('signingV2.action.finalDocuments', { count: 1, formattedCount: '1' }))).toBeInTheDocument();
+    expect(api.previewAction).toHaveBeenCalledWith('package-1', 'person-1', { purpose: 'completed_copy' }, expect.any(Object));
+    const confirm = within(dialog).getByRole('button', { name: i18n.t('signingV2.action.completed_copy.confirm') });
+    fireEvent.click(confirm); fireEvent.click(confirm);
+    await within(dialog).findByText(i18n.t('signingV2.action.queued'));
+    expect(api.executeAction).toHaveBeenCalledTimes(1);
+    expect(api.executeAction).toHaveBeenCalledWith('package-1', 'person-1', { purpose: 'completed_copy', previewHash: 'hash-1' }, expect.any(String));
+});

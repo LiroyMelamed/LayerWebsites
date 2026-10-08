@@ -1540,7 +1540,9 @@
       "COOLDOWN_ACTIVE": "A message was just sent to this signer. Wait a little before sending another.",
       "INVALID_ACTION": "This request is invalid. Refresh and try again.",
       "TEMPLATE_ARCHIVED": "This template is archived. Restore it before a new send.",
-      "TEMPLATE_SOURCE_ARCHIVED": "The source template is archived. Its imported version cannot be restored."
+      "TEMPLATE_SOURCE_ARCHIVED": "The source template is archived. Its imported version cannot be restored.",
+      "COMPLETED_COPY_NOT_READY": "The copy is not ready. Signatures and final document preparation must finish first.",
+      "COMPLETED_COPY_CHANGED": "The prepared documents changed. Reopen the send details and review the copy before sending."
     },
     "action": {
       "reminder": {
@@ -1567,7 +1569,16 @@
       "queuedHelp": "The status updates here when the provider confirms receipt. You can close this window; sending continues in the background.",
       "failedHelp": "The provider rejected the message. Check the contact details before trying again.",
       "tasks_one": "1 document waiting for their signature",
-      "tasks_other": "{{formattedCount}} documents waiting for their signature"
+      "tasks_other": "{{formattedCount}} documents waiting for their signature",
+      "completed_copy": {
+        "title": "Send completed copy",
+        "open": "Send completed copy",
+        "confirm": "Send copy",
+        "effect": "A personal link to the final documents listed here will be sent. No new signature will be requested."
+      },
+      "finalDocuments": "{{formattedCount}} final documents",
+      "finalDocuments_one": "1 final document",
+      "finalDocuments_other": "{{formattedCount}} final documents"
     },
     "reasons": {
       "REVISION_INACTIVE": "This package is not active, so there is nobody to ask for a signature.",
@@ -1578,7 +1589,9 @@
       "LINK_UNAVAILABLE": "This signer has no valid signing link. The link needs to be renewed.",
       "PREVIOUS_OUTCOME_UNCERTAIN": "We do not know whether the previous message went out. Check delivery before sending another.",
       "MESSAGE_ALREADY_QUEUED": "A message to this signer is already waiting to go out. Track it in the Delivery tab.",
-      "COOLDOWN_ACTIVE": "A message was just sent to this signer. You can send again from {{time}}."
+      "COOLDOWN_ACTIVE": "A message was just sent to this signer. You can send again from {{time}}.",
+      "COMPLETED_COPY_NOT_READY": "The copy is not ready. Signatures and final document preparation must finish first.",
+      "COMPLETED_COPY_CHANGED": "The prepared documents changed. Reopen the send details and review the copy before sending."
     },
     "compose": {
       "title": "New signing run",
@@ -2210,6 +2223,14 @@
         "exclude_document": "Do not include this PDF",
         "authored_inactive": "The source already marks this field as not applicable"
       }
+    },
+    "completedCopy": {
+      "title": "Completed documents",
+      "help": "These completed documents are available for you to download. No further signature is needed.",
+      "receipt": "Download my signing receipt",
+      "finish": "Finish",
+      "unavailable": "This copy link is no longer available. Contact the office for a new link.",
+      "lastCopy": "Last completed copy"
     }
   },
   "calendar": {

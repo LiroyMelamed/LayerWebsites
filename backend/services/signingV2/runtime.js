@@ -69,6 +69,12 @@ const MESSAGES = {
     en: (name, owner, url) => `Hello ${name}, documents from ${owner} are waiting for your signature. ${url}`,
 };
 
+const COPY_MESSAGES = {
+    he: (name, owner, url) => `שלום ${name}, המסמכים שהושלמו מאת ${owner} זמינים לצפייה ולהורדה. אין צורך לחתום שוב. ${url}`,
+    ar: (name, owner, url) => `مرحبًا ${name}، المستندات المكتملة من ${owner} متاحة للعرض والتنزيل. لا حاجة للتوقيع مجددًا. ${url}`,
+    en: (name, owner, url) => `Hello ${name}, completed documents from ${owner} are ready to view and download. No further signature is needed. ${url}`,
+};
+
 function notificationProvider({ pool, notifyRecipient }) {
     return { async send(message) {
         const found = (await pool.query(`SELECT person.name AS person_name,s.name AS submission_name,owner.name AS owner_name
@@ -81,12 +87,15 @@ function notificationProvider({ pool, notifyRecipient }) {
             JOIN users owner ON owner.userid=p.owner_userid WHERE d.id=$1`, [message.deliveryId])).rows[0];
         if (!found) throw Object.assign(new Error('delivery not found'), { definitive: true, code: 'DELIVERY_NOT_FOUND' });
         const email = message.channel === 'email';
-        const type = message.purpose === 'reminder' ? 'SIGN_REMINDER' : 'SIGN_INVITE';
+        const completedCopy = message.purpose === 'completed_copy';
+        const type = completedCopy ? 'DOC_SIGNED' : message.purpose === 'reminder' ? 'SIGN_REMINDER' : 'SIGN_INVITE';
+        const copy = completedCopy ? COPY_MESSAGES : MESSAGES;
         const result = await notifyRecipient({ recipientUserId: null, notificationType: type, respectExplicitChannelChoice: true, skipAdminCc: true,
             recipientEmail: email ? message.endpoint : null, recipientPhone: email ? null : message.endpoint,
             email: email ? { campaignKey: type, contactFields: { recipient_name: found.person_name, document_name: found.submission_name,
-                lawyer_name: found.owner_name, action_url: message.url } } : null,
-            sms: email ? null : { messageBody: (MESSAGES[message.locale] || MESSAGES.he)(found.person_name, found.owner_name, message.url) } });
+                lawyer_name: found.owner_name, action_url: message.url,
+                ...(completedCopy ? { signed_document_url: message.url, evidence_certificate_url: message.url } : {}) } } : null,
+            sms: email ? null : { messageBody: (copy[message.locale] || copy.he)(found.person_name, found.owner_name, message.url) } });
         const outcome = result?.outcomes?.[email ? 'email' : 'sms'];
         if (outcome?.ok === true) return { providerId: outcome.messageId || null };
         if (outcome && outcome.attempted === false) throw Object.assign(new Error('not attempted'), { definitive: true, code: 'PROVIDER_REJECTED' });

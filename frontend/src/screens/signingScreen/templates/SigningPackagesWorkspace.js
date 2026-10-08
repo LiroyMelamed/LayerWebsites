@@ -128,8 +128,9 @@ function PackageChildren({ api, batchId, state, query, onOpen }) {
 function PersonActions({ person, detail, onAction }) {
     const { t, date } = useSigningLocale();
     const latest = detail.deliveries.find(item => item.personId === person.personId);
-    if (!person.tasks.some(task => task.state === 'ready')) return null;
-    const purpose = latest?.state === 'failed' ? 'resend' : 'reminder';
+    const completedCopy = detail.package.workflow_state === 'complete';
+    if (!completedCopy && !person.tasks.some(task => task.state === 'ready')) return null;
+    const purpose = completedCopy ? 'completed_copy' : latest?.state === 'failed' ? 'resend' : 'reminder';
     return <div className="lw-signingPackages__personActions">
         {latest && <p>{t(`signingV2.delivery.${latest.state}`)}{latest.attemptedAt && <> · <time dateTime={latest.attemptedAt}>{date(latest.attemptedAt)}</time></>}</p>}
         <SecondaryButton onPress={() => onAction(person.personId, purpose)}>{t(`signingV2.action.${purpose}.open`)}</SecondaryButton>

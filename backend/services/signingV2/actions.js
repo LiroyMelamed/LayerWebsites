@@ -6,7 +6,8 @@ const { packageScopeSql, scopeParams } = require('./access');
 const { transaction } = require('./transaction');
 const { enqueue, job } = require('./jobs');
 
-const PURPOSES = new Set(['reminder', 'resend']);
+const { completedDocuments, documentManifest, copiesReady } = require('./completedCopy');
+const PURPOSES = new Set(['reminder', 'resend', 'completed_copy']);
 const CHANNELS = new Set(['email', 'sms']);
 // Applies across idempotency keys, so a second click or a second tab that
 // generated a new key still cannot message the same person again immediately.
@@ -28,7 +29,7 @@ function validate(input) {
     expect(input.channel === undefined || input.channel === null || CHANNELS.has(input.channel), 'INVALID_ACTION');
 }
 
-async function loadTarget(db, scope, { packageId, personId }, lock = false) {
+async function loadTarget(db, scope, { packageId, personId, purpose }, lock = false) {
     const pkg = await db.query(`SELECT p.id,p.external_key,p.case_id,p.active_revision_id,r.workflow_state,r.revision_hash,r.deadline,
             r.deadline IS NULL OR r.deadline > clock_timestamp() AS before_deadline
         FROM signing_packages p JOIN signing_package_revisions r ON r.owner_context_id=p.owner_context_id AND r.id=p.active_revision_id
@@ -57,27 +58,32 @@ async function loadTarget(db, scope, { packageId, personId }, lock = false) {
             AND ($5::boolean OR EXISTS (SELECT 1 FROM case_users cu WHERE cu.caseid=c.caseid AND cu.userid=$6))) AS case_name`,
     [scope.contextId, target.active_revision_id, personId, scope.caseView ? target.case_id : null, Boolean(scope.caseAll), scope.userId])).rows[0];
     if (!detail.participations.length || !detail.profile) fail('NOT_FOUND', 404);
-    return { ...target, ...detail };
+    const documents = purpose === 'completed_copy'
+        ? await completedDocuments(db, scope.contextId, target.active_revision_id, personId) : [];
+    return { ...target, ...detail, documents };
 }
 
 function evaluate(target, input) {
+    const completedCopy = input.purpose === 'completed_copy';
     const channels = target.profile.policy_snapshot.channels || [];
     const channel = input.channel || channels.find(value => CHANNELS.has(value));
     const endpoint = channel === 'email' ? target.profile.endpoints_snapshot.email : channel === 'sms' ? target.profile.endpoints_snapshot.phone : null;
     const ready = target.tasks.filter(task => task.state === 'ready');
     const openRequired = target.tasks.filter(task => task.required && !['accepted', 'cancelled'].includes(task.state));
-    const messages = target.deliveries.filter(item => item.channel === channel);
+    const relevant = target.deliveries.filter(item => (item.purpose === 'completed_copy') === completedCopy);
+    const messages = relevant.filter(item => item.channel === channel);
     const lastInvitation = target.deliveries.find(item => item.purpose === 'invitation') || null;
-    const lastFollowUp = target.deliveries.find(item => item.purpose !== 'invitation') || null;
+    const lastFollowUp = relevant.find(item => item.purpose !== 'invitation') || null;
     const recent = messages.find(item => item.purpose !== 'invitation' && !['failed', 'cancelled', 'skipped_completed'].includes(item.state));
     const cooldownUntil = recent ? new Date(new Date(recent.createdAt).getTime() + COOLDOWN_SECONDS * 1000) : null;
     let reason = null;
-    if (!['active', 'attention'].includes(target.workflow_state)) reason = 'REVISION_INACTIVE';
-    else if (!target.before_deadline) reason = 'DEADLINE_EXPIRED';
-    else if (!openRequired.length && !ready.length) reason = 'ALREADY_COMPLETED';
-    else if (!ready.length) reason = 'WAITING_FOR_PREVIOUS_STAGE';
+    if (completedCopy && (target.workflow_state !== 'complete' || !copiesReady(target.documents))) reason = 'COMPLETED_COPY_NOT_READY';
+    else if (!completedCopy && !['active', 'attention'].includes(target.workflow_state)) reason = 'REVISION_INACTIVE';
+    else if (!completedCopy && !target.before_deadline) reason = 'DEADLINE_EXPIRED';
+    else if (!completedCopy && !openRequired.length && !ready.length) reason = 'ALREADY_COMPLETED';
+    else if (!completedCopy && !ready.length) reason = 'WAITING_FOR_PREVIOUS_STAGE';
     else if (!channel || !channels.includes(channel) || !endpoint) reason = 'CHANNEL_UNAVAILABLE';
-    else if (!target.grant_id) reason = 'LINK_UNAVAILABLE';
+    else if (!completedCopy && !target.grant_id) reason = 'LINK_UNAVAILABLE';
     else if (messages.some(item => ['dispatching', 'uncertain'].includes(item.state))) reason = 'PREVIOUS_OUTCOME_UNCERTAIN';
     else if (messages.some(item => item.state === 'pending')) reason = 'MESSAGE_ALREADY_QUEUED';
     else if (cooldownUntil && cooldownUntil > new Date()) reason = 'COOLDOWN_ACTIVE';
@@ -85,14 +91,16 @@ function evaluate(target, input) {
         packageId: target.id, revisionId: target.active_revision_id, personId: input.personId, purpose: input.purpose,
         package: { name: target.external_key, caseName: target.case_name || null },
         recipient: { name: target.participations[0].name, participations: target.participations },
-        tasks: ready.map(task => ({ taskId: task.taskId, documentName: task.documentName, stage: task.stage })),
+        tasks: (completedCopy ? [] : ready).map(task => ({ taskId: task.taskId, documentName: task.documentName, stage: task.stage })),
+        documents: target.documents.map(({ documentId, documentName }) => ({ documentId, documentName })),
         destination: channel ? { channel, masked: maskEndpoint(channel, endpoint) } : null,
         lastInvitation, lastFollowUp,
         eligible: reason === null, reason, cooldownUntil: reason === 'COOLDOWN_ACTIVE' ? cooldownUntil.toISOString() : null,
     };
     preview.previewHash = digest({ revisionId: preview.revisionId, revisionHash: target.revision_hash, personId: input.personId,
         purpose: input.purpose, channel: channel || null, taskIds: preview.tasks.map(task => task.taskId),
-        profileVersion: target.profile.version, grantId: target.grant_id, endpoint: endpoint ? digest({ endpoint }) : null });
+        documents: completedCopy ? documentManifest(target.documents) : [],
+        profileVersion: target.profile.version, grantId: completedCopy ? null : target.grant_id, endpoint: endpoint ? digest({ endpoint }) : null });
     return { preview, channel, endpoint };
 }
 
@@ -137,16 +145,17 @@ async function executeParticipantAction(pool, scope, input) {
         if (preview.previewHash !== input.previewHash) fail('PREVIEW_CHANGED', 412);
         const deliveryId = randomUUID();
         await db.query(`INSERT INTO signing_deliveries(id,owner_context_id,profile_id,profile_version,grant_id,event_key,purpose,channel,target_snapshot)
-            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [deliveryId, scope.contextId, target.profile.id, target.profile.version, target.grant_id,
+            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [deliveryId, scope.contextId, target.profile.id, target.profile.version, input.purpose === 'completed_copy' ? null : target.grant_id,
             `${input.purpose}:${target.active_revision_id}:${input.personId}:${operationId}`, input.purpose, channel,
-            { locale: target.profile.policy_snapshot.locale, endpoint }]);
+            { locale: target.profile.policy_snapshot.locale, endpoint,
+                ...(input.purpose === 'completed_copy' ? { documents: documentManifest(target.documents) } : {}) }]);
         await enqueue(db, scope.contextId, [job('dispatch_delivery', deliveryId, target.revision_hash)]);
         const row = (await db.query(`INSERT INTO signing_operations(id,owner_context_id,actor_key,kind,idempotency_key,request_hash,state,result)
             VALUES($1,$2,$3,$4,$5,$6,'running',$7) RETURNING *`, [operationId, scope.contextId, actorKey, kind, input.idempotencyKey, requestHash,
             { items: [{ personId: input.personId, deliveryId, state: 'queued' }] }])).rows[0];
         await db.query(`INSERT INTO signing_events_v2(owner_context_id,package_id,actor_key,kind,details) VALUES($1,$2,$3,'action_queued',$4)`,
             [scope.contextId, target.id, actorKey, { operationId, purpose: input.purpose, personId: input.personId, channel,
-                taskIds: preview.tasks.map(task => task.taskId) }]);
+                taskIds: preview.tasks.map(task => task.taskId), documentIds: preview.documents.map(document => document.documentId) }]);
         return operationResult(row, false);
     });
 }
