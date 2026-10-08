@@ -16,6 +16,7 @@ ALTER TABLE signing_error_alerts ADD COLUMN IF NOT EXISTS submission_id uuid REF
 CREATE UNIQUE INDEX IF NOT EXISTS signing_error_alerts_dedupe ON signing_error_alerts
     ((COALESCE(owner_context_id,'00000000-0000-0000-0000-000000000000'::uuid)),source_key,phase,error_code,severity);
 CREATE INDEX IF NOT EXISTS signing_error_alerts_pending ON signing_error_alerts(first_seen_at) WHERE batch_id IS NULL;
+CREATE INDEX IF NOT EXISTS signing_error_alerts_batch ON signing_error_alerts(batch_id) WHERE batch_id IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS signing_error_emails (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
