@@ -14,6 +14,7 @@ import { colors } from '../../../constant/colors';
 import useSigningLocale from './useSigningLocale';
 import ParticipantActionDialog from './ParticipantActionDialog';
 import StatusNotice from '../../../components/ui/StatusNotice';
+import { downloadBlobAsFile } from '../../../utils/downloadBlobAsFile';
 import './signingPackages.scss';
 
 function useDebounced(value, delay = 250) {
@@ -84,10 +85,8 @@ function Progress({ accepted, required }) {
 }
 
 function saveBlob(blob, name) {
-    const url = URL.createObjectURL(blob), link = document.createElement('a');
-    link.href = url; link.download = `${String(name || 'document').replace(/[\\/:*?"<>|]+/g, ' ').trim()}.pdf`;
-    document.body.appendChild(link); link.click(); link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    const filename = String(name || 'document').replace(/[\\/:*?"<>|]+/g, ' ').trim().replace(/\.pdf$/i, '');
+    return downloadBlobAsFile(blob, `${filename || 'document'}.pdf`);
 }
 
 function taskDisplayState(task, pkg) {
@@ -196,28 +195,28 @@ function PackagePanel({ id, api, onClose }) {
         setTab('documents');
         setOpenId(current => (current === documentId ? null : documentId));
     };
+    const openDocument = detail.documents?.find(document => document.id === openId);
+    const openDocumentVersion = openDocument?.final ? 'final' : openDocument?.prepared ? 'prepared' : 'source';
     useEffect(() => {
         if (!openId) return undefined;
         let cancelled = false;
-        let skip = false;
-        setFiles(previous => {
-            if (previous[openId]?.blob || previous[openId]?.loading || previous[openId]?.error) { skip = true; return previous; }
-            return { ...previous, [openId]: { loading: true } };
-        });
-        if (skip) return undefined;
+        // A preview can become a prepared/final PDF while the panel stays open.
+        // Reopening also retries a failed or abandoned load instead of keeping it stuck.
+        setFiles(previous => ({ ...previous, [openId]: { loading: true } }));
         api.documentFile(id, openId).then(blob => { if (!cancelled) setFiles(previous => ({ ...previous, [openId]: { blob } })); })
             .catch(error => { if (!cancelled) setFiles(previous => ({ ...previous, [openId]: { error } })); });
         return () => { cancelled = true; };
-    }, [openId, id, api]);
+    }, [openId, id, api, openDocumentVersion]);
     const downloadDocument = async document => {
         setBusy(`document-${document.id}`); setFileError(null);
-        try { saveBlob(files[document.id]?.blob || await api.documentFile(id, document.id), document.name); }
+        // Always obtain the current authorized artifact; the viewer may hold an older unsigned preview.
+        try { await saveBlob(await api.documentFile(id, document.id), document.name); }
         catch (error) { setFileError(error); }
         finally { setBusy(''); }
     };
     const downloadEvidence = async () => {
         setBusy('evidence'); setFileError(null);
-        try { saveBlob(await api.evidenceFile(id), detail.package?.external_key || t('signingV2.public.evidenceName')); }
+        try { await saveBlob(await api.evidenceFile(id), detail.package?.external_key || t('signingV2.public.evidenceName')); }
         catch (error) { setFileError(error); }
         finally { setBusy(''); }
     };

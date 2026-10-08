@@ -1,14 +1,14 @@
-import React from 'react';
+import React, { act } from 'react';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { createInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import SigningPackagesWorkspace from './SigningPackagesWorkspace';
-
-jest.mock('../../../components/specializedComponents/signFiles/pdfViewer/PdfViewer', () => ({ spots = [] }) =>
-    <div data-testid="package-pdf">{spots.map(spot => spot.signerName).join('|')}</div>);
 import he from '../../../i18n/locales/he.json';
 import ar from '../../../i18n/locales/ar.json';
 import en from '../../../i18n/locales/en.json';
+
+jest.mock('../../../components/specializedComponents/signFiles/pdfViewer/PdfViewer', () => ({ spots = [], pdfFile }) =>
+    <div data-testid="package-pdf" data-bytes={pdfFile?.size}>{spots.map(spot => spot.signerName).join('|')}</div>);
 
 // CRA's jsdom has no Web Crypto; browsers do.
 if (!window.crypto) Object.defineProperty(window, 'crypto', { value: require('crypto').webcrypto });
@@ -234,4 +234,77 @@ test('all locale plural forms resolve for 0/1/2/3/11/200 without falling back to
             expect(language === 'he' ? '' : text).not.toMatch(/[\u0590-\u05ff]/);
         }
     }
+});
+
+async function openPackagePanel(i18n, api) {
+    render(<I18nextProvider i18n={i18n}><SigningPackagesWorkspace api={api} /></I18nextProvider>);
+    fireEvent.click(await screen.findByRole('button', { name: /October employees/ }));
+    fireEvent.click(await screen.findByRole('button', { name: i18n.t('signingV2.openPackage') }));
+    const panel = await screen.findByRole('dialog');
+    await within(panel).findByText('Synthetic employee');
+    return panel;
+}
+
+test('an open unsigned preview refreshes on completion and final download obtains fresh bytes through the incumbent file bridge', async () => {
+    const i18n = await translations('en'), { api, detail } = fixture();
+    const preview = new Blob(['unsigned'], { type: 'application/pdf' });
+    const final = new Blob(['signed final PDF with the accepted signature'], { type: 'application/pdf' });
+    const evidence = new Blob(['synthetic evidence'], { type: 'application/pdf' });
+    api.documentFile = jest.fn().mockResolvedValueOnce(preview).mockResolvedValue(final);
+    api.evidenceFile = jest.fn().mockResolvedValue(evidence);
+    window.ReactNativeWebView = { postMessage: jest.fn() };
+    jest.useFakeTimers();
+    try {
+        const panel = await openPackagePanel(i18n, api);
+        fireEvent.click(within(panel).getByRole('button', { name: 'View document: Employment agreement' }));
+        expect(await within(panel).findByTestId('package-pdf')).toHaveAttribute('data-bytes', String(preview.size));
+        api.details.mockResolvedValue({ ...detail, package: { ...detail.package, workflow_state: 'complete' }, documents: [{ ...detail.documents[0], final: true, prepared: true, state: 'final', name: 'Employment agreement.pdf' }] });
+        await act(async () => { jest.advanceTimersByTime(8000); });
+        await waitFor(() => expect(within(panel).getByTestId('package-pdf')).toHaveAttribute('data-bytes', String(final.size)));
+        // Let FileReader use real timers; polling has already proven the transition.
+        jest.useRealTimers();
+        fireEvent.click(within(panel).getByRole('button', { name: 'Download signed document: Employment agreement.pdf' }));
+        await waitFor(() => expect(window.ReactNativeWebView.postMessage).toHaveBeenCalledTimes(1));
+        expect(api.documentFile).toHaveBeenCalledTimes(3);
+        const message = JSON.parse(window.ReactNativeWebView.postMessage.mock.calls[0][0]);
+        expect(message.payload).toMatchObject({ fileName: 'Employment agreement.pdf', mimeType: 'application/pdf' });
+        expect(atob(message.payload.base64)).toBe('signed final PDF with the accepted signature');
+        fireEvent.click(within(panel).getByRole('button', { name: i18n.t('signingV2.public.downloadEvidence') }));
+        await waitFor(() => expect(window.ReactNativeWebView.postMessage).toHaveBeenCalledTimes(2));
+        expect(atob(JSON.parse(window.ReactNativeWebView.postMessage.mock.calls[1][0]).payload.base64)).toBe('synthetic evidence');
+    } finally { delete window.ReactNativeWebView; jest.useRealTimers(); }
+});
+
+test('reopening a document abandons its old request and cannot get stuck on a cached loading state', async () => {
+    const i18n = await translations('en'), { api } = fixture();
+    let oldRequest;
+    api.documentFile = jest.fn().mockReturnValueOnce(new Promise(resolve => { oldRequest = resolve; })).mockResolvedValue(new Blob(['newer preview']));
+    const panel = await openPackagePanel(i18n, api);
+    fireEvent.click(within(panel).getByRole('button', { name: 'View document: Employment agreement' }));
+    await waitFor(() => expect(api.documentFile).toHaveBeenCalledTimes(1));
+    fireEvent.click(within(panel).getByRole('button', { name: 'Hide document: Employment agreement' }));
+    fireEvent.click(within(panel).getByRole('button', { name: 'View document: Employment agreement' }));
+    expect(await within(panel).findByTestId('package-pdf')).toHaveAttribute('data-bytes', String('newer preview'.length));
+    await act(async () => { oldRequest(new Blob(['obsolete'])); });
+    expect(within(panel).getByTestId('package-pdf')).toHaveAttribute('data-bytes', String('newer preview'.length));
+});
+
+test('a file bridge failure is shown as a localized error and allows retry', async () => {
+    const i18n = await translations('ar'), { api, detail } = fixture();
+    detail.package.workflow_state = 'complete';
+    api.evidenceFile = jest.fn().mockResolvedValue(new Blob(['evidence']));
+    window.ReactNativeWebView = { postMessage: jest.fn() };
+    const failedReader = jest.spyOn(FileReader.prototype, 'readAsDataURL').mockImplementation(function () { this.onerror(); });
+    try {
+        const panel = await openPackagePanel(i18n, api);
+        const download = within(panel).getByRole('button', { name: i18n.t('signingV2.public.downloadEvidence') });
+        fireEvent.click(download);
+        await within(panel).findByText(i18n.t('signingV2.errors.REQUEST_FAILED'));
+        expect(download).toBeEnabled();
+        expect(window.ReactNativeWebView.postMessage).not.toHaveBeenCalled();
+        failedReader.mockRestore();
+        fireEvent.click(download);
+        await waitFor(() => expect(window.ReactNativeWebView.postMessage).toHaveBeenCalledTimes(1));
+        expect(within(panel).queryByText(i18n.t('signingV2.errors.REQUEST_FAILED'))).not.toBeInTheDocument();
+    } finally { failedReader.mockRestore(); delete window.ReactNativeWebView; }
 });
