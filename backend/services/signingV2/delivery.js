@@ -5,6 +5,7 @@ const { transaction } = require('./transaction');
 const { digest } = require('../../lib/signingV2/canonical');
 const { senderCanAccess, taskManifest } = require('./followupScope');
 const { completedDocuments, manifestHash, copiesReady } = require('./completedCopy');
+const { assertCurrentAuthorities } = require('./authorities');
 const { planBulkDelivery } = require('./bulkDispatch');
 const SENDABLE_PURPOSES = new Set(['invitation', 'reminder', 'resend', 'completed_copy']);
 
@@ -67,11 +68,12 @@ function createDeliveryService({ pool, grantService, provider, linkFor }) {
             if (delivery.target_snapshot.bulk === true) return planBulkDelivery(db,delivery,grantService);
             if (!SENDABLE_PURPOSES.has(delivery.purpose)) return skip('cancelled', 'PURPOSE_NOT_SUPPORTED');
             const completedCopy = delivery.purpose === 'completed_copy';
+            const renewLink = delivery.purpose === 'resend' && delivery.target_snapshot.renewLink === true;
             if (delivery.active_revision_id !== delivery.revision_id || !(completedCopy ? ['complete'] : ['active', 'attention']).includes(delivery.workflow_state)) {
                 return skip('cancelled', 'REVISION_INACTIVE');
             }
             if (delivery.purpose !== 'invitation' && !await senderCanAccess(db,lease.owner_context_id,
-                delivery.target_snapshot.actorUserId,delivery.package_id)) return skip('cancelled','SENDER_ACCESS_CHANGED');
+                delivery.target_snapshot.actorUserId,delivery.package_id,renewLink ? 'access_link_renew' : null)) return skip('cancelled','SENDER_ACCESS_CHANGED');
             if (delivery.deadline && !completedCopy && new Date(delivery.deadline) <= new Date()) return skip('cancelled','DEADLINE_EXPIRED');
             if (delivery.profile_version !== delivery.current_profile_version) return skip('cancelled', 'CONTACT_CHANGED');
             if (['reminder','resend'].includes(delivery.purpose)) {
@@ -93,7 +95,9 @@ function createDeliveryService({ pool, grantService, provider, linkFor }) {
             }
             if (delivery.purpose !== 'invitation') {
                 // Recheck changes committed while waiting for the task fence.
-                if (!completedCopy) {
+                if (!await senderCanAccess(db,lease.owner_context_id,delivery.target_snapshot.actorUserId,delivery.package_id,
+                    renewLink ? 'access_link_renew' : null)) return skip('cancelled','SENDER_ACCESS_CHANGED');
+                if (!completedCopy && !renewLink) {
                     const link = await db.query(`SELECT id FROM signing_public_grants WHERE owner_context_id=$1 AND id=$2
                         AND person_id=$3 AND purpose='sign' AND revoked_at IS NULL AND expires_at>clock_timestamp() FOR SHARE`,
                     [lease.owner_context_id,delivery.grant_id,delivery.person_id]);
@@ -104,12 +108,13 @@ function createDeliveryService({ pool, grantService, provider, linkFor }) {
                 if (!profile || profile.version !== delivery.profile_version) return skip('cancelled','CONTACT_CHANGED');
                 delivery.endpoints_snapshot = profile.endpoints_snapshot;
             }
+            if (!completedCopy && delivery.deadline && new Date(delivery.deadline)<=new Date()) return skip('cancelled','DEADLINE_EXPIRED');
             if (!completedCopy && Number(delivery.ready_tasks) === 0) {
                 // Someone who completed while the job waited gets no signing request.
                 if (Number(delivery.open_required) === 0) return skip('skipped_completed', 'ALREADY_COMPLETED');
                 return { deferred: 'BLOCKED_ON_STAGE', delivery };
             }
-            if (!completedCopy && (!delivery.live_grant_id || delivery.grant_purpose !== 'sign')) return skip('failed', 'LINK_UNAVAILABLE');
+            if (!completedCopy && !renewLink && (!delivery.live_grant_id || delivery.grant_purpose !== 'sign')) return skip('failed', 'LINK_UNAVAILABLE');
             const endpoint = delivery.channel === 'email' ? delivery.endpoints_snapshot.email
                 : delivery.channel === 'sms' ? delivery.endpoints_snapshot.phone : null;
             if (!endpoint || endpoint !== delivery.target_snapshot.endpoint) return skip('cancelled', 'CONTACT_CHANGED');
@@ -128,6 +133,10 @@ function createDeliveryService({ pool, grantService, provider, linkFor }) {
                 Object.assign(delivery, { live_grant_id: grant.id, grant_context_id: grant.owner_context_id,
                     grant_person_id: grant.person_id, grant_purpose: grant.purpose,
                     encrypted_token: grant.encrypted_token, token_hash: grant.token_hash });
+            }
+            if (renewLink) {
+                try { await assertCurrentAuthorities(db,lease.owner_context_id,delivery.revision_id); }
+                catch(error) { if (!['AUTHORITY_EXPIRED','AUTHORITY_REQUIRED','AUTHORITY_SCOPE_MISMATCH'].includes(error.errorCode)) throw error; return skip('cancelled',error.errorCode); }
             }
             if (['reminder','resend'].includes(delivery.purpose)) {
                 const grant = await grantService.issueFollowupGrant(db,{ contextId:lease.owner_context_id,revisionId:delivery.revision_id,

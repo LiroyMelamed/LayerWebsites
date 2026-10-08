@@ -13,7 +13,7 @@ const { loadPublicGrant } = require('../services/signingV2/grants');
 test('follow-ups freeze exact tasks and recheck current sender access before dispatch',
     { skip: process.env.LEGAL_DB_QA !== 'true', timeout: 120000 }, async t => {
     const pool = require('../config/db'); t.after(()=>pool.end());
-    const h = await deliveryHarness(pool,{ endpoints:Array(8).fill('shared@example.invalid'),configure:({definition,packages})=>{
+    const h = await deliveryHarness(pool,{ endpoints:Array(9).fill('shared@example.invalid'),configure:({definition,packages})=>{
         const personId=packages[0].roles.employee[0].personId, role=packages[0].roles.employee;
         for(const item of packages) {
             item.roles={employee:role,later:role};
@@ -30,7 +30,7 @@ test('follow-ups freeze exact tasks and recheck current sender access before dis
     const {byKey,people}=await h.targets(receipt.submissionId),{f}=h;
     const service=createPublicSigningService({pool,storage:{},otpKey:Buffer.alloc(32,7)});
     const originalToken=h.provider.calls[0].url.split('/s/')[1];
-    assert.equal((await service.describe(originalToken)).packages.length,8);
+    assert.equal((await service.describe(originalToken)).packages.length,9);
     const target=index=>({packageId:byKey[`employee-${index}`].id,personId:people[`employee-${index}`],purpose:'reminder'});
     const tasks=async index=>(await pool.query(`SELECT t.* FROM signing_tasks t WHERE t.revision_id=$1 ORDER BY stage,id`,[byKey[`employee-${index}`].revision_id])).rows;
     const queue=async index=>{const input=target(index),preview=await actions.previewParticipantAction(pool,f.scope,input);assert.equal(preview.eligible,true,JSON.stringify(preview));return actions.executeParticipantAction(pool,f.scope,{...input,previewHash:preview.previewHash,idempotencyKey:randomUUID()});};
@@ -47,7 +47,7 @@ test('follow-ups freeze exact tasks and recheck current sender access before dis
         await assert.rejects(service.createSession(token,{taskIds:[future.id],consentVersion:CONSENT_VERSION}),{errorCode:'TASK_UNAVAILABLE'});
         await assert.rejects(reportTaskIssue(pool,token,{taskIds:[future.id],kind:'decline',idempotencyKey:randomUUID()}),{errorCode:'TASK_UNAVAILABLE'});
         assert.deepEqual((await service.describe(token)).packages[0].documents[0].tasks.map(item=>item.taskId),[first.id]);
-        assert.equal((await service.describe(originalToken)).packages.length,8,'original invitation unchanged');
+        assert.equal((await service.describe(originalToken)).packages.length,9,'original invitation unchanged');
     });
     await t.test('completed reviewed stage cannot invite a returning person to a later stage',async()=>{
         const op=await queue(1),old=await tasks(1);await pool.query("UPDATE signing_tasks SET state=CASE WHEN stage=0 THEN 'accepted' ELSE 'ready' END,version=version+1 WHERE revision_id=$1",[old[0].revision_id]);
@@ -90,7 +90,7 @@ test('follow-ups freeze exact tasks and recheck current sender access before dis
         assert.equal(await currentSenderScope(pool,f.contextId,-1),null);
     });
 
-    for (const [index, change] of [[6,'contact'],[7,'link']]) await t.test(`${change} revoked while dispatch waits for the task fence is rechecked`,async()=>{
+    for (const [index, change] of [[6,'contact'],[8,'sender'],[7,'link']]) await t.test(`${change} revoked while dispatch waits for the task fence is rechecked`,async()=>{
         const op=await queue(index),deliveryId=op.items[0].deliveryId;
         const delivery=(await pool.query('SELECT * FROM signing_deliveries WHERE id=$1',[deliveryId])).rows[0];
         const locker=await pool.connect();let running;
@@ -106,11 +106,12 @@ test('follow-ups freeze exact tasks and recheck current sender access before dis
             }
             assert.equal(blocked,true,'worker reached the task fence after its first profile/grant read');
             if(change==='contact')await locker.query('UPDATE signing_delivery_profiles SET version=version+1 WHERE id=$1',[delivery.profile_id]);
+            else if(change==='sender')await locker.query("UPDATE users SET role='User' WHERE userid=$1",[f.scope.userId]);
             else await locker.query('UPDATE signing_public_grants SET revoked_at=clock_timestamp() WHERE id=$1',[delivery.grant_id]);
             await locker.query('COMMIT');await running;
             assert.equal(h.provider.calls.length,count);
-            assert.equal((await actions.operationStatus(pool,f.scope,op.operationId)).items[0].errorCode,change==='contact'?'CONTACT_CHANGED':'LINK_UNAVAILABLE');
-        } finally {await locker.query('ROLLBACK');locker.release();if(running)await running;}
+            assert.equal((await actions.operationStatus(pool,f.scope,op.operationId)).items[0].errorCode,change==='contact'?'CONTACT_CHANGED':change==='sender'?'SENDER_ACCESS_CHANGED':'LINK_UNAVAILABLE');
+        } finally {await locker.query('ROLLBACK');locker.release();if(running)await running;if(change==='sender')await pool.query("UPDATE users SET role='Admin' WHERE userid=$1",[f.scope.userId]);}
     });
 
 });

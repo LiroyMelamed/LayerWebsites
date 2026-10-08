@@ -6,6 +6,8 @@ const { packageScopeSql, scopeParams } = require('./access');
 const { transaction } = require('./transaction');
 const { enqueue, job } = require('./jobs');
 
+const { invalidateProfile } = require('./contactChanges');
+const { assertCurrentAuthorities } = require('./authorities');
 const { taskManifest } = require('./followupScope');
 const { completedDocuments, documentManifest, copiesReady } = require('./completedCopy');
 const PURPOSES = new Set(['reminder', 'resend', 'completed_copy']);
@@ -27,6 +29,8 @@ function maskEndpoint(channel, value) {
 function validate(input) {
     expect(UUID.test(input.packageId) && UUID.test(input.personId), 'INVALID_ACTION');
     expect(PURPOSES.has(input.purpose), 'INVALID_ACTION');
+    expect(input.renewLink === undefined || typeof input.renewLink === 'boolean', 'INVALID_ACTION');
+    expect(!input.renewLink || input.purpose === 'resend', 'INVALID_ACTION');
     expect(input.channel === undefined || input.channel === null || CHANNELS.has(input.channel), 'INVALID_ACTION');
 }
 
@@ -50,6 +54,8 @@ async function loadTarget(db, scope, { packageId, personId, purpose }, lock = fa
         (SELECT to_jsonb(dp) FROM signing_delivery_profiles dp WHERE dp.owner_context_id=$1 AND dp.revision_id=$2 AND dp.person_id=$3) AS profile,
         (SELECT g.id FROM signing_public_grants g JOIN signing_grant_items i ON i.owner_context_id=g.owner_context_id AND i.grant_id=g.id
             WHERE g.owner_context_id=$1 AND i.revision_id=$2 AND g.person_id=$3 AND g.purpose='sign'
+            AND EXISTS(SELECT 1 FROM signing_delivery_profiles dp WHERE dp.owner_context_id=i.owner_context_id
+                AND dp.id=i.delivery_profile_id AND dp.version=i.delivery_profile_version)
             AND g.revoked_at IS NULL AND g.expires_at > clock_timestamp() ORDER BY g.created_at DESC LIMIT 1) AS grant_id,
         COALESCE((SELECT jsonb_agg(jsonb_build_object('purpose',d.purpose,'channel',d.channel,'state',d.state,'createdAt',d.created_at,
             'attemptedAt',d.attempted_at,'providerAcceptedAt',d.provider_accepted_at) ORDER BY d.created_at DESC,d.id)
@@ -68,7 +74,7 @@ async function loadTarget(db, scope, { packageId, personId, purpose }, lock = fa
 function evaluate(target, input) {
     const completedCopy = input.purpose === 'completed_copy';
     const channels = target.profile.policy_snapshot.channels || [];
-    const channel = input.channel || channels.find(value => CHANNELS.has(value));
+    const channel = input.channel || (!input.renewLink && channels.find(value => CHANNELS.has(value)));
     const endpoint = channel === 'email' ? target.profile.endpoints_snapshot.email : channel === 'sms' ? target.profile.endpoints_snapshot.phone : null;
     const ready = target.tasks.filter(task => task.state === 'ready');
     const openRequired = target.tasks.filter(task => task.required && !['accepted', 'cancelled'].includes(task.state));
@@ -85,8 +91,9 @@ function evaluate(target, input) {
     else if (!completedCopy && !openRequired.length && !ready.length) reason = 'ALREADY_COMPLETED';
     else if (!completedCopy && !ready.length) reason = target.tasks.some(task => ['declined','clarification'].includes(task.state))
         ? 'TASK_REQUIRES_ATTENTION' : 'WAITING_FOR_PREVIOUS_STAGE';
+    else if (input.renewLink && !channel) reason = 'CHANNEL_REQUIRED';
     else if (!channel || !channels.includes(channel) || !endpoint) reason = 'CHANNEL_UNAVAILABLE';
-    else if (!completedCopy && !target.grant_id) reason = 'LINK_UNAVAILABLE';
+    else if (!completedCopy && !input.renewLink && !target.grant_id) reason = 'LINK_UNAVAILABLE';
     else if (messages.some(item => ['dispatching', 'uncertain'].includes(item.state))) reason = 'PREVIOUS_OUTCOME_UNCERTAIN';
     else if (messages.some(item => item.state === 'pending')) reason = 'MESSAGE_ALREADY_QUEUED';
     else if (cooldownUntil && cooldownUntil > new Date()) reason = 'COOLDOWN_ACTIVE';
@@ -96,12 +103,14 @@ function evaluate(target, input) {
         recipient: { name: target.participations[0].name, participations: target.participations },
         tasks: (completedCopy ? [] : ready).map(task => ({ taskId: task.taskId, documentId: task.documentId, documentName: task.documentName, stage: task.stage })),
         documents: target.documents.map(({ documentId, documentName }) => ({ documentId, documentName })),
+        channels: channels.filter(value => CHANNELS.has(value) && target.profile.endpoints_snapshot[value === 'sms' ? 'phone' : 'email']),
+        renewLink: input.renewLink === true,
         destination: channel ? { channel, masked: maskEndpoint(channel, endpoint) } : null,
         lastInvitation, lastFollowUp,
         eligible: reason === null, reason, cooldownUntil: reason === 'COOLDOWN_ACTIVE' ? cooldownUntil.toISOString() : null,
     };
     preview.previewHash = digest({ revisionId: preview.revisionId, revisionHash: target.revision_hash, personId: input.personId,
-        purpose: input.purpose, channel: channel || null, tasks: taskManifest(completedCopy ? [] : ready),
+        purpose: input.purpose, renewLink: input.renewLink === true, channel: channel || null, tasks: taskManifest(completedCopy ? [] : ready),
         documents: completedCopy ? documentManifest(target.documents) : [],
         profileVersion: target.profile.version, grantId: completedCopy ? null : target.grant_id, endpoint: endpoint ? digest({ endpoint }) : null });
     return { preview, channel, endpoint };
@@ -109,7 +118,10 @@ function evaluate(target, input) {
 
 async function previewParticipantAction(db, scope, input) {
     validate(input);
-    return evaluate(await loadTarget(db, scope, input), input).preview;
+    if (input.renewLink && scope.linkRenew !== true) fail('FORBIDDEN',403);
+    const target = await loadTarget(db, scope, input);
+    if (input.renewLink) await assertCurrentAuthorities(db,scope.contextId,target.active_revision_id);
+    return evaluate(target, input).preview;
 }
 
 function operationResult(row, reused) {
@@ -118,21 +130,22 @@ function operationResult(row, reused) {
 
 async function executeParticipantAction(pool, scope, input) {
     validate(input);
+    if (input.renewLink && scope.linkRenew !== true) fail('FORBIDDEN',403);
     expect(UUID.test(input.idempotencyKey) && /^[a-f0-9]{64}$/.test(input.previewHash || ''), 'INVALID_ACTION');
     const kind = `participant_${input.purpose}`;
     const actorKey = `user:${scope.userId}`;
     const requestHash = digest({ packageId: input.packageId, personId: input.personId, purpose: input.purpose,
-        channel: input.channel || null, previewHash: input.previewHash });
+        renewLink: input.renewLink === true, channel: input.channel || null, previewHash: input.previewHash });
     return transaction(pool, async db => {
         // One decision at a time per person and package, across tabs and keys.
         await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [`signing-v2-action:${scope.contextId}:${input.packageId}:${input.personId}`]);
+        const target = await loadTarget(db, scope, input, true);
         const previous = await db.query(`SELECT * FROM signing_operations WHERE owner_context_id=$1 AND actor_key=$2 AND kind=$3 AND idempotency_key=$4`,
             [scope.contextId, actorKey, kind, input.idempotencyKey]);
         if (previous.rowCount) {
             if (previous.rows[0].request_hash !== requestHash) fail('IDEMPOTENCY_CONFLICT', 409);
             return operationResult(previous.rows[0], true);
         }
-        const target = await loadTarget(db, scope, input, true);
         const { preview, channel, endpoint } = evaluate(target, input);
         const operationId = randomUUID();
         if (preview.reason === 'ALREADY_COMPLETED') {
@@ -146,11 +159,16 @@ async function executeParticipantAction(pool, scope, input) {
         }
         if (!preview.eligible) fail(preview.reason, 409);
         if (preview.previewHash !== input.previewHash) fail('PREVIEW_CHANGED', 412);
+        if (input.renewLink) {
+            await assertCurrentAuthorities(db,scope.contextId,target.active_revision_id);
+            target.profile = await invalidateProfile(db,scope.contextId,target.profile,scope.userId,'explicit_link_renewal');
+        }
         const deliveryId = randomUUID();
         await db.query(`INSERT INTO signing_deliveries(id,owner_context_id,profile_id,profile_version,grant_id,event_key,purpose,channel,target_snapshot)
-            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [deliveryId, scope.contextId, target.profile.id, target.profile.version, input.purpose === 'completed_copy' ? null : target.grant_id,
+            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [deliveryId, scope.contextId, target.profile.id, target.profile.version, input.purpose === 'completed_copy' || input.renewLink ? null : target.grant_id,
             `${input.purpose}:${target.active_revision_id}:${input.personId}:${operationId}`, input.purpose, channel,
             { locale: target.profile.policy_snapshot.locale, endpoint, actorUserId: scope.userId,
+                ...(input.renewLink ? { renewLink:true } : {}),
                 ...(input.purpose !== 'completed_copy' ? { tasks: taskManifest(target.tasks.filter(task => task.state === 'ready')) } : {}),
                 ...(input.purpose === 'completed_copy' ? { documents: documentManifest(target.documents) } : {}) }]);
         await enqueue(db, scope.contextId, [job('dispatch_delivery', deliveryId, target.revision_hash)]);
@@ -160,6 +178,9 @@ async function executeParticipantAction(pool, scope, input) {
         await db.query(`INSERT INTO signing_events_v2(owner_context_id,package_id,actor_key,kind,details) VALUES($1,$2,$3,'action_queued',$4)`,
             [scope.contextId, target.id, actorKey, { operationId, purpose: input.purpose, personId: input.personId, channel,
                 taskIds: preview.tasks.map(task => task.taskId), documentIds: preview.documents.map(document => document.documentId) }]);
+        if (input.renewLink) await db.query(`INSERT INTO signing_events_v2(owner_context_id,package_id,actor_key,kind,details)
+            VALUES($1,$2,$3,'link_renewed',$4)`,[scope.contextId,target.id,actorKey,
+            {operationId,personId:input.personId,profileVersion:target.profile.version,taskIds:preview.tasks.map(task=>task.taskId)}]);
         return operationResult(row, false);
     });
 }

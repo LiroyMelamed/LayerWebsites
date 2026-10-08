@@ -108,11 +108,19 @@ test('unknown actions are stripped', () => {
 
 test('new signing approvals are explicit and never inherited from v3 manage/upload or role names', () => {
     const old = normalizeRolePermissions({ version:3, areas:{signing:{visible:true,actions:['view','manage','upload']}} });
-    assert.equal(old.version,4);
+    assert.equal(old.version,5);
     assert.equal(hasAreaAction(old,'signing','authority_manage'),false);
     assert.equal(hasAreaAction(old,'signing','package_approve'),false);
     const explicit=normalizeRolePermissions({areas:{signing:{visible:true,actions:['view','authority_manage','package_approve']}}});
     assert.equal(hasAreaAction(explicit,'signing','authority_manage'),true);
     assert.equal(hasAreaAction(explicit,'signing','package_approve'),true);
     assert.equal(hasAreaAction(explicit,'signing','upload'),false);
+});
+
+test('contact correction and link renewal require explicit grants after catalog upgrade',()=>{
+ const old=normalizeRolePermissions({version:4,areas:{signing:{visible:true,actions:['view','upload','manage']}}});
+ for(const action of ['delivery_contact_correct','access_link_renew'])assert.equal(hasAreaAction(old,'signing',action),false);
+ const explicit=normalizeRolePermissions({areas:{signing:{visible:true,actions:['view','delivery_contact_correct','access_link_renew']}}});
+ for(const action of ['delivery_contact_correct','access_link_renew'])assert.equal(hasAreaAction(explicit,'signing',action),true);
+ assert.equal(hasAreaAction(explicit,'signing','upload'),false);
 });

@@ -6,6 +6,7 @@ const { UUID } = require('../../lib/signingV2/compiler');
 const { signatureImage, IMAGE_TYPES } = require('../../lib/signingV2/stamp');
 const { transaction } = require('./transaction');
 const { loadPublicGrant } = require('./grants');
+const { assertCurrentAuthorities } = require('./authorities');
 const { job, enqueue } = require('./jobs');
 const { personalEvidenceInput, evidenceJobInput } = require('../../lib/signingV2/personalEvidence');
 
@@ -155,7 +156,15 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
         if (grant.allowed_task_ids && taskIds.some(id => !grant.allowed_task_ids.includes(id))) fail('TASK_UNAVAILABLE', 404);
         if (input.consentVersion !== CONSENT_VERSION) fail('CONSENT_CHANGED', 409);
         const locale = LOCALES.has(input.locale) ? input.locale : 'he';
-        const tasks = (await pool.query(`SELECT t.id,t.revision_id,t.document_id,t.participation_id,t.stage,t.state,t.field_ids,
+        return transaction(pool,async db=>{
+        // Serialize new consent with contact correction and acceptance, in package order.
+        await db.query(`SELECT p.id FROM signing_packages p JOIN signing_package_revisions r
+            ON r.owner_context_id=p.owner_context_id AND r.id=p.active_revision_id
+            WHERE p.owner_context_id=$1 AND r.id=ANY($2::uuid[]) AND EXISTS(SELECT 1 FROM signing_tasks t
+                WHERE t.owner_context_id=p.owner_context_id AND t.revision_id=r.id AND t.id=ANY($3::uuid[])) ORDER BY p.id FOR SHARE OF p`,
+        [grant.owner_context_id,[...new Set(grant.items.map(item=>item.revision_id))],taskIds]);
+        const currentGrant=await loadPublicGrant(db,token);
+        const tasks = (await db.query(`SELECT t.id,t.revision_id,t.document_id,t.participation_id,t.stage,t.state,t.field_ids,
                 t.stage_artifact_id,t.version,a.content_sha256 AS stage_hash,r.revision_hash
             FROM signing_tasks t
             JOIN signing_participations p ON p.owner_context_id=t.owner_context_id AND p.id=t.participation_id AND p.person_id=$3
@@ -163,7 +172,7 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
             JOIN signing_packages pk ON pk.owner_context_id=r.owner_context_id AND pk.id=r.package_id AND pk.active_revision_id=r.id
             LEFT JOIN signing_artifacts a ON a.owner_context_id=t.owner_context_id AND a.id=t.stage_artifact_id AND a.state='ready'
             WHERE t.owner_context_id=$1 AND t.id=ANY($2::uuid[]) AND t.document_id=ANY($4::uuid[])`,
-        [grant.owner_context_id, taskIds, grant.person_id, grant.items.map(item => item.document_id)])).rows;
+        [grant.owner_context_id, taskIds, grant.person_id, currentGrant.items.map(item => item.document_id)])).rows;
         if (tasks.length !== taskIds.length) fail('TASK_UNAVAILABLE', 404);
         for (const task of tasks) {
             if (task.state === 'accepted') fail('ALREADY_ACCEPTED', 409);
@@ -176,14 +185,15 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
         const manifest = { grantId: grant.id, personId: grant.person_id, consentVersion: CONSENT_VERSION, locale, items };
         const consent = { version: CONSENT_VERSION, locale, ip: meta.ip ? String(meta.ip).slice(0, 64) : null,
             userAgent: meta.userAgent ? String(meta.userAgent).slice(0, 300) : null };
-        const session = (await pool.query(`INSERT INTO signing_sessions_v2(id,owner_context_id,person_id,grant_id,exact_manifest,manifest_hash,consent_snapshot,expires_at)
+        const session = (await db.query(`INSERT INTO signing_sessions_v2(id,owner_context_id,person_id,grant_id,exact_manifest,manifest_hash,consent_snapshot,expires_at)
             VALUES($1,$2,$3,$4,$5,$6,$7,LEAST(clock_timestamp()+make_interval(secs=>$8),$9::timestamptz)) RETURNING id,manifest_hash,expires_at`,
         [randomUUID(), grant.owner_context_id, grant.person_id, grant.id, manifest, digest(manifest), consent, limits.sessionSeconds, grant.expires_at])).rows[0];
         return { sessionId: session.id, manifestHash: session.manifest_hash, expiresAt: session.expires_at,
-            taskCount: items.length, channels: channelsOf(await currentEndpoints(pool, grant, items[0].revisionId)) };
+            taskCount: items.length, channels: channelsOf(await currentEndpoints(db, currentGrant, items[0].revisionId)) };
+        });
     }
 
-    async function lockSession(db, grant, sessionId) {
+    async function lockSession(db, grant, sessionId, token) {
         if (!UUID.test(String(sessionId))) fail('SESSION_EXPIRED', 404);
         const session = (await db.query(`SELECT *,expires_at > clock_timestamp() AS live FROM signing_sessions_v2
             WHERE owner_context_id=$1 AND id=$2 AND grant_id=$3 AND person_id=$4 FOR UPDATE`,
@@ -191,6 +201,8 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
         if (!session) fail('SESSION_EXPIRED', 404);
         if (session.revoked_at) fail('SESSION_CLOSED', 409);
         if (!session.live) fail('SESSION_EXPIRED', 410);
+        const currentGrant=await loadPublicGrant(db,token);
+        if (session.exact_manifest.items.some(item=>!currentGrant.items.some(allowed=>allowed.document_id===item.documentId))) fail('SESSION_CLOSED',409);
         return session;
     }
 
@@ -198,7 +210,7 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
         if (!otpTransport) fail('OTP_TRANSPORT_UNAVAILABLE', 503);
         const grant = await loadPublicGrant(pool, token);
         const planned = await transaction(pool, async db => {
-            const session = await lockSession(db, grant, sessionId);
+            const session = await lockSession(db, grant, sessionId, token);
             if (session.verified_at) fail('ALREADY_VERIFIED', 409);
             const recent = (await db.query(`SELECT count(*)::integer AS total,
                     count(*) FILTER (WHERE created_at > clock_timestamp()-make_interval(secs=>$3))::integer AS cooling,
@@ -245,7 +257,7 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
         const code = String(input.code ?? '');
         expect(/^\d{6}$/.test(code), 'OTP_INVALID');
         const outcome = await transaction(pool, async db => {
-            const session = await lockSession(db, grant, sessionId);
+            const session = await lockSession(db, grant, sessionId, token);
             if (session.verified_at) return { verified: true };
             const current = (await db.query(`SELECT *,expires_at > clock_timestamp() AS live FROM signing_otp_challenges_v2
                 WHERE owner_context_id=$1 AND session_id=$2 AND state IN ('pending','sent','uncertain')
@@ -374,11 +386,16 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
                 if (!task || task.state !== 'ready' || task.stage_artifact_id !== item.stageArtifactId || task.version !== item.taskVersion
                     || task.participation_id !== item.participationId) fail('MANIFEST_CHANGED', 409);
             }
-            const live = await lockSession(db, grant, session.id);
+            const live = await lockSession(db, grant, session.id, token);
             if (!live.verified_at || live.manifest_hash !== session.manifest_hash) fail('OTP_REQUIRED', 403);
             const grantRow = await db.query(`SELECT id FROM signing_public_grants WHERE owner_context_id=$1 AND id=$2 AND revoked_at IS NULL
                 AND expires_at > clock_timestamp() FOR SHARE`, [grant.owner_context_id, grant.id]);
             if (!grantRow.rowCount) fail('LINK_UNAVAILABLE', 404);
+            // A contact correction can commit after the initial public lookup. Recheck
+            // scoped profile versions under the package/session fence before acceptance.
+            const currentGrant = await loadPublicGrant(db,token);
+            if (items.some(item => !currentGrant.items.some(allowed => allowed.document_id === item.documentId))) fail('LINK_UNAVAILABLE',404);
+            await assertCurrentAuthorities(db,grant.owner_context_id,revisionIds);
             const now = (await db.query('SELECT clock_timestamp() AS now')).rows[0].now;
             let signatureArtifactId = null;
             if (signature) {

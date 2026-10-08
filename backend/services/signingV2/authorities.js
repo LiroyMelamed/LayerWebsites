@@ -75,8 +75,8 @@ async function changeAuthority(pool,scope,id,{expectedVersion,action,reason}) {
 
 async function assertCurrentAuthorities(db, contextId, revisionId) {
     const participants=(await db.query(`SELECT person_id,represented_party_id,authority_id,authority_version,role_key
-        FROM signing_participations WHERE owner_context_id=$1 AND revision_id=$2 AND capacity='representative'
-        ORDER BY authority_id`,[contextId,revisionId])).rows;
+        FROM signing_participations WHERE owner_context_id=$1 AND revision_id=ANY($2::uuid[]) AND capacity='representative'
+        ORDER BY authority_id`,[contextId,Array.isArray(revisionId) ? revisionId : [revisionId]])).rows;
     if(!participants.length) return [];
     const ids=[...new Set(participants.map(item=>item.authority_id))];
     const rows=(await db.query(`SELECT *,valid_from <= clock_timestamp() AND

@@ -12,6 +12,7 @@ import SimpleContainer from '../../../components/simpleComponents/SimpleContaine
 import { Text14, TextBold14 } from '../../../components/specializedComponents/text/AllTextKindFile';
 import { colors } from '../../../constant/colors';
 import useSigningLocale from './useSigningLocale';
+import ParticipantContactDialog from './ParticipantContactDialog';
 import ParticipantActionDialog from './ParticipantActionDialog';
 import TaskIssueDialog from './TaskIssueDialog';
 import BulkActionsWorkspace from './BulkActionsWorkspace';
@@ -127,16 +128,19 @@ function PackageChildren({ api, batchId, state, query, onOpen }) {
 }
 
 // One action entry per person, even when the same person signs in two capacities.
-function PersonActions({ person, detail, onAction }) {
+function PersonActions({ person, detail, onAction, onContact }) {
     const { t, date } = useSigningLocale();
     const latest = detail.deliveries.find(item => item.personId === person.personId);
     const completedCopy = detail.package.workflow_state === 'complete';
-    if (!detail.capabilities?.send) return null;
-    if (!completedCopy && !person.tasks.some(task => task.state === 'ready')) return null;
+    const ready = person.tasks.some(task => task.state === 'ready');
+    const editable = !['cancelled','superseded'].includes(detail.package.workflow_state);
+    if (!detail.capabilities?.send && !detail.capabilities?.contactCorrect) return null;
     const purpose = completedCopy ? 'completed_copy' : latest?.state === 'failed' ? 'resend' : 'reminder';
     return <div className="lw-signingPackages__personActions">
         {latest && <p>{t(`signingV2.delivery.${latest.state}`)}{latest.attemptedAt && <> · <time dateTime={latest.attemptedAt}>{date(latest.attemptedAt)}</time></>}</p>}
-        <SecondaryButton onPress={() => onAction(person.personId, purpose)}>{t(`signingV2.action.${purpose}.open`)}</SecondaryButton>
+        {detail.capabilities?.send && (completedCopy || ready) && <SecondaryButton onPress={() => onAction(person.personId, purpose)}>{t(`signingV2.action.${purpose}.open`)}</SecondaryButton>}
+        {detail.capabilities?.send && detail.capabilities?.linkRenew && ready && editable && <SecondaryButton onPress={()=>onAction(person.personId,'resend',true)}>{t('signingV2.action.renew_link.open')}</SecondaryButton>}
+        {detail.capabilities?.contactCorrect && editable && <SecondaryButton onPress={()=>onContact(person.personId)}>{t('signingV2.contact.open')}</SecondaryButton>}
     </div>;
 }
 
@@ -181,6 +185,7 @@ function PackagePanel({ id, api, onClose }) {
     const [tab, setTab] = useState('people');
     const [action, setAction] = useState(null);
     const [issue, setIssue] = useState(null);
+    const [contactPerson,setContactPerson] = useState(null);
     const [openId, setOpenId] = useState(null);
     const [files, setFiles] = useState({});
     const [busy, setBusy] = useState('');
@@ -276,7 +281,7 @@ function PackagePanel({ id, api, onClose }) {
                 })}</ul>
                 {actionRows.get(person.personId) === person.id && <PersonActions detail={detail}
                     person={{ personId: person.personId, tasks: detail.participants.filter(item => item.personId === person.personId).flatMap(item => item.tasks) }}
-                    onAction={(personId, purpose) => setAction({ personId, purpose })} />}
+                    onAction={(personId, purpose, renewLink = false) => setAction({ personId, purpose, renewLink })} onContact={setContactPerson} />}
             </li>)}</ul>}
             {tab === 'documents' && <PackageDocuments detail={detail} openId={openId} files={files} busy={busy} message={errorMessage}
                 onView={showDocument} onDownload={downloadDocument} />}
@@ -290,6 +295,10 @@ function PackagePanel({ id, api, onClose }) {
         {issue && <TaskIssueDialog kind="resolve" documentName={issue.documentName} originalNote={issue.reason}
             onSubmit={(resolution, key) => api.resolveIssue(id, issue.id, { resolution }, key)}
             onClose={changed => { setIssue(null); if (changed) resource.refresh(); }} />}
+        {contactPerson && <ParticipantContactDialog api={api} packageId={id} personId={contactPerson}
+            canSend={detail.capabilities?.send && (detail.package?.workflow_state==='complete' || (detail.capabilities?.linkRenew && detail.participants?.some(p=>p.personId===contactPerson && p.tasks.some(task=>task.state==='ready'))))}
+            onClose={changed=>{setContactPerson(null);if(changed)resource.refresh();}}
+            onSend={()=>{setContactPerson(null);resource.refresh();setAction({personId:contactPerson,purpose:detail.package.workflow_state==='complete'?'completed_copy':'resend',renewLink:detail.package.workflow_state!=='complete'});}}/>}
         {action && <ParticipantActionDialog key={`${action.personId}:${action.purpose}`} api={api} packageId={id} {...action}
             onClose={changed => { setAction(null); if (changed) resource.refresh(); }} />}
     </dialog>;

@@ -15,6 +15,7 @@ const caseContext = require('../services/signingV2/caseContext');
 const clientContext = require('../services/signingV2/clientContext');
 const authoring = require('../services/signingV2/authoring');
 const directory = require('../services/signingV2/participantDirectory');
+const contacts = require('../services/signingV2/contactChanges');
 const authorities = require('../services/signingV2/authorities');
 const workbook = require('../lib/signingV2/workbook');
 const { objectStorage, officeQuota } = require('../services/signingV2/runtime');
@@ -32,7 +33,7 @@ router.use((req, res, next) => (process.env.SIGNING_V2_ENABLED === 'true' ? next
 router.use((req, res, next) => { res.set('Cache-Control', 'private, no-store'); next(); });
 router.use(auth, requireSigningEnabledForUser);
 
-const target = req => ({ packageId: req.params.id, personId: req.params.personId, purpose: req.body?.purpose, channel: req.body?.channel });
+const target = req => ({ packageId: req.params.id, personId: req.params.personId, purpose: req.body?.purpose, channel: req.body?.channel, renewLink: req.body?.renewLink });
 
 router.get('/submissions', view, run(async (req, res) => res.json(await management.listSubmissions(pool, await actorScope(pool, req, 'view'), req.query))));
 router.get('/packages',view,run(async(req,res)=>res.json(await management.listPackages(pool,
@@ -78,6 +79,9 @@ router.post('/packages/:id/participants/:personId/actions', send, run(async (req
     // 202 only means the request is durably queued; the operation reports delivery facts.
     res.status(result.reused ? 200 : 202).json(result);
 }));
+const correctContact = requireFirmAction('signing','delivery_contact_correct',{legacy:'lawyerOrAdmin'});
+router.get('/packages/:id/participants/:personId/contact',correctContact,run(async(req,res)=>res.json(await contacts.readContact(pool,await actorScope(pool,req,'delivery_contact_correct'),req.params.id,req.params.personId))));
+router.post('/packages/:id/participants/:personId/contact',correctContact,run(async(req,res)=>res.json(await contacts.correctContact(pool,await actorScope(pool,req,'delivery_contact_correct'),req.params.id,req.params.personId,{...(req.body||{}),idempotencyKey:req.get('Idempotency-Key')}))));
 router.get('/templates', view, run(async (req, res) => res.json(await creation.listTemplates(pool, await actorScope(pool, req, 'view')))));
 router.get('/authoring/templates', view, run(async (req, res) => res.json(await authoring.catalog(pool, await actorScope(pool, req, 'view'), { archived: req.query.archived === 'true' }))));
 router.post('/authoring/templates/:id/archive', manage, run(async (req, res) =>

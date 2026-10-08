@@ -156,3 +156,13 @@
   .lw-signingPackages__children { padding-inline: .75rem; }
   .lw-signingPackages__panel { padding: 1rem; }
 }
+
+.lw-signingPackages__contactFields { display: grid; gap: 1rem; min-width: 0; }
+.lw-signingPackages__renewChannel { margin-block: 1rem; }
+.lw-signingPackages__renewChannel .lw-segmentedSwitch { flex-wrap: wrap; }
+
+.lw-signingPackages__contactFields .lw-simpleInput { min-block-size: 48px; }
+.lw-signingPackages__contactFields .lw-simpleInput__field { min-block-size: 44px; }
+.lw-signingPackages__contactFields .lw-simpleTextArea__field { min-block-size: 60px; text-align: start; direction: inherit; }
+
+.lw-signingPackages__contactFields .lw-simpleTextArea { direction: inherit; }

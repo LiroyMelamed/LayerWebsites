@@ -240,7 +240,7 @@ async function packageDetails(db, scope, packageId) {
         JOIN signing_documents d ON d.owner_context_id=t.owner_context_id AND d.id=t.document_id
         JOIN signing_package_revisions r ON r.owner_context_id=t.owner_context_id AND r.id=t.revision_id
         WHERE i.owner_context_id=$1 AND t.revision_id=$2 ORDER BY i.created_at DESC,i.id`, [scope.contextId,pkg.active_revision_id])).rows;
-    return { package: pkg, ...body, issues, capabilities: { send: scope.send === true, manage: scope.manage === true } };
+    return { package: pkg, ...body, issues, capabilities: { send: scope.send === true, manage: scope.manage === true, contactCorrect: scope.contactCorrect === true, linkRenew: scope.linkRenew === true } };
 }
 
 async function packageDocumentFile(db, scope, packageId, documentId, storage) {

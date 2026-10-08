@@ -3,7 +3,7 @@ const { packageScopeSql, scopeParams } = require('./access');
 
 // Workers have no request/JWT context. Reconstruct only the current office scope
 // from the recorded context and sender; a saved permission snapshot cannot send.
-async function currentSenderScope(db, contextId, userId) {
+async function currentSenderScope(db, contextId, userId, requiredAction = null) {
     if (!Number.isSafeInteger(userId) || userId < 1) return null;
     const row = (await db.query(`SELECT u.userid,u.role,u.firm_staff_role_id,
             u.law_firm_tenant_id,r.law_firm_tenant_id AS role_tenant,r.permissions,r.is_active,
@@ -15,15 +15,15 @@ async function currentSenderScope(db, contextId, userId) {
     if (!row.platform_admin && row.firm_staff_role_id) {
         if (!row.is_active || String(row.role_tenant || '') !== String(row.law_firm_tenant_id || '')) return null;
         const permissions = normalizeRolePermissions(row.permissions);
-        if (!hasAreaAction(permissions,'signing','upload')) return null;
+        if (!hasAreaAction(permissions,'signing','upload') || (requiredAction && !hasAreaAction(permissions,'signing',requiredAction))) return null;
         all = getSigningDataScope(permissions) === 'all_firm';
         assignedCases = permissions.areas?.signing?.legacyCaseAssignment === true;
     } else if (!row.platform_admin && !['Admin','Lawyer'].includes(row.role)) return null;
     return { contextId,userId,all,assignedCases };
 }
 
-async function senderCanAccess(db, contextId, userId, packageId) {
-    const scope = await currentSenderScope(db,contextId,userId);
+async function senderCanAccess(db, contextId, userId, packageId, requiredAction = null) {
+    const scope = await currentSenderScope(db,contextId,userId,requiredAction);
     if (!scope) return false;
     return (await db.query(`SELECT 1 FROM signing_packages p WHERE ${packageScopeSql('p')} AND p.id=$5`,
         [...scopeParams(scope),packageId])).rowCount === 1;
