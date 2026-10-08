@@ -1550,18 +1550,24 @@
       "TASK_STAGE_PASSED": "This signing stage is closed. Document changes require a new revision.",
       "TASK_REQUIRES_ATTENTION": "Signing is waiting for a refusal or clarification request to be handled."
     },
+    "actionCancelledReason": {
+      "ACTION_SCOPE_CHANGED": "The signing tasks changed while this message was waiting. Review the current selection before sending again.",
+      "SENDER_ACCESS_CHANGED": "Your permission to send or access this package changed. No message was sent.",
+      "ACTION_REVIEW_REQUIRED": "This request needs a new review before sending. No message was sent.",
+      "other": "The request is no longer valid. No message was sent; refresh the package before trying again."
+    },
     "action": {
       "reminder": {
         "open": "Send reminder",
         "title": "Send a reminder to this signer",
         "confirm": "Send reminder",
-        "effect": "Only this signer receives the reminder, with the same signing link. Signatures already accepted do not change."
+        "effect": "Only this signer will receive a reminder linking to the selected documents. Accepted signatures stay unchanged."
       },
       "resend": {
         "open": "Send again",
         "title": "Send the signing request again",
         "confirm": "Send again",
-        "effect": "Only this signer receives the invitation again. No new package is created and accepted signatures do not change."
+        "effect": "Only this signer will receive another invitation linking to the selected documents. Accepted signatures stay unchanged."
       },
       "recipient": "Recipient",
       "package": "Package",

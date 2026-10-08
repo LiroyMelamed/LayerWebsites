@@ -186,7 +186,11 @@ function PackagePanel({ id, api, onClose }) {
     const [fileError, setFileError] = useState(null);
     const resource = usePagedResource(config => api.details(id, config), [api, id]);
     const actionRows = new Map();
-    (resource.data.participants || []).forEach(person => { if (!actionRows.has(person.personId)) actionRows.set(person.personId, person.id); });
+    (resource.data.participants || []).forEach(person => {
+        // Keep the person's single action beside a ready participation, not a
+        // future-stage role that happens to sort first. Copies use the first row.
+        if (!actionRows.has(person.personId) || person.tasks.some(task => task.state === 'ready')) actionRows.set(person.personId, person.id);
+    });
     useEffect(() => {
         const previousFocus = document.activeElement;
         const element = dialog.current;

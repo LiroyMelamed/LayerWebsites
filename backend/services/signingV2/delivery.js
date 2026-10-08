@@ -2,6 +2,8 @@ const { expect, fail } = require('../../lib/signingV2/errors');
 const { complete } = require('./jobs');
 const { transaction } = require('./transaction');
 
+const { digest } = require('../../lib/signingV2/canonical');
+const { senderCanAccess, taskManifest } = require('./followupScope');
 const { completedDocuments, manifestHash, copiesReady } = require('./completedCopy');
 const SENDABLE_PURPOSES = new Set(['invitation', 'reminder', 'resend', 'completed_copy']);
 
@@ -41,7 +43,7 @@ function createDeliveryService({ pool, grantService, provider, linkFor }) {
                     SELECT * FROM signing_deliveries WHERE owner_context_id=$1 AND id=$2 FOR UPDATE
                 )
                 SELECT d.*,dp.person_id,dp.revision_id,dp.version AS current_profile_version,
-                    dp.endpoints_snapshot,r.workflow_state,r.package_id,pk.active_revision_id,
+                    dp.endpoints_snapshot,r.workflow_state,r.package_id,r.deadline,pk.active_revision_id,
                     g.id AS live_grant_id,g.encrypted_token,g.token_hash,g.purpose AS grant_purpose,g.person_id AS grant_person_id,
                     g.owner_context_id AS grant_context_id,
                     COALESCE(tc.ready,0) AS ready_tasks,COALESCE(tc.open_required,0) AS open_required
@@ -66,7 +68,40 @@ function createDeliveryService({ pool, grantService, provider, linkFor }) {
             if (delivery.active_revision_id !== delivery.revision_id || !(completedCopy ? ['complete'] : ['active', 'attention']).includes(delivery.workflow_state)) {
                 return skip('cancelled', 'REVISION_INACTIVE');
             }
+            if (delivery.purpose !== 'invitation' && !await senderCanAccess(db,lease.owner_context_id,
+                delivery.target_snapshot.actorUserId,delivery.package_id)) return skip('cancelled','SENDER_ACCESS_CHANGED');
+            if (delivery.deadline && !completedCopy && new Date(delivery.deadline) <= new Date()) return skip('cancelled','DEADLINE_EXPIRED');
             if (delivery.profile_version !== delivery.current_profile_version) return skip('cancelled', 'CONTACT_CHANGED');
+            if (['reminder','resend'].includes(delivery.purpose)) {
+                const frozen = delivery.target_snapshot.tasks;
+                if (!Array.isArray(frozen) || !frozen.length) return skip('cancelled','ACTION_REVIEW_REQUIRED');
+                // Serialize with incumbent acceptance/issue transitions. A follow-up
+                // queued for an earlier stage must never wait for and invite a later one.
+                const liveRevision = (await db.query(`SELECT r.workflow_state,p.active_revision_id FROM signing_packages p
+                    JOIN signing_package_revisions r ON r.owner_context_id=p.owner_context_id AND r.id=p.active_revision_id
+                    WHERE p.owner_context_id=$1 AND p.id=$2 FOR UPDATE OF p,r`, [lease.owner_context_id,delivery.package_id])).rows[0];
+                if (!liveRevision || liveRevision.active_revision_id!==delivery.revision_id
+                    || !['active','attention'].includes(liveRevision.workflow_state)) return skip('cancelled','REVISION_INACTIVE');
+                const tasks = (await db.query(`SELECT t.id AS "taskId",t.document_id AS "documentId",t.version,t.stage,t.state
+                    FROM signing_tasks t JOIN signing_participations p ON p.owner_context_id=t.owner_context_id AND p.id=t.participation_id
+                    WHERE t.owner_context_id=$1 AND t.revision_id=$2 AND p.person_id=$3 ORDER BY t.id FOR SHARE OF t`,
+                [lease.owner_context_id,delivery.revision_id,delivery.person_id])).rows;
+                if (frozen.every(item=>tasks.some(task=>task.taskId===item.taskId && task.state==='accepted'))) return skip('skipped_completed','ALREADY_COMPLETED');
+                if (digest(taskManifest(tasks.filter(task=>task.state==='ready'))) !== digest(frozen)) return skip('cancelled','ACTION_SCOPE_CHANGED');
+            }
+            if (delivery.purpose !== 'invitation') {
+                // Recheck changes committed while waiting for the task fence.
+                if (!completedCopy) {
+                    const link = await db.query(`SELECT id FROM signing_public_grants WHERE owner_context_id=$1 AND id=$2
+                        AND person_id=$3 AND purpose='sign' AND revoked_at IS NULL AND expires_at>clock_timestamp() FOR SHARE`,
+                    [lease.owner_context_id,delivery.grant_id,delivery.person_id]);
+                    if (!link.rowCount) return skip('cancelled','LINK_UNAVAILABLE');
+                }
+                const profile = (await db.query(`SELECT version,endpoints_snapshot FROM signing_delivery_profiles
+                    WHERE owner_context_id=$1 AND id=$2 FOR SHARE`, [lease.owner_context_id,delivery.profile_id])).rows[0];
+                if (!profile || profile.version !== delivery.profile_version) return skip('cancelled','CONTACT_CHANGED');
+                delivery.endpoints_snapshot = profile.endpoints_snapshot;
+            }
             if (!completedCopy && Number(delivery.ready_tasks) === 0) {
                 // Someone who completed while the job waited gets no signing request.
                 if (Number(delivery.open_required) === 0) return skip('skipped_completed', 'ALREADY_COMPLETED');
@@ -91,6 +126,15 @@ function createDeliveryService({ pool, grantService, provider, linkFor }) {
                 Object.assign(delivery, { live_grant_id: grant.id, grant_context_id: grant.owner_context_id,
                     grant_person_id: grant.person_id, grant_purpose: grant.purpose,
                     encrypted_token: grant.encrypted_token, token_hash: grant.token_hash });
+            }
+            if (['reminder','resend'].includes(delivery.purpose)) {
+                const grant = await grantService.issueFollowupGrant(db,{ contextId:lease.owner_context_id,revisionId:delivery.revision_id,
+                    personId:delivery.person_id,profileId:delivery.profile_id,profileVersion:delivery.profile_version,
+                    tasks:delivery.target_snapshot.tasks,deadline:delivery.deadline });
+                await db.query('UPDATE signing_deliveries SET grant_id=$3 WHERE owner_context_id=$1 AND id=$2',
+                    [lease.owner_context_id,delivery.id,grant.id]);
+                Object.assign(delivery,{ live_grant_id:grant.id,grant_context_id:grant.owner_context_id,grant_person_id:grant.person_id,
+                    grant_purpose:grant.purpose,encrypted_token:grant.encrypted_token,token_hash:grant.token_hash });
             }
             if (delivery.purpose === 'invitation') {
                 // Packages of one run share the grant of a shared signer. The grant row serializes

@@ -60,9 +60,10 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
             LEFT JOIN signing_artifacts pa ON pa.owner_context_id=d.owner_context_id AND pa.id=d.prepared_artifact_id
             LEFT JOIN signing_participations p ON p.owner_context_id=d.owner_context_id AND p.revision_id=d.revision_id AND p.person_id=i.person_id
             LEFT JOIN signing_tasks t ON t.owner_context_id=d.owner_context_id AND t.document_id=d.id AND t.participation_id=p.id
+                AND ($4::uuid[] IS NULL OR t.id=ANY($4::uuid[]))
             WHERE i.owner_context_id=$1 AND i.grant_id=$2 AND i.document_id=ANY($3::uuid[])
             ORDER BY pk.created_at,length(pk.external_key),pk.external_key,pk.id,d.document_key,t.stage,t.id`,
-        [grant.owner_context_id, grant.id, grant.items.map(item => item.document_id)])).rows;
+        [grant.owner_context_id, grant.id, grant.items.map(item => item.document_id),grant.allowed_task_ids])).rows;
         const profile = (await pool.query(`SELECT policy_snapshot->>'locale' AS locale FROM signing_delivery_profiles
             WHERE owner_context_id=$1 AND id=$2`, [grant.owner_context_id, grant.items[0].delivery_profile_id])).rows[0];
         const packages = new Map(), counts = { ready: 0, accepted: 0, waiting: 0 };
@@ -150,6 +151,7 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
         const taskIds = input.taskIds;
         expect(Array.isArray(taskIds) && taskIds.length > 0 && taskIds.length <= limits.manifestTasks
             && taskIds.every(id => UUID.test(String(id))) && new Set(taskIds).size === taskIds.length, 'INVALID_SELECTION');
+        if (grant.allowed_task_ids && taskIds.some(id => !grant.allowed_task_ids.includes(id))) fail('TASK_UNAVAILABLE', 404);
         if (input.consentVersion !== CONSENT_VERSION) fail('CONSENT_CHANGED', 409);
         const locale = LOCALES.has(input.locale) ? input.locale : 'he';
         const tasks = (await pool.query(`SELECT t.id,t.revision_id,t.document_id,t.participation_id,t.stage,t.state,t.field_ids,

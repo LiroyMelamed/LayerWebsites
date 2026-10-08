@@ -36,6 +36,7 @@ async function reportTaskIssue(pool, token, input) {
     const taskIds = [...input.taskIds].sort();
     const hash = digest({ kind: input.kind, taskIds, reason });
     const grant = await loadPublicGrant(pool, token);
+    if (grant.allowed_task_ids && taskIds.some(id => !grant.allowed_task_ids.includes(id))) fail('TASK_UNAVAILABLE', 404);
     const actorKey = `grant:${grant.id}`;
     return transaction(pool, async db => {
         await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [`task-issue:${grant.id}:${input.idempotencyKey}`]);

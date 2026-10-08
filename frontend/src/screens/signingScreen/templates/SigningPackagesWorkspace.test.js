@@ -377,3 +377,27 @@ test.each(['he','ar','en'])('authorized office responds to an issue using the ex
     await waitFor(() => expect(screen.queryByRole('dialog', { name: i18n.t('signingV2.issue.resolveTitle') })).not.toBeInTheDocument());
     expect(api.details).toHaveBeenCalledTimes(2);
 });
+
+
+test.each(['he', 'ar', 'en'])('cancelled follow-up explains the changed selection in %s', async language => {
+    const i18n = await translations(language), { api } = actionFixture();
+    api.executeAction.mockResolvedValue({ operationId: 'op-1', state: 'complete', items: [{ personId: 'person-1', state: 'cancelled', errorCode: 'ACTION_SCOPE_CHANGED' }] });
+    const dialog = await openAction(i18n, api);
+    fireEvent.click(await within(dialog).findByRole('button', { name: i18n.t('signingV2.action.reminder.confirm') }));
+    expect(await within(dialog).findByText(i18n.t('signingV2.actionCancelledReason.ACTION_SCOPE_CHANGED'))).toBeInTheDocument();
+    expect(within(dialog).queryByText(i18n.t('signingV2.delivery.provider_accepted'))).not.toBeInTheDocument();
+});
+
+
+test('a reminder counts distinct PDFs and sits with the ready participation instead of a future role', async () => {
+    const i18n = await translations('en'), { api, detail, preview } = actionFixture();
+    const ready = detail.participants[0];
+    const later = { ...ready, id: 'later-role', tasks: ready.tasks.map((task, index) => ({ ...task, id: `later-task-${index}`, state: 'blocked', stage: 2 })) };
+    detail.participants = [later, ready];
+    preview.tasks = [{ taskId: 'one', documentId: 'same-pdf', documentName: 'One PDF' }, { taskId: 'two', documentId: 'same-pdf', documentName: 'One PDF' }];
+    const dialog = await openAction(i18n, api);
+    expect(await within(dialog).findAllByText('One PDF')).toHaveLength(1);
+    expect(within(dialog).getByText(i18n.t('signingV2.action.tasks', { count: 1, formattedCount: '1' }))).toBeInTheDocument();
+    const row = screen.getAllByRole('listitem').find(item => within(item).queryByRole('button', { name: i18n.t('signingV2.action.reminder.open'), exact: true }));
+    expect(within(row).getByText(i18n.t('signingV2.task.ready'))).toBeInTheDocument();
+});

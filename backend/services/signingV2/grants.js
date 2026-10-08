@@ -103,12 +103,27 @@ function createGrantService({ encryptionKey, keyId = '1' }) {
         [contextId, grant.id, personId, documents.map(document => document.documentId), revisionId, profileId, profileVersion]);
         return grant;
     }
-    return { issueRevisionGrants, tokenForDelivery, issueDownloadGrant };
+    // A reviewed follow-up never reuses the broader invitation of a shared person.
+    // Its task list cannot grow when another stage or another package becomes ready.
+    async function issueFollowupGrant(db, { contextId, revisionId, personId, profileId, profileVersion, tasks, deadline }) {
+        expect(tasks.length > 0, 'EMPTY_GRANT');
+        const token = randomBytes(32).toString('base64url');
+        const grant = { id: randomUUID(),owner_context_id: contextId,person_id: personId,purpose:'sign',token_hash:bytesHash(Buffer.from(token)) };
+        grant.encrypted_token = seal(token,grant);
+        await db.query(`INSERT INTO signing_public_grants(id,owner_context_id,person_id,purpose,token_hash,encrypted_token,expires_at,allowed_task_ids)
+            VALUES($1,$2,$3,'sign',$4,$5,LEAST(clock_timestamp()+make_interval(secs=>$6),COALESCE($7::timestamptz,'infinity')),$8)`,
+        [grant.id,contextId,personId,grant.token_hash,grant.encrypted_token,grantSeconds,deadline,tasks.map(task=>task.taskId)]);
+        await db.query(`INSERT INTO signing_grant_items(owner_context_id,grant_id,person_id,document_id,revision_id,delivery_profile_id,delivery_profile_version)
+            SELECT $1,$2,$3,unnest($4::uuid[]),$5,$6,$7`,
+        [contextId,grant.id,personId,[...new Set(tasks.map(task=>task.documentId))],revisionId,profileId,profileVersion]);
+        return grant;
+    }
+    return { issueRevisionGrants, tokenForDelivery, issueDownloadGrant, issueFollowupGrant };
 }
 
 async function loadPublicGrant(db,token,{purpose='sign'}={}) {
     if(typeof token !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(token)) fail('LINK_UNAVAILABLE',404);
-    const result=await db.query(`SELECT id,owner_context_id,person_id,purpose,expires_at FROM signing_public_grants
+    const result=await db.query(`SELECT id,owner_context_id,person_id,purpose,expires_at,allowed_task_ids FROM signing_public_grants
         WHERE token_hash=$1 AND purpose=ANY($2::text[]) AND revoked_at IS NULL AND expires_at > clock_timestamp()`,[bytesHash(Buffer.from(token)),Array.isArray(purpose) ? purpose : [purpose]]);
     if(!result.rowCount) fail('LINK_UNAVAILABLE',404);
     const grant=result.rows[0];

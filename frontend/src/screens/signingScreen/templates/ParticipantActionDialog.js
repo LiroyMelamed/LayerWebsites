@@ -80,7 +80,8 @@ export default function ParticipantActionDialog({ api, packageId, personId, purp
     };
 
     const item = operation?.items?.[0];
-    const documents = purpose === 'completed_copy' ? preview?.documents || [] : preview?.tasks || [];
+    const documents = purpose === 'completed_copy' ? preview?.documents || []
+        : [...new Map((preview?.tasks || []).map(task => [task.documentId || task.taskId, task])).values()];
     const titleId = `signing-action-${personId}`;
     const dismiss = event => { event.preventDefault(); event.stopPropagation(); if (phase !== 'sending') onClose(Boolean(operation)); };
     return <dialog ref={dialog} className="lw-signingPackages__actionDialog" dir={direction} aria-labelledby={titleId}
@@ -110,6 +111,7 @@ export default function ParticipantActionDialog({ api, packageId, personId, purp
         {phase === 'sent' && item && <div className="lw-signingPackages__actionBody" role="status" ref={result} tabIndex={-1}>
             <p><strong>{item.state === 'queued' ? t('signingV2.action.queued') : t(`signingV2.delivery.${item.state}`)}</strong></p>
             {item.state === 'queued' && <p>{t('signingV2.action.queuedHelp')}</p>}
+            {item.state === 'cancelled' && <p>{t(`signingV2.actionCancelledReason.${item.errorCode}`, { defaultValue: t('signingV2.actionCancelledReason.other') })}</p>}
             {item.state === 'uncertain' && <p>{t('signingV2.uncertainHelp')}</p>}
             {item.state === 'failed' && <p>{t('signingV2.action.failedHelp')}</p>}
         </div>}

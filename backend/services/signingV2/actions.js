@@ -6,6 +6,7 @@ const { packageScopeSql, scopeParams } = require('./access');
 const { transaction } = require('./transaction');
 const { enqueue, job } = require('./jobs');
 
+const { taskManifest } = require('./followupScope');
 const { completedDocuments, documentManifest, copiesReady } = require('./completedCopy');
 const PURPOSES = new Set(['reminder', 'resend', 'completed_copy']);
 const CHANNELS = new Set(['email', 'sms']);
@@ -41,7 +42,7 @@ async function loadTarget(db, scope, { packageId, personId, purpose }, lock = fa
         COALESCE((SELECT jsonb_agg(jsonb_build_object('roleKey',p.role_key,'occurrence',p.occurrence,'capacity',p.capacity,
             'name',p.identity_snapshot->>'name','partyName',p.identity_snapshot->>'partyName') ORDER BY p.role_key,p.occurrence)
             FROM signing_participations p WHERE p.owner_context_id=$1 AND p.revision_id=$2 AND p.person_id=$3),'[]') AS participations,
-        COALESCE((SELECT jsonb_agg(jsonb_build_object('taskId',t.id,'documentName',d.name,'stage',t.stage,'state',t.state,'required',t.required)
+        COALESCE((SELECT jsonb_agg(jsonb_build_object('taskId',t.id,'documentId',t.document_id,'version',t.version,'documentName',d.name,'stage',t.stage,'state',t.state,'required',t.required)
             ORDER BY t.stage,d.document_key,t.id)
             FROM signing_tasks t JOIN signing_participations p ON p.owner_context_id=t.owner_context_id AND p.id=t.participation_id
             JOIN signing_documents d ON d.owner_context_id=t.owner_context_id AND d.id=t.document_id
@@ -92,14 +93,14 @@ function evaluate(target, input) {
         packageId: target.id, revisionId: target.active_revision_id, personId: input.personId, purpose: input.purpose,
         package: { name: target.external_key, caseName: target.case_name || null },
         recipient: { name: target.participations[0].name, participations: target.participations },
-        tasks: (completedCopy ? [] : ready).map(task => ({ taskId: task.taskId, documentName: task.documentName, stage: task.stage })),
+        tasks: (completedCopy ? [] : ready).map(task => ({ taskId: task.taskId, documentId: task.documentId, documentName: task.documentName, stage: task.stage })),
         documents: target.documents.map(({ documentId, documentName }) => ({ documentId, documentName })),
         destination: channel ? { channel, masked: maskEndpoint(channel, endpoint) } : null,
         lastInvitation, lastFollowUp,
         eligible: reason === null, reason, cooldownUntil: reason === 'COOLDOWN_ACTIVE' ? cooldownUntil.toISOString() : null,
     };
     preview.previewHash = digest({ revisionId: preview.revisionId, revisionHash: target.revision_hash, personId: input.personId,
-        purpose: input.purpose, channel: channel || null, taskIds: preview.tasks.map(task => task.taskId),
+        purpose: input.purpose, channel: channel || null, tasks: taskManifest(completedCopy ? [] : ready),
         documents: completedCopy ? documentManifest(target.documents) : [],
         profileVersion: target.profile.version, grantId: completedCopy ? null : target.grant_id, endpoint: endpoint ? digest({ endpoint }) : null });
     return { preview, channel, endpoint };
@@ -148,7 +149,8 @@ async function executeParticipantAction(pool, scope, input) {
         await db.query(`INSERT INTO signing_deliveries(id,owner_context_id,profile_id,profile_version,grant_id,event_key,purpose,channel,target_snapshot)
             VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [deliveryId, scope.contextId, target.profile.id, target.profile.version, input.purpose === 'completed_copy' ? null : target.grant_id,
             `${input.purpose}:${target.active_revision_id}:${input.personId}:${operationId}`, input.purpose, channel,
-            { locale: target.profile.policy_snapshot.locale, endpoint,
+            { locale: target.profile.policy_snapshot.locale, endpoint, actorUserId: scope.userId,
+                ...(input.purpose !== 'completed_copy' ? { tasks: taskManifest(target.tasks.filter(task => task.state === 'ready')) } : {}),
                 ...(input.purpose === 'completed_copy' ? { documents: documentManifest(target.documents) } : {}) }]);
         await enqueue(db, scope.contextId, [job('dispatch_delivery', deliveryId, target.revision_hash)]);
         const row = (await db.query(`INSERT INTO signing_operations(id,owner_context_id,actor_key,kind,idempotency_key,request_hash,state,result)
