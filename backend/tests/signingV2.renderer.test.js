@@ -87,3 +87,88 @@ test('real Chromium text shaping/overflow and PDF geometry across Hebrew, Arabic
             geometry: prepared.geometry, extracted, positions, sourcePreserved: true, overflowBlocked: true, personalDataSeparated: true }, null, 2));
     }
 });
+
+test('reused font resources never retain another document value, page size or page count across40 successive PDFs',
+    { skip: process.env.LEGAL_DB_QA !== 'true', timeout: 90000 }, async t => {
+    const renderer = await createDataRenderer(); t.after(() => renderer.close());
+    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    const standardFontDataUrl = `${path.resolve(__dirname, '../node_modules/pdfjs-dist/standard_fonts')}/`;
+    const sources = [];
+    for (const [width, height, pages] of [[595,842,1], [420,595,2]]) {
+        const pdf = await PDFDocument.create();
+        for (let n = 0; n < pages; n += 1) pdf.addPage([width,height]);
+        const bytes = Buffer.from(await pdf.save()); sources.push({ bytes, hash: bytesHash(bytes), pages, width, height });
+    }
+    let previous = null;
+    for (let index = 0; index < 40; index += 1) {
+        const source = sources[index % 2], value = `CURRENT-${String(index).padStart(4,'0')}-ONLY`;
+        const fields = [{ id: 'name', type: 'data', pageNum: source.pages, x: 30, y: 50, width: 640, height: 60, fontSize: 18, overflow: 'block', value }];
+        const result = await renderer.render({ sourceBytes: source.bytes, expectedSourceHash: source.hash, fields, locale: ['he','ar','en'][index % 3] });
+        const pdf = await pdfjs.getDocument({ data: new Uint8Array(result.bytes), useSystemFonts: false, isEvalSupported: false, standardFontDataUrl }).promise;
+        assert.equal(pdf.numPages, source.pages);
+        let text = '';
+        for (let n = 1; n <= source.pages; n += 1) {
+            const page = await pdf.getPage(n), viewport = page.getViewport({scale:1});
+            assert.equal(viewport.width, source.width); assert.equal(viewport.height, source.height);
+            text += (await page.getTextContent()).items.map(item => item.str).join('');
+        }
+        assert.ok(text.includes(value)); if (previous) assert.ok(!text.includes(previous));
+        if (index === 20) await assert.rejects(renderer.render({ sourceBytes: source.bytes, expectedSourceHash: source.hash,
+            fields: [{...fields[0], width:1}], locale:'en' }), { errorCode: 'TEXT_OVERFLOW' });
+        previous = value; await pdf.destroy();
+    }
+});
+
+test('sparse overlays keep source-only page content unchanged and map unsorted fields to the correct rotated pages',
+    { skip: process.env.LEGAL_DB_QA !== 'true', timeout: 90000 }, async t => {
+    const renderer = await createDataRenderer(); t.after(() => renderer.close());
+    const source = await PDFDocument.create();
+    for (let index = 0; index < 12; index += 1) {
+        const page = source.addPage(index % 2 ? [595, 842] : [420, 595]);
+        page.setCropBox(10, 20, page.getWidth() - 30, page.getHeight() - 40);
+        page.setRotation(degrees((index % 4) * 90));
+        page.drawText(`SOURCE-PAGE-${index + 1}`, { x: 50, y: 80, size: 12 });
+    }
+    const sourceBytes = Buffer.from(await source.save()), expectedSourceHash = bytesHash(sourceBytes);
+    const fields = [12, 2, 8].map(pageNum => ({ id: `value${pageNum}`, type: 'data', pageNum,
+        x: 30, y: 100, width: 640, height: 50, fontSize: 18, overflow: 'block', value: `DATA-ON-PAGE-${pageNum}-ONLY` }));
+    const result = await renderer.render({ sourceBytes, expectedSourceHash, fields, locale: 'en' });
+    const original = await PDFDocument.load(sourceBytes), prepared = await PDFDocument.load(result.bytes);
+    const contents = (pdf, index) => {
+        const value = pdf.getPage(index).node.Contents();
+        const refs = value?.asArray ? value.asArray() : value ? [value] : [];
+        return refs.map(ref => Buffer.from(pdf.context.lookup(ref).getContents()).toString('base64'));
+    };
+    assert.equal(prepared.getPageCount(), 12);
+    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    const loaded = await pdfjs.getDocument({ data: new Uint8Array(result.bytes), useSystemFonts: false, isEvalSupported: false,
+        standardFontDataUrl: `${path.resolve(__dirname, '../node_modules/pdfjs-dist/standard_fonts')}/` }).promise;
+    try {
+        for (let index = 0; index < 12; index += 1) {
+            assert.deepEqual(prepared.getPage(index).getCropBox(), original.getPage(index).getCropBox());
+            assert.deepEqual(prepared.getPage(index).getRotation(), original.getPage(index).getRotation());
+            const page = await loaded.getPage(index + 1), items = (await page.getTextContent()).items;
+            const text = items.map(item => item.str).join('');
+            assert.ok(text.includes(`SOURCE-PAGE-${index + 1}`));
+            const field = fields.find(item => item.pageNum === index + 1);
+            if (!field) {
+                assert.deepEqual(contents(prepared, index), contents(original, index), 'untouched source pages gain no blank overlay streams');
+                assert.ok(!text.includes('DATA-ON-PAGE-'));
+            } else {
+                assert.ok(text.includes(field.value));
+                assert.ok(fields.filter(item => item !== field).every(item => !text.includes(item.value)));
+                const start = items.find(item => item.str.startsWith('D'));
+                assert.ok(start);
+                const viewport = page.getViewport({ scale: 1 });
+                const [x] = viewport.convertToViewportPoint(start.transform[4], start.transform[5]);
+                assert.ok(Math.abs(x - 30 * viewport.width / 800) < 0.01);
+            }
+        }
+    } finally { await loaded.destroy(); }
+    if (process.env.V2_QA_OUTPUT_DIR) {
+        const directory = path.resolve(process.env.V2_QA_OUTPUT_DIR);
+        await fs.mkdir(directory, { recursive: true });
+        await fs.writeFile(path.join(directory, 'sparse-source.pdf'), sourceBytes);
+        await fs.writeFile(path.join(directory, 'sparse-prepared.pdf'), result.bytes);
+    }
+});

@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const { randomUUID } = require('node:crypto');
 const request = require('supertest');
 const zlib = require('node:zlib');
+test.after(() => process.env.LEGAL_DB_QA === 'true' ? require('../config/db').end() : undefined);
 
 function signaturePng(width = 240, height = 80) {
     const rows = [];
@@ -26,14 +27,15 @@ function signaturePng(width = 240, height = 80) {
         chunk('IDAT', zlib.deflateSync(Buffer.concat(rows))), chunk('IEND', Buffer.alloc(0))]);
 }
 
-test('the same person signing now and again after other signers needs a new explicit session for the later PDF',
+for (const grouped of [false, true]) test(`the returning signer needs fresh consent after ${grouped ? 'a parallel stage barrier' : 'sequential signers'}`,
     { skip: process.env.LEGAL_DB_QA !== 'true', timeout: 180000 }, async t => {
     const f = await require('./helpers/signingTemplateFixture').signingTemplateFixture();
-    t.after(() => f.pool.end());
     const { createRuntime, objectStorage } = require('../services/signingV2/runtime');
     const { createPublicSigningService, CONSENT_VERSION } = require('../services/signingV2/publicSigning');
     const { fakeProvider } = require('./helpers/signingV2Delivery');
     const { createPerson } = require('../services/signingV2/people');
+    const { packageDetails, packageDocumentFile, packageEvidenceFile } = require('../services/signingV2/management');
+    const { bytesHash } = require('../lib/signingV2/canonical');
     const { r2 } = require('../utils/r2');
     const publicRoutes = require('../routes/signingV2PublicRoutes');
     const grantKey = Buffer.alloc(32, 7), codes = [];
@@ -63,10 +65,17 @@ test('the same person signing now and again after other signers needs a new expl
     const scope = { contextId, userId: f.users[0].userid, tenantId: null, all: true, manage: true };
     const { person } = await createPerson(f.pool, scope, { name: 'Same lawyer', endpoints: { email: 'returning@example.invalid' } });
     const shared = { personId: person.id, name: person.name, email: 'returning@example.invalid', channel: 'email' };
-    const body = { name: 'Returning signer QA', templateVersionId: versionId, shared: { opening: shared, closing: shared },
+    const body = { name: 'Returning signer QA', templateVersionId: versionId,
+        ...(grouped ? { signingOrder: { mode: 'grouped', groups: [['opening', 'client'], ['closing']] } } : {}), shared: { opening: shared, closing: shared },
         rows: [{ key: 'QA', recipients: { client: { name: 'Other signer', email: 'middle@example.invalid', channel: 'email' } } }] };
     const preview = ok(await as(request(f.app).post('/api/signing-v2/creation/preview')).send(body));
     assert.equal(preview.valid, true, JSON.stringify(preview));
+    if (grouped) {
+        const invalid = await as(request(f.app).post('/api/signing-v2/creation/preview')).send({ ...body, signingOrder: { mode: 'grouped', groups: [['opening','client'], ['opening','closing']] } });
+        assert.equal(invalid.body.valid, false); assert.equal(invalid.body.errors[0].code, 'INVALID_SIGNING_ORDER');
+        const changed = await as(request(f.app).post('/api/signing-v2/creation')).set('Idempotency-Key', randomUUID()).send({ ...body, signingOrder: { mode: 'grouped', groups: [['opening'], ['client','closing']] }, previewHash: preview.previewHash });
+        assert.equal(changed.status, 412, 'a different stage arrangement needs fresh approval');
+    }
     ok(await as(request(f.app).post('/api/signing-v2/creation')).set('Idempotency-Key', randomUUID()).send({ ...body, previewHash: preview.previewHash }), 201);
     const provider = fakeProvider(), workerErrors = [];
     const runtime = createRuntime({ pool: f.pool, storage, provider, contextIds: [contextId],
@@ -80,7 +89,14 @@ test('the same person signing now and again after other signers needs a new expl
     const viewFor = async token => ok(await pub('get', '/package', token));
     const tasksOf = view => view.packages.flatMap(pkg => pkg.documents.flatMap(doc => doc.tasks));
     const lawyer = tokenFor('returning@example.invalid');
-    const initialTasks = tasksOf(await viewFor(lawyer));
+    if (grouped) assert.equal(tasksOf(await viewFor(tokenFor('middle@example.invalid')))[0].state, 'ready', 'both people in the first group may act before either has signed');
+    const initialView = await viewFor(lawyer);
+    const initialTasks = tasksOf(initialView);
+    const packageId = initialView.packages[0].packageId;
+    const firstDocumentId = initialView.packages[0].documents.find(doc => doc.name === 'First PDF').documentId;
+    const officeBefore = await packageDocumentFile(f.pool, scope, packageId, firstDocumentId, storage);
+    const officeBeforeVersion = (await packageDetails(f.pool, scope, packageId)).documents.find(doc => doc.id === firstDocumentId).artifactVersion;
+    assert.equal(officeBefore.final, false);
     assert.deepEqual(initialTasks.map(task => task.state).sort(), ['ready', 'waiting']);
     const first = initialTasks.find(task => task.state === 'ready'), later = initialTasks.find(task => task.state === 'waiting');
     const premature = await pub('post', '/sessions', lawyer).send({ taskIds: [first.taskId, later.taskId], consentVersion: CONSENT_VERSION, locale: 'he' });
@@ -99,6 +115,17 @@ test('the same person signing now and again after other signers needs a new expl
     await runtime.drain();
     assert.equal(tasksOf(await viewFor(lawyer)).find(task => task.taskId === later.taskId).state, 'waiting');
     const middle = tokenFor('middle@example.invalid');
+    const officeDuring = await packageDocumentFile(f.pool, scope, packageId, firstDocumentId, storage);
+    const officeDuringVersion = (await packageDetails(f.pool, scope, packageId)).documents.find(doc => doc.id === firstDocumentId).artifactVersion;
+    const middlePdf = await pub('get', `/documents/${firstDocumentId}`, middle);
+    assert.equal(middlePdf.status, 200);
+    if (grouped) assert.equal(bytesHash(officeDuring.bytes), bytesHash(officeBefore.bytes), 'parallel signers consent to the same frozen stage PDF until the group completes');
+    else assert.notEqual(bytesHash(officeDuring.bytes), bytesHash(officeBefore.bytes), 'office PDF includes the first accepted signature before final completion');
+    assert.equal(bytesHash(officeDuring.bytes), bytesHash(middlePdf.body), 'office sees the same stage PDF that the next signer receives');
+    if (grouped) assert.equal(officeDuringVersion, officeBeforeVersion);
+    else assert.notEqual(officeDuringVersion, officeBeforeVersion, 'polling exposes a new artifact version without pretending it is final');
+    assert.equal(officeDuring.final, false);
+    await assert.rejects(packageDocumentFile(f.pool, { ...scope, all: false, userId: -1 }, packageId, firstDocumentId, storage), { errorCode: 'NOT_FOUND' });
     await sign(middle, tasksOf(await viewFor(middle)).find(task => task.state === 'ready'));
     await runtime.drain();
     assert.equal(tasksOf(await viewFor(lawyer)).find(task => task.taskId === later.taskId).state, 'ready');
@@ -113,5 +140,33 @@ test('the same person signing now and again after other signers needs a new expl
     assert.equal(codes.length, 3, 'one fresh OTP for each explicit stage, including the returning signer');
     await runtime.drain();
     assert.deepEqual(tasksOf(await viewFor(lawyer)).map(task => task.state), ['accepted', 'accepted']);
+    const officeFinal = await packageDocumentFile(f.pool, scope, packageId, firstDocumentId, storage);
+    assert.equal(officeFinal.final, true);
+    assert.notEqual(bytesHash(officeFinal.bytes), bytesHash(officeDuring.bytes));
+    assert.notEqual((await packageDetails(f.pool, scope, packageId)).documents.find(doc => doc.id === firstDocumentId).artifactVersion, officeDuringVersion);
+    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    const path = require('node:path');
+    const receiptResponse = token => pub('get', `/packages/${packageId}/evidence`, token).buffer(true).parse((res, done) => {
+        const chunks = []; res.on('data', chunk => chunks.push(chunk)); res.on('end', () => done(null, Buffer.concat(chunks)));
+    });
+    async function textOf(bytes) {
+        const pdf = await pdfjs.getDocument({ data: new Uint8Array(bytes), useSystemFonts: false, isEvalSupported: false,
+            standardFontDataUrl: `${path.resolve(__dirname, '../node_modules/pdfjs-dist/standard_fonts')}/` }).promise;
+        let result = '';
+        try { for (let page = 1; page <= pdf.numPages; page += 1) result += (await (await pdf.getPage(page)).getTextContent()).items.map(item => item.str).join(''); }
+        finally { await pdf.destroy(); }
+        return result.replace(/\s+/g, '');
+    }
+    const lawyerReceipt = await receiptResponse(lawyer), clientReceipt = await receiptResponse(middle);
+    assert.equal(lawyerReceipt.status, 200); assert.equal(clientReceipt.status, 200);
+    const lawyerText = await textOf(lawyerReceipt.body), clientText = await textOf(clientReceipt.body);
+    assert.match(lawyerText, /Samelawyer/); assert.match(lawyerText, /FirstPDF/); assert.match(lawyerText, /LaterPDF/);
+    assert.doesNotMatch(lawyerText, /Othersigner|m•••@example\.invalid/);
+    assert.match(clientText, /Othersigner/); assert.match(clientText, /FirstPDF/);
+    assert.doesNotMatch(clientText, /Samelawyer|LaterPDF|r•••@example\.invalid/);
+    const officeEvidence = await packageEvidenceFile(f.pool, scope, packageId, storage);
+    const officeText = await textOf(officeEvidence.bytes);
+    assert.match(officeText, /Samelawyer/); assert.match(officeText, /Othersigner/); assert.match(officeText, /LaterPDF/);
+    assert.notEqual(bytesHash(officeEvidence.bytes), bytesHash(clientReceipt.body));
     assert.deepEqual(workerErrors, []);
 });

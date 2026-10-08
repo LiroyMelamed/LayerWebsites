@@ -10,8 +10,8 @@
   h2 { font-size: 1rem; margin: 2rem 0 1rem; font-weight: 500; }
   h3 { font-size: 0.875rem; margin: 0 0 .7rem; font-weight: 500; }
   p { line-height: 1.6; margin: .4rem 0; max-width: 72ch; }
-  button, input, select { font: inherit; }
-  button:not(.lw-signing-spotResize), .lw-templates__file {
+  button, input, select, textarea { font: inherit; }
+  button:not(.lw-signing-spotResize):not(.lw-segmentedSwitch__option), .lw-templates__file {
     border: 1px solid #c8d1dd; border-radius: .6rem; padding: .65rem 1rem; min-height: 2.75rem;
     color: var(--template-accent); background: white; cursor: pointer; font-weight: 600; line-height: 1.4;
     &:hover:not(:disabled) { background: #edf2f7; }
@@ -20,7 +20,7 @@
     &.is-primary, &[aria-selected="true"] { color: white; background: var(--template-accent); border-color: var(--template-accent); }
     &.is-primary:hover:not(:disabled), &[aria-selected="true"]:hover:not(:disabled) { background: var(--template-accent); filter: brightness(.9); }
   }
-  input:not([type="checkbox"]):not([type="file"]), select {
+  input:not([type="checkbox"]):not([type="file"]), select, textarea {
     box-sizing: border-box; width: 100%; min-width: 0; padding: .65rem .8rem; min-height: 2.75rem;
     border: 1px solid #b9c5d3; border-radius: .5rem; background: white; color: var(--template-ink); caret-color: var(--template-accent);
     &::placeholder { color: #637184; }
@@ -44,6 +44,13 @@
 .lw-templates__setup, .lw-templates__contactGrid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1rem; }
 .lw-templates__roles { display: flex; flex-direction: column; gap: .8rem; margin-bottom: 1rem; }
 .lw-templates__role { display: grid; grid-template-columns: 1.5rem minmax(0,1fr) minmax(0,1fr) auto; gap: .8rem; align-items: end; > span { align-self: center; font-variant-numeric: tabular-nums; } }
+.lw-templates__dataKey { margin-block: 1rem; }
+.lw-templates__defaults { margin-block: .75rem; > label, > div { max-width: 32rem; margin-block: .75rem; } }
+.lw-templates__condition { min-width: 0; > label, > div { margin-block: .75rem; } }
+.lw-templates__conditionLeaf, .lw-templates__conditionGroup { min-width: 0; > label, > div, > fieldset { margin-block: .75rem; } fieldset { min-width: 0; padding: .65rem; } }
+.lw-templates__roleCondition { grid-column: 2 / -1; min-width: 0; }
+.lw-templates__conditionValue { display: flex; gap: .5rem; align-items: end; > label, > div { flex: 1; min-width: 0; } > button { flex: 0 0 auto; padding-inline: .6rem; } }
+@media (min-width: 48.01rem) { .lw-templates__role.is-grouped { grid-template-columns: 1.5rem minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) auto; } }
 .lw-templates__empty { padding: 3rem 1.5rem; border-block: 1px solid #d9e0e9; text-align: center; p { margin-inline: auto; } }
 .lw-templates__file { position: relative; overflow: hidden; input { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; } &:focus-within { outline: 2px solid var(--template-accent); outline-offset: 3px; } }
 .lw-templates__editor { display: grid; grid-template-columns: minmax(13rem,18rem) minmax(0,1fr); gap: 1.5rem; align-items: start; }
@@ -65,7 +72,7 @@
 @media (max-width: 48rem) {
   .lw-templates__setup, .lw-templates__contactGrid, .lw-templates__editor, .lw-templates__reviewGrid { grid-template-columns: minmax(0,1fr); }
   .lw-templates__fieldTools { position: static; }
-  .lw-templates__role { grid-template-columns: 1.5rem minmax(0,1fr); > label:last-of-type, > button { grid-column: 2; } }
+  .lw-templates__role { grid-template-columns: 1.5rem minmax(0,1fr); > label, > button { grid-column: 2; } }
   .lw-templates__footer > button { width: 100%; }
   .lw-templates__actions { width: 100%; }
   .lw-templates__reviewList { display: flex; overflow-x: auto; gap: .6rem; li { flex: 0 0 14rem; } }
@@ -87,3 +94,6 @@
 }
 
 @media (max-width: 48rem) { .lw-templates__roleActions { grid-column: 2; } }
+
+.lw-templates > .lw-segmentedSwitch { width: fit-content; max-width: 100%; margin-block-end: 1rem; }
+.lw-templates > .lw-segmentedSwitch .lw-segmentedSwitch__option { min-height: 2.75rem; }

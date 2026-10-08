@@ -51,7 +51,7 @@ function uuidv4() {
     }
 }
 
-const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal", filesApi = signingFilesApi, loadPublicPdf = null, nextDocument = null, documentGroup = null, multiDocumentAction = null, deferOtpUntilConsent = false }) => {
+const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal", filesApi = signingFilesApi, loadPublicPdf = null, nextDocument = null, documentGroup = null, multiDocumentAction = null, deferOtpUntilConsent = false, documentIssueActions = null, signingContext = null }) => {
     const { t } = useTranslation();
     const canvasRef = useRef(null);
     const initializedCanvasRef = useRef(null);
@@ -1973,6 +1973,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     }, [otpCode, otpRequired, otpVerified, otpBusy, saving]);
 
     const rejectFile = async () => {
+        if (documentIssueActions) return documentIssueActions.request("decline", activeDocumentId);
         const reason = prompt(t("signing.canvas.rejectReasonPrompt"));
         if (reason === null) return;
         try {
@@ -2216,7 +2217,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                     <p className="lw-signing-completeSubtitle">
                         {hasMoreFields
                             ? t("signing.canvas.signingCompleteFieldsRemainSubtitle", { count: remainingFieldsForComplete })
-                            : t("signing.canvas.signingCompleteSubtitle")}
+                            : (documentGroup?.completionText || t("signing.canvas.signingCompleteSubtitle"))}
                     </p>
                     <div className="lw-signing-completeActions">
                         {hasMoreFields && (
@@ -2820,6 +2821,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 <div className="lw-signing-screen">
                     <div className="lw-signing-modalContent lw-signing-screenContent">
                         <SimpleContainer className="lw-signing-screenBody">
+                            {!!signingContext?.byDocument?.[activeDocumentId || signingContext.documentId]?.length && <div className="lw-signingTaskIssue__notice" dir={signingContext.direction}>
+                                {signingContext.byDocument[activeDocumentId || signingContext.documentId].map(text => <p key={text}>{text}</p>)}
+                            </div>}
                             {documentGroup && (
                                 <label className="lw-signing-documentPicker">
                                     <span>{t('signingV2.public.group.document', { count: documentGroup.documents.length })}</span>
@@ -2832,6 +2836,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                     </select>
                                 </label>
                             )}
+                            {documentIssueActions?.resolutions?.[activeDocumentId || documentIssueActions.documentId] && <div className="lw-signingTaskIssue__notice" role="status" dir={documentIssueActions.direction}>
+                                <strong>{t('signingV2.issue.resolution')}</strong>
+                                <p className="lw-signingTaskIssue__note">{documentIssueActions.resolutions[activeDocumentId || documentIssueActions.documentId]}</p>
+                            </div>}
                             <div className="lw-signing-floatingBar">
                                 {multiDocumentAction && <SecondaryButton size={buttonSizes.SMALL} onPress={openDocumentGroup} disabled={saving}>{multiDocumentAction.label}</SecondaryButton>}
                                 <div className="lw-signing-progressHint">
@@ -2846,7 +2854,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                         {nextSpotButtonLabel}
                                     </PrimaryButton>
                                 )}
-                                {!allSpotsSignedByUser && (
+                                {!isDocumentLocked && !allSpotsSignedByUser && (
                                     <TertiaryButton
                                         size={buttonSizes.SMALL}
                                         onPress={rejectFile}
@@ -2857,6 +2865,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                         {t("signing.canvas.rejectDocument")}
                                     </TertiaryButton>
                                 )}
+                                {documentIssueActions && !isDocumentLocked && !allSpotsSignedByUser && <SecondaryButton size={buttonSizes.SMALL}
+                                    onPress={() => documentIssueActions.request('clarify', activeDocumentId)} disabled={saving}>
+                                    {t('signingV2.issue.clarifyButton')}</SecondaryButton>}
                                 <SecondaryButton size={buttonSizes.SMALL} onPress={onClose} disabled={saving}>
                                     {t("common.close")}
                                 </SecondaryButton>
@@ -3047,6 +3058,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                     </SimpleContainer>
 
                     <SimpleContainer className="lw-signing-modalFooter">
+                                {documentIssueActions && !isDocumentLocked && !allSpotsSignedByUser && <SecondaryButton size={buttonSizes.SMALL}
+                                    onPress={() => documentIssueActions.request('clarify', activeDocumentId)} disabled={saving}>
+                                    {t('signingV2.issue.clarifyButton')}</SecondaryButton>}
+
                         {!isDocumentLocked && !allSpotsSignedByUser && (
                             <TertiaryButton
                                 size={buttonSizes.SMALL}

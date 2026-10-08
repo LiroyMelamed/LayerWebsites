@@ -139,6 +139,8 @@ export function createV2DocumentAdapter({ token, document, task, entries, person
             if (!frozenBody && body.signatureImage) signatureImage = body.signatureImage;
             ids.forEach(id => signed.add(id));
         }),
-        publicRejectSigning: async () => ({ success: false, data: { message: '' } }),
+        // PublicPackageSigning opens the scoped in-page issue dialog. Never
+        // pretend a refusal succeeded if an older caller skips that hook.
+        publicRejectSigning: async () => { throw new Error('TASK_ISSUE_DIALOG_REQUIRED'); },
     };
 }

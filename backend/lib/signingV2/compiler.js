@@ -1,6 +1,7 @@
 const { expect } = require('./errors');
 const { canonical, digest, freeze, HASH_VERSION } = require('./canonical');
 const limits = require('./limits');
+const { normalizeSigningOrder } = require('./signingOrder');
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const KEY = /^[a-z][a-zA-Z0-9_]{0,63}$/;
@@ -25,21 +26,63 @@ function keyed(values, path) {
     }
     return map;
 }
-function validateCondition(condition, keys, path) {
+// Preview admission changes when evaluation semantics change. Existing immutable
+// snapshots are never re-evaluated; a new submission must review the new result.
+const CONDITION_EVALUATOR_VERSION = 2;
+function validateCondition(condition, keys, path, budget = { nodes: 0 }, depth = 0) {
     if (condition == null) return null;
+    expect(typeof condition === 'object' && !Array.isArray(condition) && ++budget.nodes <= 50 && depth <= 4, 'INVALID_CONDITION', path);
+    if (['all', 'any'].includes(condition.operator)) {
+        expect(condition.key === undefined && condition.value === undefined && condition.values === undefined, 'INVALID_CONDITION', path);
+        expect(Array.isArray(condition.conditions) && condition.conditions.length > 0 && condition.conditions.length <= 20, 'INVALID_CONDITION', path);
+        condition.conditions.forEach((child, index) => {
+            expect(child != null, 'INVALID_CONDITION', `${path}.conditions.${index}`);
+            validateCondition(child, keys, `${path}.conditions.${index}`, budget, depth + 1);
+        });
+        return condition;
+    }
+    expect(condition.conditions === undefined, 'INVALID_CONDITION', path);
     expect(condition && keys.has(condition.key), 'INVALID_CONDITION', path);
     expect(['equals', 'in', 'present'].includes(condition.operator), 'INVALID_CONDITION', path);
     const values = condition.operator === 'in' ? list(condition.values, 50, path, 1) : [condition.value];
-    if (condition.operator === 'in') condition.values = values.map(value => normalizeValue(keys.get(condition.key), value, path));
-    if (condition.operator === 'equals') condition.value = normalizeValue(keys.get(condition.key), condition.value, path);
+    const comparison = value => {
+        const normalized = normalizeValue(keys.get(condition.key), value, path);
+        expect(normalized !== null, 'INVALID_CONDITION', path);
+        return normalized;
+    };
+    if (condition.operator === 'in') condition.values = values.map(comparison);
+    if (condition.operator === 'equals') condition.value = comparison(condition.value);
     return condition;
 }
-function conditionMatches(condition, data) {
-    if (!condition) return true;
+function decimalComparable(value) {
+    const trimmed = value.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+    return trimmed === '-0' ? '0' : trimmed;
+}
+function evaluateCondition(condition, data, keys) {
+    if (!condition) return { result: true };
+    if (['all', 'any'].includes(condition.operator)) {
+        const decisive = condition.operator === 'any';
+        let unknown;
+        for (const child of condition.conditions) {
+            const evaluated = evaluateCondition(child, data, keys);
+            if (evaluated.result === decisive) return evaluated;
+            if (evaluated.missingKey) unknown ||= evaluated;
+        }
+        return unknown || { result: !decisive };
+    }
     const value = data[condition.key];
-    if (condition.operator === 'present') return value !== null && value !== undefined && value !== '';
+    if (condition.operator === 'present') return { result: value !== null && value !== undefined && value !== '' };
+    // Unknown is not false: otherwise missing input could silently omit a
+    // required annex or participant. Only an explicit presence rule can do so.
+    if (value === null || value === undefined || value === '') return { result: null, missingKey: condition.key };
     const values = condition.operator === 'in' ? condition.values : [condition.value];
-    return values.some(candidate => canonical(candidate) === canonical(value === undefined ? null : value));
+    const compare = keys.get(condition.key)?.type === 'decimal' ? decimalComparable : canonical;
+    return { result: values.some(candidate => compare(candidate) === compare(value)) };
+}
+function conditionMatches(condition, data, keys = new Map()) {
+    const evaluated = evaluateCondition(condition, data, keys);
+    expect(evaluated.result !== null, 'DATA_REQUIRED', evaluated.missingKey);
+    return evaluated.result;
 }
 
 function normalizeValue(field, value, path = field.key) {
@@ -150,9 +193,10 @@ function validateDefinition(input) {
     definition.dataKeys = [...keys.values()];
     definition.signingRules ||= [];
     definition.policy ||= {};
-    for (const flag of ['internalApproval', 'requiredAllPdfReview', 'identityBeforeView']) {
+    for (const flag of ['internalApproval', 'requiredAllPdfReview', 'identityBeforeView', 'soloApproval']) {
         expect(definition.policy[flag] === undefined || typeof definition.policy[flag] === 'boolean', 'INVALID_DEFINITION', `policy.${flag}`);
     }
+    expect(!definition.policy.soloApproval || definition.policy.internalApproval || definition.policy.requiredAllPdfReview, 'INVALID_DEFINITION', 'policy.soloApproval');
     expect(definition.policy.otpRequired === true, 'OTP_REQUIRED', 'policy.otpRequired');
     expect(['invite', 'manual'].includes(definition.policy.deliveryMode), 'INVALID_DEFINITION', 'policy.deliveryMode');
     expect(!definition.policy.identityBeforeView, 'WORKFLOW_NOT_ENABLED', 'policy.identityBeforeView');
@@ -162,22 +206,20 @@ function validateDefinition(input) {
 function signingStages(definition, input, omitted) {
     const order = input.signingOrder;
     if (order == null) return null;
-    expect(order.mode === 'parallel' || order.mode === 'sequential', 'INVALID_WORKFLOW', 'signingOrder');
     const active = definition.roles.filter(role => !omitted.has(role.key)).map(role => role.key);
+    const normalized = normalizeSigningOrder(order, active);
     if (order.mode === 'parallel') {
         return {
             byRole: new Map(definition.roles.map(role => [role.key, 0])),
             stages: [{ key: 'together', label: definition.name, after: null }],
         };
     }
-    const roles = order.roles;
-    expect(Array.isArray(roles) && roles.length === active.length && new Set(roles).size === active.length
-        && roles.every(key => active.includes(key)), 'INVALID_WORKFLOW', 'signingOrder.roles');
+    const groups = normalized.mode === 'grouped' ? normalized.groups : normalized.roles.map(key => [key]);
     return {
-        byRole: new Map(roles.map((key, index) => [key, index])),
-        stages: roles.map((key, index) => ({
+        byRole: new Map(groups.flatMap((roles, index) => roles.map(key => [key, index]))),
+        stages: groups.map((roles, index) => ({
             key: `order${index + 1}`,
-            label: definition.roles.find(role => role.key === key).label,
+            label: roles.map(key => definition.roles.find(role => role.key === key).label).join(' · '),
             after: index ? `order${index}` : null,
         })),
     };
@@ -186,6 +228,7 @@ function signingStages(definition, input, omitted) {
 function compilePackage(definition, input, directory, now = new Date()) {
     const data = {};
     const provenance = {};
+    const dataKeys = new Map(definition.dataKeys.map(field => [field.key, field]));
     const validKeys = new Set(definition.dataKeys.map(field => field.key));
     expect(Object.keys(input.data || {}).every(key => validKeys.has(key)), 'UNKNOWN_DATA_KEY');
     for (const key of definition.dataKeys) {
@@ -209,8 +252,14 @@ function compilePackage(definition, input, directory, now = new Date()) {
             expect(assignments.length === 0, 'ROLE_CAPACITY_EXCEEDED', role.key);
             continue;
         }
-        const active = conditionMatches(role.when, data);
+        const active = conditionMatches(role.when, data, dataKeys);
         expect(active ? assignments.length >= role.min && assignments.length <= role.max : assignments.length === 0, 'ROLE_CAPACITY_EXCEEDED', role.key);
+        expect(new Set(assignments.map(assignment => assignment.personId)).size === assignments.length, 'DISTINCT_PEOPLE_REQUIRED', role.key);
+        if (role.capacity === 'representative' && assignments.length > 1) {
+            const identities=assignments.map(item=>directory.people.get(item.personId)?.identity_key);
+            expect(identities.every(Boolean),'IDENTITY_VERIFICATION_REQUIRED',role.key);
+            expect(new Set(identities).size===identities.length,'DISTINCT_PEOPLE_REQUIRED',role.key);
+        }
         assignments.forEach((assignment, occurrence) => {
             const person = directory.people.get(assignment.personId);
             const party = directory.parties.get(assignment.partyId);
@@ -219,7 +268,7 @@ function compilePackage(definition, input, directory, now = new Date()) {
             let authority = null;
             if (role.capacity === 'representative') {
                 authority = directory.authorities.get(assignment.authorityId);
-                expect(party.kind === 'legal_entity' && authority?.person_id === person.id && authority?.represented_party_id === party.id, 'AUTHORITY_REQUIRED', role.key);
+                expect((party.kind === 'legal_entity' || (party.kind === 'person' && party.person_id !== person.id)) && authority?.person_id === person.id && authority?.represented_party_id === party.id, 'AUTHORITY_REQUIRED', role.key);
                 expect(authority.status === 'approved' && new Date(authority.valid_from) <= now && (!authority.valid_until || new Date(authority.valid_until) > now), 'AUTHORITY_EXPIRED', role.key);
                 expect(authority.scope?.roleKeys?.includes(role.key) || authority.scope?.allSigning === true, 'AUTHORITY_SCOPE_MISMATCH', role.key);
             }
@@ -247,8 +296,9 @@ function compilePackage(definition, input, directory, now = new Date()) {
     const tasks = [];
     for (const document of definition.documents) {
         const missing = document.fields.filter(field => field.type !== 'data' && !byRole.has(`${field.roleKey}:${field.occurrence}`));
-        if (!conditionMatches(document.when, data) || missing.some(field => field.inactiveTreatment === 'exclude_document')) {
-            exclusions.push({ documentKey: document.key, reason: !conditionMatches(document.when, data) ? 'condition' : 'inactive_role' });
+        const included = conditionMatches(document.when, data, dataKeys);
+        if (!included || missing.some(field => field.inactiveTreatment === 'exclude_document')) {
+            exclusions.push({ documentKey: document.key, reason: !included ? 'condition' : 'inactive_role' });
             continue;
         }
         const source = directory.sources.get(document.sourceArtifactId);
@@ -329,4 +379,4 @@ function admission(compiled) {
     return { packages: compiled.length, documents, outputPages, estimatedOutputBytes, uniqueSourceBytes, snapshotBytes };
 }
 
-module.exports = { validateDefinition, compilePackage, admission, normalizeValue, conditionMatches, UUID, LOCALES };
+module.exports = { validateDefinition, compilePackage, admission, normalizeValue, conditionMatches, CONDITION_EVALUATOR_VERSION, UUID, LOCALES };

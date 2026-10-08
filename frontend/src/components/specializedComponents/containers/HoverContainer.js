@@ -152,6 +152,7 @@ const HoverContainer = ({
                                     key={`choiceNumber${index}`}
                                     className="lw-hoverContainer__option"
                                     onPointerDown={(e) => handleOptionPointerDown(e, result)}
+                                    onPress={(e) => { if (e.detail === 0) handleOptionPointerDown(e, result); }}
                                 >
                                     <Text20 className="lw-hoverContainer__optionText">{getButtonTextFunction?.(result)}</Text20>
                                 </SimpleButton>
