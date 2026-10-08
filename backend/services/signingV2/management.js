@@ -88,6 +88,22 @@ function projectionCte(scope, groupParameter = null) {
             count(*) FILTER (WHERE d.state='failed') AS failed_count
         FROM signing_documents d JOIN authorized a ON a.owner_context_id=d.owner_context_id AND a.active_revision_id=d.revision_id
         GROUP BY d.revision_id
+    ), job_issues AS (
+        -- Document jobs and revision jobs use different subjects. Start both axes
+        -- from authorized active revisions so failed historical work stays private.
+        SELECT a.active_revision_id AS revision_id,j.id
+        FROM authorized a
+        JOIN signing_documents d ON d.owner_context_id=a.owner_context_id AND d.revision_id=a.active_revision_id
+        JOIN signing_jobs j ON j.owner_context_id=d.owner_context_id AND j.subject_id=d.id
+            AND j.kind IN ('prepare_document','finalize_document')
+        WHERE j.state IN ('needs_attention','uncertain')
+        UNION ALL
+        SELECT a.active_revision_id,j.id
+        FROM authorized a JOIN signing_jobs j ON j.owner_context_id=a.owner_context_id AND j.subject_id=a.active_revision_id
+            AND j.kind IN ('validate_package','activate_package','render_stage','render_evidence')
+        WHERE j.state IN ('needs_attention','uncertain')
+    ), job_counts AS (
+        SELECT revision_id,count(DISTINCT id) AS job_issues FROM job_issues GROUP BY revision_id
     ), ${deliveryMembershipCte()}, delivery_rows AS (
         -- Only the latest attempt per person, channel and message kind decides attention:
         -- a successful resend clears an earlier failure instead of leaving it flagged forever.
@@ -118,10 +134,11 @@ function projectionCte(scope, groupParameter = null) {
             COALESCE(dc.document_count,0) AS document_count,COALESCE(dc.prepared_count,0) AS prepared_count,COALESCE(dc.final_count,0) AS final_count,
             COALESCE(mc.accepted_messages,0) AS accepted_messages,COALESCE(mc.delivered_messages,0) AS delivered_messages,
             COALESCE(mc.pending_messages,0) AS pending_messages,mc.last_message_at,
-            (COALESCE(tc.attention_count,0)+COALESCE(dc.failed_count,0)+COALESCE(mc.delivery_issues,0)) AS issue_count,
+            (COALESCE(tc.attention_count,0)+COALESCE(dc.failed_count,0)+COALESCE(jc.job_issues,0)+COALESCE(mc.delivery_issues,0)) AS issue_count,
             ps.person_names,ps.party_names
         FROM authorized a LEFT JOIN task_counts tc ON tc.revision_id=a.active_revision_id
         LEFT JOIN document_counts dc ON dc.revision_id=a.active_revision_id
+        LEFT JOIN job_counts jc ON jc.revision_id=a.active_revision_id
         LEFT JOIN delivery_counts mc ON mc.revision_id=a.active_revision_id
         LEFT JOIN person_search ps ON ps.revision_id=a.active_revision_id
     )`;
