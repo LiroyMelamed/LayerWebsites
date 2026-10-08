@@ -1,3 +1,4 @@
+import SigningSelect from './SigningSelect';
 import React, { useEffect, useRef, useState } from 'react';
 import PrimaryButton from '../../../components/styledComponents/buttons/PrimaryButton';
 import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
@@ -74,12 +75,12 @@ export default function WorkbookImport({ api, versionId, roles: sourceRoles, dat
         const selected = sheet.columns.find(column => column.index === columns[key]);
         return <div className="lw-signingCompose__field" key={key}>
             <label htmlFor={`map-${key}`}>{label}{required ? ` (${t('signingV2.compose.mapping.required')})` : ''}</label>
-            <select id={`map-${key}`} dir={direction} value={columns[key] || ''} disabled={busy} onChange={event => map(key, event.target.value)}>
+            <SigningSelect id={`map-${key}`} dir={direction} value={columns[key] || ''} disabled={busy} onChange={event => map(key, event.target.value)}>
                 <option value="">{t('signingV2.compose.mapping.skip')}</option>
                 {sheet.columns.map(column => <option key={column.index} value={column.index}>
                     {number(column.index)} · {column.header || t('signingV2.compose.mapping.noHeader')}
                 </option>)}
-            </select>
+            </SigningSelect>
             {selected && <small><bdi>{selected.samples.filter(Boolean).join(' · ') || t('signingV2.compose.mapping.noSample')}</bdi></small>}
         </div>;
     };
@@ -97,10 +98,10 @@ export default function WorkbookImport({ api, versionId, roles: sourceRoles, dat
                 <p>{t('signingV2.compose.mapping.help')}</p>
                 {sheets.length > 1 && <div className="lw-signingCompose__field">
                     <label htmlFor="mapping-sheet">{t('signingV2.compose.mapping.sheet')}</label>
-                    <select id="mapping-sheet" dir={direction} value={sheetId} disabled={busy} onChange={event => {
+                    <SigningSelect id="mapping-sheet" dir={direction} value={sheetId} disabled={busy} onChange={event => {
                         const next = sheets.find(item => item.id === Number(event.target.value));
                         setSheetId(next.id); setColumns(suggestedMapping(next, roles, dataFields)); setError(null);
-                    }}>{sheets.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
+                    }}>{sheets.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</SigningSelect>
                 </div>}
                 {roles.map(role => <fieldset key={role.key} className="lw-signingCompose__mappingRole">
                     <legend>{role.label}</legend>
