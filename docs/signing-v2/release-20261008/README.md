@@ -11,3 +11,5 @@ The detailed 18-page Hebrew operating guide covers authoring, stages, people/cap
 Backups preserve old application/environment and frontend assets. Data-preserving rollback retains additive schema and new data; a database dump must never be restored over new customer writes automatically. Melamed's hosting-managed .htaccess is preserved byte-for-byte, including its cPanel PHP handler.
 
 Original immutable detailed evidence remains in the owner's workspace; this folder freezes the ledger, exact source/evidence manifests, actual public deployment receipts and manual. No secrets, raw dotenv, grant keys or reviewer credentials are included.
+
+Final remote branch and annotated-tag readback passed; git-production-proof03.json pins all four actual deployed heads and the initial documentation checkpoint. Observed GitHub dependency advisories were read and scoped: four pre-existing frontend build/dev-tool alerts remain follow-up. They are absent from all four browser artifact source maps, and production backend proxy-addr2.0.8/compression1.8.2 are already patched. This is limited evidence, not dismissal or a full security audit.

@@ -2,11 +2,11 @@
   "files": [
     {
       "path": "README.md",
-      "sha256": "b79f869744813586b62faee8ead7e518bdfe983c536bd376c10b7658fec43ed0"
+      "sha256": "9ea52fa0c4d57f714d5e3a8cdde96abb07f645141de5dde5e2a9d456a9bd1f34"
     },
     {
       "path": "TEST-LEDGER-snapshot.md",
-      "sha256": "2331c873a0da36cb65cd81b9e3952644196c53bf396b432a0893fbbec1ba0e61"
+      "sha256": "3a11f250d77a06b2511519730893ff6713789d90ed62d8a3c3da465ca5379dc1"
     },
     {
       "path": "ashrafessa-backend-readonly-proof03.json",
@@ -19,6 +19,22 @@
     {
       "path": "ashrafessa-public-live-proof03.json",
       "sha256": "f99005ab26d50848fd389a3a607e2c87c867b95307acaaf83d5b13cfb2912349"
+    },
+    {
+      "path": "dependabot-artifact-scope03.json",
+      "sha256": "d261a977dc4f56bb3a6e0ce2d367f4a88a2d25bdb8d91afa492f96881b990032"
+    },
+    {
+      "path": "dependabot-readonly03.json",
+      "sha256": "594ad8487e99179638496e7783dc8c4ad3d1c830f3ae9f248c3f23a228513c14"
+    },
+    {
+      "path": "dependency-installed-readonly03.json",
+      "sha256": "013190ab867e4f427ed31bc9e71c137d8cab5e597998cc1ef92a2f2be66d25d3"
+    },
+    {
+      "path": "git-production-proof03.json",
+      "sha256": "db243e7c5544d0d384287eda8085fa4339d20abbc15bf04717767464bf99fe28"
     },
     {
       "path": "idm-backend-readonly-proof03.json",
