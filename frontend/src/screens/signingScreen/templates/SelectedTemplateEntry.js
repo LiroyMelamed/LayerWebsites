@@ -8,9 +8,10 @@ import useSigningLocale from './useSigningLocale';
 export async function resolveSelectedTemplate(api, id, locale, expectedVersion) {
     const catalog = await api.templates();
     const legacy = catalog.legacy.find(item => String(item.id) === String(id));
-    const matching = catalog.templates.filter(item => String(item.origin?.templateId || item.templateId) === String(id) || item.versionId === id);
-    let selected = matching.sort((a, b) => (b.origin?.version || b.version) - (a.origin?.version || a.version))[0];
-    const version = legacy?.version ?? selected?.origin?.version ?? selected?.version;
+    const native = catalog.templates.filter(item => String(item.templateId) === String(id) || item.versionId === id);
+    const matching = native.length ? native : catalog.templates.filter(item => String(item.origin?.templateId) === String(id));
+    let selected = matching.sort((a, b) => native.length ? b.version - a.version : (b.origin?.version || b.version) - (a.origin?.version || a.version))[0];
+    const version = legacy?.version ?? (native.length ? selected?.version : selected?.origin?.version ?? selected?.version);
     if (expectedVersion != null && String(expectedVersion) !== String(version)) throw Object.assign(new Error('Selected template changed'), { code: 'SELECTED_TEMPLATE_CHANGED' });
     if (legacy) {
         const imported = await api.importLegacy(legacy.id, locale, legacy.version);

@@ -42,11 +42,27 @@ async function createDraft(pool, scope, input) {
     expect(input.definition?.schemaVersion === 2 && typeof input.definition.name === 'string' && input.definition.name.trim().length > 0, 'INVALID_TEMPLATE');
     const definitionHash = digest(input.definition);
     expect(Buffer.byteLength(JSON.stringify(input.definition)) <= snapshotBytes, 'CAPACITY_BUDGET_EXCEEDED');
+    if (input.draftId != null) expect(UUID.test(input.draftId), 'INVALID_TEMPLATE');
     return transaction(pool, async db => {
+        const draftId = input.draftId || randomUUID();
+        await db.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`signing-template-draft:${draftId}`]);
+        const existing = (await db.query('SELECT * FROM signing_template_versions WHERE id=$1', [draftId])).rows[0];
+        if (existing) {
+            if (existing.owner_context_id !== scope.contextId || existing.created_by !== scope.userId) fail('NOT_FOUND', 404);
+            await loadHead(db, scope, existing.template_id, true);
+            if (existing.edit_version !== 1 || existing.state !== 'draft' || existing.definition_hash !== definitionHash
+                || (input.templateId && input.templateId !== existing.template_id)
+                || (input.baseVersionId !== undefined && input.baseVersionId !== existing.base_version_id)) fail('VERSION_CHANGED', 412);
+            return existing;
+        }
         let templateId = input.templateId;
         let version = 1;
+        let baseVersionId = null;
         if (templateId) {
             await loadHead(db, scope, templateId, true);
+            const base = (await db.query("SELECT id FROM signing_template_versions WHERE owner_context_id=$1 AND template_id=$2 AND state='published' ORDER BY version DESC LIMIT 1", [scope.contextId, templateId])).rows[0];
+            baseVersionId = base?.id || null;
+            if (input.baseVersionId !== undefined && input.baseVersionId !== baseVersionId) fail('VERSION_CHANGED', 412);
             const latest = await db.query('SELECT COALESCE(max(version),0) AS version FROM signing_template_versions WHERE owner_context_id=$1 AND template_id=$2', [scope.contextId, templateId]);
             version = latest.rows[0].version + 1;
         } else {
@@ -54,8 +70,8 @@ async function createDraft(pool, scope, input) {
             await db.query(`INSERT INTO signing_templates(id,owner_context_id,law_firm_tenant_id,owner_userid,name,definition)
                 VALUES($1,$2,$3,$4,$5,$6)`, [templateId, scope.contextId, scope.tenantId, scope.userId, input.definition.name.trim(), input.definition]);
         }
-        return (await db.query(`INSERT INTO signing_template_versions(id,owner_context_id,template_id,version,definition,definition_hash,created_by)
-            VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *`, [randomUUID(), scope.contextId, templateId, version, input.definition, definitionHash, scope.userId])).rows[0];
+        return (await db.query(`INSERT INTO signing_template_versions(id,owner_context_id,template_id,version,definition,definition_hash,created_by,base_version_id)
+            VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`, [draftId, scope.contextId, templateId, version, input.definition, definitionHash, scope.userId, baseVersionId])).rows[0];
     });
 }
 
@@ -67,8 +83,8 @@ async function saveDraft(pool, scope, templateId, versionId, definition, expecte
     return transaction(pool, async db => {
         await loadHead(db, scope, templateId, true);
         const updated = await db.query(`UPDATE signing_template_versions SET definition=$1,definition_hash=$2,edit_version=edit_version+1
-            WHERE owner_context_id=$3 AND template_id=$4 AND id=$5 AND state='draft' AND edit_version=$6 RETURNING *`,
-        [definition, definitionHash, scope.contextId, templateId, versionId, expectedVersion]);
+            WHERE owner_context_id=$3 AND template_id=$4 AND id=$5 AND state='draft' AND edit_version=$6 AND created_by=$7 RETURNING *`,
+        [definition, definitionHash, scope.contextId, templateId, versionId, expectedVersion, scope.userId]);
         if (!updated.rowCount) fail('VERSION_CHANGED', 412);
         return updated.rows[0];
     });
@@ -82,7 +98,10 @@ async function publish(pool, scope, templateId, versionId, expectedVersion, expe
         const result = await db.query(`SELECT * FROM signing_template_versions WHERE owner_context_id=$1 AND template_id=$2 AND id=$3 FOR UPDATE`, [scope.contextId, templateId, versionId]);
         if (!result.rowCount) fail('NOT_FOUND', 404);
         const draft = result.rows[0];
+        if (draft.created_by !== scope.userId) fail('NOT_FOUND', 404);
         if (draft.state !== 'draft' || draft.edit_version !== expectedVersion || draft.definition_hash !== expectedHash) fail('VERSION_CHANGED', 412);
+        const latest = (await db.query("SELECT id FROM signing_template_versions WHERE owner_context_id=$1 AND template_id=$2 AND state='published' ORDER BY version DESC LIMIT 1", [scope.contextId, templateId])).rows[0];
+        if ((latest?.id || null) !== draft.base_version_id) fail('VERSION_CHANGED', 412);
         const definition = validateDefinition(draft.definition);
         await validateSources(db, scope, definition);
         const published = (await db.query(`UPDATE signing_template_versions SET state='published',definition=$1,definition_hash=$2,

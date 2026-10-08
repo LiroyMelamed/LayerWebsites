@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import api from '../../../api/signingTemplatesApi';
 import TemplateBuilder from './TemplateBuilder';
+import NativeTemplateBuilder from './NativeTemplateBuilder';
+import packagesApi from '../../../api/signingPackagesApi';
 import BatchComposer from './BatchComposer';
 import SigningBackButton from './SigningBackButton';
 import useSigningLocale from './useSigningLocale';
@@ -8,13 +10,14 @@ import { downloadBlobAsFile } from '../../../utils/downloadBlobAsFile';
 import StatusNotice from '../../../components/ui/StatusNotice';
 import './templates.scss';
 
-export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSendTemplate }) {
+export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSendTemplate, nativeAvailable = false }) {
     const { t, direction, number, date, errorMessage } = useSigningLocale();
     const text = (key, values) => t(`signingV2.workspace.${key}`, values);
     const status = value => text(`status.${value}`, { defaultValue: text('unknownStatus') });
     const count = (key, value) => text(key, { count: Number(value), formattedCount: number(value) });
     const [mode, setMode] = useState('list');
     const [templates, setTemplates] = useState([]);
+    const [nativeTemplates, setNativeTemplates] = useState([]);
     const [batches, setBatches] = useState([]);
     const [current, setCurrent] = useState(null);
     const [batch, setBatch] = useState(null);
@@ -30,10 +33,11 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSe
             const [templateResult, batchResult] = await Promise.all([api.list(), api.batches()]);
             setTemplates(templateResult.templates);
             setBatches(batchResult.batches);
+            if (nativeAvailable) setNativeTemplates((await packagesApi.authoringTemplates()).templates);
         } catch (err) { setError(err); }
         finally { setBusy(false); }
     }
-    useEffect(() => { refresh(); }, []);
+    useEffect(() => { refresh(); }, [nativeAvailable]); // eslint-disable-line react-hooks/exhaustive-deps
 
     async function openTemplate(id, next) {
         setBusy(true);
@@ -92,7 +96,10 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSe
         catch (err) { setError(err); }
         finally { setBusy(false); }
     }
+    const visibleLegacyTemplates = templates.filter(template => !nativeAvailable || !nativeTemplates.some(version =>
+        version.state === 'published' && version.definition.origin?.templateId === template.id && version.definition.origin?.version === template.version));
     const back = () => { setMode('list'); setError(null); refresh(); };
+    if (mode === 'nativeBuilder') return <NativeTemplateBuilder version={current} onBack={back} onSaved={back} />;
     if (mode === 'builder') return <TemplateBuilder template={current} onBack={back} onSaved={back} />;
     if (mode === 'compose') return <BatchComposer template={current} onBack={back} onCreated={openBatch} />;
 
@@ -111,10 +118,17 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSe
         {mode === 'list' ? <>
             <div className="lw-templates__toolbar">
                 <h2>{text('officeTemplates')}</h2>
-                {canUpload && <button type="button" className="is-primary" onClick={() => { setCurrent(null); setMode('builder'); }}>{text('newTemplate')}</button>}
+                {canUpload && <button type="button" className="is-primary" onClick={() => { setCurrent(null); setMode(nativeAvailable ? 'nativeBuilder' : 'builder'); }}>{text('newTemplate')}</button>}
             </div>
-            {!templates.length && !busy && <div className="lw-templates__empty"><h3>{text('emptyTitle')}</h3><p>{text('emptyBody')}</p></div>}
-            <ul className="lw-templates__list" aria-label={text('officeTemplates')}>{templates.map(template => <li key={template.id}>
+            {!templates.length && !nativeTemplates.length && !busy && <div className="lw-templates__empty"><h3>{text('emptyTitle')}</h3><p>{text('emptyBody')}</p></div>}
+            {nativeAvailable && <ul className="lw-templates__list" aria-label={t('signingV2.authoring.library')}>{nativeTemplates.map(version => <li key={version.id}>
+                <div><strong><bdi>{version.definition.name}</bdi></strong><p>{version.state === 'draft' ? t('signingV2.authoring.draft') : text('version', { version: number(version.version) })} · {count('documents', version.definition.documents?.length || 0)}</p></div>
+                <div className="lw-templates__actions">
+                    {canUpload && version.state === 'published' && <button type="button" className="is-primary" disabled={busy} onClick={() => onSendTemplate?.({ id: version.templateId, versionId: version.id, version: version.version })}>{text('sendFromTemplate')}</button>}
+                    {canUpload && version.canEdit && <button type="button" disabled={busy} onClick={() => { setCurrent(version); setMode('nativeBuilder'); }}>{text('edit')}</button>}
+                </div>
+            </li>)}</ul>}
+            <ul className="lw-templates__list" aria-label={text('officeTemplates')}>{visibleLegacyTemplates.map(template => <li key={template.id}>
                 <div><strong><bdi>{template.name}</bdi></strong><p>{count('documents', template.document_count)} · {text('version', { version: number(template.version) })}</p></div>
                 <div className="lw-templates__actions">
                     {canUpload && <button type="button" className="is-primary" disabled={busy} onClick={() => onSendTemplate ? onSendTemplate(template) : openTemplate(template.id, 'compose')}>{text('sendFromTemplate')}</button>}

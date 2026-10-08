@@ -9,6 +9,7 @@ const actions = require('../services/signingV2/actions');
 const creation = require('../services/signingV2/creation');
 const drafts = require('../services/signingV2/drafts');
 const caseContext = require('../services/signingV2/caseContext');
+const authoring = require('../services/signingV2/authoring');
 const workbook = require('../lib/signingV2/workbook');
 const { objectStorage, officeQuota } = require('../services/signingV2/runtime');
 const { createAppError } = require('../utils/appError');
@@ -48,6 +49,23 @@ router.post('/packages/:id/participants/:personId/actions', send, run(async (req
     res.status(result.reused ? 200 : 202).json(result);
 }));
 router.get('/templates', view, run(async (req, res) => res.json(await creation.listTemplates(pool, await actorScope(pool, req, 'view')))));
+router.get('/authoring/templates', view, run(async (req, res) => res.json(await authoring.catalog(pool, await actorScope(pool, req, 'view')))));
+router.get('/authoring/versions/:id', view, run(async (req, res) =>
+    res.json({ version: authoring.versionView(await authoring.loadVersion(pool, await actorScope(pool, req, 'view'), req.params.id)) })));
+router.put('/authoring/drafts/:id', send, run(async (req, res) =>
+    res.json({ version: await authoring.save(pool, await actorScope(pool, req, 'upload'), req.params.id, req.body || {}) })));
+router.post('/authoring/drafts/:id/publish', send, run(async (req, res) =>
+    res.json({ version: await authoring.publish(pool, await actorScope(pool, req, 'upload'), req.params.id, req.body || {}) })));
+router.post('/authoring/sources', send, run(async (req, res) => {
+    const { r2, BUCKET } = require('../utils/r2');
+    res.json({ source: await authoring.registerSource(pool, await actorScope(pool, req, 'upload'), req.body?.fileKey,
+        { readPdf: require('../services/signingTemplateService').readPdf, storage: objectStorage({ client: r2, bucket: BUCKET }) }) });
+}));
+router.get('/authoring/versions/:id/documents/:key', view, run(async (req, res) => {
+    const { r2, BUCKET } = require('../utils/r2');
+    pdf(res, await authoring.documentFile(pool, await actorScope(pool, req, 'view'), req.params.id, req.params.key,
+        objectStorage({ client: r2, bucket: BUCKET })), 'template.pdf');
+}));
 router.get('/creation/cases', send, run(async (req, res) => res.json(await caseContext.searchCases(pool, await actorScope(pool, req, 'upload'), req.query.q))));
 router.get('/creation/cases/:id', send, run(async (req, res) => res.json(await caseContext.loadCaseContext(pool, await actorScope(pool, req, 'upload'), req.params.id))));
 router.post('/templates/legacy/:id/import', send, run(async (req, res) => {

@@ -863,6 +863,7 @@
       "clientStampShort": "C.Stamp"
     },
     "fieldSettings": {
+      "resize": "Resize field",
       "addFieldTitle": "Add field",
       "title": "Field settings",
       "type": "Field type",
@@ -2108,6 +2109,34 @@
         "signed": "Signed",
         "rejected": "Rejected",
         "cancelled": "Cancelled"
+      }
+    },
+    "authoring": {
+      "dataTitleNamed": "Information before sending: {{name}}",
+      "dataTitle": "Information to fill in the documents",
+      "dataHelp": "Define the information that changes between packages once. Enter values when sending and place them on the PDF in the documents step.",
+      "newData": "New data field",
+      "label": "Field name",
+      "type": "Information type",
+      "options": "Choices — one per line",
+      "required": "Required before sending",
+      "removeData": "Remove data field",
+      "addData": "Add data field",
+      "dataField": "Information filled before sending",
+      "fontSize": "Text size",
+      "overflow": "Text that does not fit stops preparation for correction. It will not be clipped or move signatures.",
+      "saveDraft": "Save draft",
+      "publish": "Publish template",
+      "saved": "Template draft saved. You can return to it from the templates list.",
+      "library": "Templates and drafts",
+      "draft": "Private draft",
+      "types": {
+        "text": "Text",
+        "identifier": "Identifier — keeps leading zeros",
+        "decimal": "Exact amount or decimal number",
+        "date": "Date",
+        "boolean": "Yes or no",
+        "enum": "Choice list"
       }
     }
   },

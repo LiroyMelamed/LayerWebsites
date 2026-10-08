@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import he from '../../../i18n/locales/he.json';
@@ -7,12 +7,19 @@ import en from '../../../i18n/locales/en.json';
 import ar from '../../../i18n/locales/ar.json';
 import { downloadBlobAsFile } from '../../../utils/downloadBlobAsFile';
 import api from '../../../api/signingTemplatesApi';
+import packagesApi from '../../../api/signingPackagesApi';
 import BatchComposer from './BatchComposer';
 import TemplatesWorkspace from './TemplatesWorkspace';
 
 jest.mock('../../../api/signingTemplatesApi', () => ({ __esModule: true, default: {
     create: jest.fn(), list: jest.fn(), batches: jest.fn(), batch: jest.fn(), send: jest.fn(), contacts: jest.fn(), archive: jest.fn(), link: jest.fn(), downloadPackage: jest.fn(), completion: jest.fn(),
 } }));
+
+jest.mock('../../../api/signingPackagesApi', () => ({ __esModule: true, default: { authoringTemplates: jest.fn() } }));
+jest.mock('./NativeTemplateBuilder', () => {
+    const React = require('react');
+    return function MockNativeTemplateBuilder(props) { return React.createElement('div', { 'data-testid': 'native-builder' }, props.version?.id || 'new-native-template'); };
+});
 
 jest.mock('../../../utils/downloadBlobAsFile', () => ({ downloadBlobAsFile: jest.fn() }));
 
@@ -140,4 +147,33 @@ test.each(['ar', 'en'])('request failures use translated messages and recover in
     fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.refresh') }));
     await screen.findByText(i18n.t('signingV2.workspace.emptyTitle'));
     expect(screen.queryByText(i18n.t('signingV2.errors.FORBIDDEN'))).not.toBeInTheDocument();
+});
+
+test.each(['he','ar','en'])('native library keeps private recovery and exact published send without duplicate imported entries in %s', async lng=>{
+    const published={id:'v2',templateId:'native1',version:2,state:'published',canEdit:true,definition:{name:'Published template',documents:[{}],origin:{templateId:'legacy1',version:1}}};
+    const draft={...published,id:'draft3',version:3,state:'draft',definition:{...published.definition,name:'Private work'}};
+    api.list.mockResolvedValue({templates:[{id:'legacy1',version:1,name:'Legacy duplicate',document_count:1}]});api.batches.mockResolvedValue({batches:[]});
+    packagesApi.authoringTemplates.mockResolvedValue({templates:[published,draft]});const send=jest.fn();
+    const i18n=await showWorkspace({nativeAvailable:true,onSendTemplate:send},lng),t=key=>i18n.t(`signingV2.workspace.${key}`);
+    const library=screen.getByRole('list',{name:i18n.t('signingV2.authoring.library')});
+    expect(screen.queryByText('Legacy duplicate')).toBeNull();
+    expect(within(library).getAllByRole('button',{name:t('sendFromTemplate')})).toHaveLength(1);
+    fireEvent.click(within(library).getByRole('button',{name:t('sendFromTemplate')}));
+    expect(send).toHaveBeenCalledWith({id:'native1',versionId:'v2',version:2});
+    const draftRow=screen.getAllByRole('listitem').find(row => within(row).queryByText('Private work'));
+    fireEvent.click(within(draftRow).getByRole('button',{name:t('edit')}));
+    expect(screen.getByTestId('native-builder')).toHaveTextContent('draft3');
+});
+test('new templates use the native editor when enabled',async()=>{
+    api.list.mockResolvedValue({templates:[]});api.batches.mockResolvedValue({batches:[]});packagesApi.authoringTemplates.mockResolvedValue({templates:[]});
+    const i18n=await showWorkspace({nativeAvailable:true},'en');
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.workspace.newTemplate')}));
+    expect(screen.getByTestId('native-builder')).toHaveTextContent('new-native-template');
+});
+test('native read-only library hides creation, editing and send actions',async()=>{
+    api.list.mockResolvedValue({templates:[]});api.batches.mockResolvedValue({batches:[]});
+    packagesApi.authoringTemplates.mockResolvedValue({templates:[{id:'v1',templateId:'native1',version:1,state:'published',canEdit:false,definition:{name:'Visible only',documents:[{}]}}]});
+    const i18n=await showWorkspace({nativeAvailable:true,canUpload:false,canManage:false},'en');
+    expect(screen.getByText('Visible only')).toBeVisible();
+    for(const key of ['newTemplate','sendFromTemplate','edit'])expect(screen.queryByRole('button',{name:i18n.t(`signingV2.workspace.${key}`)})).toBeNull();
 });
