@@ -13,6 +13,10 @@ test('disabled mode preserves normal transports; guard rejects other tenants', (
  setQa();process.env.PORT='3001';assert.throws(()=>qaOutboundNoop('sms'),/isolated/);
  setQa();process.env.DATABASE_URL='postgres://local/other';assert.throws(()=>qaOutboundNoop('sms'),/isolated/);
  setQa();process.env.QA_OUTBOUND_MODE='typo';assert.throws(()=>qaOutboundNoop('sms'),/isolated/);
+ setQa();process.env.QA_OUTBOUND_ALLOW='0500000000';
+ assert.equal(qaOutboundNoop('sms','+972500000000'),null);
+ assert.equal(qaOutboundNoop('sms','+972501111111').mode,'qa-noop');
+ delete process.env.QA_OUTBOUND_ALLOW;
 });
 function loadUtility(file) {
  const mod={exports:{}}; const forbidden=()=>{throw new Error('Provider or DB IO attempted');};

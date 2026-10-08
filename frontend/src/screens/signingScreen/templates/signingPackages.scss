@@ -1,0 +1,176 @@
+.lw-signingPackages {
+  color: var(--lw-color-text, #2d3748);
+  max-inline-size: 78rem;
+  margin-inline: auto;
+  padding: 1.25rem clamp(.75rem, 2vw, 2rem) 5rem;
+  text-align: start;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.875rem;
+
+  h1 { font-size: 1.25rem; line-height: 1.4; margin: 0; font-weight: 500; }
+  h2 { font-size: 1rem; margin: 0; font-weight: 500; }
+  h3 { font-size: 0.875rem; margin: 0; font-weight: 500; }
+  p:not(.lw-simpleText) { margin: .375rem 0; line-height: 1.6; max-inline-size: 72ch; }
+  button, input { font: inherit; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--lw-color-primary, #2a4365); outline-offset: 3px; }
+  ::selection { color: #fff; background: var(--lw-color-primary, #2a4365); }
+  input { caret-color: var(--lw-color-primary, #2a4365); }
+}
+.lw-signingPackages .lw-segmentedSwitch__option { min-block-size: 2.75rem; }
+.lw-signingPackages__heading, .lw-signingPackages__actions, .lw-signingPackages__toolbar,
+.lw-signingPackages__panelHeader, .lw-signingPackages__pager {
+  display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+}
+.lw-signingPackages__heading { justify-content: space-between; margin-block-end: 1.5rem; }
+.lw-signingPackages > .lw-textButtonWithTwoOptionalIcons,
+.lw-signingCompose .lw-signingPackages__heading .lw-textButtonWithTwoOptionalIcons { margin-block-end: 1rem; }
+.lw-signingPackages__heading p:not(.lw-simpleText), .lw-signingPackages__caption { color: #4a5568; font-size: .875rem; }
+.lw-signingPackages__toolbar { margin-block-end: 1rem; > :first-child { flex: 1 1 18rem; } }
+.lw-signingPackages__toolbar .lw-simpleInput { inline-size: 100%; min-block-size: 2.75rem; margin-block-start: 0; }
+.lw-signingPackages__resultSummary { min-block-size: 1.75rem; margin-block: .75rem; font-size: .875rem; }
+.lw-signingPackages__list.lw-simpleCard {
+  padding: 0; margin: 0; border-radius: .5rem;
+  box-shadow: 0 2px 5px rgb(45 55 72 / 6%);
+  &:hover { transform: none; box-shadow: 0 2px 5px rgb(45 55 72 / 6%); }
+  > ul { list-style: none; padding: 0; margin: 0; width: 100%; }
+}
+.lw-signingPackages__group { border-block-end: 1px solid #e0e0e0; &:last-child { border-block-end: 0; } }
+.lw-signingPackages__row { display: grid; grid-template-columns: minmax(13rem, 1.4fr) minmax(14rem, 1.5fr) minmax(8rem, .7fr); align-items: center; gap: 1rem; padding: 1rem; }
+.lw-signingPackages__groupTitle {
+  display: flex; align-items: center; gap: .65rem; text-align: start; background: transparent;
+  border: 0; color: inherit; padding: .375rem 0; min-block-size: 2.75rem; cursor: pointer; min-inline-size: 0;
+  svg { flex: none; color: var(--lw-color-primary, #2a4365); }
+  span { min-inline-size: 0; }
+  strong { display: block; font-size: inherit; overflow-wrap: anywhere; }
+  time { display: block; font-size: .8125rem; color: #4a5568; margin-block-start: .375rem; }
+}
+.lw-signingPackages__metrics { display: flex; gap: .8rem 1.5rem; flex-wrap: wrap; font-size: .8125rem; align-items: center; }
+.lw-signingPackages__progress { display: flex; flex-wrap: wrap; gap: .35rem; bdi { font-weight: 700; } }
+.lw-signingPackages__rowStatus { display: flex; flex-direction: column; gap: .5rem; font-size: .8125rem; }
+.lw-signingPackages__attention { color: #9b2c2c; font-weight: 700; }
+.lw-signingPackages__caption { margin: .5rem 1rem !important; }
+.lw-signingPackages__children { background: #f7fafc; border-block-start: 1px solid #e2e8f0; padding: .5rem 1rem; }
+.lw-signingPackages__childList, .lw-signingPackages__people, .lw-signingPackages__tasks { list-style: none; padding: 0; margin: 0; }
+.lw-signingPackages__childList > li { display: grid; grid-template-columns: minmax(10rem,1fr) 1fr 1fr auto; gap: .75rem; align-items: center; padding-block: .875rem; border-block-end: 1px solid #e2e8f0; font-size: .875rem; }
+.lw-signingPackages__childName { display: flex; flex-direction: column; gap: .375rem; min-width: 0; }
+.lw-signingPackages__textButton { text-align: start; color: var(--lw-color-primary, #2a4365); background: transparent; border: 0; padding: .25rem 0; font-weight: 700; text-decoration: underline; text-underline-offset: .2em; cursor: pointer; min-height: 2.75rem; overflow-wrap: anywhere; }
+.lw-signingPackages__pager { justify-content: flex-end; margin-block: 1rem; }
+.lw-signingPackages__empty {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100%;
+  margin-block-start: 1.5rem;
+  padding-block: 3.125rem;
+  text-align: center;
+  color: var(--lw-color-winter, #718096);
+  .lw-simpleText { text-align: center; color: inherit; }
+}
+.lw-signingPackages__panel {
+  position: fixed; inset-block: 0; inset-inline-start: auto; inset-inline-end: 0; margin: 0;
+  inline-size: min(52rem, 100%); max-inline-size: 100%; block-size: 100dvh; max-block-size: 100dvh;
+  border: 0; border-inline-start: 1px solid #e2e8f0; padding: 1.25rem; background: #fff;
+  color: var(--lw-color-text, #2d3748); box-sizing: border-box; text-align: start; overflow: auto;
+  box-shadow: -4px 0 18px rgb(45 55 72 / 12%);
+  &::backdrop { background: rgb(26 54 93 / 25%); }
+  h2 { font-size: 1rem; margin: 0; font-weight: 500; }
+  h3 { font-size: 1rem; margin: 0; }
+  p:not(.lw-simpleText) { line-height: 1.6; margin: .375rem 0; }
+  time, small { font-size: .8125rem; color: #4a5568; }
+}
+.lw-signingPackages__panelHeader { justify-content: space-between; gap: 1rem; margin-block-end: 1.5rem; }
+.lw-signingPackages__panelSummary { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; margin-block-end: 1.5rem; p { flex-basis: 100%; font-size: .875rem; } }
+.lw-signingPackages__people > li { padding-block: 1.25rem; border-block-end: 1px solid #e2e8f0; }
+.lw-signingPackages__tasks > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; margin-block-start: .75rem; font-size: .875rem; time, .lw-signingPackages__docActions { grid-column: 1 / -1; } }
+.lw-signingPackages__docActions { display: flex; flex-wrap: wrap; gap: .5rem; margin-block-start: .25rem; }
+.lw-signingPackages__spots { margin: .75rem 0 0; padding-inline-start: 1.1rem; font-size: .875rem; }
+.lw-signingPackages__viewer { margin-block-start: .75rem; max-block-size: 70vh; overflow: auto; border: 1px solid #e2e8f0; border-radius: .375rem; background: #f1f3f5; }
+.lw-signingPackages__personActions {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem;
+  margin-block-start: 1rem; padding-block-start: .75rem; border-block-start: 1px dashed #e2e8f0; font-size: .8125rem;
+  p:not(.lw-simpleText) { margin: 0; color: #4a5568; }
+}
+.lw-signingPackages__actionDialog {
+  inline-size: min(32rem, calc(100% - 2rem)); max-block-size: calc(100dvh - 2rem); box-sizing: border-box;
+  border: 1px solid #e2e8f0; border-radius: .5rem; padding: 1.25rem; background: #fff; overflow: auto;
+  color: var(--lw-color-text, #2d3748); text-align: start; box-shadow: 0 12px 32px rgb(45 55 72 / 18%);
+  &::backdrop { background: rgb(26 54 93 / 30%); }
+  h2 { font-size: 1rem; margin: 0 0 1rem; font-weight: 500; }
+  p:not(.lw-simpleText) { line-height: 1.6; margin: .5rem 0; font-size: .875rem; }
+  bdi { unicode-bidi: isolate; }
+  [tabindex="-1"]:focus:not(:focus-visible) { outline: none; }
+}
+.lw-signingPackages__actionBody {
+  dl { margin: 0 0 .75rem; display: grid; gap: .75rem; }
+  dl > div { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); gap: .75rem; font-size: .875rem; }
+  dt { color: #4a5568; }
+  dd { margin: 0; display: flex; flex-direction: column; gap: .25rem; overflow-wrap: anywhere; }
+  small { font-size: .8125rem; color: #4a5568; }
+  ul { margin: .25rem 0 0; padding-inline-start: 1.1rem; }
+  p > span { color: #4a5568; }
+}
+.lw-signingPackages__actionButtons button { min-block-size: 44px; }
+.lw-signingPackages__actionButtons { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: flex-end; margin-block-start: 1.25rem; }
+.lw-signingBulk {
+  button { min-block-size: 2.75rem; min-inline-size: 2.75rem; }
+  bdi, strong { overflow-wrap: anywhere; }
+  .lw-segmentedSwitch__track { flex-wrap: wrap; }
+  .lw-segmentedSwitch__option { white-space: normal; }
+  [tabindex="-1"]:focus:not(:focus-visible) { outline: none; }
+  &__buttons, &__selection { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; margin-block: 1rem; }
+  &__selection > p, &__selection > small { flex-basis: 100%; color: #4a5568; }
+  &__card.lw-simpleCard { display: block; padding: 0; margin: 0; border-radius: .5rem; &:hover { transform: none; } }
+  &__packages, &__messages, &__excluded, &__outcomes, &__recent > ul { list-style: none; padding: 0; margin: 0; }
+  &__packages > li { display: flex; align-items: center; gap: 1rem; padding: .5rem 1rem; border-block-end: 1px solid #e2e8f0; }
+  &__packages label { display: flex; gap: .75rem; align-items: center; min-block-size: 3rem; flex: 1; min-inline-size: 0; cursor: pointer; }
+  &__packages input { inline-size: 1.125rem; block-size: 1.125rem; flex: none; accent-color: var(--lw-color-primary, #2a4365); }
+  &__packages small { display: block; margin-block-start: .25rem; color: #4a5568; }
+  &__setup { display: flex; align-items: flex-start; gap: 1rem; flex-direction: column; padding-block: 1.5rem; }
+  &__recent { margin-block-start: 1.5rem; border-block-start: 1px solid #e2e8f0; padding-block-start: 1.25rem; }
+  &__recent > ul { display: flex; flex-wrap: wrap; gap: .75rem; margin-block-start: .75rem; }
+  &__summary { display: flex; flex-wrap: wrap; gap: 1.25rem 2rem; border-block: 1px solid #e2e8f0; padding-block: 1rem; margin: 0 0 1rem; }
+  &__summary dt { color: #4a5568; }
+  &__summary dd { margin: .375rem 0 0; font-size: 1.125rem; font-weight: 600; }
+  &__messages > li { padding-block: 1.25rem; border-block-end: 1px solid #e2e8f0; }
+  &__messages ul { padding-inline-start: 1.25rem; margin-block: .5rem; }
+  &__messages > li > ul > li { margin-block: .75rem; }
+  &__capacity { display: inline-block; margin-inline-end: .75rem; color: #4a5568; }
+  &__excluded { margin-block: 1rem; border-inline-start: 3px solid #b7791f; padding-inline-start: 1rem; }
+  &__excluded > li { display: grid; gap: .375rem; padding-block: .5rem; }
+  &__outcomes > li { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: .5rem 1rem; padding-block: 1rem; border-block-end: 1px solid #e2e8f0; > p { grid-column: 1 / -1; } }
+}
+@media (max-width: 48rem) {
+  .lw-signingBulk__setup, .lw-signingBulk__setup > *, .lw-signingBulk__setup .lw-segmentedSwitch { inline-size: 100%; box-sizing: border-box; }
+  .lw-signingBulk__buttons > * { flex: 1 1 100%; }
+  .lw-signingBulk__outcomes > li { grid-template-columns: minmax(0,1fr); }
+  .lw-signingPackages__toolbar .lw-segmentedSwitch__track { max-inline-size: 100%; box-sizing: border-box; flex-wrap: wrap; border-radius: 1.375rem; }
+  .lw-signingPackages__toolbar .lw-segmentedSwitch__option { padding-inline: .5rem; flex: 1 0 auto; }
+  .lw-signingPackages__actionBody dl > div { grid-template-columns: minmax(0, 1fr); gap: .25rem; }
+  .lw-signingPackages__actionButtons > * { flex: 1 1 100%; }
+  .lw-signingPackages__row { grid-template-columns: minmax(0,1fr); gap: .75rem; }
+  .lw-signingPackages__metrics, .lw-signingPackages__rowStatus { padding-inline-start: 1.75rem; }
+  .lw-signingPackages__rowStatus { flex-direction: row; flex-wrap: wrap; }
+  .lw-signingPackages__toolbar > * { flex: 1 1 100%; }
+  .lw-signingPackages__childList > li { grid-template-columns: minmax(0,1fr) auto; }
+  .lw-signingPackages__childName { grid-column: 1 / -1; }
+  .lw-signingPackages__children { padding-inline: .75rem; }
+  .lw-signingPackages__panel { padding: 1rem; }
+}
+
+.lw-signingPackages__contactFields { display: grid; gap: 1rem; min-width: 0; }
+.lw-signingPackages__renewChannel { margin-block: 1rem; }
+.lw-signingPackages__renewChannel .lw-segmentedSwitch { flex-wrap: wrap; }
+
+.lw-signingPackages__contactFields .lw-simpleInput { min-block-size: 48px; }
+.lw-signingPackages__contactFields .lw-simpleInput__field { min-block-size: 44px; }
+.lw-signingPackages__contactFields .lw-simpleTextArea__field { min-block-size: 60px; text-align: start; direction: inherit; }
+
+.lw-signingPackages__contactFields .lw-simpleTextArea { direction: inherit; }
+
+.lw-signingPackages__assignees { border: 0; padding: 0; margin: 0; max-block-size: 18rem; overflow-y: auto; }
+.lw-signingPackages__assignees label { display: flex; align-items: center; gap: .75rem; min-block-size: 44px; cursor: pointer; }
+.lw-signingPackages__assignees input { inline-size: 20px; block-size: 20px; flex-shrink: 0; }
+
+.lw-signingPackages__approvalCheck { display:flex; align-items:center; gap:.75rem; min-block-size:44px; margin-block:1rem; }
+.lw-signingPackages__approvalCheck input { inline-size:20px; block-size:20px; flex-shrink:0; }
+.lw-signingPackages__approval button { min-block-size:44px; }

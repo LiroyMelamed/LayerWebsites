@@ -2,7 +2,7 @@
  * Versioned permission catalog — defines what can be assigned to a role.
  * Role names (e.g. "מזכירה") are labels only; no semantic defaults by name.
  */
-const CATALOG_VERSION = 3;
+const CATALOG_VERSION = 7;
 
 /** @typedef {'all_firm' | 'assigned_only'} CasesDataScope */
 
@@ -56,7 +56,7 @@ const PERMISSION_AREAS = Object.freeze([
         id: 'signing',
         pageKey: 'signingFiles',
         navKeys: ['signingFiles', 'uploadFileForSigning'],
-        actions: ['view', 'manage', 'upload'],
+        actions: ['view', 'manage', 'upload', 'package_approve', 'authority_manage', 'delivery_contact_correct', 'access_link_renew', 'package_cancel', 'package_assign', 'package_remind', 'delivery_resend', 'package_revision_create'],
         supportsDataScope: true,
     },
     {

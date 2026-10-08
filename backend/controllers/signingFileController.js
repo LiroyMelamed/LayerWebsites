@@ -298,7 +298,8 @@ async function loadEvidenceRowsForZip(signingFileId) {
                 verify_ip as "VerifyIp",
                 verify_user_agent as "VerifyUserAgent"
              from signing_otp_challenges
-             where signingfileid = $1
+             where signingfileid = $1 OR challengeid IN
+                (SELECT otpverificationid FROM signaturespots WHERE signingfileid=$1 AND otpverificationid IS NOT NULL)
              order by sent_at_utc asc`,
             [signingFileId]
         ),
@@ -734,6 +735,9 @@ function createPublicSigningToken({ signingFileId, signerUserId, fileExpiresAt }
 // Exported for sign-reminder worker (lazy-required to avoid circular deps).
 exports.createPublicSigningToken = createPublicSigningToken;
 exports.buildPublicSigningUrl = buildPublicSigningUrl;
+exports.insertAuditEvent = insertAuditEvent;
+exports.getDeliverableSignedPdf = getDeliverableSignedPdf;
+exports.generateEvidenceCertificateBuffer = generateEvidenceCertificateBuffer;
 
 function getSavedSignatureKey(userId) {
     const safeId = Number(userId);
@@ -1508,6 +1512,7 @@ async function loadSigningFileBase({ signingFileId, schemaSupport }) {
 async function ensurePublicUserAuthorized({ signingFileId, userId, schemaSupport }) {
     const file = await loadSigningFileBase({ signingFileId, schemaSupport });
     if (!file) return { ok: false, httpStatus: 404, errorCode: 'DOCUMENT_NOT_FOUND' };
+    if (file.Status === 'draft') return { ok: false, httpStatus: 403, errorCode: 'FORBIDDEN' };
 
     const isLawyer = file.LawyerId === userId;
     const isPrimaryClient = file.ClientId === userId;
@@ -1837,7 +1842,9 @@ async function getVerifiedOtpChallengeIdOrNull({ signingFileId, signerUserId, si
              limit 1`,
             [signingFileId, signerUserId, signingSessionId, String(presentedPdfSha256 || '')]
         );
-        return res.rows?.[0]?.ChallengeId || null;
+        return res.rows?.[0]?.ChallengeId || await require('../lib/signingBatchOtpGrant').batchOtpGrant({
+            signingFileId, signerUserId, signingSessionId, presentedPdfSha256,
+        });
     } catch (err) {
         const code = String(err?.code || '');
         const msg = String(err?.message || '').toLowerCase();
@@ -3383,7 +3390,7 @@ exports.getClientSigningFiles = async (req, res, next) => {
                  join cases c  on c.caseid  = sf.caseid
                  join users u  on u.userid  = sf.lawyerid
                  left join signaturespots ss on ss.signingfileid = sf.signingfileid
-                 where sf.clientid = $1
+                 where sf.clientid = $1 AND sf.status<>'draft'
                  group by sf.signingfileid, sf.caseid, sf.filename, sf.filekey,
                           sf.status, sf.createdat, sf.expiresat, sf.notes, sf.signedat,
                           c.casename, u.name
@@ -3420,13 +3427,13 @@ exports.getClientSigningFiles = async (req, res, next) => {
              left join signaturespots ss
                 on ss.signingfileid = sf.signingfileid
                and (ss.signeruserid = $1 or ss.signeruserid is null)
-             where sf.clientid = $1
+             where sf.status<>'draft' AND (sf.clientid = $1
                 or exists (
                     select 1
                     from signaturespots ss2
                     where ss2.signingfileid = sf.signingfileid
                       and ss2.signeruserid = $1
-                )
+                ))
              group by sf.signingfileid, sf.caseid, sf.filename, sf.filekey,
                       sf.status, sf.createdat, sf.expiresat, sf.notes, sf.signedat,
                       c.casename, u.name
@@ -3918,7 +3925,8 @@ exports.getEvidencePackage = async (req, res, next) => {
                 verify_ip as "VerifyIp",
                 verify_user_agent as "VerifyUserAgent"
              from signing_otp_challenges
-             where signingfileid = $1
+             where signingfileid = $1 OR challengeid IN
+                (SELECT otpverificationid FROM signaturespots WHERE signingfileid=$1 AND otpverificationid IS NOT NULL)
              order by sent_at_utc asc`,
             [signingFileId]
         );
@@ -6279,6 +6287,7 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
     }
 
     const fileStatus = String(file.Status || '').toLowerCase();
+    if (fileStatus === 'draft') return otpRequestFail('FORBIDDEN', 403, 'המסמך טרם נשלח לחתימה');
     if (fileStatus === 'signed' || fileStatus === 'rejected') {
         await auditOtpBlocked({
             req,
@@ -6813,7 +6822,9 @@ async function runSigningFinalize({
         const evidenceCertificateUrl = buildPublicEvidenceUrl(publicViewToken)
             || `https://${domainForUrls}/ViewSignedDocument?token=${encodeURIComponent(publicViewToken)}&evidence=1`;
 
-        await notifyRecipient({
+        const completionContext = await require('../services/signingPackageCompletion').packageContext(signingFileId);
+        const completeTogether = completionContext?.snapshot?.definition?.completionMode === 'package';
+        if (!completeTogether) await notifyRecipient({
             recipientUserId: file.LawyerId,
             notificationType: 'DOC_SIGNED',
             caseId: file.CaseId || null,
@@ -6937,6 +6948,7 @@ async function runSigningFinalize({
             console.error('[signingFinalize] Failed to notify signer (non-fatal):', e?.message || e);
         }
 
+        if (completeTogether) await require('../services/signingPackageCompletion').completePackage(completionContext, req);
         console.log('[signingFinalize] done', { signingFileId, ms: Date.now() - t0 });
     } catch (err) {
         console.error('[signingFinalize] unexpected error:', err?.message || err);
@@ -7000,6 +7012,8 @@ async function notifyNextSequentialSignerIfNeeded({
 
         const nextSignerUserId = nextSignerResult.rows[0].signerUserId;
         if (!nextSignerUserId || Number(nextSignerUserId) === Number(finishedSignerUserId)) return;
+
+        if (await require('../services/signingBatchDelivery').notifyBatchTurn(signingFileId, nextSignerUserId)) return;
 
         const token = createPublicSigningToken({
             signingFileId,

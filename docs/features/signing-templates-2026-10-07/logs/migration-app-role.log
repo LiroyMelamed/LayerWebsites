@@ -1,0 +1,7 @@
+PASS application role SELECT: signing_templates
+PASS application role SELECT: signing_batches
+PASS application role SELECT: signing_batch_files
+PASS application role SELECT: signing_batch_recipients
+PASS application role SELECT: signing_batch_sessions
+PASS application role SELECT: signing_package_completions
+PASS application role SELECT: signing_batch_reminders

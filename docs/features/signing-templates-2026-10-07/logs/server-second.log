@@ -1,0 +1,13 @@
+Isolated signing template QA ready at http://127.0.0.1:5188/qa-login
+[signing] publicSignFileBatch ok {
+  signingFileId: 11,
+  count: 1,
+  remaining: 1,
+  timings: { uploadMs: 0, dbMs: 2, totalMs: 14 }
+}
+[signing] publicSignFileBatch ok {
+  signingFileId: 12,
+  count: 1,
+  remaining: 1,
+  timings: { uploadMs: 1, dbMs: 1, totalMs: 10 }
+}

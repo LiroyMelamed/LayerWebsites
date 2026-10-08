@@ -206,13 +206,6 @@ export default function RemindersScreen() {
             )}
 
             <SimpleScrollView>
-                <ListPageTitle
-                    title={t("nav.reminders")}
-                    count={total}
-                    isLoading={isPerforming && !result}
-                    className="lw-reminders__pageTitle"
-                />
-
                 <SimpleContainer className="lw-reminders__filtersRow">
                     <ChooseButton
                         buttonText={t("reminders.statusFilter")}
@@ -226,6 +219,12 @@ export default function RemindersScreen() {
                 </SimpleContainer>
 
                 <SimpleCard className={`lw-reminders__list${isSmallScreen ? ' lw-reminders__list--compact' : ''}`}>
+                    <ListPageTitle
+                        title={t("nav.reminders")}
+                        count={total}
+                        isLoading={isPerforming && !result}
+                        className="lw-reminders__pageTitle"
+                    />
                     <SimpleTable
                         titles={tableTitles}
                         data={tableData}

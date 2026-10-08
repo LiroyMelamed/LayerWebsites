@@ -1,13 +1,11 @@
 import { useTranslation } from 'react-i18next';
-import SimpleCard from '../simpleComponents/SimpleCard';
-import SecondaryButton from '../styledComponents/buttons/SecondaryButton';
+import StatusNotice from './StatusNotice';
 
 export default function RequestLoadError({ onRetry }) {
     const { t } = useTranslation();
     return (
-        <SimpleCard>
-            <p role="alert">{t('errors.loadFailed')}</p>
-            <SecondaryButton onPress={onRetry}>{t('common.retry')}</SecondaryButton>
-        </SimpleCard>
+        <StatusNotice onAction={onRetry} actionLabel={t('common.retry')}>
+            <p>{t('errors.loadFailed')}</p>
+        </StatusNotice>
     );
 }
