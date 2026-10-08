@@ -502,3 +502,28 @@ test('shared signers can create separate data-only packages and data changes inv
     expect(api.previewCreation.mock.calls[1][0].rows[1].data.identity).toBe('0003');
     expect(api.create).not.toHaveBeenCalled();
 });
+
+
+test.each(['he','ar','en'])('mixed template stages survive selection and explicit regrouping in %s', async language => {
+    const i18n = await translations(language), api = fakeApi();
+    const stages = [{ key:'buyer',label:'Buyer',audience:'shared',stage:0 }, { key:'seller',label:'Seller',audience:'shared',stage:0 }, { key:'lawyer',label:'Lawyer',audience:'shared',stage:1 }];
+    const template = { ...converted, roles:stages };
+    api.templates.mockResolvedValue({ templates:[template],legacy:[] });
+    api.previewCreation.mockImplementation(async body => ({...validPreview(1),shared:[],sample:[],template:{...validPreview(1).template,roles:stages}}));
+    render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialTemplateId="t-1" /></I18nextProvider>);
+    expect(await screen.findByRole('radio',{name:i18n.t('signingV2.compose.order.grouped')})).toBeChecked();
+    const select = name => screen.getByRole('combobox',{name:i18n.t('signingV2.compose.order.stageFor',{name})});
+    expect(select('Buyer')).toHaveValue('0'); expect(select('Seller')).toHaveValue('0'); expect(select('Lawyer')).toHaveValue('1');
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.compose.check')}));
+    await screen.findByRole('heading',{name:i18n.t('signingV2.compose.review.heading')});
+    expect(api.previewCreation.mock.calls[0][0].signingOrder).toEqual({mode:'grouped',groups:[['buyer','seller'],['lawyer']]});
+    expect(screen.getByText(i18n.t('signingV2.compose.order.stage',{number:new Intl.NumberFormat({he:'he-IL',ar:'ar-IL',en:'en-GB'}[language]).format(2)}))).toBeVisible();
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.compose.review.edit')}));
+    fireEvent.change(select('Seller'),{target:{value:'1'}});
+    fireEvent.change(select('Buyer'),{target:{value:'1'}});
+    expect(select('Buyer')).toHaveValue('0'); expect(select('Lawyer')).toHaveValue('0');
+    fireEvent.change(select('Lawyer'),{target:{value:'1'}});
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.compose.check')}));
+    await screen.findByRole('heading',{name:i18n.t('signingV2.compose.review.heading')});
+    expect(api.previewCreation.mock.calls[1][0].signingOrder).toEqual({mode:'grouped',groups:[['seller','buyer'],['lawyer']]});
+});

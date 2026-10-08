@@ -279,7 +279,7 @@ function indexErrors(errors, sentIds) {
     return { byRow, shared };
 }
 
-function SigningOrderFields({ mode, roles, onMode, onMove }) {
+function SigningOrderFields({ mode, roles, groups, onMode, onMove, onGroup }) {
     const { t, number } = useSigningLocale();
     const drag = useRef(null);
     return <fieldset className="lw-signingCompose__order">
@@ -292,6 +292,21 @@ function SigningOrderFields({ mode, roles, onMode, onMove }) {
             <input type="radio" name="signingOrder" checked={mode === 'sequential'} onChange={() => onMode('sequential')} />
             {t('signing.upload.signingOrderSequential')}
         </label>
+        <label className="lw-signingCompose__radio">
+            <input type="radio" name="signingOrder" checked={mode === 'grouped'} onChange={() => onMode('grouped')} />
+            {t('signingV2.compose.order.grouped')}
+        </label>
+        {mode === 'grouped' && <div className="lw-signingCompose__groupedOrder">
+            <p>{t('signingV2.compose.order.groupHelp')}</p>
+            <div className="lw-signingCompose__identity">{roles.map(role => <Field key={role.key} id={`signing-stage-${role.key}`}
+                label={t('signingV2.compose.order.stageFor', { name: role.label })}>
+                <select value={groups.findIndex(group => group.includes(role.key))} onChange={event => onGroup(role.key, Number(event.target.value))}>
+                    {groups.map((_, index) => <option key={index} value={index}>{t('signingV2.compose.order.stage', { number: number(index + 1) })}</option>)}
+                    {groups.length < roles.length && <option value={groups.length}>{t('signingV2.compose.order.newStage')}</option>}
+                </select>
+            </Field>)}</div>
+            <StageSummary groups={groups} roles={roles} />
+        </div>}
         {mode === 'sequential' && roles.length >= 2 && <div className="lw-signingCompose__orderList">
             <p>{t('signing.upload.sequentialOrderTitle')}</p>
             <ol>
@@ -310,11 +325,21 @@ function SigningOrderFields({ mode, roles, onMode, onMove }) {
     </fieldset>;
 }
 
+function StageSummary({ groups, roles }) {
+    const { t, number } = useSigningLocale();
+    return <ol className="lw-signingCompose__plainList lw-signingCompose__stageSummary">{groups.map((group, index) => <li key={index}>
+        <strong>{t('signingV2.compose.order.stage', { number: number(index + 1) })}</strong>: {' '}
+        {group.map((key, position) => <React.Fragment key={key}>{position > 0 && ' · '}<bdi>{roles.find(role => role.key === key)?.label}</bdi></React.Fragment>)}
+    </li>)}</ol>;
+}
+
 function templateOrder(roles) {
     const ordered = [...roles].sort((a, b) => (a.stage ?? 0) - (b.stage ?? 0));
+    const stages = [...new Set(ordered.map(role => role.stage ?? 0))];
+    const groups = stages.map(stage => ordered.filter(role => (role.stage ?? 0) === stage).map(role => role.key));
     return {
-        mode: new Set(ordered.map(role => role.stage ?? 0)).size > 1 ? 'sequential' : 'parallel',
-        roles: ordered.map(role => role.key),
+        mode: groups.length <= 1 ? 'parallel' : groups.some(group => group.length > 1) ? 'grouped' : 'sequential',
+        roles: ordered.map(role => role.key), groups,
     };
 }
 
@@ -332,6 +357,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const [omitted, setOmitted] = useState(() => new Set());
     const [orderMode, setOrderMode] = useState('parallel');
     const [orderRoles, setOrderRoles] = useState([]);
+    const [orderGroups, setOrderGroups] = useState([]);
     const [source, setSource] = useState('manual');
     const [importNote, setImportNote] = useState(null);
     const [check, setCheck] = useState(null);
@@ -378,7 +404,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         setRows([blankRow(roles)]);
         setOmitted(new Set());
         setOrderMode(order.mode);
-        setOrderRoles(order.roles);
+        setOrderRoles(order.roles); setOrderGroups(order.groups);
         setName(current => current || selected.name);
         setImportNote(null); invalidate();
     };
@@ -439,6 +465,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             return next;
         });
         setOrderRoles(current => current.filter(item => item !== key));
+        setOrderGroups(current => current.map(group => group.filter(item => item !== key)).filter(group => group.length));
         invalidate();
     };
     const restoreSigner = key => {
@@ -449,6 +476,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             return next;
         });
         setOrderRoles(current => current.includes(key) ? current : [...current, key]);
+        setOrderGroups(current => current.some(group => group.includes(key)) ? current : [...current, [key]]);
         invalidate();
     };
     const moveRole = (from, to) => {
@@ -463,6 +491,19 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         invalidate();
     };
     const orderedRoles = orderRoles.map(key => template?.roles.find(role => role.key === key)).filter(role => role && !omitted.has(role.key));
+    const activeGroups = orderGroups.map(group => group.filter(key => !omitted.has(key))).filter(group => group.length);
+    const changeOrderMode = mode => {
+        if (mode === 'grouped') setOrderGroups(orderMode === 'sequential' ? orderedRoles.map(role => [role.key]) : [orderedRoles.map(role => role.key)]);
+        setOrderMode(mode); invalidate();
+    };
+    const changeGroup = (key, stage) => {
+        setOrderGroups(current => {
+            const groups = current.map(group => group.filter(item => item !== key));
+            (groups[stage] ||= []).push(key);
+            return groups.filter(group => group.length);
+        });
+        invalidate();
+    };
     const payload = () => {
         const keptEach = new Set(activeEach.map(role => role.key));
         const candidates = rows.filter(row => row.key.trim() || dataFilled(row) || [...keptEach].some(key => filled(row.recipients[key])));
@@ -475,7 +516,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 ...(caseContext ? { caseId: caseContext.id } : {}),
                 ...(Object.keys(roleAudience).length ? { roleAudience } : {}),
                 omittedRoles: [...omitted].sort(),
-                signingOrder: orderMode === 'sequential'
+                signingOrder: orderMode === 'grouped' ? { mode: 'grouped', groups: activeGroups } : orderMode === 'sequential'
                     ? { mode: 'sequential', roles: orderRoles.filter(key => !omitted.has(key)) }
                     : { mode: 'parallel' },
                 shared: Object.fromEntries(activeShare.map(role => [role.key, clean(shared[role.key] || blankPerson(), language)])),
@@ -484,7 +525,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         };
     };
     const draftPayload = template ? { request: payload().body, editor: {
-        template, name, shared, roleAudience, rows, omitted: [...omitted], orderMode, orderRoles, source, importNote,
+        template, name, shared, roleAudience, rows, omitted: [...omitted], orderMode, orderRoles, orderGroups, source, importNote,
     } } : null;
     const draft = useSigningDraft({ api, payload: draftPayload, active: !!template && !casePending && step !== 'done',
         onSubmitted: created => { setResult(created); setStep('done'); },
@@ -499,6 +540,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             setRoleAudience(editor.roleAudience || {});
             setRows(editor.rows.map(row => ({ ...row, id: `row-${++localId}` })));
             setOmitted(new Set(editor.omitted || [])); setOrderMode(editor.orderMode || 'parallel');
+            setOrderGroups(editor.orderGroups || templateOrder(editor.template.roles).groups);
             setOrderRoles(editor.orderRoles || []); setSource(editor.source || 'manual'); setImportNote(editor.importNote || null);
             setCaseContext(restoredCase); setCasePending(false); setCaseRestored(true); invalidate(); setStep('recipients');
         } });
@@ -652,7 +694,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                     </ul>
                 </div>}
                 </details>
-                <SigningOrderFields mode={orderMode} roles={orderedRoles} onMode={mode => { setOrderMode(mode); invalidate(); }} onMove={moveRole} />
+                <SigningOrderFields mode={orderMode} roles={orderedRoles} groups={activeGroups} onMode={changeOrderMode} onMove={moveRole} onGroup={changeGroup} />
             </SimpleCard>
             {activeShare.length > 0 && <SimpleCard className="lw-signingCompose__card">
                 <h2>{t('signingV2.compose.shared.heading')}</h2>
@@ -746,7 +788,8 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                     })}
                 </li>)}</ul>
                 <h3>{t('signing.upload.signingOrderLabel')}</h3>
-                <p className="lw-signingCompose__note">{orderMode === 'sequential' ? t('signing.upload.signingOrderSequential') : t('signing.upload.signingOrderParallel')}</p>
+                <p className="lw-signingCompose__note">{orderMode === 'grouped' ? t('signingV2.compose.order.grouped') : orderMode === 'sequential' ? t('signing.upload.signingOrderSequential') : t('signing.upload.signingOrderParallel')}</p>
+                {orderMode === 'grouped' && <StageSummary groups={activeGroups} roles={orderedRoles} />}
                 {orderMode === 'sequential' && orderedRoles.length >= 2 && <ol className="lw-signingCompose__plainList">{orderedRoles.map(role => <li key={role.key}>{role.label}</li>)}</ol>}
                 <p className="lw-signingCompose__note">{t('signingV2.compose.review.otp')}</p>
                 <p className="lw-signingCompose__note">{t('signingV2.compose.review.effect')}</p>

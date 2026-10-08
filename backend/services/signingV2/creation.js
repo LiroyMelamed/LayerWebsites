@@ -11,6 +11,7 @@ const { resolveRecipient, recipientIdentity } = require('../../lib/signingV2/rec
 const { recipientRoles } = require('../../lib/signingV2/recipientLayout');
 const { assertCases, scopeParams } = require('./access');
 const { caseId } = require('./caseContext');
+const { normalizeSigningOrder } = require('../../lib/signingV2/signingOrder');
 
 const LEGACY_FIELD_TYPES = { signature: 'signature', initials: 'initials', text: 'text', date: 'date', checkbox: 'checkbox', number: 'text' };
 // An imported revision must not resurrect an archived source template for a new send.
@@ -202,16 +203,11 @@ function omittedRoles(definition, input, errors) {
 function signingOrder(definition, input, omitted, errors) {
     if (input.signingOrder == null) return null;
     const active = definition.roles.filter(role => !omitted.has(role.key)).map(role => role.key);
-    const mode = input.signingOrder?.mode;
-    if (mode !== 'parallel' && mode !== 'sequential') {
-        errors.push({ path: 'signingOrder.mode', code: 'INVALID_SIGNING_ORDER' });
+    try { return normalizeSigningOrder(input.signingOrder, active, 'INVALID_SIGNING_ORDER'); }
+    catch (error) {
+        errors.push({ path: 'signingOrder', code: error.errorCode || 'INVALID_SIGNING_ORDER' });
         return null;
     }
-    if (mode === 'parallel') return { mode, roles: active };
-    const roles = input.signingOrder.roles;
-    const matches = Array.isArray(roles) && roles.length === active.length && new Set(roles).size === roles.length && roles.every(key => active.includes(key));
-    if (!matches) errors.push({ path: 'signingOrder.roles', code: 'INVALID_SIGNING_ORDER' });
-    return matches ? { mode, roles: [...roles] } : null;
 }
 
 function rowData(definition, row, path, errors) {

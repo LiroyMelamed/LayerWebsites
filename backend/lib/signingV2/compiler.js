@@ -1,6 +1,7 @@
 const { expect } = require('./errors');
 const { canonical, digest, freeze, HASH_VERSION } = require('./canonical');
 const limits = require('./limits');
+const { normalizeSigningOrder } = require('./signingOrder');
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const KEY = /^[a-z][a-zA-Z0-9_]{0,63}$/;
@@ -162,22 +163,20 @@ function validateDefinition(input) {
 function signingStages(definition, input, omitted) {
     const order = input.signingOrder;
     if (order == null) return null;
-    expect(order.mode === 'parallel' || order.mode === 'sequential', 'INVALID_WORKFLOW', 'signingOrder');
     const active = definition.roles.filter(role => !omitted.has(role.key)).map(role => role.key);
+    const normalized = normalizeSigningOrder(order, active);
     if (order.mode === 'parallel') {
         return {
             byRole: new Map(definition.roles.map(role => [role.key, 0])),
             stages: [{ key: 'together', label: definition.name, after: null }],
         };
     }
-    const roles = order.roles;
-    expect(Array.isArray(roles) && roles.length === active.length && new Set(roles).size === active.length
-        && roles.every(key => active.includes(key)), 'INVALID_WORKFLOW', 'signingOrder.roles');
+    const groups = normalized.mode === 'grouped' ? normalized.groups : normalized.roles.map(key => [key]);
     return {
-        byRole: new Map(roles.map((key, index) => [key, index])),
-        stages: roles.map((key, index) => ({
+        byRole: new Map(groups.flatMap((roles, index) => roles.map(key => [key, index]))),
+        stages: groups.map((roles, index) => ({
             key: `order${index + 1}`,
-            label: definition.roles.find(role => role.key === key).label,
+            label: roles.map(key => definition.roles.find(role => role.key === key).label).join(' · '),
             after: index ? `order${index}` : null,
         })),
     };

@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const { randomUUID } = require('node:crypto');
 const request = require('supertest');
 const zlib = require('node:zlib');
+test.after(() => process.env.LEGAL_DB_QA === 'true' ? require('../config/db').end() : undefined);
 
 function signaturePng(width = 240, height = 80) {
     const rows = [];
@@ -26,10 +27,9 @@ function signaturePng(width = 240, height = 80) {
         chunk('IDAT', zlib.deflateSync(Buffer.concat(rows))), chunk('IEND', Buffer.alloc(0))]);
 }
 
-test('the same person signing now and again after other signers needs a new explicit session for the later PDF',
+for (const grouped of [false, true]) test(`the returning signer needs fresh consent after ${grouped ? 'a parallel stage barrier' : 'sequential signers'}`,
     { skip: process.env.LEGAL_DB_QA !== 'true', timeout: 180000 }, async t => {
     const f = await require('./helpers/signingTemplateFixture').signingTemplateFixture();
-    t.after(() => f.pool.end());
     const { createRuntime, objectStorage } = require('../services/signingV2/runtime');
     const { createPublicSigningService, CONSENT_VERSION } = require('../services/signingV2/publicSigning');
     const { fakeProvider } = require('./helpers/signingV2Delivery');
@@ -65,10 +65,17 @@ test('the same person signing now and again after other signers needs a new expl
     const scope = { contextId, userId: f.users[0].userid, tenantId: null, all: true, manage: true };
     const { person } = await createPerson(f.pool, scope, { name: 'Same lawyer', endpoints: { email: 'returning@example.invalid' } });
     const shared = { personId: person.id, name: person.name, email: 'returning@example.invalid', channel: 'email' };
-    const body = { name: 'Returning signer QA', templateVersionId: versionId, shared: { opening: shared, closing: shared },
+    const body = { name: 'Returning signer QA', templateVersionId: versionId,
+        ...(grouped ? { signingOrder: { mode: 'grouped', groups: [['opening', 'client'], ['closing']] } } : {}), shared: { opening: shared, closing: shared },
         rows: [{ key: 'QA', recipients: { client: { name: 'Other signer', email: 'middle@example.invalid', channel: 'email' } } }] };
     const preview = ok(await as(request(f.app).post('/api/signing-v2/creation/preview')).send(body));
     assert.equal(preview.valid, true, JSON.stringify(preview));
+    if (grouped) {
+        const invalid = await as(request(f.app).post('/api/signing-v2/creation/preview')).send({ ...body, signingOrder: { mode: 'grouped', groups: [['opening','client'], ['opening','closing']] } });
+        assert.equal(invalid.body.valid, false); assert.equal(invalid.body.errors[0].code, 'INVALID_SIGNING_ORDER');
+        const changed = await as(request(f.app).post('/api/signing-v2/creation')).set('Idempotency-Key', randomUUID()).send({ ...body, signingOrder: { mode: 'grouped', groups: [['opening'], ['client','closing']] }, previewHash: preview.previewHash });
+        assert.equal(changed.status, 412, 'a different stage arrangement needs fresh approval');
+    }
     ok(await as(request(f.app).post('/api/signing-v2/creation')).set('Idempotency-Key', randomUUID()).send({ ...body, previewHash: preview.previewHash }), 201);
     const provider = fakeProvider(), workerErrors = [];
     const runtime = createRuntime({ pool: f.pool, storage, provider, contextIds: [contextId],
@@ -82,6 +89,7 @@ test('the same person signing now and again after other signers needs a new expl
     const viewFor = async token => ok(await pub('get', '/package', token));
     const tasksOf = view => view.packages.flatMap(pkg => pkg.documents.flatMap(doc => doc.tasks));
     const lawyer = tokenFor('returning@example.invalid');
+    if (grouped) assert.equal(tasksOf(await viewFor(tokenFor('middle@example.invalid')))[0].state, 'ready', 'both people in the first group may act before either has signed');
     const initialView = await viewFor(lawyer);
     const initialTasks = tasksOf(initialView);
     const packageId = initialView.packages[0].packageId;
@@ -111,9 +119,11 @@ test('the same person signing now and again after other signers needs a new expl
     const officeDuringVersion = (await packageDetails(f.pool, scope, packageId)).documents.find(doc => doc.id === firstDocumentId).artifactVersion;
     const middlePdf = await pub('get', `/documents/${firstDocumentId}`, middle);
     assert.equal(middlePdf.status, 200);
-    assert.notEqual(bytesHash(officeDuring.bytes), bytesHash(officeBefore.bytes), 'office PDF includes the first accepted signature before final completion');
+    if (grouped) assert.equal(bytesHash(officeDuring.bytes), bytesHash(officeBefore.bytes), 'parallel signers consent to the same frozen stage PDF until the group completes');
+    else assert.notEqual(bytesHash(officeDuring.bytes), bytesHash(officeBefore.bytes), 'office PDF includes the first accepted signature before final completion');
     assert.equal(bytesHash(officeDuring.bytes), bytesHash(middlePdf.body), 'office sees the same stage PDF that the next signer receives');
-    assert.notEqual(officeDuringVersion, officeBeforeVersion, 'polling exposes a new artifact version without pretending it is final');
+    if (grouped) assert.equal(officeDuringVersion, officeBeforeVersion);
+    else assert.notEqual(officeDuringVersion, officeBeforeVersion, 'polling exposes a new artifact version without pretending it is final');
     assert.equal(officeDuring.final, false);
     await assert.rejects(packageDocumentFile(f.pool, { ...scope, all: false, userId: -1 }, packageId, firstDocumentId, storage), { errorCode: 'NOT_FOUND' });
     await sign(middle, tasksOf(await viewFor(middle)).find(task => task.state === 'ready'));

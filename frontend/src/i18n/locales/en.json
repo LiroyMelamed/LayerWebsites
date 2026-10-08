@@ -1631,7 +1631,12 @@
       },
       "order": {
         "up": "Move {{name}} earlier",
-        "down": "Move {{name}} later"
+        "down": "Move {{name}} later",
+        "grouped": "Sign in stages — several signers together in each stage",
+        "groupHelp": "Signers in the same stage can sign in parallel. The next stage opens only when everyone in the previous stage has finished. A person returning later needs fresh consent and verification.",
+        "stageFor": "Signing stage for {{name}}",
+        "stage": "Stage {{number}}",
+        "newStage": "New stage at the end"
       },
       "shared": {
         "heading": "Shared signer",

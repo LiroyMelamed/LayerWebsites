@@ -150,3 +150,16 @@ test('a send can ask everyone to sign together or one role after another without
     assert.deepEqual(ordered.snapshot.stages.map(stage => stage.label), ['Lawyer', 'Employee']);
     assert.throws(() => compilePackage(published, { ...input, signingOrder: { mode: 'sequential', roles: ['employee'] } }, f.directory), error('INVALID_WORKFLOW'));
 });
+
+
+test('grouped signing order rejects missing, duplicate, foreign or empty stage members and never mutates input', () => {
+    const { normalizeSigningOrder } = require('../lib/signingV2/signingOrder');
+    const input = { mode: 'grouped', groups: [['buyer', 'seller'], ['lawyer']] };
+    const normalized = normalizeSigningOrder(input, ['buyer', 'seller', 'lawyer']);
+    assert.deepEqual(normalized, input); normalized.groups[0].pop(); assert.equal(input.groups[0].length, 2);
+    for (const groups of [null, [], [[]], [['buyer'], []], [['buyer','seller']], [['buyer','seller'], ['buyer','lawyer']],
+        [['buyer','seller'], ['foreign']], [['buyer','seller'], 'lawyer'], [['buyer','seller'], [null]]]) {
+        assert.throws(() => normalizeSigningOrder({mode:'grouped',groups}, ['buyer','seller','lawyer']), error('INVALID_WORKFLOW'));
+    }
+    assert.deepEqual(normalizeSigningOrder({ mode:'grouped', groups:[['buyer','lawyer']] }, ['buyer','lawyer']).groups, [['buyer','lawyer']]);
+});

@@ -177,6 +177,7 @@
   background: var(--lw-color-primary, #1976d2); color: #fff; font-size: .75rem; font-weight: 600;
 }
 .lw-signingCompose__orderName { font-size: .875rem; color: #333; }
+.lw-signingCompose__stageSummary { list-style: none; padding-inline-start: 0; }
 
 .lw-signingCompose__mappingRole { border: 0; border-block-start: 1px solid #e2e8f0; padding: 1rem 0; margin: 0; min-inline-size: 0; }
 .lw-signingCompose__mappingRole legend { padding-inline-end: .5rem; font-weight: 600; }
