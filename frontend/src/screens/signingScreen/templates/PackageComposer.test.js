@@ -540,3 +540,17 @@ test.each(['he','ar','en'])('review explains conditional exclusions and actual i
     expect(screen.getByText(i18n.t('signingV2.compose.review.inclusion',{included:number(1),total:number(2),excluded:number(1)}),{exact:false})).toBeInTheDocument();
     expect(screen.getByText(i18n.t('signingV2.compose.review.excluded',{names:'Annex'}))).toBeInTheDocument();
 });
+
+test.each(['he','ar','en'])('review makes conditional shared participants and their smaller package scope explicit in %s',async language=>{
+    const i18n=await translations(language),api=fakeApi();await toRecipients(i18n,api);
+    fireEvent.change(screen.getAllByLabelText(i18n.t('signingV2.compose.fields.name')).at(-1),{target:{value:'Synthetic employee'}});
+    const preview=validPreview(2);
+    preview.roleSummary=[{key:'employee',label:'Employee',includedCount:2,excludedCount:0},{key:'lawyer',label:'Counsel',includedCount:1,excludedCount:1}];
+    preview.shared=[{roleKey:'lawyer',name:'Conditional counsel',channels:['email'],packageCount:1}];api.previewCreation.mockResolvedValue(preview);
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.compose.check')}));
+    await screen.findByRole('heading',{name:i18n.t('signingV2.compose.review.heading')});
+    expect(screen.getByRole('heading',{name:i18n.t('signingV2.compose.review.conditionalRoles')})).toBeVisible();
+    const number=value=>new Intl.NumberFormat({he:'he-IL',ar:'ar-IL',en:'en-GB'}[language]).format(value);
+    expect(screen.getByText(i18n.t('signingV2.compose.review.sharedInvitations',{name:'Conditional counsel',count:1,formattedCount:number(1)}),{exact:false})).toBeVisible();
+    expect(screen.queryByText(i18n.t('signingV2.compose.review.sharedInvitations',{name:'Conditional counsel',count:2,formattedCount:number(2)}),{exact:false})).not.toBeInTheDocument();
+});

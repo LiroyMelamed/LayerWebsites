@@ -1,12 +1,13 @@
 import React from 'react';
 import useSigningLocale from './useSigningLocale';
 import TemplateDataValueInput from './TemplateDataValueInput';
+import { conditionUses } from './templateConditions';
 
 export default function TemplateDataKeys({ draft, onChange }) {
     const { t, direction } = useSigningLocale();
     const text = key => t(`signingV2.authoring.${key}`);
     const update = (key, patch) => onChange({ dataKeys: draft.dataKeys.map(field => field.key === key ? { ...field, ...patch } : field) });
-    const usedByCondition = key => draft.documents.some(doc => doc.nativeDocument?.when?.key === key) || draft.roles.some(role => role.nativeRole?.when?.key === key);
+    const usedByCondition = key => draft.documents.some(doc => conditionUses(doc.nativeDocument?.when, key)) || draft.roles.some(role => conditionUses(role.nativeRole?.when, key));
     return <section aria-labelledby="template-data-title">
         <h2 id="template-data-title">{text('dataTitle')}</h2><p>{text('dataHelp')}</p>
         {(draft.dataKeys || []).map(field => <fieldset key={field.key} className="lw-templates__dataKey">

@@ -110,3 +110,13 @@ test('a signer role named data cannot collide with business data columns', async
     const result = await parseWorkbook(await bytes(book), value);
     assert.deepEqual(result.errors, []); assert.equal(result.rows[0].recipients.data.name, 'Signer'); assert.equal(result.rows[0].data.name, 'Property one');
 });
+
+test('conditional roles may have unmapped columns while unconditional roles still require identity/contact mapping', async () => {
+    const conditional={...definition,roles:[definition.roles[0],{...definition.roles[1],audience:'each',when:{key:'flag',operator:'equals',value:true}}],dataKeys:[{key:'flag',type:'boolean',defaultValue:false}]};
+    const {book}=await custom([['one@example.invalid','Synthetic One','001']]);
+    const parsed=await parseWorkbook(await bytes(book),conditional,{mapping});
+    assert.equal(parsed.rows.length,1);assert.deepEqual(parsed.errors,[]);
+    assert.deepEqual(parsed.rows[0].recipients.seller,{name:'',email:'',phone:''});
+    assert.equal(parsed.rows[0].recipients.buyer.name,'Synthetic One');
+    await assert.rejects(parseWorkbook(await bytes(book),conditional,{mapping:{sheetId:1,columns:{key:3}}}),matches('INCOMPLETE_COLUMN_MAPPING'));
+});

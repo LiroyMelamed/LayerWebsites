@@ -8,6 +8,7 @@ import useSigningLocale from './useSigningLocale';
 import TemplateRoles from './TemplateRoles';
 import TemplateDataKeys from './TemplateDataKeys';
 import TemplateDocumentCondition from './TemplateDocumentCondition';
+import { conditionSummary } from './templateConditions';
 import './templates.scss';
 
 const FIELD_TYPES = ['signature', 'initials', 'text', 'date', 'number', 'checkbox'];
@@ -79,12 +80,12 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
             <label>{t('name')}<input value={draft.name} maxLength={120} onChange={e => change({ name: e.target.value })} placeholder={t('nameExample')} /></label>
             <label>{t('order')}<select dir={direction} value={draft.signingOrder} onChange={e => change({ signingOrder: e.target.value, ...(e.target.value === 'grouped' ? { signingGroups: draft.signingOrder === 'sequential' ? draft.roles.map(role => [role.id]) : [draft.roles.map(role => role.id)] } : {}) })}><option value="parallel">{t('parallel')}</option><option value="sequential">{t('sequential')}</option>{native && <option value="grouped">{translate('signingV2.compose.order.grouped')}</option>}</select></label>
         </div>
-        <TemplateRoles draft={draft} onChange={change} roleId={roleId} onRoleId={setRoleId} />
+        <TemplateRoles draft={draft} onChange={change} roleId={roleId} onRoleId={setRoleId} native={native} />
         {native && <TemplateDataKeys draft={draft} onChange={change} />}
         </>}
         {step === 1 && <>
         <h2>{t('documents')}</h2>
-        <div className="lw-templates__toolbar"><div className="lw-templates__tabs" role="tablist" aria-label={t('documentTabs')}>{draft.documents.map((doc, i) => <button type="button" key={doc.id} role="tab" aria-selected={activeDoc === i} onClick={() => { setActiveDoc(i);setSelected(null);setPage(1); }}>{doc.name} <small>{t('fields', { count: doc.fields.length })}</small></button>)}</div>
+        <div className="lw-templates__toolbar"><div className="lw-templates__tabs" role="tablist" aria-label={t('documentTabs')}>{draft.documents.map((doc, i) => <button type="button" key={doc.id} role="tab" aria-selected={activeDoc === i} onClick={() => { setActiveDoc(i);setSelected(null);setPage(1); }}>{doc.name} <small>{t('fields', { count: doc.fields.length, formattedCount: number(doc.fields.length) })}</small></button>)}</div>
             <label className="lw-templates__file">{t('addPdf')}<input type="file" accept=".pdf,application/pdf" disabled={busy || draft.documents.length >= 10} onChange={e => { upload(e.target.files?.[0]);e.target.value = ''; }} /></label></div>
         {!document ? <div className="lw-templates__empty"><h3>{t('emptyTitle')}</h3><p>{t('emptyBody')}</p></div> : <div className="lw-templates__editor">
             <aside className="lw-templates__fieldTools">
@@ -102,6 +103,14 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
                         <label>{translate('signingV2.authoring.fontSize')}<input type="number" min="8" max="72" value={field.fontSize || 14} onChange={e => updateField(selected, { fontSize: Number(e.target.value) })} /></label>
                         <p>{translate('signingV2.authoring.overflow')}</p>
                     </> : <label>{t('signer')}<select dir={direction} value={field.roleId} onChange={e => updateField(selected, { roleId: e.target.value })}>{draft.roles.map(role => <option key={role.id} value={role.id}>{role.name}</option>)}</select></label>}
+                    {native && field.fieldType !== 'data' && (() => {
+                        const role = draft.roles.find(item => item.id === field.roleId)?.nativeRole;
+                        return (role?.when || role?.min <= (field.nativeField?.occurrence || 0)) && <label>{translate('signingV2.authoring.condition.inactive')}
+                            <select dir={direction} value={field.inactiveTreatment || ''} onChange={event => updateField(selected, { inactiveTreatment: event.target.value || undefined })}>
+                                <option value="">{translate('signingV2.authoring.condition.chooseTreatment')}</option>
+                                {['exclude_document', 'authored_inactive'].map(value => <option key={value} value={value}>{translate(`signingV2.authoring.condition.${value}`)}</option>)}
+                            </select></label>;
+                    })()}
                     <label>{t('label')}<input value={field.fieldLabel || ''} maxLength={120} onChange={e => updateField(selected, { fieldLabel: e.target.value })} /></label>
                     {field.fieldType !== 'data' && <label className="lw-templates__check"><input type="checkbox" checked={field.isRequired} onChange={e => updateField(selected, { isRequired: e.target.checked })} />{t('required')}</label>}
                     <button type="button" onClick={() => removeField(selected)}>{t('deleteField')}</button>
@@ -115,9 +124,11 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
             <h2>{draft.name}</h2>
             <p>{draft.signingOrder === 'grouped' ? translate('signingV2.compose.order.grouped') : t(draft.signingOrder === 'sequential' ? 'sequential' : 'parallel')}</p>
             {draft.signingOrder === 'grouped' && <ol>{draft.signingGroups.map((group, index) => <li key={index}>{group.map(key => draft.roles.find(role => role.id === key)?.name).join(' · ')}</li>)}</ol>}
-            <ol>{draft.roles.map(role => <li key={role.id}><bdi>{role.name}</bdi> · {t(role.kind === 'shared' || role.kind === 'lawyer' ? 'shared' : 'each')}</li>)}</ol>
-            <ul>{draft.documents.map(doc => <li key={doc.id}><bdi>{doc.name}</bdi> · {t('fields', { count: doc.fields.length })}
-                {native && doc.nativeDocument?.when && <span> · {translate('signingV2.authoring.condition.review', { field: draft.dataKeys?.find(item => item.key === doc.nativeDocument.when.key)?.label || doc.nativeDocument.when.key })}</span>}
+            <ol>{draft.roles.map(role => <li key={role.id}><bdi>{role.name}</bdi> · {t(role.kind === 'shared' || role.kind === 'lawyer' ? 'shared' : 'each')}
+                {native && role.nativeRole?.when && <span dir="auto"> · {conditionSummary(role.nativeRole.when, draft.dataKeys || [], (key, values) => translate(`signingV2.authoring.condition.${key}`, values))}</span>}
+            </li>)}</ol>
+            <ul>{draft.documents.map(doc => <li key={doc.id}><bdi>{doc.name}</bdi> · {t('fields', { count: doc.fields.length, formattedCount: number(doc.fields.length) })}
+                {native && doc.nativeDocument?.when && <span dir="auto"> · {conditionSummary(doc.nativeDocument.when, draft.dataKeys || [], (key, values) => translate(`signingV2.authoring.condition.${key}`, values))}</span>}
             </li>)}</ul>
             {draft.roles.some(role => !draft.documents.some(doc => doc.fields.some(field => field.roleId === role.id))) && <p role="alert">{t('missingFields')}</p>}
             {!native && <details><summary>{t('extra')}</summary><div className="lw-templates__setup">            <label>{t('completionEmail')}<input type="email" dir="ltr" value={draft.completionEmail} onChange={e => change({ completionEmail: e.target.value })} placeholder="office@example.com" /></label>

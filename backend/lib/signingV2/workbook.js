@@ -72,7 +72,9 @@ function mappedColumns(sheet, definition, mapping) {
     expect(entries.length && entries.every(([key, value]) => targets.some(column => column.key === key)
         && Number.isInteger(value) && value > 0 && value <= sheet.actualColumnCount), 'INVALID_COLUMN_MAPPING');
     expect(new Set(entries.map(([, column]) => column)).size === entries.length, 'INVALID_COLUMN_MAPPING');
-    for (const role of definition.roles.filter(role => role.audience !== 'shared')) {
+    // Whether a conditional role is required can only be decided per package
+    // from normalized business data. Creation preview is that strict boundary.
+    for (const role of definition.roles.filter(role => role.audience !== 'shared' && !role.when)) {
         expect(mapping.columns[`${role.key}.name`] && (mapping.columns[`${role.key}.email`] || mapping.columns[`${role.key}.phone`]), 'INCOMPLETE_COLUMN_MAPPING');
     }
     for (const field of definition.dataKeys || []) if (field.required && field.defaultValue == null) {

@@ -13,6 +13,7 @@ import SimpleCard from '../../../components/simpleComponents/SimpleCard';
 import BlockDateInput from '../../../components/simpleComponents/BlockDateInput';
 import useSigningLocale from './useSigningLocale';
 import documentDataValue from './documentDataValue';
+import { conditionSummary } from './templateConditions';
 import { newKey } from './ParticipantActionDialog';
 import StatusNotice from '../../../components/ui/StatusNotice';
 import SelectedTemplateEntry from './SelectedTemplateEntry';
@@ -680,6 +681,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                         {template.roles.length - omitted.size > 1 && <SecondaryButton onPress={() => omitSigner(role.key)} aria-label={t('signingV2.compose.signers.remove', { name: role.label })}>
                             {t('signingV2.compose.rows.removeShort')}
                         </SecondaryButton>}
+                        {role.when && <p dir="auto">{conditionSummary(role.when, dataFields, (key, values) => t(`signingV2.authoring.condition.${key}`, values))}</p>}
                     </li>)}
                 </ul>
                 {omitted.size > 0 && <div className="lw-signingCompose__restored">
@@ -698,7 +700,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             </SimpleCard>
             {activeShare.length > 0 && <SimpleCard className="lw-signingCompose__card">
                 <h2>{t('signingV2.compose.shared.heading')}</h2>
-                <p>{t('signingV2.compose.shared.help')}</p>
+                <p>{t(activeShare.some(role => role.when) ? 'signingV2.compose.shared.conditionalHelp' : 'signingV2.compose.shared.help')}</p>
                 {activeShare.map(role => <fieldset key={role.key} className="lw-signingCompose__shared">
                     <legend>{role.label}</legend>
                     <PersonFields scope="shared" roleKey={role.key} person={shared[role.key] || blankPerson()} errors={check?.indexed.shared[role.key]} onChange={changeShared} suggestLawyers={role.key === 'lawyer'} casePeople={caseContext?.people} otherRoles={activeShare.filter(other => other.key !== role.key)} />
@@ -773,10 +775,18 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 <ul className="lw-signingCompose__plainList">{(preview.documentSummary || preview.template.documents).map(item => <li key={item.key}><bdi>{item.name}</bdi>
                     {item.excludedCount > 0 && <span> · {t('signingV2.compose.review.inclusion', { included: number(item.includedCount), total: number(preview.packageCount), excluded: number(item.excludedCount) })}</span>}
                 </li>)}</ul>
+                {!!preview.roleSummary?.some(item => item.excludedCount > 0) && <>
+                    <h3>{t('signingV2.compose.review.conditionalRoles')}</h3>
+                    <ul className="lw-signingCompose__plainList">{preview.roleSummary.filter(item => item.excludedCount > 0).map(item => <li key={item.key}>
+                        <bdi>{item.label}</bdi> · {t('signingV2.compose.review.inclusion', { included: number(item.includedCount), total: number(preview.packageCount), excluded: number(item.excludedCount) })}
+                    </li>)}</ul>
+                </>}
                 {preview.shared.length > 0 && <>
                     <h3>{t('signingV2.compose.shared.heading')}</h3>
-                    <ul className="lw-signingCompose__plainList">{preview.shared.map(item => <li key={item.roleKey}><bdi>{roleLabel(item.roleKey)}</bdi>: <bdi>{item.name}</bdi></li>)}</ul>
-                    <p className="lw-signingCompose__note">{t('signingV2.compose.review.sharedInvitations', { name: sharedNames, count: preview.packageCount, formattedCount: number(preview.packageCount) })}</p>
+                    <ul className="lw-signingCompose__plainList">{preview.shared.map(item => <li key={item.roleKey}><bdi>{roleLabel(item.roleKey)}</bdi>: <bdi>{item.name}</bdi>
+                        {item.packageCount != null && item.packageCount < preview.packageCount && <span> · {t('signingV2.compose.review.sharedInvitations', { name: item.name, count: item.packageCount, formattedCount: number(item.packageCount) })}</span>}
+                    </li>)}</ul>
+                    {preview.shared.every(item => item.packageCount == null || item.packageCount === preview.packageCount) && <p className="lw-signingCompose__note">{t('signingV2.compose.review.sharedInvitations', { name: sharedNames, count: preview.packageCount, formattedCount: number(preview.packageCount) })}</p>}
                 </>}
                 {omitted.size > 0 && <p className="lw-signingCompose__note">{t('signingV2.compose.signers.review', { names: template.roles.filter(role => omitted.has(role.key)).map(role => role.label).join(', ') })}</p>}
                 <h3>{t('signingV2.compose.review.sample', { count: preview.sample.length, formattedCount: number(preview.sample.length) })}</h3>

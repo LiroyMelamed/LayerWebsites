@@ -1,8 +1,9 @@
 import React from 'react';
 import useSigningLocale from './useSigningLocale';
+import TemplateDocumentCondition from './TemplateDocumentCondition';
 
 // Role IDs bind PDF fields. Reordering changes only the stage, never those bindings.
-export default function TemplateRoles({ draft, onChange, roleId, onRoleId }) {
+export default function TemplateRoles({ draft, onChange, roleId, onRoleId, native = false }) {
     const { t: translate, number, direction } = useSigningLocale();
     const t = (key, values) => translate(`signingV2.builder.${key}`, values);
     const update = (id, patch) => onChange({ roles: draft.roles.map(role => role.id === id ? { ...role, ...patch } : role) });
@@ -45,6 +46,8 @@ export default function TemplateRoles({ draft, onChange, roleId, onRoleId }) {
                         if (roleId === role.id) onRoleId(roles[0].id);
                     }}>{t('removeRole')}</button>
                 </div>
+                {native && <div className="lw-templates__roleCondition"><TemplateDocumentCondition kind="role" fields={draft.dataKeys || []} condition={role.nativeRole?.when}
+                    onChange={when => update(role.id, { nativeRole: { ...role.nativeRole, when } })} /></div>}
             </div>;
         })}</div>
         <button type="button" disabled={draft.roles.length >= 8} onClick={() => {

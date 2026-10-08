@@ -1,5 +1,5 @@
 const { createHash, randomUUID } = require('node:crypto');
-const { validateDefinition, compilePackage, admission, normalizeValue, UUID, LOCALES } = require('../../lib/signingV2/compiler');
+const { validateDefinition, compilePackage, admission, normalizeValue, conditionMatches, CONDITION_EVALUATOR_VERSION, UUID, LOCALES } = require('../../lib/signingV2/compiler');
 const { digest } = require('../../lib/signingV2/canonical');
 const { expect, fail } = require('../../lib/signingV2/errors');
 const limits = require('../../lib/signingV2/limits');
@@ -48,7 +48,8 @@ async function loadVersion(db, scope, versionId) {
 }
 
 function roleSummary(definition) {
-    return definition.roles.map(role => ({ key: role.key, label: role.label, audience: role.audience === 'shared' ? 'shared' : 'each', stage: role.stage }));
+    return definition.roles.map(role => ({ key: role.key, label: role.label, audience: role.audience === 'shared' ? 'shared' : 'each', stage: role.stage,
+        ...(role.when ? { when: role.when } : {}) }));
 }
 
 async function listTemplates(db, scope) {
@@ -242,18 +243,31 @@ function normalize(definition, input) {
     const omitted = omittedRoles(definition, input, errors);
     const roles = recipientRoles(definition, input.roleAudience, [...omitted]);
     const shared = {}, each = roles.filter(role => role.audience !== 'shared');
-    for (const role of roles.filter(item => item.audience === 'shared')) {
-        shared[role.key] = recipient(resolveRecipient(roles, input, role, null, `shared.${role.key}`, errors), definition, `shared.${role.key}`, errors);
-        if (shared[role.key].personId) expect(UUID.test(shared[role.key].personId), 'INVALID_PERSON');
-    }
+    const dataKeys = new Map(definition.dataKeys.map(field => [field.key, field]));
     const keys = new Set();
     const selectedCaseId = input.caseId == null ? null : caseId(input.caseId);
     const rows = input.rows.map((row, index) => {
         const key = typeof row?.key === 'string' && row.key.trim() ? row.key.trim().slice(0, 200) : `row-${index + 1}`;
         if (keys.has(key)) errors.push({ path: `rows.${index}.key`, code: 'DUPLICATE_ROW_KEY' });
         keys.add(key);
-        return { key, ...(selectedCaseId ? { caseId: selectedCaseId } : {}), ...rowData(definition, row, `rows.${index}.data`, errors), recipients: Object.fromEntries(each.map(role => [role.key, recipient(resolveRecipient(roles, input, role, index, `rows.${index}.${role.key}`, errors), definition, `rows.${index}.${role.key}`, errors)])) };
+        const before = errors.length;
+        const normalized = rowData(definition, row, `rows.${index}.data`, errors);
+        const data = Object.fromEntries(definition.dataKeys.map(field => [field.key, Object.hasOwn(normalized.data || {}, field.key) ? normalized.data[field.key] : field.defaultValue]));
+        const activeRoles = [];
+        if (before === errors.length) for (const role of roles) {
+            try { if (conditionMatches(role.when, data, dataKeys)) activeRoles.push(role.key); }
+            catch (error) {
+                const missing = error.extras?.fieldErrors?.[0]?.path;
+                errors.push({ path: `rows.${index}.data.${missing}`, code: error.errorCode || 'INVALID_CONDITION' });
+            }
+        }
+        return { key, ...(selectedCaseId ? { caseId: selectedCaseId } : {}), ...normalized, activeRoles,
+            recipients: Object.fromEntries(each.filter(role => activeRoles.includes(role.key)).map(role => [role.key, recipient(resolveRecipient(roles, input, role, index, `rows.${index}.${role.key}`, errors), definition, `rows.${index}.${role.key}`, errors)])) };
     });
+    for (const role of roles.filter(item => item.audience === 'shared' && rows.some(row => row.activeRoles.includes(item.key)))) {
+        shared[role.key] = recipient(resolveRecipient(roles, input, role, null, `shared.${role.key}`, errors), definition, `shared.${role.key}`, errors);
+        if (shared[role.key].personId) expect(UUID.test(shared[role.key].personId), 'INVALID_PERSON');
+    }
     return { name: input.name.trim(), roles, shared, rows, omitted, signingOrder: signingOrder(definition, input, omitted, errors), errors };
 }
 
@@ -261,6 +275,7 @@ function packagesFor(definition, plan, personFor) {
     return plan.rows.map((row, index) => {
         const roles = {}, delivery = {};
         for (const role of plan.roles) {
+            if (!row.activeRoles.includes(role.key)) continue;
             const person = role.audience === 'shared' ? plan.shared[role.key] : row.recipients[role.key];
             const ids = personFor(role, person, index);
             roles[role.key] = [{ personId: ids.personId, partyId: ids.partyId }];
@@ -273,7 +288,7 @@ function packagesFor(definition, plan, personFor) {
 }
 
 function rowsHash(template, plan) {
-    return digest({ templateVersionId: template.id, definitionHash: template.definition_hash, name: plan.name, roleAudience: Object.fromEntries(plan.roles.map(role => [role.key, role.audience])), omitted: [...plan.omitted].sort(), signingOrder: plan.signingOrder, shared: plan.shared, rows: plan.rows });
+    return digest({ conditionEvaluatorVersion: CONDITION_EVALUATOR_VERSION, templateVersionId: template.id, definitionHash: template.definition_hash, name: plan.name, roleAudience: Object.fromEntries(plan.roles.map(role => [role.key, role.audience])), omitted: [...plan.omitted].sort(), signingOrder: plan.signingOrder, shared: plan.shared, rows: plan.rows });
 }
 
 async function previewCreation(pool, scope, input) {
@@ -312,10 +327,14 @@ async function previewCreation(pool, scope, input) {
             const includedCount = compiled.filter(item => item.snapshot.documents.some(doc => doc.key === document.key)).length;
             return { key: document.key, name: document.name, includedCount, excludedCount: plan.rows.length - includedCount };
         }),
+        roleSummary: plan.errors.length ? [] : plan.roles.map(role => {
+            const includedCount = compiled.filter(item => item.snapshot.participants.some(person => person.roleKey === role.key)).length;
+            return { key: role.key, label: role.label, includedCount, excludedCount: plan.rows.length - includedCount };
+        }),
         recipientCount: people.size,
         omitted: [...plan.omitted].sort(),
         caseId: plan.rows[0]?.caseId || null,
-        shared: Object.entries(plan.shared).map(([roleKey, person]) => ({ roleKey, name: person.name, channels: person.channels })),
+        shared: Object.entries(plan.shared).map(([roleKey, person]) => ({ roleKey, name: person.name, channels: person.channels, packageCount: plan.rows.filter(row => row.activeRoles.includes(roleKey)).length })),
         sample: plan.rows.slice(0, 5).map((row, index) => ({ key: row.key, ...(row.data ? { data: row.data } : {}),
             ...(plan.errors.length ? {} : { exclusions: compiled[index].snapshot.exclusions.map(item => ({ ...item, name: definition.documents.find(doc => doc.key === item.documentKey).name })) }),
             recipients: Object.entries(row.recipients).map(([roleKey, person]) => ({ roleKey, name: person.name, channels: person.channels })) })),

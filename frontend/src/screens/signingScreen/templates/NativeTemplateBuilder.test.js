@@ -200,3 +200,52 @@ test.each(['he','ar','en'])('date defaults use the incumbent date control and re
     await screen.findByText(i18n.t('signingV2.authoring.saved'));
     expect(api.saveTemplateDraft.mock.calls[0][1].definition.dataKeys[2].defaultValue).toBe('2028-02-29');
 });
+
+test.each(['he','ar','en'])('nested document rules survive draft recovery and protect every referenced data key in %s',async language=>{
+    const i18n=await setup(language),api=fakeApi(),input=version();
+    const a=key=>i18n.t(`signingV2.authoring.condition.${key}`),b=key=>i18n.t(`signingV2.builder.${key}`);
+    const view=render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={input} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
+    fireEvent.click(screen.getByRole('button',{name:b('next')}));
+    fireEvent.change(screen.getByLabelText(a('field')),{target:{value:'amount'}});
+    fireEvent.change(screen.getByLabelText(a('operator')),{target:{value:'equals'}});
+    fireEvent.change(screen.getByLabelText(a('value')),{target:{value:'9007199254740993.120000'}});
+    fireEvent.click(screen.getByRole('button',{name:a('addRule')}));
+    fireEvent.change(screen.getByLabelText(a('combine')),{target:{value:'any'}});
+    fireEvent.click(screen.getByRole('button',{name:a('addGroup')}));
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.authoring.saveDraft')}));
+    await screen.findByText(i18n.t('signingV2.authoring.saved'));
+    const saved=api.saveTemplateDraft.mock.calls[0][1].definition;
+    expect(saved.documents[0].when).toEqual({operator:'any',conditions:[{key:'amount',operator:'equals',value:'9007199254740993.120000'},{key:'identifier',operator:'present'},{operator:'all',conditions:[{key:'identifier',operator:'present'}]}]});
+    view.unmount();
+    render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={{...input,definition:saved}} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
+    for(const label of ['Amount','Identity']){
+        expect(within(screen.getByRole('group',{name:label})).getByLabelText(i18n.t('signingV2.authoring.type'))).toBeDisabled();
+        expect(within(screen.getByRole('group',{name:label})).getByRole('button',{name:i18n.t('signingV2.authoring.removeData')})).toBeDisabled();
+    }
+    fireEvent.click(screen.getByRole('button',{name:b('next')}));
+    expect(screen.getAllByLabelText(a('combine')).map(select=>select.value)).toEqual(['any','all']);
+    fireEvent.click(screen.getByRole('button',{name:b('next')}));
+    expect(screen.getByText(/9007199254740993.120000/)).toBeVisible();
+    expect(input.definition.documents[0].when).toBeUndefined();
+});
+
+test('a conditional signer needs an explicit inactive field treatment, preserved without changing PDF geometry',async()=>{
+    const i18n=await setup('en'),api=fakeApi(),input=version();
+    render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={input} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
+    const role=within(screen.getAllByText('When this signer is required')[2].closest('details'));
+    fireEvent.change(role.getByLabelText('Based on field'),{target:{value:'amount'}});
+    fireEvent.change(role.getByLabelText('Include when'),{target:{value:'equals'}});
+    fireEvent.change(role.getByLabelText('Comparison value'),{target:{value:'1.00'}});
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.builder.next')}));
+    fireEvent.click(await screen.findByRole('button',{name:'Select last PDF field'}));
+    expect(screen.getByLabelText('When this signer is not included')).toHaveValue('');
+    fireEvent.change(screen.getByLabelText('When this signer is not included'),{target:{value:'exclude_document'}});
+    fireEvent.click(screen.getByRole('button',{name:'Save draft'}));await screen.findByText(i18n.t('signingV2.authoring.saved'));
+    const saved=api.saveTemplateDraft.mock.calls[0][1].definition;
+    expect(saved.roles[2].when).toEqual({key:'amount',operator:'equals',value:'1.00'});
+    expect(saved.documents[0].fields[2]).toEqual({...input.definition.documents[0].fields[2],label:'',inactiveTreatment:'exclude_document'});
+    expect(fromEditor(toEditor(saved),'en').documents[0].fields[2].inactiveTreatment).toBe('exclude_document');
+    fireEvent.change(screen.getByLabelText('When this signer is not included'),{target:{value:''}});
+    fireEvent.click(screen.getByRole('button',{name:'Save draft'}));await waitFor(()=>expect(api.saveTemplateDraft).toHaveBeenCalledTimes(2));
+    expect(api.saveTemplateDraft.mock.calls[1][1].definition.documents[0].fields[2].inactiveTreatment).toBeUndefined();
+});

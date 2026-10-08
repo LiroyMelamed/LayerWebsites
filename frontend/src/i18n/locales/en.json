@@ -1643,7 +1643,8 @@
       },
       "shared": {
         "heading": "Shared signer",
-        "help": "Choose one person to sign in every package: a client, representative, lawyer or anyone else."
+        "help": "Choose one person to sign in every package: a client, representative, lawyer or anyone else.",
+        "conditionalHelp": "Enter this person once. They participate only in packages where the template rules require their role; the review before sending shows the included package count."
       },
       "rows": {
         "heading": "Recipients",
@@ -1719,7 +1720,8 @@
         "sharedInvitations_one": "{{name}} will receive one link for this package. Only documents that are ready for this signer can be signed together.",
         "sharedInvitations_other": "{{name}} will receive one link for all {{formattedCount}} packages. Only documents whose signing turn has arrived can be signed together.",
         "inclusion": "Included in {{included}} of {{total}} packages; excluded from {{excluded}} by template rules",
-        "excluded": "Documents excluded by template rules: {{names}}"
+        "excluded": "Documents excluded by template rules: {{names}}",
+        "conditionalRoles": "Signers included by template rules"
       },
       "done": {
         "heading": "The run was created",
@@ -1797,7 +1799,8 @@
         "replaceWarning": "Confirming this import replaces your current recipient list. Shared signers are kept.",
         "edit": "Edit mapping",
         "replace": "Replace recipients with file data",
-        "apply": "Use these recipients"
+        "apply": "Use these recipients",
+        "conditionalRole": "This signer is needed only for packages matching the template rules. If their columns are absent, you can import the file and complete their details before confirming the send."
       },
       "context": {
         "label": "Case for this send (optional)",
@@ -2043,7 +2046,7 @@
       "completionMode": "Office completion notification",
       "completionDocument": "For each completed document",
       "completionPackage": "When the package is complete",
-      "fields": "Fields: {{count}}",
+      "fields": "Fields: {{formattedCount}}",
       "missingFields": "Assign at least one field to each signer before saving.",
       "types": {
         "signature": "Signature",
@@ -2171,7 +2174,28 @@
         "add": "Add a value",
         "remove": "Remove",
         "removeValue": "Remove comparison value {{number}}",
-        "review": "Conditional on {{field}}"
+        "review": "Conditional on {{field}}",
+        "combine": "Match these rules",
+        "all": "All rules must match",
+        "any": "At least one rule must match",
+        "rule": "Rule {{number}}",
+        "addRule": "Add a rule",
+        "addGroup": "Add a group of rules",
+        "removeRule": "Remove this rule",
+        "clear": "Remove all rules — always include",
+        "and": "and",
+        "or": "or",
+        "summaryPresent": "{{field}} has a value",
+        "summaryEquals": "{{field}} equals {{value}}",
+        "summaryIn": "{{field}} is one of: {{value}}",
+        "true": "Yes",
+        "false": "No",
+        "roleTitle": "When this signer is required",
+        "roleHelp": "Choose when this signing role participates. For every affected PDF field, explicitly choose what happens when the signer is not included.",
+        "inactive": "When this signer is not included",
+        "chooseTreatment": "Choose how to handle this field",
+        "exclude_document": "Do not include this PDF",
+        "authored_inactive": "The source already marks this field as not applicable"
       }
     }
   },

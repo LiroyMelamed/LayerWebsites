@@ -32,6 +32,8 @@ export function fromEditor(draft, locale) {
                     delete result.roleKey; delete result.occurrence;
                     return { ...result, dataKey: field.dataKey, overflow: 'block', fontSize: field.fontSize || 14, align: field.align || 'start' };
                 }
+                if (field.inactiveTreatment) result.inactiveTreatment = field.inactiveTreatment;
+                else delete result.inactiveTreatment;
                 return { ...result, roleKey: field.roleId, occurrence: field.nativeField?.occurrence || 0 };
             }) })),
         signingRules: draft.nativeDefinition?.signingRules || [],

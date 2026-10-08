@@ -47,6 +47,8 @@
 .lw-templates__dataKey { margin-block: 1rem; }
 .lw-templates__defaults { margin-block: .75rem; > label, > div { max-width: 32rem; margin-block: .75rem; } }
 .lw-templates__condition { min-width: 0; > label, > div { margin-block: .75rem; } }
+.lw-templates__conditionLeaf, .lw-templates__conditionGroup { min-width: 0; > label, > div, > fieldset { margin-block: .75rem; } fieldset { min-width: 0; padding: .65rem; } }
+.lw-templates__roleCondition { grid-column: 2 / -1; min-width: 0; }
 .lw-templates__conditionValue { display: flex; gap: .5rem; align-items: end; > label, > div { flex: 1; min-width: 0; } > button { flex: 0 0 auto; padding-inline: .6rem; } }
 @media (min-width: 48.01rem) { .lw-templates__role.is-grouped { grid-template-columns: 1.5rem minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) auto; } }
 .lw-templates__empty { padding: 3rem 1.5rem; border-block: 1px solid #d9e0e9; text-align: center; p { margin-inline: auto; } }

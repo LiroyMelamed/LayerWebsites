@@ -65,7 +65,7 @@ export default function WorkbookImport({ api, versionId, roles, dataFields = [],
         } catch (failure) { if (current === generation.current) setError(failure); }
         finally { if (current === generation.current) setBusy(false); }
     };
-    const complete = roles.every(role => columns[`${role.key}.name`] && (columns[`${role.key}.email`] || columns[`${role.key}.phone`]))
+    const complete = Object.keys(columns).length > 0 && roles.every(role => role.when || (columns[`${role.key}.name`] && (columns[`${role.key}.email`] || columns[`${role.key}.phone`])))
         && dataFields.every(field => !field.required || field.defaultValue != null || columns[`data:${field.key}`]);
     const duplicate = new Set(Object.values(columns)).size !== Object.keys(columns).length;
     const select = (key, label, required = false) => {
@@ -102,7 +102,8 @@ export default function WorkbookImport({ api, versionId, roles, dataFields = [],
                 </div>}
                 {roles.map(role => <fieldset key={role.key} className="lw-signingCompose__mappingRole">
                     <legend>{role.label}</legend>
-                    <div className="lw-signingCompose__identity">{FIELDS.map(field => select(`${role.key}.${field}`, t(`signingV2.compose.fields.${field}`), field === 'name'))}</div>
+                    {role.when && <p>{t('signingV2.compose.mapping.conditionalRole')}</p>}
+                    <div className="lw-signingCompose__identity">{FIELDS.map(field => select(`${role.key}.${field}`, t(`signingV2.compose.fields.${field}`), field === 'name' && !role.when))}</div>
                 </fieldset>)}
                 {!!dataFields.length && <fieldset className="lw-signingCompose__mappingRole">
                     <legend>{t('signingV2.compose.data.heading')}</legend>

@@ -81,3 +81,14 @@ test('required data columns must be mapped and invalid spreadsheet rows cannot b
     expect(await screen.findByRole('button', { name: i18n.t('signingV2.compose.mapping.apply') })).toBeDisabled();
     expect(props.onApply).not.toHaveBeenCalled();
 });
+
+test('conditional recipient columns are optional at import but are explained before mapping confirmation',async()=>{
+    const {props,i18n,upload}=await setup('en',{roles:[{key:'buyer',label:'Buyer',when:{key:'flag',operator:'equals',value:true}}]});
+    upload();await screen.findByRole('heading',{name:i18n.t('signingV2.compose.mapping.heading')});
+    expect(screen.getByText(i18n.t('signingV2.compose.mapping.conditionalRole'))).toBeVisible();
+    expect(screen.getByRole('button',{name:i18n.t('signingV2.compose.mapping.preview')})).toBeDisabled();
+    fireEvent.change(screen.getByRole('combobox',{name:'Full name'}),{target:{value:'2'}});
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.compose.mapping.preview')}));
+    await waitFor(()=>expect(props.api.parseWorkbook).toHaveBeenCalledWith('template-v1',expect.any(String),{mapping:{sheetId:1,columns:{'buyer.name':2}}}));
+    expect(props.onApply).not.toHaveBeenCalled();
+});

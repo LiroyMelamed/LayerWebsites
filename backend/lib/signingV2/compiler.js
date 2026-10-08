@@ -26,8 +26,22 @@ function keyed(values, path) {
     }
     return map;
 }
-function validateCondition(condition, keys, path) {
+// Preview admission changes when evaluation semantics change. Existing immutable
+// snapshots are never re-evaluated; a new submission must review the new result.
+const CONDITION_EVALUATOR_VERSION = 2;
+function validateCondition(condition, keys, path, budget = { nodes: 0 }, depth = 0) {
     if (condition == null) return null;
+    expect(typeof condition === 'object' && !Array.isArray(condition) && ++budget.nodes <= 50 && depth <= 4, 'INVALID_CONDITION', path);
+    if (['all', 'any'].includes(condition.operator)) {
+        expect(condition.key === undefined && condition.value === undefined && condition.values === undefined, 'INVALID_CONDITION', path);
+        expect(Array.isArray(condition.conditions) && condition.conditions.length > 0 && condition.conditions.length <= 20, 'INVALID_CONDITION', path);
+        condition.conditions.forEach((child, index) => {
+            expect(child != null, 'INVALID_CONDITION', `${path}.conditions.${index}`);
+            validateCondition(child, keys, `${path}.conditions.${index}`, budget, depth + 1);
+        });
+        return condition;
+    }
+    expect(condition.conditions === undefined, 'INVALID_CONDITION', path);
     expect(condition && keys.has(condition.key), 'INVALID_CONDITION', path);
     expect(['equals', 'in', 'present'].includes(condition.operator), 'INVALID_CONDITION', path);
     const values = condition.operator === 'in' ? list(condition.values, 50, path, 1) : [condition.value];
@@ -40,15 +54,35 @@ function validateCondition(condition, keys, path) {
     if (condition.operator === 'equals') condition.value = comparison(condition.value);
     return condition;
 }
-function conditionMatches(condition, data) {
-    if (!condition) return true;
+function decimalComparable(value) {
+    const trimmed = value.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+    return trimmed === '-0' ? '0' : trimmed;
+}
+function evaluateCondition(condition, data, keys) {
+    if (!condition) return { result: true };
+    if (['all', 'any'].includes(condition.operator)) {
+        const decisive = condition.operator === 'any';
+        let unknown;
+        for (const child of condition.conditions) {
+            const evaluated = evaluateCondition(child, data, keys);
+            if (evaluated.result === decisive) return evaluated;
+            if (evaluated.missingKey) unknown ||= evaluated;
+        }
+        return unknown || { result: !decisive };
+    }
     const value = data[condition.key];
-    if (condition.operator === 'present') return value !== null && value !== undefined && value !== '';
+    if (condition.operator === 'present') return { result: value !== null && value !== undefined && value !== '' };
     // Unknown is not false: otherwise missing input could silently omit a
     // required annex or participant. Only an explicit presence rule can do so.
-    expect(value !== null && value !== undefined && value !== '', 'DATA_REQUIRED', condition.key);
+    if (value === null || value === undefined || value === '') return { result: null, missingKey: condition.key };
     const values = condition.operator === 'in' ? condition.values : [condition.value];
-    return values.some(candidate => canonical(candidate) === canonical(value === undefined ? null : value));
+    const compare = keys.get(condition.key)?.type === 'decimal' ? decimalComparable : canonical;
+    return { result: values.some(candidate => compare(candidate) === compare(value)) };
+}
+function conditionMatches(condition, data, keys = new Map()) {
+    const evaluated = evaluateCondition(condition, data, keys);
+    expect(evaluated.result !== null, 'DATA_REQUIRED', evaluated.missingKey);
+    return evaluated.result;
 }
 
 function normalizeValue(field, value, path = field.key) {
@@ -193,6 +227,7 @@ function signingStages(definition, input, omitted) {
 function compilePackage(definition, input, directory, now = new Date()) {
     const data = {};
     const provenance = {};
+    const dataKeys = new Map(definition.dataKeys.map(field => [field.key, field]));
     const validKeys = new Set(definition.dataKeys.map(field => field.key));
     expect(Object.keys(input.data || {}).every(key => validKeys.has(key)), 'UNKNOWN_DATA_KEY');
     for (const key of definition.dataKeys) {
@@ -216,7 +251,7 @@ function compilePackage(definition, input, directory, now = new Date()) {
             expect(assignments.length === 0, 'ROLE_CAPACITY_EXCEEDED', role.key);
             continue;
         }
-        const active = conditionMatches(role.when, data);
+        const active = conditionMatches(role.when, data, dataKeys);
         expect(active ? assignments.length >= role.min && assignments.length <= role.max : assignments.length === 0, 'ROLE_CAPACITY_EXCEEDED', role.key);
         assignments.forEach((assignment, occurrence) => {
             const person = directory.people.get(assignment.personId);
@@ -254,8 +289,9 @@ function compilePackage(definition, input, directory, now = new Date()) {
     const tasks = [];
     for (const document of definition.documents) {
         const missing = document.fields.filter(field => field.type !== 'data' && !byRole.has(`${field.roleKey}:${field.occurrence}`));
-        if (!conditionMatches(document.when, data) || missing.some(field => field.inactiveTreatment === 'exclude_document')) {
-            exclusions.push({ documentKey: document.key, reason: !conditionMatches(document.when, data) ? 'condition' : 'inactive_role' });
+        const included = conditionMatches(document.when, data, dataKeys);
+        if (!included || missing.some(field => field.inactiveTreatment === 'exclude_document')) {
+            exclusions.push({ documentKey: document.key, reason: !included ? 'condition' : 'inactive_role' });
             continue;
         }
         const source = directory.sources.get(document.sourceArtifactId);
@@ -336,4 +372,4 @@ function admission(compiled) {
     return { packages: compiled.length, documents, outputPages, estimatedOutputBytes, uniqueSourceBytes, snapshotBytes };
 }
 
-module.exports = { validateDefinition, compilePackage, admission, normalizeValue, conditionMatches, UUID, LOCALES };
+module.exports = { validateDefinition, compilePackage, admission, normalizeValue, conditionMatches, CONDITION_EVALUATOR_VERSION, UUID, LOCALES };
