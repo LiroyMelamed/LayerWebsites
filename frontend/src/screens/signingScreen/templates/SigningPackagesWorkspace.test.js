@@ -289,6 +289,25 @@ test('reopening a document abandons its old request and cannot get stuck on a ca
     expect(within(panel).getByTestId('package-pdf')).toHaveAttribute('data-bytes', String('newer preview'.length));
 });
 
+test('an open partial document refreshes after a signing stage but not for an unchanged polling version', async () => {
+    const i18n = await translations('en'), { api, detail } = fixture();
+    detail.documents[0] = { ...detail.documents[0], prepared: true, artifactVersion: 'prepared-version' };
+    api.documentFile = jest.fn().mockResolvedValueOnce(new Blob(['prepared'])).mockResolvedValue(new Blob(['first signature already applied']));
+    jest.useFakeTimers();
+    try {
+        const panel = await openPackagePanel(i18n, api);
+        fireEvent.click(within(panel).getByRole('button', { name: 'View document: Employment agreement' }));
+        expect(await within(panel).findByTestId('package-pdf')).toHaveAttribute('data-bytes', '8');
+        api.details.mockResolvedValue({ ...detail, documents: [{ ...detail.documents[0], artifactVersion: 'after-first-signature' }] });
+        await act(async () => { jest.advanceTimersByTime(8000); });
+        await waitFor(() => expect(within(panel).getByTestId('package-pdf')).toHaveAttribute('data-bytes', String('first signature already applied'.length)));
+        expect(api.documentFile).toHaveBeenCalledTimes(2);
+        expect(within(panel).queryByRole('button', { name: 'Download signed document: Employment agreement' })).not.toBeInTheDocument();
+        await act(async () => { jest.advanceTimersByTime(8000); });
+        expect(api.documentFile).toHaveBeenCalledTimes(2);
+    } finally { jest.useRealTimers(); }
+});
+
 test('a file bridge failure is shown as a localized error and allows retry', async () => {
     const i18n = await translations('ar'), { api, detail } = fixture();
     detail.package.workflow_state = 'complete';

@@ -196,11 +196,20 @@ async function readReadyArtifact(db, contextId, artifactId, storage) {
     return { bytes, kind: artifact.kind };
 }
 
+// Office viewers may see every completed stage of the active revision. Keep the
+// polling version and the downloaded artifact on the same selection rule.
+const currentDocumentArtifact = `COALESCE(d.final_artifact_id,
+    (SELECT t.stage_artifact_id FROM signing_tasks t
+     WHERE t.owner_context_id=d.owner_context_id AND t.revision_id=d.revision_id
+       AND t.document_id=d.id AND t.stage_artifact_id IS NOT NULL
+     ORDER BY t.stage DESC,t.id LIMIT 1),d.prepared_artifact_id,d.source_artifact_id)`;
+
 async function packageDetails(db, scope, packageId) {
     const pkg = await authorizedPackage(db, scope, packageId);
     const result = await db.query(`SELECT
         COALESCE((SELECT jsonb_agg(jsonb_build_object('id',d.id,'name',d.name,'state',d.state,'informational',d.informational,
-            'prepared',d.prepared_artifact_id IS NOT NULL,'final',d.final_artifact_id IS NOT NULL,'bindings',d.field_bindings) ORDER BY d.document_key)
+            'prepared',d.prepared_artifact_id IS NOT NULL,'final',d.final_artifact_id IS NOT NULL,
+            'artifactVersion',${currentDocumentArtifact},'bindings',d.field_bindings) ORDER BY d.document_key)
             FROM signing_documents d WHERE d.owner_context_id=$1 AND d.revision_id=$2),'[]') AS documents,
         COALESCE((SELECT jsonb_agg(jsonb_build_object('id',p.id,'personId',p.person_id,'name',p.identity_snapshot->>'name',
             'partyName',p.identity_snapshot->>'partyName','roleKey',p.role_key,'capacity',p.capacity,'occurrence',p.occurrence,
@@ -227,11 +236,11 @@ async function packageDetails(db, scope, packageId) {
 async function packageDocumentFile(db, scope, packageId, documentId, storage) {
     const pkg = await authorizedPackage(db, scope, packageId);
     if (!UUID.test(String(documentId))) fail('NOT_FOUND', 404);
-    const document = (await db.query(`SELECT name,final_artifact_id,prepared_artifact_id,source_artifact_id
-        FROM signing_documents WHERE owner_context_id=$1 AND revision_id=$2 AND id=$3`,
+    const document = (await db.query(`SELECT d.name,d.final_artifact_id,${currentDocumentArtifact} AS artifact_id
+        FROM signing_documents d WHERE d.owner_context_id=$1 AND d.revision_id=$2 AND d.id=$3`,
     [scope.contextId, pkg.active_revision_id, documentId])).rows[0];
     if (!document) fail('NOT_FOUND', 404);
-    const artifactId = document.final_artifact_id || document.prepared_artifact_id || document.source_artifact_id;
+    const artifactId = document.artifact_id;
     if (!artifactId) fail('ARTIFACT_NOT_READY', 409);
     const file = await readReadyArtifact(db, scope.contextId, artifactId, storage);
     return { bytes: file.bytes, name: document.name, final: Boolean(document.final_artifact_id) };

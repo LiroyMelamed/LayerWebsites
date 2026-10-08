@@ -196,7 +196,8 @@ function PackagePanel({ id, api, onClose }) {
         setOpenId(current => (current === documentId ? null : documentId));
     };
     const openDocument = detail.documents?.find(document => document.id === openId);
-    const openDocumentVersion = openDocument?.final ? 'final' : openDocument?.prepared ? 'prepared' : 'source';
+    const openDocumentVersion = openDocument?.artifactVersion
+        || (openDocument?.final ? 'final' : openDocument?.prepared ? 'prepared' : 'source');
     useEffect(() => {
         if (!openId) return undefined;
         let cancelled = false;
