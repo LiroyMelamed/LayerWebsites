@@ -9,6 +9,7 @@ import SegmentedSwitch from '../../../components/styledComponents/SegmentedSwitc
 import SearchInput from '../../../components/specializedComponents/containers/SearchInput';
 import SimpleCard from '../../../components/simpleComponents/SimpleCard';
 import SimpleContainer from '../../../components/simpleComponents/SimpleContainer';
+import SimpleButton from '../../../components/simpleComponents/SimpleButton';
 import { Text14, TextBold14 } from '../../../components/specializedComponents/text/AllTextKindFile';
 import { colors } from '../../../constant/colors';
 import useSigningLocale from './useSigningLocale';
@@ -149,17 +150,19 @@ function PersonActions({ person, detail, onAction, onContact }) {
     const purpose = completedCopy ? 'completed_copy' : latest?.state === 'failed' ? 'resend' : 'reminder';
     const canSend = completedCopy ? detail.capabilities?.send : purpose === 'resend' ? detail.capabilities?.deliveryResend : detail.capabilities?.packageRemind;
     return <div className="lw-signingPackages__personActions">
-        {latest && <p>{t(`signingV2.delivery.${latest.state}`)}{latest.attemptedAt && <> · <time dateTime={latest.attemptedAt}>{date(latest.attemptedAt)}</time></>}</p>}
+        {latest && <div className="lw-signingPackages__personDelivery"><p>{t(`signingV2.delivery.${latest.state}`)}{latest.attemptedAt && <> · <time dateTime={latest.attemptedAt}>{date(latest.attemptedAt)}</time></>}</p></div>}
+        <div className="lw-signingPackages__personActionButtons">
         {canSend && (completedCopy || (ready && editable)) && <SecondaryButton onPress={() => onAction(person.personId, purpose)}>{t(`signingV2.action.${purpose}.open`)}</SecondaryButton>}
         {detail.capabilities?.deliveryResend && detail.capabilities?.linkRenew && ready && editable && <SecondaryButton onPress={()=>onAction(person.personId,'resend',true)}>{t('signingV2.action.renew_link.open')}</SecondaryButton>}
         {detail.capabilities?.contactCorrect && editable && <SecondaryButton onPress={()=>onContact(person.personId)}>{t('signingV2.contact.open')}</SecondaryButton>}
+        </div>
     </div>;
 }
 
 function PackageDocuments({ detail, openId, files, busy, onView, onDownload, message }) {
     const { t, number } = useSigningLocale();
     const seen = new Set();
-    return <ul className="lw-signingPackages__people">{detail.documents.map(document => {
+    return <ul className="lw-signingPackages__people lw-signingPackages__documentList">{detail.documents.map(document => {
         if (seen.has(document.id)) return null;
         seen.add(document.id);
         const open = openId === document.id;
@@ -270,7 +273,11 @@ function PackagePanel({ id, api, onClose, onReplacement }) {
         onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); onClose(); } }}>
         <header className="lw-signingPackages__panelHeader">
             <h2 id="signing-package-title">{detail.package?.external_key || t('signingV2.packageDetails')}</h2>
-            <SecondaryButton onPress={onClose}>{t('common.close')}</SecondaryButton>
+            <SimpleButton type="button" className="lw-signingPackages__panelClose" onPress={onClose} aria-label={t('common.close')}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                    <path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+            </SimpleButton>
         </header>
         <ErrorNotice error={resource.error} onRetry={resource.refresh} />
         {resource.busy && !detail.package && <p role="status">{t('common.loading')}</p>}
@@ -282,7 +289,7 @@ function PackagePanel({ id, api, onClose, onReplacement }) {
                 {detail.package.workflow_state === 'complete' && <SecondaryButton onPress={downloadEvidence} disabled={busy === 'evidence'}
                     aria-label={t('signingV2.public.downloadEvidence')}>{t('signingV2.public.downloadEvidence')}</SecondaryButton>}
             </div>
-            <div className="lw-signingPackages__docActions">
+            <div className="lw-signingPackages__docActions lw-signingPackages__panelActions">
                 {detail.capabilities?.packageAssign && <SecondaryButton onPress={()=>setLifecycle('assign')}>{t('signingV2.lifecycle.assign.title')}</SecondaryButton>}
                 {detail.capabilities?.packageCancel && !['cancelled','superseded','complete'].includes(detail.package.workflow_state) && detail.package.accepted_count < detail.package.required_count && <SecondaryButton onPress={()=>setLifecycle('cancel')}>{t('signingV2.lifecycle.cancel.title')}</SecondaryButton>}
                 {detail.capabilities?.packageRevise && detail.package.workflow_state !== 'superseded' && <SecondaryButton onPress={()=>setReplacementOpen(true)}>{t('signingV2.replacement.title')}</SecondaryButton>}
@@ -292,10 +299,10 @@ function PackagePanel({ id, api, onClose, onReplacement }) {
                 {detail.capabilities?.packageApprove && detail.approval.state==='pending' && <PrimaryButton onPress={()=>setApprovalOpen(true)}>{t('signingV2.approval.title')}</PrimaryButton>}
             </div>}
             {fileError && <StatusNotice embedded><p>{errorMessage(fileError)}</p></StatusNotice>}
-            <SegmentedSwitch value={tab} onChange={setTab} ariaLabel={t('signingV2.packageDetails')}
+            <SegmentedSwitch className="lw-signingPackages__panelTabs" value={tab} onChange={setTab} ariaLabel={t('signingV2.packageDetails')}
                 options={['people', 'documents', 'delivery', ...(detail.revisionHistory?.length ? ['history'] : [])].map(value => ({ value, label: value === 'history' ? t('signingV2.replacement.history') : t(`signingV2.tabs.${value}`) }))} />
             {tab === 'people' && <ul className="lw-signingPackages__people">{detail.participants.map(person => <li key={person.id}>
-                <h3>{person.name}</h3><p>{t(`signingV2.capacity.${person.capacity}`)} · {person.partyName}</p>
+                <div className="lw-signingPackages__personHeading"><h3>{person.name}</h3><p>{t(`signingV2.capacity.${person.capacity}`)} · {person.partyName}</p></div>
                 <ul className="lw-signingPackages__tasks">{person.tasks.map(task => {
                     const document = detail.documents.find(item => item.id === task.documentId);
                     return <li key={task.id}>

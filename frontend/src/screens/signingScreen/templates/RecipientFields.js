@@ -1,3 +1,4 @@
+import SigningSelect from './SigningSelect';
 import React, { useEffect, useState } from 'react';
 import StatusNotice from '../../../components/ui/StatusNotice';
 import api from '../../../api/signingTemplatesApi';
@@ -24,6 +25,6 @@ export default function RecipientFields({ role, value = {}, onChange, disabled }
                 <label>טלפון<input type="tel" dir="ltr" value={value.phone || ''} onChange={e => change({ phone: e.target.value })} /></label>
             </div>}
         </>}
-        <label>ערוץ הזמנה<select value={value.deliveryMethod || 'email'} onChange={e => change({ deliveryMethod: e.target.value })}><option value="email">אימייל</option><option value="phone">SMS</option><option value="both">אימייל ו־SMS</option></select></label>
+        <label>ערוץ הזמנה<SigningSelect value={value.deliveryMethod || 'email'} onChange={e => change({ deliveryMethod: e.target.value })}><option value="email">אימייל</option><option value="phone">SMS</option><option value="both">אימייל ו־SMS</option></SigningSelect></label>
     </fieldset>;
 }
