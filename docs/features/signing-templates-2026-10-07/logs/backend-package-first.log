@@ -1,0 +1,58 @@
+{"event":"auth_missing_token","method":"GET","path":"/api/signing-templates/9ae8db36-d478-4f7f-973b-aa2bdb4684ac"}
+[signing] publicSignFileBatch ok {
+  signingFileId: 7,
+  count: 1,
+  remaining: 1,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 6 }
+}
+[signing] publicSignFileBatch ok {
+  signingFileId: 8,
+  count: 1,
+  remaining: 1,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 6 }
+}
+[signing] publicSignFileBatch ok {
+  signingFileId: 7,
+  count: 1,
+  remaining: 0,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 8 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=27 for file 7
+[signingFinalize] done { signingFileId: 7, ms: 382 }
+[signing] publicSignFileBatch ok {
+  signingFileId: 8,
+  count: 1,
+  remaining: 0,
+  timings: { uploadMs: 0, dbMs: 3, totalMs: 10 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=28 for file 8
+[signingFinalize] done { signingFileId: 8, ms: 18 }
+[signing] publicSignFileBatch ok {
+  signingFileId: 9,
+  count: 1,
+  remaining: 0,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 6 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=27 for file 9
+[signingFinalize] done { signingFileId: 9, ms: 23 }
+[signing] publicSignFileBatch ok {
+  signingFileId: 10,
+  count: 1,
+  remaining: 0,
+  timings: { uploadMs: 0, dbMs: 2, totalMs: 15 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=27 for file 10
+[signingFinalize] done { signingFileId: 10, ms: 32 }
+✔ templates, immutable bulk dispatch and manifest-bound shared OTP use the released signing engine (3025.882042ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3140.811458

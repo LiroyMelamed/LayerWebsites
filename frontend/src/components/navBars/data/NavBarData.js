@@ -124,20 +124,20 @@ function buildPlatformAdminLinks({ navigate, t, isPlatformAdmin }) {
             onClick: () => navigate(AdminStackName + PlanUsageScreenName),
         },
         {
-            navKey: "platformSettings",
-            routeMatch: PlatformSettingsScreenName,
-            buttonText: t("nav.platformSettings", "הגדרות פלטפורמה"),
-            buttonScreen: t("nav.platformSettings", "הגדרות פלטפורמה"),
-            icon: null,
-            onClick: () => navigate(AdminStackName + PlatformSettingsScreenName),
-        },
-        {
             navKey: "firmStaffRoles",
             routeMatch: FirmStaffRolesScreenName,
             buttonText: t("nav.firmStaffRoles", "תפקידים והרשאות"),
             buttonScreen: t("nav.firmStaffRoles", "תפקידים והרשאות"),
             icon: null,
             onClick: () => navigate(AdminStackName + FirmStaffRolesScreenName),
+        },
+        {
+            navKey: "platformSettings",
+            routeMatch: PlatformSettingsScreenName,
+            buttonText: t("nav.platformSettings", "הגדרות פלטפורמה"),
+            buttonScreen: t("nav.platformSettings", "הגדרות פלטפורמה"),
+            icon: null,
+            onClick: () => navigate(AdminStackName + PlatformSettingsScreenName),
         },
     ];
 }

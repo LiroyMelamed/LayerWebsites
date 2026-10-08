@@ -1,0 +1,60 @@
+{
+  "stage": "management component and scoped read services",
+  "productionReady": false,
+  "database": "owned synthetic PostgreSQL16 at 127.0.0.1:55442/legal_e2e_qa",
+  "backendTests": 6,
+  "uiTests": 8,
+  "browser": "Codex IAB Chromium",
+  "viewports": [
+    {
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "languages": [
+    "he",
+    "ar",
+    "en"
+  ],
+  "browserVerified": [
+    "200 packages / 600 obligations from real synthetic database",
+    "Search signer returns one matching child while keeping authorized send total at 200",
+    "Detail dialog and focus return",
+    "Correct preparing task label; no claim of previous stage",
+    "Localized numbers/date/direction and controls",
+    "No horizontal document overflow at 390px"
+  ],
+  "limitations": [
+    "Component isolated from main app; production API mount and permission integration pending",
+    "Read-only management; bulk actions, source authoring and signing flow pending",
+    "Synthetic rows still preparing; no provider delivery and no public signing exercised"
+  ],
+  "fixes": [
+    "Standalone QA asset mount and build env corrected",
+    "Search input expands to available width with 44px height",
+    "Blocked task distinguishes preparation and previous stage",
+    "Tasks sorted by document key, verified by service tests"
+  ],
+  "screenshots": [
+    {
+      "path": "outputs/signing-implementation-20261007/ui/ar-mobile-search.png",
+      "sha256": "9a7631437c406960789ad202d5e31d683fd5c3c05551f73e3abf59ede3c42e74"
+    },
+    {
+      "path": "outputs/signing-implementation-20261007/ui/en-mobile-detail.png",
+      "sha256": "4db6c1cd577a99c55cb93e06b5df9b0a3d6b5add5b9a87751569f41ba055d90c"
+    },
+    {
+      "path": "outputs/signing-implementation-20261007/ui/en-mobile.png",
+      "sha256": "d02e595300eda9c1f4964aac9d53ca49977b15a83f659c5da4f6b7e090a92bf8"
+    },
+    {
+      "path": "outputs/signing-implementation-20261007/ui/he-desktop-search.png",
+      "sha256": "2d2409d047a8df00af45eeed71ead8e6eb6d33ae76e68e35083acf4deace5a29"
+    }
+  ]
+}

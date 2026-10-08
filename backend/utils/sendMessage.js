@@ -217,7 +217,7 @@ async function sendViaSmoove(messageBody, formattedPhone) {
  * @param {{ fast?: boolean }} [options] - Set fast=true for high-priority OTP delivery.
  */
 async function sendMessage(messageBody, formattedPhone, { fast = false } = {}) {
-    const suppressed = qaOutboundNoop('sms');
+    const suppressed = qaOutboundNoop('sms', formattedPhone);
     if (suppressed) return suppressed;
     const e164Regex = /^\+[1-9]\d{7,14}$/;
     const normalizedPhone = formatPhoneNumber(formattedPhone) || String(formattedPhone || "").trim();

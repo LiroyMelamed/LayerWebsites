@@ -17,6 +17,7 @@ import { getClientNavBarData } from "../../../components/navBars/data/ClientNavB
 import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
 import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import { useTranslation } from 'react-i18next';
+import StatusNotice from "../../../components/ui/StatusNotice";
 import { toastError } from "../../../components/ui/toast";
 import { formatDisplayDateTime } from "../../../functions/date/formatDateForInput";
 
@@ -96,16 +97,9 @@ export default function NotificationsScreen() {
                     )}
 
                     {loadFailed && !isFetching && (
-                        <SimpleContainer className="lw-notificationsScreen__empty">
-                            <TextBold14 className="lw-notificationsScreen__emptyText">{t('notifications.loadError')}</TextBold14>
-                            <PrimaryButton
-                                size={buttonSizes.MEDIUM}
-                                onPress={refetchNotifications}
-                                className="lw-notificationsScreen__retryButton"
-                            >
-                                {t('common.retry')}
-                            </PrimaryButton>
-                        </SimpleContainer>
+                        <StatusNotice onAction={refetchNotifications} actionLabel={t('common.retry')}>
+                            <p>{t('notifications.loadError')}</p>
+                        </StatusNotice>
                     )}
 
                     {!loadFailed && !isFetching && !hasNotifications && (

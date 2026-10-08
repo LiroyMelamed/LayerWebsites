@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "completedUtc": "2026-10-06T12:45:31.779004+00:00",
+  "mainCommit": "9c0987bd8e9df7f88bd4c9c234068e63a12e6fcb",
+  "qaCommit": "f1b072dfb31f93c0fe70395cb714d6b017830250",
+  "qaBuild": "PASS",
+  "qaServerAllFilesHash": "PASS_237_FILES",
+  "qaPublic": "PASS_PUBLIC_RELEASE",
+  "qaBrowser": "Fresh entry script verified; actual existing demo reminder opened/closed; compact list header hidden",
+  "isolatedBrowser": [
+    "actual popup and shared components compiled from source",
+    "desktop 448px popup",
+    "mobile 320px popup all three channels",
+    "calendar deferred and no-delay variants",
+    "calendar navigation target and close handler",
+    "multi-recipient desktop matching seven column tracks without overflow",
+    "multi-recipient mobile wraps names above date and status",
+    "long unbroken names wrap"
+  ],
+  "scope": "Frontend reminder layout only",
+  "customerWrites": false,
+  "notificationsSent": false,
+  "nativeBuildsChanged": false,
+  "limitations": [
+    "calendar footer and multi-recipient data exercised in isolated synthetic component harness; live QA has one preexisting sent demo reminder"
+  ]
+}

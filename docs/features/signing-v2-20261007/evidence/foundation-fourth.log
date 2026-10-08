@@ -1,0 +1,86 @@
+✔ template round-trip retains exact fractional signature coordinates without live signer identity (1.318584ms)
+✔ template rejects unassigned roles, invalid coordinates and silently reused lawyer stamps (0.528792ms)
+✔ template rejects duplicate role and document identities (0.103459ms)
+✔ actual rotated/cropped page bounds govern field acceptance (0.125084ms)
+✔ idempotency fingerprint is stable across object key order and changes with content (0.2455ms)
+{"event":"auth_missing_token","method":"GET","path":"/api/signing-templates/409c118c-d9cc-47a9-84a2-4fb7ebf97679"}
+[signing] publicSignFileBatch ok {
+  signingFileId: 81,
+  count: 1,
+  remaining: 1,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 7 }
+}
+[signing] publicSignFileBatch ok {
+  signingFileId: 82,
+  count: 1,
+  remaining: 1,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 6 }
+}
+[signing] publicSignFileBatch ok {
+  signingFileId: 81,
+  count: 1,
+  remaining: 0,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 7 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=137 for file 81
+[signingFinalize] done { signingFileId: 81, ms: 224 }
+[signing] publicSignFileBatch ok {
+  signingFileId: 82,
+  count: 1,
+  remaining: 0,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 7 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=138 for file 82
+[signingFinalize] done { signingFileId: 82, ms: 15 }
+[signing] publicSignFileBatch ok {
+  signingFileId: 83,
+  count: 1,
+  remaining: 0,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 7 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=137 for file 83
+[signingFinalize] done { signingFileId: 83, ms: 14 }
+[signing] publicSignFileBatch ok {
+  signingFileId: 84,
+  count: 1,
+  remaining: 0,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 8 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=137 for file 84
+[signingFinalize] done { signingFileId: 84, ms: 22 }
+✔ templates, immutable bulk dispatch and manifest-bound shared OTP use the released signing engine (2776.350834ms)
+▶ v2 authoring versions, explicit identities, scoped lookup and frozen approval inputs
+  ✔ incomplete draft autosave uses compare-and-swap; published version cannot be edited (29.74175ms)
+  ✔ shared phone and email are two people until the office explicitly selects an existing person (11.719958ms)
+  ✔ all-firm viewing does not grant editing other owners templates (2.953041ms)
+  ✔ a changed person name after preview requires a new approval preview (10.607541ms)
+  ✔ legacy template APIs cannot reopen v2 templates (34.215167ms)
+  ✔ ready artifact checksum and object key cannot be replaced (1.276042ms)
+✔ v2 authoring versions, explicit identities, scoped lookup and frozen approval inputs (123.517625ms)
+✔ canonical snapshots are deterministic, reject lossy JSON and keep exact identifiers/decimal amounts (1.97725ms)
+✔ compiler creates immutable personalized snapshots and counts one task per document/participation, not spots (1.874417ms)
+✔ 200 employees support 600, 1200 and 2000 documents; technical budgets apply beyond the UI (135.195417ms)
+✔ unknown people, changed sources, overflow geometry and unknown data keys are blockers (0.418042ms)
+✔ optional role needs an authored inactive treatment; informational annex is never counted signed (0.629709ms)
+✔ two named corporate representatives need distinct verified people and current scoped authority (0.476708ms)
+▶ v2 set-based persistence, isolation, retry and durable worker fences
+  ✔ all 200 packages, 600 docs/tasks and 1200 jobs are durable at response; no sends or source reads (125.6775ms)
+  ✔ lost response retry returns same submission, conflicting payload rejects, new connection sees all children (7.854584ms)
+  ✔ quota failure rolls back everything and immutable versions reject edits (28.050458ms)
+  ✔ foreign office data cannot join a revision even through direct SQL (11.811083ms)
+  ✔ concurrent claims never duplicate a lease; expired worker cannot commit an artifact (9.162834ms)
+  ✔ dependencies block activation; interrupted provider dispatch is uncertain, never blindly retried (5.7185ms)
+✔ v2 set-based persistence, isolation, retry and durable worker fences (236.7005ms)
+ℹ {"workload":"200x3","elapsedMs":124.03549999999998,"queries":20,"representativeInfrastructure":false,"sampleCount":1}
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2914.551958

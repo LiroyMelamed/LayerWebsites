@@ -23,6 +23,8 @@ import { useFirmPermissions } from '../../../providers/FirmPermissionsProvider';
 import ConfirmationDialog from '../popups/ConfirmationDialog';
 import ClientPopup from '../../../screens/mainScreen/components/ClientPopUp';
 import SimplePopUp from '../../simpleComponents/SimplePopUp';
+import CaseSigningFlow from '../../../screens/signingScreen/templates/CaseSigningFlow';
+import { useSigningV2Available } from '../../../screens/signingScreen/templates/SigningPackagesHub';
 
 function _buildInitialCaseData(caseDetails, initialDraft) {
     const source = caseDetails?.CaseId ? caseDetails : (initialDraft || caseDetails || {});
@@ -67,6 +69,8 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
     const [hasSubmitted, setHasSubmitted] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({});
     const [caseData, setCaseData] = useState(() => _buildInitialCaseData(caseDetails, initialDraft));
+    const [signingOpen, setSigningOpen] = useState(false);
+    const signingAvailable = useSigningV2Available();
 
     const seed = caseDetails?.CaseId ? caseDetails : (initialDraft || caseDetails);
     const [showLicenseExpiry, setShowLicenseExpiry] = useState(!!seed?.HasLicenseExpiry || !!seed?.LicenseExpiryDate);
@@ -427,6 +431,7 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
         }
     };
 
+    if (signingOpen) return <CaseSigningFlow caseId={caseDetails?.CaseId || caseData.CaseId} onBack={() => setSigningOpen(false)} />;
     return (
         <>
         <SimpleContainer className={`lw-caseFullView${caseFormReadOnly ? ' lw-caseFullView--readOnly' : ''}`}>
@@ -674,6 +679,10 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
                 </SimpleContainer>
 
                 <SimpleContainer className="lw-caseFullView__buttonsRow">
+                    {signingAvailable && (caseDetails?.CaseId || caseData.CaseId) && canAction('signing', 'upload') && <SecondaryButton
+                        onPress={() => setSigningOpen(true)} size={buttonSizes.MEDIUM}>
+                        {t('signingV2.compose.context.open')}
+                    </SecondaryButton>}
                     {(isEditingExisting || caseHasBeenChosen) && canDeleteCases && (
                         <SecondaryButton
                             onPress={handleDeleteCase}

@@ -366,13 +366,13 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
             ref={ref}
             className={`lw-signing-spot ${colorClass} lw-signing-spot--type-${fieldType} ${isRequired ? 'is-required' : 'is-optional'}${isSigned ? ' is-signed' : ''}${isSelected ? ' is-selected' : ''}${canEditSpot ? ' is-editable' : ''}`}
             style={spotStyle}
-            title={t("signing.spot.signedByTitle", { name: signerNameSafe })}
+            title={spot?.authoredDataLabel ? t("signingV2.authoring.dataTitleNamed", { name: spot.authoredDataLabel }) : t("signing.spot.signedByTitle", { name: signerNameSafe })}
         >
             {!isSigned && (
                 <>
                     <div className="lw-signing-spotMeta">
                         <span className="lw-signing-spotType">
-                            <span className="lw-signing-spotTypeLabel">{fieldTypeLabels[fieldType] || t('signing.fields.signature')}</span>
+                            <span className="lw-signing-spotTypeLabel">{spot?.authoredDataLabel ? t('signingV2.authoring.dataField') : fieldTypeLabels[fieldType] || t('signing.fields.signature')}</span>
                         </span>
                     </div>
                     <span className={`lw-signing-spotRequired ${isRequired ? 'is-required' : 'is-optional'}`}>

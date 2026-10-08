@@ -1,0 +1,40 @@
+{"event":"auth_missing_token","method":"GET","path":"/api/signing-templates/339cbcd1-3322-4643-bb39-12da8944ca73"}
+[signing] publicSignFileBatch ok {
+  signingFileId: 5,
+  count: 1,
+  remaining: 1,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 8 }
+}
+[signing] publicSignFileBatch ok {
+  signingFileId: 6,
+  count: 1,
+  remaining: 1,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 6 }
+}
+[signing] publicSignFileBatch ok {
+  signingFileId: 5,
+  count: 1,
+  remaining: 0,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 9 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=17 for file 5
+[signingFinalize] done { signingFileId: 5, ms: 1074 }
+[signing] publicSignFileBatch ok {
+  signingFileId: 6,
+  count: 1,
+  remaining: 0,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 9 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=18 for file 6
+[signingFinalize] done { signingFileId: 6, ms: 23 }
+✔ templates, immutable bulk dispatch and manifest-bound shared OTP use the released signing engine (2680.274459ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2815.66175

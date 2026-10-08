@@ -18,6 +18,13 @@ const LoginOtpScreen = lazy(() => import("../screens/otpScreen/OtpScreen.js/Logi
 
 export { LoginStackName };
 
+export function sessionHomePath() {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const role = typeof window !== "undefined" ? localStorage.getItem("role") : null;
+    if (!token) return LoginStackName + LoginScreenName;
+    return isOfficeWebRole(role) ? AdminStackName + MainScreenName : ClientStackName + ClientMainScreenName;
+}
+
 function LoginStack() {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     const role = typeof window !== "undefined" ? localStorage.getItem("role") : null;
