@@ -22,11 +22,19 @@ const HoverContainer = ({
     usePortal = true,
     style: _style,
     className,
+    portalContainer,
+    keyboardNavigation = false,
+    getOptionProps,
+    id,
+    role,
+    ariaLabelledBy,
+    dir,
 }) => {
     const { t } = useTranslation();
     const hoverRef = useRef(null);
 
     const handleOptionPointerDown = (event, result) => {
+        if (getOptionProps?.(result)?.disabled) return;
         // Keep focus on the input until the value is committed (prevents blur-before-click).
         event.preventDefault();
         event.stopPropagation();
@@ -130,9 +138,33 @@ const HoverContainer = ({
         };
     }, [onClose, targetRef]);
 
+    useEffect(() => {
+        if (!keyboardNavigation) return undefined;
+        const choices = () => Array.from(hoverRef.current?.querySelectorAll('button[data-lw-choice]:not([disabled])') || []);
+        const options = choices();
+        (options.find(button => button.getAttribute('aria-selected') === 'true') || options[0])?.focus();
+        const handleKeyDown = event => {
+            if (!hoverRef.current?.contains(event.target) && !targetRef?.current?.contains(event.target)) return;
+            if (event.key === 'Escape') {
+                event.preventDefault(); event.stopPropagation(); onClose?.(); return;
+            }
+            if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+            event.preventDefault(); event.stopPropagation();
+            const enabled = choices(); const index = enabled.indexOf(document.activeElement);
+            const next = event.key === 'Home' ? 0 : event.key === 'End' ? enabled.length - 1
+                : event.key === 'ArrowDown' ? (index + 1) % enabled.length : (index + enabled.length - 1) % enabled.length;
+            enabled[next]?.focus();
+        };
+        // Capture before parent modal Escape handlers so the first Escape closes
+        // only this list, preserving the surrounding draft or dialog.
+        window.addEventListener('keydown', handleKeyDown, true);
+        return () => window.removeEventListener('keydown', handleKeyDown, true);
+    }, [keyboardNavigation, onClose, targetRef]);
+
     const panel = (
         <SimpleContainer
             ref={hoverRef}
+            id={id} role={role} aria-labelledby={ariaLabelledBy} dir={dir}
             className={[
                 'lw-hoverContainer',
                 !usePortal ? 'lw-hoverContainer--inline' : null,
@@ -151,6 +183,8 @@ const HoverContainer = ({
                                 <SimpleButton
                                     key={`choiceNumber${index}`}
                                     className="lw-hoverContainer__option"
+                                    data-lw-choice={keyboardNavigation ? true : undefined}
+                                    {...getOptionProps?.(result)}
                                     onPointerDown={(e) => handleOptionPointerDown(e, result)}
                                     onPress={(e) => { if (e.detail === 0) handleOptionPointerDown(e, result); }}
                                 >
@@ -189,7 +223,7 @@ const HoverContainer = ({
 
     if (!usePortal) return panel;
 
-    return createPortal(panel, document.body);
+    return createPortal(panel, portalContainer || document.body);
 };
 
 export default HoverContainer;

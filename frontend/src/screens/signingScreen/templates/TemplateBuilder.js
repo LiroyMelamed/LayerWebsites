@@ -1,3 +1,6 @@
+import SimplePopUp from '../../../components/simpleComponents/SimplePopUp';
+import ConfirmationDialog from '../../../components/styledComponents/popups/ConfirmationDialog';
+import SigningSelect from './SigningSelect';
 import SigningBackButton from './SigningBackButton';
 import React, { useEffect, useRef, useState } from 'react';
 import PdfViewer from '../../../components/specializedComponents/signFiles/pdfViewer/PdfViewer';
@@ -12,6 +15,16 @@ import { conditionSummary } from './templateConditions';
 import './templates.scss';
 
 const FIELD_TYPES = ['signature', 'initials', 'text', 'date', 'number', 'checkbox'];
+function LeaveConfirmation(props) {
+    const content = useRef(null);
+    useEffect(() => {
+        const previous = window.document.activeElement;
+        content.current?.querySelector('button')?.focus();
+        return () => { if (previous?.isConnected) previous.focus?.(); };
+    }, []);
+    return <div ref={content}><ConfirmationDialog {...props} /></div>;
+}
+
 const initial = name => ({ name: '', roles: [{ id: 'first', name, kind: 'custom' }], documents: [], requireOtp: true, signingOrder: 'parallel', completionEmail: '', completionMode: 'document' });
 
 export default function TemplateBuilder({ template, onBack, onSaved, adapter, onSaveDraft, onDirtyChange }) {
@@ -21,6 +34,7 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
     const service = adapter || api;
     const saving = useRef(false);
     const [step, setStep] = useState(0);
+    const [leaving, setLeaving] = useState(false);
     const [draft, setDraft] = useState(() => template?.definition || initial(t('roleDefault', { index: number(1) })));
     const [activeDoc, setActiveDoc] = useState(0);const [selected, setSelected] = useState(null);
     const [pdfFiles, setPdfFiles] = useState({});const [page, setPage] = useState(1);
@@ -30,7 +44,7 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
     const original = useRef(JSON.stringify(draft));
     const dirty = original.current !== JSON.stringify(draft);
     useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
-    const leave = () => { if (!dirty || window.confirm(t('leave'))) onBack(); };
+    const leave = () => { if (!dirty) onBack(); else setLeaving(true); };
     useEffect(() => {
         const prevent = event => { if (dirty) { event.preventDefault(); event.returnValue = ''; } };
         window.addEventListener('beforeunload', prevent);
@@ -60,9 +74,9 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
             setActiveDoc(draft.documents.length);setSelected(null);setPage(1);
         } catch (e) { setError(e.message); } finally { saving.current = false; setBusy(false); }
     }
-    const slotSelect = (id, current, value, changeSlot) => native && (current?.nativeRole?.max || 1) > 1 && <label>{translate('signingV2.people.slotFor', { role: current.name })}<select id={id} dir={direction} value={value} onChange={event => changeSlot(Number(event.target.value))}>
+    const slotSelect = (id, current, value, changeSlot) => native && (current?.nativeRole?.max || 1) > 1 && <label>{translate('signingV2.people.slotFor', { role: current.name })}<SigningSelect id={id} dir={direction} value={value} onChange={event => changeSlot(Number(event.target.value))}>
         {Array.from({ length: current.nativeRole.max }, (_, index) => <option key={index} value={index}>{translate('signingV2.people.personNumber', { number: number(index + 1) })}</option>)}
-    </select></label>;
+    </SigningSelect></label>;
     const personLabel = item => { const role = draft.roles.find(role => role.id === item.roleId); return (role?.nativeRole?.max || 1) > 1 ? `${role.name} · ${number((item.occurrence ?? item.nativeField?.occurrence ?? 0) + 1)}` : role?.name; };
     function addField() {
         const next = { ...(native ? { ...(type !== 'data' ? { occurrence: Math.min(occurrence, (draft.roles.find(role => role.id === roleId)?.nativeRole?.max || 1) - 1) } : {}), id: `field_${crypto.randomUUID().replace(/-/g, '')}`, ...(type === 'data' ? { dataKey: draft.dataKeys?.[0]?.key, fontSize: 14, align: 'start' } : {}) } : {}), pageNum: page, x: 48, y: 60 + Math.min(document.fields.length, 6) * 60, width: type === 'checkbox' ? 28 : 180, height: type === 'checkbox' ? 28 : 48, roleId: type === 'data' ? undefined : roleId, fieldType: type, isRequired: true, fieldLabel: '' };
@@ -74,7 +88,7 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
         try { const result = await service.save(draft, template?.id, template?.version);onSaved(result.template); }
         catch (e) { setError(e.message); } finally { saving.current = false; setBusy(false); }
     }
-    return <section className="lw-templates" dir={direction}>
+    return <><section className="lw-templates" dir={direction}>
         <SigningBackButton onPress={leave} disabled={busy}>{t('back')}</SigningBackButton>
         <header className="lw-templates__heading"><div><h1>{t(template && !template.isNew ? 'edit' : 'new')}</h1><p>{t('intro')}</p></div></header>
         {error && <StatusNotice><p>{error}</p></StatusNotice>}
@@ -84,7 +98,7 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
         </nav>
         {step === 0 && <><div className="lw-templates__setup">
             <label>{t('name')}<input value={draft.name} maxLength={120} onChange={e => change({ name: e.target.value })} placeholder={t('nameExample')} /></label>
-            <label>{t('order')}<select dir={direction} value={draft.signingOrder} onChange={e => change({ signingOrder: e.target.value, ...(e.target.value === 'grouped' ? { signingGroups: draft.signingOrder === 'sequential' ? draft.roles.map(role => [role.id]) : [draft.roles.map(role => role.id)] } : {}) })}><option value="parallel">{t('parallel')}</option><option value="sequential">{t('sequential')}</option>{native && <option value="grouped">{translate('signingV2.compose.order.grouped')}</option>}</select></label>
+            <label>{t('order')}<SigningSelect dir={direction} value={draft.signingOrder} onChange={e => change({ signingOrder: e.target.value, ...(e.target.value === 'grouped' ? { signingGroups: draft.signingOrder === 'sequential' ? draft.roles.map(role => [role.id]) : [draft.roles.map(role => role.id)] } : {}) })}><option value="parallel">{t('parallel')}</option><option value="sequential">{t('sequential')}</option>{native && <option value="grouped">{translate('signingV2.compose.order.grouped')}</option>}</SigningSelect></label>
         </div>
         <TemplateRoles draft={draft} onChange={change} roleId={roleId} onRoleId={setRoleId} native={native} />
         {native && <TemplateDataKeys draft={draft} onChange={change} />}
@@ -98,26 +112,26 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
                 <label>{t('documentName')}<input value={document.name} maxLength={160} onChange={e => updateDocument(doc => ({ ...doc, name: e.target.value }))} /></label>
                 {native && <TemplateDocumentCondition key={document.id} fields={draft.dataKeys || []} condition={document.nativeDocument?.when}
                     onChange={when => updateDocument(doc => ({ ...doc, nativeDocument: { ...doc.nativeDocument, when } }))} />}
-                {type !== 'data' && <label>{t('signer')}<select dir={direction} value={roleId} onChange={e => { setRoleId(e.target.value); setOccurrence(0); }}>{draft.roles.map(role => <option key={role.id} value={role.id}>{role.name}</option>)}</select></label>}
+                {type !== 'data' && <label>{t('signer')}<SigningSelect dir={direction} value={roleId} onChange={e => { setRoleId(e.target.value); setOccurrence(0); }}>{draft.roles.map(role => <option key={role.id} value={role.id}>{role.name}</option>)}</SigningSelect></label>}
                 {type !== 'data' && slotSelect('new-field-person', draft.roles.find(role => role.id === roleId), Math.min(occurrence, (draft.roles.find(role => role.id === roleId)?.nativeRole?.max || 1) - 1), setOccurrence)}
-                <label>{t('fieldType')}<select dir={direction} value={type} onChange={e => setType(e.target.value)}>{(native ? [...FIELD_TYPES.filter(key => key !== 'number'), 'data'] : FIELD_TYPES).map(key => <option key={key} value={key}>{key === 'data' ? translate('signingV2.authoring.dataField') : t(`types.${key}`)}</option>)}</select></label>
+                <label>{t('fieldType')}<SigningSelect dir={direction} value={type} onChange={e => setType(e.target.value)}>{(native ? [...FIELD_TYPES.filter(key => key !== 'number'), 'data'] : FIELD_TYPES).map(key => <option key={key} value={key}>{key === 'data' ? translate('signingV2.authoring.dataField') : t(`types.${key}`)}</option>)}</SigningSelect></label>
                 <label>{t('page')}<input type="number" min="1" max="500" value={page} onChange={e => setPage(Number(e.target.value) || 1)} /></label>
                 <button type="button" className="is-primary" disabled={!pdfFiles[document.id] || document.fields.length >= 150 || (type === 'data' && !draft.dataKeys?.length)} onClick={addField}>{t('addField', { page: number(page) })}</button>
                 <p>{t('dragHint')}</p>
                 {field && <fieldset><legend>{t('selectedField')}</legend>
                     {field.fieldType === 'data' ? <>
-                        <label>{translate('signingV2.authoring.dataField')}<select dir={direction} value={field.dataKey || ''} onChange={e => updateField(selected, { dataKey: e.target.value })}>{draft.dataKeys.map(key => <option value={key.key} key={key.key}>{key.label || key.key}</option>)}</select></label>
+                        <label>{translate('signingV2.authoring.dataField')}<SigningSelect dir={direction} value={field.dataKey || ''} onChange={e => updateField(selected, { dataKey: e.target.value })}>{draft.dataKeys.map(key => <option value={key.key} key={key.key}>{key.label || key.key}</option>)}</SigningSelect></label>
                         <label>{translate('signingV2.authoring.fontSize')}<input type="number" min="8" max="72" value={field.fontSize || 14} onChange={e => updateField(selected, { fontSize: Number(e.target.value) })} /></label>
                         <p>{translate('signingV2.authoring.overflow')}</p>
-                    </> : <label>{t('signer')}<select dir={direction} value={field.roleId} onChange={e => updateField(selected, { roleId: e.target.value, occurrence: 0 })}>{draft.roles.map(role => <option key={role.id} value={role.id}>{role.name}</option>)}</select></label>}
+                    </> : <label>{t('signer')}<SigningSelect dir={direction} value={field.roleId} onChange={e => updateField(selected, { roleId: e.target.value, occurrence: 0 })}>{draft.roles.map(role => <option key={role.id} value={role.id}>{role.name}</option>)}</SigningSelect></label>}
                     {field.fieldType !== 'data' && slotSelect('selected-field-person', draft.roles.find(role => role.id === field.roleId), field.occurrence ?? field.nativeField?.occurrence ?? 0, next => updateField(selected, { occurrence: next }))}
                     {native && field.fieldType !== 'data' && (() => {
                         const role = draft.roles.find(item => item.id === field.roleId)?.nativeRole;
                         return (role?.when || role?.min <= (field.occurrence ?? field.nativeField?.occurrence ?? 0)) && <label>{translate('signingV2.authoring.condition.inactive')}
-                            <select dir={direction} value={field.inactiveTreatment || ''} onChange={event => updateField(selected, { inactiveTreatment: event.target.value || undefined })}>
+                            <SigningSelect dir={direction} value={field.inactiveTreatment || ''} onChange={event => updateField(selected, { inactiveTreatment: event.target.value || undefined })}>
                                 <option value="">{translate('signingV2.authoring.condition.chooseTreatment')}</option>
                                 {['exclude_document', 'authored_inactive'].map(value => <option key={value} value={value}>{translate(`signingV2.authoring.condition.${value}`)}</option>)}
-                            </select></label>;
+                            </SigningSelect></label>;
                     })()}
                     <label>{t('label')}<input value={field.fieldLabel || ''} maxLength={120} onChange={e => updateField(selected, { fieldLabel: e.target.value })} /></label>
                     {field.fieldType !== 'data' && <label className="lw-templates__check"><input type="checkbox" checked={field.isRequired} onChange={e => updateField(selected, { isRequired: e.target.checked })} />{t('required')}</label>}
@@ -148,7 +162,7 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
                     onChange={e=>change({nativeDefinition:{...draft.nativeDefinition,policy:{...draft.nativeDefinition.policy,soloApproval:e.target.checked}}})}/>{translate('signingV2.approval.templateSolo')}</label>}
             </div>}
             {!native && <details><summary>{t('extra')}</summary><div className="lw-templates__setup">            <label>{t('completionEmail')}<input type="email" dir="ltr" value={draft.completionEmail} onChange={e => change({ completionEmail: e.target.value })} placeholder="office@example.com" /></label>
-            <label>{t('completionMode')}<select dir={direction} value={draft.completionMode || 'document'} onChange={e => change({ completionMode: e.target.value })}><option value="document">{t('completionDocument')}</option><option value="package">{t('completionPackage')}</option></select></label>
+            <label>{t('completionMode')}<SigningSelect dir={direction} value={draft.completionMode || 'document'} onChange={e => change({ completionMode: e.target.value })}><option value="document">{t('completionDocument')}</option><option value="package">{t('completionPackage')}</option></SigningSelect></label>
 </div></details>}
         </section>}
         <footer className="lw-templates__footer"><div hidden={step !== 2}><label className="lw-templates__check"><input type="checkbox" disabled={native} checked={draft.requireOtp} onChange={e => change({ requireOtp: e.target.checked, otpWaiverAcknowledged: false })} />{t('otp')}</label>
@@ -160,5 +174,10 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
             {step < 2 && <button type="button" className="is-primary" disabled={busy || !draft.name.trim() || draft.roles.some(role => !role.name.trim()) || (step === 1 && !draft.documents.length)} onClick={() => setStep(step + 1)}>{t('next')}</button>}
         </footer>
         </fieldset>
-    </section>;
+    </section>
+        {leaving && <SimplePopUp isOpen onClose={() => setLeaving(false)} role="dialog" aria-modal="true" aria-label={t('back')} dir={direction}>
+            <LeaveConfirmation title={t('back')} message={t('leave')} confirmText={t('back')} cancelText={translate('common.cancel')}
+                onConfirm={() => { setLeaving(false); onBack(); }} onCancel={() => setLeaving(false)} />
+        </SimplePopUp>}
+    </>;
 }

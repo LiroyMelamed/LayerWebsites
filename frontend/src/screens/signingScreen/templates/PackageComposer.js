@@ -1,3 +1,4 @@
+import SigningSelect from './SigningSelect';
 import SigningBackButton from './SigningBackButton';
 import { ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -119,18 +120,18 @@ function PersonFields({ scope, roleKey, person, errors, onChange, compact, sugge
     return <div className={`lw-signingCompose__person${compact ? ' is-compact' : ''}`}>
         {((capacity !== 'representative' && otherRoles.length > 0) || person.sameAsRole) && <Field id={fieldId(scope, roleKey, 'sameAsRole')}
             label={t('signingV2.compose.identity.label')} error={errors?.sameAsRole} className="is-wide">
-            <select value={linkedValue} onChange={event => { const [key, index] = event.target.value.split('|'); onChange(roleKey, 'sameAsRole', key); onChange(roleKey, 'sameAsOccurrence', index == null ? undefined : Number(index)); }}>
+            <SigningSelect value={linkedValue} onChange={event => { const [key, index] = event.target.value.split('|'); onChange(roleKey, 'sameAsRole', key); onChange(roleKey, 'sameAsOccurrence', index == null ? undefined : Number(index)); }}>
                 <option value="">{t('signingV2.compose.identity.separate')}</option>
                 {person.sameAsRole && !choices.some(role => role.value === linkedValue) && <option value={linkedValue}>{t('signingV2.compose.identity.unavailable')}</option>}
                 {choices.map(role => <option key={role.value} value={role.value}>{t('signingV2.compose.identity.sameAs', { role: role.label })}</option>)}
-            </select>
+            </SigningSelect>
         </Field>}
         {person.sameAsRole ? <p className="lw-signingCompose__hintLine">{t('signingV2.compose.identity.linkedHelp')}</p> : <>
         {!!casePeople?.length && <Field id={fieldId(scope, roleKey, 'case-person')} label={peopleLabel || t('signingV2.compose.context.fill')} className="is-wide">
-            <select value="" onChange={event => { const item = casePeople.find(candidate => String(candidate.id) === event.target.value); if (item) pick(item); }}>
+            <SigningSelect value="" onChange={event => { const item = casePeople.find(candidate => String(candidate.id) === event.target.value); if (item) pick(item); }}>
                 <option value="">{t('signingV2.compose.context.choose')}</option>
                 {casePeople.map(item => <option key={item.id} value={item.id}>{item.name} · {item.email || item.phone || t('signingV2.compose.context.noContact')}</option>)}
-            </select>
+            </SigningSelect>
         </Field>}
         <div className="lw-signingCompose__identity">
             {suggest('name', { maxLength: 300, dir: direction })}
@@ -195,12 +196,12 @@ function DocumentDataFields({ row, fields, errors, onChange }) {
             return <Field key={field.key} id={fieldId(row.id, 'data', field.key)}
                 label={`${field.label || field.key}${field.required ? ` (${t('signingV2.compose.mapping.required')})` : ''}`}
                 error={errors?.[field.key]} help={field.type === 'decimal' ? t('signingV2.compose.data.decimalHelp') : undefined}>
-                {field.type === 'boolean' || field.type === 'enum' ? <select value={String(value)} onChange={event => change(field.type === 'boolean' && event.target.value !== '' ? event.target.value === 'true' : event.target.value)}>
+                {field.type === 'boolean' || field.type === 'enum' ? <SigningSelect value={String(value)} onChange={event => change(field.type === 'boolean' && event.target.value !== '' ? event.target.value === 'true' : event.target.value)}>
                     <option value="">{t('signingV2.compose.data.choose')}</option>
                     {(field.type === 'boolean' ? [true, false] : field.options).map(option => <option key={String(option)} value={String(option)}>
                         {field.type === 'boolean' ? t(`signingV2.compose.data.${option ? 'yes' : 'no'}`) : option}
                     </option>)}
-                </select> : <input type="text" value={value} maxLength={field.maxLength || 2000}
+                </SigningSelect> : <input type="text" value={value} maxLength={field.maxLength || 2000}
                     inputMode={field.type === 'decimal' ? 'decimal' : undefined} dir={['date', 'decimal', 'identifier'].includes(field.type) ? 'ltr' : direction}
                     onChange={event => change(event.target.value)} autoComplete="off" />}
             </Field>;
@@ -340,10 +341,10 @@ function SigningOrderFields({ mode, roles, groups, onMode, onMove, onGroup }) {
             <p>{t('signingV2.compose.order.groupHelp')}</p>
             <div className="lw-signingCompose__identity">{roles.map(role => <Field key={role.key} id={`signing-stage-${role.key}`}
                 label={t('signingV2.compose.order.stageFor', { name: role.label })}>
-                <select value={groups.findIndex(group => group.includes(role.key))} onChange={event => onGroup(role.key, Number(event.target.value))}>
+                <SigningSelect value={groups.findIndex(group => group.includes(role.key))} onChange={event => onGroup(role.key, Number(event.target.value))}>
                     {groups.map((_, index) => <option key={index} value={index}>{t('signingV2.compose.order.stage', { number: number(index + 1) })}</option>)}
                     {groups.length < roles.length && <option value={groups.length}>{t('signingV2.compose.order.newStage')}</option>}
-                </select>
+                </SigningSelect>
             </Field>)}</div>
             <StageSummary groups={groups} roles={roles} />
         </div>}

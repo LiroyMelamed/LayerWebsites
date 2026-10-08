@@ -1,3 +1,4 @@
+import SigningSelect from './SigningSelect';
 import React, { useEffect, useState } from 'react';
 import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
 import StatusNotice from '../../../components/ui/StatusNotice';
@@ -17,10 +18,10 @@ export default function DraftRecoveryList({ api, onResume }) {
     return <details className="lw-signingCompose__optionalRoles">
         <summary>{t('signingV2.compose.draft.recent')}</summary>
         <label htmlFor="signing-saved-draft">{t('signingV2.compose.draft.choose')}</label>
-        <select id="signing-saved-draft" value={selected} onChange={event => setSelected(event.target.value)}>
+        <SigningSelect id="signing-saved-draft" value={selected} onChange={event => setSelected(event.target.value)}>
             <option value="">{t('signingV2.compose.draft.choose')}</option>
             {rows.map((row, index) => <option key={row.id} value={row.id}>{date.format(new Date(row.updatedAt))} · {new Intl.NumberFormat(language).format(index + 1)}{row.state === 'submitted' ? ` · ${t('signingV2.compose.draft.submitted')}` : ''}</option>)}
-        </select>
+        </SigningSelect>
         <SecondaryButton disabled={!selected} onPress={() => onResume(selected)}>{t('signingV2.compose.draft.resume')}</SecondaryButton>
     </details>;
 }

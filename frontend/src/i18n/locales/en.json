@@ -2336,6 +2336,14 @@
       "pausedHelp": "Signing this document is paused for the office to respond. Existing signatures are preserved.",
       "officePaused": "This needs attention before signing can continue. A signed document cannot be changed."
     },
+    "bulkshortlabels": {
+      "reminder": "Reminder",
+      "resend": "Resend",
+      "completed_copy": "Signed copy",
+      "policy": "Current",
+      "email": "Email",
+      "sms": "SMS"
+    },
     "bulk": {
       "title": "Bulk actions",
       "back": "Back to signing runs",

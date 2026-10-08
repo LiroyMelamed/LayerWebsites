@@ -211,10 +211,18 @@ export default function BulkActionsWorkspace({ api, initialFilter = {}, onClose 
                 <SecondaryButton disabled={busy || pageBusy || !page.nextCursor} onPress={() => setCursors(values => [...values, page.nextCursor])}>{t('signingV2.nextPage')}</SecondaryButton>
             </nav>}
             {canSend && <div className="lw-signingBulk__setup">
-                <SegmentedSwitch value={purpose} onChange={value => { setPurpose(value); keys.current.preview = newKey(); keys.current.execute = newKey(); }} ariaLabel={t('signingV2.bulk.action')}
-                    options={['reminder', 'resend', 'completed_copy'].map(value => ({ value, label: t(`signingV2.action.${value}.title`), disabled: busy || (value === 'reminder' ? !canRemind : value === 'resend' ? !canResend : !canSend) }))} />
-                <SegmentedSwitch value={channel} onChange={value => { setChannel(value); keys.current.preview = newKey(); keys.current.execute = newKey(); }} ariaLabel={t('signingV2.action.destination')}
-                    options={['policy', 'email', 'sms'].map(value => ({ value, label: t(value === 'policy' ? 'signingV2.bulk.policyChannel' : `signingV2.channel.${value}`), disabled: busy }))} />
+                <SegmentedSwitch className="lw-signingBulk__shortOptions" title={t('signingV2.bulk.action')}
+                    value={purpose} onChange={value => { setPurpose(value); keys.current.preview = newKey(); keys.current.execute = newKey(); }} ariaLabel={t('signingV2.bulk.action')}
+                    options={['reminder', 'resend', 'completed_copy'].map(value => ({ value, label: <>
+                        <span aria-hidden="true">{t(`signingV2.bulkshortlabels.${value}`)}</span>
+                        <span className="lw-signingBulk__optionDescription">{t(`signingV2.action.${value}.title`)}</span>
+                    </>, disabled: busy || (value === 'reminder' ? !canRemind : value === 'resend' ? !canResend : !canSend) }))} />
+                <SegmentedSwitch className="lw-signingBulk__shortOptions" title={t('signingV2.action.destination')}
+                    value={channel} onChange={value => { setChannel(value); keys.current.preview = newKey(); keys.current.execute = newKey(); }} ariaLabel={t('signingV2.action.destination')}
+                    options={['policy', 'email', 'sms'].map(value => ({ value, label: <>
+                        <span aria-hidden="true">{t(`signingV2.bulkshortlabels.${value}`)}</span>
+                        <span className="lw-signingBulk__optionDescription">{t(value === 'policy' ? 'signingV2.bulk.policyChannel' : `signingV2.channel.${value}`)}</span>
+                    </>, disabled: busy }))} />
                 <PrimaryButton disabled={busy || !ids.length || !canPurpose} onPress={beginReview}>{busy ? t('common.loading') : t('signingV2.bulk.review')}</PrimaryButton>
             </div>}
             <section className="lw-signingBulk__recent" aria-labelledby="signing-bulk-recent"><h2 id="signing-bulk-recent">{t('signingV2.bulk.recent')}</h2>

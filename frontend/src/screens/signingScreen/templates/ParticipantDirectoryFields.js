@@ -1,3 +1,4 @@
+import SigningSelect from './SigningSelect';
 import React, { useEffect, useRef, useState } from 'react';
 import api from '../../../api/signingPackagesApi';
 import SearchInput from '../../../components/specializedComponents/containers/SearchInput';
@@ -77,13 +78,13 @@ export default function ParticipantDirectoryFields({ person = {}, capacity = 'pe
                 <SecondaryButton disabled={!person.name?.trim() || busy} onPress={()=>run(async()=>pickPerson((await create('people',{name:person.name.trim(),endpoints:{...(person.email?{email:person.email.trim()}:{}),...(person.phone?{phone:person.phone.trim()}: {})}})).person))}>{tr('savePerson')}</SecondaryButton>
             </>}
             {person.personId && capacity === 'representative' && <>
-                <label className="lw-signingCompose__field">{tr('party')}<select dir={direction} value={person.partyId||''} onChange={event=>onChange({...person,partyId:event.target.value,authorityId:undefined})}>
+                <label className="lw-signingCompose__field">{tr('party')}<SigningSelect dir={direction} value={person.partyId||''} onChange={event=>onChange({...person,partyId:event.target.value,authorityId:undefined})}>
                     <option value="">{tr('chooseParty')}</option>
                     {person.partyId && !selectedParty && <option value={person.partyId}>{tr('savedParty')}</option>}
                     {availableParties.filter(item=>item.personId!==person.personId).map(item=><option key={item.id} value={item.id}>{item.name}</option>)}
-                </select></label>
+                </SigningSelect></label>
                 <details><summary>{tr('newParty')}</summary>
-                    <label className="lw-signingCompose__field">{tr('partyKind')}<select dir={direction} value={partyKind} onChange={event=>setPartyKind(event.target.value)}><option value="company">{tr('company')}</option><option value="person">{tr('person')}</option></select></label>
+                    <label className="lw-signingCompose__field">{tr('partyKind')}<SigningSelect dir={direction} value={partyKind} onChange={event=>setPartyKind(event.target.value)}><option value="company">{tr('company')}</option><option value="person">{tr('person')}</option></SigningSelect></label>
                     {text('partyName',partyName,setPartyName,{maxLength:300})}
                     {partyKind === 'company' && <>{text('registration',registration,setRegistration,{maxLength:80,dir:'ltr'})}{registration && text('country',registrationCountry,value=>setRegistrationCountry(value.toUpperCase()),{maxLength:2,dir:'ltr'})}</>}
                     <SecondaryButton disabled={!partyName.trim()||busy} onPress={()=>run(async()=>{
@@ -94,10 +95,10 @@ export default function ParticipantDirectoryFields({ person = {}, capacity = 'pe
                         setDirectory(old=>({...old,parties:[...old.parties.filter(item=>item.id!==next.id),next]}));onChange({...person,partyId:next.id,authorityId:undefined});setPartyName('');
                     })}>{tr('addParty')}</SecondaryButton>
                 </details>
-                {!!person.partyId && <label className="lw-signingCompose__field">{tr('authority')}<select dir={direction} value={person.authorityId||''} onChange={event=>onChange({...person,authorityId:event.target.value})}>
+                {!!person.partyId && <label className="lw-signingCompose__field">{tr('authority')}<SigningSelect dir={direction} value={person.authorityId||''} onChange={event=>onChange({...person,authorityId:event.target.value})}>
                     <option value="">{tr('chooseAuthority')}</option>
                     {authorities.filter(item=>item.partyId===person.partyId).map(item=><option key={item.id} value={item.id}>{tr(`states.${item.status}`)} · {date(item.validFrom)}{item.validUntil?` – ${date(item.validUntil)}`:''}</option>)}
-                </select></label>}
+                </SigningSelect></label>}
                 {selected && <StatusNotice variant={activeAuthority(selected)?'info':'warning'}>{tr(activeAuthority(selected)?'ready':'notReady')}</StatusNotice>}
             </>}
             {person.personId && directory.canManageAuthority && <details>
@@ -124,7 +125,7 @@ export default function ParticipantDirectoryFields({ person = {}, capacity = 'pe
                 <details><summary>{tr('verifyIdentity')}</summary>
                     <p>{tr('identityHelp')}</p>
                     {text('country',identity.country,value=>setIdentity(old=>({...old,country:value.toUpperCase()})),{maxLength:2,dir:'ltr'})}
-                    <label className="lw-signingCompose__field">{tr('identityType')}<select dir={direction} value={identity.type} onChange={event=>setIdentity(old=>({...old,type:event.target.value}))}>{['id','passport','other'].map(type=><option key={type} value={type}>{tr(`identityTypes.${type}`)}</option>)}</select></label>
+                    <label className="lw-signingCompose__field">{tr('identityType')}<SigningSelect dir={direction} value={identity.type} onChange={event=>setIdentity(old=>({...old,type:event.target.value}))}>{['id','passport','other'].map(type=><option key={type} value={type}>{tr(`identityTypes.${type}`)}</option>)}</SigningSelect></label>
                     {text('identityValue',identity.value,value=>setIdentity(old=>({...old,value})),{maxLength:100,dir:'ltr',autoComplete:'off'})}
                     <SecondaryButton disabled={!currentPerson||!evidence||!identity.value.trim()||!reason.trim()||busy} onPress={()=>run(async()=>{
                         const result=await service.verifyPersonIdentity(person.personId,{expectedVersion:currentPerson.version,identity,evidenceArtifactId:evidence.id,reason:reason.trim()});setSavedPerson(result.person);setIdentity(old=>({...old,value:''}));
