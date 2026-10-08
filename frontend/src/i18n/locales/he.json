@@ -3199,7 +3199,9 @@
         "chooseTreatment": "בחרו מה לעשות בשדה",
         "exclude_document": "לא לצרף את ה־PDF הזה",
         "authored_inactive": "השדה כבר מסומן במקור כלא רלוונטי"
-      }
+      },
+      "documentSettings": "פרטי המסמך",
+      "canvasHint": "בחרו תפקיד למעלה, לחצו על + ובחרו שדה. גררו את השדה למקום הרצוי במסמך."
     },
     "completedCopy": {
       "title": "המסמכים שהושלמו",

@@ -11,7 +11,7 @@
   h3 { font-size: 0.875rem; margin: 0 0 .7rem; font-weight: 500; }
   p { line-height: 1.6; margin: .4rem 0; max-width: 72ch; }
   button, input, select, textarea { font: inherit; }
-  button:not(.lw-signing-spotResize):not(.lw-segmentedSwitch__option), .lw-templates__file {
+  button:not(.lw-signing-spotResize):not(.lw-segmentedSwitch__option):not(.lw-floatingAddField__btn), .lw-templates__file {
     border: 1px solid #c8d1dd; border-radius: .6rem; padding: .65rem 1rem; min-height: 2.75rem;
     color: var(--template-accent); background: white; cursor: pointer; font-weight: 600; line-height: 1.4;
     &:hover:not(:disabled) { background: #edf2f7; }
@@ -97,3 +97,13 @@
 
 .lw-templates > .lw-segmentedSwitch { width: fit-content; max-width: 100%; margin-block-end: 1rem; }
 .lw-templates > .lw-segmentedSwitch .lw-segmentedSwitch__option { min-height: 2.75rem; }
+
+.lw-templates__documentSettings { margin-block: .75rem 1.25rem; .lw-templates__setup { margin-block: 1rem; align-items: end; } }
+.lw-templates__canvas { position: relative; min-width: 0; }
+.lw-templates__roleToolbar { position: sticky; top: .5rem; z-index: 4000; width: fit-content; max-width: 100%; box-sizing: border-box; padding: .5rem; border-radius: .5rem; background: white; box-shadow: 0 .5rem 1rem rgba(15,23,42,.08); > label { margin-block-start: .75rem; } }
+.lw-templates__roleButtons { display: flex; flex-wrap: wrap; gap: .5rem; }
+.lw-templates__roleButton { max-width: 100%; border-inline-start: .35rem solid var(--spot-signature-border, var(--template-accent)) !important; .lw-textButtonWithTwoOptionalIcons__inner { overflow-wrap: anywhere; } }
+.lw-templates__roleButton[aria-pressed="true"] { box-shadow: 0 0 0 .125rem var(--spot-signature-border, var(--template-accent)); }
+.lw-templates__editSelected { margin-block-start: .75rem; }
+.lw-templates__fieldDialog { padding: 0; fieldset { display: flex; flex-direction: column; gap: .8rem; } > button { margin-block-start: 1rem; } }
+.lw-templates__canvas .lw-addFieldPanel { direction: inherit; max-width: calc(100vw - 3rem); box-sizing: border-box; }

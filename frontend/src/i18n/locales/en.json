@@ -2307,7 +2307,9 @@
         "chooseTreatment": "Choose how to handle this field",
         "exclude_document": "Do not include this PDF",
         "authored_inactive": "The source already marks this field as not applicable"
-      }
+      },
+      "documentSettings": "Document details",
+      "canvasHint": "Choose a role above, press + and choose a field. Drag the field to its place in the document."
     },
     "completedCopy": {
       "title": "Completed documents",

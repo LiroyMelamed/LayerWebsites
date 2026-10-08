@@ -8,6 +8,10 @@ import { resolveSelectedTemplate } from './SelectedTemplateEntry';
 import he from '../../../i18n/locales/he.json';
 import ar from '../../../i18n/locales/ar.json';
 import en from '../../../i18n/locales/en.json';
+// These adapter/authoring assertions use the string-valued select contract.
+// The incumbent platform popup itself is covered in SigningSelect.test.js and browser evidence.
+jest.mock('./SigningSelect', () => props => <select {...props} />);
+
 jest.mock('../../../components/specializedComponents/signFiles/pdfViewer/PdfViewer', () => {
     const Spot = require('../../../components/specializedComponents/signFiles/signatureSpots/SignatureSpot').default;
     return props => <div>
@@ -43,8 +47,8 @@ test.each(['he','ar','en'])('incumbent native editor authors a data overlay, kee
     expect(screen.getByLabelText(i18n.t('signingV2.compose.order.stageFor',{name:'seller'}))).toHaveValue('0');
     fireEvent.click(screen.getByRole('button',{name:t('next')}));
     fireEvent.click(await screen.findByRole('button',{name:'Move first PDF field'}));
-    fireEvent.change(screen.getByLabelText(t('fieldType')),{target:{value:'data'}});
-    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.builder.addField',{page:new Intl.NumberFormat({he:'he-IL',ar:'ar-IL',en:'en-GB'}[language]).format(1)})}));
+    fireEvent.click(screen.getByTitle(i18n.t('signing.fieldSettings.addFieldForPage',{page:1})));
+    fireEvent.click(screen.getByRole('button',{name:a('dataField')}));
     expect(screen.getByTitle(i18n.t('signingV2.authoring.dataTitleNamed',{name:'Identity'}))).toHaveClass('is-required');
     fireEvent.click(screen.getByRole('button',{name:a('saveDraft')}));
     await screen.findByText(a('saved'));
@@ -232,20 +236,26 @@ test.each(['he','ar','en'])('nested document rules survive draft recovery and pr
 test('a conditional signer needs an explicit inactive field treatment, preserved without changing PDF geometry',async()=>{
     const i18n=await setup('en'),api=fakeApi(),input=version();
     render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={input} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
+    // The detail node scopes the third role's conditional controls.
+    // eslint-disable-next-line testing-library/no-node-access
     const role=within(screen.getAllByText('When this signer is required')[2].closest('details'));
     fireEvent.change(role.getByLabelText('Based on field'),{target:{value:'amount'}});
     fireEvent.change(role.getByLabelText('Include when'),{target:{value:'equals'}});
     fireEvent.change(role.getByLabelText('Comparison value'),{target:{value:'1.00'}});
     fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.builder.next')}));
     fireEvent.click(await screen.findByRole('button',{name:'Select last PDF field'}));
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.builder.selectedField')}));
     expect(screen.getByLabelText('When this signer is not included')).toHaveValue('');
     fireEvent.change(screen.getByLabelText('When this signer is not included'),{target:{value:'exclude_document'}});
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('common.close')}));
     fireEvent.click(screen.getByRole('button',{name:'Save draft'}));await screen.findByText(i18n.t('signingV2.authoring.saved'));
     const saved=api.saveTemplateDraft.mock.calls[0][1].definition;
     expect(saved.roles[2].when).toEqual({key:'amount',operator:'equals',value:'1.00'});
     expect(saved.documents[0].fields[2]).toEqual({...input.definition.documents[0].fields[2],label:'',inactiveTreatment:'exclude_document'});
     expect(fromEditor(toEditor(saved),'en').documents[0].fields[2].inactiveTreatment).toBe('exclude_document');
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.builder.selectedField')}));
     fireEvent.change(screen.getByLabelText('When this signer is not included'),{target:{value:''}});
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('common.close')}));
     fireEvent.click(screen.getByRole('button',{name:'Save draft'}));await waitFor(()=>expect(api.saveTemplateDraft).toHaveBeenCalledTimes(2));
     expect(api.saveTemplateDraft.mock.calls[1][1].definition.documents[0].fields[2].inactiveTreatment).toBeUndefined();
 });
@@ -260,7 +270,8 @@ test('adding an explicit person position preserves all original fields; a used p
     fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.builder.next')}));
     await screen.findByRole('button',{name:'Move first PDF field'});
     fireEvent.change(screen.getByLabelText('Signature position for buyer'),{target:{value:'1'}});
-    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.builder.addField',{page:'1'})}));
+    fireEvent.click(screen.getByTitle(i18n.t('signing.fieldSettings.addFieldForPage',{page:1})));
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.builder.types.signature')}));
     fireEvent.click(screen.getByRole('button',{name:'Save draft'}));
     await screen.findByText(i18n.t('signingV2.authoring.saved'));
     const saved=api.saveTemplateDraft.mock.calls[0][1].definition;
