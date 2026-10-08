@@ -6,7 +6,7 @@ const { bytesHash, digest } = require('./canonical');
 const { expect, fail } = require('./errors');
 const limits = require('./limits');
 
-const RENDERER_VERSION = 'signing-data-v2.4';
+const RENDERER_VERSION = 'signing-data-v2.5';
 const FONTS_DIR = path.join(__dirname, '../../assets/fonts');
 // Neither Noto file has Latin letters; without this font, English values would use whatever the host has installed.
 const LATIN_DIR = path.join(path.dirname(require.resolve('pdfjs-dist/package.json')), 'standard_fonts');
@@ -85,6 +85,7 @@ async function createDataRenderer({ executablePath, noSandbox = false, reuseTemp
     // One renderer belongs to one worker. It never handles two packages at once.
     let active = false;
     let dataContext = null, dataPage = null;
+    const printSessions = new WeakMap();
     async function resetDataPage() {
         const context = dataContext;
         dataPage = null; dataContext = null;
@@ -100,6 +101,27 @@ async function createDataRenderer({ executablePath, noSandbox = false, reuseTemp
             await dataPage.evaluate(loadFonts);
         }
         return dataPage;
+    }
+    async function printDataOverlay(page) {
+        let session = printSessions.get(page);
+        if (!session) {
+            session = await page.createCDPSession();
+            await session.send('Emulation.setDefaultBackgroundColorOverride', { color: { r: 0, g: 0, b: 0, a: 0 } });
+            printSessions.set(page, session);
+        }
+        // Fonts were explicitly loaded and measured above. Keep the data-only
+        // page transparent and return bytes in one command, avoiding repeated
+        // background resets/font waits/stream reads for every employee PDF.
+        // Overlay structure tags are not retained by pdf-lib's XObject embedding;
+        // the source PDF and the standalone evidence printer remain unchanged.
+        const result = await session.send('Page.printToPDF', {
+            landscape: false, displayHeaderFooter: false, printBackground: false, scale: 1,
+            paperWidth: 8.5, paperHeight: 11, marginTop: 0, marginBottom: 0, marginLeft: 0, marginRight: 0,
+            pageRanges: '', preferCSSPageSize: true, generateTaggedPDF: false, generateDocumentOutline: false,
+            transferMode: 'ReturnAsBase64',
+        }, { timeout: 15000 });
+        expect(typeof result.data === 'string' && result.data.length > 0, 'RENDER_FAILED');
+        return Buffer.from(result.data, 'base64');
     }
     return {
         assets: fontAssets,
@@ -154,8 +176,7 @@ async function createDataRenderer({ executablePath, noSandbox = false, reuseTemp
                     }));
                     expect(measurement.fontsReady, 'FONT_LOAD_FAILED');
                     if (measurement.overflow.length) fail('TEXT_OVERFLOW', 422, measurement.overflow.map(id => ({ path: id, code: 'TEXT_OVERFLOW' })));
-                    const overlayBytes = await page.pdf({ preferCSSPageSize: true, printBackground: false, omitBackground: true,
-                        displayHeaderFooter: false, timeout: 15000 });
+                    const overlayBytes = await printDataOverlay(page);
                     const overlay = await PDFDocument.load(overlayBytes);
                     expect(overlay.getPageCount() === pdf.getPageCount(), 'RENDER_PAGE_MISMATCH');
                     const embedded = await pdf.embedPages(overlay.getPages());
