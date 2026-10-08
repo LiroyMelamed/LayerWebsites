@@ -136,7 +136,7 @@ function linkFor(env) {
     return token => `${origin.origin}/ViewSignedDocument/Sign#${token}`;
 }
 
-function createRuntime({ pool, env = process.env, storage, provider, renderer, contextIds = null, log = console }) {
+function createRuntime({ pool, env = process.env, storage, provider, renderer, alerts = null, contextIds = null, log = console }) {
     const grantService = createGrantService({ encryptionKey: grantKey(env), keyId: env.SIGNING_V2_GRANT_KEY_ID || '1' });
     const pool_ = renderer || new RenderPool({
         concurrency: Math.min(4, Math.max(1, Number(env.SIGNING_V2_RENDERERS) || 2)),
@@ -211,12 +211,14 @@ function createRuntime({ pool, env = process.env, storage, provider, renderer, c
             if (timer) return;
             timer = setInterval(tick, intervalMs);
             timer.unref?.();
+            alerts?.start();
         },
         async stop() {
             stopped = true;
             if (timer) clearInterval(timer);
             timer = null;
             await inFlight;
+            await alerts?.stop();
             if (!renderer) await pool_.close();
         },
     };
@@ -228,7 +230,9 @@ function startFromEnvironment({ pool, env = process.env, log = console }) {
     const provider = env.SIGNING_V2_PROVIDER === 'notifications'
         ? notificationProvider({ pool, notifyRecipient: (...args) => require('../notifications/notificationOrchestrator').notifyRecipient(...args) })
         : null;
-    const runtime = createRuntime({ pool, env, storage: objectStorage({ client: r2, bucket: BUCKET }), provider, log });
+    const alerts = provider ? require('./errorAlerts').createErrorAlerts({ pool, origin: env.WEBSITE_DOMAIN,
+        sendEmail: message => require('../../utils/smooveEmailCampaignService').sendTransactionalCustomHtmlEmail(message), log }) : null;
+    const runtime = createRuntime({ pool, env, storage: objectStorage({ client: r2, bucket: BUCKET }), provider, alerts, log });
     runtime.start();
     log.log(`[signing-v2] worker started (provider: ${provider ? 'notifications' : 'none, invitations stay queued'})`);
     return runtime;

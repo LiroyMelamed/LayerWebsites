@@ -41,5 +41,6 @@ router.post('/sessions/:id/accept', viewLimit, run(async (req, res) => {
     res.status(200).json(result);
 }));
 
+router.use(require('../services/signingV2/errorAlerts').requestErrorReporter(pool, 'signer'));
 module.exports = router;
 module.exports.useService = value => { service = value; };

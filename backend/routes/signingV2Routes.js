@@ -95,5 +95,6 @@ router.post('/creation', send, run(async (req, res) => {
     res.status(result.reused ? 200 : 201).json(result);
 }));
 router.get('/operations/:id', view, run(async (req, res) => res.json(await actions.operationStatus(pool, await actorScope(pool, req, 'view'), req.params.id))));
+router.use(require('../services/signingV2/errorAlerts').requestErrorReporter(pool, 'office'));
 
 module.exports = router;
