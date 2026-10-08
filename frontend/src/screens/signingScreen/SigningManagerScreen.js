@@ -1,7 +1,7 @@
 import { downloadBlobAsFile } from "../../utils/downloadBlobAsFile";
 // src/screens/signingScreen/SigningManagerScreen.js
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import useHttpRequest from "../../hooks/useHttpRequest";
@@ -47,6 +47,8 @@ import {
 import { useFirmPermissions } from "../../providers/FirmPermissionsProvider";
 import "../calendarScreen/CalendarInviteScreen.scss";
 import RequestLoadError from '../../components/ui/RequestLoadError';
+import TemplatesWorkspace from './templates/TemplatesWorkspace';
+import SigningPackagesHub, { useSigningV2Available } from './templates/SigningPackagesHub';
 
 
 export const SigningManagerScreenName = "/SigningManagerScreen";
@@ -63,6 +65,18 @@ export default function SigningManagerScreen() {
 
     const { isFromApp } = useFromApp();
     const [activeTab, setActiveTab] = useState("pending");
+    const [searchParams, setSearchParams] = useSearchParams();
+    const panel = searchParams.get("panel") || "";
+    const setPanel = (value) => {
+        const next = new URLSearchParams(searchParams);
+        if (value) next.set("panel", value);
+        else next.delete("panel");
+        if (value !== "compose") { next.delete("template"); next.delete("templateVersion"); }
+        setSearchParams(next);
+    };
+    const showTemplates = panel.startsWith("template");
+    const showRuns = panel === "runs" || panel === "compose";
+    const signingV2Available = useSigningV2Available();
     const [scope, setScope] = useState("mine");
     useEffect(() => {
         if (!canViewOfficeFiles && scope === 'office') setScope('mine');
@@ -355,6 +369,11 @@ export default function SigningManagerScreen() {
         );
     };
 
+    if (showTemplates) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><TemplatesWorkspace nativeAvailable={signingV2Available} onSendTemplate={signingV2Available ? template => {
+        const next = new URLSearchParams(searchParams); next.set('panel', 'compose'); next.set('template', template.id); next.set('templateVersion', String(template.version)); setSearchParams(next);
+    } : undefined} canUpload={canSignUpload} canManage={canSignManage} onClose={() => { setPanel(null); reloadFiles(); }} /></SimpleScrollView></SimpleScreen>;
+    if (showRuns) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><SigningPackagesHub canCreate={canSignUpload} onClose={() => { setPanel(null); reloadFiles(); }} /></SimpleScrollView></SimpleScreen>;
+
     return (
         <SimpleScreen
             imageBackgroundSource={images.Backgrounds.AppBackground}
@@ -473,16 +492,18 @@ export default function SigningManagerScreen() {
                 </>}
             </SimpleScrollView>
 
-            {canSignUpload && (
             <SimpleContainer className="lw-signingManagerScreen__footer">
+                {canSignUpload && (
                 <PrimaryButton
                     className="lw-signingManagerScreen__addButton"
                     onPress={handleGoToUpload}
                 >
                     {t('signingManager.actions.uploadNew')}
                 </PrimaryButton>
+                )}
+                <SecondaryButton onPress={() => setPanel("templates")}>{t('signingManager.templatesAndBulk')}</SecondaryButton>
+                {signingV2Available && <SecondaryButton onPress={() => setPanel("runs")}>{t('signingManager.signingRuns')}</SecondaryButton>}
             </SimpleContainer>
-            )}
         </SimpleScreen>
     );
 }

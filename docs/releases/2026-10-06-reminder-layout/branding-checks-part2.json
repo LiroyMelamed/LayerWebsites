@@ -1,0 +1,20 @@
+[
+  {
+    "tenant": "ashrafessa",
+    "title": "אשראף עיסא לקוחות | אזור אישי - משרד עו\"ד אשראף עיסא",
+    "api": {
+      "REACT_APP_API_BASE_URL": "https://api-ashrafessa.mela-media.co.il/api",
+      "REACT_APP_CENTRAL_API_URL": "https://central-api.mela-media.co.il"
+    },
+    "apiIncludedInBuild": true
+  },
+  {
+    "tenant": "idm",
+    "title": "איתמר דוד משה לקוחות | אזור אישי - משרד עו\"ד איתמר דוד משה",
+    "api": {
+      "REACT_APP_API_BASE_URL": "https://api-idm.mela-media.co.il/api",
+      "REACT_APP_CENTRAL_API_URL": "https://central-api.mela-media.co.il"
+    },
+    "apiIncludedInBuild": true
+  }
+]

@@ -1,0 +1,19 @@
+node:internal/modules/cjs/loader:2021
+      throw new ERR_INVALID_ARG_VALUE('filename', filenameOrURL,
+      ^
+
+TypeError [ERR_INVALID_ARG_VALUE]: The argument 'filename' must be a file URL object, file URL string, or absolute path string. Received '../signing-templates-20261006/backend/package.json'
+    at createRequire (node:internal/modules/cjs/loader:2021:13)
+    at Object.<anonymous> (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/signing-templates-qa/isolate.cjs:2:24)
+    at Module._compile (node:internal/modules/cjs/loader:1812:14)
+    at Object..js (node:internal/modules/cjs/loader:1943:10)
+    at Module.load (node:internal/modules/cjs/loader:1533:32)
+    at Module._load (node:internal/modules/cjs/loader:1335:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.require (node:internal/modules/cjs/loader:1556:12)
+    at node:internal/modules/cjs/loader:2104:12
+    at loadPreloadModules (node:internal/process/pre_execution:698:5) {
+  code: 'ERR_INVALID_ARG_VALUE'
+}
+
+Node.js v24.14.0

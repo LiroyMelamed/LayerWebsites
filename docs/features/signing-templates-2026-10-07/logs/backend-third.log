@@ -1,0 +1,12 @@
+✔ workbook round-trip previews normalized recipients and does not import shared identities per row (55.347375ms)
+✔ Excel formulas and incorrect column headers fail preview with actionable row errors (29.641125ms)
+✔ invalid archive, phone, channel and missing shared signer cannot become a dispatch (0.429875ms)
+✔ templates, immutable bulk dispatch and manifest-bound shared OTP use the released signing engine (2117.061625ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2300.439209

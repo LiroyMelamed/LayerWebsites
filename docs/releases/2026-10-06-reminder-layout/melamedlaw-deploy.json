@@ -1,0 +1,13 @@
+{
+  "tenant": "melamedlaw",
+  "status": "DEPLOYED_VERIFIED",
+  "sourceCommit": "9f14702e5b4f4592ee38e39586e24d60f2ee7baf",
+  "backendChanged": false,
+  "verifiedTlsHost": "server01.funet.co.il",
+  "archiveSha256": "c6e3f7aee1cd653cc1b2b3c356f296730a515f577c01eef8629eb697c059468b",
+  "publishedFiles": 234,
+  "previousHashedAssetsRetained": true,
+  "indexPublishedLast": true,
+  "ftpReadbackAllBytesMatch": true,
+  "completedUnix": 1791290966.659319
+}

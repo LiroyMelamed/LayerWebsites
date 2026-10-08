@@ -7,11 +7,12 @@ import { Text14, TextBold24 } from "../../components/specializedComponents/text/
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import SignatureCanvas from "../../components/specializedComponents/signFiles/SignatureCanvas";
 import { images } from "../../assets/images/images";
-import { LoginStackName } from "../../navigation/LoginStack";
+import { LoginStackName, sessionHomePath } from "../../navigation/LoginStack";
 import { LoginScreenName } from "../loginScreen/LoginScreen";
 import { useTranslation } from "react-i18next";
 
 import "./PublicSigningScreen.scss";
+import PublicBatchSigning from './templates/PublicBatchSigning';
 
 export const PublicSignScreenName = "/PublicSignScreen";
 
@@ -26,10 +27,13 @@ export default function PublicSigningScreen() {
     }, [location.search]);
 
     const [closed, setClosed] = useState(false);
+    const batchToken = new URLSearchParams(location.search).get('batch');
 
     const goToLogin = () => {
         navigate(LoginStackName + LoginScreenName, { replace: true });
     };
+
+    if (batchToken) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><PublicBatchSigning key={batchToken} token={batchToken} /></SimpleScreen>;
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground} className="lw-publicSigningScreen">
@@ -49,7 +53,7 @@ export default function PublicSigningScreen() {
                     <SignatureCanvas
                         publicToken={token}
                         variant="screen"
-                        onClose={() => setClosed(true)}
+                        onClose={() => navigate(sessionHomePath(), { replace: true })}
                     />
                 )}
             </SimpleContainer>

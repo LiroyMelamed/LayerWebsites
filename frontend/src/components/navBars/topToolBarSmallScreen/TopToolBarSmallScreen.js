@@ -4,7 +4,7 @@ import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { images } from "../../../assets/images/images";
 import SimpleButton from "../../simpleComponents/SimpleButton";
 import SideBarMenuItem from "../navBarItems/SideBarMenuItem";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { usePopup } from "../../../providers/PopUpProvider";
 import { getNavBarData } from "../data/NavBarData";
 import ImageButton from "../../specializedComponents/buttons/ImageButton";
@@ -26,14 +26,30 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, chosenNavKey, 
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     const navigate = useNavigate();
+    const location = useLocation();
 
     const { openPopup, closePopup } = usePopup();
 
     const firmPerms = useFirmPermissions();
     const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup, isFromApp, t, isClient ? null : firmPerms);
 
-    // Determine which nav item is active — prefer navKey, fall back to chosenIndex
+    const routeMatchesPath = (item, pathname) => {
+        if (!item.routeMatch) return false;
+        const matches = Array.isArray(item.routeMatch) ? item.routeMatch : [item.routeMatch];
+        return matches.some((route) => pathname.includes(route));
+    };
+
+    // The open page wins. A screen that forgot to pass chosenNavKey still highlights.
+    const pathMatch = NavBarLinks.reduce((best, item) => {
+        if (!routeMatchesPath(item, location.pathname)) return best;
+        const routes = Array.isArray(item.routeMatch) ? item.routeMatch : [item.routeMatch];
+        const length = Math.max(...routes.filter((route) => location.pathname.includes(route)).map((route) => route.length));
+        if (!best || length > best.length) return { item, length };
+        return best;
+    }, null);
+
     const isActiveItem = (item, index) => {
+        if (pathMatch) return pathMatch.item === item;
         if (chosenNavKey && item.navKey) return item.navKey === chosenNavKey;
         return chosenIndex >= 0 && index === chosenIndex;
     };
