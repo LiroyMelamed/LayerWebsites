@@ -14,7 +14,6 @@ CREATE TABLE IF NOT EXISTS signing_approval_requests (
     CHECK (solo_profile OR preparer_userid <> reviewer_userid)
 );
 CREATE INDEX IF NOT EXISTS signing_approval_requests_reviewer ON signing_approval_requests(owner_context_id,reviewer_userid,state);
-ALTER TABLE signing_approval_requests ENABLE ROW LEVEL SECURITY;
 CREATE OR REPLACE FUNCTION signing_approval_request_identity_immutable() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
     IF (to_jsonb(NEW)-'state'-'version'-'reason'-'decided_at') IS DISTINCT FROM (to_jsonb(OLD)-'state'-'version'-'reason'-'decided_at') THEN
