@@ -1,0 +1,10 @@
+{
+  "complete": true,
+  "tenant": "ashrafessa",
+  "candidate": "bd9fb6383a00c6c29869e3d9620535bbfff99e96",
+  "indexSha256": "a0b1177c325d14a94cbeff72771a809eacf9bbdc4f073bb3ba5e790932431276",
+  "filesVerified": 319,
+  "oldAssetsRetained": true,
+  "indexInstalledLastAtomically": true,
+  "nginxUnchanged": true
+}

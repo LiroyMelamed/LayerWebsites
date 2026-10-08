@@ -1,0 +1,22 @@
+{
+  "verifiedUtc": "2026-10-08T20:04:54.422Z",
+  "tenant": "ashrafessa",
+  "candidate": "bd9fb6383a00c6c29869e3d9620535bbfff99e96",
+  "tree": "6cd36757fb825903eb2038126e4e2b0c8550eb4c",
+  "sourceFilesVerified": 1347,
+  "exactSeventeenMigrations": true,
+  "newFortyFiveTableGrants": true,
+  "legacyGrantsPreserved": true,
+  "allOtherEnvironmentFieldsPreserved": true,
+  "provider": "notifications",
+  "featureAndWorkerEnabled": true,
+  "pm2NamedOnly": {
+    "name": "ashrafessa-api",
+    "status": "online",
+    "pid": 2061519
+  },
+  "health": {
+    "ok": true
+  },
+  "noTestMessagesOrFixtures": true
+}

@@ -78,7 +78,7 @@
   },
   "signingManager": {
     "searchTitle": "Search document / customer / case",
-    "templatesAndBulk": "Templates and bulk sending",
+    "templatesAndBulk": "Signing templates",
     "dateFrom": "From date",
     "dateTo": "To date",
     "tabs": {
@@ -182,7 +182,7 @@
       "evidencePackageDownloadError": "Error downloading evidence package",
       "deleteError": "Error deleting the document"
     },
-    "signingRuns": "Signing runs"
+    "signingRuns": "Manage sends"
   },
   "evidenceDocuments": {
     "pageTitle": "Evidence documents",
@@ -1413,7 +1413,7 @@
     }
   },
   "signingV2": {
-    "title": "Pending signatures",
+    "title": "Manage sends",
     "subtitle": "Track the packages, signers and delivery for each send.",
     "newPackage": "New package",
     "backToDocuments": "Back to documents",
@@ -2170,10 +2170,12 @@
     },
     "showAllRuns": "Show all runs",
     "workspace": {
-      "title": "Templates and bulk sending",
+      "title": "Signing templates",
       "subtitle": "Reusable documents with defined fields and signer roles.",
       "backToTemplates": "Back to templates",
       "batchSubtitle": "Packages, invitations and signing progress",
+      "previousBatches": "Previous sends",
+      "backToRuns": "Back to send management",
       "loading": "Loading…",
       "officeTemplates": "Office templates",
       "newTemplate": "New template",
@@ -2307,7 +2309,9 @@
         "chooseTreatment": "Choose how to handle this field",
         "exclude_document": "Do not include this PDF",
         "authored_inactive": "The source already marks this field as not applicable"
-      }
+      },
+      "documentSettings": "Document details",
+      "canvasHint": "Choose a role above, press + and choose a field. Drag the field to its place in the document."
     },
     "completedCopy": {
       "title": "Completed documents",

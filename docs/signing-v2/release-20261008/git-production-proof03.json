@@ -1,0 +1,39 @@
+{
+  "complete": true,
+  "verifiedUtc": "2026-10-08T20:07:48.726Z",
+  "documentationCommit": "92be3736c9780a44d1333099ed63f901a94c8196",
+  "atomicNoForcePush": true,
+  "refs": {
+    "refs/heads/AshrafEssa": "bd9fb6383a00c6c29869e3d9620535bbfff99e96",
+    "refs/heads/Idm": "9239ce3db9793f70357c6b457ffce96b8a645994",
+    "refs/heads/MelamedLaw": "3e454de8cb4ff9fc6552080c03488e7790a51c57",
+    "refs/heads/MorLevi": "a16cb2e0267d0c5eb98f7d3951a7d37d8aecbe5f",
+    "refs/heads/codex/signing-templates-20261006": "92be3736c9780a44d1333099ed63f901a94c8196",
+    "refs/tags/production-signing-v2-20261008-ashrafessa^{}": "bd9fb6383a00c6c29869e3d9620535bbfff99e96",
+    "refs/tags/production-signing-v2-20261008-idm^{}": "9239ce3db9793f70357c6b457ffce96b8a645994",
+    "refs/tags/production-signing-v2-20261008-melamedlaw^{}": "3e454de8cb4ff9fc6552080c03488e7790a51c57",
+    "refs/tags/production-signing-v2-20261008-morlevy^{}": "a16cb2e0267d0c5eb98f7d3951a7d37d8aecbe5f"
+  },
+  "tags": [
+    {
+      "tenant": "melamedlaw",
+      "tag": "production-signing-v2-20261008-melamedlaw",
+      "candidate": "3e454de8cb4ff9fc6552080c03488e7790a51c57"
+    },
+    {
+      "tenant": "morlevy",
+      "tag": "production-signing-v2-20261008-morlevy",
+      "candidate": "a16cb2e0267d0c5eb98f7d3951a7d37d8aecbe5f"
+    },
+    {
+      "tenant": "ashrafessa",
+      "tag": "production-signing-v2-20261008-ashrafessa",
+      "candidate": "bd9fb6383a00c6c29869e3d9620535bbfff99e96"
+    },
+    {
+      "tenant": "idm",
+      "tag": "production-signing-v2-20261008-idm",
+      "candidate": "9239ce3db9793f70357c6b457ffce96b8a645994"
+    }
+  ]
+}

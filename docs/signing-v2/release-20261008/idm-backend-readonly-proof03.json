@@ -1,0 +1,22 @@
+{
+  "verifiedUtc": "2026-10-08T20:06:38.040Z",
+  "tenant": "idm",
+  "candidate": "9239ce3db9793f70357c6b457ffce96b8a645994",
+  "tree": "15fd374e51018ca4d4df172bc908cef029a29ebb",
+  "sourceFilesVerified": 1346,
+  "exactSeventeenMigrations": true,
+  "newFortyFiveTableGrants": true,
+  "legacyGrantsPreserved": true,
+  "allOtherEnvironmentFieldsPreserved": true,
+  "provider": "notifications",
+  "featureAndWorkerEnabled": true,
+  "pm2NamedOnly": {
+    "name": "idm-api",
+    "status": "online",
+    "pid": 2061930
+  },
+  "health": {
+    "ok": true
+  },
+  "noTestMessagesOrFixtures": true
+}
