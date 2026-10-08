@@ -6,7 +6,7 @@ const { bytesHash, digest } = require('./canonical');
 const { expect, fail } = require('./errors');
 const limits = require('./limits');
 
-const RENDERER_VERSION = 'signing-data-v2.3';
+const RENDERER_VERSION = 'signing-data-v2.4';
 const FONTS_DIR = path.join(__dirname, '../../assets/fonts');
 // Neither Noto file has Latin letters; without this font, English values would use whatever the host has installed.
 const LATIN_DIR = path.join(path.dirname(require.resolve('pdfjs-dist/package.json')), 'standard_fonts');
@@ -36,7 +36,7 @@ function displayValue(value, locale) {
     return value === null ? '' : String(value);
 }
 
-function overlayHtml(pages, fields, locale, fonts) {
+function overlayContent(pages, fields, locale) {
     const cssPages = pages.map((geometry, index) => `@page p${index}{size:${geometry.visualWidth / geometry.scale}pt ${geometry.visualHeight / geometry.scale}pt;margin:0}
         .p${index}{page:p${index};width:${geometry.visualWidth / geometry.scale}pt;height:${geometry.visualHeight / geometry.scale}pt}`).join('\n');
     const body = pages.map((geometry, index) => {
@@ -46,9 +46,13 @@ function overlayHtml(pages, fields, locale, fonts) {
         }).join('');
         return `<section class="sheet p${index}">${content}</section>`;
     }).join('');
-    return `<!doctype html><html lang="${locale}"><head><meta charset="utf-8"><style>
+    return { cssPages, body };
+}
+
+function overlayHtml(pages, fields, locale, fonts) {
+    const { cssPages, body } = overlayContent(pages, fields, locale);
+    return `<!doctype html><html lang="${locale}"><head><meta charset="utf-8"><style id="signing-page-geometry">${cssPages}</style><style>
         ${fonts.map(font => `@font-face{font-family:${font.family};src:url('${font.uri}') format('truetype');font-weight:400}`).join('\n')}
-        ${cssPages}
         *{box-sizing:border-box}html,body{margin:0;padding:0;background:transparent}
         .sheet{position:relative;break-after:page;overflow:hidden}.sheet:last-child{break-after:auto}
         .value{position:absolute;font-family:${FONT_STACK};line-height:normal;color:#000;font-weight:400;overflow:visible;overflow-wrap:normal}
@@ -73,13 +77,30 @@ async function isolatedPage(context) {
     return page;
 }
 
-async function createDataRenderer({ executablePath, noSandbox = false } = {}) {
+async function createDataRenderer({ executablePath, noSandbox = false, reuseTemplatePage = true } = {}) {
     const puppeteer = require('puppeteer');
     const browser = await puppeteer.launch({ ...(executablePath ? { executablePath } : {}),
         ...(noSandbox ? { args: ['--no-sandbox', '--disable-setuid-sandbox'] } : {}) });
     const fontAssets = rendererAssets();
     // One renderer belongs to one worker. It never handles two packages at once.
     let active = false;
+    let dataContext = null, dataPage = null;
+    async function resetDataPage() {
+        const context = dataContext;
+        dataPage = null; dataContext = null;
+        if (context) await context.close().catch(() => {});
+    }
+    async function templatePage() {
+        if (!dataPage) {
+            dataContext = await browser.createBrowserContext();
+            dataPage = await isolatedPage(dataContext);
+            // Only immutable styles and embedded fonts survive between jobs.
+            // Business values are installed below and removed before the slot is reusable.
+            await dataPage.setContent(overlayHtml([], [], 'en', fontAssets.fonts), { waitUntil: 'domcontentloaded', timeout: 15000 });
+            await dataPage.evaluate(loadFonts);
+        }
+        return dataPage;
+    }
     return {
         assets: fontAssets,
         browserProcess: browser.process(),
@@ -104,12 +125,21 @@ async function createDataRenderer({ executablePath, noSandbox = false } = {}) {
                 }
                 if (!dataFields.length) return { bytes: Buffer.from(sourceBytes), contentHash: expectedSourceHash,
                     rendererHash: fontAssets.hash, geometry: geometries.map(item => ({ width: item.visualWidth, height: item.visualHeight })), overflow: [] };
-                const html = overlayHtml(geometries, dataFields, locale, fontAssets.fonts);
-                const context = await browser.createBrowserContext();
+                const context = reuseTemplatePage ? null : await browser.createBrowserContext();
                 try {
-                    page = await isolatedPage(context);
-                    await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 15000 });
-                    await page.evaluate(loadFonts);
+                    if (reuseTemplatePage) {
+                        page = await templatePage();
+                        const content = overlayContent(geometries, dataFields, locale);
+                        await page.evaluate(({ cssPages, body, language }) => {
+                            document.getElementById('signing-page-geometry').textContent = cssPages;
+                            document.documentElement.lang = language;
+                            document.body.innerHTML = body;
+                        }, { ...content, language: locale });
+                    } else {
+                        page = await isolatedPage(context);
+                        await page.setContent(overlayHtml(geometries, dataFields, locale, fontAssets.fonts), { waitUntil: 'domcontentloaded', timeout: 15000 });
+                        await page.evaluate(loadFonts);
+                    }
                     const measurement = await page.evaluate(() => ({
                         fontsReady: Array.from(document.fonts).every(font => font.status === 'loaded'),
                         overflow: Array.from(document.querySelectorAll('.value')).filter(element => {
@@ -143,8 +173,22 @@ async function createDataRenderer({ executablePath, noSandbox = false } = {}) {
                     const bytes = Buffer.from(await pdf.save({ useObjectStreams: true }));
                     return { bytes, contentHash: bytesHash(bytes), rendererHash: fontAssets.hash,
                         geometry: geometries.map(item => ({ width: item.visualWidth, height: item.visualHeight })), overflow: [] };
+                } catch (error) {
+                    if (reuseTemplatePage && error.errorCode !== 'TEXT_OVERFLOW') await resetDataPage();
+                    throw error;
                 } finally {
-                    await context.close();
+                    if (context) await context.close();
+                    else if (dataPage) {
+                        try {
+                            // Clear personal values even after overflow/print errors. A
+                            // cleanup failure destroys the whole context before the next job.
+                            await dataPage.evaluate(() => {
+                                document.body.replaceChildren();
+                                document.getElementById('signing-page-geometry').textContent = '';
+                                document.documentElement.lang = 'en';
+                            });
+                        } catch { await resetDataPage(); }
+                    }
                 }
             } finally {
                 active = false;
