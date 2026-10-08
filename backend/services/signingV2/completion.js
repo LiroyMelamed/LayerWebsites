@@ -148,7 +148,7 @@ function createCompletionService({ pool, renderer, storage }) {
     }
 
     async function openStage(contextId, revisionId) {
-        return (await pool.query(`SELECT count(*) FILTER (WHERE required AND state='ready')::integer AS ready,
+        return (await pool.query(`SELECT count(*) FILTER (WHERE required AND state IN ('ready','declined','clarification','expired'))::integer AS ready,
                 min(stage) FILTER (WHERE state='blocked') AS next FROM signing_tasks WHERE owner_context_id=$1 AND revision_id=$2`,
         [contextId, revisionId])).rows[0];
     }

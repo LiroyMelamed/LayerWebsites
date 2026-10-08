@@ -81,7 +81,8 @@ function evaluate(target, input) {
     else if (!completedCopy && !['active', 'attention'].includes(target.workflow_state)) reason = 'REVISION_INACTIVE';
     else if (!completedCopy && !target.before_deadline) reason = 'DEADLINE_EXPIRED';
     else if (!completedCopy && !openRequired.length && !ready.length) reason = 'ALREADY_COMPLETED';
-    else if (!completedCopy && !ready.length) reason = 'WAITING_FOR_PREVIOUS_STAGE';
+    else if (!completedCopy && !ready.length) reason = target.tasks.some(task => ['declined','clarification'].includes(task.state))
+        ? 'TASK_REQUIRES_ATTENTION' : 'WAITING_FOR_PREVIOUS_STAGE';
     else if (!channel || !channels.includes(channel) || !endpoint) reason = 'CHANNEL_UNAVAILABLE';
     else if (!completedCopy && !target.grant_id) reason = 'LINK_UNAVAILABLE';
     else if (messages.some(item => ['dispatching', 'uncertain'].includes(item.state))) reason = 'PREVIOUS_OUTCOME_UNCERTAIN';

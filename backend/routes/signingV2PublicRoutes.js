@@ -32,6 +32,8 @@ router.get('/documents/:documentId', viewLimit, run(async (req, res) => {
     pdf(res.set('X-Document-Final', String(file.final)), file, file.final ? 'signed.pdf' : 'document.pdf');
 }));
 router.get('/packages/:packageId/evidence', viewLimit, run(async (req, res) => pdf(res, await signing().evidencePdf(tokenOf(req), req.params.packageId), 'evidence.pdf')));
+router.post('/issues', viewLimit, run(async (req, res) => res.json(await require('../services/signingV2/taskIssues').reportTaskIssue(pool, tokenOf(req),
+    { ...(req.body || {}), idempotencyKey: req.get('Idempotency-Key') }))));
 router.post('/sessions', viewLimit, run(async (req, res) => res.status(201).json(await signing().createSession(tokenOf(req), req.body || {},
     { ip: getClientIp(req, { trustProxy: true }), userAgent: req.get('User-Agent') }))));
 router.post('/sessions/:id/challenge', challengeLimit, run(async (req, res) => res.json(await signing().challenge(tokenOf(req), req.params.id, req.body || {}))));

@@ -19,6 +19,7 @@ const signingPackagesApi = {
     previewAction: (packageId, personId, body, config) => signingRequest('post', `${participant(packageId, personId)}/action-preview`, body, config),
     executeAction: (packageId, personId, body, idempotencyKey) => signingRequest('post', `${participant(packageId, personId)}/actions`, body,
         { headers: { 'Idempotency-Key': idempotencyKey } }),
+    resolveIssue: (packageId, issueId, body, idempotencyKey) => signingRequest('post', `${root}/packages/${packageId}/issues/${issueId}/resolve`, body, { headers: { 'Idempotency-Key': idempotencyKey } }),
     operation: (id, config) => signingRequest('get', `${root}/operations/${id}`, null, config),
     templates: config => signingRequest('get', `${root}/templates`, null, config),
     authoringTemplates: ({ archived = false } = {}) => signingRequest('get', `${root}/authoring/templates?archived=${archived}`),

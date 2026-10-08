@@ -89,3 +89,22 @@ test.each([
     expect(await screen.findByTestId('destination')).toHaveTextContent(expected);
     expect(signingPublicApi.session).not.toHaveBeenCalled();
 });
+
+test('incumbent controls delegate refusal/clarification to the viewed PDF without a native prompt or OTP', async () => {
+    const api = createV2DocumentAdapter({ token: 'synthetic', entries, consentVersion: 'v', locale: 'ar' });
+    const issue = jest.fn(), nativePrompt = jest.spyOn(window, 'prompt').mockImplementation(() => { throw Error('Unexpected prompt'); });
+    render(<SignatureCanvas variant="screen" publicToken="synthetic" filesApi={api} onClose={() => {}} deferOtpUntilConsent
+        documentIssueActions={{ request: issue, direction: 'ltr', resolutions: { b: 'Unchanged document response' } }} documentGroup={{ documents: entries.map(item => ({ id: item.document.documentId, name: item.document.name })), loadPdf: async () => new Blob(['PDF']) }} />);
+    const selector = await screen.findByRole('combobox');
+    fireEvent.change(selector, { target: { value: 'b' } });
+    await screen.findByRole('button', { name: 'Name b' });
+    expect(screen.getAllByRole('button', { name: 'signingV2.issue.clarifyButton' })).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: 'signingV2.issue.clarifyButton' }));
+    expect(issue).toHaveBeenLastCalledWith('clarify', 'b');
+    expect(screen.getByRole('status')).toHaveAttribute('dir', 'ltr');
+    expect(screen.getByRole('status')).toHaveTextContent('Unchanged document response');
+    fireEvent.click(screen.getByRole('button', { name: 'signing.canvas.rejectDocument' }));
+    expect(issue).toHaveBeenLastCalledWith('decline', 'b');
+    expect(nativePrompt).not.toHaveBeenCalled(); expect(signingPublicApi.challenge).not.toHaveBeenCalled();
+    nativePrompt.mockRestore();
+});

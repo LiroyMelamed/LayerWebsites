@@ -22,6 +22,7 @@ const signingPublicApi = {
     describe: token => signingRequest('get', `${root}/package`, null, as(token)),
     document: (token, documentId) => signingRequest('get', `${root}/documents/${documentId}`, null, as(token, { responseType: 'blob' })),
     evidence: (token, packageId) => signingRequest('get', `${root}/packages/${packageId}/evidence`, null, as(token, { responseType: 'blob' })),
+    issue: (token, body, idempotencyKey) => signingRequest('post', `${root}/issues`, body, as(token, { headers: { 'Idempotency-Key': idempotencyKey } })),
     session: (token, body) => signingRequest('post', `${root}/sessions`, body, as(token)),
     challenge: (token, sessionId, channel) => signingRequest('post', `${root}/sessions/${sessionId}/challenge`, channel ? { channel } : {}, as(token)),
     verify: (token, sessionId, code) => signingRequest('post', `${root}/sessions/${sessionId}/verify`, { code }, as(token)),

@@ -26,6 +26,7 @@ function fixture() {
         preparing_count: 0, attention_count: 0, complete_count: 0, cancelled_count: 0 };
     const child = { id: 'package-1', name: 'Employee 001', workflow_state: 'active', accepted_count: 1, required_count: 9, match_reason: 'person' };
     const detail = {
+        capabilities: { send: true, manage: true }, issues: [],
         package: { id: child.id, external_key: child.name, workflow_state: 'active', accepted_count: 1, required_count: 9, prepared_count: 3, document_count: 3 },
         documents: [{ id: 'doc-1', name: 'Employment agreement', state: 'ready', informational: false, final: false,
             spots: [{ id: 'sig', pageNum: 2, x: 30, y: 100, width: 200, height: 60, type: 'signature', required: true, signerName: 'Synthetic employee', signerIndex: 0 }] }],
@@ -344,4 +345,35 @@ test.each(['he', 'ar', 'en'])('a completed package offers a copy of scoped final
     await within(dialog).findByText(i18n.t('signingV2.action.queued'));
     expect(api.executeAction).toHaveBeenCalledTimes(1);
     expect(api.executeAction).toHaveBeenCalledWith('package-1', 'person-1', { purpose: 'completed_copy', previewHash: 'hash-1' }, expect.any(String));
+});
+
+test('view-only office can read a request but cannot resume or send any message', async () => {
+    const i18n = await translations('en'), { api, detail } = fixture();
+    detail.capabilities = { send: false, manage: false };
+    detail.package.workflow_state = 'attention';
+    detail.participants[0].tasks[0].state = 'clarification';
+    detail.issues = [{ id: 'issue-1', taskId: 'task-1', kind: 'clarify', reason: 'Please explain clause 3', state: 'open', canResume: true, documentName: 'Employment agreement', createdAt: '2026-10-08T08:00:00Z' }];
+    render(<I18nextProvider i18n={i18n}><SigningPackagesWorkspace api={api} initialSubmissionId="send-1" /></I18nextProvider>);
+    fireEvent.click(await screen.findByRole('button', { name: i18n.t('signingV2.openPackage') }));
+    expect(await screen.findByText('Please explain clause 3')).toBeVisible();
+    expect(screen.queryByRole('button', { name: i18n.t('signingV2.issue.resolveTitle') })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: i18n.t('signingV2.action.reminder.open') })).not.toBeInTheDocument();
+});
+
+test.each(['he','ar','en'])('authorized office responds to an issue using the existing controls in %s', async language => {
+    const i18n = await translations(language), { api, detail } = fixture();
+    detail.participants[0].tasks[0].state = 'clarification';
+    detail.issues = [{ id: 'issue-1', taskId: 'task-1', kind: 'clarify', reason: 'Please explain clause 3', state: 'open', canResume: true, documentName: 'Employment agreement', createdAt: '2026-10-08T08:00:00Z' }];
+    api.resolveIssue = jest.fn().mockResolvedValue({ state: 'ready' });
+    render(<I18nextProvider i18n={i18n}><SigningPackagesWorkspace api={api} initialSubmissionId="send-1" /></I18nextProvider>);
+    fireEvent.click(await screen.findByRole('button', { name: i18n.t('signingV2.openPackage') }));
+    fireEvent.click(await screen.findByRole('button', { name: i18n.t('signingV2.issue.resolveTitle') }));
+    const form = screen.getByRole('dialog', { name: i18n.t('signingV2.issue.resolveTitle') });
+    const confirm = within(form).getByRole('button', { name: i18n.t('signingV2.issue.resolveConfirm') });
+    expect(confirm).toBeDisabled();
+    fireEvent.change(within(form).getByRole('textbox'), { target: { value: 'Explained without changing the document' } });
+    fireEvent.click(confirm);
+    await waitFor(() => expect(api.resolveIssue).toHaveBeenCalledWith('package-1', 'issue-1', { resolution: 'Explained without changing the document' }, expect.any(String)));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: i18n.t('signingV2.issue.resolveTitle') })).not.toBeInTheDocument());
+    expect(api.details).toHaveBeenCalledTimes(2);
 });

@@ -13,6 +13,7 @@ import { Text14, TextBold14 } from '../../../components/specializedComponents/te
 import { colors } from '../../../constant/colors';
 import useSigningLocale from './useSigningLocale';
 import ParticipantActionDialog from './ParticipantActionDialog';
+import TaskIssueDialog from './TaskIssueDialog';
 import StatusNotice from '../../../components/ui/StatusNotice';
 import { downloadBlobAsFile } from '../../../utils/downloadBlobAsFile';
 import './signingPackages.scss';
@@ -129,6 +130,7 @@ function PersonActions({ person, detail, onAction }) {
     const { t, date } = useSigningLocale();
     const latest = detail.deliveries.find(item => item.personId === person.personId);
     const completedCopy = detail.package.workflow_state === 'complete';
+    if (!detail.capabilities?.send) return null;
     if (!completedCopy && !person.tasks.some(task => task.state === 'ready')) return null;
     const purpose = completedCopy ? 'completed_copy' : latest?.state === 'failed' ? 'resend' : 'reminder';
     return <div className="lw-signingPackages__personActions">
@@ -177,6 +179,7 @@ function PackagePanel({ id, api, onClose }) {
     const dialog = useRef(null);
     const [tab, setTab] = useState('people');
     const [action, setAction] = useState(null);
+    const [issue, setIssue] = useState(null);
     const [openId, setOpenId] = useState(null);
     const [files, setFiles] = useState({});
     const [busy, setBusy] = useState('');
@@ -255,6 +258,14 @@ function PackagePanel({ id, api, onClose }) {
                             {document.final && <SecondaryButton onPress={() => downloadDocument(document)} disabled={busy === `document-${document.id}`}
                                 aria-label={`${t('signingV2.public.downloadFinal')}: ${document.name}`}>{t('signingV2.public.downloadFinal')}</SecondaryButton>}
                         </div>}
+                        {(detail.issues || []).filter(item => item.taskId === task.id).map(item => <div key={item.id} className="lw-signingTaskIssue__notice">
+                            <strong>{t(`signingV2.issue.${item.kind}Title`)}</strong>
+                            {item.reason && <p className="lw-signingTaskIssue__note">{item.reason}</p>}
+                            <time dateTime={item.createdAt}>{date(item.createdAt)}</time>
+                            {item.state === 'resolved' ? <p className="lw-signingTaskIssue__note">{t('signingV2.issue.resolution')}: {item.resolution}</p>
+                                : detail.capabilities?.manage && item.canResume ? <SecondaryButton onPress={() => setIssue(item)}>{t('signingV2.issue.resolveTitle')}</SecondaryButton>
+                                    : <p>{t('signingV2.issue.officePaused')}</p>}
+                        </div>)}
                         {task.acceptedAt && <time dateTime={task.acceptedAt}>{date(task.acceptedAt)}</time>}
                     </li>;
                 })}</ul>
@@ -271,6 +282,9 @@ function PackagePanel({ id, api, onClose }) {
                 {delivery.state === 'uncertain' && <p>{t('signingV2.uncertainHelp')}</p>}
             </li>)}</ul>}
         </>}
+        {issue && <TaskIssueDialog kind="resolve" documentName={issue.documentName} originalNote={issue.reason}
+            onSubmit={(resolution, key) => api.resolveIssue(id, issue.id, { resolution }, key)}
+            onClose={changed => { setIssue(null); if (changed) resource.refresh(); }} />}
         {action && <ParticipantActionDialog key={`${action.personId}:${action.purpose}`} api={api} packageId={id} {...action}
             onClose={changed => { setAction(null); if (changed) resource.refresh(); }} />}
     </dialog>;

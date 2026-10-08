@@ -8,6 +8,7 @@ import { Text14, TextBold24 } from '../../../components/specializedComponents/te
 import SignatureCanvas from '../../../components/specializedComponents/signFiles/SignatureCanvas';
 import { images } from '../../../assets/images/images';
 import CompletedPackageCopy from './CompletedPackageCopy';
+import TaskIssueDialog from '../templates/TaskIssueDialog';
 import signingPublicApi, { readGrantToken } from '../../../api/signingPublicApi';
 import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
 import { createV2DocumentAdapter } from './v2SigningCanvasAdapter';
@@ -54,6 +55,14 @@ function signedDocumentOf(view) {
     return null;
 }
 
+function pausedDocumentOf(view) {
+    for (const pkg of view?.packages || []) for (const document of pkg.documents || []) {
+        const task = (document.tasks || []).find(item => ['declined', 'clarification'].includes(item.state));
+        if (task) return { pkg, document, task };
+    }
+    return null;
+}
+
 function waitingDocumentOf(view) {
     for (const pkg of view?.packages || []) {
         for (const document of pkg.documents || []) {
@@ -65,13 +74,14 @@ function waitingDocumentOf(view) {
 }
 
 export default function PublicPackageSigning() {
-    const { t, language: locale, number } = useSigningLocale();
+    const { t, language: locale, number, direction } = useSigningLocale();
     const navigate = useNavigate();
     const [token] = useState(readGrantToken);
     const [view, setView] = useState(null);
     const [loadError, setLoadError] = useState(token ? null : { code: 'MISSING_TOKEN' });
     const [index, setIndex] = useState(0);
     const [groupSelection, setGroupSelection] = useState(null);
+    const [issue, setIssue] = useState(null);
 
     const load = useCallback(async () => {
         if (!token) return null;
@@ -95,7 +105,7 @@ export default function PublicPackageSigning() {
 
     const documents = useMemo(() => documentsOf(view), [view]);
     const readyDocumentCount = new Set(documents.map(item => item.document.documentId)).size;
-    const current = documents[Math.min(index, documents.length - 1)] || signedDocumentOf(view) || waitingDocumentOf(view);
+    const current = documents[Math.min(index, documents.length - 1)] || pausedDocumentOf(view) || signedDocumentOf(view) || waitingDocumentOf(view);
     const groupCandidate = useMemo(() => readyDocumentGroup(documents, view?.maxTasksPerSession || 200, current?.document.documentId), [documents, view?.maxTasksPerSession, current]);
     const candidateCount = new Set(groupCandidate.map(item => item.document.documentId)).size;
     const groupIds = new Set((groupSelection || []).map(item => item.document.documentId));
@@ -121,6 +131,12 @@ export default function PublicPackageSigning() {
         setIndex(queue.length ? Math.min(following, queue.length - 1) : 0);
     };
 
+    const requestIssue = (kind, selectedDocumentId) => {
+        const documentId = selectedDocumentId || current?.document.documentId;
+        const selected = documents.filter(item => item.document.documentId === documentId);
+        if (selected.length) setIssue({ kind, documentName: selected[0].document.name, taskIds: selected.map(item => item.task.taskId) });
+    };
+
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground} className="lw-publicSigningScreen">
             {!token || loadError ? (
@@ -144,9 +160,20 @@ export default function PublicPackageSigning() {
                         <Text14>{t('signing.public.closedHint')}</Text14>
                     </SimpleContainer>
                 </SimpleContainer>
+            ) : ['declined', 'clarification'].includes(current.task.state) ? (
+                <SimpleContainer className="lw-publicSigningScreen__container" dir={direction}>
+                    <SimpleContainer className="lw-publicSigningScreen__stack">
+                        <TextBold24>{t(`signingV2.issue.${current.task.state}Status`)}</TextBold24>
+                        <Text14><bdi>{current.document.name}</bdi></Text14>
+                        <Text14>{t('signingV2.issue.pausedHelp')}</Text14>
+                        {current.task.issue?.reason && <p className="lw-signingTaskIssue__note">{current.task.issue.reason}</p>}
+                        <SecondaryButton onPress={load}>{t('signingV2.refresh')}</SecondaryButton>
+                        <SecondaryButton onPress={() => navigate(sessionHomePath(), { replace: true })}>{t('signingV2.completedCopy.finish')}</SecondaryButton>
+                    </SimpleContainer>
+                </SimpleContainer>
             ) : (
                 <SignatureCanvas
-                    key={`${groupSelection ? groupSelection.map(item => item.task.taskId).join(':') : current.task.taskId}:${locale}`}
+                    key={`${groupSelection ? groupSelection.map(item => `${item.task.taskId}.${item.task.version || 0}`).join(':') : `${current.task.taskId}.${current.task.version || 0}`}:${locale}`}
                     publicToken={token}
                     variant="screen"
                     filesApi={adapter}
@@ -161,6 +188,7 @@ export default function PublicPackageSigning() {
                     multiDocumentAction={!groupSelection && candidateCount > 1 ? {
                         onPress: () => setGroupSelection(groupCandidate), label: groupLabel,
                     } : null}
+                    documentIssueActions={{ request: requestIssue, direction, documentId: current.document.documentId, resolutions: Object.fromEntries(documents.filter(item => item.task.issue?.state === 'resolved').map(item => [item.document.documentId, item.task.issue.resolution])) }}
                     deferOtpUntilConsent={readyDocumentCount > 1}
                     nextDocument={groupSelection ? (remainingAfterGroup > 0 ? { onPress: openNext,
                         label: t('signingV2.public.group.continueRemaining', { count: remainingAfterGroup, documentCount: number(remainingAfterGroup) }) } : null)
@@ -168,6 +196,9 @@ export default function PublicPackageSigning() {
                     onClose={() => navigate(sessionHomePath(), { replace: true })}
                 />
             )}
+            {issue && <TaskIssueDialog kind={issue.kind} documentName={issue.documentName}
+                onSubmit={(reason, key) => signingPublicApi.issue(token, { kind: issue.kind, taskIds: issue.taskIds, reason }, key)}
+                onClose={changed => { setIssue(null); if (changed) { setGroupSelection(null); setIndex(0); load(); } }} />}
         </SimpleScreen>
     );
 }

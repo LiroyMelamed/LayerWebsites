@@ -1485,7 +1485,8 @@
       "expired": "Signing deadline passed",
       "cancelled": "Cancelled",
       "preparing": "Waiting for document preparation",
-      "previousStage": "Waiting for the previous stage"
+      "previousStage": "Waiting for the previous stage",
+      "clarification": "Awaiting clarification"
     },
     "document": {
       "pending": "Waiting for preparation",
@@ -1542,7 +1543,12 @@
       "TEMPLATE_ARCHIVED": "This template is archived. Restore it before a new send.",
       "TEMPLATE_SOURCE_ARCHIVED": "The source template is archived. Its imported version cannot be restored.",
       "COMPLETED_COPY_NOT_READY": "The copy is not ready. Signatures and final document preparation must finish first.",
-      "COMPLETED_COPY_CHANGED": "The prepared documents changed. Reopen the send details and review the copy before sending."
+      "COMPLETED_COPY_CHANGED": "The prepared documents changed. Reopen the send details and review the copy before sending.",
+      "INVALID_TASK_ISSUE": "This action is unavailable. Refresh the document and try again.",
+      "ISSUE_NOTE_REQUIRED": "Enter an explanation of up to 2,000 characters.",
+      "ISSUE_ALREADY_RESOLVED": "This request has already been handled. Refresh the page.",
+      "TASK_STAGE_PASSED": "This signing stage is closed. Document changes require a new revision.",
+      "TASK_REQUIRES_ATTENTION": "Signing is waiting for a refusal or clarification request to be handled."
     },
     "action": {
       "reminder": {
@@ -1591,7 +1597,8 @@
       "MESSAGE_ALREADY_QUEUED": "A message to this signer is already waiting to go out. Track it in the Delivery tab.",
       "COOLDOWN_ACTIVE": "A message was just sent to this signer. You can send again from {{time}}.",
       "COMPLETED_COPY_NOT_READY": "The copy is not ready. Signatures and final document preparation must finish first.",
-      "COMPLETED_COPY_CHANGED": "The prepared documents changed. Reopen the send details and review the copy before sending."
+      "COMPLETED_COPY_CHANGED": "The prepared documents changed. Reopen the send details and review the copy before sending.",
+      "TASK_REQUIRES_ATTENTION": "Signing is waiting for a refusal or clarification request to be handled."
     },
     "compose": {
       "title": "New signing run",
@@ -2231,6 +2238,25 @@
       "finish": "Finish",
       "unavailable": "This copy link is no longer available. Contact the office for a new link.",
       "lastCopy": "Last completed copy"
+    },
+    "issue": {
+      "clarifyButton": "Ask for clarification",
+      "declineTitle": "Decline this document",
+      "clarifyTitle": "Ask the office for clarification",
+      "resolveTitle": "Respond and reopen signing",
+      "declineHelp": "This refusal applies only to this document. Existing signatures are preserved. The office will see your request; a stage depending on this signature will wait for a response.",
+      "clarifyHelp": "Explain what needs clarification in this document. Signing it will pause for the office to respond. You can still sign other documents that are ready for you.",
+      "resolveHelp": "Add a response for the signer. This reopens the same unchanged document and requires fresh consent and a new verification code. Changes to content or signers require a new revision.",
+      "reason": "What needs clarification?",
+      "optionalReason": "Reason for declining (optional)",
+      "resolution": "Office response",
+      "declineConfirm": "Confirm refusal",
+      "clarifyConfirm": "Send request to the office",
+      "resolveConfirm": "Save response and reopen signing",
+      "declinedStatus": "Your refusal was sent to the office",
+      "clarificationStatus": "Your clarification request was sent to the office",
+      "pausedHelp": "Signing this document is paused for the office to respond. Existing signatures are preserved.",
+      "officePaused": "This needs attention before signing can continue. A signed document cannot be changed."
     }
   },
   "calendar": {

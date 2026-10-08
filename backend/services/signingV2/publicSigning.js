@@ -44,7 +44,10 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
         const rows = (await pool.query(`SELECT d.id AS document_id,d.name,d.state AS document_state,d.document_key,d.field_bindings,
                 d.final_artifact_id,r.id AS revision_id,r.package_id,r.workflow_state,r.snapshot->>'locale' AS locale,r.deadline,
                 pk.external_key,s.name AS run_name,owner.name AS owner_name,person.name AS person_name,
-                pa.metadata->'pages' AS pages,t.id AS task_id,t.state AS task_state,t.stage,t.required,t.field_ids,
+                pa.metadata->'pages' AS pages,t.id AS task_id,t.state AS task_state,t.stage,t.required,t.field_ids,t.version AS task_version,
+                (SELECT jsonb_build_object('kind',i.kind,'reason',i.reason,'state',i.state,'resolution',i.resolution)
+                    FROM signing_task_issues i WHERE i.owner_context_id=t.owner_context_id AND i.task_id=t.id
+                    ORDER BY i.created_at DESC,i.id DESC LIMIT 1) AS issue,
                 (SELECT COALESCE(jsonb_agg(op.identity_snapshot->>'name' ORDER BY op.role_key,op.occurrence),'[]') FROM signing_participations op
                     WHERE op.owner_context_id=r.owner_context_id AND op.revision_id=r.id AND op.person_id<>i.person_id) AS others
             FROM signing_grant_items i
@@ -78,7 +81,7 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
             const state = row.task_state === 'blocked' ? 'waiting' : row.task_state;
             if (state in counts) counts[state] += 1;
             const ids = new Set(row.field_ids);
-            item.documents.get(row.document_id).tasks.push({ taskId: row.task_id, state, required: row.required,
+            item.documents.get(row.document_id).tasks.push({ taskId: row.task_id, state, required: row.required, version: row.task_version, issue: row.issue,
                 fields: row.field_bindings.filter(field => ids.has(field.id)).map(visibleField) });
         }
         return {
@@ -435,10 +438,10 @@ async function currentEndpoints(db, grant, revisionId) {
 }
 
 // Runs inside the accepting transaction. Only one stage is ready at a time; it is done when
-// none of its required tasks are still ready. Optional tasks never hold a package back.
+// none of its required tasks are ready or need resolution. Optional tasks never hold a package back.
 async function advanceMany(db, contextId, revisions) {
     if (!revisions.length) return [];
-    const states = new Map((await db.query(`SELECT revision_id,count(*) FILTER (WHERE required AND state='ready')::integer AS ready,
+    const states = new Map((await db.query(`SELECT revision_id,count(*) FILTER (WHERE required AND state IN ('ready','declined','clarification','expired'))::integer AS ready,
             min(stage) FILTER (WHERE state='blocked') AS next
         FROM signing_tasks WHERE owner_context_id=$1 AND revision_id=ANY($2::uuid[]) GROUP BY revision_id`,
     [contextId, revisions.map(revision => revision.id)])).rows.map(row => [row.revision_id, row]));

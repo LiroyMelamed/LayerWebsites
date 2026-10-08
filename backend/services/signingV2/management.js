@@ -43,8 +43,8 @@ function projectionCte(scope) {
         SELECT t.revision_id,count(*) FILTER (WHERE t.required) AS required_count,
             count(*) FILTER (WHERE t.required AND t.state='accepted') AS accepted_count,
             count(*) FILTER (WHERE t.state='ready') AS ready_count,
-            count(*) FILTER (WHERE t.state IN ('declined','expired')) AS attention_count,
-            min(t.stage) FILTER (WHERE t.state='ready') AS current_stage
+            count(*) FILTER (WHERE t.state IN ('declined','clarification','expired')) AS attention_count,
+            min(t.stage) FILTER (WHERE t.state='ready' OR (t.required AND t.state IN ('declined','clarification','expired'))) AS current_stage
         FROM signing_tasks t JOIN authorized a ON a.owner_context_id=t.owner_context_id AND a.active_revision_id=t.revision_id
         GROUP BY t.revision_id
     ), document_counts AS (
@@ -230,7 +230,16 @@ async function packageDetails(db, scope, packageId) {
         const { bindings, ...rest } = document;
         return { ...rest, spots };
     });
-    return { package: pkg, ...body };
+    const issues = (await db.query(`SELECT i.id,i.task_id AS "taskId",i.kind,i.reason,i.state,i.created_at AS "createdAt",
+            i.resolution,i.resolved_at AS "resolvedAt",p.person_id AS "personId",p.identity_snapshot->>'name' AS "personName",d.name AS "documentName",
+            (i.state='open' AND r.workflow_state IN ('active','attention') AND (r.deadline IS NULL OR r.deadline>clock_timestamp()) AND t.stage=(SELECT min(t2.stage) FROM signing_tasks t2
+                WHERE t2.owner_context_id=t.owner_context_id AND t2.revision_id=t.revision_id AND t2.required AND t2.state NOT IN ('accepted','cancelled'))) AS "canResume"
+        FROM signing_task_issues i JOIN signing_tasks t ON t.owner_context_id=i.owner_context_id AND t.id=i.task_id
+        JOIN signing_participations p ON p.owner_context_id=t.owner_context_id AND p.id=t.participation_id
+        JOIN signing_documents d ON d.owner_context_id=t.owner_context_id AND d.id=t.document_id
+        JOIN signing_package_revisions r ON r.owner_context_id=t.owner_context_id AND r.id=t.revision_id
+        WHERE i.owner_context_id=$1 AND t.revision_id=$2 ORDER BY i.created_at DESC,i.id`, [scope.contextId,pkg.active_revision_id])).rows;
+    return { package: pkg, ...body, issues, capabilities: { send: scope.send === true, manage: scope.manage === true } };
 }
 
 async function packageDocumentFile(db, scope, packageId, documentId, storage) {

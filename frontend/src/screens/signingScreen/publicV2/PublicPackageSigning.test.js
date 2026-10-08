@@ -13,13 +13,17 @@ jest.mock('../../../utils/downloadBlobAsFile', () => ({ downloadBlobAsFile: jest
 
 jest.mock('../../../api/signingPublicApi', () => {
     const actual = jest.requireActual('../../../api/signingPublicApi');
-    return { __esModule: true, ...actual, default: { describe: jest.fn(), document: jest.fn(), evidence: jest.fn(), session: jest.fn() } };
+    return { __esModule: true, ...actual, default: { describe: jest.fn(), document: jest.fn(), evidence: jest.fn(), session: jest.fn(), issue: jest.fn() } };
 });
 jest.mock('../../../components/specializedComponents/signFiles/SignatureCanvas', () => (props) => (
     <div data-testid="signing-canvas">
         {props.multiDocumentAction && <button onClick={props.multiDocumentAction.onPress}>{props.multiDocumentAction.label}</button>}
         {props.documentGroup && <div data-testid="group">{props.documentGroup.documents.map(doc => doc.id).join(',')}</div>}
         {props.nextDocument && <button type="button" onClick={props.nextDocument.onPress}>{props.nextDocument.label}</button>}
+        {props.documentIssueActions && <>
+            <button onClick={() => props.documentIssueActions.request('clarify', props.documentGroup?.documents[1]?.id)}>issue-current</button>
+            <button onClick={() => props.documentIssueActions.request('decline', null)}>decline-current</button>
+        </>}
         <button type="button" onClick={props.onClose}>close</button>
     </div>
 ));
@@ -188,6 +192,7 @@ test.each(['he', 'ar', 'en'])('a read-only completed copy downloads fresh author
     await waitFor(() => expect(screen.getByRole('button', { name: i18n.t('signingV2.completedCopy.receipt') })).toBeEnabled());
     fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.completedCopy.receipt') }));
     await waitFor(() => expect(signingPublicApi.evidence).toHaveBeenCalledWith(TOKEN, 'one-package'));
+    await waitFor(() => expect(screen.getByRole('button', { name: i18n.t('signingV2.completedCopy.receipt') })).toBeEnabled());
 });
 
 test('a revoked final-document request reports failure and never downloads stale cached content', async () => {
@@ -202,4 +207,43 @@ test('a revoked final-document request reports failure and never downloads stale
     await screen.findByRole('alert');
     expect(downloadBlobAsFile).toHaveBeenCalledTimes(downloads);
     expect(screen.getByRole('button', { name: `${i18n.t('signingV2.public.downloadFinal')}: Agreement` })).toBeEnabled();
+});
+
+test.each(['he', 'ar', 'en'])('clarification during a group freezes only the viewed PDF in %s', async language => {
+    const i18n = await translations(); await i18n.changeLanguage(language);
+    const first = documentFor(1, 'ready'), second = documentFor(2, 'ready');
+    second.documents[0].tasks.push({ taskId: 't-2-extra', state: 'ready', fields: [] });
+    const initial = { person: { name: 'Synthetic signer' }, consentVersion: 'v', packages: [first, second, documentFor(3, 'waiting')] };
+    signingPublicApi.describe.mockResolvedValue(initial);
+    signingPublicApi.issue.mockResolvedValue({ state: 'clarification' });
+    window.history.replaceState({}, '', `/ViewSignedDocument/Sign#${TOKEN}`);
+    render(<MemoryRouter><I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider></MemoryRouter>);
+    fireEvent.click(await screen.findByRole('button', { name: i18n.t('signingV2.public.group.signAll') }));
+    fireEvent.click(screen.getByRole('button', { name: 'issue-current' }));
+    const form = screen.getByRole('dialog', { name: i18n.t('signingV2.issue.clarifyTitle') });
+    expect(form).toHaveTextContent('Agreement 2');
+    expect(form).toHaveAttribute('dir', language === 'en' ? 'ltr' : 'rtl');
+    expect(screen.getByRole('button', { name: i18n.t('signingV2.issue.clarifyConfirm') })).toBeDisabled();
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Please explain this one PDF' } });
+    const changed = JSON.parse(JSON.stringify(initial));
+    changed.packages[1].documents[0].tasks.forEach(task => { task.state = 'clarification'; });
+    signingPublicApi.describe.mockResolvedValue(changed);
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.issue.clarifyConfirm') }));
+    await waitFor(() => expect(signingPublicApi.issue).toHaveBeenCalledWith(TOKEN, { kind: 'clarify', taskIds: ['t-2', 't-2-extra'], reason: 'Please explain this one PDF' }, expect.any(String)));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.getByTestId('signing-canvas')).toBeInTheDocument();
+    expect(screen.queryByTestId('group')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: i18n.t('signingV2.public.group.signAll') })).not.toBeInTheDocument();
+});
+
+test('a paused task is shown before accepted documents; no OTP or completed-signature screen appears', async () => {
+    const i18n = await translations(); await i18n.changeLanguage('en');
+    const paused = documentFor(2, 'declined'); paused.documents[0].tasks[0].issue = { kind: 'decline', reason: 'Review the amount' };
+    signingPublicApi.describe.mockResolvedValue({ person: { name: 'Synthetic signer' }, packages: [documentFor(1, 'accepted'), paused, documentFor(3, 'waiting')] });
+    window.history.replaceState({}, '', `/ViewSignedDocument/Sign#${TOKEN}`);
+    render(<MemoryRouter><I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider></MemoryRouter>);
+    expect(await screen.findByText(i18n.t('signingV2.issue.declinedStatus'))).toBeVisible();
+    expect(screen.getByText('Review the amount')).toBeVisible();
+    expect(screen.queryByTestId('signing-canvas')).not.toBeInTheDocument();
+    expect(signingPublicApi.session).not.toHaveBeenCalled();
 });

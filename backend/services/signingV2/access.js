@@ -34,6 +34,7 @@ async function actorScope(db, req, action = 'view') {
         // Match the incumbent customer directory (legacy Admin, not every lawyer).
         clientView: custom ? hasAreaAction(req.firmPermissions, 'clients', 'view') : mode === 'platform_admin' || actor.role === 'Admin',
         caseAll: !custom || getCasesDataScope(req.firmPermissions) === 'all_firm',
+        send: !custom || hasAreaAction(req.firmPermissions, 'signing', 'upload'),
         templateManage: !custom || hasAreaAction(req.firmPermissions, 'signing', 'manage'),
         manage: !custom || (hasAreaAction(req.firmPermissions, 'signing', 'manage') && hasAreaAction(req.firmPermissions, 'signing', 'upload')),
         mode,
