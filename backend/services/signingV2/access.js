@@ -31,6 +31,8 @@ async function actorScope(db, req, action = 'view') {
         all: !custom || getSigningDataScope(req.firmPermissions) === 'all_firm',
         assignedCases: custom && req.firmPermissions?.areas?.signing?.legacyCaseAssignment === true,
         caseView: !custom || hasAreaAction(req.firmPermissions, 'cases', 'view'),
+        // Match the incumbent customer directory (legacy Admin, not every lawyer).
+        clientView: custom ? hasAreaAction(req.firmPermissions, 'clients', 'view') : mode === 'platform_admin' || actor.role === 'Admin',
         caseAll: !custom || getCasesDataScope(req.firmPermissions) === 'all_firm',
         templateManage: !custom || hasAreaAction(req.firmPermissions, 'signing', 'manage'),
         manage: !custom || (hasAreaAction(req.firmPermissions, 'signing', 'manage') && hasAreaAction(req.firmPermissions, 'signing', 'upload')),
@@ -57,4 +59,13 @@ async function assertCases(db, scope, caseIds) {
     if (result.rowCount !== caseIds.length) fail('NOT_FOUND', 404);
 }
 
-module.exports = { actorScope, packageScopeSql, scopeParams, assertCases };
+async function assertClients(db, scope, clientIds, lock = false) {
+    if (!clientIds.length) return;
+    if (!scope.clientView) fail('NOT_FOUND', 404);
+    const result = await db.query(`SELECT userid FROM users WHERE userid=ANY($1::integer[])
+        AND law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid AND role NOT IN ('Admin','Deleted')
+        ORDER BY userid ${lock ? 'FOR SHARE' : ''}`, [clientIds, scope.tenantId]);
+    if (result.rowCount !== clientIds.length) fail('NOT_FOUND', 404);
+}
+
+module.exports = { actorScope, packageScopeSql, scopeParams, assertCases, assertClients };

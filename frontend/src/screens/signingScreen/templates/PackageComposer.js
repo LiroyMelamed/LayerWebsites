@@ -19,6 +19,7 @@ import StatusNotice from '../../../components/ui/StatusNotice';
 import SelectedTemplateEntry from './SelectedTemplateEntry';
 import WorkbookImport from './WorkbookImport';
 import CaseContextPicker from './CaseContextPicker';
+import ClientSendContext from './ClientSendContext';
 import useSigningDraft from './useSigningDraft';
 import DraftRecoveryList from './DraftRecoveryList';
 import './signingPackages.scss';
@@ -93,7 +94,7 @@ function SuggestField({ id, label, value, error, errorText, dir, type, inputMode
     </div>;
 }
 
-function PersonFields({ scope, roleKey, person, errors, onChange, compact, suggestLawyers, casePeople, otherRoles = [] }) {
+function PersonFields({ scope, roleKey, person, errors, onChange, compact, suggestLawyers, casePeople, peopleLabel, otherRoles = [] }) {
     const { t, direction } = useSigningLocale();
     const message = name => errors?.[name] ? t(`signingV2.compose.rowErrors.${errors[name]}`, { defaultValue: t('signingV2.compose.rowErrors.INVALID_ROW') }) : '';
     const pick = item => {
@@ -117,7 +118,7 @@ function PersonFields({ scope, roleKey, person, errors, onChange, compact, sugge
             </select>
         </Field>}
         {person.sameAsRole ? <p className="lw-signingCompose__hintLine">{t('signingV2.compose.identity.linkedHelp')}</p> : <>
-        {!!casePeople?.length && <Field id={fieldId(scope, roleKey, 'case-person')} label={t('signingV2.compose.context.fill')} className="is-wide">
+        {!!casePeople?.length && <Field id={fieldId(scope, roleKey, 'case-person')} label={peopleLabel || t('signingV2.compose.context.fill')} className="is-wide">
             <select value="" onChange={event => { const item = casePeople.find(candidate => String(candidate.id) === event.target.value); if (item) pick(item); }}>
                 <option value="">{t('signingV2.compose.context.choose')}</option>
                 {casePeople.map(item => <option key={item.id} value={item.id}>{item.name} · {item.email || item.phone || t('signingV2.compose.context.noContact')}</option>)}
@@ -170,7 +171,7 @@ function DocumentDataFields({ row, fields, errors, onChange }) {
     </div>;
 }
 
-const RecipientRow = memo(function RecipientRow({ row, index, roles, errors, onChange, onRemove, canRemove, casePeople, allRoles, dataFields, onDataChange }) {
+const RecipientRow = memo(function RecipientRow({ row, index, roles, errors, onChange, onRemove, canRemove, casePeople, peopleLabel, allRoles, dataFields, onDataChange }) {
     const { t, number } = useSigningLocale();
     const change = useCallback((roleKey, field, value) => onChange(row.id, roleKey, field, value), [onChange, row.id]);
     const rowNumber = number(index + 1);
@@ -186,7 +187,7 @@ const RecipientRow = memo(function RecipientRow({ row, index, roles, errors, onC
             {errors?.row?.key && <p className="lw-signingCompose__fieldError" role="note">{t(`signingV2.compose.rowErrors.${errors.row.key}`, { defaultValue: t('signingV2.compose.rowErrors.INVALID_ROW') })}</p>}
             {roles.map(role => <div key={role.key} className="lw-signingCompose__roleBlock">
                 {roles.length > 1 && <h4>{role.label}</h4>}
-                <PersonFields scope={row.id} roleKey={role.key} person={row.recipients[role.key] || blankPerson()} errors={errors?.[role.key]} onChange={change} suggestLawyers={role.key === 'lawyer'} compact casePeople={casePeople} otherRoles={allRoles.filter(other => other.key !== role.key)} />
+                <PersonFields scope={row.id} roleKey={role.key} person={row.recipients[role.key] || blankPerson()} errors={errors?.[role.key]} onChange={change} suggestLawyers={role.key === 'lawyer'} compact casePeople={casePeople} peopleLabel={peopleLabel} otherRoles={allRoles.filter(other => other.key !== role.key)} />
             </div>)}
             <DocumentDataFields row={row} fields={dataFields} errors={errors?.data} onChange={onDataChange} />
         </fieldset>
@@ -344,7 +345,7 @@ function templateOrder(roles) {
     };
 }
 
-export default function PackageComposer({ api = signingPackagesApi, onBack, onCreated, initialTemplateId, initialTemplateVersion, initialCaseId, backLabel }) {
+export default function PackageComposer({ api = signingPackagesApi, onBack, onCreated, initialTemplateId, initialTemplateVersion, initialCaseId, initialClientId, backLabel }) {
     const { t, direction, number, language, errorMessage, locale } = useSigningLocale();
     const heading = useRef(null);
     const errorSummary = useRef(null);
@@ -369,6 +370,11 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const [caseContext, setCaseContext] = useState(null);
     const [casePending, setCasePending] = useState(!!initialCaseId);
     const [caseRestored, setCaseRestored] = useState(false);
+    const [clientContext, setClientContext] = useState(null);
+    const [clientPending, setClientPending] = useState(!!initialClientId);
+    const [clientRestored, setClientRestored] = useState(false);
+    const contextPeople = useMemo(() => [...new Map([...(caseContext?.people || []), ...(clientContext ? [clientContext] : [])].map(person => [person.id, person])).values()], [caseContext, clientContext]);
+    const peopleLabel = clientContext ? t('signingV2.compose.clientContext.fill') : undefined;
     const createKey = useRef(null);
     const creating = useRef(false);
     const checking = useRef(false);
@@ -515,6 +521,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             body: {
                 templateVersionId: template.versionId, name: name.trim(),
                 ...(caseContext ? { caseId: caseContext.id } : {}),
+                ...(clientContext ? { clientId: clientContext.id } : {}),
                 ...(Object.keys(roleAudience).length ? { roleAudience } : {}),
                 omittedRoles: [...omitted].sort(),
                 signingOrder: orderMode === 'grouped' ? { mode: 'grouped', groups: activeGroups } : orderMode === 'sequential'
@@ -528,7 +535,13 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const draftPayload = template ? { request: payload().body, editor: {
         template, name, shared, roleAudience, rows, omitted: [...omitted], orderMode, orderRoles, orderGroups, source, importNote,
     } } : null;
-    const draft = useSigningDraft({ api, payload: draftPayload, active: !!template && !casePending && step !== 'done',
+    const draft = useSigningDraft({ api, payload: draftPayload, active: !!template && !casePending && !clientPending && step !== 'done',
+        validateRestore: saved => {
+            if ((initialClientId && String(saved?.request?.clientId) !== String(initialClientId))
+                || (initialCaseId && String(saved?.request?.caseId) !== String(initialCaseId))) {
+                throw Object.assign(new Error('DRAFT_CONTEXT_CHANGED'), { code: 'DRAFT_CONTEXT_CHANGED' });
+            }
+        },
         onSubmitted: created => { setResult(created); setStep('done'); },
         onRestore: async (saved, isCurrent) => {
             const editor = saved.editor;
@@ -536,6 +549,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 throw Object.assign(new Error('INVALID_DRAFT'), { code: 'INVALID_DRAFT' });
             }
             const restoredCase = saved.request.caseId ? await api.caseContext(saved.request.caseId) : null;
+            const restoredClient = saved.request.clientId ? await api.clientContext(saved.request.clientId) : null;
             if (!isCurrent()) return;
             setTemplate(editor.template); setName(editor.name || ''); setShared(editor.shared || {});
             setRoleAudience(editor.roleAudience || {});
@@ -543,10 +557,11 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             setOmitted(new Set(editor.omitted || [])); setOrderMode(editor.orderMode || 'parallel');
             setOrderGroups(editor.orderGroups || templateOrder(editor.template.roles).groups);
             setOrderRoles(editor.orderRoles || []); setSource(editor.source || 'manual'); setImportNote(editor.importNote || null);
+            setClientContext(restoredClient); setClientPending(false); setClientRestored(true);
             setCaseContext(restoredCase); setCasePending(false); setCaseRestored(true); invalidate(); setStep('recipients');
         } });
     const runCheck = async () => {
-        if (checking.current || casePending) return;
+        if (checking.current || casePending || clientPending) return;
         setError(null);
         const { body, sentIds } = payload();
         if (!body.name) { setError({ code: 'RUN_NAME_REQUIRED' }); return; }
@@ -605,7 +620,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
 
     if (draft.status === 'loading' || draft.status === 'loadError') return <section className="lw-signingPackages lw-signingCompose" dir={direction}>
         {draft.status === 'loading' ? <p role="status">{t('signingV2.compose.draft.loading')}</p> : <StatusNotice>
-            <p>{t('signingV2.compose.draft.loadError')}</p>
+            <p>{t(draft.error?.code === 'DRAFT_CONTEXT_CHANGED' ? 'signingV2.compose.draft.contextChanged' : 'signingV2.compose.draft.loadError')}</p>
             <SecondaryButton onPress={() => draft.recover(draft.id)}>{t('common.retry')}</SecondaryButton>
             <SigningBackButton onPress={restart}>{t('signingV2.compose.draft.startNew')}</SigningBackButton>
         </StatusNotice>}
@@ -637,6 +652,11 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             </div>
         </div>}
         <Stepper step={step === 'opening' ? 'template' : step} />
+        {api.clientContext && (initialClientId || clientContext) && step !== 'done' && <SimpleCard className="lw-signingCompose__card lw-signingCompose__context" hidden={step === 'review'}>
+            <ClientSendContext key={String(clientRestored)} api={api} initialClientId={clientRestored ? null : initialClientId} value={clientContext}
+                onPending={value => { setClientPending(value); if (value) invalidate(); }}
+                onChange={value => { setClientContext(value); invalidate(); }} />
+        </SimpleCard>}
         {api.caseContext && step !== 'done' && <SimpleCard className="lw-signingCompose__card lw-signingCompose__context" hidden={step === 'review'}>
             <CaseContextPicker api={api} initialCaseId={caseRestored ? null : initialCaseId} value={caseContext} onPending={value => { setCasePending(value); if (value) invalidate(); }}
                 onChange={value => { setCaseContext(value); invalidate(); }} />
@@ -703,7 +723,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 <p>{t(activeShare.some(role => role.when) ? 'signingV2.compose.shared.conditionalHelp' : 'signingV2.compose.shared.help')}</p>
                 {activeShare.map(role => <fieldset key={role.key} className="lw-signingCompose__shared">
                     <legend>{role.label}</legend>
-                    <PersonFields scope="shared" roleKey={role.key} person={shared[role.key] || blankPerson()} errors={check?.indexed.shared[role.key]} onChange={changeShared} suggestLawyers={role.key === 'lawyer'} casePeople={caseContext?.people} otherRoles={activeShare.filter(other => other.key !== role.key)} />
+                    <PersonFields scope="shared" roleKey={role.key} person={shared[role.key] || blankPerson()} errors={check?.indexed.shared[role.key]} onChange={changeShared} suggestLawyers={role.key === 'lawyer'} casePeople={contextPeople} peopleLabel={peopleLabel} otherRoles={activeShare.filter(other => other.key !== role.key)} />
                 </fieldset>)}
             </SimpleCard>}
             {(activeEach.length > 0 || dataFields.length > 0) && <SimpleCard className="lw-signingCompose__card">
@@ -743,7 +763,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                     {errorCount > 30 && <p>{t('signingV2.compose.moreErrors', { count: errorCount - 30, formattedCount: number(errorCount - 30) })}</p>}
                 </StatusNotice>}
                 {(activeEach.length > 0 || dataFields.length > 0) && busy !== 'upload' && <ol className="lw-signingCompose__rows">{rows.map((row, index) =>
-                    <RecipientRow key={row.id} row={row} index={index} roles={activeEach} errors={check?.indexed.byRow[row.id]} onChange={changeRow} onRemove={removeRow} canRemove={rows.length > 1} casePeople={caseContext?.people} allRoles={activeRoles} dataFields={dataFields} onDataChange={changeData} />)}
+                    <RecipientRow key={row.id} row={row} index={index} roles={activeEach} errors={check?.indexed.byRow[row.id]} onChange={changeRow} onRemove={removeRow} canRemove={rows.length > 1} casePeople={contextPeople} peopleLabel={peopleLabel} allRoles={activeRoles} dataFields={dataFields} onDataChange={changeData} />)}
                 </ol>}
                 <div className="lw-signingPackages__actions">
                     <SecondaryButton onPress={() => {
@@ -756,7 +776,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             </SimpleCard>}
             <footer className="lw-signingCompose__footer is-sticky">
                 <SigningBackButton onPress={() => setStep('template')} disabled={!!busy}>{t('signingV2.compose.previous')}</SigningBackButton>
-                <PrimaryButton onPress={runCheck} disabled={!!busy || casePending}>{busy === 'check' ? t('signingV2.compose.checking') : t('signingV2.compose.check')}</PrimaryButton>
+                <PrimaryButton onPress={runCheck} disabled={!!busy || casePending || clientPending}>{busy === 'check' ? t('signingV2.compose.checking') : t('signingV2.compose.check')}</PrimaryButton>
             </footer>
         </>}
 
@@ -765,6 +785,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 <h2>{t('signingV2.compose.review.heading')}</h2>
                 <dl className="lw-signingCompose__summary">
                     <div><dt>{t('signingV2.compose.review.run')}</dt><dd><bdi>{check.body.name}</bdi></dd></div>
+                    {clientContext && <div><dt>{t('signingV2.compose.clientContext.selected')}</dt><dd><bdi>{clientContext.name}</bdi></dd></div>}
                     {caseContext && <div><dt>{t('signingV2.compose.context.selected')}</dt><dd><bdi>{caseContext.name}</bdi></dd></div>}
                     <div><dt>{t('signingV2.compose.review.template')}</dt><dd><bdi>{preview.template.name}</bdi></dd></div>
                     <div><dt>{t('signingV2.compose.review.packages')}</dt><dd><bdi>{number(preview.packageCount)}</bdi></dd></div>

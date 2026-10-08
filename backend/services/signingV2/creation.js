@@ -9,8 +9,9 @@ const { createSubmissionInTransaction, loadDirectory, previewHash } = require('.
 const { personScopeSql } = require('./people');
 const { resolveRecipient, recipientIdentity } = require('../../lib/signingV2/recipientBindings');
 const { recipientRoles } = require('../../lib/signingV2/recipientLayout');
-const { assertCases, scopeParams } = require('./access');
+const { assertCases, assertClients, scopeParams } = require('./access');
 const { caseId } = require('./caseContext');
+const { clientId } = require('./clientContext');
 const { normalizeSigningOrder } = require('../../lib/signingV2/signingOrder');
 
 const LEGACY_FIELD_TYPES = { signature: 'signature', initials: 'initials', text: 'text', date: 'date', checkbox: 'checkbox', number: 'text' };
@@ -246,6 +247,7 @@ function normalize(definition, input) {
     const dataKeys = new Map(definition.dataKeys.map(field => [field.key, field]));
     const keys = new Set();
     const selectedCaseId = input.caseId == null ? null : caseId(input.caseId);
+    const selectedClientId = input.clientId == null ? null : clientId(input.clientId);
     const rows = input.rows.map((row, index) => {
         const key = typeof row?.key === 'string' && row.key.trim() ? row.key.trim().slice(0, 200) : `row-${index + 1}`;
         if (keys.has(key)) errors.push({ path: `rows.${index}.key`, code: 'DUPLICATE_ROW_KEY' });
@@ -261,7 +263,7 @@ function normalize(definition, input) {
                 errors.push({ path: `rows.${index}.data.${missing}`, code: error.errorCode || 'INVALID_CONDITION' });
             }
         }
-        return { key, ...(selectedCaseId ? { caseId: selectedCaseId } : {}), ...normalized, activeRoles,
+        return { key, ...(selectedCaseId ? { caseId: selectedCaseId } : {}), ...(selectedClientId ? { clientId: selectedClientId } : {}), ...normalized, activeRoles,
             recipients: Object.fromEntries(each.filter(role => activeRoles.includes(role.key)).map(role => [role.key, recipient(resolveRecipient(roles, input, role, index, `rows.${index}.${role.key}`, errors), definition, `rows.${index}.${role.key}`, errors)])) };
     });
     for (const role of roles.filter(item => item.audience === 'shared' && rows.some(row => row.activeRoles.includes(item.key)))) {
@@ -281,7 +283,7 @@ function packagesFor(definition, plan, personFor) {
             roles[role.key] = [{ personId: ids.personId, partyId: ids.partyId }];
             delivery[ids.personId] = { locale: person.locale, channels: person.channels, ...(person.email ? { email: person.email } : {}), ...(person.phone ? { phone: person.phone } : {}) };
         }
-        return { externalKey: row.key, ...(row.caseId ? { caseId: row.caseId } : {}), data: row.data || {}, ...(row.provenance ? { provenance: row.provenance } : {}), roles, delivery,
+        return { externalKey: row.key, ...(row.caseId ? { caseId: row.caseId } : {}), ...(row.clientId ? { clientId: row.clientId } : {}), data: row.data || {}, ...(row.provenance ? { provenance: row.provenance } : {}), roles, delivery,
             ...(plan.signingOrder ? { signingOrder: plan.signingOrder } : {}),
             ...(plan.omitted.size ? { omitRoles: [...plan.omitted].sort() } : {}) };
     });
@@ -295,6 +297,7 @@ async function previewCreation(pool, scope, input) {
     const { template, definition, sources } = await loadVersion(pool, scope, input.templateVersionId);
     const plan = normalize(definition, input);
     await assertCases(pool, scope, [...new Set(plan.rows.map(row => row.caseId).filter(Boolean))]);
+    await assertClients(pool, scope, [...new Set(plan.rows.map(row => row.clientId).filter(Boolean))]);
     const people = new Map(), parties = new Map();
     const personFor = (role, person, index) => {
         const personId = person.personId || stableUuid('preview', recipientIdentity(role, person, index));
@@ -334,6 +337,7 @@ async function previewCreation(pool, scope, input) {
         recipientCount: people.size,
         omitted: [...plan.omitted].sort(),
         caseId: plan.rows[0]?.caseId || null,
+        clientId: plan.rows[0]?.clientId || null,
         shared: Object.entries(plan.shared).map(([roleKey, person]) => ({ roleKey, name: person.name, channels: person.channels, packageCount: plan.rows.filter(row => row.activeRoles.includes(roleKey)).length })),
         sample: plan.rows.slice(0, 5).map((row, index) => ({ key: row.key, ...(row.data ? { data: row.data } : {}),
             ...(plan.errors.length ? {} : { exclusions: compiled[index].snapshot.exclusions.map(item => ({ ...item, name: definition.documents.find(doc => doc.key === item.documentKey).name })) }),
@@ -354,6 +358,7 @@ async function createFromRowsInTransaction(db, scope, input, { reserveCapacity }
     const plan = normalize(definition, input);
     // Check before creating directory entries; createSubmission checks again in its transaction.
     await assertCases(db, scope, [...new Set(plan.rows.map(row => row.caseId).filter(Boolean))]);
+    await assertClients(db, scope, [...new Set(plan.rows.map(row => row.clientId).filter(Boolean))], true);
     if (plan.errors.length) fail('INVALID_ROWS', 422, plan.errors.slice(0, 50));
     if (input.previewHash !== rowsHash(template, plan)) fail('PREVIEW_CHANGED', 412);
     const seed = [scope.contextId, scope.userId, input.idempotencyKey];

@@ -29,6 +29,7 @@ const signingPackagesApi = {
     registerTemplateSource: fileKey => signingRequest('post', `${root}/authoring/sources`, { fileKey }),
     templateDocument: (id, key) => signingRequest('get', `${root}/authoring/versions/${encodeURIComponent(id)}/documents/${encodeURIComponent(key)}`, null, { responseType: 'blob' }),
     cases: (q, config) => signingRequest('get', `${root}/creation/cases?${query({ q })}`, null, config),
+    clientContext: (id, config) => signingRequest('get', `${root}/creation/clients/${encodeURIComponent(id)}`, null, config),
     caseContext: (id, config) => signingRequest('get', `${root}/creation/cases/${encodeURIComponent(id)}`, null, config),
     importLegacy: (id, locale, expectedVersion) => signingRequest('post', `${root}/templates/legacy/${id}/import`, { locale, ...(expectedVersion != null ? { expectedVersion } : {}) }),
     workbook: (versionId, locale, layout) => signingRequest('get', `${root}/templates/${versionId}/workbook?${query({ locale, ...(layout ? { layout: JSON.stringify(layout) } : {}) })}`, null, { responseType: 'blob' }),

@@ -9,6 +9,7 @@ const actions = require('../services/signingV2/actions');
 const creation = require('../services/signingV2/creation');
 const drafts = require('../services/signingV2/drafts');
 const caseContext = require('../services/signingV2/caseContext');
+const clientContext = require('../services/signingV2/clientContext');
 const authoring = require('../services/signingV2/authoring');
 const workbook = require('../lib/signingV2/workbook');
 const { objectStorage, officeQuota } = require('../services/signingV2/runtime');
@@ -69,6 +70,7 @@ router.get('/authoring/versions/:id/documents/:key', view, run(async (req, res) 
     pdf(res, await authoring.documentFile(pool, await actorScope(pool, req, 'view'), req.params.id, req.params.key,
         objectStorage({ client: r2, bucket: BUCKET })), 'template.pdf');
 }));
+router.get('/creation/clients/:id', send, run(async (req, res) => res.json(await clientContext.loadClientContext(pool, await actorScope(pool, req, 'upload'), req.params.id))));
 router.get('/creation/cases', send, run(async (req, res) => res.json(await caseContext.searchCases(pool, await actorScope(pool, req, 'upload'), req.query.q))));
 router.get('/creation/cases/:id', send, run(async (req, res) => res.json(await caseContext.loadCaseContext(pool, await actorScope(pool, req, 'upload'), req.params.id))));
 router.post('/templates/legacy/:id/import', send, run(async (req, res) => {

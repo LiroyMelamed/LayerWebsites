@@ -554,3 +554,64 @@ test.each(['he','ar','en'])('review makes conditional shared participants and th
     expect(screen.getByText(i18n.t('signingV2.compose.review.sharedInvitations',{name:'Conditional counsel',count:1,formattedCount:number(1)}),{exact:false})).toBeVisible();
     expect(screen.queryByText(i18n.t('signingV2.compose.review.sharedInvitations',{name:'Conditional counsel',count:2,formattedCount:number(2)}),{exact:false})).not.toBeInTheDocument();
 });
+
+test.each(['he', 'ar', 'en'])('client-card entry keeps explicit role choice and linked review in %s', async language => {
+    const i18n = await translations(language), api = fakeApi();
+    const record = { id: 71, name: 'Synthetic client', email: 'client@example.invalid', phone: '' };
+    api.clientContext = jest.fn().mockResolvedValue(record);
+    api.templates.mockResolvedValue({ templates: [converted], legacy: [] });
+    render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialClientId="71" initialTemplateId="t-1" /></I18nextProvider>);
+    await screen.findByText('Synthetic client');
+    await screen.findByLabelText(i18n.t('signingV2.compose.runName'));
+    const row = screen.getByRole('group', { name: i18n.t('signingV2.compose.rows.row', { number: new Intl.NumberFormat({ he: 'he-IL', ar: 'ar-IL', en: 'en-GB' }[language]).format(1) }) });
+    expect(field(row, i18n.t('signingV2.compose.fields.name'))).toHaveValue('');
+    fireEvent.change(within(row).getByLabelText(i18n.t('signingV2.compose.clientContext.fill')), { target: { value: '71' } });
+    expect(field(row, i18n.t('signingV2.compose.fields.email'))).toHaveValue(record.email);
+    expect(field(screen.getByRole('group', { name: 'Lawyer' }), i18n.t('signingV2.compose.fields.name'))).toHaveValue('');
+    api.previewCreation.mockResolvedValue(validPreview(1));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.check') }));
+    await screen.findByRole('heading', { name: i18n.t('signingV2.compose.review.heading') });
+    expect(api.previewCreation.mock.calls[0][0].clientId).toBe(71);
+    expect(api.previewCreation.mock.calls[0][0].rows[0].recipients.first.authorityId).toBeUndefined();
+    expect(screen.getByText(record.name, { selector: 'dd bdi' })).toBeVisible();
+});
+
+test('missing client blocks creation; retry loads only persisted details and explicit removal detaches the association', async () => {
+    const i18n = await translations('en'), api = fakeApi();
+    api.clientContext = jest.fn().mockRejectedValueOnce({ code: 'NOT_FOUND' }).mockResolvedValue({ id: 71, name: 'Stored client', email: 'stored@example.invalid' });
+    api.templates.mockResolvedValue({ templates: [converted], legacy: [] });
+    render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialClientId="71" initialTemplateId="t-1" /></I18nextProvider>);
+    const check = await screen.findByRole('button', { name: 'Check data' });
+    expect(check).toBeDisabled();
+    fireEvent.click(await screen.findByRole('button', { name: en.common.retry }));
+    await screen.findByText('Stored client');
+    expect(check).toBeEnabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Remove client link' }));
+    expect(screen.queryByText('Stored client')).not.toBeInTheDocument();
+    fireEvent.change(field(screen.getByRole('group', { name: 'Row 1' }), 'Full name'), { target: { value: 'Manual signer' } });
+    api.previewCreation.mockResolvedValue(validPreview(1));
+    fireEvent.click(check);
+    await waitFor(() => expect(api.previewCreation).toHaveBeenCalled());
+    expect(api.previewCreation.mock.calls[0][0].clientId).toBeUndefined();
+    expect(api.create).not.toHaveBeenCalled();
+});
+
+test.each(['editing', 'submitted'])('a %s draft from another client cannot replace a client-card entry', async state => {
+    const i18n = await translations('en'), api = fakeApi();
+    const id = '10000000-0000-4000-8000-000000000071';
+    window.history.replaceState(null, '', `/?draft=${id}`);
+    api.draft = jest.fn().mockResolvedValue({ id, version: 1, state, payload: { request: { clientId: 99 } }, result: { packageCount: 4 } });
+    api.saveDraft = jest.fn(); api.submitDraft = jest.fn();
+    api.clientContext = jest.fn().mockResolvedValue({ id: 71, name: 'Selected client' });
+    api.templates.mockResolvedValue({ templates: [converted], legacy: [] });
+    try {
+        render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialClientId="71" /></I18nextProvider>);
+        await screen.findByText(en.signingV2.compose.draft.contextChanged);
+        expect(screen.queryByText(en.signingV2.compose.done.heading)).not.toBeInTheDocument();
+        expect(api.saveDraft).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByRole('button', { name: en.signingV2.compose.draft.startNew }));
+        await screen.findByText('Selected client');
+        expect(window.location.search).toBe('');
+        expect(api.create).not.toHaveBeenCalled();
+    } finally { window.history.replaceState(null, '', '/'); }
+});

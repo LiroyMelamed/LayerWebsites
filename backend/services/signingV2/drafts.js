@@ -5,8 +5,9 @@ const { expect, fail } = require('../../lib/signingV2/errors');
 const { transaction } = require('./transaction');
 const { loadVersion, createFromRowsInTransaction } = require('./creation');
 const { resultFor } = require('./submissions');
-const { assertCases } = require('./access');
+const { assertCases, assertClients } = require('./access');
 const { caseId } = require('./caseContext');
+const { clientId } = require('./clientContext');
 
 function validatePayload(payload) {
     expect(payload && typeof payload === 'object' && !Array.isArray(payload), 'INVALID_DRAFT');
@@ -18,7 +19,8 @@ function validatePayload(payload) {
     expect(Array.isArray(input.rows) && input.rows.length <= 200, 'INVALID_DRAFT');
     // Invalid/incomplete contacts are legitimate drafts. They are fully checked at
     // preview and submit, while scope and resource limits are checked on every save.
-    return { templateVersionId: input.templateVersionId, caseId: input.caseId == null ? null : caseId(input.caseId) };
+    return { templateVersionId: input.templateVersionId, caseId: input.caseId == null ? null : caseId(input.caseId),
+        clientId: input.clientId == null ? null : clientId(input.clientId) };
 }
 
 function description(row) {
@@ -34,6 +36,7 @@ async function owned(db, scope, id, lock = false) {
     // Private draft data is never expanded by the office-wide package-view flag.
     if (!row) fail('NOT_FOUND', 404);
     await assertCases(db, scope, row.case_id ? [row.case_id] : []);
+    await assertClients(db, scope, row.payload?.request?.clientId == null ? [] : [clientId(row.payload.request.clientId)], lock);
     return row;
 }
 
@@ -63,6 +66,7 @@ async function saveDraft(pool, scope, id, { expectedVersion, payload }) {
     await loadVersion(pool, scope, context.templateVersionId);
     await assertCases(pool, scope, context.caseId ? [context.caseId] : []);
     return transaction(pool, async db => {
+        await assertClients(db, scope, context.clientId ? [context.clientId] : [], true);
         if (expectedVersion === 0) {
             const inserted = await db.query(`INSERT INTO signing_creation_drafts
                 (id,owner_context_id,owner_userid,template_version_id,case_id,payload,payload_hash,submission_key)

@@ -11,13 +11,13 @@ function remember(id) {
 
 // Serialize/coalesce saves. No contact data or form values enter localStorage.
 // The only recovery pointer in the URL is a UUID checked against the owner by API.
-export default function useSigningDraft({ api, payload, active, onRestore, onSubmitted }) {
+export default function useSigningDraft({ api, payload, active, onRestore, onSubmitted, validateRestore }) {
     const enabled = !!(api.draft && api.saveDraft && api.submitDraft);
     const [status, setStatus] = useState(enabled && urlId() ? 'loading' : 'idle');
     const [error, setError] = useState(null);
     const [savedAt, setSavedAt] = useState(null);
     const model = useRef({ id: null, version: 0, saved: null, queue: Promise.resolve(), epoch: 0, loading: enabled && !!urlId(), submitted: false });
-    const callbacks = useRef({ onRestore, onSubmitted }); callbacks.current = { onRestore, onSubmitted };
+    const callbacks = useRef({ onRestore, onSubmitted, validateRestore }); callbacks.current = { onRestore, onSubmitted, validateRestore };
     const serialized = payload ? JSON.stringify(payload) : null;
     const current = useRef(serialized); current.current = serialized;
     const alive = useRef(true);
@@ -30,6 +30,7 @@ export default function useSigningDraft({ api, payload, active, onRestore, onSub
         try {
             const draft = await api.draft(id);
             if (!alive.current || epoch !== model.current.epoch) return;
+            callbacks.current.validateRestore?.(draft.payload);
             Object.assign(state, { id: draft.id, version: draft.version, saved: JSON.stringify(draft.payload), submitted: draft.state === 'submitted' });
             remember(draft.id); setSavedAt(draft.updatedAt);
             if (draft.state === 'submitted') { callbacks.current.onSubmitted(draft.result); setStatus('submitted'); }

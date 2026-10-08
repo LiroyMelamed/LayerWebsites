@@ -4,7 +4,7 @@ const { digest, canonical } = require('../../lib/signingV2/canonical');
 const { expect, fail } = require('../../lib/signingV2/errors');
 const limits = require('../../lib/signingV2/limits');
 const { transaction } = require('./transaction');
-const { assertCases, scopeParams, packageScopeSql } = require('./access');
+const { assertCases, assertClients, scopeParams, packageScopeSql } = require('./access');
 const { personScopeSql } = require('./people');
 const { lockAvailableOrigin } = require('./templateAvailability');
 const { job, enqueue } = require('./jobs');
@@ -17,6 +17,7 @@ function validateInput(input) {
     for (const item of input.packages) {
         expect(typeof item.externalKey === 'string' && item.externalKey.length > 0 && item.externalKey.length <= 200 && !keys.has(item.externalKey), 'DUPLICATE_PACKAGE_KEY');
         keys.add(item.externalKey);
+        expect(item.clientId == null || (Number.isSafeInteger(item.clientId) && item.clientId > 0 && item.clientId <= 2147483647), 'INVALID_CLIENT');
         expect(item.caseId == null || (Number.isSafeInteger(item.caseId) && item.caseId > 0), 'INVALID_SUBMISSION');
     }
     expect(Buffer.byteLength(canonical(input)) <= limits.snapshotBytes, 'CAPACITY_BUDGET_EXCEEDED');
@@ -116,6 +117,7 @@ async function createSubmissionInTransaction(db, scope, input, { reserveCapacity
     // cannot silently waive their review requirement.
     expect(!definition.policy.internalApproval && !definition.policy.requiredAllPdfReview, 'APPROVAL_REQUIRED');
     await assertCases(db, scope, [...new Set(input.packages.map(item => item.caseId).filter(Boolean))]);
+    await assertClients(db, scope, [...new Set(input.packages.map(item => item.clientId).filter(Boolean))], true);
     const directory = await loadDirectory(db, scope, definition, input.packages);
     const compiled = input.packages.map(item => compilePackage(definition, item, directory));
     if (input.previewHash !== previewHash(template, input.packages, compiled)) fail('PREVIEW_CHANGED', 412);
@@ -141,7 +143,7 @@ function buildRows(inputs, compiled) {
     const rows = { packages: [], revisions: [], participations: [], documents: [], tasks: [], profiles: [], deliveries: [], jobs: [], dependencies: [] };
     compiled.forEach(({ snapshot, hash, hashVersion }, index) => {
         const input = inputs[index], packageId = randomUUID(), revisionId = randomUUID();
-        rows.packages.push({ id: packageId, external_key: input.externalKey, case_id: input.caseId || null,
+        rows.packages.push({ id: packageId, external_key: input.externalKey, case_id: input.caseId || null, client_userid: input.clientId || null,
             transaction_ref: input.transactionRef || null, active_revision_id: revisionId, revision_hash: hash });
         rows.revisions.push({ id: revisionId, package_id: packageId, snapshot, revision_hash: hash, hash_version: hashVersion, deadline: snapshot.deadline });
         const participants = new Map(), documents = new Map();
@@ -186,9 +188,9 @@ function buildRows(inputs, compiled) {
 
 async function persistRows(db, scope, submissionId, rows) {
     const contextId = scope.contextId;
-    await db.query(`INSERT INTO signing_packages(id,owner_context_id,submission_id,external_key,owner_userid,case_id,transaction_ref,active_revision_id)
-        SELECT id,$1,$2,external_key,$3,case_id,transaction_ref,active_revision_id FROM jsonb_to_recordset($4::jsonb)
-        AS p(id uuid,external_key text,case_id integer,transaction_ref text,active_revision_id uuid)`, [contextId, submissionId, scope.userId, JSON.stringify(rows.packages)]);
+    await db.query(`INSERT INTO signing_packages(id,owner_context_id,submission_id,external_key,owner_userid,case_id,client_userid,transaction_ref,active_revision_id)
+        SELECT id,$1,$2,external_key,$3,case_id,client_userid,transaction_ref,active_revision_id FROM jsonb_to_recordset($4::jsonb)
+        AS p(id uuid,external_key text,case_id integer,client_userid integer,transaction_ref text,active_revision_id uuid)`, [contextId, submissionId, scope.userId, JSON.stringify(rows.packages)]);
     await db.query(`INSERT INTO signing_package_revisions(id,owner_context_id,package_id,revision_no,workflow_state,snapshot,revision_hash,hash_version,deadline)
         SELECT id,$1,package_id,1,'authorized_preparing',snapshot,revision_hash,hash_version,deadline FROM jsonb_to_recordset($2::jsonb)
         AS r(id uuid,package_id uuid,snapshot jsonb,revision_hash text,hash_version text,deadline timestamptz)`, [contextId, JSON.stringify(rows.revisions)]);
