@@ -34,7 +34,7 @@ test('the same person signing now and again after other signers needs a new expl
     const { createPublicSigningService, CONSENT_VERSION } = require('../services/signingV2/publicSigning');
     const { fakeProvider } = require('./helpers/signingV2Delivery');
     const { createPerson } = require('../services/signingV2/people');
-    const { packageDetails, packageDocumentFile } = require('../services/signingV2/management');
+    const { packageDetails, packageDocumentFile, packageEvidenceFile } = require('../services/signingV2/management');
     const { bytesHash } = require('../lib/signingV2/canonical');
     const { r2 } = require('../utils/r2');
     const publicRoutes = require('../routes/signingV2PublicRoutes');
@@ -134,5 +134,29 @@ test('the same person signing now and again after other signers needs a new expl
     assert.equal(officeFinal.final, true);
     assert.notEqual(bytesHash(officeFinal.bytes), bytesHash(officeDuring.bytes));
     assert.notEqual((await packageDetails(f.pool, scope, packageId)).documents.find(doc => doc.id === firstDocumentId).artifactVersion, officeDuringVersion);
+    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    const path = require('node:path');
+    const receiptResponse = token => pub('get', `/packages/${packageId}/evidence`, token).buffer(true).parse((res, done) => {
+        const chunks = []; res.on('data', chunk => chunks.push(chunk)); res.on('end', () => done(null, Buffer.concat(chunks)));
+    });
+    async function textOf(bytes) {
+        const pdf = await pdfjs.getDocument({ data: new Uint8Array(bytes), useSystemFonts: false, isEvalSupported: false,
+            standardFontDataUrl: `${path.resolve(__dirname, '../node_modules/pdfjs-dist/standard_fonts')}/` }).promise;
+        let result = '';
+        try { for (let page = 1; page <= pdf.numPages; page += 1) result += (await (await pdf.getPage(page)).getTextContent()).items.map(item => item.str).join(''); }
+        finally { await pdf.destroy(); }
+        return result.replace(/\s+/g, '');
+    }
+    const lawyerReceipt = await receiptResponse(lawyer), clientReceipt = await receiptResponse(middle);
+    assert.equal(lawyerReceipt.status, 200); assert.equal(clientReceipt.status, 200);
+    const lawyerText = await textOf(lawyerReceipt.body), clientText = await textOf(clientReceipt.body);
+    assert.match(lawyerText, /Samelawyer/); assert.match(lawyerText, /FirstPDF/); assert.match(lawyerText, /LaterPDF/);
+    assert.doesNotMatch(lawyerText, /Othersigner|m•••@example\.invalid/);
+    assert.match(clientText, /Othersigner/); assert.match(clientText, /FirstPDF/);
+    assert.doesNotMatch(clientText, /Samelawyer|LaterPDF|r•••@example\.invalid/);
+    const officeEvidence = await packageEvidenceFile(f.pool, scope, packageId, storage);
+    const officeText = await textOf(officeEvidence.bytes);
+    assert.match(officeText, /Samelawyer/); assert.match(officeText, /Othersigner/); assert.match(officeText, /LaterPDF/);
+    assert.notEqual(bytesHash(officeEvidence.bytes), bytesHash(clientReceipt.body));
     assert.deepEqual(workerErrors, []);
 });

@@ -7,6 +7,7 @@ const { signatureImage, IMAGE_TYPES } = require('../../lib/signingV2/stamp');
 const { transaction } = require('./transaction');
 const { loadPublicGrant } = require('./grants');
 const { job, enqueue } = require('./jobs');
+const { personalEvidenceInput, evidenceJobInput } = require('../../lib/signingV2/personalEvidence');
 
 const CONSENT_VERSION = 'signing-v2-consent-2026-10-07';
 const OTP = Object.freeze({ ttlSeconds: 600, cooldownSeconds: 30, perSession: 5, perPersonHour: 10, attempts: 5 });
@@ -118,9 +119,25 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
             WHERE r.owner_context_id=$1 AND pk.id=$2 AND r.workflow_state='complete' AND r.id=ANY($3::uuid[])`,
         [grant.owner_context_id, UUID.test(String(packageId)) ? packageId : null, grant.items.map(item => item.revision_id)])).rows[0];
         if (!revision) fail('NOT_FOUND', 404);
-        const artifact = (await pool.query(`SELECT id FROM signing_artifacts WHERE owner_context_id=$1 AND kind='evidence' AND inputs_hash=$2`,
-            [grant.owner_context_id, digest({ revisionId: revision.id, revisionHash: revision.revision_hash, kind: 'evidence' })])).rows[0];
-        if (!artifact) fail('ARTIFACT_NOT_READY', 409);
+        const artifact = (await pool.query(`SELECT id,metadata FROM signing_artifacts
+            WHERE owner_context_id=$1 AND kind='evidence' AND inputs_hash=$2 AND state='ready'`,
+        [grant.owner_context_id, personalEvidenceInput(revision.id, revision.revision_hash, grant.person_id)])).rows[0];
+        if (!artifact) {
+            // Older completed packages retain their immutable office certificate.
+            // A scoped request queues one idempotent receipt-generation job, never
+            // falls back to the full certificate and never sends a notification.
+            const signed = await pool.query(`SELECT 1 FROM signing_actions a
+                JOIN signing_participations p ON p.owner_context_id=a.owner_context_id AND p.id=a.participation_id
+                WHERE a.owner_context_id=$1 AND p.revision_id=$2 AND p.person_id=$3 LIMIT 1`,
+            [grant.owner_context_id, revision.id, grant.person_id]);
+            if (!signed.rowCount) fail('NOT_FOUND', 404);
+            await enqueue(pool, grant.owner_context_id, [job('render_evidence', revision.id, evidenceJobInput(revision.revision_hash))]);
+            fail('ARTIFACT_NOT_READY', 409);
+        }
+        const allowedDocuments = new Set(grant.items.filter(item => item.revision_id === revision.id).map(item => item.document_id));
+        if (artifact.metadata?.visibility !== 'personal' || artifact.metadata.personId !== grant.person_id
+            || !Array.isArray(artifact.metadata.documentIds) || !artifact.metadata.documentIds.length
+            || artifact.metadata.documentIds.some(id => !allowedDocuments.has(id))) fail('NOT_FOUND', 404);
         return readArtifact(grant.owner_context_id, artifact.id);
     }
 
@@ -442,7 +459,7 @@ async function advanceMany(db, contextId, revisions) {
         }
         const finals = (documents.get(revision.id) || []).map(document => job('finalize_document', document.id,
             digest({ revisionHash: revision.revision_hash, document: document.document_key, kind: 'final' })));
-        const evidence = job('render_evidence', revision.id, digest({ revisionHash: revision.revision_hash, kind: 'evidence' }));
+        const evidence = job('render_evidence', revision.id, evidenceJobInput(revision.revision_hash));
         jobs.push(...finals, evidence);
         dependencies.push(...finals.map(item => ({ job_id: evidence.id, depends_on_id: item.id })));
         return { packageId: revision.package_id, state: 'finalizing' };
