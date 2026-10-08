@@ -12,6 +12,7 @@ import SimpleContainer from '../../../components/simpleComponents/SimpleContaine
 import { Text14, TextBold14 } from '../../../components/specializedComponents/text/AllTextKindFile';
 import { colors } from '../../../constant/colors';
 import useSigningLocale from './useSigningLocale';
+import PackageApprovalDialog from './PackageApprovalDialog';
 import PackageLifecycleDialog from './PackageLifecycleDialog';
 import ParticipantContactDialog from './ParticipantContactDialog';
 import ParticipantActionDialog from './ParticipantActionDialog';
@@ -186,6 +187,7 @@ function PackagePanel({ id, api, onClose }) {
     const [tab, setTab] = useState('people');
     const [action, setAction] = useState(null);
     const [issue, setIssue] = useState(null);
+    const [approvalOpen,setApprovalOpen] = useState(false);
     const [lifecycle,setLifecycle] = useState(null);
     const [contactPerson,setContactPerson] = useState(null);
     const [openId, setOpenId] = useState(null);
@@ -258,6 +260,10 @@ function PackagePanel({ id, api, onClose }) {
                 {detail.capabilities?.packageAssign && <SecondaryButton onPress={()=>setLifecycle('assign')}>{t('signingV2.lifecycle.assign.title')}</SecondaryButton>}
                 {detail.capabilities?.packageCancel && !['cancelled','superseded','complete'].includes(detail.package.workflow_state) && detail.package.accepted_count < detail.package.required_count && <SecondaryButton onPress={()=>setLifecycle('cancel')}>{t('signingV2.lifecycle.cancel.title')}</SecondaryButton>}
             </div>
+            {detail.approval && <div className="lw-signingPackages__panelSummary"><p>{t('signingV2.approval.reviewer')}: <bdi>{detail.approval.reviewerName}</bdi> · {t(`signingV2.approval.state.${detail.approval.state}`)}</p>
+                {detail.approval.reason && <p>{detail.approval.reason}</p>}
+                {detail.capabilities?.packageApprove && detail.approval.state==='pending' && <PrimaryButton onPress={()=>setApprovalOpen(true)}>{t('signingV2.approval.title')}</PrimaryButton>}
+            </div>}
             {fileError && <StatusNotice embedded><p>{errorMessage(fileError)}</p></StatusNotice>}
             <SegmentedSwitch value={tab} onChange={setTab} ariaLabel={t('signingV2.packageDetails')}
                 options={['people', 'documents', 'delivery'].map(value => ({ value, label: t(`signingV2.tabs.${value}`) }))} />
@@ -298,6 +304,7 @@ function PackagePanel({ id, api, onClose }) {
                 {delivery.state === 'uncertain' && <p>{t('signingV2.uncertainHelp')}</p>}
             </li>)}</ul>}
         </>}
+        {approvalOpen && <PackageApprovalDialog api={api} packageId={id} onClose={changed=>{setApprovalOpen(false);if(changed)resource.refresh();}}/>}
         {lifecycle && <PackageLifecycleDialog key={lifecycle} api={api} packageId={id} action={lifecycle}
             onClose={changed=>{setLifecycle(null);if(changed)resource.refresh();}} />}
         {issue && <TaskIssueDialog kind="resolve" documentName={issue.documentName} originalNote={issue.reason}

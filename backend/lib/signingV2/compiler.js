@@ -193,9 +193,10 @@ function validateDefinition(input) {
     definition.dataKeys = [...keys.values()];
     definition.signingRules ||= [];
     definition.policy ||= {};
-    for (const flag of ['internalApproval', 'requiredAllPdfReview', 'identityBeforeView']) {
+    for (const flag of ['internalApproval', 'requiredAllPdfReview', 'identityBeforeView', 'soloApproval']) {
         expect(definition.policy[flag] === undefined || typeof definition.policy[flag] === 'boolean', 'INVALID_DEFINITION', `policy.${flag}`);
     }
+    expect(!definition.policy.soloApproval || definition.policy.internalApproval || definition.policy.requiredAllPdfReview, 'INVALID_DEFINITION', 'policy.soloApproval');
     expect(definition.policy.otpRequired === true, 'OTP_REQUIRED', 'policy.otpRequired');
     expect(['invite', 'manual'].includes(definition.policy.deliveryMode), 'INVALID_DEFINITION', 'policy.deliveryMode');
     expect(!definition.policy.identityBeforeView, 'WORKFLOW_NOT_ENABLED', 'policy.identityBeforeView');

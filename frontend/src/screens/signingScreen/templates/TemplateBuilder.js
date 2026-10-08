@@ -141,6 +141,12 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
             </li>)}</ul>
             {draft.roles.some(role => !draft.documents.some(doc => doc.fields.some(field => field.roleId === role.id))) && <p role="alert">{t('missingFields')}</p>}
             {!!missingPositions.length && <ul role="alert">{missingPositions.map(({ role, occurrence }) => <li key={`${role.id}:${occurrence}`}>{translate('signingV2.people.missingPosition', { role: role.name, number: number(occurrence + 1) })}</li>)}</ul>}
+            {native && <div className="lw-templates__setup">
+                <label className="lw-templates__check"><input type="checkbox" checked={!!(draft.nativeDefinition?.policy?.internalApproval || draft.nativeDefinition?.policy?.requiredAllPdfReview)}
+                    onChange={e=>change({nativeDefinition:{...draft.nativeDefinition,policy:{...draft.nativeDefinition.policy,internalApproval:e.target.checked,...(!e.target.checked?{soloApproval:false,requiredAllPdfReview:false}:{})}}})}/>{translate('signingV2.approval.templateEnable')}</label>
+                {(draft.nativeDefinition?.policy?.internalApproval || draft.nativeDefinition?.policy?.requiredAllPdfReview) && <label className="lw-templates__check"><input type="checkbox" checked={!!draft.nativeDefinition?.policy?.soloApproval}
+                    onChange={e=>change({nativeDefinition:{...draft.nativeDefinition,policy:{...draft.nativeDefinition.policy,soloApproval:e.target.checked}}})}/>{translate('signingV2.approval.templateSolo')}</label>}
+            </div>}
             {!native && <details><summary>{t('extra')}</summary><div className="lw-templates__setup">            <label>{t('completionEmail')}<input type="email" dir="ltr" value={draft.completionEmail} onChange={e => change({ completionEmail: e.target.value })} placeholder="office@example.com" /></label>
             <label>{t('completionMode')}<select dir={direction} value={draft.completionMode || 'document'} onChange={e => change({ completionMode: e.target.value })}><option value="document">{t('completionDocument')}</option><option value="package">{t('completionPackage')}</option></select></label>
 </div></details>}

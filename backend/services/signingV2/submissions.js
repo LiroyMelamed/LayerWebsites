@@ -7,6 +7,7 @@ const { transaction } = require('./transaction');
 const { assertCases, assertClients, scopeParams, packageScopeSql } = require('./access');
 const { personScopeSql } = require('./people');
 const { lockAvailableOrigin } = require('./templateAvailability');
+const { approvalPlan, createRequests } = require('./approvals');
 const { job, enqueue } = require('./jobs');
 
 function validateInput(input) {
@@ -68,9 +69,9 @@ async function loadDirectory(db, scope, definition, packages) {
     return directory;
 }
 
-function previewHash(template, packages, compiled) {
+function previewHash(template, packages, compiled, reviewerUserId) {
     return digest({ templateVersionId: template.id, definitionHash: template.definition_hash, packages,
-        revisionHashes: compiled.map(item => item.hash) });
+        revisionHashes: compiled.map(item => item.hash), ...(reviewerUserId != null ? {reviewerUserId} : {}) });
 }
 
 function resultFor(submission, reused) {
@@ -113,14 +114,12 @@ async function createSubmissionInTransaction(db, scope, input, { reserveCapacity
     await lockAvailableOrigin(db, scope, template.definition);
     const definition = validateDefinition(template.definition);
     expect(digest(definition) === template.definition_hash, 'TEMPLATE_CHANGED');
-    // These policies use the prepared-package approval route; a bulk fast path
-    // cannot silently waive their review requirement.
-    expect(!definition.policy.internalApproval && !definition.policy.requiredAllPdfReview, 'APPROVAL_REQUIRED');
+    const approval = await approvalPlan(db, scope, definition.policy, input.reviewerUserId);
     await assertCases(db, scope, [...new Set(input.packages.map(item => item.caseId).filter(Boolean))]);
     await assertClients(db, scope, [...new Set(input.packages.map(item => item.clientId).filter(Boolean))], true);
     const directory = await loadDirectory(db, scope, definition, input.packages);
     const compiled = input.packages.map(item => compilePackage(definition, item, directory));
-    if (input.previewHash !== previewHash(template, input.packages, compiled)) fail('PREVIEW_CHANGED', 412);
+    if (input.previewHash !== previewHash(template, input.packages, compiled, input.reviewerUserId)) fail('PREVIEW_CHANGED', 412);
     const capacity = admission(compiled);
     const submissionId = randomUUID();
     await reserveCapacity(db, scope, capacity, submissionId);
@@ -130,10 +129,11 @@ async function createSubmissionInTransaction(db, scope, input, { reserveCapacity
     [submissionId, scope.contextId, scope.userId, template.id, input.name.trim(), input.idempotencyKey, requestHash, capacity.packages, capacity.documents])).rows[0];
     const rows = buildRows(input.packages, compiled);
     await persistRows(db, scope, submissionId, rows);
+    await createRequests(db, scope, rows, approval);
     await db.query(`INSERT INTO signing_events_v2(owner_context_id,package_id,actor_key,kind,details)
-        SELECT $1,id,$2,'package_authorized',jsonb_build_object('submissionId',$3::text,'revisionHash',revision_hash)
+        SELECT $1,id,$2,$5,jsonb_build_object('submissionId',$3::text,'revisionHash',revision_hash)
         FROM jsonb_to_recordset($4::jsonb) AS p(id uuid,revision_hash text)`,
-    [scope.contextId, `user:${scope.userId}`, submissionId, JSON.stringify(rows.packages)]);
+    [scope.contextId, `user:${scope.userId}`, submissionId, JSON.stringify(rows.packages), approval ? 'package_preparation_requested' : 'package_authorized']);
     // transaction() returns only AFTER the commit completes, including every
     // document, task, delivery intent, job and dependency.
     return resultFor(submission, false);

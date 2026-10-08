@@ -107,6 +107,11 @@ async function publish(pool, scope, templateId, versionId, expectedVersion, expe
         const latest = (await db.query("SELECT id FROM signing_template_versions WHERE owner_context_id=$1 AND template_id=$2 AND state='published' ORDER BY version DESC LIMIT 1", [scope.contextId, templateId])).rows[0];
         if ((latest?.id || null) !== draft.base_version_id) fail('VERSION_CHANGED', 412);
         const definition = validateDefinition(draft.definition);
+        if (definition.policy.soloApproval) {
+            const actor=(await db.query(`SELECT u.role,u.firm_staff_role_id,EXISTS(SELECT 1 FROM platform_admins a WHERE a.user_id=u.userid AND a.is_active) AS platform_admin
+                FROM users u JOIN signing_owner_contexts c ON c.id=$1 AND c.law_firm_tenant_id IS NOT DISTINCT FROM u.law_firm_tenant_id WHERE u.userid=$2`,[scope.contextId,scope.userId])).rows[0];
+            if (!actor || !(actor.platform_admin || (actor.role==='Admin' && !actor.firm_staff_role_id))) fail('SOLO_PROFILE_ADMIN_REQUIRED',403);
+        }
         await validateSources(db, scope, definition);
         const published = (await db.query(`UPDATE signing_template_versions SET state='published',definition=$1,definition_hash=$2,
             published_by=$3,published_at=clock_timestamp(),edit_version=edit_version+1 WHERE id=$4 RETURNING *`,

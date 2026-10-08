@@ -240,7 +240,10 @@ async function packageDetails(db, scope, packageId) {
         JOIN signing_documents d ON d.owner_context_id=t.owner_context_id AND d.id=t.document_id
         JOIN signing_package_revisions r ON r.owner_context_id=t.owner_context_id AND r.id=t.revision_id
         WHERE i.owner_context_id=$1 AND t.revision_id=$2 ORDER BY i.created_at DESC,i.id`, [scope.contextId,pkg.active_revision_id])).rows;
-    return { package: pkg, ...body, issues, capabilities: { send: scope.send === true, manage: scope.manage === true, packageCancel: scope.packageCancel === true, packageAssign: scope.packageAssign === true, contactCorrect: scope.contactCorrect === true, linkRenew: scope.linkRenew === true } };
+    const approval = (await db.query(`SELECT a.state,a.reason,a.reviewer_userid AS "reviewerId",u.name AS "reviewerName",
+        a.solo_profile AS "soloProfile" FROM signing_approval_requests a JOIN users u ON u.userid=a.reviewer_userid
+        WHERE a.owner_context_id=$1 AND a.revision_id=$2`,[scope.contextId,pkg.active_revision_id])).rows[0] || null;
+    return { package: pkg, ...body, issues, approval, capabilities: { packageApprove: scope.packageApprove===true && approval?.reviewerId===scope.userId, send: scope.send === true, manage: scope.manage === true, packageCancel: scope.packageCancel === true, packageAssign: scope.packageAssign === true, contactCorrect: scope.contactCorrect === true, linkRenew: scope.linkRenew === true } };
 }
 
 async function packageDocumentFile(db, scope, packageId, documentId, storage) {

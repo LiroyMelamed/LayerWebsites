@@ -11,6 +11,7 @@ const { resolveRecipient, recipientIdentity, recipientPeople } = require('../../
 const { recipientRoles } = require('../../lib/signingV2/recipientLayout');
 const { assertCases, assertClients, scopeParams } = require('./access');
 const { caseId } = require('./caseContext');
+const { needsApproval, approvalPlan } = require('./approvals');
 const { clientId } = require('./clientContext');
 const { normalizeSigningOrder } = require('../../lib/signingV2/signingOrder');
 
@@ -66,7 +67,7 @@ async function listTemplates(db, scope) {
     [scope.tenantId, scope.all, scope.userId])).rows;
     return {
         templates: current.map(row => ({ templateId: row.template_id, versionId: row.version_id, name: row.name, version: row.version,
-            publishedAt: row.published_at, documentCount: row.definition.documents.length, roles: roleSummary(row.definition),
+            publishedAt: row.published_at, approvalRequired: needsApproval(row.definition.policy), soloApproval: row.definition.policy.soloApproval===true, documentCount: row.definition.documents.length, roles: roleSummary(row.definition),
             dataKeys: row.definition.dataKeys || [],
             origin: row.definition.origin || null })),
         legacy: legacy.filter(row => !imported.has(`${row.id}:${row.version}`)).map(row => ({ id: row.id, name: row.name, version: row.version,
@@ -292,7 +293,7 @@ function normalize(definition, input) {
     for (const role of roles.filter(item => item.audience === 'shared' && rows.some(row => row.activeRoles.includes(item.key)))) {
         shared[role.key] = recipientGroup(roles, input, role, null, definition, `shared.${role.key}`, errors);
     }
-    return { name: input.name.trim(), roles, shared, rows, omitted, signingOrder: signingOrder(definition, input, omitted, errors), errors };
+    return { name: input.name.trim(), reviewerUserId: needsApproval(definition.policy) ? input.reviewerUserId ?? null : null, roles, shared, rows, omitted, signingOrder: signingOrder(definition, input, omitted, errors), errors };
 }
 
 function packagesFor(definition, plan, personFor) {
@@ -317,7 +318,7 @@ function packagesFor(definition, plan, personFor) {
 }
 
 function rowsHash(template, plan, references) {
-    return digest({ conditionEvaluatorVersion: CONDITION_EVALUATOR_VERSION, templateVersionId: template.id, definitionHash: template.definition_hash, name: plan.name, roleAudience: Object.fromEntries(plan.roles.map(role => [role.key, role.audience])), omitted: [...plan.omitted].sort(), signingOrder: plan.signingOrder, shared: plan.shared, rows: plan.rows, ...(references?.hash ? { directoryHash: references.hash } : {}) });
+    return digest({ conditionEvaluatorVersion: CONDITION_EVALUATOR_VERSION, templateVersionId: template.id, definitionHash: template.definition_hash, name: plan.name, ...(plan.reviewerUserId != null ? { reviewerUserId: plan.reviewerUserId } : {}), roleAudience: Object.fromEntries(plan.roles.map(role => [role.key, role.audience])), omitted: [...plan.omitted].sort(), signingOrder: plan.signingOrder, shared: plan.shared, rows: plan.rows, ...(references?.hash ? { directoryHash: references.hash } : {}) });
 }
 
 // Resolve only explicit directory IDs, in bounded set queries for the whole
@@ -347,6 +348,12 @@ async function previewCreation(pool, scope, input) {
     await assertCases(pool, scope, [...new Set(plan.rows.map(row => row.caseId).filter(Boolean))]);
     await assertClients(pool, scope, [...new Set(plan.rows.map(row => row.clientId).filter(Boolean))]);
     const references = await referencedDirectory(pool, scope, definition, plan);
+    let approval = null;
+    try { approval = await approvalPlan(pool, scope, definition.policy, plan.reviewerUserId); }
+    catch(error) {
+        if (!['APPROVER_REQUIRED','APPROVER_UNAVAILABLE','SEPARATE_APPROVER_REQUIRED','APPROVAL_NOT_REQUIRED'].includes(error.errorCode)) throw error;
+        plan.errors.push({path:'reviewerUserId',code:error.errorCode});
+    }
     const people = new Map(references.people), parties = new Map(references.parties);
     const personFor = (role, person, index, occurrence) => {
         if (person.personId && references.people.has(person.personId)) return {personId:person.personId,partyId:references.personalParties.get(person.personId)};
@@ -389,6 +396,7 @@ async function previewCreation(pool, scope, input) {
             return { key: role.key, label: role.label, includedCount, excludedCount: plan.rows.length - includedCount };
         }),
         recipientCount: people.size,
+        approval,
         omitted: [...plan.omitted].sort(),
         caseId: plan.rows[0]?.caseId || null,
         clientId: plan.rows[0]?.clientId || null,
@@ -396,7 +404,7 @@ async function previewCreation(pool, scope, input) {
         sample: plan.rows.slice(0, 5).map((row, index) => ({ key: row.key, ...(row.data ? { data: row.data } : {}),
             ...(plan.errors.length ? {} : { exclusions: compiled[index].snapshot.exclusions.map(item => ({ ...item, name: definition.documents.find(doc => doc.key === item.documentKey).name })) }),
             recipients: Object.entries(row.recipients).flatMap(([roleKey, group]) => recipientPeople(group).map((person, occurrence) => ({ roleKey, occurrence, name: person.name, channels: person.channels, ...representativeView(roleKey,person) }))) })),
-        template: { versionId: template.id, name: definition.name, documents: definition.documents.map(document => ({ key: document.key, name: document.name })), roles: roleSummary(definition), dataKeys: definition.dataKeys || [] },
+        template: { versionId: template.id, name: definition.name, approvalRequired: needsApproval(definition.policy), soloApproval: definition.policy.soloApproval===true, documents: definition.documents.map(document => ({ key: document.key, name: document.name })), roles: roleSummary(definition), dataKeys: definition.dataKeys || [] },
     };
 }
 
@@ -439,8 +447,8 @@ async function createFromRowsInTransaction(db, scope, input, { reserveCapacity }
     expect(owned.rows[0].count === rows.length, 'PARTICIPANT_NOT_AVAILABLE');
     const directory = await loadDirectory(db, scope, definition, packages);
     const compiled = packages.map(item => compilePackage(definition, item, directory));
-    return createSubmissionInTransaction(db, scope, { name: plan.name, templateVersionId: template.id, idempotencyKey: input.idempotencyKey, packages,
-        previewHash: previewHash(template, packages, compiled) }, { reserveCapacity });
+    return createSubmissionInTransaction(db, scope, { name: plan.name, ...(plan.reviewerUserId != null ? {reviewerUserId:plan.reviewerUserId}:{}), templateVersionId: template.id, idempotencyKey: input.idempotencyKey, packages,
+        previewHash: previewHash(template, packages, compiled, plan.reviewerUserId) }, { reserveCapacity });
 }
 
 module.exports = { listTemplates, loadVersion, importLegacyTemplate, previewCreation, createFromRows, createFromRowsInTransaction, convertLegacy, normalizePhone, stableUuid };

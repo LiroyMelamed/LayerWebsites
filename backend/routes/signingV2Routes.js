@@ -15,6 +15,7 @@ const caseContext = require('../services/signingV2/caseContext');
 const clientContext = require('../services/signingV2/clientContext');
 const authoring = require('../services/signingV2/authoring');
 const directory = require('../services/signingV2/participantDirectory');
+const approvals = require('../services/signingV2/approvals');
 const lifecycle = require('../services/signingV2/packageLifecycle');
 const contacts = require('../services/signingV2/contactChanges');
 const authorities = require('../services/signingV2/authorities');
@@ -64,6 +65,9 @@ router.get('/submissions/:id/packages', view, run(async (req, res) =>
 router.get('/packages/:id', view, run(async (req, res) => res.json(await management.packageDetails(pool, await actorScope(pool, req, 'view'), req.params.id))));
 router.post('/packages/:id/lifecycle-preview', manage, run(async (req,res) => res.json(await lifecycle.previewPackageAction(pool,await actorScope(pool,req,'manage'),req.params.id,req.body || {}))));
 router.post('/packages/:id/lifecycle', manage, run(async (req,res) => res.json(await lifecycle.executePackageAction(pool,await actorScope(pool,req,'manage'),req.params.id,{...(req.body || {}),idempotencyKey:req.get('Idempotency-Key')}))));
+router.get('/approval-reviewers',send,run(async(req,res)=>res.json({users:await approvals.approvers(pool,await actorScope(pool,req,'upload'))})));
+router.get('/packages/:id/approval',view,run(async(req,res)=>res.json(await approvals.readReview(pool,await actorScope(pool,req,'package_approve'),req.params.id))));
+router.post('/packages/:id/approval',view,run(async(req,res)=>res.json(await approvals.decide(pool,await actorScope(pool,req,'package_approve'),req.params.id,{...(req.body||{}),idempotencyKey:req.get('Idempotency-Key')}))));
 const pdf = (res, file, name) => res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': `inline; filename="${name}"`, 'X-Content-Type-Options': 'nosniff' }).send(file.bytes);
 router.get('/packages/:id/documents/:documentId', view, run(async (req, res) => {
     const { r2, BUCKET } = require('../utils/r2');

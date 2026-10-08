@@ -18,6 +18,7 @@ import { newKey } from './ParticipantActionDialog';
 import StatusNotice from '../../../components/ui/StatusNotice';
 import SelectedTemplateEntry from './SelectedTemplateEntry';
 import WorkbookImport from './WorkbookImport';
+import ApprovalReviewerField from './ApprovalReviewerField';
 import ParticipantDirectoryFields from './ParticipantDirectoryFields';
 import CaseContextPicker from './CaseContextPicker';
 import ClientSendContext from './ClientSendContext';
@@ -389,6 +390,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const [step, setStep] = useState(initialTemplateId ? 'opening' : 'template');
     const [replacement, setReplacement] = useState(null);
     const [template, setTemplate] = useState(null);
+    const [reviewerUserId,setReviewerUserId] = useState(null);
     const [name, setName] = useState('');
     const [shared, setShared] = useState({});
     const [roleAudience, setRoleAudience] = useState({});
@@ -442,7 +444,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         if (selected.versionId === template?.versionId) return;
         const roles = selected.roles.filter(role => role.audience !== 'shared');
         const order = templateOrder(selected.roles);
-        setTemplate(selected);
+        setTemplate(selected); setReviewerUserId(null);
         setRoleAudience({});
         setShared(Object.fromEntries(selected.roles.filter(role => role.audience === 'shared').map(role => [role.key, blankRole(role)])));
         setRows([blankRow(roles)]);
@@ -557,6 +559,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             sentIds: sent.map(row => row.id),
             body: {
                 templateVersionId: template.versionId, name: name.trim(),
+                ...(template.approvalRequired ? {reviewerUserId} : {}),
                 ...(caseContext ? { caseId: caseContext.id } : {}),
                 ...(clientContext ? { clientId: clientContext.id } : {}),
                 ...(Object.keys(roleAudience).length ? { roleAudience } : {}),
@@ -570,7 +573,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         };
     };
     const draftPayload = template ? { request: payload().body, editor: {
-        template, name, shared, roleAudience, rows, omitted: [...omitted], orderMode, orderRoles, orderGroups, source, importNote,
+        template, name, shared, roleAudience, rows, reviewerUserId, omitted: [...omitted], orderMode, orderRoles, orderGroups, source, importNote,
     } } : null;
     const draft = useSigningDraft({ api, payload: draftPayload, active: !!template && !casePending && !clientPending && step !== 'done',
         validateRestore: saved => {
@@ -589,7 +592,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             const restoredClient = saved.request.clientId ? await api.clientContext(saved.request.clientId) : null;
             if (!isCurrent()) return;
             setTemplate(editor.template); setName(editor.name || ''); setShared(editor.shared || {});
-            setRoleAudience(editor.roleAudience || {});
+            setRoleAudience(editor.roleAudience || {}); setReviewerUserId(editor.reviewerUserId || null);
             setRows(editor.rows.map(row => ({ ...row, id: `row-${++localId}` })));
             setOmitted(new Set(editor.omitted || [])); setOrderMode(editor.orderMode || 'parallel');
             setOrderGroups(editor.orderGroups || templateOrder(editor.template.roles).groups);
@@ -641,6 +644,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const errorEntries = check && !check.preview.valid ? check.preview.errors : [];
     const roleLabel = key => template?.roles.find(role => role.key === key)?.label || key;
     const describeError = item => {
+        if (item.path === 'reviewerUserId') return {where:'',fieldLabel:t('signingV2.approval.reviewer'),message:t(`signingV2.compose.rowErrors.${item.code}`),target:'approval-reviewer'};
         const parts = item.path.split('.');
         const field = parts.at(-1);
         const fieldLabel = parts[2] === 'data' ? dataFields.find(item => item.key === field)?.label || field : FIELDS.includes(field) ? t(`signingV2.compose.fields.${field}`) : field === 'sameAsRole' ? t('signingV2.compose.identity.label') : field === 'key' ? t('signingV2.compose.rows.key') : '';
@@ -727,6 +731,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                     <input value={name} maxLength={300} onChange={event => { setName(event.target.value); invalidate(); }} />
                 </Field>
                 <p className="lw-signingPackages__caption">{t('signingV2.compose.templateSummary', { name: template.name })}</p>
+                {template.approvalRequired && <ApprovalReviewerField api={api} value={reviewerUserId} soloAllowed={template.soloApproval} validationError={errorEntries.find(item=>item.path==='reviewerUserId')?.code} onChange={value=>{setReviewerUserId(value);invalidate();}}/>}
                 <details className="lw-signingCompose__optionalRoles"><summary>{t('signingV2.compose.signers.heading')}</summary>
                 <p className="lw-signingCompose__hintLine">{t('signingV2.compose.signers.help')}</p>
                 <p className="lw-signingCompose__hintLine">{t('signingV2.compose.audience.help')}</p>
@@ -829,6 +834,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                     <div><dt>{t('signingV2.compose.review.documents')}</dt><dd><bdi>{number(preview.documentCount)}</bdi></dd></div>
                     <div><dt>{t('signingV2.compose.review.recipients')}</dt><dd><bdi>{number(preview.recipientCount)}</bdi></dd></div>
                 </dl>
+                {preview.approval && <StatusNotice embedded><p>{t('signingV2.approval.beforeSending')} <bdi>{preview.approval.name}</bdi></p></StatusNotice>}
                 <h3>{t('signingV2.compose.review.documentList')}</h3>
                 <ul className="lw-signingCompose__plainList">{(preview.documentSummary || preview.template.documents).map(item => <li key={item.key}><bdi>{item.name}</bdi>
                     {item.excludedCount > 0 && <span> · {t('signingV2.compose.review.inclusion', { included: number(item.includedCount), total: number(preview.packageCount), excluded: number(item.excludedCount) })}</span>}

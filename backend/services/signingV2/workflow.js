@@ -3,6 +3,7 @@ const { expect, fail } = require('../../lib/signingV2/errors');
 const limits = require('../../lib/signingV2/limits');
 const { complete } = require('./jobs');
 const { assertCurrentAuthorities } = require('./authorities');
+const { packageScopeSql, scopeParams } = require('./access');
 
 async function lockRevision(db,contextId,revisionId) {
     const result=await db.query(`SELECT r.*,p.owner_userid,p.case_id,p.active_revision_id,
@@ -74,6 +75,10 @@ function createWorkflowService({pool,authorizeActivation,grantService}) {
             expect(existing.preview_hash===prepared.previewHash,'PREVIEW_CHANGED');
             await db.query('UPDATE signing_package_revisions SET preview_hash=$3 WHERE owner_context_id=$1 AND id=$2',
                 [revision.owner_context_id,revision.id,prepared.previewHash]);
+            if (revision.snapshot.policy.internalApproval || revision.snapshot.policy.requiredAllPdfReview) {
+                await db.query("UPDATE signing_approval_requests SET state='pending',version=version+1 WHERE owner_context_id=$1 AND revision_id=$2 AND state='preparing'",[revision.owner_context_id,revision.id]);
+                await db.query("UPDATE signing_package_revisions SET workflow_state='awaiting_approval',version=version+1 WHERE owner_context_id=$1 AND id=$2",[revision.owner_context_id,revision.id]);
+            }
             return {previewHash:prepared.previewHash,documentsReady:prepared.documents.length};
         });
     }
@@ -90,9 +95,16 @@ function createWorkflowService({pool,authorizeActivation,grantService}) {
                 [revision.owner_context_id,revision.id,revision.revision_hash])).rows[0];
             expect(proof && proof.preview_hash===prepared.previewHash && revision.preview_hash===prepared.previewHash,'PREFLIGHT_REQUIRED');
             if(revision.snapshot.policy.internalApproval || revision.snapshot.policy.requiredAllPdfReview) {
-                const approval=await db.query(`SELECT id FROM signing_approvals WHERE owner_context_id=$1 AND revision_id=$2
-                    AND revision_hash=$3 AND preview_hash=$4`,[revision.owner_context_id,revision.id,revision.revision_hash,prepared.previewHash]);
+                const approval=await db.query(`SELECT a.id,a.approver_userid FROM signing_approvals a
+                    JOIN signing_approval_requests q ON q.owner_context_id=a.owner_context_id AND q.revision_id=a.revision_id
+                    AND q.reviewer_userid=a.approver_userid AND q.state='approved'
+                    WHERE a.owner_context_id=$1 AND a.revision_id=$2 AND a.revision_hash=$3 AND a.preview_hash=$4`,
+                    [revision.owner_context_id,revision.id,revision.revision_hash,prepared.previewHash]);
                 expect(approval.rowCount===1,'APPROVAL_REQUIRED');
+                const scope=await require('./approvals').currentReviewerScope(db,{contextId:revision.owner_context_id,
+                    userId:approval.rows[0].approver_userid,packageApprove:true,all:true,assignedCases:true});
+                expect((await db.query(`SELECT 1 FROM signing_packages p WHERE ${packageScopeSql('p')} AND p.id=$5`,
+                    [...scopeParams(scope),revision.package_id])).rowCount===1,'APPROVER_UNAVAILABLE');
             }
             await assertCurrentAuthorities(db,revision.owner_context_id,revision.id);
             const stage=Math.min(...prepared.tasks.map(task=>task.stage));

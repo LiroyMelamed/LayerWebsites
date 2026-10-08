@@ -290,3 +290,12 @@ test('two representative positions add a verified-person rule without changing g
     expect(edited.documents[0].fields[0]).toMatchObject(source.documents[0].fields[0]);
     const again=adapter.toEditor(edited);again.roles[0].nativeRole.capacity='personal';expect(adapter.fromEditor(again,'en').signingRules).toEqual([]);
 });
+
+test('new internal approval controls preserve existing review policy and require explicit solo profile',async()=>{
+ const i=await setup('en'),api=fakeApi(),input=version();
+ render(<I18nextProvider i18n={i}><NativeTemplateBuilder version={input} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
+ fireEvent.click(screen.getByRole('button',{name:i.t('signingV2.builder.next')}));await screen.findByRole('button',{name:'Move first PDF field'});fireEvent.click(screen.getByRole('button',{name:i.t('signingV2.builder.next')}));
+ const approval=screen.getByRole('checkbox',{name:i.t('signingV2.approval.templateEnable')});expect(approval).toBeChecked();expect(screen.getByRole('checkbox',{name:i.t('signingV2.approval.templateSolo')})).not.toBeChecked();
+ fireEvent.click(approval);expect(screen.queryByRole('checkbox',{name:i.t('signingV2.approval.templateSolo')})).toBeNull();fireEvent.click(approval);fireEvent.click(screen.getByRole('checkbox',{name:i.t('signingV2.approval.templateSolo')}));fireEvent.click(screen.getByRole('button',{name:i.t('signingV2.authoring.saveDraft')}));await screen.findByText(i.t('signingV2.authoring.saved'));
+ expect(api.saveTemplateDraft.mock.calls[0][1].definition.policy).toMatchObject({internalApproval:true,soloApproval:true});expect(api.saveTemplateDraft.mock.calls[0][1].definition.documents).toMatchObject(input.definition.documents);
+});

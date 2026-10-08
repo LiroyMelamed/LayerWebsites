@@ -1574,7 +1574,14 @@
       "CHANNEL_REQUIRED": "Choose a channel for the new link.",
       "SIGNING_ALREADY_COMPLETE": "All signatures are already complete. This request cannot be cancelled.",
       "ASSIGNMENT_UNCHANGED": "The handling team has not changed.",
-      "ASSIGNEE_UNAVAILABLE": "A selected staff member is no longer available. Reload the list."
+      "ASSIGNEE_UNAVAILABLE": "A selected staff member is no longer available. Reload the list.",
+      "APPROVER_REQUIRED": "Choose an internal reviewer.",
+      "APPROVER_UNAVAILABLE": "The selected reviewer is unavailable or no longer authorized.",
+      "SEPARATE_APPROVER_REQUIRED": "Choose someone else to approve this work.",
+      "SOLO_PROFILE_ADMIN_REQUIRED": "Only the office administrator can enable self-approval.",
+      "PDF_REVIEW_REQUIRED": "Review every document and explicitly approve the wording.",
+      "APPROVAL_NOT_READY": "This package is not ready for approval yet.",
+      "APPROVAL_NOT_REQUIRED": "This template does not require internal approval."
     },
     "actionCancelledReason": {
       "ACTION_SCOPE_CHANGED": "The signing tasks changed while this message was waiting. Review the current selection before sending again.",
@@ -1829,7 +1836,14 @@
         "IDENTITY_ALREADY_EXISTS": "This identity already exists. Select the existing person; no automatic merge occurred.",
         "IDENTITY_ALREADY_VERIFIED": "A verified identity cannot be changed to another person.",
         "IDENTITY_VERIFICATION_REQUIRED": "Review both representatives’ identities before sending.",
-        "INVALID_CAPACITY": "The represented party does not match this signing capacity."
+        "INVALID_CAPACITY": "The represented party does not match this signing capacity.",
+        "APPROVER_REQUIRED": "Choose an internal reviewer.",
+        "APPROVER_UNAVAILABLE": "The selected reviewer is unavailable or no longer authorized.",
+        "SEPARATE_APPROVER_REQUIRED": "Choose someone else to approve this work.",
+        "SOLO_PROFILE_ADMIN_REQUIRED": "Only the office administrator can enable self-approval.",
+        "PDF_REVIEW_REQUIRED": "Review every document and explicitly approve the wording.",
+        "APPROVAL_NOT_READY": "This package is not ready for approval yet.",
+        "APPROVAL_NOT_REQUIRED": "This template does not require internal approval."
       },
       "errors": {
         "INVALID_WORKBOOK": "This file is not a valid Excel workbook",
@@ -2468,6 +2482,32 @@
         "saved": "Responsibility updated.",
         "search": "Find staff"
       }
+    },
+    "approval": {
+      "title": "Approve wording for delivery",
+      "reviewer": "Internal reviewer",
+      "beforeSending": "Documents will be prepared for review. Signing invitations will be sent only after internal approval by",
+      "choose": "Choose a reviewer",
+      "solo": "Solo office profile",
+      "preparer": "Prepared by",
+      "help": "Review every document and approve the wording for delivery. This approval does not sign the documents.",
+      "soloNotice": "This template explicitly enables a solo office profile, allowing the preparer to approve their own work.",
+      "reviewed": "I reviewed every document and approve the wording for delivery",
+      "confirm": "Approve wording and continue delivery",
+      "return": "Return for correction",
+      "returnConfirm": "Return with this reason",
+      "reason": "What needs correcting?",
+      "approved": "Wording approved. Delivery will continue in the background.",
+      "returned": "The package was returned for correction. Signing invitations will not be sent.",
+      "templateEnable": "Require internal approval before sending the package",
+      "templateSolo": "Solo office profile: the office administrator permits preparers to approve their own work",
+      "state": {
+        "preparing": "Preparing documents for review",
+        "pending": "Waiting for internal approval",
+        "approved": "Internal approval received",
+        "returned": "Returned for correction"
+      },
+      "waitingHelp": "Documents will be prepared for review. Signing invitations will be sent only after the selected reviewer approves them."
     }
   },
   "calendar": {

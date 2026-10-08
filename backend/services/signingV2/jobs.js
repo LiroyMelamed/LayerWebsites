@@ -70,6 +70,11 @@ async function claim(db, { workerId, kinds, limit = 1, leaseSeconds = 60, contex
         WHERE j.kind=ANY($1::text[]) AND j.state IN ('pending','retry') AND j.available_at <= clock_timestamp()
           AND ($5::uuid[] IS NULL OR j.owner_context_id=ANY($5::uuid[]))
           AND j.attempts < j.max_attempts
+          AND (j.kind<>'activate_package' OR NOT EXISTS (
+            SELECT 1 FROM signing_package_revisions r WHERE r.owner_context_id=j.owner_context_id AND r.id=j.subject_id
+            AND ((r.snapshot->'policy'->>'internalApproval')::boolean IS TRUE OR (r.snapshot->'policy'->>'requiredAllPdfReview')::boolean IS TRUE)
+            AND NOT EXISTS (SELECT 1 FROM signing_approvals a WHERE a.owner_context_id=r.owner_context_id AND a.revision_id=r.id
+                AND a.revision_hash=r.revision_hash AND a.preview_hash=r.preview_hash)))
           AND NOT EXISTS (SELECT 1 FROM signing_job_dependencies d
             JOIN signing_jobs p ON p.owner_context_id=d.owner_context_id AND p.id=d.depends_on_id
             WHERE d.owner_context_id=j.owner_context_id AND d.job_id=j.id AND p.state <> 'complete' AND NOT (j.kind='dispatch_delivery' AND p.state='cancelled'))

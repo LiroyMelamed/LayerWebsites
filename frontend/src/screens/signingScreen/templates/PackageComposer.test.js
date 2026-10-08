@@ -644,3 +644,15 @@ test.each(['he','ar','en'])('multiple people keep explicit positions and focused
     fireEvent.click(within(second).getByRole('button',{name:label('removeLast')}));
     expect(screen.queryByRole('group',{name:label('personNumber',{number:fmt(2)})})).toBeNull();
 });
+
+test('new internal reviewer is explicit in creation preview and review',async()=>{
+ const i=await translations('en'),api=fakeApi();api.templates.mockResolvedValue({templates:[{...converted,approvalRequired:true}],legacy:[]});api.approvalReviewers=jest.fn().mockResolvedValue({users:[{id:21,name:'Chosen reviewer',self:false}]});
+ api.previewCreation.mockResolvedValue({...validPreview(1),approval:{name:'Chosen reviewer',reviewerId:21}});
+ render(<I18nextProvider i18n={i}><PackageComposer api={api} initialTemplateId="t-1"/></I18nextProvider>);
+ const picker=await screen.findByRole('combobox',{name:i.t('signingV2.approval.reviewer')});await screen.findByRole('option',{name:'Chosen reviewer'});fireEvent.change(picker,{target:{value:'21'}});fireEvent.change(within(screen.getByRole('group',{name:i.t('signingV2.compose.rows.row',{number:'1'})})).getByLabelText(i.t('signingV2.compose.fields.name')),{target:{value:'Synthetic recipient'}});fireEvent.click(screen.getByRole('button',{name:i.t('signingV2.compose.check')}));await screen.findByRole('heading',{name:i.t('signingV2.compose.review.heading')});
+ expect(api.previewCreation.mock.calls[0][0].reviewerUserId).toBe(21);expect(screen.getByText('Chosen reviewer')).toBeTruthy();expect(screen.getByText(i.t('signingV2.approval.beforeSending'),{exact:false})).toBeTruthy();
+});
+test('new missing internal reviewer error focuses the actual picker',async()=>{
+ const i=await translations('en'),api=fakeApi();api.templates.mockResolvedValue({templates:[{...converted,approvalRequired:true}],legacy:[]});api.approvalReviewers=jest.fn().mockResolvedValue({users:[{id:21,name:'Reviewer',self:false}]});api.previewCreation.mockResolvedValue({valid:false,errorCount:1,errors:[{path:'reviewerUserId',code:'APPROVER_REQUIRED'}]});
+ render(<I18nextProvider i18n={i}><PackageComposer api={api} initialTemplateId="t-1"/></I18nextProvider>);await screen.findByRole('option',{name:'Reviewer'});fireEvent.change(within(screen.getByRole('group',{name:i.t('signingV2.compose.rows.row',{number:'1'})})).getByLabelText(i.t('signingV2.compose.fields.name')),{target:{value:'Synthetic recipient'}});fireEvent.click(screen.getByRole('button',{name:i.t('signingV2.compose.check')}));const summary=await screen.findByRole('alert');fireEvent.click(within(summary).getByRole('button'));const picker=screen.getByRole('combobox',{name:i.t('signingV2.approval.reviewer')});expect(picker).toHaveFocus();expect(picker).toHaveAttribute('aria-invalid','true');expect(picker).toHaveAccessibleDescription(i.t('signingV2.errors.APPROVER_REQUIRED'));
+});
