@@ -1735,7 +1735,9 @@
         "INVALID_ROW": "The documents for this row could not be prepared",
         "TEXT_OVERFLOW": "The text is longer than the space in the document",
         "DISTINCT_PEOPLE_REQUIRED": "The same person cannot fill two roles that need different signers",
-        "CAPACITY_BUDGET_EXCEEDED": "This run is too large. The limit is 200 rows"
+        "CAPACITY_BUDGET_EXCEEDED": "This run is too large. The limit is 200 rows",
+        "RECIPIENT_LINK_CYCLE": "These roles refer back to each other. Enter person details for one of them.",
+        "RECIPIENT_LINK_UNAVAILABLE": "The linked role is unavailable. Choose the person again."
       },
       "errors": {
         "INVALID_WORKBOOK": "This file is not a valid Excel workbook",
@@ -1792,6 +1794,13 @@
         "noContact": "Contact details missing",
         "open": "Send documents for signing",
         "back": "Back to case"
+      },
+      "identity": {
+        "label": "Who fills this role?",
+        "separate": "Separate person — enter details",
+        "sameAs": "Same person as: {{role}}",
+        "unavailable": "Linked role is no longer available — choose again",
+        "linkedHelp": "Uses the person details from the selected role. Roles and signing order stay separate; a later signing stage requires fresh consent and verification."
       }
     },
     "public": {

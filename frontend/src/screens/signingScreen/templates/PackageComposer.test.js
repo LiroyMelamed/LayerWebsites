@@ -376,3 +376,37 @@ test('choosing an existing case through the real search control does not cancel 
     expect(await screen.findByText('Linked case:')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Check data' })).toBeEnabled();
 });
+
+test('an explicit same-person role sends a reference, preserves original details when detached and never copies a row into all packages', async () => {
+    const i18n = await translations('en'), api = fakeApi();
+    const listRoles = [
+        { key:'opening',label:'Opening lawyer',audience:'shared',stage:0 },
+        { key:'client',label:'Client',audience:'each',stage:1 },
+        { key:'closing',label:'Closing lawyer',audience:'shared',stage:2 },
+    ];
+    api.templates.mockResolvedValue({templates:[{...converted,roles:listRoles}],legacy:[]});
+    render(<I18nextProvider i18n={i18n}><PackageComposer api={api}/></I18nextProvider>);
+    fireEvent.click(await screen.findByRole('button',{name:/Employment pack/}));
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.compose.next')}));
+    const opening = screen.getByRole('group',{name:'Opening lawyer'});
+    const closing = screen.getByRole('group',{name:'Closing lawyer'});
+    fireEvent.change(within(opening).getByLabelText(i18n.t('signingV2.compose.fields.name')),{target:{value:'Same synthetic lawyer'}});
+    fireEvent.change(within(opening).getByLabelText(i18n.t('signingV2.compose.fields.email')),{target:{value:'lawyer@example.invalid'}});
+    fireEvent.change(within(closing).getByLabelText(i18n.t('signingV2.compose.fields.name')),{target:{value:'Separate draft details'}});
+    const choice = within(closing).getByRole('combobox',{name:i18n.t('signingV2.compose.identity.label')});
+    expect(within(choice).queryByRole('option',{name:'Same person as: Client'})).not.toBeInTheDocument();
+    fireEvent.change(choice,{target:{value:'opening'}});
+    expect(within(closing).queryByLabelText(i18n.t('signingV2.compose.fields.email'))).not.toBeInTheDocument();
+    fireEvent.change(choice,{target:{value:''}});
+    expect(within(closing).getByLabelText(i18n.t('signingV2.compose.fields.name'))).toHaveValue('Separate draft details');
+    fireEvent.change(choice,{target:{value:'opening'}});
+    const row = screen.getByRole('group',{name:i18n.t('signingV2.compose.rows.row',{number:'1'})});
+    fireEvent.change(within(row).getByLabelText(i18n.t('signingV2.compose.fields.name')),{target:{value:'Client'}});
+    fireEvent.change(within(row).getByLabelText(i18n.t('signingV2.compose.fields.email')),{target:{value:'client@example.invalid'}});
+    api.previewCreation.mockResolvedValue({...validPreview(1), shared:[{roleKey:'opening',name:'Same synthetic lawyer'},{roleKey:'closing',name:'Same synthetic lawyer'}]});
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.compose.check')}));
+    await screen.findByRole('heading',{name:i18n.t('signingV2.compose.review.heading')});
+    expect(screen.queryByText(/Same synthetic lawyer, Same synthetic lawyer/)).not.toBeInTheDocument();
+    expect(api.previewCreation.mock.calls[0][0].shared.closing).toEqual({sameAsRole:'opening'});
+    expect(api.previewCreation.mock.calls[0][0].signingOrder).toEqual({mode:'sequential',roles:['opening','client','closing']});
+});

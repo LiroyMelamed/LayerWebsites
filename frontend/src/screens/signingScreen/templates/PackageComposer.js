@@ -27,13 +27,19 @@ const MAX_ROWS = 200;
 let localId = 0;
 const blankPerson = () => ({ name: '', email: '', phone: '', channel: '' });
 const blankRow = roles => ({ id: `row-${++localId}`, key: '', recipients: Object.fromEntries(roles.map(role => [role.key, blankPerson()])) });
-const filled = person => FIELDS.some(field => String(person?.[field] || '').trim());
+const filled = person => !!person?.sameAsRole || FIELDS.some(field => String(person?.[field] || '').trim());
 const rowFilled = row => row.key.trim() || Object.values(row.recipients).some(filled);
-const clean = (person, language) => ({
+const clean = (person, language) => person.sameAsRole ? { sameAsRole: person.sameAsRole } : ({
     name: person.name.trim(), email: person.email.trim(), phone: person.phone.trim(),
     ...(person.channel ? { channel: person.channel } : {}),
     locale: LOCALES.has(language) ? language : 'he',
 });
+function sharedIdentityKey(people, roleKey) {
+    const visited = new Set();
+    let key = roleKey;
+    while (people?.[key]?.sameAsRole && !visited.has(key)) { visited.add(key); key = people[key].sameAsRole; }
+    return people?.[key]?.personId || key;
+}
 const fieldId = (scope, roleKey, field) => `compose-${scope}-${roleKey}-${field}`;
 
 function Field({ id, label, help, error, className = '', children }) {
@@ -81,7 +87,7 @@ function SuggestField({ id, label, value, error, errorText, dir, type, inputMode
     </div>;
 }
 
-function PersonFields({ scope, roleKey, person, errors, onChange, compact, suggestLawyers, casePeople }) {
+function PersonFields({ scope, roleKey, person, errors, onChange, compact, suggestLawyers, casePeople, otherRoles = [] }) {
     const { t, direction } = useSigningLocale();
     const message = name => errors?.[name] ? t(`signingV2.compose.rowErrors.${errors[name]}`, { defaultValue: t('signingV2.compose.rowErrors.INVALID_ROW') }) : '';
     const pick = item => {
@@ -96,6 +102,15 @@ function PersonFields({ scope, roleKey, person, errors, onChange, compact, sugge
         value={person[name]} onChange={value => onChange(roleKey, name, value)}
         options={[{ value: '', label: first }, ...values.map(value => ({ value, label: t(`signingV2.compose.${name}.${value}`) }))]} />;
     return <div className={`lw-signingCompose__person${compact ? ' is-compact' : ''}`}>
+        {(otherRoles.length > 0 || person.sameAsRole) && <Field id={fieldId(scope, roleKey, 'sameAsRole')}
+            label={t('signingV2.compose.identity.label')} error={errors?.sameAsRole} className="is-wide">
+            <select value={person.sameAsRole || ''} onChange={event => onChange(roleKey, 'sameAsRole', event.target.value)}>
+                <option value="">{t('signingV2.compose.identity.separate')}</option>
+                {person.sameAsRole && !otherRoles.some(role => role.key === person.sameAsRole) && <option value={person.sameAsRole}>{t('signingV2.compose.identity.unavailable')}</option>}
+                {otherRoles.map(role => <option key={role.key} value={role.key}>{t('signingV2.compose.identity.sameAs', { role: role.label })}</option>)}
+            </select>
+        </Field>}
+        {person.sameAsRole ? <p className="lw-signingCompose__hintLine">{t('signingV2.compose.identity.linkedHelp')}</p> : <>
         {!!casePeople?.length && <Field id={fieldId(scope, roleKey, 'case-person')} label={t('signingV2.compose.context.fill')} className="is-wide">
             <select value="" onChange={event => { const item = casePeople.find(candidate => String(candidate.id) === event.target.value); if (item) pick(item); }}>
                 <option value="">{t('signingV2.compose.context.choose')}</option>
@@ -113,10 +128,11 @@ function PersonFields({ scope, roleKey, person, errors, onChange, compact, sugge
         <div className="lw-signingCompose__choices">
             {choice('channel', t('signingV2.compose.channel.auto'), ['email', 'sms', 'both'])}
         </div>
+        </>}
     </div>;
 }
 
-const RecipientRow = memo(function RecipientRow({ row, index, roles, errors, onChange, onRemove, canRemove, casePeople }) {
+const RecipientRow = memo(function RecipientRow({ row, index, roles, errors, onChange, onRemove, canRemove, casePeople, allRoles }) {
     const { t, number } = useSigningLocale();
     const change = useCallback((roleKey, field, value) => onChange(row.id, roleKey, field, value), [onChange, row.id]);
     const rowNumber = number(index + 1);
@@ -132,7 +148,7 @@ const RecipientRow = memo(function RecipientRow({ row, index, roles, errors, onC
             {errors?.row?.key && <p className="lw-signingCompose__fieldError" role="note">{t(`signingV2.compose.rowErrors.${errors.row.key}`, { defaultValue: t('signingV2.compose.rowErrors.INVALID_ROW') })}</p>}
             {roles.map(role => <div key={role.key} className="lw-signingCompose__roleBlock">
                 {roles.length > 1 && <h4>{role.label}</h4>}
-                <PersonFields scope={row.id} roleKey={role.key} person={row.recipients[role.key] || blankPerson()} errors={errors?.[role.key]} onChange={change} suggestLawyers={role.key === 'lawyer'} compact casePeople={casePeople} />
+                <PersonFields scope={row.id} roleKey={role.key} person={row.recipients[role.key] || blankPerson()} errors={errors?.[role.key]} onChange={change} suggestLawyers={role.key === 'lawyer'} compact casePeople={casePeople} otherRoles={allRoles.filter(other => other.key !== role.key)} />
             </div>)}
         </fieldset>
     </li>;
@@ -296,6 +312,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const sendRoles = useMemo(() => (template?.roles || []).map(role => ({ ...role, audience: Object.hasOwn(roleAudience, role.key) ? roleAudience[role.key] : role.audience })), [template, roleAudience]);
     const shareRoles = useMemo(() => sendRoles.filter(role => role.audience === 'shared'), [sendRoles]);
     const eachRoles = useMemo(() => sendRoles.filter(role => role.audience !== 'shared'), [sendRoles]);
+    const activeRoles = useMemo(() => sendRoles.filter(role => !omitted.has(role.key)), [sendRoles, omitted]);
     const activeShare = useMemo(() => shareRoles.filter(role => !omitted.has(role.key)), [shareRoles, omitted]);
     const activeEach = useMemo(() => eachRoles.filter(role => !omitted.has(role.key)), [eachRoles, omitted]);
     const dirty = rows.some(rowFilled) || Object.values(shared).some(filled) || !!name.trim();
@@ -452,7 +469,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const describeError = item => {
         const parts = item.path.split('.');
         const field = parts.at(-1);
-        const fieldLabel = FIELDS.includes(field) ? t(`signingV2.compose.fields.${field}`) : field === 'key' ? t('signingV2.compose.rows.key') : '';
+        const fieldLabel = FIELDS.includes(field) ? t(`signingV2.compose.fields.${field}`) : field === 'sameAsRole' ? t('signingV2.compose.identity.label') : field === 'key' ? t('signingV2.compose.rows.key') : '';
         const sentKey = parts[0] === 'rows' ? check.body.rows[Number(parts[1])]?.key : null;
         const where = parts[0] === 'shared' ? roleLabel(parts[1])
             : parts.length >= 2 ? t('signingV2.compose.rows.row', { number: number(Number(parts[1]) + 1) }) + (sentKey ? ` (${sentKey})` : '')
@@ -462,7 +479,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     };
     const filledRows = rows.filter(rowFilled).length;
     const preview = check?.preview;
-    const sharedNames = preview?.shared?.map(item => item.name).join(', ');
+    const sharedNames = [...new Map((preview?.shared || []).map(item => [sharedIdentityKey(check?.body.shared, item.roleKey), item.name])).values()].join(', ');
 
     return <section className="lw-signingPackages lw-signingCompose" dir={direction} aria-labelledby="signing-compose-title">
         <header className="lw-signingPackages__heading">
@@ -545,7 +562,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 <p>{t('signingV2.compose.shared.help')}</p>
                 {activeShare.map(role => <fieldset key={role.key} className="lw-signingCompose__shared">
                     <legend>{role.label}</legend>
-                    <PersonFields scope="shared" roleKey={role.key} person={shared[role.key] || blankPerson()} errors={check?.indexed.shared[role.key]} onChange={changeShared} suggestLawyers={role.key === 'lawyer'} casePeople={caseContext?.people} />
+                    <PersonFields scope="shared" roleKey={role.key} person={shared[role.key] || blankPerson()} errors={check?.indexed.shared[role.key]} onChange={changeShared} suggestLawyers={role.key === 'lawyer'} casePeople={caseContext?.people} otherRoles={activeShare.filter(other => other.key !== role.key)} />
                 </fieldset>)}
             </SimpleCard>}
             {activeEach.length > 0 && <SimpleCard className="lw-signingCompose__card">
@@ -585,7 +602,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                     {errorCount > 30 && <p>{t('signingV2.compose.moreErrors', { count: errorCount - 30, formattedCount: number(errorCount - 30) })}</p>}
                 </StatusNotice>}
                 {activeEach.length > 0 && busy !== 'upload' && <ol className="lw-signingCompose__rows">{rows.map((row, index) =>
-                    <RecipientRow key={row.id} row={row} index={index} roles={activeEach} errors={check?.indexed.byRow[row.id]} onChange={changeRow} onRemove={removeRow} canRemove={rows.length > 1} casePeople={caseContext?.people} />)}
+                    <RecipientRow key={row.id} row={row} index={index} roles={activeEach} errors={check?.indexed.byRow[row.id]} onChange={changeRow} onRemove={removeRow} canRemove={rows.length > 1} casePeople={caseContext?.people} allRoles={activeRoles} />)}
                 </ol>}
                 <div className="lw-signingPackages__actions">
                     <SecondaryButton onPress={() => {

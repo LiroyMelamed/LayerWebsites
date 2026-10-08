@@ -6,9 +6,10 @@ const limits = require('../../lib/signingV2/limits');
 const { transaction } = require('./transaction');
 const { validateSources } = require('./templates');
 const { createSubmission, loadDirectory, previewHash } = require('./submissions');
-const { loadPerson } = require('./people');
+const { personScopeSql } = require('./people');
+const { resolveRecipient, recipientIdentity } = require('../../lib/signingV2/recipientBindings');
 const { recipientRoles } = require('../../lib/signingV2/recipientLayout');
-const { assertCases } = require('./access');
+const { assertCases, scopeParams } = require('./access');
 const { caseId } = require('./caseContext');
 
 const LEGACY_FIELD_TYPES = { signature: 'signature', initials: 'initials', text: 'text', date: 'date', checkbox: 'checkbox', number: 'text' };
@@ -177,7 +178,8 @@ function recipient(input, definition, path, errors) {
     const locale = value.locale || definition.locale;
     if (!LOCALES.has(locale)) errors.push({ path: `${path}.locale`, code: 'INVALID_LOCALE' });
     return { name, email, phone: phone || null, channels: channels || [], locale,
-        ...(value.personId ? { personId: String(value.personId) } : {}) };
+        ...(value.personId ? { personId: String(value.personId) } : {}),
+        ...(value.bindingKey ? { bindingKey: value.bindingKey } : {}) };
 }
 
 function omittedRoles(definition, input, errors) {
@@ -220,7 +222,7 @@ function normalize(definition, input) {
     const roles = recipientRoles(definition, input.roleAudience, [...omitted]);
     const shared = {}, each = roles.filter(role => role.audience !== 'shared');
     for (const role of roles.filter(item => item.audience === 'shared')) {
-        shared[role.key] = recipient(input.shared?.[role.key], definition, `shared.${role.key}`, errors);
+        shared[role.key] = recipient(resolveRecipient(roles, input, role, null, `shared.${role.key}`, errors), definition, `shared.${role.key}`, errors);
         if (shared[role.key].personId) expect(UUID.test(shared[role.key].personId), 'INVALID_PERSON');
     }
     const keys = new Set();
@@ -229,7 +231,7 @@ function normalize(definition, input) {
         const key = typeof row?.key === 'string' && row.key.trim() ? row.key.trim().slice(0, 200) : `row-${index + 1}`;
         if (keys.has(key)) errors.push({ path: `rows.${index}.key`, code: 'DUPLICATE_ROW_KEY' });
         keys.add(key);
-        return { key, ...(selectedCaseId ? { caseId: selectedCaseId } : {}), recipients: Object.fromEntries(each.map(role => [role.key, recipient(row?.recipients?.[role.key], definition, `rows.${index}.${role.key}`, errors)])) };
+        return { key, ...(selectedCaseId ? { caseId: selectedCaseId } : {}), recipients: Object.fromEntries(each.map(role => [role.key, recipient(resolveRecipient(roles, input, role, index, `rows.${index}.${role.key}`, errors), definition, `rows.${index}.${role.key}`, errors)])) };
     });
     return { name: input.name.trim(), roles, shared, rows, omitted, signingOrder: signingOrder(definition, input, omitted, errors), errors };
 }
@@ -259,7 +261,7 @@ async function previewCreation(pool, scope, input) {
     await assertCases(pool, scope, [...new Set(plan.rows.map(row => row.caseId).filter(Boolean))]);
     const people = new Map(), parties = new Map();
     const personFor = (role, person, index) => {
-        const personId = person.personId || stableUuid('preview', role.audience === 'shared' ? role.key : `${index}:${role.key}`);
+        const personId = person.personId || stableUuid('preview', recipientIdentity(role, person, index));
         const partyId = stableUuid('preview-party', personId);
         people.set(personId, { id: personId, name: person.name || '-', identity_key: null });
         parties.set(partyId, { id: partyId, kind: 'person', person_id: personId, name: person.name || '-' });
@@ -302,7 +304,7 @@ async function createFromRows(pool, scope, input, { reserveCapacity }) {
     const created = new Map();
     const personFor = (role, person, index) => {
         if (person.personId) return { personId: person.personId, partyId: null, existing: true };
-        const personId = stableUuid(...seed, role.audience === 'shared' ? `shared:${role.key}` : `${index}:${role.key}`);
+        const personId = stableUuid(...seed, recipientIdentity(role, person, index));
         const ids = { personId, partyId: stableUuid(...seed, 'party', personId) };
         created.set(personId, { ...ids, name: person.name, endpoints: { ...(person.email ? { email: person.email } : {}), ...(person.phone ? { phone: person.phone } : {}) } });
         return ids;
@@ -310,12 +312,18 @@ async function createFromRows(pool, scope, input, { reserveCapacity }) {
     const packages = packagesFor(definition, plan, personFor);
     await transaction(pool, async db => {
         await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [`signing-v2-people:${seed.join(':')}`]);
-        for (const role of plan.roles.filter(item => item.audience === 'shared' && plan.shared[item.key]?.personId)) {
-            const person = await loadPerson(db, scope, plan.shared[role.key].personId);
-            const party = (await db.query(`SELECT id FROM signing_parties WHERE owner_context_id=$1 AND person_id=$2 AND kind='person' ORDER BY id LIMIT 1`,
-                [scope.contextId, person.id])).rows[0];
-            if (!party) fail('PARTICIPANT_NOT_AVAILABLE', 404);
-            packages.forEach(item => { item.roles[role.key][0].partyId = party.id; });
+        const linkedIds = [...new Set(packages.flatMap(item => Object.values(item.roles).flat().filter(person => person.partyId === null).map(person => person.personId)))];
+        if (linkedIds.length) {
+            expect(linkedIds.every(id => UUID.test(id)), 'INVALID_PERSON');
+            const available = (await db.query(`SELECT person.id,party.id AS party_id FROM signing_people person
+                JOIN LATERAL (SELECT id FROM signing_parties WHERE owner_context_id=person.owner_context_id
+                    AND person_id=person.id AND kind='person' ORDER BY id LIMIT 1) party ON TRUE
+                WHERE ${personScopeSql()} AND person.id=ANY($5::uuid[])`, [...scopeParams(scope), linkedIds])).rows;
+            if (available.length !== linkedIds.length) fail('PARTICIPANT_NOT_AVAILABLE', 404);
+            const parties = new Map(available.map(person => [person.id, person.party_id]));
+            for (const item of packages) for (const people of Object.values(item.roles)) for (const person of people) {
+                if (person.partyId === null) person.partyId = parties.get(person.personId);
+            }
         }
         const rows = [...created.values()];
         await db.query(`INSERT INTO signing_people(id,owner_context_id,name,contact_endpoints,created_by)
