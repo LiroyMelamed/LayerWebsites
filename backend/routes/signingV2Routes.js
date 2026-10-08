@@ -7,6 +7,7 @@ const { actorScope } = require('../services/signingV2/access');
 const management = require('../services/signingV2/management');
 const actions = require('../services/signingV2/actions');
 const selections = require('../services/signingV2/selections');
+const bulkReview = require('../services/signingV2/bulkReview');
 const creation = require('../services/signingV2/creation');
 const drafts = require('../services/signingV2/drafts');
 const caseContext = require('../services/signingV2/caseContext');
@@ -37,6 +38,10 @@ router.post('/selections', send, run(async (req,res) => {
 }));
 router.get('/selections/:id', send, run(async (req,res) =>
     res.json(await selections.getSelection(pool,await actorScope(pool,req,'upload'),req.params.id))));
+router.post('/selections/:id/preview', send, run(async (req,res) =>
+    res.json(await bulkReview.previewBulkAction(pool,await actorScope(pool,req,'upload'),{
+        selectionId:req.params.id,purpose:req.body?.purpose,channel:req.body?.channel,idempotencyKey:req.get('Idempotency-Key'),
+    }))));
 router.get('/submissions/:id/packages', view, run(async (req, res) =>
     res.json(await management.listPackages(pool, await actorScope(pool, req, 'view'), req.params.id, req.query))));
 router.get('/packages/:id', view, run(async (req, res) => res.json(await management.packageDetails(pool, await actorScope(pool, req, 'view'), req.params.id))));

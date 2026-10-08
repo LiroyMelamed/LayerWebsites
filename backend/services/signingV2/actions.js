@@ -183,4 +183,4 @@ async function operationStatus(db, scope, operationId) {
     return { operationId, kind: operation.kind, createdAt: operation.created_at, state: open ? 'running' : operation.state === 'running' ? 'complete' : operation.state, items };
 }
 
-module.exports = { previewParticipantAction, executeParticipantAction, operationStatus, maskEndpoint, COOLDOWN_SECONDS };
+module.exports = { previewParticipantAction, executeParticipantAction, operationStatus, maskEndpoint, COOLDOWN_SECONDS, evaluate };
