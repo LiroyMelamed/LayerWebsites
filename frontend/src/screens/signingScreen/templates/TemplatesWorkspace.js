@@ -71,9 +71,9 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSe
         finally { setBusy(false); }
     }
     async function archive(template) {
-        if (archiving.current || !window.confirm(text('archiveConfirm', { name: template.name }))) return;
+        if (archiving.current) return;
         archiving.current = true; setBusy(true); setError(null);
-        try { await api.archive(template.id, template.version); await refresh(); }
+        try { await api.archive(template.id, template.version); setArchiveConfirmation(null); await refresh(); }
         catch (err) { setError(err); }
         finally { archiving.current = false; setBusy(false); }
     }
@@ -162,7 +162,7 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSe
                 <div className="lw-templates__actions">
                     {canUpload && <button type="button" className="is-primary" disabled={busy} onClick={() => onSendTemplate ? onSendTemplate(template) : openTemplate(template.id, 'compose')}>{text('sendFromTemplate')}</button>}
                     {canManage && canUpload && <button type="button" disabled={busy} onClick={() => openTemplate(template.id, 'builder')}>{text('edit')}</button>}
-                    {canManage && <button type="button" disabled={busy} onClick={() => archive(template)}>{text('archive')}</button>}
+                    {canManage && <button type="button" disabled={busy} onClick={() => setArchiveConfirmation({ ...template, legacy: true, definition: { ...template.definition, name: template.name } })}>{text('archive')}</button>}
                 </div>
             </li>)}</ul>
             <h2>{text('batches')}</h2>
@@ -214,7 +214,7 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSe
             </>}
         </>}
     </section>
-        {archiveConfirmation && <TemplateArchiveConfirmation version={archiveConfirmation} busy={busy} onConfirm={() => archiveNative(archiveConfirmation)}
+        {archiveConfirmation && <TemplateArchiveConfirmation version={archiveConfirmation} busy={busy} onConfirm={() => archiveConfirmation.legacy ? archive(archiveConfirmation) : archiveNative(archiveConfirmation)}
             onCancel={() => { if (!archiving.current) setArchiveConfirmation(null); }} />}
     </>;
 }
