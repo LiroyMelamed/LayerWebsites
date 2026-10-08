@@ -75,20 +75,50 @@
   &::backdrop { background: rgb(26 54 93 / 25%); }
   h2 { font-size: 1rem; margin: 0; font-weight: 500; }
   h3 { font-size: 1rem; margin: 0; }
+  button { min-block-size: 2.75rem; }
   p:not(.lw-simpleText) { line-height: 1.6; margin: .375rem 0; }
   time, small { font-size: .8125rem; color: #4a5568; }
 }
-.lw-signingPackages__panelHeader { justify-content: space-between; gap: 1rem; margin-block-end: 1.5rem; }
-.lw-signingPackages__panelSummary { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; margin-block-end: 1.5rem; p { flex-basis: 100%; font-size: .875rem; } }
-.lw-signingPackages__people > li { padding-block: 1.25rem; border-block-end: 1px solid #e2e8f0; }
-.lw-signingPackages__tasks > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; margin-block-start: .75rem; font-size: .875rem; time, .lw-signingPackages__docActions { grid-column: 1 / -1; } }
+.lw-signingPackages__panelHeader {
+  position: relative; display: block; min-block-size: 2.75rem; padding-left: 3.5rem; margin-block-end: 1rem;
+  h2 { min-inline-size: 0; overflow-wrap: anywhere; line-height: 1.5; }
+}
+.lw-signingPackages__panelClose.lw-simpleButton {
+  position: absolute; left: 0; inset-block-start: 0; display: grid; place-items: center;
+  inline-size: 2.75rem; block-size: 2.75rem; min-inline-size: 2.75rem; min-block-size: 2.75rem;
+  margin: 0; padding: 0; border: 0; border-radius: .375rem; background: transparent; color: inherit; cursor: pointer;
+  &:hover { background: #edf2f7; }
+}
+.lw-signingPackages__panelSummary {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: .5rem 1rem; margin-block-end: 1rem;
+  p:not(.lw-simpleText), > button { grid-column: 1 / -1; margin: 0; font-size: .875rem; }
+}
+.lw-signingPackages__panelTabs {
+  margin-block-end: 1.5rem;
+  .lw-segmentedSwitch__track { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); inline-size: 100%; box-sizing: border-box; }
+  .lw-segmentedSwitch__option { min-inline-size: 0; min-block-size: 2.75rem; padding-inline: .5rem; white-space: normal; }
+}
+.lw-signingPackages__people > li { padding-block: 1.5rem; border-block-end: 1px solid #e2e8f0; }
+.lw-signingPackages__people > li:first-child { padding-block-start: 0; }
+.lw-signingPackages__personHeading { display: grid; gap: .5rem; p:not(.lw-simpleText) { margin: 0; } }
+.lw-signingPackages__documentList > li { display: grid; gap: 1rem; p:not(.lw-simpleText), .lw-signingPackages__docActions { margin: 0; } }
+.lw-signingPackages__tasks { margin-block-start: 1rem; }
+.lw-signingPackages__tasks > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1rem; padding-block: 1rem; font-size: .875rem; time, .lw-signingPackages__docActions { grid-column: 1 / -1; } }
 .lw-signingPackages__docActions { display: flex; flex-wrap: wrap; gap: .5rem; margin-block-start: .25rem; }
+.lw-signingPackages__docActions.lw-signingPackages__panelActions {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); gap: .75rem; margin-block: 1rem 1.5rem;
+  > button { inline-size: 100%; min-block-size: 2.75rem; margin: 0; }
+}
 .lw-signingPackages__spots { margin: .75rem 0 0; padding-inline-start: 1.1rem; font-size: .875rem; }
 .lw-signingPackages__viewer { margin-block-start: .75rem; max-block-size: 70vh; overflow: auto; border: 1px solid #e2e8f0; border-radius: .375rem; background: #f1f3f5; }
 .lw-signingPackages__personActions {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem;
-  margin-block-start: 1rem; padding-block-start: .75rem; border-block-start: 1px dashed #e2e8f0; font-size: .8125rem;
+  display: grid; gap: 1rem;
+  margin-block-start: 1rem; padding-block-start: 1rem; border-block-start: 1px dashed #e2e8f0; font-size: .8125rem;
   p:not(.lw-simpleText) { margin: 0; color: #4a5568; }
+}
+.lw-signingPackages__personActionButtons {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: .75rem;
+  > button { inline-size: 100%; min-block-size: 2.75rem; margin: 0; }
 }
 .lw-signingPackages__actionDialog {
   inline-size: min(32rem, calc(100% - 2rem)); max-block-size: calc(100dvh - 2rem); box-sizing: border-box;
@@ -126,6 +156,13 @@
   &__packages input { inline-size: 1.125rem; block-size: 1.125rem; flex: none; accent-color: var(--lw-color-primary, #2a4365); }
   &__packages small { display: block; margin-block-start: .25rem; color: #4a5568; }
   &__setup { display: flex; align-items: flex-start; gap: 1rem; flex-direction: column; padding-block: 1.5rem; }
+  &__shortOptions {
+    inline-size: 100%; max-inline-size: 36rem;
+    .lw-segmentedSwitch__title { font-size: .875rem; margin: 0; }
+    .lw-segmentedSwitch__track { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; inline-size: 100%; box-sizing: border-box; }
+    .lw-segmentedSwitch__option { min-inline-size: 0; min-block-size: 2.75rem; inline-size: 100%; padding-inline: .375rem; text-align: center; }
+  }
+  &__optionDescription { position: absolute; inline-size: 1px; block-size: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   &__recent { margin-block-start: 1.5rem; border-block-start: 1px solid #e2e8f0; padding-block-start: 1.25rem; }
   &__recent > ul { display: flex; flex-wrap: wrap; gap: .75rem; margin-block-start: .75rem; }
   &__summary { display: flex; flex-wrap: wrap; gap: 1.25rem 2rem; border-block: 1px solid #e2e8f0; padding-block: 1rem; margin: 0 0 1rem; }
@@ -147,6 +184,7 @@
   .lw-signingPackages__toolbar .lw-segmentedSwitch__option { padding-inline: .5rem; flex: 1 0 auto; }
   .lw-signingPackages__actionBody dl > div { grid-template-columns: minmax(0, 1fr); gap: .25rem; }
   .lw-signingPackages__actionButtons > * { flex: 1 1 100%; }
+  .lw-signingPackages__personActionButtons { grid-template-columns: minmax(0, 1fr); }
   .lw-signingPackages__row { grid-template-columns: minmax(0,1fr); gap: .75rem; }
   .lw-signingPackages__metrics, .lw-signingPackages__rowStatus { padding-inline-start: 1.75rem; }
   .lw-signingPackages__rowStatus { flex-direction: row; flex-wrap: wrap; }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { icons } from "../../../assets/icons/icons";
@@ -17,6 +17,9 @@ export default function ChooseButton({
     defaultValue = null,
     style: _style,
     props,
+    controlRef,
+    dropdownProps,
+    controlledValue,
 }) {
     const { t } = useTranslation();
 
@@ -34,16 +37,28 @@ export default function ChooseButton({
 
     const [chosenValue, setChosenValue] = useState(defaultValue);
     const [showResults, setShowResults] = useState(false);
-    const buttonRef = useRef()
+    const buttonRef = useRef();
+    const keyboardNavigation = dropdownProps?.keyboardNavigation === true;
+    const closeResults = useCallback(() => {
+        setShowResults(false);
+        if (keyboardNavigation) buttonRef.current?.focus();
+    }, [keyboardNavigation]);
+    const setControlRef = node => {
+        buttonRef.current = node;
+        if (typeof controlRef === "function") controlRef(node);
+        else if (controlRef) controlRef.current = node;
+    };
 
     useEffect(() => {
         setChosenValue(defaultValue ?? null);
     }, [defaultValue]);
 
-    const chosenItem = computedItems.find((it) => it.value === chosenValue) || computedItems[0];
+    const displayedValue = controlledValue === undefined ? chosenValue : controlledValue;
+    const chosenItem = computedItems.find((it) => it.value === displayedValue) || computedItems[0];
 
     function OnPressChoice(_label, item) {
-        setShowResults(false)
+        if (dropdownProps?.getOptionProps?.(item)?.disabled || (keyboardNavigation && buttonRef.current?.matches(':disabled'))) return;
+        closeResults();
         setChosenValue(item?.value ?? null)
         OnPressChoiceFunction?.(item?.value ?? null, item)
     }
@@ -51,23 +66,32 @@ export default function ChooseButton({
     return (
         <SimpleContainer className="lw-chooseButton">
             <SecondaryButton
-                ref={buttonRef}
+                ref={setControlRef}
                 leftIcon={icons.Button.DownArrow}
                 onPress={() => {
                     setShowResults(true)
                 }}
                 size={buttonSizes.SMALL}
                 {...props}
+                aria-expanded={dropdownProps?.keyboardNavigation ? showResults : props?.['aria-expanded']}
+                onKeyDown={event => {
+                    props?.onKeyDown?.(event);
+                    if (dropdownProps?.keyboardNavigation && !props?.disabled && !buttonRef.current?.matches(':disabled') && ['ArrowDown', 'ArrowUp'].includes(event.key)) {
+                        event.preventDefault(); setShowResults(true);
+                    }
+                }}
             >
                 {chosenItem?.label}
             </SecondaryButton>
             {showResults && (
                 <HoverContainer
+                    {...dropdownProps}
+                    portalContainer={dropdownProps?.withinDialog ? buttonRef.current?.closest('dialog') || undefined : dropdownProps?.portalContainer}
                     targetRef={buttonRef}
                     queryResult={computedItems}
                     getButtonTextFunction={(item) => item?.label}
                     onPressButtonFunction={OnPressChoice}
-                    onClose={() => { setShowResults(false) }}
+                    onClose={closeResults}
                 />
             )}
 
