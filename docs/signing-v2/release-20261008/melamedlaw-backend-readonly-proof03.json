@@ -1,0 +1,22 @@
+{
+  "verifiedUtc": "2026-10-08T19:49:34.968Z",
+  "tenant": "melamedlaw",
+  "candidate": "3e454de8cb4ff9fc6552080c03488e7790a51c57",
+  "tree": "a390ec9627b76dee722477a03b0b62e0cf355595",
+  "sourceFilesVerified": 1346,
+  "exactSeventeenMigrations": true,
+  "newFortyFiveTableGrants": true,
+  "legacyGrantsPreserved": true,
+  "allOtherEnvironmentFieldsPreserved": true,
+  "provider": "notifications",
+  "featureAndWorkerEnabled": true,
+  "pm2NamedOnly": {
+    "name": "melamed-backend",
+    "status": "online",
+    "pid": 2059578
+  },
+  "health": {
+    "ok": true
+  },
+  "noTestMessagesOrFixtures": true
+}

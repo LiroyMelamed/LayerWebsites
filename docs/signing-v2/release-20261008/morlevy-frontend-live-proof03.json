@@ -1,0 +1,10 @@
+{
+  "complete": true,
+  "tenant": "morlevy",
+  "candidate": "a16cb2e0267d0c5eb98f7d3951a7d37d8aecbe5f",
+  "indexSha256": "93d2c69a70cf535141f1e9d3e7565f32ce7021e73f80e1eb9bbb712576d211e2",
+  "filesVerified": 317,
+  "oldAssetsRetained": true,
+  "indexInstalledLastAtomically": true,
+  "nginxUnchanged": true
+}

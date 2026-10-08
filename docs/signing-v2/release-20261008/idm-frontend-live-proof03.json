@@ -1,0 +1,10 @@
+{
+  "complete": true,
+  "tenant": "idm",
+  "candidate": "9239ce3db9793f70357c6b457ffce96b8a645994",
+  "indexSha256": "f6beb2d108e7300e4aa6092c1e9f8ce57c3c9305b0e70b539e20f8ec120e7f91",
+  "filesVerified": 315,
+  "oldAssetsRetained": true,
+  "indexInstalledLastAtomically": true,
+  "nginxUnchanged": true
+}
