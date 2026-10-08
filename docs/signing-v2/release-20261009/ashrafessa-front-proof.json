@@ -1,0 +1,11 @@
+{
+  "complete": true,
+  "tenant": "ashrafessa",
+  "candidate": "7da3564a2bc9229b45d66ef8abfd4522973bdd67",
+  "filesVerified": 317,
+  "indexSha256": "aba3c4bbf32f5d413cbfa45cd8d5c12ba6777890ef8cf7dfc0dfb96961d7c464",
+  "atomicIndexLast": true,
+  "oldAssetsRetained": true,
+  "backupIndex": "a0b1177c325d14a94cbeff72771a809eacf9bbdc4f073bb3ba5e790932431276",
+  "at": "2026-10-08T23:01:32.682Z"
+}

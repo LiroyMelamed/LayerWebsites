@@ -1,0 +1,11 @@
+{
+  "tenant": "ashrafessa",
+  "candidate": "7da3564a2bc9229b45d66ef8abfd4522973bdd67",
+  "exitCode": 0,
+  "result": "PASS",
+  "log": {
+    "bytes": 22628,
+    "sha256": "69ffa2aaa2d1562c844cca86895173a0e473025bda9e1bf95bd5cd440b75dd61"
+  },
+  "at": "2026-10-08T22:56:51.428Z"
+}
