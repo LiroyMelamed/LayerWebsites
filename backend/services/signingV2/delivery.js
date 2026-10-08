@@ -67,6 +67,14 @@ function createDeliveryService({ pool, grantService, provider, linkFor }) {
             if (delivery.state !== 'pending') return { done: true, delivery };
             if (delivery.target_snapshot.bulk === true) return planBulkDelivery(db,delivery,grantService);
             if (!SENDABLE_PURPOSES.has(delivery.purpose)) return skip('cancelled', 'PURPOSE_NOT_SUPPORTED');
+            // Every delivery purpose shares the cancellation fence, including an
+            // initial invitation. Network work already planned cannot be recalled.
+            const livePackage = (await db.query(`SELECT r.workflow_state,p.active_revision_id FROM signing_packages p
+                JOIN signing_package_revisions r ON r.owner_context_id=p.owner_context_id AND r.id=p.active_revision_id
+                WHERE p.owner_context_id=$1 AND p.id=$2 FOR UPDATE OF p,r`, [lease.owner_context_id,delivery.package_id])).rows[0];
+            if (!livePackage) return skip('cancelled','REVISION_INACTIVE');
+            delivery.workflow_state=livePackage.workflow_state;
+            delivery.active_revision_id=livePackage.active_revision_id;
             const completedCopy = delivery.purpose === 'completed_copy';
             const renewLink = delivery.purpose === 'resend' && delivery.target_snapshot.renewLink === true;
             if (delivery.active_revision_id !== delivery.revision_id || !(completedCopy ? ['complete'] : ['active', 'attention']).includes(delivery.workflow_state)) {
@@ -81,11 +89,6 @@ function createDeliveryService({ pool, grantService, provider, linkFor }) {
                 if (!Array.isArray(frozen) || !frozen.length) return skip('cancelled','ACTION_REVIEW_REQUIRED');
                 // Serialize with incumbent acceptance/issue transitions. A follow-up
                 // queued for an earlier stage must never wait for and invite a later one.
-                const liveRevision = (await db.query(`SELECT r.workflow_state,p.active_revision_id FROM signing_packages p
-                    JOIN signing_package_revisions r ON r.owner_context_id=p.owner_context_id AND r.id=p.active_revision_id
-                    WHERE p.owner_context_id=$1 AND p.id=$2 FOR UPDATE OF p,r`, [lease.owner_context_id,delivery.package_id])).rows[0];
-                if (!liveRevision || liveRevision.active_revision_id!==delivery.revision_id
-                    || !['active','attention'].includes(liveRevision.workflow_state)) return skip('cancelled','REVISION_INACTIVE');
                 const tasks = (await db.query(`SELECT t.id AS "taskId",t.document_id AS "documentId",t.version,t.stage,t.state
                     FROM signing_tasks t JOIN signing_participations p ON p.owner_context_id=t.owner_context_id AND p.id=t.participation_id
                     WHERE t.owner_context_id=$1 AND t.revision_id=$2 AND p.person_id=$3 ORDER BY t.id FOR SHARE OF t`,

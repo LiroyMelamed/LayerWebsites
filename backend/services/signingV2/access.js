@@ -40,6 +40,8 @@ async function actorScope(db, req, action = 'view') {
         authorityManage: !custom || hasAreaAction(req.firmPermissions, 'signing', 'authority_manage'),
         contactCorrect: !custom || (hasAreaAction(req.firmPermissions, 'signing', 'manage') && hasAreaAction(req.firmPermissions, 'signing', 'delivery_contact_correct')),
         linkRenew: !custom || hasAreaAction(req.firmPermissions, 'signing', 'access_link_renew'),
+        packageCancel: !custom || (hasAreaAction(req.firmPermissions, 'signing', 'manage') && hasAreaAction(req.firmPermissions, 'signing', 'package_cancel')),
+        packageAssign: !custom || (hasAreaAction(req.firmPermissions, 'signing', 'manage') && hasAreaAction(req.firmPermissions, 'signing', 'package_assign')),
         packageApprove: !custom || hasAreaAction(req.firmPermissions, 'signing', 'package_approve'),
         mode,
     });

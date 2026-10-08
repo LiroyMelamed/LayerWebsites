@@ -37,6 +37,27 @@ async function recoverExpired(db) {
         RETURNING id,owner_context_id,kind,subject_id,state`);
 }
 
+// Cancellation never takes a job lock while holding the package lock. Retire
+// its PDF/activation work here, including abandoned in-flight leases, so a
+// deliberate cancellation does not become an operational failure/retry alert.
+// Deliveries are excluded: a bundled delivery can still serve other packages,
+// and an attempted network send must retain its truthful outcome.
+async function cancelObsolete(db, contextIds = null) {
+    return db.query(`WITH obsolete AS (
+        SELECT j.id FROM signing_jobs j
+        LEFT JOIN signing_documents d ON d.owner_context_id=j.owner_context_id AND d.id=j.subject_id
+            AND j.kind IN ('prepare_document','finalize_document')
+        JOIN signing_package_revisions r ON r.owner_context_id=j.owner_context_id
+            AND r.id=CASE WHEN j.kind IN ('prepare_document','finalize_document') THEN d.revision_id ELSE j.subject_id END
+        WHERE j.kind IN ('prepare_document','validate_package','activate_package','render_stage','finalize_document','render_evidence')
+            AND j.state IN ('pending','retry','running','needs_attention')
+            AND r.workflow_state IN ('cancelled','superseded')
+            AND ($1::uuid[] IS NULL OR j.owner_context_id=ANY($1::uuid[]))
+    ) UPDATE signing_jobs j SET state='cancelled',error_code='REVISION_INACTIVE',completed_at=clock_timestamp(),
+        leased_by=NULL,lease_until=NULL,fencing_token=fencing_token+1
+        FROM obsolete o WHERE j.id=o.id AND j.state IN ('pending','retry','running','needs_attention') RETURNING j.id`,[contextIds]);
+}
+
 async function claim(db, { workerId, kinds, limit = 1, leaseSeconds = 60, contextIds = null }) {
     expect(typeof workerId === 'string' && workerId.length <= 100 && workerId.length > 0, 'INVALID_JOB');
     expect(Array.isArray(kinds) && kinds.length > 0 && kinds.every(kind => KINDS.has(kind)), 'INVALID_JOB');
@@ -51,7 +72,7 @@ async function claim(db, { workerId, kinds, limit = 1, leaseSeconds = 60, contex
           AND j.attempts < j.max_attempts
           AND NOT EXISTS (SELECT 1 FROM signing_job_dependencies d
             JOIN signing_jobs p ON p.owner_context_id=d.owner_context_id AND p.id=d.depends_on_id
-            WHERE d.owner_context_id=j.owner_context_id AND d.job_id=j.id AND p.state <> 'complete')
+            WHERE d.owner_context_id=j.owner_context_id AND d.job_id=j.id AND p.state <> 'complete' AND NOT (j.kind='dispatch_delivery' AND p.state='cancelled'))
     ), picked AS (
         SELECT j.id FROM signing_jobs j JOIN eligible e ON e.id=j.id
         WHERE j.state IN ('pending','retry') AND j.available_at <= clock_timestamp() AND j.attempts < j.max_attempts
@@ -103,4 +124,4 @@ async function failed(db, lease, { code, uncertain = false, retryable = true }) 
     return result.rows[0];
 }
 
-module.exports = { enqueue, job, recoverExpired, claim, heartbeat, complete, failed };
+module.exports = { enqueue, job, recoverExpired, cancelObsolete, claim, heartbeat, complete, failed };

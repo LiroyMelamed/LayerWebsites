@@ -12,6 +12,7 @@ import SimpleContainer from '../../../components/simpleComponents/SimpleContaine
 import { Text14, TextBold14 } from '../../../components/specializedComponents/text/AllTextKindFile';
 import { colors } from '../../../constant/colors';
 import useSigningLocale from './useSigningLocale';
+import PackageLifecycleDialog from './PackageLifecycleDialog';
 import ParticipantContactDialog from './ParticipantContactDialog';
 import ParticipantActionDialog from './ParticipantActionDialog';
 import TaskIssueDialog from './TaskIssueDialog';
@@ -185,6 +186,7 @@ function PackagePanel({ id, api, onClose }) {
     const [tab, setTab] = useState('people');
     const [action, setAction] = useState(null);
     const [issue, setIssue] = useState(null);
+    const [lifecycle,setLifecycle] = useState(null);
     const [contactPerson,setContactPerson] = useState(null);
     const [openId, setOpenId] = useState(null);
     const [files, setFiles] = useState({});
@@ -252,6 +254,10 @@ function PackagePanel({ id, api, onClose }) {
                 {detail.package.workflow_state === 'complete' && <SecondaryButton onPress={downloadEvidence} disabled={busy === 'evidence'}
                     aria-label={t('signingV2.public.downloadEvidence')}>{t('signingV2.public.downloadEvidence')}</SecondaryButton>}
             </div>
+            <div className="lw-signingPackages__docActions">
+                {detail.capabilities?.packageAssign && <SecondaryButton onPress={()=>setLifecycle('assign')}>{t('signingV2.lifecycle.assign.title')}</SecondaryButton>}
+                {detail.capabilities?.packageCancel && !['cancelled','superseded','complete'].includes(detail.package.workflow_state) && detail.package.accepted_count < detail.package.required_count && <SecondaryButton onPress={()=>setLifecycle('cancel')}>{t('signingV2.lifecycle.cancel.title')}</SecondaryButton>}
+            </div>
             {fileError && <StatusNotice embedded><p>{errorMessage(fileError)}</p></StatusNotice>}
             <SegmentedSwitch value={tab} onChange={setTab} ariaLabel={t('signingV2.packageDetails')}
                 options={['people', 'documents', 'delivery'].map(value => ({ value, label: t(`signingV2.tabs.${value}`) }))} />
@@ -292,6 +298,8 @@ function PackagePanel({ id, api, onClose }) {
                 {delivery.state === 'uncertain' && <p>{t('signingV2.uncertainHelp')}</p>}
             </li>)}</ul>}
         </>}
+        {lifecycle && <PackageLifecycleDialog key={lifecycle} api={api} packageId={id} action={lifecycle}
+            onClose={changed=>{setLifecycle(null);if(changed)resource.refresh();}} />}
         {issue && <TaskIssueDialog kind="resolve" documentName={issue.documentName} originalNote={issue.reason}
             onSubmit={(resolution, key) => api.resolveIssue(id, issue.id, { resolution }, key)}
             onClose={changed => { setIssue(null); if (changed) resource.refresh(); }} />}

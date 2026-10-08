@@ -166,3 +166,7 @@
 .lw-signingPackages__contactFields .lw-simpleTextArea__field { min-block-size: 60px; text-align: start; direction: inherit; }
 
 .lw-signingPackages__contactFields .lw-simpleTextArea { direction: inherit; }
+
+.lw-signingPackages__assignees { border: 0; padding: 0; margin: 0; max-block-size: 18rem; overflow-y: auto; }
+.lw-signingPackages__assignees label { display: flex; align-items: center; gap: .75rem; min-block-size: 44px; cursor: pointer; }
+.lw-signingPackages__assignees input { inline-size: 20px; block-size: 20px; flex-shrink: 0; }

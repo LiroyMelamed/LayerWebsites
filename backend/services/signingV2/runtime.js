@@ -174,6 +174,10 @@ function createRuntime({ pool, env = process.env, storage, provider, renderer, a
         catch (error) {
             const code = /^[A-Z][A-Z0-9_]{1,79}$/.test(error?.errorCode || '') ? error.errorCode : 'WORKER_ERROR';
             if (code === 'WORKER_LEASE_LOST') return;
+            if (code === 'REVISION_INACTIVE') {
+                const retired = await jobs.cancelObsolete(pool, [lease.owner_context_id]);
+                if (retired.rows.some(row=>row.id===lease.id)) return;
+            }
             try { await jobs.failed(pool, lease, { code, retryable: !['REVISION_INACTIVE', 'ACTIVATION_NOT_AUTHORIZED', 'INVALID_SOURCE', 'REVISION_CHANGED'].includes(code) }); }
             catch (failure) { if (failure?.errorCode !== 'WORKER_LEASE_LOST') throw failure; }
             // Messages may carry personal data; only the class and the SQLSTATE are logged.
@@ -185,6 +189,7 @@ function createRuntime({ pool, env = process.env, storage, provider, renderer, a
     async function performTick() {
         let processed = 0;
         try {
+            await jobs.cancelObsolete(pool, contextIds);
             if (Date.now() - recoveredAt > 30000) {
                 recoveredAt = Date.now();
                 await jobs.recoverExpired(pool);

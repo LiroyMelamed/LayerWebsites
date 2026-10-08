@@ -1406,7 +1406,9 @@
         "authority_manage": "Approve and revoke signing authority",
         "package_approve": "Approve signing packages",
         "delivery_contact_correct": "Correct package delivery contact",
-        "access_link_renew": "Renew signing links"
+        "access_link_renew": "Renew signing links",
+        "package_cancel": "Cancel signing packages",
+        "package_assign": "Assign package responsibility"
       }
     }
   },
@@ -1569,7 +1571,10 @@
       "INVALID_CAPACITY": "The represented party does not match this signing capacity.",
       "CONTACT_UNCHANGED": "The contact details have not changed.",
       "INVALID_DELIVERY": "Check that the email and phone number are valid.",
-      "CHANNEL_REQUIRED": "Choose a channel for the new link."
+      "CHANNEL_REQUIRED": "Choose a channel for the new link.",
+      "SIGNING_ALREADY_COMPLETE": "All signatures are already complete. This request cannot be cancelled.",
+      "ASSIGNMENT_UNCHANGED": "The handling team has not changed.",
+      "ASSIGNEE_UNAVAILABLE": "A selected staff member is no longer available. Reload the list."
     },
     "actionCancelledReason": {
       "ACTION_SCOPE_CHANGED": "The signing tasks changed while this message was waiting. Review the current selection before sending again.",
@@ -2438,6 +2443,31 @@
       "saveAndReview": "Save and review sending",
       "saved": "Contact saved. No message was sent.",
       "chooseChannel": "How should we send the new link?"
+    },
+    "lifecycle": {
+      "reason": "Reason for change",
+      "cancel": {
+        "title": "Cancel signing request",
+        "help": "Remaining signing tasks and signing access to this package will be blocked. Existing signatures are preserved. Messages already being sent cannot be recalled. Cancellation does not send another message.",
+        "remaining": "Tasks to cancel: {{formattedCount}} · Documents: {{documents}}",
+        "preserved": "Existing signatures to preserve: {{formattedCount}}",
+        "confirm": "Confirm cancellation",
+        "saved": "The signing request was cancelled. Existing signatures were preserved."
+      },
+      "assign": {
+        "title": "Assign responsibility",
+        "help": "Choose office staff who can handle this package. Each person’s system permissions still apply. This does not replace signers or send a message.",
+        "owner": "The creator keeps access",
+        "current": "Current handling team",
+        "next": "Handling team after this change",
+        "none": "No additional staff",
+        "select": "Choose staff",
+        "review": "Review change",
+        "edit": "Change selection",
+        "confirm": "Save responsibility",
+        "saved": "Responsibility updated.",
+        "search": "Find staff"
+      }
     }
   },
   "calendar": {
