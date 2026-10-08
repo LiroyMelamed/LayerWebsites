@@ -11,6 +11,13 @@ function query(params = {}) {
 const participant = (packageId, personId) => `${root}/packages/${packageId}/participants/${personId}`;
 
 const signingPackagesApi = {
+    directory: (q, config) => signingRequest('get', `${root}/directory?${query({q})}`, null, config),
+    createDirectoryEntry: (kind, body, key) => signingRequest('post', `${root}/directory/${kind}`, body, { headers: { 'Idempotency-Key': key } }),
+    personAuthorities: id => signingRequest('get', `${root}/directory/people/${id}/authorities`),
+    verifyPersonIdentity: (id, body) => signingRequest('post', `${root}/directory/people/${id}/verify`, body),
+    changeAuthority: (id, body) => signingRequest('post', `${root}/directory/authorities/${id}`, body),
+    registerAuthorityEvidence: fileKey => signingRequest('post', `${root}/directory/evidence`, {fileKey}),
+    authorityEvidence: id => signingRequest('get', `${root}/directory/evidence/${id}`, null, {responseType:'blob'}),
     matchingPackages: (filters, config) => signingRequest('get', `${root}/packages?${query(filters)}`, null, config),
     freezeSelection: (body, key, config) => signingRequest('post', `${root}/selections`, body, { ...config, headers: { 'Idempotency-Key': key } }),
     previewBulk: (id, body, key, config) => signingRequest('post', `${root}/selections/${id}/preview`, body, { ...config, headers: { 'Idempotency-Key': key } }),

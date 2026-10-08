@@ -1,0 +1,153 @@
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const {randomUUID}=require('node:crypto');
+const {PDFDocument}=require('pdf-lib');
+const {databaseFixture}=require('./helpers/signingV2Fixture');
+const directory=require('../services/signingV2/participantDirectory');
+const {changeAuthority}=require('../services/signingV2/authorities');
+const {previewCreation,createFromRows}=require('../services/signingV2/creation');
+const {bytesHash}=require('../lib/signingV2/canonical');
+const {actorScope}=require('../services/signingV2/access');
+const {normalizeRolePermissions}=require('../lib/firmRolePermissions');
+
+test('scoped participant directory, immutable evidence, explicit identity/authority approval and row creation',
+{skip:process.env.LEGAL_DB_QA!=='true',timeout:90000},async t=>{
+    const pool=require('../config/db');t.after(()=>pool.end());
+    const f=await databaseFixture(pool,{documentCount:1});
+    const scope={...f.scope,send:true,authorityManage:true};
+    const contact={name:'Synthetic representative',endpoints:{email:'representative@example.invalid'}};
+    let person,party,evidence,authority;
+    const objects=new Map();const pdf=await PDFDocument.create();pdf.addPage([595,842]);const bytes=Buffer.from(await pdf.save());
+    const storage={write:async(key,value)=>objects.set(key,Buffer.from(value)),read:async key=>objects.get(key),verify:async(key,size,hash)=>{assert.equal(objects.get(key).length,size);assert.equal(bytesHash(objects.get(key)),hash);}};
+    const deps={storage,readPdf:async()=>({bytes,sha256:bytesHash(bytes),geometries:[{width:595,height:842}]})};
+    await t.test('directory creation is scoped and idempotent; contacts do not merge identities',async()=>{
+        const key=randomUUID();const results=await Promise.all([1,2].map(()=>directory.createEntry(pool,scope,'person',contact,key)));
+        assert.equal(results[0].id,results[1].id);person=results[0].person;assert.equal(results[0].party.personId,person.id);assert.equal(results[0].party.id,results[1].party.id);
+        assert.equal(results.filter(x=>x.reused).length,1);
+        await assert.rejects(directory.createEntry(pool,scope,'person',{...contact,name:'Changed'},key),{errorCode:'IDEMPOTENCY_CONFLICT'});
+        const other=await directory.createEntry(pool,scope,'person',contact,randomUUID());assert.notEqual(other.id,person.id);
+        party=(await directory.createEntry(pool,scope,'party',{name:'Synthetic Company',registration:{country:'IL',type:'company',value:'000000001'}},randomUUID())).party;
+        assert.equal(party.registration.value,'000000001');
+        const result=await directory.searchDirectory(pool,scope,'Synthetic');assert.ok(result.people.some(p=>p.id===person.id));assert.ok(result.parties.some(p=>p.id===party.id));
+        assert.equal(result.people.find(p=>p.id===person.id).identityVerified,false);
+        const denied={...scope,all:false,userId:scope.userId+100000};
+        assert.equal((await directory.searchDirectory(pool,denied,'Synthetic')).people.length,0);
+        await assert.rejects(directory.personAuthorities(pool,denied,person.id),{errorCode:'NOT_FOUND'});
+        await assert.rejects(directory.createEntry(pool,{...scope,send:false},'person',contact,randomUUID()),{errorCode:'FORBIDDEN'});
+    });
+    await t.test('authority evidence uses private owned PDF bytes and explicit capability',async()=>{
+        await assert.rejects(directory.registerEvidence(pool,{...scope,authorityManage:false},`users/${scope.userId}/a.pdf`,deps),{errorCode:'FORBIDDEN'});
+        await assert.rejects(directory.registerEvidence(pool,scope,'users/999999/private.pdf',deps),{errorCode:'INVALID_SOURCE'});
+        evidence=await directory.registerEvidence(pool,scope,`users/${scope.userId}/a.pdf`,deps);
+        assert.equal((await directory.registerEvidence(pool,scope,`users/${scope.userId}/a.pdf`,deps)).id,evidence.id);
+        assert.equal(bytesHash((await directory.evidenceFile(pool,scope,evidence.id,storage)).bytes),evidence.hash);
+        await assert.rejects(directory.evidenceFile(pool,{...scope,all:false,userId:scope.userId+1},evidence.id,storage),{errorCode:'NOT_FOUND'});
+    });
+    await t.test('identity verification is explicit, versioned and does not expose or merge identifiers',async()=>{
+        const input={expectedVersion:person.version,identity:{country:'IL',type:'id',value:'000000001'},evidenceArtifactId:evidence.id,reason:'Synthetic identity evidence checked'};
+        await assert.rejects(directory.verifyIdentity(pool,{...scope,authorityManage:false},person.id,input),{errorCode:'FORBIDDEN'});
+        person=await directory.verifyIdentity(pool,scope,person.id,input);assert.equal(person.identityVerified,true);assert.equal(person.version,2);
+        assert.ok(!JSON.stringify(person).includes('000000001'));
+        await assert.rejects(directory.verifyIdentity(pool,scope,person.id,input),{errorCode:'VERSION_CHANGED'});
+        await assert.rejects(directory.verifyIdentity(pool,scope,person.id,{...input,expectedVersion:2,identity:{...input.identity,value:'000000002'}}),{errorCode:'IDENTITY_ALREADY_VERIFIED'});
+        const duplicate=(await directory.createEntry(pool,scope,'person',{...contact,name:'Different synthetic'},randomUUID())).person;
+        await assert.rejects(directory.verifyIdentity(pool,scope,duplicate.id,input),{errorCode:'IDENTITY_ALREADY_EXISTS'});
+    });
+    await t.test('pending authority cannot send; current approved version binds preview and revocation blocks stale creation',async()=>{
+        const input={personId:person.id,partyId:party.id,evidenceArtifactId:evidence.id,scope:{roleKeys:['employee']},validFrom:'2020-01-01T00:00:00Z'};
+        await assert.rejects(directory.createEntry(pool,{...scope,authorityManage:false},'authority',input,randomUUID()),{errorCode:'FORBIDDEN'});
+        authority=(await directory.createEntry(pool,scope,'authority',input,randomUUID())).authority;
+        assert.equal(authority.status,'pending');
+        const def=structuredClone(f.definition);def.roles[0].capacity='representative';
+        const templates=require('../services/signingV2/templates');
+        const draft=await templates.createDraft(pool,scope,{definition:def});const version=await templates.publish(pool,scope,draft.template_id,draft.id,1,draft.definition_hash);
+        const request={templateVersionId:version.id,name:'Representative flow',shared:{},rows:[{key:'one',data:{employeeId:'00001'},recipients:{employee:{name:person.name,email:contact.endpoints.email,personId:person.id,partyId:party.id,authorityId:authority.id}}}]};
+        assert.ok((await previewCreation(pool,scope,request)).errors.some(e=>e.code==='AUTHORITY_EXPIRED'));
+        authority=directory.authorityView(await changeAuthority(pool,scope,authority.id,{expectedVersion:1,action:'approve',reason:'Reviewed synthetic evidence'}));
+        const approved=await previewCreation(pool,scope,request);assert.equal(approved.valid,true,JSON.stringify(approved.errors));assert.equal(approved.sample[0].recipients[0].partyName,party.name);assert.equal(approved.sample[0].recipients[0].authorityVersion,2);
+        assert.equal((await directory.personAuthorities(pool,scope,person.id)).authorities[0].status,'approved');
+        const result=await createFromRows(pool,scope,{...request,previewHash:approved.previewHash,idempotencyKey:randomUUID()},{reserveCapacity:async()=>{}});
+        assert.equal(result.packageCount,1);
+        const snapshot=(await pool.query('SELECT snapshot FROM signing_package_revisions WHERE owner_context_id=$1',[f.contextId])).rows[0].snapshot;
+        assert.equal(snapshot.participants[0].authorityVersion,2);assert.equal(snapshot.participants[0].partyId,party.id);assert.equal(snapshot.participants[0].personId,person.id);
+        await changeAuthority(pool,scope,authority.id,{expectedVersion:2,action:'revoke',reason:'Synthetic revoked after review'});
+        await assert.rejects(createFromRows(pool,scope,{...request,previewHash:approved.previewHash,idempotencyKey:randomUUID()},{reserveCapacity:async()=>{}}),{errorCode:'PREVIEW_CHANGED'});
+        assert.equal((await pool.query('SELECT count(*) FROM signing_submissions WHERE owner_context_id=$1',[f.contextId])).rows[0].count,'1');
+        const wrong=structuredClone(request);wrong.rows[0].recipients.employee.name='Spoofed';await assert.rejects(previewCreation(pool,scope,wrong),{errorCode:'PERSON_CHANGED'});
+    });
+    await t.test('assigned sender sees another reviewer authority only while both person and party remain scoped',async()=>{
+        const uid=(await pool.query("INSERT INTO users(name,email,role,passwordhash) VALUES('Synthetic assigned sender',$1,'Staff','synthetic') RETURNING userid",[`${randomUUID()}@example.invalid`])).rows[0].userid;
+        const assigned={...scope,userId:uid,all:false,authorityManage:false};
+        await assert.rejects(directory.personAuthorities(pool,assigned,person.id),{errorCode:'NOT_FOUND'});
+        const packageId=(await pool.query('SELECT id FROM signing_packages WHERE owner_context_id=$1',[f.contextId])).rows[0].id;
+        await pool.query('INSERT INTO signing_package_assignments(owner_context_id,package_id,user_id) VALUES($1,$2,$3)',[f.contextId,packageId,uid]);
+        const found=await directory.personAuthorities(pool,assigned,person.id);
+        assert.ok(found.authorities.some(a=>a.id===authority.id));assert.ok(found.parties.some(p=>p.id===party.id));
+        await assert.rejects(directory.evidenceFile(pool,assigned,evidence.id,storage),{errorCode:'FORBIDDEN'});
+        const reviewer={...assigned,authorityManage:true};
+        assert.equal(bytesHash((await directory.evidenceFile(pool,reviewer,evidence.id,storage)).bytes),evidence.hash);
+        const otherParty=(await directory.createEntry(pool,scope,'party',{name:'Synthetic unassigned party'},randomUUID())).party;
+        const unrelated=(await directory.createEntry(pool,scope,'authority',{personId:person.id,partyId:otherParty.id,evidenceArtifactId:evidence.id,scope:{allSigning:true},validFrom:'2020-01-01T00:00:00Z'},randomUUID())).authority;
+        assert.ok(!(await directory.personAuthorities(pool,assigned,person.id)).authorities.some(a=>a.id===unrelated.id));
+        await assert.rejects(changeAuthority(pool,reviewer,unrelated.id,{expectedVersion:1,action:'approve',reason:'Denied scope'}),{errorCode:'NOT_FOUND'});
+        const pending=(await directory.createEntry(pool,scope,'authority',{personId:person.id,partyId:party.id,evidenceArtifactId:evidence.id,scope:{allSigning:true},validFrom:'2020-01-01T00:00:00Z'},randomUUID())).authority;
+        assert.equal((await changeAuthority(pool,reviewer,pending.id,{expectedVersion:1,action:'approve',reason:'Assigned explicit review'})).status,'approved');
+        await pool.query('DELETE FROM signing_package_assignments WHERE owner_context_id=$1 AND package_id=$2 AND user_id=$3',[f.contextId,packageId,uid]);
+        await assert.rejects(directory.personAuthorities(pool,reviewer,person.id),{errorCode:'NOT_FOUND'});
+        await assert.rejects(directory.evidenceFile(pool,reviewer,evidence.id,storage),{errorCode:'NOT_FOUND'});
+        await assert.rejects(changeAuthority(pool,reviewer,pending.id,{expectedVersion:2,action:'revoke',reason:'Access removed'}),{errorCode:'NOT_FOUND'});
+    });
+    await t.test('HTTP capabilities remain explicit for custom roles and refresh after permission changes',async()=>{
+        const express=require('express'),request=require('supertest'),jwt=require('jsonwebtoken');
+        process.env.SIGNING_V2_ENABLED='true';
+        process.env.SIGNING_DEPLOYMENT_KEY=(await pool.query('SELECT deployment_key FROM signing_owner_contexts WHERE id=$1',[f.contextId])).rows[0].deployment_key;
+        try {
+            const app=express();app.use(express.json());app.use('/api/signing-v2',require('../routes/signingV2Routes'));
+            app.use((err,req,res,next)=>res.status(err.httpStatus||500).json({errorCode:err.errorCode}));
+            const permissions={version:3,areas:{signing:{visible:true,actions:['view','upload','manage'],dataScope:'all_firm'}}};
+            const role=(await pool.query('INSERT INTO firm_staff_roles(name,permissions) VALUES($1,$2) RETURNING id',[`Synthetic authority ${randomUUID()}`,permissions])).rows[0].id;
+            const uid=(await pool.query("INSERT INTO users(name,email,role,passwordhash,firm_staff_role_id) VALUES('Synthetic custom approver',$1,'Staff','synthetic',$2) RETURNING userid",[`${randomUUID()}@example.invalid`,role])).rows[0].userid;
+            const token=jwt.sign({userid:uid,role:'Staff'},process.env.JWT_SECRET), auth=`Bearer ${token}`;
+            const endpoint='/api/signing-v2/directory';
+            const found=await request(app).get(endpoint).set('Authorization',auth);assert.equal(found.status,200,JSON.stringify(found.body));assert.equal(found.body.canManageAuthority,false);
+            const denied=await request(app).post(`${endpoint}/authorities/${authority.id}`).set('Authorization',auth).send({action:'approve',expectedVersion:3,reason:'denied'});assert.equal(denied.status,403,JSON.stringify(denied.body));
+            assert.equal((await request(app).get(`${endpoint}/evidence/${evidence.id}`).set('Authorization',auth)).status,403);
+            permissions.areas.signing.actions.push('authority_manage');await pool.query('UPDATE firm_staff_roles SET permissions=$2 WHERE id=$1',[role,permissions]);
+            const allowed=await request(app).get(endpoint).set('Authorization',auth);assert.equal(allowed.status,200);assert.equal(allowed.body.canManageAuthority,true);
+            const req={user:{UserId:uid},firmPermissionContextValidated:true,firmPermissionMode:'role',firmStaffRoleId:role,firmTenantId:null,firmPermissions:normalizeRolePermissions(permissions)};
+            const current=await actorScope(pool,req,'authority_manage');assert.equal(current.authorityManage,true);assert.equal(current.packageApprove,false);
+            const key=randomUUID();const first=await request(app).post(`${endpoint}/people`).set('Authorization',auth).set('Idempotency-Key',key).send({name:'Synthetic HTTP person'});assert.equal(first.status,201,JSON.stringify(first.body));
+            const again=await request(app).post(`${endpoint}/people`).set('Authorization',auth).set('Idempotency-Key',key).send({name:'Synthetic HTTP person'});assert.equal(again.status,200);assert.equal(first.body.id,again.body.id);
+            assert.equal((await request(app).get(endpoint)).status,401);
+            permissions.areas.signing.actions=['view'];await pool.query('UPDATE firm_staff_roles SET permissions=$2 WHERE id=$1',[role,permissions]);
+            assert.equal((await request(app).get(endpoint).set('Authorization',auth)).status,403);
+        } finally {delete process.env.SIGNING_V2_ENABLED;delete process.env.SIGNING_DEPLOYMENT_KEY;}
+    });
+    await t.test('representation can be for a different person; self representation is rejected',async()=>{
+        const represented=(await directory.createEntry(pool,scope,'person',{name:'Synthetic represented adult'},randomUUID())).person;
+        const parties=(await directory.searchDirectory(pool,scope,'Synthetic represented adult')).parties;
+        const input={personId:person.id,partyId:parties[0].id,evidenceArtifactId:evidence.id,scope:{allSigning:true},validFrom:'2020-01-01T00:00:00Z'};
+        const created=await directory.createEntry(pool,scope,'authority',input,randomUUID());assert.equal(created.authority.partyId,parties[0].id);
+        const selfParty=(await pool.query("SELECT id FROM signing_parties WHERE owner_context_id=$1 AND person_id=$2",[f.contextId,person.id])).rows[0];
+        await assert.rejects(directory.createEntry(pool,scope,'authority',{...input,partyId:selfParty.id},randomUUID()),{errorCode:'NOT_FOUND'});
+        assert.ok(represented.id);
+    });
+});
+
+test('two named representatives require two verified distinct identities even without a client-supplied rule',()=>{
+    const {compilerFixture}=require('./helpers/signingV2Fixture');
+    const {compilePackage,validateDefinition}=require('../lib/signingV2/compiler');
+    const f=compilerFixture({documentCount:1}),otherId=randomUUID(),partyId=randomUUID();
+    const definition=structuredClone(f.definition);Object.assign(definition.roles[0],{capacity:'representative',min:2,max:2});
+    definition.documents[0].fields.push({...definition.documents[0].fields[1],id:'second',occurrence:1,y:230});
+    f.directory.parties.set(partyId,{id:partyId,kind:'legal_entity',name:'Synthetic Company'});
+    f.directory.people.set(otherId,{id:otherId,name:'Synthetic second'});
+    f.input.roles.employee=[f.personId,otherId].map(personId=>{const id=randomUUID();f.directory.authorities.set(id,{id,person_id:personId,represented_party_id:partyId,status:'approved',version:2,valid_from:'2020-01-01T00:00:00Z',scope:{roleKeys:['employee']}});return{personId,partyId,authorityId:id};});
+    f.input.delivery[otherId]={...f.input.delivery[f.personId]};
+    const valid=validateDefinition(definition);
+    assert.throws(()=>compilePackage(valid,f.input,f.directory),{errorCode:'IDENTITY_VERIFICATION_REQUIRED'});
+    f.directory.people.get(otherId).identity_key=f.directory.people.get(f.personId).identity_key;
+    assert.throws(()=>compilePackage(valid,f.input,f.directory),{errorCode:'DISTINCT_PEOPLE_REQUIRED'});
+    f.directory.people.get(otherId).identity_key='synthetic-second-verified';
+    assert.equal(compilePackage(valid,f.input,f.directory).snapshot.participants.length,2);
+});

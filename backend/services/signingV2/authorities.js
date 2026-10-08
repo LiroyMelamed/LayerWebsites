@@ -2,6 +2,8 @@ const { randomUUID } = require('node:crypto');
 const { UUID } = require('../../lib/signingV2/compiler');
 const { expect, fail } = require('../../lib/signingV2/errors');
 const { transaction } = require('./transaction');
+const {scopeParams}=require('./access');
+const {partyScopeSql,authorityScopeSql}=require('./directoryAccess');
 const { loadPerson } = require('./people');
 const { precondition } = require('./templates');
 
@@ -19,16 +21,18 @@ function validateScope(value) {
 }
 
 async function createAuthority(pool, scope, input) {
+    return transaction(pool, db => createAuthorityInTransaction(db, scope, input));
+}
+
+async function createAuthorityInTransaction(db, scope, input) {
     requireAuthorityPermission(scope);
     expect(UUID.test(input.personId) && UUID.test(input.partyId) && UUID.test(input.evidenceArtifactId), 'INVALID_AUTHORITY');
     const authorityScope = validateScope(input.scope);
     const start = new Date(input.validFrom), end = input.validUntil ? new Date(input.validUntil) : null;
     expect(typeof input.validFrom === 'string' && /Z$/.test(input.validFrom) && Number.isFinite(+start), 'INVALID_AUTHORITY');
     expect(!end || (typeof input.validUntil === 'string' && /Z$/.test(input.validUntil) && +end > +start), 'INVALID_AUTHORITY');
-    return transaction(pool, async db => {
         await loadPerson(db, scope, input.personId);
-        const party = await db.query(`SELECT id FROM signing_parties WHERE owner_context_id=$1 AND id=$2 AND kind='legal_entity'
-            AND ($3::boolean OR created_by=$4)`, [scope.contextId, input.partyId, scope.all, scope.userId]);
+        const party = await db.query(`SELECT party.id FROM signing_parties party WHERE ${partyScopeSql()} AND party.id=$5 AND (party.kind='legal_entity' OR (party.kind='person' AND party.person_id<>$6))`, [...scopeParams(scope), input.partyId, input.personId]);
         const evidence = await db.query(`SELECT id FROM signing_artifacts WHERE owner_context_id=$1 AND id=$2 AND kind='authority' AND state='ready'
             AND ($3::boolean OR created_by=$4)`, [scope.contextId, input.evidenceArtifactId, scope.all, scope.userId]);
         if (!party.rowCount || !evidence.rowCount) fail('NOT_FOUND',404);
@@ -37,7 +41,6 @@ async function createAuthority(pool, scope, input) {
         [randomUUID(),scope.contextId,input.personId,input.partyId,input.evidenceArtifactId,authorityScope,start,end,scope.userId])).rows[0];
         await audit(db,scope,'authority_created',authority);
         return authority;
-    });
 }
 
 async function audit(db,scope,kind,authority,reason=null) {
@@ -52,8 +55,7 @@ async function changeAuthority(pool,scope,id,{expectedVersion,action,reason}) {
     return transaction(pool,async db=>{
         // Acceptance takes FOR SHARE on this exact head. Revocation takes the
         // conflicting lock and never locks revisions after it, avoiding a cycle.
-        const result=await db.query(`SELECT * FROM signing_authorities WHERE owner_context_id=$1 AND id=$2
-            AND ($3::boolean OR created_by=$4) FOR UPDATE`,[scope.contextId,id,scope.all,scope.userId]);
+        const result=await db.query(`SELECT a.* FROM signing_authorities a WHERE ${authorityScopeSql()} AND a.id=$5 FOR UPDATE OF a`,[...scopeParams(scope),id]);
         if(!result.rowCount) fail('NOT_FOUND',404);
         const authority=result.rows[0];
         if(authority.version!==expectedVersion) fail('VERSION_CHANGED',412);
@@ -90,4 +92,4 @@ async function assertCurrentAuthorities(db, contextId, revisionId) {
     return rows.map(({valid_now,...authority})=>authority);
 }
 
-module.exports={createAuthority,changeAuthority,assertCurrentAuthorities,validateScope};
+module.exports={createAuthority,createAuthorityInTransaction,changeAuthority,assertCurrentAuthorities,validateScope};

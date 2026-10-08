@@ -46,6 +46,12 @@ export default function TemplateRoles({ draft, onChange, roleId, onRoleId, nativ
                         if (roleId === role.id) onRoleId(roles[0].id);
                     }}>{t('removeRole')}</button>
                 </div>
+                {native && <label className="lw-templates__roleCondition">{translate('signingV2.authority.capacity')}
+                    <select dir={direction} value={role.nativeRole?.capacity || 'personal'} onChange={event => update(role.id, { nativeRole: { ...role.nativeRole, capacity: event.target.value } })}>
+                        {['personal','professional','representative'].map(value => <option key={value} value={value}>{translate(`signingV2.authority.capacities.${value}`)}</option>)}
+                    </select>
+                    {role.nativeRole?.capacity === 'representative' && <small>{translate('signingV2.authority.templateHelp')}</small>}
+                </label>}
                 {native && <details className="lw-templates__roleCondition"><summary>{translate('signingV2.people.templateOptions')}</summary>
                     <p>{translate('signingV2.people.slotHelp')}</p>
                     <div className="lw-templates__setup">

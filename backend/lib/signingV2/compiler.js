@@ -254,6 +254,11 @@ function compilePackage(definition, input, directory, now = new Date()) {
         const active = conditionMatches(role.when, data, dataKeys);
         expect(active ? assignments.length >= role.min && assignments.length <= role.max : assignments.length === 0, 'ROLE_CAPACITY_EXCEEDED', role.key);
         expect(new Set(assignments.map(assignment => assignment.personId)).size === assignments.length, 'DISTINCT_PEOPLE_REQUIRED', role.key);
+        if (role.capacity === 'representative' && assignments.length > 1) {
+            const identities=assignments.map(item=>directory.people.get(item.personId)?.identity_key);
+            expect(identities.every(Boolean),'IDENTITY_VERIFICATION_REQUIRED',role.key);
+            expect(new Set(identities).size===identities.length,'DISTINCT_PEOPLE_REQUIRED',role.key);
+        }
         assignments.forEach((assignment, occurrence) => {
             const person = directory.people.get(assignment.personId);
             const party = directory.parties.get(assignment.partyId);
@@ -262,7 +267,7 @@ function compilePackage(definition, input, directory, now = new Date()) {
             let authority = null;
             if (role.capacity === 'representative') {
                 authority = directory.authorities.get(assignment.authorityId);
-                expect(party.kind === 'legal_entity' && authority?.person_id === person.id && authority?.represented_party_id === party.id, 'AUTHORITY_REQUIRED', role.key);
+                expect((party.kind === 'legal_entity' || (party.kind === 'person' && party.person_id !== person.id)) && authority?.person_id === person.id && authority?.represented_party_id === party.id, 'AUTHORITY_REQUIRED', role.key);
                 expect(authority.status === 'approved' && new Date(authority.valid_from) <= now && (!authority.valid_until || new Date(authority.valid_until) > now), 'AUTHORITY_EXPIRED', role.key);
                 expect(authority.scope?.roleKeys?.includes(role.key) || authority.scope?.allSigning === true, 'AUTHORITY_SCOPE_MISMATCH', role.key);
             }

@@ -17,6 +17,8 @@ jest.mock('../../../api/signingPublicApi', () => {
 });
 jest.mock('../../../components/specializedComponents/signFiles/SignatureCanvas', () => (props) => (
     <div data-testid="signing-canvas">
+        {Object.values(props.signingContext?.byDocument || {}).flat().map(text=><p key={text}>{text}</p>)}
+        {props.documentGroup && <p data-testid="group-consent">{props.documentGroup.consentText}</p>}
         {props.multiDocumentAction && <button onClick={props.multiDocumentAction.onPress}>{props.multiDocumentAction.label}</button>}
         {props.documentGroup && <div data-testid="group">{props.documentGroup.documents.map(doc => doc.id).join(',')}</div>}
         {props.nextDocument && <button type="button" onClick={props.nextDocument.onPress}>{props.nextDocument.label}</button>}
@@ -246,4 +248,18 @@ test('a paused task is shown before accepted documents; no OTP or completed-sign
     expect(screen.getByText('Review the amount')).toBeVisible();
     expect(screen.queryByTestId('signing-canvas')).not.toBeInTheDocument();
     expect(signingPublicApi.session).not.toHaveBeenCalled();
+});
+
+test('represented parties are explicit for current PDFs and grouped consent, excluding the returning later role',async()=>{
+    const i18n=await translations();await i18n.changeLanguage('en');
+    const first=documentFor(1,'ready'),second=documentFor(2,'ready'),later=documentFor(3,'waiting');
+    first.documents[0].tasks[0]={...first.documents[0].tasks[0],capacity:'representative',partyName:'Synthetic Company'};
+    second.documents[0].tasks[0]={...second.documents[0].tasks[0],capacity:'representative',partyName:'Synthetic Other'};
+    later.documents[0].tasks[0]={...later.documents[0].tasks[0],capacity:'representative',partyName:'Future Party'};
+    window.history.replaceState({},'',`/#${TOKEN}`);
+    signingPublicApi.describe.mockResolvedValue({person:{name:'Synthetic'},packages:[first,second,later],maxTasksPerSession:200});
+    render(<I18nextProvider i18n={i18n}><MemoryRouter><PublicPackageSigning/></MemoryRouter></I18nextProvider>);
+    await screen.findByText('On behalf of Synthetic Company');expect(screen.queryByText('On behalf of Future Party')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.public.group.signAll')}));
+    await screen.findByTestId('group');expect(screen.getByTestId('group-consent')).toHaveTextContent('On behalf of Synthetic Company');expect(screen.getByTestId('group-consent')).toHaveTextContent('On behalf of Synthetic Other');expect(screen.getByTestId('group-consent')).not.toHaveTextContent('Future Party');
 });

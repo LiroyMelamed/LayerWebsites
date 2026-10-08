@@ -37,6 +37,8 @@ async function actorScope(db, req, action = 'view') {
         send: !custom || hasAreaAction(req.firmPermissions, 'signing', 'upload'),
         templateManage: !custom || hasAreaAction(req.firmPermissions, 'signing', 'manage'),
         manage: !custom || (hasAreaAction(req.firmPermissions, 'signing', 'manage') && hasAreaAction(req.firmPermissions, 'signing', 'upload')),
+        authorityManage: !custom || hasAreaAction(req.firmPermissions, 'signing', 'authority_manage'),
+        packageApprove: !custom || hasAreaAction(req.firmPermissions, 'signing', 'package_approve'),
         mode,
     });
 }

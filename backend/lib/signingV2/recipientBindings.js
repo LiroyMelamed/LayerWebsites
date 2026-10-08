@@ -7,6 +7,7 @@ const occurrenceKey = (role, rowIndex, occurrence) => `${role.audience === 'shar
 function resolveRecipient(roles, input, role, rowIndex, path, errors, occurrence = 0) {
     const byKey = new Map(roles.map(item => [item.key, item]));
     const visited = new Set();
+    const origin = recipientPeople(role.audience === 'shared' ? input.shared?.[role.key] : input.rows[rowIndex]?.recipients?.[role.key])[occurrence];
     let current = role;
     let slot = occurrence;
     let value;
@@ -39,7 +40,14 @@ function resolveRecipient(roles, input, role, rowIndex, path, errors, occurrence
     delete result.sameAsRole;
     delete result.sameAsOccurrence;
     delete result.bindingKey;
-    if (current.key !== role.key || slot !== occurrence) result.bindingKey = occurrenceKey(current, rowIndex, slot);
+    if (current.key !== role.key || slot !== occurrence) {
+        result.bindingKey = occurrenceKey(current, rowIndex, slot);
+        // Reusing a person does not reuse a capacity or an authority from a
+        // different responsibility. Each role chooses its represented party.
+        delete result.partyId; delete result.authorityId;
+        if (origin?.partyId) result.partyId = origin.partyId;
+        if (origin?.authorityId) result.authorityId = origin.authorityId;
+    }
     return result;
 }
 

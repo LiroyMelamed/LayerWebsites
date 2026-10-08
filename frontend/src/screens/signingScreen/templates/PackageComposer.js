@@ -18,6 +18,7 @@ import { newKey } from './ParticipantActionDialog';
 import StatusNotice from '../../../components/ui/StatusNotice';
 import SelectedTemplateEntry from './SelectedTemplateEntry';
 import WorkbookImport from './WorkbookImport';
+import ParticipantDirectoryFields from './ParticipantDirectoryFields';
 import CaseContextPicker from './CaseContextPicker';
 import ClientSendContext from './ClientSendContext';
 import useSigningDraft from './useSigningDraft';
@@ -41,6 +42,7 @@ const rowFilled = row => row.key.trim() || Object.values(row.recipients).some(fi
 const clean = (person, language) => Array.isArray(person?.people) ? { people: person.people.map(item => clean(item, language)) } : person.sameAsRole ? { sameAsRole: person.sameAsRole, ...(person.sameAsOccurrence != null ? { sameAsOccurrence: person.sameAsOccurrence } : {}) } : ({
     name: String(person.name || '').trim(), email: String(person.email || '').trim(), phone: String(person.phone || '').trim(),
     ...(person.channel ? { channel: person.channel } : {}),
+    ...Object.fromEntries(['personId','partyId','authorityId'].filter(key => person[key]).map(key => [key, person[key]])),
     locale: LOCALES.has(language) ? language : 'he',
 });
 function sharedIdentityKey(people, roleKey, occurrence = 0) {
@@ -97,7 +99,7 @@ function SuggestField({ id, label, value, error, errorText, dir, type, inputMode
     </div>;
 }
 
-function PersonFields({ scope, roleKey, person, errors, onChange, compact, suggestLawyers, casePeople, peopleLabel, otherRoles = [] }) {
+function PersonFields({ scope, roleKey, person, errors, onChange, compact, suggestLawyers, casePeople, peopleLabel, capacity, otherRoles = [] }) {
     const { t, direction, number } = useSigningLocale();
     const choices = otherRoles.flatMap(role => Array.from({ length: role.max ?? 1 }, (_, index) => ({ key: role.key, occurrence: index, value: role.max > 1 ? `${role.key}|${index}` : role.key, label: role.max > 1 ? `${role.label} · ${number(index + 1)}` : role.label })));
     const linkedValue = person.sameAsRole ? (person.sameAsOccurrence != null ? `${person.sameAsRole}|${person.sameAsOccurrence}` : person.sameAsRole) : '';
@@ -114,7 +116,7 @@ function PersonFields({ scope, roleKey, person, errors, onChange, compact, sugge
         value={person[name]} onChange={value => onChange(roleKey, name, value)}
         options={[{ value: '', label: first }, ...values.map(value => ({ value, label: t(`signingV2.compose.${name}.${value}`) }))]} />;
     return <div className={`lw-signingCompose__person${compact ? ' is-compact' : ''}`}>
-        {(otherRoles.length > 0 || person.sameAsRole) && <Field id={fieldId(scope, roleKey, 'sameAsRole')}
+        {((capacity !== 'representative' && otherRoles.length > 0) || person.sameAsRole) && <Field id={fieldId(scope, roleKey, 'sameAsRole')}
             label={t('signingV2.compose.identity.label')} error={errors?.sameAsRole} className="is-wide">
             <select value={linkedValue} onChange={event => { const [key, index] = event.target.value.split('|'); onChange(roleKey, 'sameAsRole', key); onChange(roleKey, 'sameAsOccurrence', index == null ? undefined : Number(index)); }}>
                 <option value="">{t('signingV2.compose.identity.separate')}</option>
@@ -140,6 +142,7 @@ function PersonFields({ scope, roleKey, person, errors, onChange, compact, sugge
         <div className="lw-signingCompose__choices">
             {choice('channel', t('signingV2.compose.channel.auto'), ['email', 'sms', 'both'])}
         </div>
+        <ParticipantDirectoryFields person={person} roleKey={roleKey} capacity={capacity} onChange={value=>onChange(roleKey,'__person',value)} />
         </>}
     </div>;
 }
@@ -148,14 +151,14 @@ function PersonFields({ scope, roleKey, person, errors, onChange, compact, sugge
 // position cannot silently move another person's signature into a different slot.
 function RolePeople({ role, person, onChange, errors, ...props }) {
     const { t, number } = useSigningLocale();
-    if ((role.max ?? 1) === 1 && (role.min ?? 1) === 1 && !Array.isArray(person?.people)) return <PersonFields {...props} roleKey={role.key} person={person} errors={errors} onChange={onChange} />;
+    if ((role.max ?? 1) === 1 && (role.min ?? 1) === 1 && !Array.isArray(person?.people)) return <PersonFields {...props} capacity={role.capacity} roleKey={role.key} person={person} errors={errors} onChange={onChange} />;
     const people = groupPeople(person);
     const replace = next => onChange(role.key, '__group', { people: next });
     return <div className="lw-signingCompose__people">
         <p>{t((role.min ?? 1) === (role.max ?? 1) ? 'signingV2.people.countFixed' : 'signingV2.people.countRange', { count: role.max ?? 1, formattedCount: number(role.max ?? 1), minimum: number(role.min ?? 1), maximum: number(role.max ?? 1) })}</p>
         {people.map((item, index) => <fieldset key={index} className="lw-signingCompose__personSlot">
             <legend>{t('signingV2.people.personNumber', { number: number(index + 1) })}</legend>
-            <PersonFields {...props} scope={`${props.scope}-${index}`} roleKey={role.key} person={item} errors={errors?.people?.[index]} onChange={(_key, field, value) => onChange(role.key, `people.${index}.${field}`, value)} />
+            <PersonFields {...props} capacity={role.capacity} scope={`${props.scope}-${index}`} roleKey={role.key} person={item} errors={errors?.people?.[index]} onChange={(_key, field, value) => onChange(role.key, `people.${index}.${field}`, value)} />
             {index === people.length - 1 && people.length > (role.min ?? 1) && <SecondaryButton onPress={() => replace(people.slice(0, -1))}>{t('signingV2.people.removeLast')}</SecondaryButton>}
         </fieldset>)}
         {people.length < (role.max ?? 1) && <SecondaryButton onPress={() => replace([...people, blankPerson()])}>{t('signingV2.people.add', { role: role.label })}</SecondaryButton>}
@@ -164,12 +167,12 @@ function RolePeople({ role, person, onChange, errors, ...props }) {
 }
 
 function changePerson(person, field, value) {
-    if (field === '__group') return value;
+    if (field === '__group' || field === '__person') return value;
     if (field.startsWith('people.')) {
         const [, index, key] = field.split('.');
-        return { people: groupPeople(person).map((item, position) => position === Number(index) ? { ...item, [key]: value } : item) };
+        return { people: groupPeople(person).map((item, position) => position === Number(index) ? changePerson(item, key, value) : item) };
     }
-    return { ...person, [field]: value };
+    return { ...person, [field]: value, ...(field === 'name' && person?.personId ? {personId:undefined,partyId:undefined,authorityId:undefined} : {}) };
 }
 
 function DocumentDataFields({ row, fields, errors, onChange }) {
@@ -839,6 +842,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 {preview.shared.length > 0 && <>
                     <h3>{t('signingV2.compose.shared.heading')}</h3>
                     <ul className="lw-signingCompose__plainList">{preview.shared.map(item => <li key={`${item.roleKey}:${item.occurrence || 0}`}><bdi>{roleLabel(item.roleKey)}</bdi>: <bdi>{item.name}</bdi>
+                        {item.partyName && <span> · {t('signingV2.authority.onBehalfOf', {name:item.partyName})}</span>}
                         {item.packageCount != null && item.packageCount < preview.packageCount && <span> · {t('signingV2.compose.review.sharedInvitations', { name: item.name, count: item.packageCount, formattedCount: number(item.packageCount) })}</span>}
                     </li>)}</ul>
                     {preview.shared.every(item => item.packageCount == null || item.packageCount === preview.packageCount) && <p className="lw-signingCompose__note">{t('signingV2.compose.review.sharedInvitations', { name: sharedNames, count: preview.packageCount, formattedCount: number(preview.packageCount) })}</p>}
@@ -848,6 +852,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 <ul className="lw-signingCompose__plainList">{preview.sample.map(item => <li key={item.key}>
                     {item.recipients.map((person, index) => <React.Fragment key={`${person.roleKey}:${person.occurrence || 0}`}>{index > 0 && ' · '}
                         <bdi>{roleLabel(person.roleKey)}{(template.roles.find(role => role.key === person.roleKey)?.max || 1) > 1 ? ` · ${number((person.occurrence || 0) + 1)}` : ''}</bdi>: <bdi>{person.name}</bdi> ({person.channels.map(channel => t(`signingV2.compose.channel.${channel}`)).join(', ')})
+                        {person.partyName && <span> · {t('signingV2.authority.onBehalfOf', {name:person.partyName})}</span>}
                     </React.Fragment>)}
                     {dataFields.map(field => {
                         const value = Object.hasOwn(item.data || {}, field.key) ? item.data[field.key] : field.defaultValue;

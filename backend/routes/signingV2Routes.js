@@ -14,6 +14,8 @@ const drafts = require('../services/signingV2/drafts');
 const caseContext = require('../services/signingV2/caseContext');
 const clientContext = require('../services/signingV2/clientContext');
 const authoring = require('../services/signingV2/authoring');
+const directory = require('../services/signingV2/participantDirectory');
+const authorities = require('../services/signingV2/authorities');
 const workbook = require('../lib/signingV2/workbook');
 const { objectStorage, officeQuota } = require('../services/signingV2/runtime');
 const { createAppError } = require('../utils/appError');
@@ -22,6 +24,7 @@ const run = fn => (req, res, next) => Promise.resolve(fn(req, res)).catch(next);
 const view = requireFirmAction('signing', 'view', { legacy: 'lawyerOrAdmin' });
 // Reminders and resends use the existing publish capability; view access alone never sends.
 const send = requireFirmAction('signing', 'upload', { legacy: 'lawyerOrAdmin' });
+const approveAuthority = requireFirmAction('signing', 'authority_manage', { legacy: 'lawyerOrAdmin' });
 const manage = requireFirmAction('signing', 'manage', { legacy: 'lawyerOrAdmin' });
 
 // Offices that have not been enabled keep the current signing flows untouched.
@@ -95,6 +98,26 @@ router.get('/authoring/versions/:id/documents/:key', view, run(async (req, res) 
     pdf(res, await authoring.documentFile(pool, await actorScope(pool, req, 'view'), req.params.id, req.params.key,
         objectStorage({ client: r2, bucket: BUCKET })), 'template.pdf');
 }));
+
+router.get('/directory', send, run(async(req,res)=>res.json(await directory.searchDirectory(pool,await actorScope(pool,req,'upload'),req.query.q))));
+for (const [path,kind,middleware,action] of [['people','person',send,'upload'],['parties','party',send,'upload'],['authorities','authority',approveAuthority,'authority_manage']]) {
+    router.post(`/directory/${path}`,middleware,run(async(req,res)=>{
+        const result=await directory.createEntry(pool,await actorScope(pool,req,action),kind,req.body||{},req.get('Idempotency-Key'));
+        res.status(result.reused?200:201).json(result);
+    }));
+}
+router.get('/directory/people/:id/authorities',send,run(async(req,res)=>res.json(await directory.personAuthorities(pool,await actorScope(pool,req,'upload'),req.params.id))));
+router.post('/directory/people/:id/verify',approveAuthority,run(async(req,res)=>res.json({person:await directory.verifyIdentity(pool,await actorScope(pool,req,'authority_manage'),req.params.id,req.body||{})})));
+router.post('/directory/authorities/:id',approveAuthority,run(async(req,res)=>res.json({authority:directory.authorityView(await authorities.changeAuthority(pool,await actorScope(pool,req,'authority_manage'),req.params.id,req.body||{}))})));
+router.post('/directory/evidence',approveAuthority,run(async(req,res)=>{
+    const {r2,BUCKET}=require('../utils/r2');
+    res.json({evidence:await directory.registerEvidence(pool,await actorScope(pool,req,'authority_manage'),req.body?.fileKey,{readPdf:require('../services/signingTemplateService').readPdf,storage:objectStorage({client:r2,bucket:BUCKET})})});
+}));
+router.get('/directory/evidence/:id',approveAuthority,run(async(req,res)=>{
+    const {r2,BUCKET}=require('../utils/r2');
+    pdf(res,await directory.evidenceFile(pool,await actorScope(pool,req,'authority_manage'),req.params.id,objectStorage({client:r2,bucket:BUCKET})),'authority.pdf');
+}));
+
 router.get('/creation/clients/:id', send, run(async (req, res) => res.json(await clientContext.loadClientContext(pool, await actorScope(pool, req, 'upload'), req.params.id))));
 router.get('/creation/cases', send, run(async (req, res) => res.json(await caseContext.searchCases(pool, await actorScope(pool, req, 'upload'), req.query.q))));
 router.get('/creation/cases/:id', send, run(async (req, res) => res.json(await caseContext.loadCaseContext(pool, await actorScope(pool, req, 'upload'), req.params.id))));

@@ -1401,6 +1401,10 @@
       "evidenceDocuments": {
         "view": "View",
         "download": "Download"
+      },
+      "signing": {
+        "authority_manage": "Approve and revoke signing authority",
+        "package_approve": "Approve signing packages"
       }
     }
   },
@@ -1458,7 +1462,7 @@
     },
     "capacity": {
       "personal": "Personal capacity",
-      "representative": "On behalf of the company",
+      "representative": "For another person or organization",
       "professional": "Professional capacity"
     },
     "channel": {
@@ -1525,7 +1529,7 @@
       "IDEMPOTENCY_CONFLICT": "This request was saved with different details. Check its status before creating another request.",
       "TEXT_OVERFLOW": "The text does not fit. Enlarge the field or revise its content.",
       "CAPACITY_BUDGET_EXCEEDED": "This batch exceeds a count or size limit. Review the documents before continuing.",
-      "AUTHORITY_EXPIRED": "Authority to represent the company is no longer valid. Update the evidence and approval.",
+      "AUTHORITY_EXPIRED": "Authority is unapproved, expired or revoked.",
       "DISTINCT_PEOPLE_REQUIRED": "Choose two different people as authorized signers.",
       "SOURCE_CHANGED": "The source file changed. Select it and review the template again.",
       "INVALID_FILTER": "This filter is invalid. Select it again.",
@@ -1553,7 +1557,14 @@
       "SELECTION_ACCESS_CHANGED": "Your access changed. Clear the selection and reload your authorized packages.",
       "EMPTY_SELECTION": "No authorized packages match this selection.",
       "SELECTION_TOO_LARGE": "Select up to 1,000 packages at a time.",
-      "INVALID_SELECTION": "The selection could not be read. Select the packages again."
+      "INVALID_SELECTION": "The selection could not be read. Select the packages again.",
+      "AUTHORITY_REQUIRED": "A saved signer, represented party and approved authority are required.",
+      "AUTHORITY_SCOPE_MISMATCH": "Authority does not cover this role.",
+      "PERSON_CHANGED": "Saved person details changed. Select them again and review the send.",
+      "IDENTITY_ALREADY_EXISTS": "This identity already exists. Select the existing person; no automatic merge occurred.",
+      "IDENTITY_ALREADY_VERIFIED": "A verified identity cannot be changed to another person.",
+      "IDENTITY_VERIFICATION_REQUIRED": "Review both representatives’ identities before sending.",
+      "INVALID_CAPACITY": "The represented party does not match this signing capacity."
     },
     "actionCancelledReason": {
       "ACTION_SCOPE_CHANGED": "The signing tasks changed while this message was waiting. Review the current selection before sending again.",
@@ -1793,7 +1804,15 @@
         "UNSAFE_DATA_CELL": "Store this value as a text cell to avoid changing its number or date.",
         "ROLE_CARDINALITY": "The number of people does not match the positions defined in the template.",
         "DELIVERY_PROFILE_CONFLICT": "The same person has different delivery settings in different roles. Make them consistent before sending.",
-        "INVALID_PERSON": "The selected person is not valid."
+        "INVALID_PERSON": "The selected person is not valid.",
+        "AUTHORITY_REQUIRED": "A saved signer, represented party and approved authority are required.",
+        "AUTHORITY_EXPIRED": "Authority is unapproved, expired or revoked.",
+        "AUTHORITY_SCOPE_MISMATCH": "Authority does not cover this role.",
+        "PERSON_CHANGED": "Saved person details changed. Select them again and review the send.",
+        "IDENTITY_ALREADY_EXISTS": "This identity already exists. Select the existing person; no automatic merge occurred.",
+        "IDENTITY_ALREADY_VERIFIED": "A verified identity cannot be changed to another person.",
+        "IDENTITY_VERIFICATION_REQUIRED": "Review both representatives’ identities before sending.",
+        "INVALID_CAPACITY": "The represented party does not match this signing capacity."
       },
       "errors": {
         "INVALID_WORKBOOK": "This file is not a valid Excel workbook",
@@ -2331,6 +2350,70 @@
       "removeLast": "Remove last person",
       "countFixed": "This role requires {{formattedCount}} people, in the same signing stage.",
       "missingPosition": "Add a document field for {{role}} — person {{number}}."
+    },
+    "authority": {
+      "capacity": "Signing capacity",
+      "capacities": {
+        "personal": "For themselves",
+        "professional": "In a professional capacity",
+        "representative": "For another person or organization"
+      },
+      "templateHelp": "When sending, choose a named person, who they represent and an approved authority. For two representatives, set both counts to 2 and verify both identities.",
+      "directoryTitle": "Use a saved person",
+      "representativeTitle": "Signer and authority",
+      "directoryHelp": "Selecting a saved person explicitly links them to the package. Shared phone numbers or email addresses never merge people.",
+      "representativeHelp": "Choose the actual signer and the person or organization they represent. An approved, current authority is required.",
+      "identityVerified": "Identity reviewed by the office",
+      "identityUnverified": "Identity not yet reviewed",
+      "changePerson": "Choose another person",
+      "searchPerson": "Find a saved person",
+      "savePerson": "Save the entered person",
+      "party": "Who do they represent?",
+      "chooseParty": "Choose a person or organization",
+      "savedParty": "Party saved in this package",
+      "newParty": "Add a represented person or organization",
+      "partyKind": "Party type",
+      "company": "Organization or company",
+      "person": "Person",
+      "partyName": "Person or organization name",
+      "registration": "Registration number (optional)",
+      "addParty": "Add and select",
+      "authority": "Signing authority",
+      "chooseAuthority": "Choose an authority",
+      "states": {
+        "pending": "Awaiting approval",
+        "approved": "Approved",
+        "revoked": "Revoked"
+      },
+      "ready": "Authority is approved for this role. It will be checked again before signing.",
+      "notReady": "Authority is not ready: check approval, validity and role.",
+      "reviewEvidence": "Evidence and authority review",
+      "reviewHelp": "Approval records the office review. It does not replace any professional review required for the document.",
+      "uploadEvidence": "Upload PDF evidence",
+      "evidenceSaved": "Evidence saved privately.",
+      "viewEvidence": "Open evidence",
+      "reason": "Review note or revocation reason",
+      "validFrom": "Valid from",
+      "validUntil": "Valid until (optional)",
+      "createAuthority": "Save authority for review",
+      "approve": "Approve reviewed authority",
+      "revoke": "Revoke authority",
+      "verifyIdentity": "Review signer identity",
+      "identityHelp": "Required when the template needs two distinct representatives. Enter the identifier checked against the evidence; never merge people by contact details.",
+      "country": "Issuing country (two-letter code)",
+      "identityType": "Identifier type",
+      "identityValue": "Reviewed identifier",
+      "confirmIdentity": "Confirm identity review",
+      "needsApprover": "Ask an office member with authority approval permission to review and approve the evidence.",
+      "pdfOnly": "Choose a PDF up to 20MB.",
+      "uploadFailed": "Evidence upload failed.",
+      "requestFailed": "The action did not finish. You can try again.",
+      "identityTypes": {
+        "id": "Identity card",
+        "passport": "Passport",
+        "other": "Other official identifier"
+      },
+      "onBehalfOf": "On behalf of {{name}}"
     }
   },
   "calendar": {

@@ -105,3 +105,14 @@ test('unknown actions are stripped', () => {
     });
     assert.deepEqual(perms.areas.cases.actions, ['view']);
 });
+
+test('new signing approvals are explicit and never inherited from v3 manage/upload or role names', () => {
+    const old = normalizeRolePermissions({ version:3, areas:{signing:{visible:true,actions:['view','manage','upload']}} });
+    assert.equal(old.version,4);
+    assert.equal(hasAreaAction(old,'signing','authority_manage'),false);
+    assert.equal(hasAreaAction(old,'signing','package_approve'),false);
+    const explicit=normalizeRolePermissions({areas:{signing:{visible:true,actions:['view','authority_manage','package_approve']}}});
+    assert.equal(hasAreaAction(explicit,'signing','authority_manage'),true);
+    assert.equal(hasAreaAction(explicit,'signing','package_approve'),true);
+    assert.equal(hasAreaAction(explicit,'signing','upload'),false);
+});

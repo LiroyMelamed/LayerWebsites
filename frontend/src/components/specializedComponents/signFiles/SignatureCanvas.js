@@ -51,7 +51,7 @@ function uuidv4() {
     }
 }
 
-const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal", filesApi = signingFilesApi, loadPublicPdf = null, nextDocument = null, documentGroup = null, multiDocumentAction = null, deferOtpUntilConsent = false, documentIssueActions = null }) => {
+const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal", filesApi = signingFilesApi, loadPublicPdf = null, nextDocument = null, documentGroup = null, multiDocumentAction = null, deferOtpUntilConsent = false, documentIssueActions = null, signingContext = null }) => {
     const { t } = useTranslation();
     const canvasRef = useRef(null);
     const initializedCanvasRef = useRef(null);
@@ -2821,6 +2821,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 <div className="lw-signing-screen">
                     <div className="lw-signing-modalContent lw-signing-screenContent">
                         <SimpleContainer className="lw-signing-screenBody">
+                            {!!signingContext?.byDocument?.[activeDocumentId || signingContext.documentId]?.length && <div className="lw-signingTaskIssue__notice" dir={signingContext.direction}>
+                                {signingContext.byDocument[activeDocumentId || signingContext.documentId].map(text => <p key={text}>{text}</p>)}
+                            </div>}
                             {documentGroup && (
                                 <label className="lw-signing-documentPicker">
                                     <span>{t('signingV2.public.group.document', { count: documentGroup.documents.length })}</span>

@@ -120,6 +120,10 @@ export default function PublicPackageSigning() {
         id: item.document.documentId,
         name: `${item.document.name} — ${item.pkg.reference || item.pkg.otherParticipants?.join(', ') || item.pkg.runName || ''}`,
     }])).values()] : null, [groupSelection]);
+    const signingContexts = Object.fromEntries((groupSelection || [current]).filter(Boolean).map(item => [item.document.documentId,
+        [...new Set((groupSelection || documents.filter(entry => entry.document.documentId === item.document.documentId)).filter(entry => entry.document.documentId === item.document.documentId && entry.task.capacity === 'representative').map(entry => entry.task.partyName).filter(Boolean))]
+            .map(name => t('signingV2.authority.onBehalfOf', {name}))]));
+    const groupCapacityText = groupSelection ? [...new Set(groupSelection.filter(item => item.task.capacity === 'representative').map(item => item.task.partyName).filter(Boolean))].map(name => t('signingV2.authority.onBehalfOf', {name})).join(' · ') : '';
     const loadGroupPdf = useCallback(documentId => signingPublicApi.document(token, documentId), [token]);
 
     const openNext = async () => {
@@ -175,6 +179,7 @@ export default function PublicPackageSigning() {
                 <SignatureCanvas
                     key={`${groupSelection ? groupSelection.map(item => `${item.task.taskId}.${item.task.version || 0}`).join(':') : `${current.task.taskId}.${current.task.version || 0}`}:${locale}`}
                     publicToken={token}
+                    signingContext={{byDocument:signingContexts,documentId:current.document.documentId,direction}}
                     variant="screen"
                     filesApi={adapter}
                     loadPublicPdf={() => signingPublicApi.document(token, current.document.documentId)}
@@ -182,7 +187,7 @@ export default function PublicPackageSigning() {
                         documents: groupDocuments, loadPdf: loadGroupPdf,
                         completionText: remainingAfterGroup > 0 ? t('signingV2.public.group.completedPart', { count: remainingAfterGroup,
                             signed: number(groupDocuments.length), remaining: number(remainingAfterGroup) }) : undefined,
-                        consentText: t('signingV2.public.group.consent', { count: groupDocuments.length, documentCount: number(groupDocuments.length) }),
+                        consentText: [t('signingV2.public.group.consent', { count: groupDocuments.length, documentCount: number(groupDocuments.length) }), groupCapacityText].filter(Boolean).join(' · '),
                         signAllLabel: groupSelection.length < documents.length ? t('signingV2.public.group.signSelected', { count: groupDocuments.length, documentCount: number(groupDocuments.length) }) : t('signingV2.public.group.signAll'),
                     } : null}
                     multiDocumentAction={!groupSelection && candidateCount > 1 ? {

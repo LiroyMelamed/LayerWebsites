@@ -30,8 +30,11 @@ function endpoints(input = {}) {
 }
 
 async function createPerson(pool, scope, input) {
+    return transaction(pool, db => createPersonInTransaction(db, scope, input));
+}
+
+async function createPersonInTransaction(db, scope, input) {
     const name = personName(input.name), contacts = endpoints(input.endpoints);
-    return transaction(pool, async db => {
         const linkedUserId = input.linkedUserId || null;
         if (linkedUserId) {
             expect(Number.isSafeInteger(linkedUserId) && linkedUserId > 0, 'INVALID_PERSON');
@@ -47,7 +50,6 @@ async function createPerson(pool, scope, input) {
         const party = (await db.query(`INSERT INTO signing_parties(id,owner_context_id,kind,person_id,name,created_by)
             VALUES($1,$2,'person',$3,$4,$5) RETURNING *`, [partyId, scope.contextId, id, name, scope.userId])).rows[0];
         return { person, party };
-    });
 }
 
 async function createLegalEntity(db, scope, input) {
@@ -63,7 +65,7 @@ async function createLegalEntity(db, scope, input) {
 
 async function searchPeople(db, scope, query) {
     const term = String(query || '').trim().slice(0, 100).replace(/[%_\\]/g, '\\$&');
-    return (await db.query(`SELECT person.id,name,linked_userid,contact_endpoints,person.version FROM signing_people person
+    return (await db.query(`SELECT person.id,name,linked_userid,contact_endpoints,person.version,identity_verified_at FROM signing_people person
         WHERE ${personScopeSql()} AND (name ILIKE $5 OR contact_endpoints->>'email' ILIKE $5 OR contact_endpoints->>'phone' ILIKE $5)
         ORDER BY name,id LIMIT 30`, [...scopeParams(scope), `%${term}%`])).rows;
 }
@@ -75,4 +77,4 @@ async function loadPerson(db, scope, personId) {
     return result.rows[0];
 }
 
-module.exports = { createPerson, createLegalEntity, searchPeople, loadPerson, endpoints, personScopeSql };
+module.exports = { createPerson, createPersonInTransaction, createLegalEntity, searchPeople, loadPerson, endpoints, personScopeSql };

@@ -36,6 +36,6 @@ export function fromEditor(draft, locale) {
                 else delete result.inactiveTreatment;
                 return { ...result, roleKey: field.roleId, occurrence: field.occurrence ?? field.nativeField?.occurrence ?? 0 };
             }) })),
-        signingRules: draft.nativeDefinition?.signingRules || [],
+        signingRules: [...(draft.nativeDefinition?.signingRules || []).filter(rule => rule.source !== 'role_pair'), ...draft.roles.filter(role => role.nativeRole?.capacity === 'representative' && role.nativeRole?.min === 2 && role.nativeRole?.max === 2 && !(draft.nativeDefinition?.signingRules || []).filter(rule => rule.source !== 'role_pair').some(rule => rule.type === 'all_named' && rule.roles?.every(ref => ref.key === role.id))).map(role => ({ type:'all_named', source:'role_pair', roles:[{key:role.id,occurrence:0},{key:role.id,occurrence:1}] }))],
         policy: { ...draft.nativeDefinition?.policy, otpRequired: true, deliveryMode: draft.nativeDefinition?.policy?.deliveryMode || 'invite' } };
 }

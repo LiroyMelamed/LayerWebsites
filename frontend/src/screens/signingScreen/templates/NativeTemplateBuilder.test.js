@@ -280,3 +280,13 @@ test('raising a role maximum without authored positions blocks publication and n
     expect(screen.getByRole('button',{name:'Publish template'})).toBeDisabled();
     expect(api.publishTemplateDraft).not.toHaveBeenCalled();
 });
+
+
+test('two representative positions add a verified-person rule without changing geometry; reverting capacity removes only the generated rule', () => {
+    const adapter = require('./nativeTemplateAdapter');
+    const source={schemaVersion:2,name:'Synthetic',locale:'en',dataKeys:[],roles:[{key:'r',label:'Representatives',capacity:'personal',min:2,max:2,stage:0}],stages:[{key:'s',label:'Sign',after:null}],documents:[{key:'d',name:'Synthetic',sourceArtifactId:'source',sourceHash:'hash',fields:[{id:'f',type:'signature',roleKey:'r',occurrence:1,pageNum:1,x:20,y:50,width:100,height:40,required:true}]}],signingRules:[],policy:{otpRequired:true,deliveryMode:'invite'}};
+    const draft=adapter.toEditor(source);draft.roles[0].nativeRole.capacity='representative';const edited=adapter.fromEditor(draft,'en');
+    expect(edited.signingRules).toEqual([{type:'all_named',source:'role_pair',roles:[{key:'r',occurrence:0},{key:'r',occurrence:1}]}]);
+    expect(edited.documents[0].fields[0]).toMatchObject(source.documents[0].fields[0]);
+    const again=adapter.toEditor(edited);again.roles[0].nativeRole.capacity='personal';expect(adapter.fromEditor(again,'en').signingRules).toEqual([]);
+});

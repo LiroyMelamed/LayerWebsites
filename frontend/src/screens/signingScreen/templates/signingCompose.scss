@@ -205,3 +205,10 @@
 .lw-signingCompose__personSlot { min-inline-size: 0; margin: 1rem 0; padding: 1rem 0; border: 0; border-block-start: 1px solid #e2e8f0; }
 .lw-signingCompose__personSlot legend { padding-inline-end: .65rem; font-weight: 600; }
 .lw-signingCompose__people button { min-inline-size: 44px; min-block-size: 44px; }
+
+.lw-signingCompose__directory { grid-column: 1 / -1; min-inline-size: 0; padding-block: .5rem; }
+.lw-signingCompose__directory summary { min-block-size: 44px; display: flex; align-items: center; cursor: pointer; color: var(--signing-ink, #2c4363); }
+.lw-signingCompose__directoryBody { border: 0; margin: 0; padding: .5rem 0; display: grid; gap: 1rem; min-inline-size: 0; }
+.lw-signingCompose__directoryBody > details { min-inline-size: 0; }
+.lw-signingCompose__directoryBody input, .lw-signingCompose__directoryBody select { inline-size: 100%; max-inline-size: 100%; min-inline-size: 0; min-block-size: 44px; box-sizing: border-box; }
+.lw-signingCompose__directoryBody button { max-inline-size: 100%; white-space: normal; }

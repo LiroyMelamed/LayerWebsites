@@ -183,6 +183,8 @@ function recipient(input, definition, path, errors) {
     if (!LOCALES.has(locale)) errors.push({ path: `${path}.locale`, code: 'INVALID_LOCALE' });
     return { name, email, phone: phone || null, channels: channels || [], locale,
         ...(value.personId ? { personId: String(value.personId) } : {}),
+        ...(value.partyId ? { partyId: String(value.partyId) } : {}),
+        ...(value.authorityId ? { authorityId: String(value.authorityId) } : {}),
         ...(value.bindingKey ? { bindingKey: value.bindingKey } : {}) };
 }
 
@@ -199,7 +201,11 @@ function recipientGroup(roles, input, role, rowIndex, definition, path, errors) 
         const itemPath = group ? `${path}.people.${occurrence}` : path;
         return recipient(resolveRecipient(roles, input, role, rowIndex, itemPath, errors, occurrence), definition, itemPath, errors);
     });
-    for (const person of normalized) if (person.personId && !UUID.test(person.personId)) errors.push({ path, code: 'INVALID_PERSON' });
+    for (const person of normalized) {
+        if (['personId','partyId','authorityId'].some(key => person[key] && !UUID.test(person[key]))) errors.push({ path, code: 'INVALID_PERSON' });
+        if (role.capacity === 'representative' && (!person.personId || !person.partyId || !person.authorityId)) errors.push({ path, code: 'AUTHORITY_REQUIRED' });
+        if (role.capacity !== 'representative' && (person.partyId || person.authorityId)) errors.push({ path, code: 'INVALID_CAPACITY' });
+    }
     return group ? { people: normalized } : normalized[0];
 }
 
@@ -301,7 +307,7 @@ function packagesFor(definition, plan, personFor) {
                 // A shared identity cannot silently adopt the contact settings of the last role.
                 if (delivery[ids.personId] && digest(delivery[ids.personId]) !== digest(profile)) fail('DELIVERY_PROFILE_CONFLICT', 422);
                 delivery[ids.personId] = profile;
-                return { personId: ids.personId, partyId: ids.partyId };
+                return { personId: ids.personId, partyId: person.partyId || ids.partyId, ...(person.authorityId ? { authorityId: person.authorityId } : {}) };
             });
         }
         return { externalKey: row.key, ...(row.caseId ? { caseId: row.caseId } : {}), ...(row.clientId ? { clientId: row.clientId } : {}), data: row.data || {}, ...(row.provenance ? { provenance: row.provenance } : {}), roles, delivery,
@@ -310,8 +316,29 @@ function packagesFor(definition, plan, personFor) {
     });
 }
 
-function rowsHash(template, plan) {
-    return digest({ conditionEvaluatorVersion: CONDITION_EVALUATOR_VERSION, templateVersionId: template.id, definitionHash: template.definition_hash, name: plan.name, roleAudience: Object.fromEntries(plan.roles.map(role => [role.key, role.audience])), omitted: [...plan.omitted].sort(), signingOrder: plan.signingOrder, shared: plan.shared, rows: plan.rows });
+function rowsHash(template, plan, references) {
+    return digest({ conditionEvaluatorVersion: CONDITION_EVALUATOR_VERSION, templateVersionId: template.id, definitionHash: template.definition_hash, name: plan.name, roleAudience: Object.fromEntries(plan.roles.map(role => [role.key, role.audience])), omitted: [...plan.omitted].sort(), signingOrder: plan.signingOrder, shared: plan.shared, rows: plan.rows, ...(references?.hash ? { directoryHash: references.hash } : {}) });
+}
+
+// Resolve only explicit directory IDs, in bounded set queries for the whole
+// batch. The immutable preview hash binds current person/party/authority heads.
+async function referencedDirectory(db,scope,definition,plan) {
+    const ids=new Set(), supplied=[];
+    for (const row of plan.rows) for (const role of plan.roles.filter(item=>row.activeRoles.includes(item.key))) {
+        const group=role.audience==='shared'?plan.shared[role.key]:row.recipients[role.key];
+        for(const person of recipientPeople(group)) if(person.personId) {ids.add(person.personId);supplied.push(person);}
+    }
+    if(!ids.size || plan.errors.length) return {people:new Map(),parties:new Map(),authorities:new Map(),personalParties:new Map(),hash:null};
+    const rows=(await db.query(`SELECT person.*,party.id AS personal_party_id FROM signing_people person
+        JOIN LATERAL (SELECT id FROM signing_parties WHERE owner_context_id=person.owner_context_id AND person_id=person.id AND kind='person' ORDER BY id LIMIT 1) party ON TRUE
+        WHERE ${personScopeSql()} AND person.id=ANY($5::uuid[]) ORDER BY person.id FOR SHARE OF person`,[...scopeParams(scope),[...ids]])).rows;
+    if(rows.length!==ids.size)fail('PARTICIPANT_NOT_AVAILABLE',404);
+    const personalParties=new Map(rows.map(person=>[person.id,person.personal_party_id]));
+    const packages=[{roles:{references:supplied.map(person=>({personId:person.personId,partyId:person.partyId||personalParties.get(person.personId),...(person.authorityId?{authorityId:person.authorityId}:{})}))}}];
+    const directory=await loadDirectory(db,scope,{documents:[]},packages);
+    for(const person of supplied) expect(directory.people.get(person.personId).name===person.name,'PERSON_CHANGED');
+    const heads=Object.fromEntries(['people','parties','authorities'].map(key=>[key,[...directory[key].values()].sort((a,b)=>a.id.localeCompare(b.id))]));
+    return {...directory,personalParties,hash:digest(JSON.parse(JSON.stringify(heads)))};
 }
 
 async function previewCreation(pool, scope, input) {
@@ -319,8 +346,10 @@ async function previewCreation(pool, scope, input) {
     const plan = normalize(definition, input);
     await assertCases(pool, scope, [...new Set(plan.rows.map(row => row.caseId).filter(Boolean))]);
     await assertClients(pool, scope, [...new Set(plan.rows.map(row => row.clientId).filter(Boolean))]);
-    const people = new Map(), parties = new Map();
+    const references = await referencedDirectory(pool, scope, definition, plan);
+    const people = new Map(references.people), parties = new Map(references.parties);
     const personFor = (role, person, index, occurrence) => {
+        if (person.personId && references.people.has(person.personId)) return {personId:person.personId,partyId:references.personalParties.get(person.personId)};
         const personId = person.personId || stableUuid('preview', recipientIdentity(role, person, index, occurrence));
         const partyId = stableUuid('preview-party', personId);
         people.set(personId, { id: personId, name: person.name || '-', identity_key: null });
@@ -328,7 +357,7 @@ async function previewCreation(pool, scope, input) {
         return { personId, partyId };
     };
     const packages = packagesFor(definition, plan, personFor);
-    const directory = { people, parties, authorities: new Map(), sources };
+    const directory = { people, parties, authorities: references.authorities, sources };
     const compiled = [];
     if (!plan.errors.length) packages.forEach((item, index) => {
         try { compiled.push(compilePackage(definition, item, directory)); }
@@ -342,9 +371,13 @@ async function previewCreation(pool, scope, input) {
     if (!plan.errors.length) {
         try { capacity = admission(compiled); } catch { plan.errors.push({ path: 'rows', code: 'CAPACITY_BUDGET_EXCEEDED' }); }
     }
+    const representativeView = (roleKey,person) => plan.roles.find(role=>role.key===roleKey)?.capacity === 'representative' ? {
+        capacity:'representative',partyName:references.parties.get(person.partyId)?.name || null,
+        authorityVersion:references.authorities.get(person.authorityId)?.version || null,
+    } : {};
     return {
         valid: plan.errors.length === 0, errors: plan.errors.slice(0, 200), errorCount: plan.errors.length,
-        previewHash: plan.errors.length ? null : rowsHash(template, plan),
+        previewHash: plan.errors.length ? null : rowsHash(template, plan, references),
         packageCount: plan.rows.length,
         documentCount: capacity?.documents ?? null,
         documentSummary: plan.errors.length ? [] : definition.documents.map(document => {
@@ -359,10 +392,10 @@ async function previewCreation(pool, scope, input) {
         omitted: [...plan.omitted].sort(),
         caseId: plan.rows[0]?.caseId || null,
         clientId: plan.rows[0]?.clientId || null,
-        shared: Object.entries(plan.shared).flatMap(([roleKey, group]) => recipientPeople(group).map((person, occurrence) => ({ roleKey, occurrence, name: person.name, channels: person.channels, packageCount: plan.rows.filter(row => row.activeRoles.includes(roleKey)).length }))),
+        shared: Object.entries(plan.shared).flatMap(([roleKey, group]) => recipientPeople(group).map((person, occurrence) => ({ roleKey, occurrence, name: person.name, channels: person.channels, ...representativeView(roleKey,person), packageCount: plan.rows.filter(row => row.activeRoles.includes(roleKey)).length }))),
         sample: plan.rows.slice(0, 5).map((row, index) => ({ key: row.key, ...(row.data ? { data: row.data } : {}),
             ...(plan.errors.length ? {} : { exclusions: compiled[index].snapshot.exclusions.map(item => ({ ...item, name: definition.documents.find(doc => doc.key === item.documentKey).name })) }),
-            recipients: Object.entries(row.recipients).flatMap(([roleKey, group]) => recipientPeople(group).map((person, occurrence) => ({ roleKey, occurrence, name: person.name, channels: person.channels }))) })),
+            recipients: Object.entries(row.recipients).flatMap(([roleKey, group]) => recipientPeople(group).map((person, occurrence) => ({ roleKey, occurrence, name: person.name, channels: person.channels, ...representativeView(roleKey,person) }))) })),
         template: { versionId: template.id, name: definition.name, documents: definition.documents.map(document => ({ key: document.key, name: document.name })), roles: roleSummary(definition), dataKeys: definition.dataKeys || [] },
     };
 }
@@ -381,11 +414,12 @@ async function createFromRowsInTransaction(db, scope, input, { reserveCapacity }
     await assertCases(db, scope, [...new Set(plan.rows.map(row => row.caseId).filter(Boolean))]);
     await assertClients(db, scope, [...new Set(plan.rows.map(row => row.clientId).filter(Boolean))], true);
     if (plan.errors.length) fail('INVALID_ROWS', 422, plan.errors.slice(0, 50));
-    if (input.previewHash !== rowsHash(template, plan)) fail('PREVIEW_CHANGED', 412);
+    const references = await referencedDirectory(db, scope, definition, plan);
+    if (input.previewHash !== rowsHash(template, plan, references)) fail('PREVIEW_CHANGED', 412);
     const seed = [scope.contextId, scope.userId, input.idempotencyKey];
     const created = new Map();
     const personFor = (role, person, index, occurrence) => {
-        if (person.personId) return { personId: person.personId, partyId: null, existing: true };
+        if (person.personId) return { personId: person.personId, partyId: references.personalParties.get(person.personId), existing: true };
         const personId = stableUuid(...seed, recipientIdentity(role, person, index, occurrence));
         const ids = { personId, partyId: stableUuid(...seed, 'party', personId) };
         created.set(personId, { ...ids, name: person.name, endpoints: { ...(person.email ? { email: person.email } : {}), ...(person.phone ? { phone: person.phone } : {}) } });
@@ -393,19 +427,6 @@ async function createFromRowsInTransaction(db, scope, input, { reserveCapacity }
     };
     const packages = packagesFor(definition, plan, personFor);
     await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [`signing-v2-people:${seed.join(':')}`]);
-    const linkedIds = [...new Set(packages.flatMap(item => Object.values(item.roles).flat().filter(person => person.partyId === null).map(person => person.personId)))];
-    if (linkedIds.length) {
-        expect(linkedIds.every(id => UUID.test(id)), 'INVALID_PERSON');
-        const available = (await db.query(`SELECT person.id,party.id AS party_id FROM signing_people person
-            JOIN LATERAL (SELECT id FROM signing_parties WHERE owner_context_id=person.owner_context_id
-                AND person_id=person.id AND kind='person' ORDER BY id LIMIT 1) party ON TRUE
-            WHERE ${personScopeSql()} AND person.id=ANY($5::uuid[])`, [...scopeParams(scope), linkedIds])).rows;
-        if (available.length !== linkedIds.length) fail('PARTICIPANT_NOT_AVAILABLE', 404);
-        const parties = new Map(available.map(person => [person.id, person.party_id]));
-        for (const item of packages) for (const people of Object.values(item.roles)) for (const person of people) {
-            if (person.partyId === null) person.partyId = parties.get(person.personId);
-        }
-    }
     const rows = [...created.values()];
     await db.query(`INSERT INTO signing_people(id,owner_context_id,name,contact_endpoints,created_by)
         SELECT id,$1,name,endpoints,$2 FROM jsonb_to_recordset($3::jsonb) AS p(id uuid,name text,endpoints jsonb) ON CONFLICT DO NOTHING`,
