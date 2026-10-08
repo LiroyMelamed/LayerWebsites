@@ -10,7 +10,9 @@ import { Text12 } from '../../../components/specializedComponents/text/AllTextKi
 import { colors } from '../../../constant/colors';
 import signingTemplatesApi from '../../../api/signingTemplatesApi';
 import SimpleCard from '../../../components/simpleComponents/SimpleCard';
+import BlockDateInput from '../../../components/simpleComponents/BlockDateInput';
 import useSigningLocale from './useSigningLocale';
+import documentDataValue from './documentDataValue';
 import { newKey } from './ParticipantActionDialog';
 import StatusNotice from '../../../components/ui/StatusNotice';
 import SelectedTemplateEntry from './SelectedTemplateEntry';
@@ -30,7 +32,8 @@ let localId = 0;
 const blankPerson = () => ({ name: '', email: '', phone: '', channel: '' });
 const blankRow = roles => ({ id: `row-${++localId}`, key: '', recipients: Object.fromEntries(roles.map(role => [role.key, blankPerson()])) });
 const filled = person => !!person?.sameAsRole || FIELDS.some(field => String(person?.[field] || '').trim());
-const rowFilled = row => row.key.trim() || Object.values(row.recipients).some(filled);
+const dataFilled = row => Object.values(row.data || {}).some(value => value !== '' && value != null);
+const rowFilled = row => row.key.trim() || Object.values(row.recipients).some(filled) || dataFilled(row);
 const clean = (person, language) => person.sameAsRole ? { sameAsRole: person.sameAsRole } : ({
     name: String(person.name || '').trim(), email: String(person.email || '').trim(), phone: String(person.phone || '').trim(),
     ...(person.channel ? { channel: person.channel } : {}),
@@ -134,7 +137,39 @@ function PersonFields({ scope, roleKey, person, errors, onChange, compact, sugge
     </div>;
 }
 
-const RecipientRow = memo(function RecipientRow({ row, index, roles, errors, onChange, onRemove, canRemove, casePeople, allRoles }) {
+function DocumentDataFields({ row, fields, errors, onChange }) {
+    const { t, direction } = useSigningLocale();
+    if (!fields.length) return null;
+    return <div className="lw-signingCompose__roleBlock">
+        <h4>{t('signingV2.compose.data.heading')}</h4>
+        <p>{t('signingV2.compose.data.help')}</p>
+        <div className="lw-signingCompose__identity">{fields.map(field => {
+            const value = Object.hasOwn(row.data || {}, field.key) ? row.data[field.key] ?? '' : field.defaultValue ?? '';
+            const change = next => onChange(row.id, field.key, next);
+            if (field.type === 'date') return <div key={field.key} id={fieldId(row.id, 'data', field.key)}
+                role="group" aria-label={field.label || field.key} aria-describedby={errors?.[field.key] ? `${fieldId(row.id, 'data', field.key)}-error` : undefined}>
+                <BlockDateInput title={`${field.label || field.key}${field.required ? ` (${t('signingV2.compose.mapping.required')})` : ''}`}
+                    value={value} onChange={event => change(event.target.value)} containerDir={direction}
+                    error={errors?.[field.key] ? t(`signingV2.compose.rowErrors.${errors[field.key]}`) : null} />
+                {errors?.[field.key] && <small id={`${fieldId(row.id, 'data', field.key)}-error`} className="lw-signingCompose__srError">{t(`signingV2.compose.rowErrors.${errors[field.key]}`)}</small>}
+            </div>;
+            return <Field key={field.key} id={fieldId(row.id, 'data', field.key)}
+                label={`${field.label || field.key}${field.required ? ` (${t('signingV2.compose.mapping.required')})` : ''}`}
+                error={errors?.[field.key]} help={field.type === 'decimal' ? t('signingV2.compose.data.decimalHelp') : undefined}>
+                {field.type === 'boolean' || field.type === 'enum' ? <select value={String(value)} onChange={event => change(field.type === 'boolean' && event.target.value !== '' ? event.target.value === 'true' : event.target.value)}>
+                    <option value="">{t('signingV2.compose.data.choose')}</option>
+                    {(field.type === 'boolean' ? [true, false] : field.options).map(option => <option key={String(option)} value={String(option)}>
+                        {field.type === 'boolean' ? t(`signingV2.compose.data.${option ? 'yes' : 'no'}`) : option}
+                    </option>)}
+                </select> : <input type="text" value={value} maxLength={field.maxLength || 2000}
+                    inputMode={field.type === 'decimal' ? 'decimal' : undefined} dir={['date', 'decimal', 'identifier'].includes(field.type) ? 'ltr' : direction}
+                    onChange={event => change(event.target.value)} autoComplete="off" />}
+            </Field>;
+        })}</div>
+    </div>;
+}
+
+const RecipientRow = memo(function RecipientRow({ row, index, roles, errors, onChange, onRemove, canRemove, casePeople, allRoles, dataFields, onDataChange }) {
     const { t, number } = useSigningLocale();
     const change = useCallback((roleKey, field, value) => onChange(row.id, roleKey, field, value), [onChange, row.id]);
     const rowNumber = number(index + 1);
@@ -152,6 +187,7 @@ const RecipientRow = memo(function RecipientRow({ row, index, roles, errors, onC
                 {roles.length > 1 && <h4>{role.label}</h4>}
                 <PersonFields scope={row.id} roleKey={role.key} person={row.recipients[role.key] || blankPerson()} errors={errors?.[role.key]} onChange={change} suggestLawyers={role.key === 'lawyer'} compact casePeople={casePeople} otherRoles={allRoles.filter(other => other.key !== role.key)} />
             </div>)}
+            <DocumentDataFields row={row} fields={dataFields} errors={errors?.data} onChange={onDataChange} />
         </fieldset>
     </li>;
 });
@@ -283,7 +319,7 @@ function templateOrder(roles) {
 }
 
 export default function PackageComposer({ api = signingPackagesApi, onBack, onCreated, initialTemplateId, initialTemplateVersion, initialCaseId, backLabel }) {
-    const { t, direction, number, language, errorMessage } = useSigningLocale();
+    const { t, direction, number, language, errorMessage, locale } = useSigningLocale();
     const heading = useRef(null);
     const errorSummary = useRef(null);
     const [step, setStep] = useState(initialTemplateId ? 'opening' : 'template');
@@ -318,6 +354,9 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const activeRoles = useMemo(() => sendRoles.filter(role => !omitted.has(role.key)), [sendRoles, omitted]);
     const activeShare = useMemo(() => shareRoles.filter(role => !omitted.has(role.key)), [shareRoles, omitted]);
     const activeEach = useMemo(() => eachRoles.filter(role => !omitted.has(role.key)), [eachRoles, omitted]);
+    const dataFields = useMemo(() => template?.dataKeys || [], [template]);
+    const editingData = useRef({ rows, dataFields });
+    editingData.current = { rows, dataFields };
     const dirty = rows.some(rowFilled) || Object.values(shared).some(filled) || !!name.trim();
 
     const pendingFocus = useRef(null);
@@ -356,6 +395,16 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         }));
         inputGeneration.current += 1; setCheck(null); createKey.current = null;
     }, []);
+    const changeData = useCallback((rowId, key, value) => {
+        const current = editingData.current, row = current.rows.find(item => item.id === rowId);
+        if (!row) return;
+        const previous = Object.hasOwn(row.data || {}, key) ? row.data[key] : current.dataFields.find(field => field.key === key)?.defaultValue;
+        // The incumbent date control commits again on blur. An unchanged value
+        // must not erase a review that completed while focus was moving.
+        if ((previous ?? '') === value) return;
+        setRows(current => current.map(row => row.id === rowId ? { ...row, data: { ...row.data, [key]: value }, dataSources: { ...row.dataSources, [key]: 'manual' } } : row));
+        inputGeneration.current += 1; setCheck(null); createKey.current = null;
+    }, []);
     const removeRow = useCallback(rowId => { setRows(current => current.filter(row => row.id !== rowId)); inputGeneration.current += 1; setCheck(null); createKey.current = null; }, []);
     const changeShared = useCallback((roleKey, field, value) => {
         setShared(current => ({ ...current, [roleKey]: { ...current[roleKey], [field]: value } }));
@@ -376,6 +425,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     };
     const applyWorkbook = parsed => {
         const imported = parsed.rows.map(row => ({ id: `row-${++localId}`, key: row.key || '',
+            ...(row.data ? { data: row.data, dataSources: row.dataSources } : {}),
             recipients: Object.fromEntries(eachRoles.map(role => [role.key, { ...blankPerson(), ...row.recipients[role.key] }])) }));
         setRows(imported); setImportNote({ count: imported.length, issues: parsed.errors }); invalidate();
     };
@@ -415,7 +465,8 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const orderedRoles = orderRoles.map(key => template?.roles.find(role => role.key === key)).filter(role => role && !omitted.has(role.key));
     const payload = () => {
         const keptEach = new Set(activeEach.map(role => role.key));
-        const sent = keptEach.size ? rows.filter(row => row.key.trim() || [...keptEach].some(key => filled(row.recipients[key]))) : rows.slice(0, 1);
+        const candidates = rows.filter(row => row.key.trim() || dataFilled(row) || [...keptEach].some(key => filled(row.recipients[key])));
+        const sent = keptEach.size || dataFields.length ? (candidates.length ? candidates : keptEach.size ? [] : rows.slice(0, 1)) : rows.slice(0, 1);
         const people = recipients => Object.fromEntries(Object.entries(recipients).filter(([key]) => keptEach.has(key)).map(([key, person]) => [key, clean(person, language)]));
         return {
             sentIds: sent.map(row => row.id),
@@ -428,7 +479,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                     ? { mode: 'sequential', roles: orderRoles.filter(key => !omitted.has(key)) }
                     : { mode: 'parallel' },
                 shared: Object.fromEntries(activeShare.map(role => [role.key, clean(shared[role.key] || blankPerson(), language)])),
-                rows: sent.map(row => ({ ...(row.key.trim() ? { key: row.key.trim() } : {}), recipients: people(row.recipients) })),
+                rows: sent.map(row => ({ ...(row.key.trim() ? { key: row.key.trim() } : {}), recipients: people(row.recipients), ...(dataFields.length ? { data: row.data || {}, dataSources: row.dataSources || {} } : {}) })),
             },
         };
     };
@@ -497,11 +548,11 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const describeError = item => {
         const parts = item.path.split('.');
         const field = parts.at(-1);
-        const fieldLabel = FIELDS.includes(field) ? t(`signingV2.compose.fields.${field}`) : field === 'sameAsRole' ? t('signingV2.compose.identity.label') : field === 'key' ? t('signingV2.compose.rows.key') : '';
+        const fieldLabel = parts[2] === 'data' ? dataFields.find(item => item.key === field)?.label || field : FIELDS.includes(field) ? t(`signingV2.compose.fields.${field}`) : field === 'sameAsRole' ? t('signingV2.compose.identity.label') : field === 'key' ? t('signingV2.compose.rows.key') : '';
         const sentKey = parts[0] === 'rows' ? check.body.rows[Number(parts[1])]?.key : null;
         const where = parts[0] === 'shared' ? roleLabel(parts[1])
             : parts.length >= 2 ? t('signingV2.compose.rows.row', { number: number(Number(parts[1]) + 1) }) + (sentKey ? ` (${sentKey})` : '')
-                + (parts[2] && parts[2] !== 'key' && eachRoles.length > 1 ? ` · ${roleLabel(parts[2])}` : '') : '';
+                + (parts[2] && !['key', 'data'].includes(parts[2]) && eachRoles.length > 1 ? ` · ${roleLabel(parts[2])}` : '') : '';
         return { where, fieldLabel, message: t(`signingV2.compose.rowErrors.${item.code}`, { defaultValue: t('signingV2.compose.rowErrors.INVALID_ROW') }),
             target: parts[0] === 'shared' ? fieldId('shared', parts[1], field) : check.sentIds[Number(parts[1])] && (parts.length === 4 ? fieldId(check.sentIds[Number(parts[1])], parts[2], field) : fieldId(check.sentIds[Number(parts[1])], eachRoles[0]?.key, 'name')) };
     };
@@ -611,11 +662,11 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                     <PersonFields scope="shared" roleKey={role.key} person={shared[role.key] || blankPerson()} errors={check?.indexed.shared[role.key]} onChange={changeShared} suggestLawyers={role.key === 'lawyer'} casePeople={caseContext?.people} otherRoles={activeShare.filter(other => other.key !== role.key)} />
                 </fieldset>)}
             </SimpleCard>}
-            {activeEach.length > 0 && <SimpleCard className="lw-signingCompose__card">
+            {(activeEach.length > 0 || dataFields.length > 0) && <SimpleCard className="lw-signingCompose__card">
                 <div className="lw-signingCompose__rowsHeading">
                     <div>
                         <h2>{t('signingV2.compose.rows.heading')}</h2>
-                        <p>{t('signingV2.compose.rows.help', { roles: activeEach.map(role => role.label).join(' · '), max: number(MAX_ROWS) })}</p>
+                        <p>{activeEach.length ? t('signingV2.compose.rows.help', { roles: activeEach.map(role => role.label).join(' · '), max: number(MAX_ROWS) }) : t('signingV2.compose.data.rowsHelp')}</p>
                     </div>
                     <SegmentedSwitch value={source} onChange={setSource} ariaLabel={t('signingV2.compose.rows.source')}
                         options={[{ value: 'manual', label: t('signingV2.compose.rows.manual') }, { value: 'excel', label: t('signingV2.compose.rows.excel') }]} />
@@ -625,7 +676,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                         <li>{t('signingV2.compose.excel.stepDownload')} <SecondaryButton onPress={downloadWorkbook} disabled={!!busy}>{busy === 'download' ? t('common.loading') : t('signingV2.compose.excel.download')}</SecondaryButton></li>
                         <li>{t('signingV2.compose.excel.stepFill', { max: number(MAX_ROWS) })}</li>
                     </ol>
-                    <WorkbookImport key={JSON.stringify(layout())} api={api} versionId={template.versionId} roles={activeEach} layout={layout()}
+                    <WorkbookImport key={JSON.stringify(layout())} api={api} versionId={template.versionId} roles={activeEach} dataFields={dataFields} layout={layout()}
                         hasRecipients={rows.some(rowFilled)} onApply={applyWorkbook} onPending={importPending} />
                     {importNote && <div role="status" className="lw-signingCompose__importNote">
                         <p>{t('signingV2.compose.excel.imported', { count: importNote.count, formattedCount: number(importNote.count) })}</p>
@@ -640,20 +691,20 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                     <ul>{errorEntries.slice(0, 30).map((item, index) => {
                         const info = describeError(item);
                         return <li key={`${item.path}-${index}`}>
-                            <button type="button" className="lw-signingPackages__textButton" onClick={() => document.getElementById(info.target)?.focus()}>
+                            <button type="button" className="lw-signingPackages__textButton" onClick={() => { const target = document.getElementById(info.target); (target?.querySelector('input') || target)?.focus(); }}>
                                 {[info.where, info.fieldLabel].filter(Boolean).join(' · ')}
                             </button>: {info.message}
                         </li>;
                     })}</ul>
                     {errorCount > 30 && <p>{t('signingV2.compose.moreErrors', { count: errorCount - 30, formattedCount: number(errorCount - 30) })}</p>}
                 </StatusNotice>}
-                {activeEach.length > 0 && busy !== 'upload' && <ol className="lw-signingCompose__rows">{rows.map((row, index) =>
-                    <RecipientRow key={row.id} row={row} index={index} roles={activeEach} errors={check?.indexed.byRow[row.id]} onChange={changeRow} onRemove={removeRow} canRemove={rows.length > 1} casePeople={caseContext?.people} allRoles={activeRoles} />)}
+                {(activeEach.length > 0 || dataFields.length > 0) && busy !== 'upload' && <ol className="lw-signingCompose__rows">{rows.map((row, index) =>
+                    <RecipientRow key={row.id} row={row} index={index} roles={activeEach} errors={check?.indexed.byRow[row.id]} onChange={changeRow} onRemove={removeRow} canRemove={rows.length > 1} casePeople={caseContext?.people} allRoles={activeRoles} dataFields={dataFields} onDataChange={changeData} />)}
                 </ol>}
                 <div className="lw-signingPackages__actions">
                     <SecondaryButton onPress={() => {
                         const row = blankRow(activeEach.length ? activeEach : eachRoles);
-                        pendingFocus.current = fieldId(row.id, activeEach[0]?.key, 'name');
+                        pendingFocus.current = activeEach.length ? fieldId(row.id, activeEach[0].key, 'name') : fieldId(row.id, 'data', dataFields[0]?.key);
                         setRows(current => [...current, row]); invalidate();
                     }} disabled={rows.length >= MAX_ROWS || busy === 'upload'}>{t('signingV2.compose.rows.add')}</SecondaryButton>
                     <span className="lw-signingPackages__caption" aria-live="polite">{t('signingV2.compose.rows.count', { count: filledRows, formattedCount: number(filledRows), max: number(MAX_ROWS) })}</span>
@@ -689,6 +740,10 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                     {item.recipients.map((person, index) => <React.Fragment key={person.roleKey}>{index > 0 && ' · '}
                         <bdi>{roleLabel(person.roleKey)}</bdi>: <bdi>{person.name}</bdi> ({person.channels.map(channel => t(`signingV2.compose.channel.${channel}`)).join(', ')})
                     </React.Fragment>)}
+                    {dataFields.map(field => {
+                        const value = Object.hasOwn(item.data || {}, field.key) ? item.data[field.key] : field.defaultValue;
+                        return value == null ? null : <div key={field.key}><bdi>{field.label || field.key}</bdi>: <bdi>{documentDataValue(field, value, { t, locale })}</bdi></div>;
+                    })}
                 </li>)}</ul>
                 <h3>{t('signing.upload.signingOrderLabel')}</h3>
                 <p className="lw-signingCompose__note">{orderMode === 'sequential' ? t('signing.upload.signingOrderSequential') : t('signing.upload.signingOrderParallel')}</p>

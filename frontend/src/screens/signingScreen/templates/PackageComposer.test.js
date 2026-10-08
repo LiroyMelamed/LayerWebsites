@@ -135,7 +135,7 @@ test('a signer can be left out of this send and put back without changing the te
         rows: [{ recipients: { first: { name: 'Synthetic employee', email: 'employee@example.invalid', phone: '', locale: 'he' } } }] });
 });
 
-test('Excel rows replace manual rows and skipped rows are reported by their sheet row', async () => {
+test('Excel row errors block partial replacement until a corrected file is reviewed', async () => {
     const i18n = await translations('he'), api = fakeApi();
     await toRecipients(i18n, api);
     fireEvent.click(screen.getByRole('radio', { name: i18n.t('signingV2.compose.rows.excel') }));
@@ -147,16 +147,24 @@ test('Excel rows replace manual rows and skipped rows are reported by their shee
     const upload = screen.getByLabelText(i18n.t('signingV2.compose.excel.upload'));
     fireEvent.change(upload, { target: { files: [new File([new Uint8Array([80, 75, 3, 4])], 'people.xlsx')] } });
     fireEvent.click(await screen.findByRole('button', { name: i18n.t('signingV2.compose.mapping.preview') }));
+    expect(await screen.findByRole('button', { name: i18n.t('signingV2.compose.mapping.apply') })).toBeDisabled();
+    expect(screen.getByText(new RegExp(i18n.t('signingV2.compose.rowErrors.UNSUPPORTED_CELL')))).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('common.cancel') }));
+    api.parseWorkbook.mockResolvedValueOnce({ rows: [
+        { sourceRow: 2, key: 'E1', recipients: { first: { name: 'Synthetic one', email: '', phone: '0501234567', channel: 'sms' } } },
+        { sourceRow: 3, key: 'E3', recipients: { first: { name: 'Synthetic three', email: 'three@example.invalid', phone: '' } } }], errors: [] });
+    fireEvent.change(upload, { target: { files: [new File(['corrected synthetic'], 'corrected.xlsx')] } });
+    fireEvent.click(await screen.findByRole('button', { name: i18n.t('signingV2.compose.mapping.preview') }));
     fireEvent.click(await screen.findByRole('button', { name: i18n.t('signingV2.compose.mapping.apply') }));
     await screen.findByText(i18n.t('signingV2.compose.excel.imported', { count: 2, formattedCount: '2' }));
     expect(api.parseWorkbook).toHaveBeenCalledWith('v-1', expect.any(String), { mapping: { sheetId: 1, columns: { key: 1, 'first.name': 2, 'first.email': 3, 'first.phone': 4 } } });
-    expect(screen.getByText(new RegExp(i18n.t('signingV2.compose.rowErrors.UNSUPPORTED_CELL')))).toBeInTheDocument();
+    expect(screen.queryByText(new RegExp(i18n.t('signingV2.compose.rowErrors.UNSUPPORTED_CELL')))).not.toBeInTheDocument();
     expect(screen.getAllByDisplayValue(/Synthetic (one|three)/)).toHaveLength(2);
     expect(screen.getByDisplayValue('0501234567')).toHaveAttribute('dir', 'ltr');
 
     fireEvent.change(upload, { target: { files: [new File([new Uint8Array(2 * 1024 * 1024 + 1)], 'large.xlsx')] } });
     expect(await screen.findByText(i18n.t('signingV2.compose.errors.WORKBOOK_TOO_LARGE'))).toBeInTheDocument();
-    expect(api.parseWorkbook).toHaveBeenCalledTimes(1);
+    expect(api.parseWorkbook).toHaveBeenCalledTimes(2);
 });
 
 test('a change made elsewhere after the preview sends the user back to check again, without a second run', async () => {
@@ -424,4 +432,73 @@ test('a committed draft restores the actual package count without creating again
         expect(screen.getByText(i18n.t('signingV2.compose.done.body', { count: 7, formattedCount: '7' }))).toBeVisible();
         expect(api.create).not.toHaveBeenCalled(); expect(api.submitDraft).not.toHaveBeenCalled(); expect(api.saveDraft).not.toHaveBeenCalled();
     } finally { window.history.replaceState(null, '', previousUrl); }
+});
+
+const businessFields = [
+    { key: 'identity', label: 'Identity number', type: 'identifier', required: true },
+    { key: 'amount', label: 'Exact amount', type: 'decimal' },
+    { key: 'confirmed', label: 'Confirmed', type: 'boolean', defaultValue: false },
+    { key: 'kind', label: 'Matter kind', type: 'enum', options: ['A', 'B'] },
+    { key: 'date', label: 'Meeting date', type: 'date' },
+];
+async function openDataComposer(i18n, api, dataRoles = roles) {
+    api.templates.mockResolvedValue({ templates: [{ ...converted, roles: dataRoles, dataKeys: businessFields }], legacy: [] });
+    render(<I18nextProvider i18n={i18n}><PackageComposer api={api} /></I18nextProvider>);
+    fireEvent.click(await screen.findByRole('button', { name: /Employment pack/ }));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.next') }));
+    await screen.findByRole('heading', { name: i18n.t('signingV2.compose.data.heading') });
+}
+
+test.each(['he', 'ar', 'en'])('document data keeps identifiers, exact amounts and false, links field errors and survives review in %s', async language => {
+    const i18n = await translations(language), api = fakeApi();
+    await openDataComposer(i18n, api);
+    const person = screen.getByRole('group', { name: i18n.t('signingV2.compose.rows.row', { number: new Intl.NumberFormat({ he: 'he-IL', ar: 'ar-EG', en: 'en-GB' }[language]).format(1) }) });
+    fireEvent.change(within(person).getByLabelText(i18n.t('signingV2.compose.fields.name')), { target: { value: 'Synthetic data client' } });
+    const identity = screen.getByLabelText(/Identity number/), amount = screen.getByLabelText('Exact amount');
+    expect(identity).toHaveAttribute('type', 'text');
+    expect(screen.getByRole('combobox', { name: 'Confirmed' })).toHaveValue('false');
+    fireEvent.change(identity, { target: { value: '000001234' } });
+    fireEvent.change(amount, { target: { value: '9007199254740993.120000' } });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Confirmed' }), { target: { value: 'true' } });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Confirmed' }), { target: { value: 'false' } });
+    const dateGroup = screen.getByRole('group', { name: 'Meeting date' });
+    fireEvent.change(within(dateGroup).getByRole('textbox', { name: i18n.t('calendar.dateSegmentDay') }), { target: { value: '29' } });
+    fireEvent.change(within(dateGroup).getByRole('textbox', { name: i18n.t('calendar.dateSegmentMonth') }), { target: { value: '02' } });
+    fireEvent.change(within(dateGroup).getByRole('textbox', { name: i18n.t('calendar.dateSegmentYear') }), { target: { value: '2028' } });
+    api.previewCreation.mockResolvedValueOnce({ valid: false, errorCount: 1, errors: [{ path: 'rows.0.data.amount', code: 'INVALID_DATA' }] });
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.check') }));
+    const error = await screen.findByRole('alert');
+    expect(amount).toHaveAttribute('aria-invalid', 'true');
+    fireEvent.click(within(error).getByRole('button', { name: /Exact amount/ }));
+    expect(amount).toHaveFocus();
+    const data = { identity: '000001234', amount: '9007199254740993.120000', confirmed: false, date: '2028-02-29' };
+    const result = validPreview(1); result.sample[0].data = data;
+    api.previewCreation.mockResolvedValueOnce(result);
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.check') }));
+    await screen.findByRole('heading', { name: i18n.t('signingV2.compose.review.heading') });
+    expect(api.previewCreation.mock.calls.at(-1)[0].rows[0]).toMatchObject({ data, dataSources: { identity: 'manual', amount: 'manual', confirmed: 'manual', date: 'manual' } });
+    expect(screen.getByText('000001234')).toBeInTheDocument();
+    expect(screen.getByText('9007199254740993.120000')).toBeInTheDocument();
+    expect(screen.getByText(new Intl.DateTimeFormat({ he: 'he-IL', ar: 'ar-IL', en: 'en-GB' }[language], { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date('2028-02-29T00:00:00Z')))).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.review.edit') }));
+    expect(screen.getByLabelText(/Identity number/)).toHaveValue('000001234');
+    expect(screen.getByRole('combobox', { name: 'Confirmed' })).toHaveValue('false');
+});
+
+test('shared signers can create separate data-only packages and data changes invalidate the approved preview', async () => {
+    const i18n = await translations('en'), api = fakeApi();
+    await openDataComposer(i18n, api, [{ ...roles[0], audience: 'shared' }]);
+    fireEvent.change(screen.getByLabelText(/Identity number/), { target: { value: '0001' } });
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.rows.add') }));
+    fireEvent.change(screen.getAllByLabelText(/Identity number/)[1], { target: { value: '0002' } });
+    api.previewCreation.mockResolvedValue({ ...validPreview(2), sample: [] });
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.check') }));
+    await screen.findByRole('heading', { name: i18n.t('signingV2.compose.review.heading') });
+    expect(api.previewCreation.mock.calls[0][0].rows.map(row => row.data.identity)).toEqual(['0001', '0002']);
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.review.edit') }));
+    fireEvent.change(screen.getAllByLabelText(/Identity number/)[1], { target: { value: '0003' } });
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.check') }));
+    await screen.findByRole('heading', { name: i18n.t('signingV2.compose.review.heading') });
+    expect(api.previewCreation.mock.calls[1][0].rows[1].data.identity).toBe('0003');
+    expect(api.create).not.toHaveBeenCalled();
 });

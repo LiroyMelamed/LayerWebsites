@@ -3,6 +3,7 @@ const { guardArchive } = require('../signingRecipientsWorkbook');
 const { expect } = require('./errors');
 const limits = require('./limits');
 const { recipientRoles } = require('./recipientLayout');
+const { normalizeValue } = require('./compiler');
 
 const SHEET = 'recipients';
 const LABELS = {
@@ -20,7 +21,7 @@ function columns(definition, locale, includeLocale = false) {
         fields.map(field => ({
             key: `${role.key}.${field}`,
             header: `${role.label} — ${field === 'locale' ? (LEGACY_LOCALE[locale] || LEGACY_LOCALE.he) : labels[field]}`,
-        })))];
+        }))), ...(definition.dataKeys || []).map(field => ({ key: `data:${field.key}`, header: field.label || field.key }))];
 }
 
 async function makeWorkbook(definition, locale, layout = {}) {
@@ -40,11 +41,11 @@ async function loadWorkbook(buffer) {
     try { guardArchive(buffer); } catch { expect(false, 'INVALID_WORKBOOK'); }
     const book = new ExcelJS.Workbook();
     try { await book.xlsx.load(buffer); } catch { expect(false, 'INVALID_WORKBOOK'); }
-    expect(book.worksheets.length <= 10 && book.worksheets.every(sheet => sheet.rowCount <= 5000 && sheet.columnCount <= 128), 'WORKBOOK_TOO_COMPLEX');
+    expect(book.worksheets.length <= 10 && book.worksheets.every(sheet => sheet.rowCount <= 5000 && sheet.columnCount <= 1 + limits.participationsPerPackage * 5 + limits.dataKeys), 'WORKBOOK_TOO_COMPLEX');
     return book;
 }
 
-const plainCell = value => value == null || ['string', 'number'].includes(typeof value);
+const plainCell = value => value == null || ['string', 'number', 'boolean'].includes(typeof value);
 const textCell = value => plainCell(value) ? String(value ?? '').trim() : '';
 
 async function inspectWorkbook(buffer, definition, layout = {}) {
@@ -74,6 +75,9 @@ function mappedColumns(sheet, definition, mapping) {
     for (const role of definition.roles.filter(role => role.audience !== 'shared')) {
         expect(mapping.columns[`${role.key}.name`] && (mapping.columns[`${role.key}.email`] || mapping.columns[`${role.key}.phone`]), 'INCOMPLETE_COLUMN_MAPPING');
     }
+    for (const field of definition.dataKeys || []) if (field.required && field.defaultValue == null) {
+        expect(mapping.columns[`data:${field.key}`], 'INCOMPLETE_COLUMN_MAPPING');
+    }
     return entries.map(([key, position]) => ({ key, position }));
 }
 
@@ -99,15 +103,28 @@ async function parseWorkbook(buffer, definition, layout = {}) {
         const row = sheet.getRow(index);
         if (!row.hasValues) continue;
         const values = {};
-        let unsupported = false;
+        let unsupported = false, dataError = null;
+        const data = {}, dataSources = {};
         expected.forEach(column => {
             const value = row.getCell(column.position).value;
-            if (value != null && !['string', 'number'].includes(typeof value)) unsupported = true;
+            if (column.key.startsWith('data:')) {
+                const key = column.key.slice(5), field = definition.dataKeys.find(item => item.key === key);
+                // Never recover identifiers/amounts from rounded numeric cells or guess Excel dates.
+                const safe = value == null || typeof value === 'string' || (field.type === 'boolean' && typeof value === 'boolean');
+                try {
+                    expect(safe, 'UNSAFE_DATA_CELL');
+                    const input = field.type === 'boolean' && typeof value === 'string' && /^(true|false)$/i.test(value.trim())
+                        ? value.trim().toLowerCase() === 'true' : value;
+                    if (input != null && input !== '') { data[key] = normalizeValue(field, input); dataSources[key] = 'import'; }
+                    else normalizeValue(field, field.defaultValue);
+                } catch (error) { dataError ||= { row: index, code: error.errorCode || 'INVALID_DATA', field: field.label || key }; }
+            } else if (value != null && !['string', 'number'].includes(typeof value)) unsupported = true;
             values[column.key] = value == null ? '' : String(value).trim();
         });
         if (!unsupported && !Object.values(values).some(Boolean)) continue;
         expect(rows.length + errors.length < limits.packages, 'CAPACITY_BUDGET_EXCEEDED');
         if (unsupported) { errors.push({ row: index, code: 'UNSUPPORTED_CELL' }); continue; }
+        if (dataError) { errors.push(dataError); continue; }
         const recipients = {};
         for (const role of definition.roles.filter(item => item.audience !== 'shared')) {
             const person = Object.fromEntries(FIELDS.map(field => [field, values[`${role.key}.${field}`] || '']));
@@ -116,7 +133,8 @@ async function parseWorkbook(buffer, definition, layout = {}) {
             recipients[role.key] = { name: person.name, email: person.email, phone: person.phone,
                 ...(person.channel ? { channel: person.channel.toLowerCase() } : {}) };
         }
-        rows.push({ sourceRow: index, ...(values.key ? { key: values.key } : {}), recipients });
+        rows.push({ sourceRow: index, ...(values.key ? { key: values.key } : {}), recipients,
+            ...((definition.dataKeys || []).length ? { data, dataSources } : {}) });
     }
     expect(rows.length || errors.length, 'EMPTY_WORKBOOK');
     return { rows, errors };

@@ -3,6 +3,7 @@ import PrimaryButton from '../../../components/styledComponents/buttons/PrimaryB
 import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
 import StatusNotice from '../../../components/ui/StatusNotice';
 import useSigningLocale from './useSigningLocale';
+import documentDataValue from './documentDataValue';
 
 const MAX_BYTES = 2 * 1024 * 1024;
 const FIELDS = ['name', 'email', 'phone', 'channel'];
@@ -15,15 +16,15 @@ function readBase64(file) {
     });
 }
 
-function suggestedMapping(sheet, roles) {
-    const allowed = new Set(['key', ...roles.flatMap(role => FIELDS.map(field => `${role.key}.${field}`))]);
+function suggestedMapping(sheet, roles, dataFields) {
+    const allowed = new Set(['key', ...roles.flatMap(role => FIELDS.map(field => `${role.key}.${field}`)), ...dataFields.map(field => `data:${field.key}`)]);
     return Object.fromEntries(sheet.columns.filter(column => allowed.has(column.suggestedKey)
         && sheet.columns.filter(other => other.suggestedKey === column.suggestedKey).length === 1)
         .map(column => [column.suggestedKey, column.index]));
 }
 
-export default function WorkbookImport({ api, versionId, roles, layout, hasRecipients, onApply, onPending }) {
-    const { t, direction, number } = useSigningLocale();
+export default function WorkbookImport({ api, versionId, roles, dataFields = [], layout, hasRecipients, onApply, onPending }) {
+    const { t, direction, number, locale } = useSigningLocale();
     const [file, setFile] = useState(null);
     const [sheets, setSheets] = useState([]);
     const [sheetId, setSheetId] = useState(null);
@@ -48,7 +49,7 @@ export default function WorkbookImport({ api, versionId, roles, layout, hasRecip
             if (current !== generation.current) return;
             const first = result.sheets[0];
             setFile({ name: selected.name, base64 }); setSheets(result.sheets);
-            setSheetId(first.id); setColumns(suggestedMapping(first, roles));
+            setSheetId(first.id); setColumns(suggestedMapping(first, roles, dataFields));
         } catch (failure) { if (current === generation.current) setError(failure); }
         finally { if (current === generation.current) setBusy(false); }
     };
@@ -64,7 +65,8 @@ export default function WorkbookImport({ api, versionId, roles, layout, hasRecip
         } catch (failure) { if (current === generation.current) setError(failure); }
         finally { if (current === generation.current) setBusy(false); }
     };
-    const complete = roles.every(role => columns[`${role.key}.name`] && (columns[`${role.key}.email`] || columns[`${role.key}.phone`]));
+    const complete = roles.every(role => columns[`${role.key}.name`] && (columns[`${role.key}.email`] || columns[`${role.key}.phone`]))
+        && dataFields.every(field => !field.required || field.defaultValue != null || columns[`data:${field.key}`]);
     const duplicate = new Set(Object.values(columns)).size !== Object.keys(columns).length;
     const select = (key, label, required = false) => {
         const selected = sheet.columns.find(column => column.index === columns[key]);
@@ -95,13 +97,18 @@ export default function WorkbookImport({ api, versionId, roles, layout, hasRecip
                     <label htmlFor="mapping-sheet">{t('signingV2.compose.mapping.sheet')}</label>
                     <select id="mapping-sheet" dir={direction} value={sheetId} disabled={busy} onChange={event => {
                         const next = sheets.find(item => item.id === Number(event.target.value));
-                        setSheetId(next.id); setColumns(suggestedMapping(next, roles)); setError(null);
+                        setSheetId(next.id); setColumns(suggestedMapping(next, roles, dataFields)); setError(null);
                     }}>{sheets.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
                 </div>}
                 {roles.map(role => <fieldset key={role.key} className="lw-signingCompose__mappingRole">
                     <legend>{role.label}</legend>
                     <div className="lw-signingCompose__identity">{FIELDS.map(field => select(`${role.key}.${field}`, t(`signingV2.compose.fields.${field}`), field === 'name'))}</div>
                 </fieldset>)}
+                {!!dataFields.length && <fieldset className="lw-signingCompose__mappingRole">
+                    <legend>{t('signingV2.compose.data.heading')}</legend>
+                    <p>{t('signingV2.compose.data.excelHelp')}</p>
+                    <div className="lw-signingCompose__identity">{dataFields.map(field => select(`data:${field.key}`, field.label || field.key, field.required && field.defaultValue == null))}</div>
+                </fieldset>}
                 {select('key', t('signingV2.compose.rows.key'))}
                 {duplicate && <p role="alert">{t('signingV2.compose.errors.INVALID_COLUMN_MAPPING')}</p>}
                 <p>{t('signingV2.compose.mapping.contactRequired')}</p>
@@ -113,15 +120,16 @@ export default function WorkbookImport({ api, versionId, roles, layout, hasRecip
                 <ul className="lw-signingCompose__plainList">{preview.rows.slice(0, 5).map(row => <li key={row.sourceRow}>
                     <strong>{t('signingV2.compose.excel.issueRow', { row: number(row.sourceRow) })}</strong>
                     {roles.map(role => <div key={role.key}><bdi>{role.label}</bdi>: <bdi>{[row.recipients[role.key]?.name, row.recipients[role.key]?.email, row.recipients[role.key]?.phone].filter(Boolean).join(' · ')}</bdi></div>)}
+                    {dataFields.map(field => row.data?.[field.key] == null ? null : <div key={field.key}><bdi>{field.label || field.key}</bdi>: <bdi>{documentDataValue(field, row.data[field.key], { t, locale })}</bdi></div>)}
                 </li>)}</ul>
                 {preview.errors.length > 0 && <StatusNotice embedded>
                     <p>{t('signingV2.compose.excel.issues', { count: preview.errors.length, formattedCount: number(preview.errors.length) })}</p>
-                    <ul>{preview.errors.slice(0, 20).map(issue => <li key={issue.row}>{t('signingV2.compose.excel.issueRow', { row: number(issue.row) })}: {t(`signingV2.compose.rowErrors.${issue.code}`)}</li>)}</ul>
+                    <ul>{preview.errors.slice(0, 20).map(issue => <li key={issue.row}>{t('signingV2.compose.excel.issueRow', { row: number(issue.row) })}: {issue.field ? `${issue.field}: ` : ''}{t(`signingV2.compose.rowErrors.${issue.code}`)}</li>)}</ul>
                 </StatusNotice>}
                 {hasRecipients && <p>{t('signingV2.compose.mapping.replaceWarning')}</p>}
                 <div className="lw-signingPackages__actions">
                     <SecondaryButton onPress={() => setPreview(null)}>{t('signingV2.compose.mapping.edit')}</SecondaryButton>
-                    <PrimaryButton disabled={!preview.rows.length} onPress={() => { onApply(preview); cancel(); }}>{t(hasRecipients ? 'signingV2.compose.mapping.replace' : 'signingV2.compose.mapping.apply')}</PrimaryButton>
+                    <PrimaryButton disabled={!preview.rows.length || preview.errors.length > 0} onPress={() => { onApply(preview); cancel(); }}>{t(hasRecipients ? 'signingV2.compose.mapping.replace' : 'signingV2.compose.mapping.apply')}</PrimaryButton>
                 </div>
             </div>}
             <SecondaryButton onPress={cancel}>{t('common.cancel')}</SecondaryButton>

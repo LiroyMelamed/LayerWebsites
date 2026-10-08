@@ -1,5 +1,5 @@
 const { createHash, randomUUID } = require('node:crypto');
-const { validateDefinition, compilePackage, admission, UUID, LOCALES } = require('../../lib/signingV2/compiler');
+const { validateDefinition, compilePackage, admission, normalizeValue, UUID, LOCALES } = require('../../lib/signingV2/compiler');
 const { digest } = require('../../lib/signingV2/canonical');
 const { expect, fail } = require('../../lib/signingV2/errors');
 const limits = require('../../lib/signingV2/limits');
@@ -68,6 +68,7 @@ async function listTemplates(db, scope) {
     return {
         templates: current.map(row => ({ templateId: row.template_id, versionId: row.version_id, name: row.name, version: row.version,
             publishedAt: row.published_at, documentCount: row.definition.documents.length, roles: roleSummary(row.definition),
+            dataKeys: row.definition.dataKeys || [],
             origin: row.definition.origin || null })),
         legacy: legacy.filter(row => !imported.has(`${row.id}:${row.version}`)).map(row => ({ id: row.id, name: row.name, version: row.version,
             documentCount: row.definition.documents?.length || 0,
@@ -213,6 +214,30 @@ function signingOrder(definition, input, omitted, errors) {
     return matches ? { mode, roles: [...roles] } : null;
 }
 
+function rowData(definition, row, path, errors) {
+    const fields = definition.dataKeys || [], supplied = row?.data ?? {}, sources = row?.dataSources ?? {};
+    if (typeof supplied !== 'object' || Array.isArray(supplied) || typeof sources !== 'object' || Array.isArray(sources)) {
+        errors.push({ path, code: 'INVALID_DATA' }); return {};
+    }
+    const known = new Set(fields.map(field => field.key));
+    for (const key of Object.keys(supplied)) if (!known.has(key)) errors.push({ path, code: 'UNKNOWN_DATA_KEY' });
+    const values = [], provenance = [];
+    for (const field of fields) {
+        const present = Object.hasOwn(supplied, field.key);
+        try {
+            const value = normalizeValue(field, present ? supplied[field.key] : field.defaultValue);
+            // Omitted values remain omitted so the compiler records a template default.
+            if (present) {
+                values.push([field.key, value]);
+                const source = Object.hasOwn(sources, field.key) ? sources[field.key] : 'manual';
+                expect(['manual', 'import'].includes(source), 'INVALID_PROVENANCE');
+                provenance.push([field.key, { source }]);
+            }
+        } catch (error) { errors.push({ path: `${path}.${field.key}`, code: error.errorCode || 'INVALID_DATA' }); }
+    }
+    return fields.length ? { data: Object.fromEntries(values), provenance: Object.fromEntries(provenance) } : {};
+}
+
 function normalize(definition, input) {
     const errors = [];
     expect(typeof input.name === 'string' && input.name.trim().length > 0 && input.name.length <= 300, 'INVALID_SUBMISSION');
@@ -231,7 +256,7 @@ function normalize(definition, input) {
         const key = typeof row?.key === 'string' && row.key.trim() ? row.key.trim().slice(0, 200) : `row-${index + 1}`;
         if (keys.has(key)) errors.push({ path: `rows.${index}.key`, code: 'DUPLICATE_ROW_KEY' });
         keys.add(key);
-        return { key, ...(selectedCaseId ? { caseId: selectedCaseId } : {}), recipients: Object.fromEntries(each.map(role => [role.key, recipient(resolveRecipient(roles, input, role, index, `rows.${index}.${role.key}`, errors), definition, `rows.${index}.${role.key}`, errors)])) };
+        return { key, ...(selectedCaseId ? { caseId: selectedCaseId } : {}), ...rowData(definition, row, `rows.${index}.data`, errors), recipients: Object.fromEntries(each.map(role => [role.key, recipient(resolveRecipient(roles, input, role, index, `rows.${index}.${role.key}`, errors), definition, `rows.${index}.${role.key}`, errors)])) };
     });
     return { name: input.name.trim(), roles, shared, rows, omitted, signingOrder: signingOrder(definition, input, omitted, errors), errors };
 }
@@ -245,7 +270,7 @@ function packagesFor(definition, plan, personFor) {
             roles[role.key] = [{ personId: ids.personId, partyId: ids.partyId }];
             delivery[ids.personId] = { locale: person.locale, channels: person.channels, ...(person.email ? { email: person.email } : {}), ...(person.phone ? { phone: person.phone } : {}) };
         }
-        return { externalKey: row.key, ...(row.caseId ? { caseId: row.caseId } : {}), data: {}, roles, delivery,
+        return { externalKey: row.key, ...(row.caseId ? { caseId: row.caseId } : {}), data: row.data || {}, ...(row.provenance ? { provenance: row.provenance } : {}), roles, delivery,
             ...(plan.signingOrder ? { signingOrder: plan.signingOrder } : {}),
             ...(plan.omitted.size ? { omitRoles: [...plan.omitted].sort() } : {}) };
     });
@@ -287,8 +312,8 @@ async function previewCreation(pool, scope, input) {
         omitted: [...plan.omitted].sort(),
         caseId: plan.rows[0]?.caseId || null,
         shared: Object.entries(plan.shared).map(([roleKey, person]) => ({ roleKey, name: person.name, channels: person.channels })),
-        sample: plan.rows.slice(0, 5).map(row => ({ key: row.key, recipients: Object.entries(row.recipients).map(([roleKey, person]) => ({ roleKey, name: person.name, channels: person.channels })) })),
-        template: { versionId: template.id, name: definition.name, documents: definition.documents.map(document => ({ key: document.key, name: document.name })), roles: roleSummary(definition) },
+        sample: plan.rows.slice(0, 5).map(row => ({ key: row.key, ...(row.data ? { data: row.data } : {}), recipients: Object.entries(row.recipients).map(([roleKey, person]) => ({ roleKey, name: person.name, channels: person.channels })) })),
+        template: { versionId: template.id, name: definition.name, documents: definition.documents.map(document => ({ key: document.key, name: document.name })), roles: roleSummary(definition), dataKeys: definition.dataKeys || [] },
     };
 }
 

@@ -1737,7 +1737,13 @@
         "DISTINCT_PEOPLE_REQUIRED": "The same person cannot fill two roles that need different signers",
         "CAPACITY_BUDGET_EXCEEDED": "This run is too large. The limit is 200 rows",
         "RECIPIENT_LINK_CYCLE": "These roles refer back to each other. Enter person details for one of them.",
-        "RECIPIENT_LINK_UNAVAILABLE": "The linked role is unavailable. Choose the person again."
+        "RECIPIENT_LINK_UNAVAILABLE": "The linked role is unavailable. Choose the person again.",
+        "DATA_REQUIRED": "Enter the required detail.",
+        "INVALID_DATA": "This value does not match the field type.",
+        "UNKNOWN_DATA_KEY": "The file contains a detail that is not defined in this template.",
+        "AMBIGUOUS_DATE": "Enter a full date as YYYY-MM-DD.",
+        "INVALID_PROVENANCE": "The data source is invalid.",
+        "UNSAFE_DATA_CELL": "Store this value as a text cell to avoid changing its number or date."
       },
       "errors": {
         "INVALID_WORKBOOK": "This file is not a valid Excel workbook",
@@ -1819,6 +1825,16 @@
         "choose": "Choose a draft by its save time",
         "submitted": "Send already created",
         "listError": "Could not load your saved drafts."
+      },
+      "data": {
+        "heading": "Details to fill in the documents",
+        "help": "These values appear in this package’s documents. Entering them here does not change the client record.",
+        "choose": "Choose",
+        "yes": "Yes",
+        "no": "No",
+        "decimalHelp": "Enter an exact amount with a decimal point and no thousands separators.",
+        "excelHelp": "Store identifiers and amounts as text cells. Use YYYY-MM-DD for dates, and true or false for yes/no values.",
+        "rowsHelp": "Each row creates a separate package with its own details, even when all signers are shared."
       }
     },
     "public": {

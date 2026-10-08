@@ -64,3 +64,20 @@ test('ambiguous duplicate headings do not get automatically assigned', async () 
     expect(name).toHaveValue('');
     expect(screen.getByRole('button', { name: 'Review mapping' })).toBeDisabled();
 });
+
+test('required data columns must be mapped and invalid spreadsheet rows cannot be silently omitted on apply', async () => {
+    const fields = [{ key: 'id', label: 'Identity number', type: 'identifier', required: true }];
+    const api = { inspectWorkbook: jest.fn().mockResolvedValue({ sheets: [{ ...metadata.sheets[0], columns: [...metadata.sheets[0].columns,
+        { index: 3, header: 'Identifier', suggestedKey: null, samples: ['000123'] }] }] }),
+        parseWorkbook: jest.fn().mockResolvedValue({ rows: [{ ...rows[0], data: { id: '000123' }, dataSources: { id: 'import' } }], errors: [{ row: 3, field: 'Identity number', code: 'UNSAFE_DATA_CELL' }] }) };
+    const { props, i18n, upload } = await setup('en', { api, dataFields: fields }); upload();
+    fireEvent.change(await screen.findByRole('combobox', { name: 'Full name (required)' }), { target: { value: '2' } });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Email', exact: true }), { target: { value: '1' } });
+    const review = screen.getByRole('button', { name: i18n.t('signingV2.compose.mapping.preview') });
+    expect(review).toBeDisabled();
+    fireEvent.change(screen.getByRole('combobox', { name: 'Identity number (required)' }), { target: { value: '3' } });
+    fireEvent.click(review);
+    await screen.findByText('000123');
+    expect(await screen.findByRole('button', { name: i18n.t('signingV2.compose.mapping.apply') })).toBeDisabled();
+    expect(props.onApply).not.toHaveBeenCalled();
+});
