@@ -770,7 +770,9 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                     <div><dt>{t('signingV2.compose.review.recipients')}</dt><dd><bdi>{number(preview.recipientCount)}</bdi></dd></div>
                 </dl>
                 <h3>{t('signingV2.compose.review.documentList')}</h3>
-                <ul className="lw-signingCompose__plainList">{preview.template.documents.map(item => <li key={item.key}>{item.name}</li>)}</ul>
+                <ul className="lw-signingCompose__plainList">{(preview.documentSummary || preview.template.documents).map(item => <li key={item.key}><bdi>{item.name}</bdi>
+                    {item.excludedCount > 0 && <span> · {t('signingV2.compose.review.inclusion', { included: number(item.includedCount), total: number(preview.packageCount), excluded: number(item.excludedCount) })}</span>}
+                </li>)}</ul>
                 {preview.shared.length > 0 && <>
                     <h3>{t('signingV2.compose.shared.heading')}</h3>
                     <ul className="lw-signingCompose__plainList">{preview.shared.map(item => <li key={item.roleKey}><bdi>{roleLabel(item.roleKey)}</bdi>: <bdi>{item.name}</bdi></li>)}</ul>
@@ -786,6 +788,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                         const value = Object.hasOwn(item.data || {}, field.key) ? item.data[field.key] : field.defaultValue;
                         return value == null ? null : <div key={field.key}><bdi>{field.label || field.key}</bdi>: <bdi>{documentDataValue(field, value, { t, locale })}</bdi></div>;
                     })}
+                    {!!item.exclusions?.length && <p>{t('signingV2.compose.review.excluded', { names: item.exclusions.map(document => document.name).join(', ') })}</p>}
                 </li>)}</ul>
                 <h3>{t('signing.upload.signingOrderLabel')}</h3>
                 <p className="lw-signingCompose__note">{orderMode === 'grouped' ? t('signingV2.compose.order.grouped') : orderMode === 'sequential' ? t('signing.upload.signingOrderSequential') : t('signing.upload.signingOrderParallel')}</p>

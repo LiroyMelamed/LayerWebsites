@@ -293,7 +293,11 @@ async function previewCreation(pool, scope, input) {
     const compiled = [];
     if (!plan.errors.length) packages.forEach((item, index) => {
         try { compiled.push(compilePackage(definition, item, directory)); }
-        catch (error) { plan.errors.push({ path: `rows.${index}`, code: error.errorCode || 'INVALID_ROW', detail: error.extras?.fieldErrors?.[0]?.path }); }
+        catch (error) {
+            const detail = error.extras?.fieldErrors?.[0]?.path;
+            const missingData = error.errorCode === 'DATA_REQUIRED' && definition.dataKeys.some(field => field.key === detail);
+            plan.errors.push({ path: missingData ? `rows.${index}.data.${detail}` : `rows.${index}`, code: error.errorCode || 'INVALID_ROW', detail });
+        }
     });
     let capacity = null;
     if (!plan.errors.length) {
@@ -304,11 +308,17 @@ async function previewCreation(pool, scope, input) {
         previewHash: plan.errors.length ? null : rowsHash(template, plan),
         packageCount: plan.rows.length,
         documentCount: capacity?.documents ?? null,
+        documentSummary: plan.errors.length ? [] : definition.documents.map(document => {
+            const includedCount = compiled.filter(item => item.snapshot.documents.some(doc => doc.key === document.key)).length;
+            return { key: document.key, name: document.name, includedCount, excludedCount: plan.rows.length - includedCount };
+        }),
         recipientCount: people.size,
         omitted: [...plan.omitted].sort(),
         caseId: plan.rows[0]?.caseId || null,
         shared: Object.entries(plan.shared).map(([roleKey, person]) => ({ roleKey, name: person.name, channels: person.channels })),
-        sample: plan.rows.slice(0, 5).map(row => ({ key: row.key, ...(row.data ? { data: row.data } : {}), recipients: Object.entries(row.recipients).map(([roleKey, person]) => ({ roleKey, name: person.name, channels: person.channels })) })),
+        sample: plan.rows.slice(0, 5).map((row, index) => ({ key: row.key, ...(row.data ? { data: row.data } : {}),
+            ...(plan.errors.length ? {} : { exclusions: compiled[index].snapshot.exclusions.map(item => ({ ...item, name: definition.documents.find(doc => doc.key === item.documentKey).name })) }),
+            recipients: Object.entries(row.recipients).map(([roleKey, person]) => ({ roleKey, name: person.name, channels: person.channels })) })),
         template: { versionId: template.id, name: definition.name, documents: definition.documents.map(document => ({ key: document.key, name: document.name })), roles: roleSummary(definition), dataKeys: definition.dataKeys || [] },
     };
 }

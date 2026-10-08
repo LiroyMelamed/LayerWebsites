@@ -163,3 +163,21 @@ test('grouped signing order rejects missing, duplicate, foreign or empty stage m
     }
     assert.deepEqual(normalizeSigningOrder({ mode:'grouped', groups:[['buyer','lawyer']] }, ['buyer','lawyer']).groups, [['buyer','lawyer']]);
 });
+
+test('comparison conditions block unknown data; only presence explicitly accepts missing values', () => {
+    const { conditionMatches, validateDefinition } = require('../lib/signingV2/compiler');
+    for (const operator of ['equals', 'in']) {
+        const condition = { key: 'flag', operator, value: false, values: [false] };
+        for (const value of [undefined, null, '']) assert.throws(() => conditionMatches(condition, { flag: value }), { errorCode: 'DATA_REQUIRED' });
+        assert.equal(conditionMatches(condition, { flag: false }), true);
+        assert.equal(conditionMatches(condition, { flag: true }), false);
+    }
+    for (const value of [undefined, null, '']) assert.equal(conditionMatches({ key: 'flag', operator: 'present' }, { flag: value }), false);
+    assert.equal(conditionMatches({ key: 'flag', operator: 'present' }, { flag: false }), true);
+    const { compilerFixture } = require('./helpers/signingV2Fixture');
+    const definition = structuredClone(compilerFixture().definition);
+    definition.documents[0].when = { key: 'salary', operator: 'equals', value: null };
+    assert.throws(() => validateDefinition(definition), { errorCode: 'INVALID_CONDITION' });
+    definition.documents[0].when = { key: 'salary', operator: 'in', values: ['1.00', null] };
+    assert.throws(() => validateDefinition(definition), { errorCode: 'INVALID_CONDITION' });
+});

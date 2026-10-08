@@ -1717,7 +1717,9 @@
         "confirm_other": "Create {{formattedCount}} packages",
         "creating": "Creating…",
         "sharedInvitations_one": "{{name}} will receive one link for this package. Only documents that are ready for this signer can be signed together.",
-        "sharedInvitations_other": "{{name}} will receive one link for all {{formattedCount}} packages. Only documents whose signing turn has arrived can be signed together."
+        "sharedInvitations_other": "{{name}} will receive one link for all {{formattedCount}} packages. Only documents whose signing turn has arrived can be signed together.",
+        "inclusion": "Included in {{included}} of {{total}} packages; excluded from {{excluded}} by template rules",
+        "excluded": "Documents excluded by template rules: {{names}}"
       },
       "done": {
         "heading": "The run was created",
@@ -2147,7 +2149,30 @@
       "archiveConfirm": "Archive “{{name}}”? New sends will be unavailable until it is restored. Existing drafts and packages will be preserved.",
       "restore": "Restore",
       "restoreConfirm": "Restore “{{name}}” to active templates?",
-      "sourceArchived": "The source template is archived. Its imported version cannot be used for new sends."
+      "sourceArchived": "The source template is archived. Its imported version cannot be used for new sends.",
+      "defaultTitle": "Default value (optional)",
+      "defaultHelp": "Prefill this value when preparing a package. It can be changed for each recipient; the value used is saved with the package.",
+      "useDefault": "Use a default value",
+      "defaultValue": "Default value",
+      "unavailableValue": "{{value}} (no longer a choice)",
+      "conditionReference": "This field is used by a condition. Remove that condition before changing its type or deleting the field.",
+      "condition": {
+        "title": "When to include this document",
+        "help": "Always include it, or include it only when the package data matches a rule. The source PDF is not changed. Every selected signer must still have a document to sign.",
+        "field": "Based on field",
+        "always": "Always include",
+        "missing": "Unavailable field — choose another",
+        "operator": "Include when",
+        "present": "A value is provided",
+        "equals": "Equals",
+        "in": "Matches any of these values",
+        "value": "Comparison value",
+        "numberedValue": "Comparison value {{number}}",
+        "add": "Add a value",
+        "remove": "Remove",
+        "removeValue": "Remove comparison value {{number}}",
+        "review": "Conditional on {{field}}"
+      }
     }
   },
   "calendar": {

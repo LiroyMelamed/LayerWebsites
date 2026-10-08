@@ -17,3 +17,7 @@ Focused verification on the local candidate:
 Evidence and every failed attempt are recorded in the outer workspace's `outputs/signing-implementation-20261007/TEST-LEDGER.md`, prefix `workflow-ux-20261008/template-lifecycle-*`. The before/after browser database snapshot has no archive events and must not be presented as proof of successful browser actions.
 
 This is a local checkpoint, not production approval. Remaining full F1, exact-current QA and representative performance gates are open. No real messages, customer deployments, push or production tag occurred.
+
+## Supplemental browser recovery — 8 October
+
+Actual browser lifecycle actions now passed on unchanged6819308: Hebrew archive, Arabic390px restore, English1280px reload and exact published-version handoff. The isolated before/after database proof has exactly one archive and one restore event, with old packages/revisions/tasks and published definitions unchanged. No overflow or console errors. Agent8122 stopped, tab21 closed, viewport reset. Supplemental manifest `candidate-6819308-browser02-evidence-hashes.json` preserves previous failures and pending-state evidence unchanged. Full F1/readiness gates remain open.

@@ -31,14 +31,22 @@ function validateCondition(condition, keys, path) {
     expect(condition && keys.has(condition.key), 'INVALID_CONDITION', path);
     expect(['equals', 'in', 'present'].includes(condition.operator), 'INVALID_CONDITION', path);
     const values = condition.operator === 'in' ? list(condition.values, 50, path, 1) : [condition.value];
-    if (condition.operator === 'in') condition.values = values.map(value => normalizeValue(keys.get(condition.key), value, path));
-    if (condition.operator === 'equals') condition.value = normalizeValue(keys.get(condition.key), condition.value, path);
+    const comparison = value => {
+        const normalized = normalizeValue(keys.get(condition.key), value, path);
+        expect(normalized !== null, 'INVALID_CONDITION', path);
+        return normalized;
+    };
+    if (condition.operator === 'in') condition.values = values.map(comparison);
+    if (condition.operator === 'equals') condition.value = comparison(condition.value);
     return condition;
 }
 function conditionMatches(condition, data) {
     if (!condition) return true;
     const value = data[condition.key];
     if (condition.operator === 'present') return value !== null && value !== undefined && value !== '';
+    // Unknown is not false: otherwise missing input could silently omit a
+    // required annex or participant. Only an explicit presence rule can do so.
+    expect(value !== null && value !== undefined && value !== '', 'DATA_REQUIRED', condition.key);
     const values = condition.operator === 'in' ? condition.values : [condition.value];
     return values.some(candidate => canonical(candidate) === canonical(value === undefined ? null : value));
 }

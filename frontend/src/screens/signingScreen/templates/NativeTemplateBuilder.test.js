@@ -127,3 +127,76 @@ test('an incomplete server draft reopens with editable required details',()=>{
     expect(draft.roles).toHaveLength(1);expect(draft.roles[0].name).toBe('');
     expect(draft.documents).toEqual([]);expect(fromEditor(draft,'en').name).toBe('Saved incomplete draft');
 });
+
+test.each(['he','ar','en'])('authors exact defaults and conditional document values without changing PDF geometry in %s',async language=>{
+    const i18n=await setup(language),api=fakeApi(),input=version();
+    input.definition.dataKeys.push({key:'consent',label:'Confirmed',type:'boolean'});
+    render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={input} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
+    const a=key=>i18n.t(`signingV2.authoring.${key}`),b=key=>i18n.t(`signingV2.builder.${key}`);
+    const amount=within(screen.getByRole('group',{name:'Amount'}));
+    fireEvent.change(amount.getByLabelText(a('defaultValue')),{target:{value:'9007199254740994.000001'}});
+    const confirmed=within(screen.getByRole('group',{name:'Confirmed'}));
+    fireEvent.click(confirmed.getByLabelText(a('useDefault')));
+    expect(confirmed.getByLabelText(a('defaultValue'))).toHaveValue('false');
+    expect(confirmed.getByLabelText(a('defaultValue'))).toHaveAttribute('dir',language==='en'?'ltr':'rtl');
+    fireEvent.click(screen.getByRole('button',{name:b('next')}));
+    fireEvent.change(screen.getByLabelText(a('condition.field')),{target:{value:'amount'}});
+    fireEvent.change(screen.getByLabelText(a('condition.operator')),{target:{value:'in'}});
+    const label=n=>i18n.t('signingV2.authoring.condition.numberedValue',{number:new Intl.NumberFormat({he:'he-IL',ar:'ar-IL',en:'en-GB'}[language]).format(n)});
+    fireEvent.change(screen.getByLabelText(label(1)),{target:{value:'9007199254740994.000001'}});
+    fireEvent.click(screen.getByRole('button',{name:a('condition.add')}));
+    fireEvent.change(screen.getByLabelText(label(2)),{target:{value:'0.00'}});
+    fireEvent.click(screen.getByRole('button',{name:a('saveDraft')}));
+    await screen.findByText(a('saved'));
+    const saved=api.saveTemplateDraft.mock.calls[0][1].definition;
+    expect(saved.dataKeys[1].defaultValue).toBe('9007199254740994.000001');
+    expect(saved.dataKeys[2].defaultValue).toBe(false);
+    expect(saved.documents[0].when).toEqual({key:'amount',operator:'in',values:['9007199254740994.000001','0.00']});
+    expect(saved.documents[0].fields).toEqual(input.definition.documents[0].fields.map(field=>({...field,label:''})));
+    fireEvent.click(screen.getByRole('button',{name:b('previous')}));
+    expect(within(screen.getByRole('group',{name:'Amount'})).getByLabelText(a('type'))).toBeDisabled();
+    expect(within(screen.getByRole('group',{name:'Amount'})).getByRole('button',{name:a('removeData')})).toBeDisabled();
+});
+
+test('removing a default is explicit; stale enum values and role conditions remain visible/protected',async()=>{
+    const i18n=await setup('en'),api=fakeApi(),input=version();
+    input.definition.dataKeys.push({key:'category',label:'Category',type:'enum',options:['A','B'],defaultValue:'B'});
+    input.definition.roles[0].when={key:'identifier',operator:'present'};
+    render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={input} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
+    const category=within(screen.getByRole('group',{name:'Category'}));
+    fireEvent.change(category.getByLabelText('Choices — one per line'),{target:{value:'A'}});
+    expect(category.getByRole('option',{name:'B (no longer a choice)'})).toBeInTheDocument();
+    expect(category.getByLabelText('Default value')).toHaveValue('B');
+    fireEvent.click(category.getByLabelText('Use a default value'));
+    expect(within(screen.getByRole('group',{name:'Identity'})).getByLabelText('Information type')).toBeDisabled();
+    fireEvent.click(screen.getByRole('button',{name:'Save draft'}));
+    await screen.findByText(i18n.t('signingV2.authoring.saved'));
+    expect(api.saveTemplateDraft.mock.calls[0][1].definition.dataKeys[2].defaultValue).toBeUndefined();
+    expect(api.saveTemplateDraft.mock.calls[0][1].definition.roles[0].when).toEqual(input.definition.roles[0].when);
+});
+
+test('conditional document supports false and explicit removal without retaining comparison values',async()=>{
+    const i18n=await setup('en'),api=fakeApi(),input=version();
+    input.definition.dataKeys.push({key:'flag',label:'Flag',type:'boolean'});
+    render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={input} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.builder.next')}));
+    fireEvent.change(screen.getByLabelText('Based on field'),{target:{value:'flag'}});
+    fireEvent.change(screen.getByLabelText('Include when'),{target:{value:'equals'}});
+    expect(screen.getByLabelText('Comparison value')).toHaveValue('false');
+    fireEvent.click(screen.getByRole('button',{name:'Save draft'}));await screen.findByText(i18n.t('signingV2.authoring.saved'));
+    expect(api.saveTemplateDraft.mock.calls[0][1].definition.documents[0].when).toEqual({key:'flag',operator:'equals',value:false});
+    fireEvent.change(screen.getByLabelText('Based on field'),{target:{value:''}});
+    fireEvent.click(screen.getByRole('button',{name:'Save draft'}));await waitFor(()=>expect(api.saveTemplateDraft).toHaveBeenCalledTimes(2));
+    expect(api.saveTemplateDraft.mock.calls[1][1].definition.documents[0].when).toBeNull();
+});
+
+test.each(['he','ar','en'])('date defaults use the incumbent date control and retain a date without timezone conversion in %s',async language=>{
+    const i18n=await setup(language),api=fakeApi(),input=version();
+    input.definition.dataKeys.push({key:'meeting',label:'Meeting',type:'date',defaultValue:'2028-02-01'});
+    render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={input} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
+    const group=within(screen.getByRole('group',{name:'Meeting'}));
+    fireEvent.change(group.getByRole('textbox',{name:i18n.t('calendar.dateSegmentDay')}),{target:{value:'29'}});
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.authoring.saveDraft')}));
+    await screen.findByText(i18n.t('signingV2.authoring.saved'));
+    expect(api.saveTemplateDraft.mock.calls[0][1].definition.dataKeys[2].defaultValue).toBe('2028-02-29');
+});

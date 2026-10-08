@@ -527,3 +527,16 @@ test.each(['he','ar','en'])('mixed template stages survive selection and explici
     await screen.findByRole('heading',{name:i18n.t('signingV2.compose.review.heading')});
     expect(api.previewCreation.mock.calls[1][0].signingOrder).toEqual({mode:'grouped',groups:[['seller','buyer'],['lawyer']]});
 });
+
+test.each(['he','ar','en'])('review explains conditional exclusions and actual inclusion counts in %s',async language=>{
+    const i18n=await translations(language),api=fakeApi();await toRecipients(i18n,api);
+    fireEvent.change(screen.getAllByLabelText(i18n.t('signingV2.compose.fields.name')).at(-1),{target:{value:'Synthetic employee'}});
+    const preview=validPreview(2);
+    preview.documentSummary=[{key:'d1',name:'Agreement',includedCount:2,excludedCount:0},{key:'d2',name:'Annex',includedCount:1,excludedCount:1}];
+    preview.sample[0].exclusions=[{documentKey:'d2',name:'Annex',reason:'condition'}];api.previewCreation.mockResolvedValue(preview);
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.compose.check')}));
+    await screen.findByRole('heading',{name:i18n.t('signingV2.compose.review.heading')});
+    const number=value=>new Intl.NumberFormat({he:'he-IL',ar:'ar-IL',en:'en-GB'}[language]).format(value);
+    expect(screen.getByText(i18n.t('signingV2.compose.review.inclusion',{included:number(1),total:number(2),excluded:number(1)}),{exact:false})).toBeInTheDocument();
+    expect(screen.getByText(i18n.t('signingV2.compose.review.excluded',{names:'Annex'}))).toBeInTheDocument();
+});

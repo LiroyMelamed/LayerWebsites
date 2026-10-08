@@ -45,6 +45,9 @@
 .lw-templates__roles { display: flex; flex-direction: column; gap: .8rem; margin-bottom: 1rem; }
 .lw-templates__role { display: grid; grid-template-columns: 1.5rem minmax(0,1fr) minmax(0,1fr) auto; gap: .8rem; align-items: end; > span { align-self: center; font-variant-numeric: tabular-nums; } }
 .lw-templates__dataKey { margin-block: 1rem; }
+.lw-templates__defaults { margin-block: .75rem; > label, > div { max-width: 32rem; margin-block: .75rem; } }
+.lw-templates__condition { min-width: 0; > label, > div { margin-block: .75rem; } }
+.lw-templates__conditionValue { display: flex; gap: .5rem; align-items: end; > label, > div { flex: 1; min-width: 0; } > button { flex: 0 0 auto; padding-inline: .6rem; } }
 @media (min-width: 48.01rem) { .lw-templates__role.is-grouped { grid-template-columns: 1.5rem minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) auto; } }
 .lw-templates__empty { padding: 3rem 1.5rem; border-block: 1px solid #d9e0e9; text-align: center; p { margin-inline: auto; } }
 .lw-templates__file { position: relative; overflow: hidden; input { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; } &:focus-within { outline: 2px solid var(--template-accent); outline-offset: 3px; } }
