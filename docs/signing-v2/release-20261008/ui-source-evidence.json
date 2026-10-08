@@ -1,0 +1,247 @@
+{
+  "productCommit": "b6b31cd97e74d3eb8facbf95aadb360306c31b6d",
+  "parent": "f3f722cd5c7b4e5efee93c6d51b3c3029903e5bf",
+  "localUiReady": true,
+  "exactLiveUiReady": true,
+  "qaCandidatePreparing": "7ce3a141bff23bcbedc7effe7b99b774256949d1",
+  "files": [
+    {
+      "file": "frontend/src/components/styledComponents/buttons/ChooseButton.js",
+      "sha256": "7a8925ac8a0d669c9de5ea03bb62e5524d263034fe8bbd2b407c574dcba365a9"
+    },
+    {
+      "file": "frontend/src/components/specializedComponents/containers/HoverContainer.js",
+      "sha256": "75748b5b7de31e4e90ab6191c33be312e5ae2b27ed769b2f06ff2f7e2d2a9a3e"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/templates/SigningSelect.js",
+      "sha256": "6a27ed6c00fe246c697788fa19c52ce7e14b934eb4bf894086e0864871868d32"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/templates/SigningSelect.test.js",
+      "sha256": "acef414b436fb0b5f91363d5736a99ed9a88bddac1cac7deb31e39b0a3adf656"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/templates/signingSelect.scss",
+      "sha256": "3b8fc5ffb04426440a7a8e2b2bfb2b9e7571be5430aa6ff5ea7d0f0cbb275644"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/templates/TemplateBuilder.js",
+      "sha256": "1a0792d96e2cba0f66d5440d38293de9a139fd37076c1f7b55b8686b30635c3c"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/templates/TemplateRoles.js",
+      "sha256": "dda9fa6229507d4e9ff68f9b9c39314b1a569093120394c3f19a4424dad7bac4"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/templates/TemplateDocumentCondition.js",
+      "sha256": "02d89ec6a8dc46668c6b8751993da5baadec8f26adda0b0d9d8a56c8a7810e79"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/templates/TemplateDataKeys.js",
+      "sha256": "a72e61546e168580a04d5222a8be0681aecf3a4ecf1b491523a2628efd5b1ba9"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/templates/TemplateDataValueInput.js",
+      "sha256": "dca1ab5b68aa1ff254109a0ea112159baf55f1c35200e903e390f562403b90ca"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/templates/ParticipantDirectoryFields.js",
+      "sha256": "03df019d5d7e0133f22b4b74f716daf868c697b602ef5044a4d9f2249eac7618"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/templates/DraftRecoveryList.js",
+      "sha256": "c0f9788db847b78fac2baf591be8ac5dfcc44907128388138d647140814744cf"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/templates/WorkbookImport.js",
+      "sha256": "7c8c3b70acf779702ab96db95f3db58c6b2c17b4f2ad84e2c108a0607da2ed4f"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/templates/ApprovalReviewerField.js",
+      "sha256": "c19bc183d3c56652d29ca3313befb084886f3754ea6958bb4a750c75124ac19f"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/templates/PackageComposer.js",
+      "sha256": "8c0514ee1c8e7a7ed465c23c959ac327e61301d876b6f2af1dc20413b52ec6cc"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/templates/RecipientFields.js",
+      "sha256": "88cd2db6128606b4acf168d21ae71c9c2450a175ce228c51f0e6de4da7a2458f"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/templates/TemplatesWorkspace.js",
+      "sha256": "430f524d27cb3170dd9d6c0c4163f8a46d09904590c130a999ca64bb903ab4de"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/templates/BulkActionsWorkspace.js",
+      "sha256": "fdcd4f38266e5d838dbd34dc0aa2f34d875ec78614f3163a46647388c6315cd5"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js",
+      "sha256": "c88848992d94649c879f525b9f5ad5db395f432b20805e5ca7bfefcb119b0e85"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/templates/signingPackages.scss",
+      "sha256": "7939ed098ac5a19a9cbb7b32fbe3bd3aee585d8fbe6d252af692a7a4a4fcd471"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/templates/SigningPackagesLayout.test.js",
+      "sha256": "24889e4914c4bb64ab746b75b6806b9c48f464fb5350e5e39a4c23b0f421efd9"
+    },
+    {
+      "file": "frontend/src/i18n/locales/he.json",
+      "sha256": "1411dd1133430f7f5ab3e9489aca9747743ebc29c9e8702dcf71c4d9aad3cbb1"
+    },
+    {
+      "file": "frontend/src/i18n/locales/ar.json",
+      "sha256": "a8ab7ec0f268966bca76eb27561a400421117ca0ce8efbf1d96e8a2f444d1bc8"
+    },
+    {
+      "file": "frontend/src/i18n/locales/en.json",
+      "sha256": "b678a185caa1a05ce57eb3bf208f9cb2abf6ff8c9e5882c927945db41838573c"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "outputs/signing-implementation-20261007/workflow-ux-20261008/ui-corrections-builder-he390-geometry01.json",
+      "sha256": "cbe6ceffa339c414a58a9af636ec6750c9fb64fcd56d43120f8e7e03d87199af",
+      "bytes": 734
+    },
+    {
+      "path": "outputs/signing-implementation-20261007/workflow-ux-20261008/ui-corrections-builder-ar390-geometry01.json",
+      "sha256": "d781d0bee414c50f635a5af04dc054e61bdfc704e1cf1467b99cb8ca3a43e884",
+      "bytes": 711
+    },
+    {
+      "path": "outputs/signing-implementation-20261007/workflow-ux-20261008/ui-corrections-role-move01.json",
+      "sha256": "00604e6deadb2f5b0bb05c2af6ffa74f094a7bf69aef07caa7f5f94d753f5751",
+      "bytes": 443
+    },
+    {
+      "path": "outputs/signing-implementation-20261007/workflow-ux-20261008/ui-corrections-leave-popup01.txt",
+      "sha256": "39ec7d1218f7c555d57b9d3b37947cf0a5c9dfb2c6e8774e9ae57ba9564e3b0d",
+      "bytes": 4295
+    },
+    {
+      "path": "outputs/signing-implementation-20261007/workflow-ux-20261008/ui-corrections-contained-portal01.json",
+      "sha256": "2636e75abbd88c9951ac78b45a613f06db81d9886ad519a846434293f5df0ba6",
+      "bytes": 617
+    },
+    {
+      "path": "outputs/signing-implementation-20261007/workflow-ux-20261008/ui-corrections-bulk-ar390-geometry01.json",
+      "sha256": "32e9ca9c8410304e93afdd1d53891ee30143984d7fb520b80855fbdafabfafd4",
+      "bytes": 1112
+    },
+    {
+      "path": "outputs/signing-implementation-20261007/workflow-ux-20261008/ui-corrections-bulk-en1280-geometry01.json",
+      "sha256": "1fc198f3869209887ccf4237ceff16f7e68583e143063a803823cc4c0f12c72b",
+      "bytes": 1612
+    },
+    {
+      "path": "outputs/signing-implementation-20261007/workflow-ux-20261008/ui-corrections-package-he390-geometry01.json",
+      "sha256": "88c0e9167e2853c16fd01eea9a8309ddda085e4e7ed952898244766ca6648c1a",
+      "bytes": 1510
+    },
+    {
+      "path": "outputs/signing-implementation-20261007/workflow-ux-20261008/ui-corrections-package-first-gap02.json",
+      "sha256": "098e755e88c72e94894205ed82502ad260de3c70bdae0c7ada1aea4ba13963b0",
+      "bytes": 111
+    },
+    {
+      "path": "outputs/signing-implementation-20261007/workflow-ux-20261008/ui-corrections-console01.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "bytes": 2
+    },
+    {
+      "path": "outputs/signing-implementation-20261007/workflow-ux-20261008/native-controls-manifest01.json",
+      "sha256": "1510554aac4b782f1ff7176814da8d7a24ec40780cb08c3284c193e7efbbbf8b",
+      "bytes": 3913
+    },
+    {
+      "path": "outputs/signing-implementation-20261007/workflow-ux-20261008/signing-layout-owned-manifest02.json",
+      "sha256": "873e4ebf20d4af3bfab3b4071bedde41dfa9b5a4ddd5877f8ec94c18d5dcd201",
+      "bytes": 3631
+    }
+  ],
+  "uniqueNewTests": 12,
+  "scope": [
+    "Incumbent dropdowns and confirmations",
+    "Role separators and incumbent stage arrows",
+    "Bulk compact labels/equal widths",
+    "Package compact header/left X/equal actions/24px first-signer gap"
+  ],
+  "reuse": {
+    "backend": "ExactQA909183 protected PDF/recovery/replacement/readback by unchangedbackend tree",
+    "signing": "Incumbent SignatureCanvas consent/OTP/stage/geometry/immutablebyte proofs reused because its sources and backend signing sources unchanged",
+    "performance": "Owner accepted historical measurement; no timing rerun"
+  },
+  "invalidation": "Changed matching runtime/CSS/locale dependencies invalidate relevant result only. Compilation and exact deployed UI must match this candidate. Do not repeat unchanged green system/native/provider/performance suites.",
+  "noRealMessages": true,
+  "customerDeployments": [],
+  "productionTags": [],
+  "pushed": false,
+  "latestRestriction": "User-supplied AGENTS.md forbids four customers; no deployment inferred from older authorization.",
+  "qaCandidate": "7ce3a141bff23bcbedc7effe7b99b774256949d1",
+  "qaDeployed": true,
+  "liveEvidence": [
+    {
+      "path": "outputs/signing-implementation-20261007/workflow-ux-20261008/qa-new-ui-package-he390-geometry01.json",
+      "sha256": "322ed436c4e4bf556c7153fec577d4db44fe84dba516a277ec44102b942d9d79"
+    },
+    {
+      "path": "outputs/signing-implementation-20261007/workflow-ux-20261008/qa-new-ui-package-he390-dom01.txt",
+      "sha256": "a0c654e7da25eecb9207a3a2be454928606f0d634dbbee017c676bd8a90ca874"
+    },
+    {
+      "path": "outputs/signing-implementation-20261007/workflow-ux-20261008/qa-new-ui-package-he39001.jpg",
+      "sha256": "f86a8e49194b1519fc63063067e576c27d2719e54508a631816d8616b8e91fab"
+    },
+    {
+      "path": "outputs/signing-implementation-20261007/workflow-ux-20261008/qa-new-ui-bulk-he390-geometry01.json",
+      "sha256": "1c778da2e168374597eaa373ebdf4105fc1939afbe152fdbe7bd9a8e0035223f"
+    },
+    {
+      "path": "outputs/signing-implementation-20261007/workflow-ux-20261008/qa-new-ui-bulk-he390-dom01.txt",
+      "sha256": "12dbb43bcbabb1674f1a9869d350ae6b88f6acf4fdf1795b6507334d2955b2cb"
+    },
+    {
+      "path": "outputs/signing-implementation-20261007/workflow-ux-20261008/qa-new-ui-roles-he390-geometry01.json",
+      "sha256": "bd6f4d36898191d65e2ac4cc16779a883da0b31ffa6a93f271eece474e7551e8"
+    },
+    {
+      "path": "outputs/signing-implementation-20261007/workflow-ux-20261008/qa-new-ui-roles-he390-dom01.txt",
+      "sha256": "c0c1637886b1aa34a923c8ec5b910d517baa875ce5f7eafef62561a0ebbdb44d"
+    },
+    {
+      "path": "outputs/signing-implementation-20261007/workflow-ux-20261008/qa-new-ui-role-divider-he390-tall05.jpg",
+      "sha256": "3c7d71debed45a723e2325f1324f87c99d620e9313ebeb41c63439336d530933"
+    },
+    {
+      "path": "outputs/signing-implementation-20261007/workflow-ux-20261008/qa-new-ui-console01.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  ],
+  "qaRolloutEvidence": [
+    {
+      "path": "work/signing-implementation-20261007/qa-rollout-20261008/qa-frontend-update-b6b31cd97e74/backend-frontend-only-proof.json",
+      "sha256": "94f032a1349053bc75045174bd455801ff8d5a3d32ab52a290ccba45c2ca3525"
+    },
+    {
+      "path": "work/signing-implementation-20261007/qa-rollout-20261008/qa-frontend-update-b6b31cd97e74/frontend-publication-proof.json",
+      "sha256": "04d63ee611930ac1c3f078c8f1eba2e96d7a93f1ce1da424220dc004d7acdf82"
+    },
+    {
+      "path": "work/signing-implementation-20261007/qa-rollout-20261008/qa-frontend-update-b6b31cd97e74/frontend-public-byte-proof01.json",
+      "sha256": "b85207d0fa6d03cc88ee10a128a7132be2babbc54e14c2962c85a2e5166a3507"
+    }
+  ],
+  "qaOnly": true,
+  "customerReadyBuilds": "Previousfourbuilds historical; newUIrequiresnewbrandedbuilds ifcustomerdeploymentlaterauthorized",
+  "ownerDraftPreserved": true,
+  "ownedTabsClosed": [
+    43,
+    42
+  ],
+  "viewportReset": true
+}

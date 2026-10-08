@@ -1,0 +1,27 @@
+{
+  "readOnly": true,
+  "at": "2026-10-08T20:39:27.562Z",
+  "rows": [
+    {
+      "tenant": "melamedlaw",
+      "proxyAddr": "2.0.8",
+      "compression": "1.8.2"
+    },
+    {
+      "tenant": "morlevy",
+      "proxyAddr": "2.0.8",
+      "compression": "1.8.2"
+    },
+    {
+      "tenant": "ashrafessa",
+      "proxyAddr": "2.0.8",
+      "compression": "1.8.2"
+    },
+    {
+      "tenant": "idm",
+      "proxyAddr": "2.0.8",
+      "compression": "1.8.2"
+    }
+  ],
+  "source": "Exact production Node createRequire package metadata readback, no reload/install/env/job/provider action"
+}

@@ -1,0 +1,64 @@
+{
+  "complete": true,
+  "tenant": "idm",
+  "candidate": "9239ce3db9793f70357c6b457ffce96b8a645994",
+  "product": "b6b31cd97e74d3eb8facbf95aadb360306c31b6d",
+  "qa": "7ce3a141bff23bcbedc7effe7b99b774256949d1",
+  "verifiedUtc": "2026-10-08T20:06:49.627Z",
+  "publicFiles": [
+    {
+      "url": "https://idm.mela-media.co.il/",
+      "path": "index.html",
+      "bytes": 6515,
+      "sha256": "f6beb2d108e7300e4aa6092c1e9f8ce57c3c9305b0e70b539e20f8ec120e7f91"
+    },
+    {
+      "url": "https://idm.mela-media.co.il/static/css/main.06af72a5.css",
+      "path": "static/css/main.06af72a5.css",
+      "bytes": 198216,
+      "sha256": "2061346f3957a12ef5afac102058e0fc51f48f3cddf98a1aad43b8be66e336f4"
+    },
+    {
+      "url": "https://idm.mela-media.co.il/static/js/main.5a2fdbdd.js",
+      "path": "static/js/main.5a2fdbdd.js",
+      "bytes": 1322415,
+      "sha256": "b01cff70f3ec7e0b0aa5f25fb64edeb9c991ace64fd3ce92dcbee6f3da89a990"
+    }
+  ],
+  "brandingAndAssociations": [
+    {
+      "path": "firm-logo.png",
+      "sha256": "808748756abf4482fccd7af896989ab7ae66ee3ea440784ecd63ec4416f125fd"
+    },
+    {
+      "path": "logo192.png",
+      "sha256": "0ddee67f7e4dc520d2a4e7e95ad39bc7587fd166b397d05dfba2b3aea4174943"
+    },
+    {
+      "path": "logo512.png",
+      "sha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5"
+    },
+    {
+      "path": "manifest.json",
+      "sha256": "69acb23ba720415a428ef04ccd686281643bbdfff2235fcd85bbcbf30001ffaa"
+    },
+    {
+      "path": "favicon.ico",
+      "sha256": "0863a016428a855ca5da0bd21d0d1dc92de07a05235bc1f0bf8e428e725197ea"
+    },
+    {
+      "path": ".well-known/assetlinks.json",
+      "sha256": "5bd018521295cfe5bfb3d300380acf8c0d2e02c5a6a5a904e58353223f2ecf73"
+    },
+    {
+      "path": ".well-known/apple-app-site-association",
+      "sha256": "773dbf6f9154fe5263a736a3c9c7fa4554494735476148f423e09b77ae80238d"
+    }
+  ],
+  "publicApiHealth": {
+    "ok": true
+  },
+  "backendProof": "idm-backend-readonly-proof03.json",
+  "frontendProof": "idm-frontend-live-proof03.json",
+  "noRealTestMessages": true
+}

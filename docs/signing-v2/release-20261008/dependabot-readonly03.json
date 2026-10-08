@@ -1,0 +1,61 @@
+{
+  "at": "2026-10-08T20:37:27.104Z",
+  "alerts": [
+    {
+      "number": 375,
+      "package": "source-map-js",
+      "ecosystem": "npm",
+      "manifest": "frontend/package-lock.json",
+      "scope": "runtime",
+      "severity": "high",
+      "summary": "source-map-js allows event-loop denial of service through indexed source-map section offsets",
+      "ghsa": "GHSA-68fv-2mgg-jv7q",
+      "cve": "CVE-2026-93749",
+      "range": ">= 1.0.0, < 1.2.2",
+      "fixed": "1.2.2",
+      "created": "2026-10-06T06:11:11Z"
+    },
+    {
+      "number": 374,
+      "package": "proxy-addr",
+      "ecosystem": "npm",
+      "manifest": "frontend/package-lock.json",
+      "scope": "runtime",
+      "severity": "critical",
+      "summary": "proxy-addr vulnerable to IP spoofing via IPv4-mapped IPv6 trust subnet",
+      "ghsa": "GHSA-jqcg-44mw-7w3h",
+      "cve": "CVE-2026-90711",
+      "range": ">= 1.1.0, < 2.0.8",
+      "fixed": "2.0.8",
+      "created": "2026-10-06T06:11:11Z"
+    },
+    {
+      "number": 373,
+      "package": "compression",
+      "ecosystem": "npm",
+      "manifest": "frontend/package-lock.json",
+      "scope": "runtime",
+      "severity": "high",
+      "summary": "compression vulnerable to Denial of Service via memory leak on premature response close",
+      "ghsa": "GHSA-vc2v-76pw-4v95",
+      "cve": "CVE-2026-87776",
+      "range": "< 1.8.2",
+      "fixed": "1.8.2",
+      "created": "2026-10-06T06:11:10Z"
+    },
+    {
+      "number": 372,
+      "package": "braces",
+      "ecosystem": "npm",
+      "manifest": "frontend/package-lock.json",
+      "scope": "runtime",
+      "severity": "high",
+      "summary": "braces vulnerable to stack-exhaustion denial of service through deeply nested patterns",
+      "ghsa": "GHSA-vfj7-8cjw-p6xm",
+      "cve": "CVE-2026-93687",
+      "range": "<= 3.0.3",
+      "created": "2026-10-05T21:14:07Z"
+    }
+  ],
+  "noCredentialMaterialSaved": true
+}
