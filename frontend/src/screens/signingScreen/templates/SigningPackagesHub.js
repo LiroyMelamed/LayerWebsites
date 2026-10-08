@@ -6,6 +6,7 @@ import PackageComposer from './PackageComposer';
 import StatusNotice from '../../../components/ui/StatusNotice';
 import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
 import useSigningLocale from './useSigningLocale';
+import TemplatesWorkspace from './TemplatesWorkspace';
 
 // The v2 API answers 404 until SIGNING_V2_ENABLED is set for the deployment.
 export function useSigningV2Available(api = signingPackagesApi) {
@@ -18,7 +19,7 @@ export function useSigningV2Available(api = signingPackagesApi) {
     return available;
 }
 
-export default function SigningPackagesHub({ onClose, canCreate, api = signingPackagesApi }) {
+export default function SigningPackagesHub({ onClose, canCreate, canManage, api = signingPackagesApi }) {
     const [searchParams, setSearchParams] = useSearchParams();
     const { t } = useSigningLocale();
     const composing = searchParams.get('panel') === 'compose';
@@ -34,5 +35,8 @@ export default function SigningPackagesHub({ onClose, canCreate, api = signingPa
     if (composing && !canCreate) return <section><StatusNotice><p>{t('signingV2.errors.FORBIDDEN')}</p></StatusNotice>
         <SecondaryButton onPress={() => setPanel('runs')}>{t('signingV2.compose.back')}</SecondaryButton></section>;
     if (composing) return <PackageComposer key={`${searchParams.get('template') || 'new'}:${searchParams.get('templateVersion') || ''}:${searchParams.get('caseId') || ''}`} initialTemplateId={searchParams.get('template')} initialTemplateVersion={searchParams.get('templateVersion')} initialCaseId={searchParams.get('caseId')} api={api} onBack={() => setPanel('runs')} onCreated={id => setPanel('runs', id)} />;
-    return <SigningPackagesWorkspace api={api} onClose={onClose} initialSubmissionId={searchParams.get('submission')} onClearFocus={() => setPanel('runs')} onCreate={canCreate ? () => setPanel('compose') : undefined} />;
+    return <>
+        <SigningPackagesWorkspace api={api} onClose={onClose} initialSubmissionId={searchParams.get('submission')} onClearFocus={() => setPanel('runs')} onCreate={canCreate ? () => setPanel('compose') : undefined} />
+        <TemplatesWorkspace view="legacy-runs" canUpload={false} canManage={canManage} />
+    </>;
 }

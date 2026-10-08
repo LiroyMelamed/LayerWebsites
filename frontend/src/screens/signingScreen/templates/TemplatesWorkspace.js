@@ -12,7 +12,9 @@ import SegmentedSwitch from '../../../components/styledComponents/SegmentedSwitc
 import StatusNotice from '../../../components/ui/StatusNotice';
 import './templates.scss';
 
-export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSendTemplate, nativeAvailable = false }) {
+export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSendTemplate, nativeAvailable = false, view = 'templates' }) {
+    const legacyRunsOnly = view === 'legacy-runs';
+    const showBatches = legacyRunsOnly || !nativeAvailable;
     const { t, direction, number, date, errorMessage } = useSigningLocale();
     const text = (key, values) => t(`signingV2.workspace.${key}`, values);
     const status = value => text(`status.${value}`, { defaultValue: text('unknownStatus') });
@@ -39,17 +41,18 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSe
         setError(null);
         try {
             const [templateResult, batchResult, nativeResult] = await Promise.all([
-                api.list(), api.batches(), nativeAvailable ? packagesApi.authoringTemplates({ archived: showArchived }) : null,
+                legacyRunsOnly ? null : api.list(), showBatches ? api.batches() : null,
+                !legacyRunsOnly && nativeAvailable ? packagesApi.authoringTemplates({ archived: showArchived }) : null,
             ]);
             if (sequence !== refreshSequence.current) return;
-            setTemplates(templateResult.templates);
-            setBatches(batchResult.batches);
+            setTemplates(templateResult?.templates || []);
+            setBatches(batchResult?.batches || []);
             setNativeTemplates(nativeResult?.templates || []);
             setImportedOrigins(nativeResult?.importedOrigins || []);
         } catch (err) { if (sequence === refreshSequence.current) setError(err); }
         finally { if (sequence === refreshSequence.current) setBusy(false); }
     }
-    useEffect(() => { refresh(); return () => { refreshSequence.current += 1; }; }, [nativeAvailable, showArchived]); // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => { refresh(); return () => { refreshSequence.current += 1; }; }, [nativeAvailable, showArchived, legacyRunsOnly]); // eslint-disable-line react-hooks/exhaustive-deps
 
     async function openTemplate(id, next) {
         setBusy(true);
@@ -125,20 +128,22 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSe
     if (mode === 'nativeBuilder') return <NativeTemplateBuilder version={current} onBack={back} onSaved={back} />;
     if (mode === 'builder') return <TemplateBuilder template={current} onBack={back} onSaved={back} />;
     if (mode === 'compose') return <BatchComposer template={current} onBack={back} onCreated={openBatch} />;
+    if (legacyRunsOnly && mode === 'list' && !batches.length && !busy && !error) return null;
 
-    return <><section className="lw-templates" dir={direction} aria-label={text('title')}>
-        <SigningBackButton onPress={mode === 'batch' ? back : onClose}>
-            {mode === 'batch' ? text('backToTemplates') : t('signingV2.backToDocuments')}
-        </SigningBackButton>
+    return <><section className="lw-templates" dir={direction} aria-label={text(legacyRunsOnly ? 'previousBatches' : 'title')}>
+        {(!legacyRunsOnly || mode === 'batch') && <SigningBackButton onPress={mode === 'batch' ? back : onClose}>
+            {mode === 'batch' ? text(legacyRunsOnly ? 'backToRuns' : 'backToTemplates') : t('signingV2.backToDocuments')}
+        </SigningBackButton>}
         <header className="lw-templates__heading"><div>
-            <h1>{mode === 'batch' ? <bdi>{batch.batch.name}</bdi> : text('title')}</h1>
-            <p>{text(mode === 'batch' ? 'batchSubtitle' : 'subtitle')}</p>
+            {legacyRunsOnly && mode === 'list' ? <h2>{text('previousBatches')}</h2> : <h1>{mode === 'batch' ? <bdi>{batch.batch.name}</bdi> : text('title')}</h1>}
+            {(!legacyRunsOnly || mode === 'batch') && <p>{text(mode === 'batch' ? 'batchSubtitle' : 'subtitle')}</p>}
         </div></header>
         {error && <StatusNotice onAction={() => mode === 'batch' ? openBatch(batch.batch.id) : refresh()} actionLabel={t('signingV2.refresh')}>
             <p>{error.code === 'CLIPBOARD_UNAVAILABLE' ? text('copyFailed') : errorMessage(error)}</p>
         </StatusNotice>}
         {busy && <p role="status">{text('loading')}</p>}
         {mode === 'list' ? <>
+            {!legacyRunsOnly && <>
             <div className="lw-templates__toolbar">
                 <h2>{text('officeTemplates')}</h2>
                 {canUpload && <button type="button" className="is-primary" onClick={() => { setCurrent(null); setMode(nativeAvailable ? 'nativeBuilder' : 'builder'); }}>{text('newTemplate')}</button>}
@@ -165,12 +170,15 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSe
                     {canManage && <button type="button" disabled={busy} onClick={() => setArchiveConfirmation({ ...template, legacy: true, definition: { ...template.definition, name: template.name } })}>{text('archive')}</button>}
                 </div>
             </li>)}</ul>
-            <h2>{text('batches')}</h2>
+            </>}
+            {showBatches && <>
+            {!legacyRunsOnly && <h2>{text('batches')}</h2>}
             <ul className="lw-templates__list" aria-label={text('batches')}>{batches.map(item => <li key={item.id}>
                 <div><strong><bdi>{item.name}</bdi></strong><p>{status(item.status)} · <bdi>{date(item.created_at)}</bdi></p></div>
                 <button type="button" onClick={() => openBatch(item.id)}>{text('batchDetails')}</button>
             </li>)}</ul>
             {!batches.length && !busy && <p>{text('emptyBatches')}</p>}
+            </>}
         </> : <>
             <div className="lw-templates__toolbar">
                 <div><strong>{status(batch.batch.status)}</strong><p>{count('documents', batch.files.length)} · {count('recipients', batch.recipients.length)} · {text('templateVersion', { version: number(batch.batch.template_version) })}</p></div>
