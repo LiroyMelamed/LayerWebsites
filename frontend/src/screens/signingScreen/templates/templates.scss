@@ -11,7 +11,7 @@
   h3 { font-size: 0.875rem; margin: 0 0 .7rem; font-weight: 500; }
   p { line-height: 1.6; margin: .4rem 0; max-width: 72ch; }
   button, input, select, textarea { font: inherit; }
-  button:not(.lw-signing-spotResize), .lw-templates__file {
+  button:not(.lw-signing-spotResize):not(.lw-segmentedSwitch__option), .lw-templates__file {
     border: 1px solid #c8d1dd; border-radius: .6rem; padding: .65rem 1rem; min-height: 2.75rem;
     color: var(--template-accent); background: white; cursor: pointer; font-weight: 600; line-height: 1.4;
     &:hover:not(:disabled) { background: #edf2f7; }
@@ -89,3 +89,6 @@
 }
 
 @media (max-width: 48rem) { .lw-templates__roleActions { grid-column: 2; } }
+
+.lw-templates > .lw-segmentedSwitch { width: fit-content; max-width: 100%; margin-block-end: 1rem; }
+.lw-templates > .lw-segmentedSwitch .lw-segmentedSwitch__option { min-height: 2.75rem; }

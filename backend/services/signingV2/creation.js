@@ -14,11 +14,7 @@ const { caseId } = require('./caseContext');
 const { normalizeSigningOrder } = require('../../lib/signingV2/signingOrder');
 
 const LEGACY_FIELD_TYPES = { signature: 'signature', initials: 'initials', text: 'text', date: 'date', checkbox: 'checkbox', number: 'text' };
-// An imported revision must not resurrect an archived source template for a new send.
-// Existing packages keep their snapshots and remain readable/signable.
-const availableOriginSql = `(v.definition->'origin'->>'kind' IS DISTINCT FROM 'legacy_template' OR EXISTS (
-    SELECT 1 FROM signing_templates source WHERE source.id::text=v.definition->'origin'->>'templateId'
-    AND NOT source.archived AND source.law_firm_tenant_id IS NOT DISTINCT FROM t.law_firm_tenant_id))`;
+const { availableOriginSql, importedOrigins } = require('./templateAvailability');
 const CHANNELS = { email: ['email'], sms: ['sms'], both: ['email', 'sms'] };
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -61,7 +57,7 @@ async function listTemplates(db, scope) {
             AND v.template_id=t.id AND v.state='published' ORDER BY v.version DESC LIMIT 1) v ON TRUE
         WHERE t.owner_context_id=$1 AND NOT t.archived AND ($2::boolean OR t.owner_userid=$3) AND ${availableOriginSql} ORDER BY t.name,t.id`,
     [scope.contextId, scope.all, scope.userId])).rows;
-    const imported = new Set(current.map(row => row.definition.origin?.templateId && `${row.definition.origin.templateId}:${row.definition.origin.version}`).filter(Boolean));
+    const imported = new Set((await importedOrigins(db, scope)).map(origin => `${origin.templateId}:${origin.version}`));
     const legacy = (await db.query(`SELECT id,name,version,definition FROM signing_templates t WHERE t.owner_context_id IS NULL
         AND COALESCE(t.definition->>'schemaVersion','1')='1' AND NOT t.archived
         AND t.law_firm_tenant_id IS NOT DISTINCT FROM $1::uuid AND ($2::boolean OR t.owner_userid=$3) ORDER BY t.name,t.id`,
@@ -109,10 +105,14 @@ function convertLegacy(legacy, sources, locale) {
 }
 
 async function findImport(db, scope, legacyId, version) {
-    return (await db.query(`SELECT t.id AS "templateId",v.id AS "versionId" FROM signing_templates t
+    const row = (await db.query(`SELECT t.id AS "templateId",v.id AS "versionId",t.archived,t.owner_userid FROM signing_templates t
         JOIN signing_template_versions v ON v.owner_context_id=t.owner_context_id AND v.template_id=t.id AND v.state='published'
-        WHERE t.owner_context_id=$1 AND NOT t.archived AND t.definition->'origin'->>'templateId'=$2 AND (t.definition->'origin'->>'version')::integer=$3
-        ORDER BY v.version DESC LIMIT 1`, [scope.contextId, legacyId, version])).rows[0] || null;
+        WHERE t.owner_context_id=$1 AND t.definition->'origin'->>'templateId'=$2 AND (t.definition->'origin'->>'version')::integer=$3
+        ORDER BY v.version DESC LIMIT 1`, [scope.contextId, legacyId, version])).rows[0];
+    if (!row) return null;
+    if (!scope.all && row.owner_userid !== scope.userId) fail('NOT_FOUND', 404);
+    if (row.archived) fail('TEMPLATE_ARCHIVED', 409);
+    return { templateId: row.templateId, versionId: row.versionId };
 }
 
 async function importLegacyTemplate(pool, scope, legacyId, { storage, readPdf, locale = 'he', expectedVersion }) {

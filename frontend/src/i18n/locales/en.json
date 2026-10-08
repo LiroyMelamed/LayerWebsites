@@ -1538,7 +1538,9 @@
       "PREVIOUS_OUTCOME_UNCERTAIN": "We do not know whether the previous message went out. Check delivery before sending another.",
       "MESSAGE_ALREADY_QUEUED": "A message to this signer is already waiting to go out. Track it in the Delivery tab.",
       "COOLDOWN_ACTIVE": "A message was just sent to this signer. Wait a little before sending another.",
-      "INVALID_ACTION": "This request is invalid. Refresh and try again."
+      "INVALID_ACTION": "This request is invalid. Refresh and try again.",
+      "TEMPLATE_ARCHIVED": "This template is archived. Restore it before a new send.",
+      "TEMPLATE_SOURCE_ARCHIVED": "The source template is archived. Its imported version cannot be restored."
     },
     "action": {
       "reminder": {
@@ -2137,7 +2139,15 @@
         "date": "Date",
         "boolean": "Yes or no",
         "enum": "Choice list"
-      }
+      },
+      "activeTemplates": "Active templates",
+      "archivedTemplates": "Archive",
+      "emptyArchive": "No archived templates.",
+      "archiveHelp": "Archiving prevents new sends. Packages already created continue as usual.",
+      "archiveConfirm": "Archive “{{name}}”? New sends will be unavailable until it is restored. Existing drafts and packages will be preserved.",
+      "restore": "Restore",
+      "restoreConfirm": "Restore “{{name}}” to active templates?",
+      "sourceArchived": "The source template is archived. Its imported version cannot be used for new sends."
     }
   },
   "calendar": {

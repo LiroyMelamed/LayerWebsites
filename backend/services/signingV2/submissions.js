@@ -6,6 +6,7 @@ const limits = require('../../lib/signingV2/limits');
 const { transaction } = require('./transaction');
 const { assertCases, scopeParams, packageScopeSql } = require('./access');
 const { personScopeSql } = require('./people');
+const { lockAvailableOrigin } = require('./templateAvailability');
 const { job, enqueue } = require('./jobs');
 
 function validateInput(input) {
@@ -108,6 +109,7 @@ async function createSubmissionInTransaction(db, scope, input, { reserveCapacity
           AND ($3::boolean OR t.owner_userid=$4) FOR SHARE OF v,t`, [scope.contextId, input.templateVersionId, scope.all, scope.userId]);
     if (!templates.rowCount) fail('NOT_FOUND', 404);
     const template = templates.rows[0];
+    await lockAvailableOrigin(db, scope, template.definition);
     const definition = validateDefinition(template.definition);
     expect(digest(definition) === template.definition_hash, 'TEMPLATE_CHANGED');
     // These policies use the prepared-package approval route; a bulk fast path

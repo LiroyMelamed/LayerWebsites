@@ -3,6 +3,7 @@ const { validateDefinition, UUID } = require('../../lib/signingV2/compiler');
 const { digest } = require('../../lib/signingV2/canonical');
 const { expect, fail } = require('../../lib/signingV2/errors');
 const { transaction } = require('./transaction');
+const { lockAvailableOrigin } = require('./templateAvailability');
 const { snapshotBytes } = require('../../lib/signingV2/limits');
 
 function precondition(value) {
@@ -17,6 +18,7 @@ async function loadHead(db, scope, templateId, lock = false) {
     [scope.contextId, templateId, scope.all, scope.userId]);
     if (!result.rowCount) fail('NOT_FOUND', 404);
     if (lock && result.rows[0].owner_userid !== scope.userId && !scope.manage) fail('FORBIDDEN', 403);
+    if (lock) await lockAvailableOrigin(db, scope, result.rows[0].definition);
     return result.rows[0];
 }
 
@@ -65,6 +67,7 @@ async function createDraft(pool, scope, input) {
             if (input.baseVersionId !== undefined && input.baseVersionId !== baseVersionId) fail('VERSION_CHANGED', 412);
             const latest = await db.query('SELECT COALESCE(max(version),0) AS version FROM signing_template_versions WHERE owner_context_id=$1 AND template_id=$2', [scope.contextId, templateId]);
             version = latest.rows[0].version + 1;
+            await db.query('UPDATE signing_templates SET lifecycle_version=lifecycle_version+1,updated_at=clock_timestamp() WHERE owner_context_id=$1 AND id=$2', [scope.contextId, templateId]);
         } else {
             templateId = randomUUID();
             await db.query(`INSERT INTO signing_templates(id,owner_context_id,law_firm_tenant_id,owner_userid,name,definition)
@@ -86,6 +89,7 @@ async function saveDraft(pool, scope, templateId, versionId, definition, expecte
             WHERE owner_context_id=$3 AND template_id=$4 AND id=$5 AND state='draft' AND edit_version=$6 AND created_by=$7 RETURNING *`,
         [definition, definitionHash, scope.contextId, templateId, versionId, expectedVersion, scope.userId]);
         if (!updated.rowCount) fail('VERSION_CHANGED', 412);
+        await db.query('UPDATE signing_templates SET lifecycle_version=lifecycle_version+1,updated_at=clock_timestamp() WHERE owner_context_id=$1 AND id=$2', [scope.contextId, templateId]);
         return updated.rows[0];
     });
 }
@@ -107,7 +111,7 @@ async function publish(pool, scope, templateId, versionId, expectedVersion, expe
         const published = (await db.query(`UPDATE signing_template_versions SET state='published',definition=$1,definition_hash=$2,
             published_by=$3,published_at=clock_timestamp(),edit_version=edit_version+1 WHERE id=$4 RETURNING *`,
         [definition, digest(definition), scope.userId, draft.id])).rows[0];
-        await db.query(`UPDATE signing_templates SET name=$1,version=$2,definition=$3,updated_at=clock_timestamp()
+        await db.query(`UPDATE signing_templates SET name=$1,version=$2,definition=$3,lifecycle_version=lifecycle_version+1,updated_at=clock_timestamp()
             WHERE owner_context_id=$4 AND id=$5`, [definition.name, draft.version, definition, scope.contextId, templateId]);
         return published;
     });

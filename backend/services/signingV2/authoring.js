@@ -4,6 +4,8 @@ const { digest, bytesHash } = require('../../lib/signingV2/canonical');
 const { expect, fail } = require('../../lib/signingV2/errors');
 const limits = require('../../lib/signingV2/limits');
 const templates = require('./templates');
+const { transaction } = require('./transaction');
+const { availableOriginSql, importedOrigins } = require('./templateAvailability');
 
 function versionView(row) {
     return { id: row.id, templateId: row.template_id, version: row.version, editVersion: row.edit_version,
@@ -16,19 +18,19 @@ async function loadVersion(db, scope, id) {
     const row = (await db.query(`SELECT v.* FROM signing_template_versions v JOIN signing_templates t
         ON t.owner_context_id=v.owner_context_id AND t.id=v.template_id
         WHERE v.owner_context_id=$1 AND v.id=$2 AND NOT t.archived AND ($3::boolean OR t.owner_userid=$4)
-        AND (v.state='published' OR v.created_by=$4)`, [scope.contextId, id, scope.all, scope.userId])).rows[0];
+        AND (v.state='published' OR v.created_by=$4) AND ${availableOriginSql}`, [scope.contextId, id, scope.all, scope.userId])).rows[0];
     if (!row) fail('NOT_FOUND', 404);
     return row;
 }
 
-async function catalog(db, scope) {
-    const rows = (await db.query(`SELECT v.*,t.name AS template_name,t.owner_userid FROM signing_templates t
+async function catalog(db, scope, { archived = false } = {}) {
+    const rows = (await db.query(`SELECT v.*,t.name AS template_name,t.owner_userid,t.archived,t.lifecycle_version,${availableOriginSql} AS source_available FROM signing_templates t
         JOIN LATERAL (SELECT * FROM signing_template_versions v WHERE v.owner_context_id=t.owner_context_id AND v.template_id=t.id
             AND ((v.state='draft' AND v.created_by=$3) OR (v.state='published' AND v.version=(SELECT max(p.version)
                 FROM signing_template_versions p WHERE p.owner_context_id=t.owner_context_id AND p.template_id=t.id AND p.state='published')))) v ON TRUE
-        WHERE t.owner_context_id=$1 AND NOT t.archived AND ($2::boolean OR t.owner_userid=$3)
-        ORDER BY t.updated_at DESC,t.id LIMIT 200`, [scope.contextId, scope.all, scope.userId])).rows;
-    return { templates: rows.map(row => ({ ...versionView(row), canEdit: row.state === 'draft' ? row.created_by === scope.userId : row.owner_userid === scope.userId || scope.manage })) };
+        WHERE t.owner_context_id=$1 AND ($2::boolean OR t.owner_userid=$3) AND (t.archived OR NOT ${availableOriginSql})=$4
+        ORDER BY t.updated_at DESC,t.id,v.version DESC LIMIT 200`, [scope.contextId, scope.all, scope.userId, archived])).rows;
+    return { importedOrigins: await importedOrigins(db, scope), templates: rows.map(row => ({ ...versionView(row), archived: row.archived, sourceAvailable: row.source_available, lifecycleVersion: row.lifecycle_version, canArchive: scope.templateManage === true, canEdit: !row.archived && row.source_available && (row.state === 'draft' ? row.created_by === scope.userId : row.owner_userid === scope.userId || scope.manage) })) };
 }
 
 // A guessed artifact ID is not access to another user's source PDF. References
@@ -60,6 +62,8 @@ async function save(pool, scope, id, input) {
     if (input.expectedVersion === 0) {
         if (input.templateId) {
             expect(UUID.test(input.templateId) && UUID.test(input.baseVersionId), 'PRECONDITION_REQUIRED');
+            const base = await loadVersion(pool, scope, input.baseVersionId);
+            expect(base.template_id === input.templateId, 'INVALID_TEMPLATE');
         } else expect(input.baseVersionId == null, 'INVALID_PRECONDITION');
         return versionView(await templates.createDraft(pool, scope, { ...input, draftId: id }));
     }
@@ -112,4 +116,30 @@ async function documentFile(pool, scope, id, documentKey, storage) {
     return { bytes };
 }
 
-module.exports = { catalog, loadVersion, versionView, save, publish, registerSource, documentFile };
+async function setArchived(pool, scope, id, input) {
+    if (scope.templateManage !== true) fail('FORBIDDEN', 403);
+    expect(UUID.test(id) && typeof input.archived === 'boolean', 'INVALID_TEMPLATE');
+    templates.precondition(input.expectedVersion);
+    return transaction(pool, async db => {
+        const head = (await db.query(`SELECT * FROM signing_templates WHERE owner_context_id=$1 AND id=$2
+            AND ($3::boolean OR owner_userid=$4) FOR UPDATE`, [scope.contextId, id, scope.all, scope.userId])).rows[0];
+        if (!head) fail('NOT_FOUND', 404);
+        if (head.lifecycle_version !== input.expectedVersion) fail('VERSION_CHANGED', 412);
+        if (head.archived === input.archived) return { archived: head.archived, lifecycleVersion: head.lifecycle_version };
+        if (!input.archived) {
+            const origin = head.definition?.origin;
+            if (origin?.kind === 'legacy_template') {
+                const source = await db.query(`SELECT id FROM signing_templates WHERE id::text=$1 AND NOT archived
+                    AND law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid FOR SHARE`, [origin.templateId, scope.tenantId]);
+                if (!source.rowCount) fail('TEMPLATE_SOURCE_ARCHIVED', 409);
+            }
+        }
+        const changed = (await db.query(`UPDATE signing_templates SET archived=$3,lifecycle_version=lifecycle_version+1,updated_at=clock_timestamp()
+            WHERE owner_context_id=$1 AND id=$2 RETURNING archived,lifecycle_version`, [scope.contextId, id, input.archived])).rows[0];
+        await db.query(`INSERT INTO signing_events_v2(owner_context_id,actor_key,kind,details) VALUES($1,$2,$3,$4)`,
+            [scope.contextId, `user:${scope.userId}`, input.archived ? 'template_archived' : 'template_restored', { templateId: id, lifecycleVersion: changed.lifecycle_version }]);
+        return { archived: changed.archived, lifecycleVersion: changed.lifecycle_version };
+    });
+}
+
+module.exports = { setArchived, catalog, loadVersion, versionView, save, publish, registerSource, documentFile };

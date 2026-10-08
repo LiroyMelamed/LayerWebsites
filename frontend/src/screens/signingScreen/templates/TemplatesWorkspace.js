@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import api from '../../../api/signingTemplatesApi';
 import TemplateBuilder from './TemplateBuilder';
+import TemplateArchiveConfirmation from './TemplateArchiveConfirmation';
 import NativeTemplateBuilder from './NativeTemplateBuilder';
 import packagesApi from '../../../api/signingPackagesApi';
 import BatchComposer from './BatchComposer';
 import SigningBackButton from './SigningBackButton';
 import useSigningLocale from './useSigningLocale';
 import { downloadBlobAsFile } from '../../../utils/downloadBlobAsFile';
+import SegmentedSwitch from '../../../components/styledComponents/SegmentedSwitch';
 import StatusNotice from '../../../components/ui/StatusNotice';
 import './templates.scss';
 
@@ -18,6 +20,9 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSe
     const [mode, setMode] = useState('list');
     const [templates, setTemplates] = useState([]);
     const [nativeTemplates, setNativeTemplates] = useState([]);
+    const [importedOrigins, setImportedOrigins] = useState([]);
+    const [showArchived, setShowArchived] = useState(false);
+    const [archiveConfirmation, setArchiveConfirmation] = useState(null);
     const [batches, setBatches] = useState([]);
     const [current, setCurrent] = useState(null);
     const [batch, setBatch] = useState(null);
@@ -25,19 +30,26 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSe
     const [error, setError] = useState(null);
     const [link, setLink] = useState('');
     const sending = useRef(false);
+    const archiving = useRef(false);
+    const refreshSequence = useRef(0);
 
     async function refresh() {
+        const sequence = ++refreshSequence.current;
         setBusy(true);
         setError(null);
         try {
-            const [templateResult, batchResult] = await Promise.all([api.list(), api.batches()]);
+            const [templateResult, batchResult, nativeResult] = await Promise.all([
+                api.list(), api.batches(), nativeAvailable ? packagesApi.authoringTemplates({ archived: showArchived }) : null,
+            ]);
+            if (sequence !== refreshSequence.current) return;
             setTemplates(templateResult.templates);
             setBatches(batchResult.batches);
-            if (nativeAvailable) setNativeTemplates((await packagesApi.authoringTemplates()).templates);
-        } catch (err) { setError(err); }
-        finally { setBusy(false); }
+            setNativeTemplates(nativeResult?.templates || []);
+            setImportedOrigins(nativeResult?.importedOrigins || []);
+        } catch (err) { if (sequence === refreshSequence.current) setError(err); }
+        finally { if (sequence === refreshSequence.current) setBusy(false); }
     }
-    useEffect(() => { refresh(); }, [nativeAvailable]); // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => { refresh(); return () => { refreshSequence.current += 1; }; }, [nativeAvailable, showArchived]); // eslint-disable-line react-hooks/exhaustive-deps
 
     async function openTemplate(id, next) {
         setBusy(true);
@@ -59,11 +71,21 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSe
         finally { setBusy(false); }
     }
     async function archive(template) {
-        if (!window.confirm(text('archiveConfirm', { name: template.name }))) return;
+        if (archiving.current || !window.confirm(text('archiveConfirm', { name: template.name }))) return;
+        archiving.current = true; setBusy(true); setError(null);
+        try { await api.archive(template.id, template.version); await refresh(); }
+        catch (err) { setError(err); }
+        finally { archiving.current = false; setBusy(false); }
+    }
+    async function archiveNative(version) {
+        if (archiving.current) return;
+        archiving.current = true; setBusy(true); setError(null);
         try {
-            await api.archive(template.id, template.version);
-            refresh();
-        } catch (err) { setError(err); }
+            await packagesApi.archiveTemplate(version.templateId, { archived: !version.archived, expectedVersion: version.lifecycleVersion });
+            setArchiveConfirmation(null);
+            await refresh();
+        } catch (err) { setArchiveConfirmation(null); setError(err); }
+        finally { archiving.current = false; setBusy(false); }
     }
     async function send() {
         if (sending.current) return;
@@ -96,14 +118,15 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSe
         catch (err) { setError(err); }
         finally { setBusy(false); }
     }
-    const visibleLegacyTemplates = templates.filter(template => !nativeAvailable || !nativeTemplates.some(version =>
-        version.state === 'published' && version.definition.origin?.templateId === template.id && version.definition.origin?.version === template.version));
+    const migrated = [...importedOrigins, ...nativeTemplates.filter(version => version.state === 'published').map(version => version.definition.origin).filter(Boolean)];
+    const visibleLegacyTemplates = showArchived ? [] : templates.filter(template => !nativeAvailable || !migrated.some(origin =>
+        origin.templateId === template.id && origin.version === template.version));
     const back = () => { setMode('list'); setError(null); refresh(); };
     if (mode === 'nativeBuilder') return <NativeTemplateBuilder version={current} onBack={back} onSaved={back} />;
     if (mode === 'builder') return <TemplateBuilder template={current} onBack={back} onSaved={back} />;
     if (mode === 'compose') return <BatchComposer template={current} onBack={back} onCreated={openBatch} />;
 
-    return <section className="lw-templates" dir={direction} aria-label={text('title')}>
+    return <><section className="lw-templates" dir={direction} aria-label={text('title')}>
         <SigningBackButton onPress={mode === 'batch' ? back : onClose}>
             {mode === 'batch' ? text('backToTemplates') : t('signingV2.backToDocuments')}
         </SigningBackButton>
@@ -120,12 +143,18 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSe
                 <h2>{text('officeTemplates')}</h2>
                 {canUpload && <button type="button" className="is-primary" onClick={() => { setCurrent(null); setMode(nativeAvailable ? 'nativeBuilder' : 'builder'); }}>{text('newTemplate')}</button>}
             </div>
-            {!templates.length && !nativeTemplates.length && !busy && <div className="lw-templates__empty"><h3>{text('emptyTitle')}</h3><p>{text('emptyBody')}</p></div>}
+            {nativeAvailable && <SegmentedSwitch value={showArchived ? 'archived' : 'active'} onChange={value => setShowArchived(value === 'archived')} ariaLabel={t('signingV2.authoring.library')}
+                options={['active', 'archived'].map(value => ({ value, label: t(`signingV2.authoring.${value}Templates`), disabled: busy }))} />}
+            {showArchived && <p>{t('signingV2.authoring.archiveHelp')}</p>}
+            {!visibleLegacyTemplates.length && !nativeTemplates.length && !busy && !showArchived && <div className="lw-templates__empty"><h3>{text('emptyTitle')}</h3><p>{text('emptyBody')}</p></div>}
+            {showArchived && !nativeTemplates.length && !busy && <p>{t('signingV2.authoring.emptyArchive')}</p>}
             {nativeAvailable && <ul className="lw-templates__list" aria-label={t('signingV2.authoring.library')}>{nativeTemplates.map(version => <li key={version.id}>
-                <div><strong><bdi>{version.definition.name}</bdi></strong><p>{version.state === 'draft' ? t('signingV2.authoring.draft') : text('version', { version: number(version.version) })} · {count('documents', version.definition.documents?.length || 0)}</p></div>
+                <div><strong><bdi>{version.definition.name}</bdi></strong><p>{version.state === 'draft' ? t('signingV2.authoring.draft') : text('version', { version: number(version.version) })} · {count('documents', version.definition.documents?.length || 0)}</p>
+                    {version.sourceAvailable === false && <p>{t('signingV2.authoring.sourceArchived')}</p>}</div>
                 <div className="lw-templates__actions">
-                    {canUpload && version.state === 'published' && <button type="button" className="is-primary" disabled={busy} onClick={() => onSendTemplate?.({ id: version.templateId, versionId: version.id, version: version.version })}>{text('sendFromTemplate')}</button>}
-                    {canUpload && version.canEdit && <button type="button" disabled={busy} onClick={() => { setCurrent(version); setMode('nativeBuilder'); }}>{text('edit')}</button>}
+                    {canUpload && !showArchived && version.state === 'published' && <button type="button" className="is-primary" disabled={busy} onClick={() => onSendTemplate?.({ id: version.templateId, versionId: version.id, version: version.version })}>{text('sendFromTemplate')}</button>}
+                    {canUpload && !showArchived && version.canEdit && <button type="button" disabled={busy} onClick={() => { setCurrent(version); setMode('nativeBuilder'); }}>{text('edit')}</button>}
+                    {canManage && version.canArchive && version.sourceAvailable !== false && <button type="button" disabled={busy} onClick={() => setArchiveConfirmation(version)}>{version.archived ? t('signingV2.authoring.restore') : text('archive')}</button>}
                 </div>
             </li>)}</ul>}
             <ul className="lw-templates__list" aria-label={text('officeTemplates')}>{visibleLegacyTemplates.map(template => <li key={template.id}>
@@ -184,5 +213,8 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSe
                 {canManage && <button type="button" disabled={busy} onClick={completion}>{text('checkCompletion')}</button>}
             </>}
         </>}
-    </section>;
+    </section>
+        {archiveConfirmation && <TemplateArchiveConfirmation version={archiveConfirmation} busy={busy} onConfirm={() => archiveNative(archiveConfirmation)}
+            onCancel={() => { if (!archiving.current) setArchiveConfirmation(null); }} />}
+    </>;
 }

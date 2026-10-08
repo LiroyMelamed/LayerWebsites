@@ -15,7 +15,7 @@ jest.mock('../../../api/signingTemplatesApi', () => ({ __esModule: true, default
     create: jest.fn(), list: jest.fn(), batches: jest.fn(), batch: jest.fn(), send: jest.fn(), contacts: jest.fn(), archive: jest.fn(), link: jest.fn(), downloadPackage: jest.fn(), completion: jest.fn(),
 } }));
 
-jest.mock('../../../api/signingPackagesApi', () => ({ __esModule: true, default: { authoringTemplates: jest.fn() } }));
+jest.mock('../../../api/signingPackagesApi', () => ({ __esModule: true, default: { authoringTemplates: jest.fn(), archiveTemplate: jest.fn() } }));
 jest.mock('./NativeTemplateBuilder', () => {
     const React = require('react');
     return function MockNativeTemplateBuilder(props) { return React.createElement('div', { 'data-testid': 'native-builder' }, props.version?.id || 'new-native-template'); };
@@ -176,4 +176,82 @@ test('native read-only library hides creation, editing and send actions',async()
     const i18n=await showWorkspace({nativeAvailable:true,canUpload:false,canManage:false},'en');
     expect(screen.getByText('Visible only')).toBeVisible();
     for(const key of ['newTemplate','sendFromTemplate','edit'])expect(screen.queryByRole('button',{name:i18n.t(`signingV2.workspace.${key}`)})).toBeNull();
+});
+
+
+test.each(['he', 'ar', 'en'])('archive and restore preserve the selected revision and avoid duplicate legacy choices in %s', async lng => {
+    let archived = false;
+    const version = { id: 'v1', templateId: 'native1', version: 1, lifecycleVersion: 7, state: 'published', canEdit: true, canArchive: true,
+        sourceAvailable: true, definition: { name: 'Reviewed template', documents: [{}], origin: { templateId: 'legacy1', version: 1 } } };
+    api.list.mockResolvedValue({ templates: [{ id: 'legacy1', version: 1, name: 'Legacy duplicate', document_count: 1 }] });
+    api.batches.mockResolvedValue({ batches: [] });
+    packagesApi.authoringTemplates.mockImplementation(options => Promise.resolve({
+        templates: options.archived === archived ? [{ ...version, archived, canEdit: !archived }] : [], importedOrigins: [version.definition.origin],
+    }));
+    packagesApi.archiveTemplate.mockImplementation(async (id, body) => { archived = body.archived; version.lifecycleVersion += 1; return { archived }; });
+    const i18n = await showWorkspace({ nativeAvailable: true }, lng), t = key => i18n.t(`signingV2.authoring.${key}`);
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.workspace.archive') }));
+    const confirm = await screen.findByRole('dialog');
+    expect(confirm).toHaveAttribute('dir', lng === 'en' ? 'ltr' : 'rtl');
+    expect(within(confirm).getByText(i18n.t('signingV2.authoring.archiveConfirm', { name: 'Reviewed template' }))).toBeVisible();
+    expect(within(confirm).getByRole('button', { name: i18n.t('common.cancel') })).toHaveFocus();
+    doubleClick(within(confirm).getByRole('button', { name: i18n.t('signingV2.workspace.archive') }));
+    await waitFor(() => expect(screen.queryByText('Reviewed template')).toBeNull());
+    expect(packagesApi.archiveTemplate).toHaveBeenCalledTimes(1);
+    expect(packagesApi.archiveTemplate).toHaveBeenLastCalledWith('native1', { archived: true, expectedVersion: 7 });
+    expect(screen.queryByText('Legacy duplicate')).toBeNull();
+    fireEvent.click(screen.getByRole('radio', { name: t('archivedTemplates') }));
+    await screen.findByText('Reviewed template');
+    expect(screen.getByText(t('archiveHelp'))).toBeVisible();
+    expect(screen.queryByRole('button', { name: i18n.t('signingV2.workspace.sendFromTemplate') })).toBeNull();
+    expect(screen.queryByRole('button', { name: i18n.t('signingV2.workspace.edit') })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: t('restore') }));
+    fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: t('restore') }));
+    await screen.findByText(t('emptyArchive'));
+    expect(packagesApi.archiveTemplate).toHaveBeenLastCalledWith('native1', { archived: false, expectedVersion: 8 });
+    fireEvent.click(screen.getByRole('radio', { name: t('activeTemplates') }));
+    await screen.findByText('Reviewed template');
+    expect(screen.getByRole('button', { name: i18n.t('signingV2.workspace.sendFromTemplate') })).toBeEnabled();
+});
+
+test('archive cancellation sends nothing, stale confirmation retains the template and refresh obtains the current version', async () => {
+    const version = { id: 'v1', templateId: 't1', lifecycleVersion: 1, version: 1, state: 'published', canArchive: true,
+        definition: { name: 'Preserved work', documents: [] } };
+    api.list.mockResolvedValue({ templates: [] }); api.batches.mockResolvedValue({ batches: [] });
+    packagesApi.authoringTemplates.mockResolvedValue({ templates: [version] });
+    packagesApi.archiveTemplate.mockRejectedValueOnce({ code: 'VERSION_CHANGED' });
+    const i18n = await showWorkspace({ nativeAvailable: true }, 'en');
+    const button = screen.getByRole('button', { name: i18n.t('signingV2.workspace.archive') });
+    button.focus(); fireEvent.click(button);
+    fireEvent.keyDown(await screen.findByRole('dialog'), { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).toBeNull(); expect(button).toHaveFocus();
+    expect(packagesApi.archiveTemplate).not.toHaveBeenCalled();
+    fireEvent.click(button);
+    fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: i18n.t('signingV2.workspace.archive') }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(i18n.t('signingV2.errors.VERSION_CHANGED'));
+    expect(screen.getByText('Preserved work')).toBeVisible();
+    packagesApi.authoringTemplates.mockResolvedValue({ templates: [{ ...version, lifecycleVersion: 2 }] });
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.refresh') }));
+    await waitFor(() => expect(screen.getByRole('button', { name: i18n.t('signingV2.workspace.archive') })).toBeEnabled());
+    expect(screen.queryByRole('alert')).toBeNull();
+    packagesApi.archiveTemplate.mockResolvedValue({ archived: true });
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.workspace.archive') }));
+    fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: i18n.t('signingV2.workspace.archive') }));
+    await waitFor(() => expect(packagesApi.archiveTemplate).toHaveBeenLastCalledWith('t1', { archived: true, expectedVersion: 2 }));
+    await waitFor(() => expect(screen.queryByText(i18n.t('signingV2.workspace.loading'))).toBeNull());
+});
+
+test('an archived source cannot be restored indirectly and manage does not require upload', async () => {
+    api.list.mockResolvedValue({ templates: [] }); api.batches.mockResolvedValue({ batches: [] });
+    packagesApi.authoringTemplates.mockImplementation(({ archived }) => Promise.resolve({ templates: archived ? [
+        { id: 'v1', templateId: 't1', state: 'published', archived: true, canArchive: true, sourceAvailable: false, definition: { name: 'Archived source', documents: [] } },
+        { id: 'v2', templateId: 't2', state: 'published', archived: true, canArchive: true, sourceAvailable: true, definition: { name: 'Restorable', documents: [] } },
+    ] : [] }));
+    const i18n = await showWorkspace({ nativeAvailable: true, canUpload: false, canManage: true }, 'en');
+    fireEvent.click(screen.getByRole('radio', { name: i18n.t('signingV2.authoring.archivedTemplates') }));
+    await screen.findByText('Archived source');
+    expect(screen.getByText(i18n.t('signingV2.authoring.sourceArchived'))).toBeVisible();
+    const row = screen.getAllByRole('listitem').find(item => within(item).queryByText('Archived source'));
+    expect(within(row).queryByRole('button')).toBeNull();
+    expect(screen.getAllByRole('button', { name: i18n.t('signingV2.authoring.restore') })).toHaveLength(1);
 });

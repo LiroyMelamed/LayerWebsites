@@ -32,6 +32,7 @@ async function actorScope(db, req, action = 'view') {
         assignedCases: custom && req.firmPermissions?.areas?.signing?.legacyCaseAssignment === true,
         caseView: !custom || hasAreaAction(req.firmPermissions, 'cases', 'view'),
         caseAll: !custom || getCasesDataScope(req.firmPermissions) === 'all_firm',
+        templateManage: !custom || hasAreaAction(req.firmPermissions, 'signing', 'manage'),
         manage: !custom || (hasAreaAction(req.firmPermissions, 'signing', 'manage') && hasAreaAction(req.firmPermissions, 'signing', 'upload')),
         mode,
     });

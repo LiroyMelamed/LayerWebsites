@@ -18,6 +18,7 @@ const run = fn => (req, res, next) => Promise.resolve(fn(req, res)).catch(next);
 const view = requireFirmAction('signing', 'view', { legacy: 'lawyerOrAdmin' });
 // Reminders and resends use the existing publish capability; view access alone never sends.
 const send = requireFirmAction('signing', 'upload', { legacy: 'lawyerOrAdmin' });
+const manage = requireFirmAction('signing', 'manage', { legacy: 'lawyerOrAdmin' });
 
 // Offices that have not been enabled keep the current signing flows untouched.
 router.use((req, res, next) => (process.env.SIGNING_V2_ENABLED === 'true' ? next() : next(createAppError('NOT_FOUND', 404))));
@@ -49,7 +50,9 @@ router.post('/packages/:id/participants/:personId/actions', send, run(async (req
     res.status(result.reused ? 200 : 202).json(result);
 }));
 router.get('/templates', view, run(async (req, res) => res.json(await creation.listTemplates(pool, await actorScope(pool, req, 'view')))));
-router.get('/authoring/templates', view, run(async (req, res) => res.json(await authoring.catalog(pool, await actorScope(pool, req, 'view')))));
+router.get('/authoring/templates', view, run(async (req, res) => res.json(await authoring.catalog(pool, await actorScope(pool, req, 'view'), { archived: req.query.archived === 'true' }))));
+router.post('/authoring/templates/:id/archive', manage, run(async (req, res) =>
+    res.json(await authoring.setArchived(pool, await actorScope(pool, req, 'manage'), req.params.id, req.body || {}))));
 router.get('/authoring/versions/:id', view, run(async (req, res) =>
     res.json({ version: authoring.versionView(await authoring.loadVersion(pool, await actorScope(pool, req, 'view'), req.params.id)) })));
 router.put('/authoring/drafts/:id', send, run(async (req, res) =>
