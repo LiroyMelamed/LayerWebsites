@@ -158,7 +158,7 @@ function createRuntime({ pool, env = process.env, storage, provider, renderer, c
     // Without an explicit provider, invitations stay queued; nothing is sent and nothing is marked failed.
     if (provider) handlers.dispatch_delivery = createDeliveryService({ pool, grantService, provider, linkFor: linkFor(env) });
     const workerId = `signing-v2:${os.hostname()}:${process.pid}:${randomUUID().slice(0, 8)}`.slice(0, 100);
-    let timer = null, running = false, stopped = false, recoveredAt = 0;
+    let timer = null, inFlight = null, stopped = false, recoveredAt = 0;
 
     async function runLease(kind, lease) {
         try { await handlers[kind](lease); }
@@ -173,9 +173,7 @@ function createRuntime({ pool, env = process.env, storage, provider, renderer, c
         }
     }
 
-    async function tick() {
-        if (running || stopped) return 0;
-        running = true;
+    async function performTick() {
         let processed = 0;
         try {
             if (Date.now() - recoveredAt > 30000) {
@@ -192,10 +190,17 @@ function createRuntime({ pool, env = process.env, storage, provider, renderer, c
             }
         } catch (error) {
             log.error('[signing-v2] worker tick failed', error?.errorCode || error?.code || 'ERROR');
-        } finally {
-            running = false;
         }
         return processed;
+    }
+
+    function tick() {
+        // A concurrent drain joins the current pass. Returning zero here would
+        // falsely report an empty queue while a scheduled worker is still busy.
+        if (inFlight) return inFlight;
+        if (stopped) return Promise.resolve(0);
+        inFlight = performTick().finally(() => { inFlight = null; });
+        return inFlight;
     }
 
     return {
@@ -207,7 +212,13 @@ function createRuntime({ pool, env = process.env, storage, provider, renderer, c
             timer = setInterval(tick, intervalMs);
             timer.unref?.();
         },
-        async stop() { stopped = true; if (timer) clearInterval(timer); timer = null; if (!renderer) await pool_.close(); },
+        async stop() {
+            stopped = true;
+            if (timer) clearInterval(timer);
+            timer = null;
+            await inFlight;
+            if (!renderer) await pool_.close();
+        },
     };
 }
 
