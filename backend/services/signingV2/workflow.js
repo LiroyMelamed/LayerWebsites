@@ -12,7 +12,7 @@ async function lockRevision(db,contextId,revisionId) {
         WHERE r.owner_context_id=$1 AND r.id=$2 FOR UPDATE OF p,r`,[contextId,revisionId]);
     if(!result.rowCount) fail('NOT_FOUND',404);
     const revision=result.rows[0];
-    expect(revision.active_revision_id===revision.id && !['cancelled','superseded','expired','draft'].includes(revision.workflow_state),'REVISION_INACTIVE');
+    expect(revision.active_revision_id===revision.id && !['cancelled','superseded','expired','draft','replacement_pending'].includes(revision.workflow_state),'REVISION_INACTIVE');
     expect(revision.before_deadline,'DEADLINE_EXPIRED');
     expect(digest(revision.snapshot)===revision.revision_hash,'REVISION_CHANGED');
     return revision;

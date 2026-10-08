@@ -293,7 +293,7 @@ function normalize(definition, input) {
     for (const role of roles.filter(item => item.audience === 'shared' && rows.some(row => row.activeRoles.includes(item.key)))) {
         shared[role.key] = recipientGroup(roles, input, role, null, definition, `shared.${role.key}`, errors);
     }
-    return { name: input.name.trim(), reviewerUserId: needsApproval(definition.policy) ? input.reviewerUserId ?? null : null, roles, shared, rows, omitted, signingOrder: signingOrder(definition, input, omitted, errors), errors };
+    return { name: input.name.trim(), deadline: input.deadline || null, reviewerUserId: needsApproval(definition.policy) ? input.reviewerUserId ?? null : null, roles, shared, rows, omitted, signingOrder: signingOrder(definition, input, omitted, errors), errors };
 }
 
 function packagesFor(definition, plan, personFor) {
@@ -311,14 +311,14 @@ function packagesFor(definition, plan, personFor) {
                 return { personId: ids.personId, partyId: person.partyId || ids.partyId, ...(person.authorityId ? { authorityId: person.authorityId } : {}) };
             });
         }
-        return { externalKey: row.key, ...(row.caseId ? { caseId: row.caseId } : {}), ...(row.clientId ? { clientId: row.clientId } : {}), data: row.data || {}, ...(row.provenance ? { provenance: row.provenance } : {}), roles, delivery,
+        return { externalKey: row.key, ...(plan.deadline ? { deadline: plan.deadline } : {}), ...(row.caseId ? { caseId: row.caseId } : {}), ...(row.clientId ? { clientId: row.clientId } : {}), data: row.data || {}, ...(row.provenance ? { provenance: row.provenance } : {}), roles, delivery,
             ...(plan.signingOrder ? { signingOrder: plan.signingOrder } : {}),
             ...(plan.omitted.size ? { omitRoles: [...plan.omitted].sort() } : {}) };
     });
 }
 
 function rowsHash(template, plan, references) {
-    return digest({ conditionEvaluatorVersion: CONDITION_EVALUATOR_VERSION, templateVersionId: template.id, definitionHash: template.definition_hash, name: plan.name, ...(plan.reviewerUserId != null ? { reviewerUserId: plan.reviewerUserId } : {}), roleAudience: Object.fromEntries(plan.roles.map(role => [role.key, role.audience])), omitted: [...plan.omitted].sort(), signingOrder: plan.signingOrder, shared: plan.shared, rows: plan.rows, ...(references?.hash ? { directoryHash: references.hash } : {}) });
+    return digest({ conditionEvaluatorVersion: CONDITION_EVALUATOR_VERSION, templateVersionId: template.id, definitionHash: template.definition_hash, name: plan.name, ...(plan.reviewerUserId != null ? { reviewerUserId: plan.reviewerUserId } : {}), roleAudience: Object.fromEntries(plan.roles.map(role => [role.key, role.audience])), omitted: [...plan.omitted].sort(), signingOrder: plan.signingOrder, ...(plan.deadline ? {deadline:plan.deadline} : {}), shared: plan.shared, rows: plan.rows, ...(references?.hash ? { directoryHash: references.hash } : {}) });
 }
 
 // Resolve only explicit directory IDs, in bounded set queries for the whole
@@ -414,7 +414,7 @@ async function createFromRows(pool, scope, input, options) {
 
 // Directory entries, the complete submission and its recoverable draft receipt
 // can share one commit. An interrupted request cannot leave a half-created send.
-async function createFromRowsInTransaction(db, scope, input, { reserveCapacity }) {
+async function createFromRowsInTransaction(db, scope, input, { reserveCapacity, persistRevision }) {
     expect(UUID.test(input.idempotencyKey), 'INVALID_SUBMISSION');
     const { template, definition } = await loadVersion(db, scope, input.templateVersionId);
     const plan = normalize(definition, input);
@@ -447,6 +447,7 @@ async function createFromRowsInTransaction(db, scope, input, { reserveCapacity }
     expect(owned.rows[0].count === rows.length, 'PARTICIPANT_NOT_AVAILABLE');
     const directory = await loadDirectory(db, scope, definition, packages);
     const compiled = packages.map(item => compilePackage(definition, item, directory));
+    if (persistRevision) return persistRevision({template,definition,packages,compiled,plan});
     return createSubmissionInTransaction(db, scope, { name: plan.name, ...(plan.reviewerUserId != null ? {reviewerUserId:plan.reviewerUserId}:{}), templateVersionId: template.id, idempotencyKey: input.idempotencyKey, packages,
         previewHash: previewHash(template, packages, compiled, plan.reviewerUserId) }, { reserveCapacity });
 }

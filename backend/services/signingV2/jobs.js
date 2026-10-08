@@ -51,7 +51,7 @@ async function cancelObsolete(db, contextIds = null) {
             AND r.id=CASE WHEN j.kind IN ('prepare_document','finalize_document') THEN d.revision_id ELSE j.subject_id END
         WHERE j.kind IN ('prepare_document','validate_package','activate_package','render_stage','finalize_document','render_evidence')
             AND j.state IN ('pending','retry','running','needs_attention')
-            AND r.workflow_state IN ('cancelled','superseded')
+            AND r.workflow_state IN ('cancelled','superseded','replacement_pending')
             AND ($1::uuid[] IS NULL OR j.owner_context_id=ANY($1::uuid[]))
     ) UPDATE signing_jobs j SET state='cancelled',error_code='REVISION_INACTIVE',completed_at=clock_timestamp(),
         leased_by=NULL,lease_until=NULL,fencing_token=fencing_token+1

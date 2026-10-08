@@ -6,7 +6,7 @@ const {transaction}=require('./transaction');
 const {checkedSnapshot}=require('./selections');
 const {loadTargets,buildPlan}=require('./bulkReview');
 const {packageScopeSql,scopeParams}=require('./access');
-const {currentSenderScope}=require('./followupScope');
+const {currentSenderScope,requiredDeliveryActions,assertDeliveryPermission}=require('./followupScope');
 const {enqueue,job}=require('./jobs');
 
 // Shared with dispatch. Lock in incumbent signing order, with deterministic
@@ -79,15 +79,16 @@ async function executeBulkAction(pool,scope,input) {
     const requestHash=digest({reviewId:input.reviewId,previewHash:input.previewHash});
     return transaction(pool,async db=>{
         await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[`bulk-request:${scope.contextId}:${scope.userId}:${input.idempotencyKey}`]);
+        const review=(await db.query('SELECT * FROM signing_bulk_reviews WHERE owner_context_id=$1 AND id=$2 AND created_by=$3',
+            [scope.contextId,input.reviewId,scope.userId])).rows[0];
+        if(!review)fail('NOT_FOUND',404);
+        assertDeliveryPermission(scope, {purpose:review.purpose});
         const alias=(await db.query('SELECT * FROM signing_bulk_requests WHERE owner_context_id=$1 AND created_by=$2 AND idempotency_key=$3',
             [scope.contextId,scope.userId,input.idempotencyKey])).rows[0];
         if(alias) {
             if(alias.request_hash!==requestHash)fail('IDEMPOTENCY_CONFLICT',409);
             return {...await bulkOperationStatus(db,scope,alias.operation_id),reused:true};
         }
-        const review=(await db.query('SELECT * FROM signing_bulk_reviews WHERE owner_context_id=$1 AND id=$2 AND created_by=$3',
-            [scope.contextId,input.reviewId,scope.userId])).rows[0];
-        if(!review)fail('NOT_FOUND',404);
         if(review.preview_hash!==input.previewHash)fail('PREVIEW_CHANGED',412);
         await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[`bulk-review-execute:${scope.contextId}:${review.id}`]);
         let op=(await db.query(`SELECT id FROM signing_operations WHERE owner_context_id=$1 AND actor_key=$2 AND kind='bulk_action' AND request_hash=$3`,
@@ -98,7 +99,7 @@ async function executeBulkAction(pool,scope,input) {
             const lockKeys=[...new Set(bindings.map(item=>`signing-v2-action:${scope.contextId}:${item.packageId}:${item.personId}`))].sort();
             await db.query('SELECT pg_advisory_xact_lock(hashtextextended(value,0)) FROM (SELECT unnest($1::text[]) AS value ORDER BY value) keys',[lockKeys]);
             await lockTargets(db,scope.contextId,bindings);
-            const currentScope=await currentSenderScope(db,scope.contextId,scope.userId);
+            const currentScope=await currentSenderScope(db,scope.contextId,scope.userId,requiredDeliveryActions(review.purpose));
             if(!currentScope)fail('FORBIDDEN',403);
             const liveScope={...scope,...currentScope};
             const selection=await checkedSnapshot(db,liveScope,review.selection_id);

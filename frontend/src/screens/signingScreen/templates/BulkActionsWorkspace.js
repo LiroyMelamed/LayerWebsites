@@ -47,6 +47,9 @@ export default function BulkActionsWorkspace({ api, initialFilter = {}, onClose 
     const cursor = cursors.at(-1);
     const changedFilter = ids.length > 0 && !sameFilter(selectionFilter, filter);
     const canSend = page.capabilities?.send === true;
+    const canRemind = canSend && page.capabilities?.packageRemind === true;
+    const canResend = canSend && page.capabilities?.deliveryResend === true;
+    const canPurpose = canSend && (purpose === 'completed_copy' || (purpose === 'reminder' ? canRemind : canResend));
     const channelInput = channel === 'policy' ? undefined : channel;
     const handleAccessFailure = useCallback(failure => {
         if (!['FORBIDDEN', 'NOT_FOUND', 'UNAUTHORIZED'].includes(failure.code)) return false;
@@ -87,6 +90,12 @@ export default function BulkActionsWorkspace({ api, initialFilter = {}, onClose 
         return () => { clearTimeout(timer); controller.abort(); };
     }, [api, operation, phase, reload, pollAttempt, handleAccessFailure]);
     useEffect(() => { heading.current?.focus(); }, [phase]);
+    useEffect(() => {
+        if (phase === 'choose' && !pageBusy && canSend && !canPurpose) {
+            setPurpose(canRemind ? 'reminder' : canResend ? 'resend' : 'completed_copy');
+            keys.current.preview = newKey(); keys.current.execute = newKey();
+        }
+    }, [phase, pageBusy, canSend, canPurpose, canRemind, canResend]);
 
     const resetReview = () => {
         keys.current = { freeze: newKey(), preview: newKey(), execute: newKey() };
@@ -112,7 +121,7 @@ export default function BulkActionsWorkspace({ api, initialFilter = {}, onClose 
         finally { flight.current = false; if (mounted.current) setBusy(false); }
     };
     const beginReview = async () => {
-        if (flight.current || !ids.length) return;
+        if (flight.current || !ids.length || !canPurpose) return;
         flight.current = true; setBusy(true); setError(null);
         try {
             let selection = reviewStale ? null : frozen;
@@ -203,10 +212,10 @@ export default function BulkActionsWorkspace({ api, initialFilter = {}, onClose 
             </nav>}
             {canSend && <div className="lw-signingBulk__setup">
                 <SegmentedSwitch value={purpose} onChange={value => { setPurpose(value); keys.current.preview = newKey(); keys.current.execute = newKey(); }} ariaLabel={t('signingV2.bulk.action')}
-                    options={['reminder', 'resend', 'completed_copy'].map(value => ({ value, label: t(`signingV2.action.${value}.title`), disabled: busy }))} />
+                    options={['reminder', 'resend', 'completed_copy'].map(value => ({ value, label: t(`signingV2.action.${value}.title`), disabled: busy || (value === 'reminder' ? !canRemind : value === 'resend' ? !canResend : !canSend) }))} />
                 <SegmentedSwitch value={channel} onChange={value => { setChannel(value); keys.current.preview = newKey(); keys.current.execute = newKey(); }} ariaLabel={t('signingV2.action.destination')}
                     options={['policy', 'email', 'sms'].map(value => ({ value, label: t(value === 'policy' ? 'signingV2.bulk.policyChannel' : `signingV2.channel.${value}`), disabled: busy }))} />
-                <PrimaryButton disabled={busy || !ids.length} onPress={beginReview}>{busy ? t('common.loading') : t('signingV2.bulk.review')}</PrimaryButton>
+                <PrimaryButton disabled={busy || !ids.length || !canPurpose} onPress={beginReview}>{busy ? t('common.loading') : t('signingV2.bulk.review')}</PrimaryButton>
             </div>}
             <section className="lw-signingBulk__recent" aria-labelledby="signing-bulk-recent"><h2 id="signing-bulk-recent">{t('signingV2.bulk.recent')}</h2>
                 {recentError && <StatusNotice onAction={() => setReload(n => n + 1)} actionLabel={t('common.retry')}><p>{errorMessage(recentError)}</p></StatusNotice>}

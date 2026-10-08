@@ -40,8 +40,14 @@ function objectStorage({ client, bucket }) {
 function officeQuota({ checkFirmLimits }) {
     return async function reserveCapacity(db, scope, capacity) {
         await db.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`signing-batches:${scope.tenantId || 'dedicated'}`]);
-        const used = (await db.query(`SELECT COALESCE(sum(document_count),0)::integer AS documents FROM signing_submissions
-            WHERE owner_context_id=$1 AND committed_at >= date_trunc('month', clock_timestamp() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'`,
+        const used = (await db.query(`SELECT COALESCE(sum(document_count),0)::integer AS documents FROM (
+            SELECT document_count FROM signing_submissions
+            WHERE owner_context_id=$1 AND committed_at >= date_trunc('month', clock_timestamp() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'
+            UNION ALL
+            SELECT document_count FROM signing_replacement_drafts
+            WHERE owner_context_id=$1 AND state='published'
+                AND published_at >= date_trunc('month', clock_timestamp() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'
+        ) monthly_documents`,
         [scope.contextId])).rows[0].documents;
         const check = await checkFirmLimits({ action: 'upload_signing_file',
             increments: { documentsCreatedThisMonth: used + capacity.documents, storageBytesTotal: capacity.estimatedOutputBytes } });
@@ -52,6 +58,14 @@ function officeQuota({ checkFirmLimits }) {
 // Activation happens later than creation; the creator's current access decides, not the access at enqueue time.
 async function authorizeActivation(db, revision) {
     expect(process.env.SIGNING_V2_ENABLED === 'true', 'ACTIVATION_NOT_AUTHORIZED');
+    if (revision.replaces_revision_id) {
+        const { currentRevisionScope } = require('./followupScope');
+        const { packageScopeSql, scopeParams } = require('./access');
+        const scope = await currentRevisionScope(db, revision.owner_context_id, revision.authorized_by_userid);
+        expect(scope && (await db.query(`SELECT 1 FROM signing_packages p WHERE ${packageScopeSql('p')} AND p.id=$5`,
+            [...scopeParams(scope), revision.package_id])).rowCount === 1, 'ACTIVATION_NOT_AUTHORIZED');
+        return;
+    }
     const owner = (await db.query(`SELECT u.role,u.firm_staff_role_id,r.permissions,r.is_active FROM signing_packages p
         JOIN users u ON u.userid=p.owner_userid LEFT JOIN firm_staff_roles r ON r.id=u.firm_staff_role_id
         WHERE p.owner_context_id=$1 AND p.id=$2`, [revision.owner_context_id, revision.package_id])).rows[0];

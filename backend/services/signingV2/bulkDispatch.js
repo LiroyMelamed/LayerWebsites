@@ -1,7 +1,7 @@
 const {digest}=require('../../lib/signingV2/canonical');
 const {lockTargets}=require('./bulkActions');
 const {loadTargets}=require('./bulkReview');
-const {currentSenderScope,taskManifest}=require('./followupScope');
+const {currentSenderScope,taskManifest,requiredDeliveryActions}=require('./followupScope');
 const {documentManifest,copiesReady}=require('./completedCopy');
 
 async function planBulkDelivery(db,delivery,grantService) {
@@ -19,7 +19,7 @@ async function planBulkDelivery(db,delivery,grantService) {
         || digest(group.policy)!==digest(delivery.target_snapshot.policy)
         || bindings.some(binding=>!approved.has(digest(binding))))return skip('cancelled','ACTION_REVIEW_REQUIRED');
     await lockTargets(db,contextId,bindings);
-    const scope=await currentSenderScope(db,contextId,delivery.target_snapshot.actorUserId);
+    const scope=await currentSenderScope(db,contextId,delivery.target_snapshot.actorUserId,requiredDeliveryActions(delivery.purpose));
     const targets=scope?await loadTargets(db,scope,{items:bindings}):[];
     const byPackage=new Map(targets.filter(target=>target.person_id===delivery.target_snapshot.personId).map(target=>[target.id,target]));
     const links=new Set((await db.query(`SELECT id FROM signing_public_grants WHERE owner_context_id=$1 AND id=ANY($2::uuid[])

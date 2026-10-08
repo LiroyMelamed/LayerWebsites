@@ -17,6 +17,7 @@ const authoring = require('../services/signingV2/authoring');
 const directory = require('../services/signingV2/participantDirectory');
 const approvals = require('../services/signingV2/approvals');
 const lifecycle = require('../services/signingV2/packageLifecycle');
+const replacement = require('../services/signingV2/replacement');
 const contacts = require('../services/signingV2/contactChanges');
 const authorities = require('../services/signingV2/authorities');
 const workbook = require('../lib/signingV2/workbook');
@@ -29,6 +30,7 @@ const view = requireFirmAction('signing', 'view', { legacy: 'lawyerOrAdmin' });
 const send = requireFirmAction('signing', 'upload', { legacy: 'lawyerOrAdmin' });
 const approveAuthority = requireFirmAction('signing', 'authority_manage', { legacy: 'lawyerOrAdmin' });
 const manage = requireFirmAction('signing', 'manage', { legacy: 'lawyerOrAdmin' });
+const revise = requireFirmAction('signing', 'package_revision_create', { legacy: 'lawyerOrAdmin' });
 
 // Offices that have not been enabled keep the current signing flows untouched.
 router.use((req, res, next) => (process.env.SIGNING_V2_ENABLED === 'true' ? next() : next(createAppError('NOT_FOUND', 404))));
@@ -62,9 +64,20 @@ router.get('/bulk-actions/:id',send,run(async(req,res)=>
     res.json(await bulkActions.bulkOperationStatus(pool,await actorScope(pool,req,'upload'),req.params.id))));
 router.get('/submissions/:id/packages', view, run(async (req, res) =>
     res.json(await management.listPackages(pool, await actorScope(pool, req, 'view'), req.params.id, req.query))));
+router.get('/submissions/:id/participants', view, run(async (req,res) => res.json(await require('../services/signingV2/participantSummary')
+    .participantSummary(pool,await actorScope(pool,req,'view'),req.params.id))));
 router.get('/packages/:id', view, run(async (req, res) => res.json(await management.packageDetails(pool, await actorScope(pool, req, 'view'), req.params.id))));
 router.post('/packages/:id/lifecycle-preview', manage, run(async (req,res) => res.json(await lifecycle.previewPackageAction(pool,await actorScope(pool,req,'manage'),req.params.id,req.body || {}))));
 router.post('/packages/:id/lifecycle', manage, run(async (req,res) => res.json(await lifecycle.executePackageAction(pool,await actorScope(pool,req,'manage'),req.params.id,{...(req.body || {}),idempotencyKey:req.get('Idempotency-Key')}))));
+router.get('/packages/:id/replacement', revise, run(async (req,res) => res.json(await replacement.readReplacement(pool,await actorScope(pool,req,'package_revision_create'),req.params.id))));
+router.post('/packages/:id/replacement/start', revise, run(async (req,res) => res.json(await replacement.startReplacement(pool,await actorScope(pool,req,'package_revision_create'),req.params.id,{...(req.body || {}),idempotencyKey:req.get('Idempotency-Key')}))));
+router.post('/packages/:id/replacement/preview', revise, run(async (req,res) => res.json(await replacement.previewReplacement(pool,await actorScope(pool,req,'package_revision_create'),req.params.id,req.body || {}))));
+router.post('/packages/:id/replacement', revise, run(async (req,res) => {
+    const result = await replacement.executeReplacement(pool,await actorScope(pool,req,'package_revision_create'),req.params.id,
+        {...(req.body || {}),idempotencyKey:req.get('Idempotency-Key')},
+        { reserveCapacity: officeQuota({ checkFirmLimits: (...args) => require('../lib/limits/enforceFirmLimits').checkFirmLimitsOrNull(...args) }) });
+    res.status(result.reused ? 200 : 202).json(result);
+}));
 router.get('/approval-reviewers',send,run(async(req,res)=>res.json({users:await approvals.approvers(pool,await actorScope(pool,req,'upload'))})));
 router.get('/packages/:id/approval',view,run(async(req,res)=>res.json(await approvals.readReview(pool,await actorScope(pool,req,'package_approve'),req.params.id))));
 router.post('/packages/:id/approval',view,run(async(req,res)=>res.json(await approvals.decide(pool,await actorScope(pool,req,'package_approve'),req.params.id,{...(req.body||{}),idempotencyKey:req.get('Idempotency-Key')}))));
@@ -77,6 +90,17 @@ router.get('/packages/:id/documents/:documentId', view, run(async (req, res) => 
 router.get('/packages/:id/evidence', view, run(async (req, res) => {
     const { r2, BUCKET } = require('../utils/r2');
     pdf(res, await management.packageEvidenceFile(pool, await actorScope(pool, req, 'view'), req.params.id, objectStorage({ client: r2, bucket: BUCKET })), 'evidence.pdf');
+}));
+router.get('/packages/:id/revisions/:revisionId/documents/:documentId', view, run(async (req,res) => {
+    const { r2, BUCKET } = require('../utils/r2');
+    const file = await management.packageDocumentFile(pool,await actorScope(pool,req,'view'),req.params.id,req.params.documentId,
+        objectStorage({ client:r2,bucket:BUCKET }),req.params.revisionId);
+    pdf(res.set('X-Document-Final',String(file.final)),file,'document.pdf');
+}));
+router.get('/packages/:id/revisions/:revisionId/evidence', view, run(async (req,res) => {
+    const { r2, BUCKET } = require('../utils/r2');
+    pdf(res,await management.packageEvidenceFile(pool,await actorScope(pool,req,'view'),req.params.id,
+        objectStorage({ client:r2,bucket:BUCKET }),req.params.revisionId),'evidence.pdf');
 }));
 router.post('/packages/:id/participants/:personId/action-preview', send, run(async (req, res) =>
     res.json(await actions.previewParticipantAction(pool, await actorScope(pool, req, 'upload'), target(req)))));

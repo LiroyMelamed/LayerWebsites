@@ -5,7 +5,7 @@ const { expect, fail } = require('../../lib/signingV2/errors');
 const { packageScopeSql, scopeParams } = require('./access');
 const { checkedSnapshot } = require('./selections');
 const { evaluate } = require('./actions');
-const { taskManifest } = require('./followupScope');
+const { taskManifest, assertDeliveryPermission } = require('./followupScope');
 const { documentManifest } = require('./completedCopy');
 const { transaction } = require('./transaction');
 
@@ -141,6 +141,7 @@ function publicReview(row,plan,reused=false) {
 async function previewBulkAction(pool,scope,input) {
     expect(UUID.test(input.selectionId||'') && UUID.test(input.idempotencyKey||'') && PURPOSES.has(input.purpose),'INVALID_ACTION');
     expect(input.channel===undefined || input.channel===null || CHANNELS.has(input.channel),'INVALID_ACTION');
+    assertDeliveryPermission(scope, input);
     const requestHash=digest({selectionId:input.selectionId,purpose:input.purpose,channel:input.channel||null});
     return transaction(pool,async db=>{
         const selection=await checkedSnapshot(db,scope,input.selectionId);

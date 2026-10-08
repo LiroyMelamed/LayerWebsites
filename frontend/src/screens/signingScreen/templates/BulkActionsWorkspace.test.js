@@ -23,7 +23,7 @@ function fixture() {
         items: rows.map(row => ({ deliveryId: 'delivery-1', packageId: row.id, packageName: row.name, state: 'queued' })) };
     const accepted = { ...queued, state: 'complete', counts: { messages: 1, acceptedMessages: 1 }, items: queued.items.map(item => ({ ...item, state: 'provider_accepted' })) };
     return { rows, selection, review, queued, accepted, api: {
-        matchingPackages: jest.fn().mockResolvedValue({ rows, total: 2, capabilities: { send: true } }),
+        matchingPackages: jest.fn().mockResolvedValue({ rows, total: 2, capabilities: { send: true, packageRemind: true, deliveryResend: true } }),
         freezeSelection: jest.fn().mockResolvedValue(selection), previewBulk: jest.fn().mockResolvedValue(review),
         executeBulk: jest.fn().mockResolvedValue(queued), bulkOperation: jest.fn().mockResolvedValue(accepted),
         bulkOperations: jest.fn().mockResolvedValue({ rows: [] }),
@@ -188,4 +188,26 @@ test('selection limit applies to accumulated page selections as well as all matc
     fireEvent.click(screen.getByRole('checkbox', { name: /Alpha/ }));
     expect(await screen.findByRole('alert')).toHaveTextContent(rendered.t('signingV2.errors.SELECTION_TOO_LARGE'));
     expect(screen.getByRole('checkbox', { name: /Alpha/ })).not.toBeChecked();
+});
+
+test('new explicit bulk action permissions keep upload-only users away from reminder and resend', async () => {
+    const f = fixture();
+    f.api.matchingPackages.mockResolvedValue({ rows:f.rows,total:2,capabilities:{send:true,packageRemind:false,deliveryResend:false} });
+    const view = await setup(f);
+    expect(screen.getByRole('radio',{name:view.t('signingV2.action.reminder.title')})).toBeDisabled();
+    expect(screen.getByRole('radio',{name:view.t('signingV2.action.resend.title')})).toBeDisabled();
+    const copy = screen.getByRole('radio',{name:view.t('signingV2.action.completed_copy.title')});
+    await waitFor(()=>expect(copy).toBeChecked());
+    await reviewPage(view);
+    expect(f.api.previewBulk).toHaveBeenCalledWith('selection-1',expect.objectContaining({purpose:'completed_copy'}),expect.any(String));
+});
+
+test('new explicit resend permission offers resend without implicitly granting reminder', async () => {
+    const f = fixture();
+    f.api.matchingPackages.mockResolvedValue({rows:f.rows,total:2,capabilities:{send:true,packageRemind:false,deliveryResend:true}});
+    const view = await setup(f);
+    expect(screen.getByRole('radio',{name:view.t('signingV2.action.reminder.title')})).toBeDisabled();
+    await waitFor(()=>expect(screen.getByRole('radio',{name:view.t('signingV2.action.resend.title')})).toBeChecked());
+    await reviewPage(view);
+    expect(f.api.previewBulk).toHaveBeenCalledWith('selection-1',expect.objectContaining({purpose:'resend'}),expect.any(String));
 });

@@ -128,7 +128,7 @@ async function createSubmissionInTransaction(db, scope, input, { reserveCapacity
         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
     [submissionId, scope.contextId, scope.userId, template.id, input.name.trim(), input.idempotencyKey, requestHash, capacity.packages, capacity.documents])).rows[0];
     const rows = buildRows(input.packages, compiled);
-    await persistRows(db, scope, submissionId, rows);
+    await persistRows(db, scope, submissionId, rows,{templateVersionId:template.id});
     await createRequests(db, scope, rows, approval);
     await db.query(`INSERT INTO signing_events_v2(owner_context_id,package_id,actor_key,kind,details)
         SELECT $1,id,$2,$5,jsonb_build_object('submissionId',$3::text,'revisionHash',revision_hash)
@@ -186,14 +186,20 @@ function buildRows(inputs, compiled) {
     return rows;
 }
 
-async function persistRows(db, scope, submissionId, rows) {
+async function persistRows(db, scope, submissionId, rows, revisionOptions) {
     const contextId = scope.contextId;
     await db.query(`INSERT INTO signing_packages(id,owner_context_id,submission_id,external_key,owner_userid,case_id,client_userid,transaction_ref,active_revision_id)
         SELECT id,$1,$2,external_key,$3,case_id,client_userid,transaction_ref,active_revision_id FROM jsonb_to_recordset($4::jsonb)
         AS p(id uuid,external_key text,case_id integer,client_userid integer,transaction_ref text,active_revision_id uuid)`, [contextId, submissionId, scope.userId, JSON.stringify(rows.packages)]);
-    await db.query(`INSERT INTO signing_package_revisions(id,owner_context_id,package_id,revision_no,workflow_state,snapshot,revision_hash,hash_version,deadline)
-        SELECT id,$1,package_id,1,'authorized_preparing',snapshot,revision_hash,hash_version,deadline FROM jsonb_to_recordset($2::jsonb)
-        AS r(id uuid,package_id uuid,snapshot jsonb,revision_hash text,hash_version text,deadline timestamptz)`, [contextId, JSON.stringify(rows.revisions)]);
+    await persistRevisionRows(db, scope, rows, revisionOptions);
+}
+
+// Fresh rows only: replacement never reuses tasks, sessions, actions or artifacts.
+async function persistRevisionRows(db, scope, rows, {revisionNo=1,replacesRevisionId=null,templateVersionId=null,authorizedBy=scope.userId}={}) {
+    const contextId=scope.contextId;
+    await db.query(`INSERT INTO signing_package_revisions(id,owner_context_id,package_id,revision_no,replaces_revision_id,workflow_state,snapshot,revision_hash,hash_version,deadline,template_version_id,authorized_by_userid)
+        SELECT id,$1,package_id,$3,$4,'authorized_preparing',snapshot,revision_hash,hash_version,deadline,$5,$6 FROM jsonb_to_recordset($2::jsonb)
+        AS r(id uuid,package_id uuid,snapshot jsonb,revision_hash text,hash_version text,deadline timestamptz)`, [contextId, JSON.stringify(rows.revisions),revisionNo,replacesRevisionId,templateVersionId,authorizedBy]);
     await db.query(`INSERT INTO signing_participations(id,owner_context_id,revision_id,person_id,represented_party_id,role_key,occurrence,capacity,authority_id,authority_version,identity_snapshot)
         SELECT id,$1,revision_id,person_id,represented_party_id,role_key,occurrence,capacity,authority_id,authority_version,identity_snapshot FROM jsonb_to_recordset($2::jsonb)
         AS p(id uuid,revision_id uuid,person_id uuid,represented_party_id uuid,role_key text,occurrence integer,capacity text,authority_id uuid,authority_version integer,identity_snapshot jsonb)`, [contextId, JSON.stringify(rows.participations)]);
@@ -212,4 +218,4 @@ async function persistRows(db, scope, submissionId, rows) {
     await enqueue(db, contextId, rows.jobs, rows.dependencies);
 }
 
-module.exports = { createSubmission, createSubmissionInTransaction, resultFor, loadDirectory, previewHash, buildRows };
+module.exports = { createSubmission, createSubmissionInTransaction, resultFor, loadDirectory, previewHash, buildRows, persistRevisionRows };

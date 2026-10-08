@@ -4,6 +4,40 @@ const { digest, bytesHash } = require('../../lib/signingV2/canonical');
 const { packageScopeSql, scopeParams } = require('./access');
 
 const PAGE_SIZE = 25;
+const PROJECTION_VERSION = 2;
+
+function projectionMetadata(scope, asOf) {
+    return { projectionVersion: PROJECTION_VERSION, asOf: new Date(asOf).toISOString(), freshness: 'current',
+        scope: { kind: 'authorized_packages', fingerprint: digest({ contextId: scope.contextId, userId: scope.userId,
+            all: Boolean(scope.all), assignedCases: Boolean(scope.assignedCases), caseView: Boolean(scope.caseView),
+            caseAll: Boolean(scope.caseAll), send: Boolean(scope.send), packageRemind: Boolean(scope.packageRemind),
+            deliveryResend: Boolean(scope.deliveryResend), packageRevise: Boolean(scope.packageRevise) }) } };
+}
+
+// Bulk deliveries belong to their reviewed members, not just their anchor profile.
+// Per-member exclusions override the shared provider result, including timestamps.
+function deliveryMembershipCte() {
+    return `delivery_memberships AS (
+        SELECT dp.revision_id,dp.id AS profile_id,dp.person_id,d.id AS delivery_id,d.purpose,d.channel,
+            d.state,d.error_code,d.created_at,d.attempted_at,d.provider_accepted_at,d.delivered_at
+        FROM authorized a JOIN signing_delivery_profiles dp ON dp.owner_context_id=a.owner_context_id AND dp.revision_id=a.active_revision_id
+        JOIN signing_deliveries d ON d.owner_context_id=dp.owner_context_id AND d.profile_id=dp.id
+        WHERE d.target_snapshot->>'bulk' IS DISTINCT FROM 'true'
+        UNION ALL
+        SELECT dp.revision_id,dp.id,dp.person_id,d.id,d.purpose,d.channel,
+            CASE WHEN i.state='included' THEN d.state ELSE i.state END,
+            CASE WHEN i.state='included' THEN d.error_code ELSE i.error_code END,d.created_at,
+            CASE WHEN i.state='included' THEN d.attempted_at END,
+            CASE WHEN i.state='included' THEN d.provider_accepted_at END,
+            CASE WHEN i.state='included' THEN d.delivered_at END
+        FROM authorized a JOIN signing_delivery_profiles dp ON dp.owner_context_id=a.owner_context_id AND dp.revision_id=a.active_revision_id
+        JOIN signing_delivery_items i ON i.owner_context_id=dp.owner_context_id AND i.profile_id=dp.id
+            AND i.person_id=dp.person_id AND i.revision_id=dp.revision_id AND i.package_id=a.id
+        JOIN signing_deliveries d ON d.owner_context_id=i.owner_context_id AND d.id=i.delivery_id
+        WHERE d.target_snapshot->>'bulk'='true'
+    )`;
+}
+
 function filters(input = {}) {
     const state = input.state || 'pending';
     expect(['pending', 'attention', 'complete', 'cancelled', 'all'].includes(state), 'INVALID_FILTER');
@@ -22,7 +56,7 @@ function filters(input = {}) {
 
 // Every aggregate starts from authorized packages. Joining actions and deliveries
 // directly would multiply counts; each axis is aggregated separately first.
-function projectionCte(scope) {
+function projectionCte(scope, groupParameter = null) {
     const caseVisible = scope.caseView ? (scope.caseAll ? 'TRUE' : 'EXISTS (SELECT 1 FROM case_users cu WHERE cu.caseid=c.caseid AND cu.userid=$3)') : 'FALSE';
     return `authorized AS (
         SELECT p.*,r.workflow_state,r.revision_hash,r.deadline,r.snapshot->>'locale' AS locale,
@@ -38,7 +72,7 @@ function projectionCte(scope) {
         LEFT JOIN cases c ON c.caseid=p.case_id AND (${caseVisible}) AND
             (to_jsonb(c)->>'law_firm_tenant_id') IS NOT DISTINCT FROM
             (SELECT law_firm_tenant_id::text FROM signing_owner_contexts WHERE id=p.owner_context_id)
-        WHERE ${packageScopeSql('p')}
+        WHERE ${packageScopeSql('p')}${groupParameter ? ` AND COALESCE(p.submission_id,p.id)=$${groupParameter}::uuid` : ''}
     ), task_counts AS (
         SELECT t.revision_id,count(*) FILTER (WHERE t.required) AS required_count,
             count(*) FILTER (WHERE t.required AND t.state='accepted') AS accepted_count,
@@ -54,15 +88,14 @@ function projectionCte(scope) {
             count(*) FILTER (WHERE d.state='failed') AS failed_count
         FROM signing_documents d JOIN authorized a ON a.owner_context_id=d.owner_context_id AND a.active_revision_id=d.revision_id
         GROUP BY d.revision_id
-    ), delivery_rows AS (
+    ), ${deliveryMembershipCte()}, delivery_rows AS (
         -- Only the latest attempt per person, channel and message kind decides attention:
         -- a successful resend clears an earlier failure instead of leaving it flagged forever.
-        SELECT p.revision_id,d.state,d.attempted_at,
+        SELECT d.revision_id,d.state,d.attempted_at,
             row_number() OVER (PARTITION BY d.profile_id,d.channel,
                 CASE WHEN d.purpose IN ('invitation','reminder','resend') THEN 'invite' ELSE d.purpose END
-                ORDER BY d.created_at DESC,d.id DESC) AS recency
-        FROM signing_delivery_profiles p JOIN authorized a ON a.owner_context_id=p.owner_context_id AND a.active_revision_id=p.revision_id
-        JOIN signing_deliveries d ON d.owner_context_id=p.owner_context_id AND d.profile_id=p.id
+                ORDER BY d.created_at DESC,d.delivery_id DESC) AS recency
+        FROM delivery_memberships d
     ), delivery_counts AS (
         SELECT revision_id,count(*) FILTER (WHERE state IN ('provider_accepted','delivered')) AS accepted_messages,
             count(*) FILTER (WHERE state='delivered') AS delivered_messages,
@@ -70,6 +103,10 @@ function projectionCte(scope) {
             count(*) FILTER (WHERE state='pending') AS pending_messages,
             max(attempted_at) AS last_message_at
         FROM delivery_rows GROUP BY revision_id
+    ), group_message_counts AS (
+        SELECT a.group_id,count(DISTINCT d.delivery_id) FILTER (WHERE d.state IN ('provider_accepted','delivered')) AS accepted_messages,
+            count(DISTINCT d.delivery_id) FILTER (WHERE d.state='delivered') AS delivered_messages
+        FROM authorized a JOIN delivery_memberships d ON d.revision_id=a.active_revision_id GROUP BY a.group_id
     ), person_search AS (
         SELECT p.revision_id,string_agg(p.identity_snapshot->>'name',' ') AS person_names,
             string_agg(p.identity_snapshot->>'partyName',' ') AS party_names
@@ -102,7 +139,7 @@ function stateMatchesSql(alias, parameter) {
         OR ($${parameter}='cancelled' AND ${alias}.workflow_state='cancelled')
         OR ($${parameter}='pending' AND ${alias}.workflow_state NOT IN ('complete','cancelled','superseded'))
         OR ($${parameter}='attention' AND ${alias}.workflow_state NOT IN ('complete','cancelled','superseded')
-            AND (${alias}.issue_count>0 OR ${alias}.workflow_state IN ('attention','expired'))))`;
+            AND (${alias}.issue_count>0 OR ${alias}.workflow_state IN ('attention','expired','replacement_pending'))))`;
 }
 
 function encodeCursor(row) {
@@ -114,34 +151,42 @@ async function listSubmissions(db, scope, input) {
     const selectedId = input?.submissionId || null;
     expect(selectedId === null || UUID.test(selectedId), 'INVALID_SUBMISSION');
     const result = await db.query(`WITH ${projectionCte(scope)}, matching_groups AS (
-        SELECT DISTINCT group_id FROM projected p WHERE ${queryMatchesSql()} AND ${stateMatchesSql('p', 6)}
+        SELECT DISTINCT group_id FROM projected p WHERE ${queryMatchesSql()}
+            AND ($6 IN ('complete','cancelled') OR ${stateMatchesSql('p', 6)})
             AND ($10::uuid IS NULL OR p.group_id=$10)
     ), grouped AS (
         SELECT p.group_id AS id,(array_agg(p.group_name))[1] AS name,min(p.group_created_at) AS created_at,
             bool_or(p.submission_id IS NOT NULL) AS is_batch,count(*) AS package_count,
+            count(*) FILTER (WHERE p.workflow_state NOT IN ('cancelled','superseded')) AS active_package_count,
             count(*) FILTER (WHERE p.workflow_state='complete') AS complete_count,
             count(*) FILTER (WHERE p.workflow_state='cancelled') AS cancelled_count,
             count(*) FILTER (WHERE p.workflow_state='authorized_preparing') AS preparing_count,
-            count(*) FILTER (WHERE p.issue_count>0 OR p.workflow_state IN ('attention','expired')) AS attention_count,
+            count(*) FILTER (WHERE p.issue_count>0 OR p.workflow_state IN ('attention','expired','replacement_pending')) AS attention_count,
             COALESCE(sum(p.required_count) FILTER (WHERE p.workflow_state NOT IN ('cancelled','superseded')),0) AS required_count,
             COALESCE(sum(p.accepted_count) FILTER (WHERE p.workflow_state NOT IN ('cancelled','superseded')),0) AS accepted_count,
             sum(p.document_count) AS document_count,sum(p.prepared_count) AS prepared_count,sum(p.final_count) AS final_count,
-            sum(p.accepted_messages) AS accepted_messages,sum(p.delivered_messages) AS delivered_messages,
+            COALESCE((SELECT accepted_messages FROM group_message_counts m WHERE m.group_id=p.group_id),0) AS accepted_messages,
+            COALESCE((SELECT delivered_messages FROM group_message_counts m WHERE m.group_id=p.group_id),0) AS delivered_messages,
             max(p.last_message_at) AS last_message_at,
             bool_or(${queryMatchesSql()}) AS matches_search
         FROM projected p JOIN matching_groups m ON m.group_id=p.group_id GROUP BY p.group_id
+    ), classified AS (
+        SELECT * FROM grouped WHERE $6 NOT IN ('complete','cancelled')
+            OR ($6='complete' AND active_package_count>0 AND complete_count=active_package_count)
+            OR ($6='cancelled' AND active_package_count=0 AND cancelled_count>0)
     ), page AS (
-        SELECT g.*,g.created_at::text AS created_cursor FROM grouped g
+        SELECT g.*,g.created_at::text AS created_cursor FROM classified g
         WHERE ($7::timestamptz IS NULL OR (g.created_at,g.id)<($7::timestamptz,$8::uuid))
         ORDER BY g.created_at DESC,g.id DESC LIMIT $9
-    ) SELECT (SELECT count(*) FROM grouped) AS total,
+    ) SELECT (SELECT count(*) FROM classified) AS total,statement_timestamp() AS projection_as_of,
         COALESCE((SELECT jsonb_agg(to_jsonb(page) ORDER BY created_at DESC,id DESC) FROM page),'[]') AS rows`,
     [...scopeParams(scope), filter.pattern, filter.state, filter.cursor?.createdAt || null, filter.cursor?.id || null, filter.limit + 1, selectedId]);
     const rows = result.rows[0].rows;
     const hasMore = rows.length > filter.limit;
     if (hasMore) rows.pop();
     return { rows, total: Number(result.rows[0].total), nextCursor: hasMore ? encodeCursor(rows.at(-1)) : null,
-        summaryScope: 'all_authorized_children', state: filter.state, capabilities: { send: Boolean(scope.send) } };
+        ...projectionMetadata(scope, result.rows[0].projection_as_of),
+        summaryScope: 'all_authorized_children', state: filter.state, capabilities: { send: Boolean(scope.send),packageRemind:scope.packageRemind===true,deliveryResend:scope.deliveryResend===true,packageRevise:scope.packageRevise===true } };
 }
 
 async function listPackages(db, scope, groupId, input) {
@@ -157,7 +202,7 @@ async function listPackages(db, scope, groupId, input) {
     ), page AS (
         SELECT * FROM matches WHERE ($8::timestamptz IS NULL OR (created_at,id)<($8::timestamptz,$9::uuid))
         ORDER BY created_at DESC,id DESC LIMIT $10
-    ) SELECT (SELECT count(*) FROM matches) AS total,
+    ) SELECT (SELECT count(*) FROM matches) AS total,statement_timestamp() AS projection_as_of,
         ($7::uuid IS NULL OR EXISTS(SELECT 1 FROM authorized WHERE group_id=$7)) AS group_exists,
         COALESCE((SELECT jsonb_agg(to_jsonb(page) ORDER BY created_at DESC,id DESC) FROM page),'[]') AS rows`,
     [...scopeParams(scope), filter.pattern, filter.state, groupId, filter.cursor?.createdAt || null, filter.cursor?.id || null, filter.limit + 1]);
@@ -165,7 +210,8 @@ async function listPackages(db, scope, groupId, input) {
     const rows = result.rows[0].rows, hasMore = rows.length > filter.limit;
     if (hasMore) rows.pop();
     return { rows, total: Number(result.rows[0].total), nextCursor: hasMore ? encodeCursor(rows.at(-1)) : null,
-        summaryScope: 'matching_children', capabilities: { send: Boolean(scope.send) } };
+        ...projectionMetadata(scope, result.rows[0].projection_as_of),
+        summaryScope: 'matching_children', capabilities: { send: Boolean(scope.send),packageRemind:scope.packageRemind===true,deliveryResend:scope.deliveryResend===true,packageRevise:scope.packageRevise===true } };
 }
 
 function documentSpots(bindings, participants) {
@@ -183,7 +229,7 @@ function documentSpots(bindings, participants) {
 
 async function authorizedPackage(db, scope, packageId) {
     expect(UUID.test(packageId), 'INVALID_SUBMISSION');
-    const header = await db.query(`WITH ${projectionCte(scope)} SELECT * FROM projected WHERE id=$5`, [...scopeParams(scope), packageId]);
+    const header = await db.query(`WITH ${projectionCte(scope)} SELECT *,statement_timestamp() AS projection_as_of FROM projected WHERE id=$5`, [...scopeParams(scope), packageId]);
     if (!header.rowCount) fail('NOT_FOUND', 404);
     return header.rows[0];
 }
@@ -207,7 +253,8 @@ const currentDocumentArtifact = `COALESCE(d.final_artifact_id,
 
 async function packageDetails(db, scope, packageId) {
     const pkg = await authorizedPackage(db, scope, packageId);
-    const result = await db.query(`SELECT
+    const result = await db.query(`WITH authorized AS (SELECT $1::uuid AS owner_context_id,$2::uuid AS active_revision_id,$3::uuid AS id),
+        ${deliveryMembershipCte()} SELECT
         COALESCE((SELECT jsonb_agg(jsonb_build_object('id',d.id,'name',d.name,'state',d.state,'informational',d.informational,
             'prepared',d.prepared_artifact_id IS NOT NULL,'final',d.final_artifact_id IS NOT NULL,
             'artifactVersion',${currentDocumentArtifact},'bindings',d.field_bindings) ORDER BY d.document_key)
@@ -220,11 +267,10 @@ async function packageDetails(db, scope, packageId) {
                 LEFT JOIN signing_actions a ON a.owner_context_id=t.owner_context_id AND a.task_id=t.id
                 WHERE t.owner_context_id=p.owner_context_id AND t.participation_id=p.id),'[]')) ORDER BY p.role_key,p.occurrence)
             FROM signing_participations p WHERE p.owner_context_id=$1 AND p.revision_id=$2),'[]') AS participants,
-        COALESCE((SELECT jsonb_agg(jsonb_build_object('id',d.id,'personId',p.person_id,'purpose',d.purpose,'channel',d.channel,
+        COALESCE((SELECT jsonb_agg(jsonb_build_object('id',d.delivery_id,'personId',d.person_id,'purpose',d.purpose,'channel',d.channel,
             'state',d.state,'attemptedAt',d.attempted_at,'providerAcceptedAt',d.provider_accepted_at,'deliveredAt',d.delivered_at,'errorCode',d.error_code)
-            ORDER BY d.created_at DESC,d.id)
-            FROM signing_deliveries d JOIN signing_delivery_profiles p ON p.owner_context_id=d.owner_context_id AND p.id=d.profile_id
-            WHERE p.owner_context_id=$1 AND p.revision_id=$2),'[]') AS deliveries`, [scope.contextId, pkg.active_revision_id]);
+            ORDER BY d.created_at DESC,d.delivery_id)
+            FROM delivery_memberships d),'[]') AS deliveries`, [scope.contextId, pkg.active_revision_id, pkg.id]);
     const body = result.rows[0];
     body.documents = body.documents.map(document => {
         const spots = documentSpots(document.bindings, body.participants);
@@ -243,15 +289,16 @@ async function packageDetails(db, scope, packageId) {
     const approval = (await db.query(`SELECT a.state,a.reason,a.reviewer_userid AS "reviewerId",u.name AS "reviewerName",
         a.solo_profile AS "soloProfile" FROM signing_approval_requests a JOIN users u ON u.userid=a.reviewer_userid
         WHERE a.owner_context_id=$1 AND a.revision_id=$2`,[scope.contextId,pkg.active_revision_id])).rows[0] || null;
-    return { package: pkg, ...body, issues, approval, capabilities: { packageApprove: scope.packageApprove===true && approval?.reviewerId===scope.userId, send: scope.send === true, manage: scope.manage === true, packageCancel: scope.packageCancel === true, packageAssign: scope.packageAssign === true, contactCorrect: scope.contactCorrect === true, linkRenew: scope.linkRenew === true } };
+    return { package: pkg, ...body, ...projectionMetadata(scope, pkg.projection_as_of), issues, approval, revisionHistory:await require('./replacement').history(db,scope,packageId), capabilities: { packageRemind:scope.packageRemind===true,deliveryResend:scope.deliveryResend===true,packageRevise:scope.packageRevise===true, packageApprove: scope.packageApprove===true && approval?.reviewerId===scope.userId, send: scope.send === true, manage: scope.manage === true, packageCancel: scope.packageCancel === true, packageAssign: scope.packageAssign === true, contactCorrect: scope.contactCorrect === true, linkRenew: scope.linkRenew === true } };
 }
 
-async function packageDocumentFile(db, scope, packageId, documentId, storage) {
+async function packageDocumentFile(db, scope, packageId, documentId, storage, revisionId=null) {
     const pkg = await authorizedPackage(db, scope, packageId);
+    const selected=await historyRevision(db,scope,packageId,revisionId||pkg.active_revision_id);
     if (!UUID.test(String(documentId))) fail('NOT_FOUND', 404);
     const document = (await db.query(`SELECT d.name,d.final_artifact_id,${currentDocumentArtifact} AS artifact_id
         FROM signing_documents d WHERE d.owner_context_id=$1 AND d.revision_id=$2 AND d.id=$3`,
-    [scope.contextId, pkg.active_revision_id, documentId])).rows[0];
+    [scope.contextId, selected.id, documentId])).rows[0];
     if (!document) fail('NOT_FOUND', 404);
     const artifactId = document.artifact_id;
     if (!artifactId) fail('ARTIFACT_NOT_READY', 409);
@@ -259,17 +306,23 @@ async function packageDocumentFile(db, scope, packageId, documentId, storage) {
     return { bytes: file.bytes, name: document.name, final: Boolean(document.final_artifact_id) };
 }
 
-async function packageEvidenceFile(db, scope, packageId, storage) {
+async function historyRevision(db,scope,packageId,revisionId){
+    if(!UUID.test(revisionId||''))fail('NOT_FOUND',404);
+    const revision=(await db.query('SELECT id,revision_hash FROM signing_package_revisions WHERE owner_context_id=$1 AND package_id=$2 AND id=$3',[scope.contextId,packageId,revisionId])).rows[0];
+    if(!revision)fail('NOT_FOUND',404);return revision;
+}
+
+async function packageEvidenceFile(db, scope, packageId, storage, revisionId=null) {
     const pkg = await authorizedPackage(db, scope, packageId);
-    if (pkg.workflow_state !== 'complete') fail('NOT_FOUND', 404);
+    const selected=await historyRevision(db,scope,packageId,revisionId||pkg.active_revision_id);
     const artifact = (await db.query(`SELECT id FROM signing_artifacts
         WHERE owner_context_id=$1 AND kind='evidence' AND state='ready' AND inputs_hash=$2`,
-    [scope.contextId, digest({ revisionId: pkg.active_revision_id, revisionHash: pkg.revision_hash, kind: 'evidence' })])).rows[0];
+    [scope.contextId, digest({ revisionId: selected.id, revisionHash: selected.revision_hash, kind: 'evidence' })])).rows[0];
     if (!artifact) fail('ARTIFACT_NOT_READY', 409);
     return readReadyArtifact(db, scope.contextId, artifact.id, storage);
 }
 
 module.exports = {
     listSubmissions, listPackages, packageDetails, packageDocumentFile, packageEvidenceFile,
-    filters, projectionCte, queryMatchesSql, stateMatchesSql, documentSpots,
+    filters, projectionCte, projectionMetadata, queryMatchesSql, stateMatchesSql, documentSpots,
 };

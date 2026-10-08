@@ -40,11 +40,11 @@ const blankRow = roles => ({ id: `row-${++localId}`, key: '', recipients: Object
 const filled = person => Array.isArray(person?.people) ? person.people.some(filled) : !!person?.sameAsRole || FIELDS.some(field => String(person?.[field] || '').trim());
 const dataFilled = row => Object.values(row.data || {}).some(value => value !== '' && value != null);
 const rowFilled = row => row.key.trim() || Object.values(row.recipients).some(filled) || dataFilled(row);
-const clean = (person, language) => Array.isArray(person?.people) ? { people: person.people.map(item => clean(item, language)) } : person.sameAsRole ? { sameAsRole: person.sameAsRole, ...(person.sameAsOccurrence != null ? { sameAsOccurrence: person.sameAsOccurrence } : {}) } : ({
+const clean = (person, language, preserveLocale = false) => Array.isArray(person?.people) ? { people: person.people.map(item => clean(item, language, preserveLocale)) } : person.sameAsRole ? { sameAsRole: person.sameAsRole, ...(person.sameAsOccurrence != null ? { sameAsOccurrence: person.sameAsOccurrence } : {}) } : ({
     name: String(person.name || '').trim(), email: String(person.email || '').trim(), phone: String(person.phone || '').trim(),
     ...(person.channel ? { channel: person.channel } : {}),
     ...Object.fromEntries(['personId','partyId','authorityId'].filter(key => person[key]).map(key => [key, person[key]])),
-    locale: LOCALES.has(language) ? language : 'he',
+    locale: preserveLocale && LOCALES.has(person.locale) ? person.locale : LOCALES.has(language) ? language : 'he',
 });
 function sharedIdentityKey(people, roleKey, occurrence = 0) {
     if (Array.isArray(people?.[roleKey]?.people)) return `${roleKey}:${occurrence}`;
@@ -383,11 +383,13 @@ function templateOrder(roles) {
     };
 }
 
-export default function PackageComposer({ api = signingPackagesApi, onBack, onCreated, initialTemplateId, initialTemplateVersion, initialCaseId, initialClientId, backLabel }) {
+export default function PackageComposer({ api = signingPackagesApi, onBack, onCreated, initialTemplateId, initialTemplateVersion, initialCaseId, initialClientId, backLabel, replacementContext }) {
     const { t, direction, number, language, errorMessage, locale } = useSigningLocale();
     const heading = useRef(null);
     const errorSummary = useRef(null);
-    const [step, setStep] = useState(initialTemplateId ? 'opening' : 'template');
+    const [step, setStep] = useState(replacementContext ? 'replacementOpening' : initialTemplateId ? 'opening' : 'template');
+    const [replacementSource, setReplacementSource] = useState(replacementContext || null);
+    const [replacementConfirmed, setReplacementConfirmed] = useState(false);
     const [replacement, setReplacement] = useState(null);
     const [template, setTemplate] = useState(null);
     const [reviewerUserId,setReviewerUserId] = useState(null);
@@ -418,6 +420,30 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const creating = useRef(false);
     const checking = useRef(false);
     const inputGeneration = useRef(0);
+    const replacementDraftApi = useMemo(() => replacementContext ? { ...api, draft: undefined, saveDraft: undefined, submitDraft: undefined } : api, [api, replacementContext]);
+    useEffect(() => {
+        if (!replacementContext) return undefined;
+        let current = true;
+        const open = async () => {
+            try {
+                const content = replacementContext.content;
+                const selected = replacementContext.template || (await api.templates()).templates.find(item => item.versionId === content?.templateVersionId);
+                if (!selected || !Array.isArray(content?.rows) || content.rows.length !== 1) throw Object.assign(new Error('Replacement unavailable'), { code: 'REPLACEMENT_UNAVAILABLE' });
+                if (!current) return;
+                const ordering = content.signingOrder || templateOrder(selected.roles);
+                const fallbackOrder = templateOrder(selected.roles);
+                setTemplate(selected); setName(content.name || selected.name); setShared(content.shared || {});
+                setRoleAudience(content.roleAudience || {}); setReviewerUserId(content.reviewerUserId || null);
+                setRows(content.rows.map(row => ({ ...row, key: row.key || '', recipients: row.recipients || {}, id: `row-${++localId}` })));
+                setOmitted(new Set(content.omittedRoles || [])); setOrderMode(ordering.mode || fallbackOrder.mode);
+                setOrderRoles(ordering.roles || ordering.groups?.flat() || fallbackOrder.roles);
+                setOrderGroups(ordering.groups || (ordering.mode === 'sequential' ? ordering.roles.map(key => [key]) : fallbackOrder.groups));
+                setStep('recipients');
+            } catch (failure) { if (current) setError(failure); }
+        };
+        open();
+        return () => { current = false; };
+    }, [api, replacementContext]);
 
     // Stable arrays keep memoized rows from re-rendering on every keystroke with 200 rows.
     const sendRoles = useMemo(() => (template?.roles || []).map(role => ({ ...role, audience: Object.hasOwn(roleAudience, role.key) ? roleAudience[role.key] : role.audience })), [template, roleAudience]);
@@ -438,7 +464,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         document.getElementById(pendingFocus.current)?.focus();
         pendingFocus.current = null;
     }, [rows]);
-    const invalidate = () => { inputGeneration.current += 1; setCheck(null); createKey.current = null; };
+    const invalidate = () => { inputGeneration.current += 1; setCheck(null); setReplacementConfirmed(false); createKey.current = null; };
 
     const applyTemplate = selected => {
         if (selected.versionId === template?.versionId) return;
@@ -447,7 +473,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         setTemplate(selected); setReviewerUserId(null);
         setRoleAudience({});
         setShared(Object.fromEntries(selected.roles.filter(role => role.audience === 'shared').map(role => [role.key, blankRole(role)])));
-        setRows([blankRow(roles)]);
+        setRows([{ ...blankRow(roles), ...(replacementSource ? { key: replacementSource.content.rows[0].key || '' } : {}) }]);
         setOmitted(new Set());
         setOrderMode(order.mode);
         setOrderRoles(order.roles); setOrderGroups(order.groups);
@@ -554,10 +580,11 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         const keptEach = new Set(activeEach.map(role => role.key));
         const candidates = rows.filter(row => row.key.trim() || dataFilled(row) || [...keptEach].some(key => filled(row.recipients[key])));
         const sent = keptEach.size || dataFields.length ? (candidates.length ? candidates : keptEach.size ? [] : rows.slice(0, 1)) : rows.slice(0, 1);
-        const people = recipients => Object.fromEntries(Object.entries(recipients).filter(([key]) => keptEach.has(key)).map(([key, person]) => [key, clean(person, language)]));
+        const people = recipients => Object.fromEntries(Object.entries(recipients).filter(([key]) => keptEach.has(key)).map(([key, person]) => [key, clean(person, language, !!replacementSource)]));
         return {
             sentIds: sent.map(row => row.id),
             body: {
+                ...Object.fromEntries(['deadline','caseId','clientId'].filter(key => replacementSource?.content?.[key] != null).map(key => [key, replacementSource.content[key]])),
                 templateVersionId: template.versionId, name: name.trim(),
                 ...(template.approvalRequired ? {reviewerUserId} : {}),
                 ...(caseContext ? { caseId: caseContext.id } : {}),
@@ -567,7 +594,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 signingOrder: orderMode === 'grouped' ? { mode: 'grouped', groups: activeGroups } : orderMode === 'sequential'
                     ? { mode: 'sequential', roles: orderRoles.filter(key => !omitted.has(key)) }
                     : { mode: 'parallel' },
-                shared: Object.fromEntries(activeShare.map(role => [role.key, clean(shared[role.key] || blankRole(role), language)])),
+                shared: Object.fromEntries(activeShare.map(role => [role.key, clean(shared[role.key] || blankRole(role), language, !!replacementSource)])),
                 rows: sent.map(row => ({ ...(row.key.trim() ? { key: row.key.trim() } : {}), recipients: people(row.recipients), ...(dataFields.length ? { data: row.data || {}, dataSources: row.dataSources || {} } : {}) })),
             },
         };
@@ -575,7 +602,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const draftPayload = template ? { request: payload().body, editor: {
         template, name, shared, roleAudience, rows, reviewerUserId, omitted: [...omitted], orderMode, orderRoles, orderGroups, source, importNote,
     } } : null;
-    const draft = useSigningDraft({ api, payload: draftPayload, active: !!template && !casePending && !clientPending && step !== 'done',
+    const draft = useSigningDraft({ api: replacementDraftApi, payload: draftPayload, active: !!template && !casePending && !clientPending && step !== 'done',
         validateRestore: saved => {
             if ((initialClientId && String(saved?.request?.clientId) !== String(initialClientId))
                 || (initialCaseId && String(saved?.request?.caseId) !== String(initialCaseId))) {
@@ -611,24 +638,31 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         const generation = inputGeneration.current;
         setBusy('check');
         try {
-            const preview = await api.previewCreation(body);
+            const replacementBody = replacementSource ? {
+                content: body, reason: replacementSource.reason,
+                expectedPackageVersion: replacementSource.expectedPackageVersion ?? replacementSource.packageVersion,
+                expectedRevisionId: replacementSource.expectedRevisionId ?? replacementSource.revisionId,
+            } : null;
+            const preview = replacementSource ? await api.previewReplacement(replacementSource.packageId, replacementBody) : await api.previewCreation(body);
             if (generation !== inputGeneration.current) return;
-            const next = { preview, body, sentIds, indexed: indexErrors(preview.errors || [], sentIds) };
+            const next = { preview, body, sentIds, replacementBody, indexed: indexErrors(preview.errors || [], sentIds) };
             setCheck(next);
-            if (preview.valid) { createKey.current = newKey(); setStep('review'); }
+            if (preview.valid) { createKey.current = newKey(); setReplacementConfirmed(false); setStep('review'); }
             else requestAnimationFrame(() => errorSummary.current?.focus());
         } catch (failure) { if (generation === inputGeneration.current) setError(failure); } finally { checking.current = false; setBusy(null); }
     };
     const create = async () => {
-        if (creating.current || !check?.preview.valid) return;
+        if (creating.current || !check?.preview.valid || (replacementSource && !replacementConfirmed)) return;
         creating.current = true; setBusy('create'); setError(null);
         try {
-            const created = draft.enabled
+            const created = replacementSource
+                ? await api.publishReplacement(replacementSource.packageId, { ...check.replacementBody, previewHash: check.preview.previewHash }, createKey.current)
+                : draft.enabled
                 ? await draft.submit({ ...draftPayload, request: check.body }, check.preview.previewHash)
                 : await api.create({ ...check.body, previewHash: check.preview.previewHash }, createKey.current);
             setResult(created); setStep('done');
         } catch (failure) {
-            if (failure.code === 'PREVIEW_CHANGED' || failure.code === 'INVALID_ROWS') { invalidate(); setStep('recipients'); }
+            if (['PREVIEW_CHANGED', 'INVALID_ROWS', 'VERSION_CHANGED', 'REPLACEMENT_CHANGED', 'REVISION_INACTIVE'].includes(failure.code)) { invalidate(); setStep('recipients'); }
             if (failure.code === 'IDEMPOTENCY_CONFLICT') createKey.current = newKey();
             setError(failure);
         } finally { creating.current = false; setBusy(null); }
@@ -639,6 +673,16 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         } else if (step !== 'done' && dirty && !leaving) setLeaving(true); else onBack?.();
     };
     const restart = () => { draft.reset(); setStep('template'); setTemplate(null); setRows([]); setShared({}); setName(''); setResult(null); setImportNote(null); invalidate(); };
+    const refreshReplacement = async () => {
+        if (busy || !replacementSource) return;
+        setBusy('refresh'); setError(null);
+        try {
+            const current = await api.replacement(replacementSource.packageId);
+            setReplacementSource(previous => ({ ...previous, ...current, expectedPackageVersion: current.expectedPackageVersion ?? current.packageVersion,
+                expectedRevisionId: current.expectedRevisionId ?? current.revisionId, reason: previous.reason, content: previous.content }));
+            invalidate();
+        } catch (failure) { setError(failure); } finally { setBusy(null); }
+    };
 
     const errorCount = check && !check.preview.valid ? check.preview.errorCount : 0;
     const errorEntries = check && !check.preview.valid ? check.preview.errors : [];
@@ -658,6 +702,10 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const filledRows = rows.filter(rowFilled).length;
     const preview = check?.preview;
     const sharedNames = [...new Map((preview?.shared || []).map(item => [sharedIdentityKey(check?.body.shared, item.roleKey, item.occurrence), item.name])).values()].join(', ');
+    if (replacementSource && ['FORBIDDEN', 'NOT_FOUND', 'ACCESS_CHANGED'].includes(error?.code)) return <section className="lw-signingPackages lw-signingCompose" dir={direction}>
+        <StatusNotice><p>{errorMessage(error)}</p></StatusNotice>
+        <SigningBackButton onPress={onBack}>{backLabel || t('signingV2.compose.back')}</SigningBackButton>
+    </section>;
 
     if (draft.status === 'loading' || draft.status === 'loadError') return <section className="lw-signingPackages lw-signingCompose" dir={direction}>
         {draft.status === 'loading' ? <p role="status">{t('signingV2.compose.draft.loading')}</p> : <StatusNotice>
@@ -671,8 +719,8 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         <header className="lw-signingPackages__heading">
             <div>
                 <SigningBackButton onPress={leave}>{backLabel || t('signingV2.compose.back')}</SigningBackButton>
-                <h1 id="signing-compose-title" ref={heading} tabIndex={-1}>{t('signingV2.compose.title')}</h1>
-                <p>{t('signingV2.compose.subtitle')}</p>
+                <h1 id="signing-compose-title" ref={heading} tabIndex={-1}>{t(replacementSource ? 'signingV2.replacement.composeTitle' : 'signingV2.compose.title')}</h1>
+                <p>{t(replacementSource ? 'signingV2.replacement.composeHelp' : 'signingV2.compose.subtitle')}</p>
             </div>
         </header>
         {draft.enabled && template && step !== 'done' && <div className="lw-signingCompose__draftState">
@@ -686,23 +734,29 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         </div>}
         {leaving && <div className="lw-signingCompose__confirm" role="alertdialog" aria-labelledby="compose-leave-title" aria-describedby="compose-leave-body">
             <strong id="compose-leave-title">{t('signingV2.compose.discardTitle')}</strong>
-            <p id="compose-leave-body">{t('signingV2.compose.discardBody')}</p>
+            <p id="compose-leave-body">{t(replacementSource ? 'signingV2.replacement.leaveHelp' : 'signingV2.compose.discardBody')}</p>
             <div className="lw-signingPackages__actions">
                 <SecondaryButton onPress={() => setLeaving(false)}>{t('signingV2.compose.keepEditing')}</SecondaryButton>
                 <PrimaryButton onPress={() => onBack?.()}>{t('signingV2.compose.discardConfirm')}</PrimaryButton>
             </div>
         </div>}
-        <Stepper step={step === 'opening' ? 'template' : step} />
-        {api.clientContext && (initialClientId || clientContext) && step !== 'done' && <SimpleCard className="lw-signingCompose__card lw-signingCompose__context" hidden={step === 'review'}>
+        {replacementSource && step !== 'done' && <StatusNotice embedded>
+            <p>{t(replacementSource.stopCurrent || replacementSource.sourceState === 'replacement_pending' ? 'signingV2.replacement.stoppedHelp' : 'signingV2.replacement.activeHelp')}</p>
+            <p>{t('signingV2.replacement.reason')}: <bdi>{replacementSource.reason}</bdi></p>
+        </StatusNotice>}
+        <Stepper step={['opening', 'replacementOpening'].includes(step) ? 'template' : step} />
+        {!replacementSource && api.clientContext && (initialClientId || clientContext) && step !== 'done' && <SimpleCard className="lw-signingCompose__card lw-signingCompose__context" hidden={step === 'review'}>
             <ClientSendContext key={String(clientRestored)} api={api} initialClientId={clientRestored ? null : initialClientId} value={clientContext}
                 onPending={value => { setClientPending(value); if (value) invalidate(); }}
                 onChange={value => { setClientContext(value); invalidate(); }} />
         </SimpleCard>}
-        {api.caseContext && step !== 'done' && <SimpleCard className="lw-signingCompose__card lw-signingCompose__context" hidden={step === 'review'}>
+        {!replacementSource && api.caseContext && step !== 'done' && <SimpleCard className="lw-signingCompose__card lw-signingCompose__context" hidden={step === 'review'}>
             <CaseContextPicker api={api} initialCaseId={caseRestored ? null : initialCaseId} value={caseContext} onPending={value => { setCasePending(value); if (value) invalidate(); }}
                 onChange={value => { setCaseContext(value); invalidate(); }} />
         </SimpleCard>}
         {error && <StatusNotice><p>{t(`signingV2.compose.errors.${error.code}`, { defaultValue: errorMessage(error) })}</p></StatusNotice>}
+        {replacementSource && ['VERSION_CHANGED', 'REPLACEMENT_CHANGED', 'REVISION_INACTIVE', 'PREVIEW_CHANGED'].includes(error?.code) && <SecondaryButton onPress={refreshReplacement} disabled={!!busy}>{t('signingV2.refresh')}</SecondaryButton>}
+        {step === 'replacementOpening' && !error && <p role="status">{t('common.loading')}</p>}
 
         {step === 'opening' && <SimpleCard className="lw-signingCompose__card">
             <SelectedTemplateEntry api={api} templateId={initialTemplateId} expectedVersion={initialTemplateVersion}
@@ -772,10 +826,10 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 <div className="lw-signingCompose__rowsHeading">
                     <div>
                         <h2>{t('signingV2.compose.rows.heading')}</h2>
-                        <p>{activeEach.length ? t('signingV2.compose.rows.help', { roles: activeEach.map(role => role.label).join(' · '), max: number(MAX_ROWS) }) : t('signingV2.compose.data.rowsHelp')}</p>
+                        <p>{replacementSource ? t('signingV2.replacement.rowHelp') : activeEach.length ? t('signingV2.compose.rows.help', { roles: activeEach.map(role => role.label).join(' · '), max: number(MAX_ROWS) }) : t('signingV2.compose.data.rowsHelp')}</p>
                     </div>
-                    <SegmentedSwitch value={source} onChange={setSource} ariaLabel={t('signingV2.compose.rows.source')}
-                        options={[{ value: 'manual', label: t('signingV2.compose.rows.manual') }, { value: 'excel', label: t('signingV2.compose.rows.excel') }]} />
+                    {!replacementSource && <SegmentedSwitch value={source} onChange={setSource} ariaLabel={t('signingV2.compose.rows.source')}
+                        options={[{ value: 'manual', label: t('signingV2.compose.rows.manual') }, { value: 'excel', label: t('signingV2.compose.rows.excel') }]} />}
                 </div>
                 {source === 'excel' && <div className="lw-signingCompose__excel">
                     <ol>
@@ -807,18 +861,18 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 {(activeEach.length > 0 || dataFields.length > 0) && busy !== 'upload' && <ol className="lw-signingCompose__rows">{rows.map((row, index) =>
                     <RecipientRow key={row.id} row={row} index={index} roles={activeEach} errors={check?.indexed.byRow[row.id]} onChange={changeRow} onRemove={removeRow} canRemove={rows.length > 1} casePeople={contextPeople} peopleLabel={peopleLabel} allRoles={activeRoles} dataFields={dataFields} onDataChange={changeData} />)}
                 </ol>}
-                <div className="lw-signingPackages__actions">
+                {!replacementSource && <div className="lw-signingPackages__actions">
                     <SecondaryButton onPress={() => {
                         const row = blankRow(activeEach.length ? activeEach : eachRoles);
                         pendingFocus.current = activeEach.length ? fieldId(row.id, activeEach[0].key, 'name') : fieldId(row.id, 'data', dataFields[0]?.key);
                         setRows(current => [...current, row]); invalidate();
                     }} disabled={rows.length >= MAX_ROWS || busy === 'upload'}>{t('signingV2.compose.rows.add')}</SecondaryButton>
                     <span className="lw-signingPackages__caption" aria-live="polite">{t('signingV2.compose.rows.count', { count: filledRows, formattedCount: number(filledRows), max: number(MAX_ROWS) })}</span>
-                </div>
+                </div>}
             </SimpleCard>}
             <footer className="lw-signingCompose__footer is-sticky">
                 <SigningBackButton onPress={() => setStep('template')} disabled={!!busy}>{t('signingV2.compose.previous')}</SigningBackButton>
-                <PrimaryButton onPress={runCheck} disabled={!!busy || casePending || clientPending}>{busy === 'check' ? t('signingV2.compose.checking') : t('signingV2.compose.check')}</PrimaryButton>
+                <PrimaryButton onPress={runCheck} disabled={!!busy || casePending || clientPending || (replacementSource && ['VERSION_CHANGED', 'REPLACEMENT_CHANGED', 'REVISION_INACTIVE', 'PREVIEW_CHANGED'].includes(error?.code))}>{busy === 'check' ? t('signingV2.compose.checking') : t('signingV2.compose.check')}</PrimaryButton>
             </footer>
         </>}
 
@@ -872,24 +926,28 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 {orderMode === 'sequential' && orderedRoles.length >= 2 && <ol className="lw-signingCompose__plainList">{orderedRoles.map(role => <li key={role.key}>{role.label}</li>)}</ol>}
                 <p className="lw-signingCompose__note">{t('signingV2.compose.review.otp')}</p>
                 <p className="lw-signingCompose__note">{t('signingV2.compose.review.effect')}</p>
+                {replacementSource && <label className="lw-signingPackages__approvalCheck">
+                    <input type="checkbox" checked={replacementConfirmed} onChange={event => setReplacementConfirmed(event.target.checked)} disabled={busy === 'create'} />
+                    <span>{t('signingV2.replacement.confirmFresh')}</span>
+                </label>}
             </SimpleCard>
             <footer className="lw-signingCompose__footer is-sticky">
                 <SigningBackButton onPress={() => setStep('recipients')} disabled={busy === 'create'}>{t('signingV2.compose.review.edit')}</SigningBackButton>
-                <PrimaryButton onPress={create} disabled={busy === 'create'} aria-busy={busy === 'create'}>
-                    {busy === 'create' ? t('signingV2.compose.review.creating') : t('signingV2.compose.review.confirm', { count: preview.packageCount, formattedCount: number(preview.packageCount) })}
+                <PrimaryButton onPress={create} disabled={busy === 'create' || (replacementSource && !replacementConfirmed)} aria-busy={busy === 'create'}>
+                    {busy === 'create' ? t('signingV2.compose.review.creating') : replacementSource ? t('signingV2.replacement.publish') : t('signingV2.compose.review.confirm', { count: preview.packageCount, formattedCount: number(preview.packageCount) })}
                 </PrimaryButton>
             </footer>
         </>}
 
         {step === 'done' && result && <SimpleCard className="lw-signingCompose__card">
             <div role="status">
-                <h2>{t('signingV2.compose.done.heading')}</h2>
-                <p>{t('signingV2.compose.done.body', { count: result.packageCount ?? preview?.packageCount ?? 0, formattedCount: number(result.packageCount ?? preview?.packageCount ?? 0) })}</p>
+                <h2>{t(replacementSource ? 'signingV2.replacement.saved' : 'signingV2.compose.done.heading')}</h2>
+                <p>{replacementSource ? t('signingV2.replacement.savedHelp') : t('signingV2.compose.done.body', { count: result.packageCount ?? preview?.packageCount ?? 0, formattedCount: number(result.packageCount ?? preview?.packageCount ?? 0) })}</p>
                 {result.reused && <p>{t('signingV2.compose.done.reused')}</p>}
             </div>
             <footer className="lw-signingCompose__footer">
-                <SecondaryButton onPress={restart}>{t('signingV2.compose.done.another')}</SecondaryButton>
-                <PrimaryButton onPress={() => onCreated?.(result.submissionId)}>{t('signingV2.compose.done.open')}</PrimaryButton>
+                {!replacementSource && <SecondaryButton onPress={restart}>{t('signingV2.compose.done.another')}</SecondaryButton>}
+                <PrimaryButton onPress={() => replacementSource ? onCreated?.(result.submissionId, result) : onCreated?.(result.submissionId)}>{t(replacementSource ? 'signingV2.openPackage' : 'signingV2.compose.done.open')}</PrimaryButton>
             </footer>
         </SimpleCard>}
     </section>;

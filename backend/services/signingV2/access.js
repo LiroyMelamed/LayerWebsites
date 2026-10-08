@@ -40,9 +40,13 @@ async function actorScope(db, req, action = 'view') {
         authorityManage: !custom || hasAreaAction(req.firmPermissions, 'signing', 'authority_manage'),
         contactCorrect: !custom || (hasAreaAction(req.firmPermissions, 'signing', 'manage') && hasAreaAction(req.firmPermissions, 'signing', 'delivery_contact_correct')),
         linkRenew: !custom || hasAreaAction(req.firmPermissions, 'signing', 'access_link_renew'),
+        packageRemind: !custom || (hasAreaAction(req.firmPermissions, 'signing', 'upload') && hasAreaAction(req.firmPermissions, 'signing', 'package_remind')),
+        deliveryResend: !custom || (hasAreaAction(req.firmPermissions, 'signing', 'upload') && hasAreaAction(req.firmPermissions, 'signing', 'delivery_resend')),
         packageCancel: !custom || (hasAreaAction(req.firmPermissions, 'signing', 'manage') && hasAreaAction(req.firmPermissions, 'signing', 'package_cancel')),
         packageAssign: !custom || (hasAreaAction(req.firmPermissions, 'signing', 'manage') && hasAreaAction(req.firmPermissions, 'signing', 'package_assign')),
         packageApprove: !custom || hasAreaAction(req.firmPermissions, 'signing', 'package_approve'),
+        packageRevise: !custom || (hasAreaAction(req.firmPermissions, 'signing', 'view') && hasAreaAction(req.firmPermissions, 'signing', 'manage')
+            && hasAreaAction(req.firmPermissions, 'signing', 'upload') && hasAreaAction(req.firmPermissions, 'signing', 'package_revision_create')),
         mode,
     });
 }

@@ -14,6 +14,9 @@ import { colors } from '../../../constant/colors';
 import useSigningLocale from './useSigningLocale';
 import PackageApprovalDialog from './PackageApprovalDialog';
 import PackageLifecycleDialog from './PackageLifecycleDialog';
+import PackageReplacementDialog from './PackageReplacementDialog';
+import PackageComposer from './PackageComposer';
+import SharedSignerSummary from './SharedSignerSummary';
 import ParticipantContactDialog from './ParticipantContactDialog';
 import ParticipantActionDialog from './ParticipantActionDialog';
 import TaskIssueDialog from './TaskIssueDialog';
@@ -21,6 +24,9 @@ import BulkActionsWorkspace from './BulkActionsWorkspace';
 import StatusNotice from '../../../components/ui/StatusNotice';
 import { downloadBlobAsFile } from '../../../utils/downloadBlobAsFile';
 import './signingPackages.scss';
+
+const privateAccessError = error => ['FORBIDDEN', 'NOT_FOUND', 'UNAUTHORIZED', 'ACCESS_CHANGED'].includes(error?.code);
+const emptyResource = () => ({ rows: [], total: 0, nextCursor: null });
 
 function useDebounced(value, delay = 250) {
     const [debounced, setDebounced] = useState(value);
@@ -32,7 +38,7 @@ function useDebounced(value, delay = 250) {
 }
 
 function usePagedResource(load, dependencies) {
-    const [data, setData] = useState({ rows: [], total: 0, nextCursor: null });
+    const [data, setData] = useState(emptyResource);
     const [busy, setBusy] = useState(true);
     const [error, setError] = useState(null);
     const [refreshKey, setRefreshKey] = useState(0);
@@ -50,7 +56,10 @@ function usePagedResource(load, dependencies) {
                 const next = await loadRef.current({ signal: controller.signal });
                 if (!disposed && request === sequence) { setData(next); setError(null); }
             } catch (failure) {
-                if (!disposed && request === sequence && !controller.signal.aborted) setError(failure);
+                if (!disposed && request === sequence && !controller.signal.aborted) {
+                    if (privateAccessError(failure)) setData(emptyResource());
+                    setError(failure);
+                }
             } finally {
                 controllers.delete(controller);
                 if (!disposed && request === sequence) setBusy(false);
@@ -135,13 +144,14 @@ function PersonActions({ person, detail, onAction, onContact }) {
     const latest = detail.deliveries.find(item => item.personId === person.personId);
     const completedCopy = detail.package.workflow_state === 'complete';
     const ready = person.tasks.some(task => task.state === 'ready');
-    const editable = !['cancelled','superseded'].includes(detail.package.workflow_state);
-    if (!detail.capabilities?.send && !detail.capabilities?.contactCorrect) return null;
+    const editable = !['cancelled','superseded','replacement_pending'].includes(detail.package.workflow_state);
+    if (!detail.capabilities?.send && !detail.capabilities?.packageRemind && !detail.capabilities?.deliveryResend && !detail.capabilities?.contactCorrect) return null;
     const purpose = completedCopy ? 'completed_copy' : latest?.state === 'failed' ? 'resend' : 'reminder';
+    const canSend = completedCopy ? detail.capabilities?.send : purpose === 'resend' ? detail.capabilities?.deliveryResend : detail.capabilities?.packageRemind;
     return <div className="lw-signingPackages__personActions">
         {latest && <p>{t(`signingV2.delivery.${latest.state}`)}{latest.attemptedAt && <> · <time dateTime={latest.attemptedAt}>{date(latest.attemptedAt)}</time></>}</p>}
-        {detail.capabilities?.send && (completedCopy || ready) && <SecondaryButton onPress={() => onAction(person.personId, purpose)}>{t(`signingV2.action.${purpose}.open`)}</SecondaryButton>}
-        {detail.capabilities?.send && detail.capabilities?.linkRenew && ready && editable && <SecondaryButton onPress={()=>onAction(person.personId,'resend',true)}>{t('signingV2.action.renew_link.open')}</SecondaryButton>}
+        {canSend && (completedCopy || (ready && editable)) && <SecondaryButton onPress={() => onAction(person.personId, purpose)}>{t(`signingV2.action.${purpose}.open`)}</SecondaryButton>}
+        {detail.capabilities?.deliveryResend && detail.capabilities?.linkRenew && ready && editable && <SecondaryButton onPress={()=>onAction(person.personId,'resend',true)}>{t('signingV2.action.renew_link.open')}</SecondaryButton>}
         {detail.capabilities?.contactCorrect && editable && <SecondaryButton onPress={()=>onContact(person.personId)}>{t('signingV2.contact.open')}</SecondaryButton>}
     </div>;
 }
@@ -181,7 +191,7 @@ function PackageDocuments({ detail, openId, files, busy, onView, onDownload, mes
     })}</ul>;
 }
 
-function PackagePanel({ id, api, onClose }) {
+function PackagePanel({ id, api, onClose, onReplacement }) {
     const { t, direction, number, date, errorMessage } = useSigningLocale();
     const dialog = useRef(null);
     const [tab, setTab] = useState('people');
@@ -189,12 +199,19 @@ function PackagePanel({ id, api, onClose }) {
     const [issue, setIssue] = useState(null);
     const [approvalOpen,setApprovalOpen] = useState(false);
     const [lifecycle,setLifecycle] = useState(null);
+    const [replacementOpen,setReplacementOpen] = useState(false);
     const [contactPerson,setContactPerson] = useState(null);
     const [openId, setOpenId] = useState(null);
     const [files, setFiles] = useState({});
     const [busy, setBusy] = useState('');
     const [fileError, setFileError] = useState(null);
     const resource = usePagedResource(config => api.details(id, config), [api, id]);
+    useEffect(() => {
+        if (!privateAccessError(resource.error)) return;
+        setFiles({}); setOpenId(null); setFileError(null);
+        setAction(null); setIssue(null); setApprovalOpen(false); setLifecycle(null);
+        setReplacementOpen(false); setContactPerson(null);
+    }, [resource.error]);
     const actionRows = new Map();
     (resource.data.participants || []).forEach(person => {
         // Keep the person's single action beside a ready participation, not a
@@ -239,6 +256,15 @@ function PackagePanel({ id, api, onClose }) {
         catch (error) { setFileError(error); }
         finally { setBusy(''); }
     };
+    const downloadRevision = async (revision, document) => {
+        const key = `revision-${revision.revisionId}-${document?.id || 'evidence'}`;
+        if (busy) return;
+        setBusy(key); setFileError(null);
+        try {
+            const blob = document ? await api.revisionDocumentFile(id, revision.revisionId, document.id) : await api.revisionEvidenceFile(id, revision.revisionId);
+            await saveBlob(blob, `${document?.name || t('signingV2.public.evidenceName')}-${revision.revisionNumber}`);
+        } catch (error) { setFileError(error); } finally { setBusy(''); }
+    };
     return <dialog ref={dialog} className="lw-signingPackages__panel" dir={direction} aria-labelledby="signing-package-title"
         onCancel={event => { event.preventDefault(); onClose(); }}
         onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); onClose(); } }}>
@@ -259,6 +285,7 @@ function PackagePanel({ id, api, onClose }) {
             <div className="lw-signingPackages__docActions">
                 {detail.capabilities?.packageAssign && <SecondaryButton onPress={()=>setLifecycle('assign')}>{t('signingV2.lifecycle.assign.title')}</SecondaryButton>}
                 {detail.capabilities?.packageCancel && !['cancelled','superseded','complete'].includes(detail.package.workflow_state) && detail.package.accepted_count < detail.package.required_count && <SecondaryButton onPress={()=>setLifecycle('cancel')}>{t('signingV2.lifecycle.cancel.title')}</SecondaryButton>}
+                {detail.capabilities?.packageRevise && detail.package.workflow_state !== 'superseded' && <SecondaryButton onPress={()=>setReplacementOpen(true)}>{t('signingV2.replacement.title')}</SecondaryButton>}
             </div>
             {detail.approval && <div className="lw-signingPackages__panelSummary"><p>{t('signingV2.approval.reviewer')}: <bdi>{detail.approval.reviewerName}</bdi> · {t(`signingV2.approval.state.${detail.approval.state}`)}</p>
                 {detail.approval.reason && <p>{detail.approval.reason}</p>}
@@ -266,7 +293,7 @@ function PackagePanel({ id, api, onClose }) {
             </div>}
             {fileError && <StatusNotice embedded><p>{errorMessage(fileError)}</p></StatusNotice>}
             <SegmentedSwitch value={tab} onChange={setTab} ariaLabel={t('signingV2.packageDetails')}
-                options={['people', 'documents', 'delivery'].map(value => ({ value, label: t(`signingV2.tabs.${value}`) }))} />
+                options={['people', 'documents', 'delivery', ...(detail.revisionHistory?.length ? ['history'] : [])].map(value => ({ value, label: value === 'history' ? t('signingV2.replacement.history') : t(`signingV2.tabs.${value}`) }))} />
             {tab === 'people' && <ul className="lw-signingPackages__people">{detail.participants.map(person => <li key={person.id}>
                 <h3>{person.name}</h3><p>{t(`signingV2.capacity.${person.capacity}`)} · {person.partyName}</p>
                 <ul className="lw-signingPackages__tasks">{person.tasks.map(task => {
@@ -303,18 +330,30 @@ function PackagePanel({ id, api, onClose }) {
                 {delivery.attemptedAt && <time dateTime={delivery.attemptedAt}>{date(delivery.attemptedAt)}</time>}
                 {delivery.state === 'uncertain' && <p>{t('signingV2.uncertainHelp')}</p>}
             </li>)}</ul>}
+            {tab === 'history' && <ul className="lw-signingPackages__people">{(detail.revisionHistory || []).map(revision => <li key={revision.revisionId}>
+                <h3>{t('signingV2.replacement.revision', { number: number(revision.revisionNumber) })}</h3>
+                <p>{t(`signingV2.workflow.${revision.state}`, { defaultValue: revision.state })} · {t('signingV2.replacement.preserved', { count: revision.acceptedCount, formattedCount: number(revision.acceptedCount) })}</p>
+                <time dateTime={revision.createdAt}>{date(revision.createdAt)}</time>
+                {revision.reason && <p>{t('signingV2.replacement.reason')}: <bdi>{revision.reason}</bdi></p>}
+                <div className="lw-signingPackages__docActions">
+                    {(revision.documents || []).map(document => <SecondaryButton key={document.id} disabled={!!busy} onPress={()=>downloadRevision(revision, document)}
+                        aria-label={`${t('signingV2.replacement.downloadDocument')}: ${document.name}`}>{document.name} · {t('signingV2.replacement.downloadDocument')}</SecondaryButton>)}
+                    {revision.evidence && <SecondaryButton disabled={!!busy} onPress={()=>downloadRevision(revision)}>{t('signingV2.public.downloadEvidence')}</SecondaryButton>}
+                </div>
+            </li>)}</ul>}
         </>}
-        {approvalOpen && <PackageApprovalDialog api={api} packageId={id} onClose={changed=>{setApprovalOpen(false);if(changed)resource.refresh();}}/>}
-        {lifecycle && <PackageLifecycleDialog key={lifecycle} api={api} packageId={id} action={lifecycle}
+        {detail.package && approvalOpen && <PackageApprovalDialog api={api} packageId={id} onClose={changed=>{setApprovalOpen(false);if(changed)resource.refresh();}}/>}
+        {detail.package && lifecycle && <PackageLifecycleDialog key={lifecycle} api={api} packageId={id} action={lifecycle}
             onClose={changed=>{setLifecycle(null);if(changed)resource.refresh();}} />}
-        {issue && <TaskIssueDialog kind="resolve" documentName={issue.documentName} originalNote={issue.reason}
+        {detail.package && replacementOpen && <PackageReplacementDialog api={api} packageId={id} onClose={()=>setReplacementOpen(false)} onStarted={onReplacement} />}
+        {detail.package && issue && <TaskIssueDialog kind="resolve" documentName={issue.documentName} originalNote={issue.reason}
             onSubmit={(resolution, key) => api.resolveIssue(id, issue.id, { resolution }, key)}
             onClose={changed => { setIssue(null); if (changed) resource.refresh(); }} />}
-        {contactPerson && <ParticipantContactDialog api={api} packageId={id} personId={contactPerson}
-            canSend={detail.capabilities?.send && (detail.package?.workflow_state==='complete' || (detail.capabilities?.linkRenew && detail.participants?.some(p=>p.personId===contactPerson && p.tasks.some(task=>task.state==='ready'))))}
+        {detail.package && contactPerson && <ParticipantContactDialog api={api} packageId={id} personId={contactPerson}
+            canSend={(detail.capabilities?.send && detail.package?.workflow_state==='complete') || (detail.capabilities?.deliveryResend && detail.capabilities?.linkRenew && detail.participants?.some(p=>p.personId===contactPerson && p.tasks.some(task=>task.state==='ready')))}
             onClose={changed=>{setContactPerson(null);if(changed)resource.refresh();}}
             onSend={()=>{setContactPerson(null);resource.refresh();setAction({personId:contactPerson,purpose:detail.package.workflow_state==='complete'?'completed_copy':'resend',renewLink:detail.package.workflow_state!=='complete'});}}/>}
-        {action && <ParticipantActionDialog key={`${action.personId}:${action.purpose}`} api={api} packageId={id} {...action}
+        {detail.package && action && <ParticipantActionDialog key={`${action.personId}:${action.purpose}`} api={api} packageId={id} {...action}
             onClose={changed => { setAction(null); if (changed) resource.refresh(); }} />}
     </dialog>;
 }
@@ -328,15 +367,23 @@ export default function SigningPackagesWorkspace({ onClose, onCreate, api = sign
     const [expanded, setExpanded] = useState(() => new Set(initialSubmissionId ? [initialSubmissionId] : []));
     const [selectedPackage, setSelectedPackage] = useState(null);
     const [bulkOpen, setBulkOpen] = useState(false);
+    const [replacementContext, setReplacementContext] = useState(null);
     const [cursors, setCursors] = useState([null]);
     const cursor = cursors.at(-1);
     const resource = usePagedResource(config => api.list({ state, query: search, cursor, ...(focused ? { submissionId: focused } : {}) }, config), [api, state, search, cursor, focused]);
+    useEffect(() => {
+        if (!privateAccessError(resource.error)) return;
+        setSelectedPackage(null); setReplacementContext(null); setBulkOpen(false);
+    }, [resource.error]);
     useEffect(() => setCursors([null]), [state, search]);
     const toggle = id => setExpanded(previous => {
         const next = new Set(previous); if (next.has(id)) next.delete(id); else next.add(id); return next;
     });
-    if (bulkOpen) return <BulkActionsWorkspace api={api} initialFilter={{ state, query: search, ...(focused ? { submissionId: focused } : {}) }}
+    if (bulkOpen && !privateAccessError(resource.error)) return <BulkActionsWorkspace api={api} initialFilter={{ state, query: search, ...(focused ? { submissionId: focused } : {}) }}
         onClose={() => { setBulkOpen(false); resource.refresh(); }} />;
+    if (replacementContext && !privateAccessError(resource.error)) return <PackageComposer api={api} replacementContext={replacementContext}
+        onBack={()=>{setReplacementContext(null);setSelectedPackage(replacementContext.packageId);resource.refresh();}}
+        onCreated={(_submissionId, result)=>{setReplacementContext(null);setSelectedPackage(result.packageId || replacementContext.packageId);resource.refresh();}} />;
     return <section className="lw-signingPackages" dir={direction} aria-labelledby="signing-packages-title">
         {onClose && <SigningBackButton onPress={onClose}>{backLabel || t('signingV2.backToDocuments')}</SigningBackButton>}
         <header className="lw-signingPackages__heading">
@@ -384,12 +431,13 @@ export default function SigningPackagesWorkspace({ onClose, onCreate, api = sign
                 </div>
                 {batch.is_batch && expanded.has(batch.id) && <>
                     <p className="lw-signingPackages__caption">{t('signingV2.authorizedSummary')}</p>
+                    {api.participantSummary && <SharedSignerSummary api={api} submissionId={batch.id} />}
                     <PackageChildren api={api} batchId={batch.id} state={state} query={search} onOpen={setSelectedPackage} />
                 </>}
             </li>)}</ul>
         </SimpleCard>)}
         <Pager previous={cursors.length > 1} next={resource.data.nextCursor} busy={resource.busy}
             onPrevious={() => setCursors(values => values.slice(0, -1))} onNext={() => setCursors(values => [...values, resource.data.nextCursor])} />
-        {selectedPackage && <PackagePanel key={selectedPackage} id={selectedPackage} api={api} onClose={() => setSelectedPackage(null)} />}
+        {selectedPackage && !privateAccessError(resource.error) && <PackagePanel key={selectedPackage} id={selectedPackage} api={api} onClose={() => setSelectedPackage(null)} onReplacement={context=>{setSelectedPackage(null);setReplacementContext(context);resource.refresh();}} />}
     </section>;
 }

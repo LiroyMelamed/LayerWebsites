@@ -8,7 +8,7 @@ const { enqueue, job } = require('./jobs');
 
 const { invalidateProfile } = require('./contactChanges');
 const { assertCurrentAuthorities } = require('./authorities');
-const { taskManifest } = require('./followupScope');
+const { taskManifest, senderCanAccess, requiredDeliveryActions, assertDeliveryPermission } = require('./followupScope');
 const { completedDocuments, documentManifest, copiesReady } = require('./completedCopy');
 const PURPOSES = new Set(['reminder', 'resend', 'completed_copy']);
 const CHANNELS = new Set(['email', 'sms']);
@@ -118,7 +118,7 @@ function evaluate(target, input) {
 
 async function previewParticipantAction(db, scope, input) {
     validate(input);
-    if (input.renewLink && scope.linkRenew !== true) fail('FORBIDDEN',403);
+    assertDeliveryPermission(scope, input);
     const target = await loadTarget(db, scope, input);
     if (input.renewLink) await assertCurrentAuthorities(db,scope.contextId,target.active_revision_id);
     return evaluate(target, input).preview;
@@ -130,7 +130,7 @@ function operationResult(row, reused) {
 
 async function executeParticipantAction(pool, scope, input) {
     validate(input);
-    if (input.renewLink && scope.linkRenew !== true) fail('FORBIDDEN',403);
+    assertDeliveryPermission(scope, input);
     expect(UUID.test(input.idempotencyKey) && /^[a-f0-9]{64}$/.test(input.previewHash || ''), 'INVALID_ACTION');
     const kind = `participant_${input.purpose}`;
     const actorKey = `user:${scope.userId}`;
@@ -140,6 +140,8 @@ async function executeParticipantAction(pool, scope, input) {
         // One decision at a time per person and package, across tabs and keys.
         await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [`signing-v2-action:${scope.contextId}:${input.packageId}:${input.personId}`]);
         const target = await loadTarget(db, scope, input, true);
+        if (!await senderCanAccess(db, scope.contextId, scope.userId, input.packageId,
+            requiredDeliveryActions(input.purpose, input.renewLink))) fail('FORBIDDEN', 403);
         const previous = await db.query(`SELECT * FROM signing_operations WHERE owner_context_id=$1 AND actor_key=$2 AND kind=$3 AND idempotency_key=$4`,
             [scope.contextId, actorKey, kind, input.idempotencyKey]);
         if (previous.rowCount) {

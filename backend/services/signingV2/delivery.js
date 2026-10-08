@@ -3,7 +3,7 @@ const { complete } = require('./jobs');
 const { transaction } = require('./transaction');
 
 const { digest } = require('../../lib/signingV2/canonical');
-const { senderCanAccess, taskManifest } = require('./followupScope');
+const { senderCanAccess, taskManifest, requiredDeliveryActions } = require('./followupScope');
 const { completedDocuments, manifestHash, copiesReady } = require('./completedCopy');
 const { assertCurrentAuthorities } = require('./authorities');
 const { planBulkDelivery } = require('./bulkDispatch');
@@ -81,7 +81,7 @@ function createDeliveryService({ pool, grantService, provider, linkFor }) {
                 return skip('cancelled', 'REVISION_INACTIVE');
             }
             if (delivery.purpose !== 'invitation' && !await senderCanAccess(db,lease.owner_context_id,
-                delivery.target_snapshot.actorUserId,delivery.package_id,renewLink ? 'access_link_renew' : null)) return skip('cancelled','SENDER_ACCESS_CHANGED');
+                delivery.target_snapshot.actorUserId,delivery.package_id,requiredDeliveryActions(delivery.purpose,renewLink))) return skip('cancelled','SENDER_ACCESS_CHANGED');
             if (delivery.deadline && !completedCopy && new Date(delivery.deadline) <= new Date()) return skip('cancelled','DEADLINE_EXPIRED');
             if (delivery.profile_version !== delivery.current_profile_version) return skip('cancelled', 'CONTACT_CHANGED');
             if (['reminder','resend'].includes(delivery.purpose)) {
@@ -99,7 +99,7 @@ function createDeliveryService({ pool, grantService, provider, linkFor }) {
             if (delivery.purpose !== 'invitation') {
                 // Recheck changes committed while waiting for the task fence.
                 if (!await senderCanAccess(db,lease.owner_context_id,delivery.target_snapshot.actorUserId,delivery.package_id,
-                    renewLink ? 'access_link_renew' : null)) return skip('cancelled','SENDER_ACCESS_CHANGED');
+                    requiredDeliveryActions(delivery.purpose,renewLink))) return skip('cancelled','SENDER_ACCESS_CHANGED');
                 if (!completedCopy && !renewLink) {
                     const link = await db.query(`SELECT id FROM signing_public_grants WHERE owner_context_id=$1 AND id=$2
                         AND person_id=$3 AND purpose='sign' AND revoked_at IS NULL AND expires_at>clock_timestamp() FOR SHARE`,
