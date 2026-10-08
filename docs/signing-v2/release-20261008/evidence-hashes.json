@@ -1,0 +1,96 @@
+{
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "9ea52fa0c4d57f714d5e3a8cdde96abb07f645141de5dde5e2a9d456a9bd1f34"
+    },
+    {
+      "path": "TEST-LEDGER-snapshot.md",
+      "sha256": "3a11f250d77a06b2511519730893ff6713789d90ed62d8a3c3da465ca5379dc1"
+    },
+    {
+      "path": "ashrafessa-backend-readonly-proof03.json",
+      "sha256": "e392efda485158977cf882fe0de77c5d3140bc6781cfe1bbc158dc80ad6cd7ff"
+    },
+    {
+      "path": "ashrafessa-frontend-live-proof03.json",
+      "sha256": "6df3baef22f24b83d103162e51cc7eed2196d67124dca3a9dcd5658ab6760541"
+    },
+    {
+      "path": "ashrafessa-public-live-proof03.json",
+      "sha256": "f99005ab26d50848fd389a3a607e2c87c867b95307acaaf83d5b13cfb2912349"
+    },
+    {
+      "path": "dependabot-artifact-scope03.json",
+      "sha256": "d261a977dc4f56bb3a6e0ce2d367f4a88a2d25bdb8d91afa492f96881b990032"
+    },
+    {
+      "path": "dependabot-readonly03.json",
+      "sha256": "594ad8487e99179638496e7783dc8c4ad3d1c830f3ae9f248c3f23a228513c14"
+    },
+    {
+      "path": "dependency-installed-readonly03.json",
+      "sha256": "013190ab867e4f427ed31bc9e71c137d8cab5e597998cc1ef92a2f2be66d25d3"
+    },
+    {
+      "path": "git-production-proof03.json",
+      "sha256": "db243e7c5544d0d384287eda8085fa4339d20abbc15bf04717767464bf99fe28"
+    },
+    {
+      "path": "idm-backend-readonly-proof03.json",
+      "sha256": "befbcb4f0ddde16d7ab48e8d3ff2cd1546dca0ed2c1eafb01a7a5f90960bddcb"
+    },
+    {
+      "path": "idm-frontend-live-proof03.json",
+      "sha256": "98a565a7898ce9047fd4b889b0a0fdeb3cbaca6bde1e654911606f6ada1f8164"
+    },
+    {
+      "path": "idm-public-live-proof03.json",
+      "sha256": "4e6ef02e07187dae642fbd7bfa6d87d68f868a627beb25ace5f34c93d9371e4a"
+    },
+    {
+      "path": "manual-verification.json",
+      "sha256": "f9933b8bb3817e993982bff72da1188e28df0b218d41cc95ea9298a1f9614f9f"
+    },
+    {
+      "path": "melamedlaw-backend-readonly-proof03.json",
+      "sha256": "5bff00d8ead980e4ce787a3a4ff5f8464c9e67e01a12e8021c8baa213b6421ca"
+    },
+    {
+      "path": "melamedlaw-frontend-live-proof03.json",
+      "sha256": "13941a4f03d333531dc2ae063afb834ddcc26ce4a21d0e26728065315aca4cb7"
+    },
+    {
+      "path": "melamedlaw-public-live-proof03.json",
+      "sha256": "54fcabedcff7ddf6c8292f90a4906a40d9495045eb34fb0c84d5b8b48b93463f"
+    },
+    {
+      "path": "morlevy-backend-readonly-proof03.json",
+      "sha256": "d2ac5f299399385aae581f4efa4729ca3279accaa0658d6dde992eddf8b70dae"
+    },
+    {
+      "path": "morlevy-frontend-live-proof03.json",
+      "sha256": "f435617613f34ddc847b3fbb1570feb8804f24764ccde6ca5f50be1d22781adf"
+    },
+    {
+      "path": "morlevy-public-live-proof03.json",
+      "sha256": "ee3d780dbb228e93697e8765caadad8c0d4dccbc0f53b1b2174c62639e0d5145"
+    },
+    {
+      "path": "production-release.json",
+      "sha256": "967f46e3d7dcbbbd9dad27f3cab9e73df62c3f096b69bc84ccc706fec5a60036"
+    },
+    {
+      "path": "signing-templates-operating-guide-he.md",
+      "sha256": "e51a9c4acc286f81b66afa4ea082150b2b60b158242d94a55a794ba8479b2f91"
+    },
+    {
+      "path": "signing-templates-operating-guide-he.pdf",
+      "sha256": "e06239e196adba1e2e88aec5e6d6b2632f87e5dc30020da5ada77159b793aa57"
+    },
+    {
+      "path": "ui-source-evidence.json",
+      "sha256": "969f43c203d356410412353a4fb705382e74165cd55af5f0abc101083dcb281f"
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "complete": true,
+  "tenant": "morlevy",
+  "candidate": "a16cb2e0267d0c5eb98f7d3951a7d37d8aecbe5f",
+  "product": "b6b31cd97e74d3eb8facbf95aadb360306c31b6d",
+  "qa": "7ce3a141bff23bcbedc7effe7b99b774256949d1",
+  "verifiedUtc": "2026-10-08T20:03:48.336Z",
+  "publicFiles": [
+    {
+      "url": "https://morlevy.mela-media.co.il/",
+      "path": "index.html",
+      "bytes": 7954,
+      "sha256": "93d2c69a70cf535141f1e9d3e7565f32ce7021e73f80e1eb9bbb712576d211e2"
+    },
+    {
+      "url": "https://morlevy.mela-media.co.il/static/css/main.06af72a5.css",
+      "path": "static/css/main.06af72a5.css",
+      "bytes": 198216,
+      "sha256": "2061346f3957a12ef5afac102058e0fc51f48f3cddf98a1aad43b8be66e336f4"
+    },
+    {
+      "url": "https://morlevy.mela-media.co.il/static/js/main.b769059a.js",
+      "path": "static/js/main.b769059a.js",
+      "bytes": 1337874,
+      "sha256": "ad04a067115e60cb3f4c58736ae028df6d35b1b82ec20e8cccec2c9b02362d12"
+    }
+  ],
+  "brandingAndAssociations": [
+    {
+      "path": "firm-logo.png",
+      "sha256": "df1a1a097e081dcae854f1d9798985f31b0a94375c3b6dfa41aa9c172b6d3888"
+    },
+    {
+      "path": "logo192.png",
+      "sha256": "ab5434f9efbb315eb1fda80982959675366f314ab59d98fc72964355c8c14fcb"
+    },
+    {
+      "path": "logo512.png",
+      "sha256": "dd63a85b6e9997ac65c645442b371efaeafb1b0c244905dbd51c9d3e48b6d177"
+    },
+    {
+      "path": "manifest.json",
+      "sha256": "7859688dd9ab9c3464e12735a2fd2b57367794cb52e02991e3d8396c627aad30"
+    },
+    {
+      "path": "favicon.ico",
+      "sha256": "1235cc7128c44375efccddde4f88d4bb8282bc39c4fd1e9f2b0deea14a832c10"
+    },
+    {
+      "path": ".well-known/assetlinks.json",
+      "sha256": "27b0fb377ab283c2e6ab0b64abb4edd45e5e4d0647c9d78a07e43093f072ed88"
+    },
+    {
+      "path": ".well-known/apple-app-site-association",
+      "sha256": "0cc6c72c18f978dff35563e29ee2c90960c1e33d8523b163dffa72e5c85bde46"
+    }
+  ],
+  "publicApiHealth": {
+    "ok": true
+  },
+  "backendProof": "morlevy-backend-readonly-proof03.json",
+  "frontendProof": "morlevy-frontend-live-proof03.json",
+  "noRealTestMessages": true
+}

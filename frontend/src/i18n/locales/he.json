@@ -105,7 +105,7 @@
   },
   "signingManager": {
     "searchTitle": "חיפוש מסמך / לקוח / תיק",
-    "templatesAndBulk": "תבניות ושליחה מרוכזת",
+    "templatesAndBulk": "תבניות חתימה",
     "dateFrom": "מתאריך",
     "dateTo": "עד תאריך",
     "scopeTabs": {
@@ -222,7 +222,7 @@
       "evidencePackageDownloadError": "שגיאה בהורדת חבילת ראיות",
       "deleteError": "שגיאה במחיקת המסמך"
     },
-    "signingRuns": "שליחות מרובות"
+    "signingRuns": "ניהול שליחות"
   },
   "audit": {
     "pageTitle": "יומן פעולות",
@@ -2278,7 +2278,7 @@
     "download": "הורד מסמך חתום"
   },
   "signingV2": {
-    "title": "חתימות ממתינות",
+    "title": "ניהול שליחות",
     "subtitle": "מעקב אחר החבילות, החותמים והמסירה בכל שליחה.",
     "newPackage": "חבילה חדשה",
     "backToDocuments": "חזרה למסמכים",
@@ -3060,10 +3060,12 @@
     },
     "showAllRuns": "הצגת כל השליחות",
     "workspace": {
-      "title": "תבניות ושליחה מרוכזת",
+      "title": "תבניות חתימה",
       "subtitle": "מסמכים מוכנים לשימוש חוזר, עם שדות ותפקידי חותמים קבועים.",
       "backToTemplates": "חזרה לתבניות",
       "batchSubtitle": "חבילות, הזמנות והתקדמות החתימות",
+      "previousBatches": "שליחות קודמות",
+      "backToRuns": "חזרה לניהול שליחות",
       "loading": "טוען…",
       "officeTemplates": "התבניות במשרד",
       "newTemplate": "תבנית חדשה",
@@ -3199,7 +3201,9 @@
         "chooseTreatment": "בחרו מה לעשות בשדה",
         "exclude_document": "לא לצרף את ה־PDF הזה",
         "authored_inactive": "השדה כבר מסומן במקור כלא רלוונטי"
-      }
+      },
+      "documentSettings": "פרטי המסמך",
+      "canvasHint": "בחרו תפקיד למעלה, לחצו על + ובחרו שדה. גררו את השדה למקום הרצוי במסמך."
     },
     "completedCopy": {
       "title": "המסמכים שהושלמו",
