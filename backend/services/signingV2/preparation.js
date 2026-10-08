@@ -9,14 +9,19 @@ function createPreparationService({ pool, renderer, storage, sourceCache = new S
     const rendererHash = rendererAssets().hash;
     return async function prepareDocument(lease) {
         expect(lease.kind === 'prepare_document', 'INVALID_JOB');
-        const result = await pool.query(`SELECT d.*,r.snapshot,r.revision_hash,r.workflow_state,p.active_revision_id,
+        // Bulk inserts can leave context statistics stale. Anchor the one document
+        // before joining its revision/artifact; otherwise the planner can walk the
+        // whole office's documents for every prepared PDF.
+        const result = await pool.query(`WITH d AS MATERIALIZED (
+                SELECT * FROM signing_documents WHERE owner_context_id=$1 AND id=$2
+            ) SELECT d.*,r.snapshot,r.revision_hash,r.workflow_state,p.active_revision_id,
             a.object_key,a.content_sha256,a.bytes,a.metadata,a.kind AS source_kind,a.state AS source_state
-            FROM signing_documents d
+            FROM d
             JOIN signing_package_revisions r ON r.owner_context_id=d.owner_context_id AND r.id=d.revision_id
             JOIN signing_packages p ON p.owner_context_id=r.owner_context_id AND p.id=r.package_id
             JOIN signing_artifacts a ON a.owner_context_id=d.owner_context_id AND a.id=d.source_artifact_id
             JOIN signing_jobs j ON j.owner_context_id=d.owner_context_id AND j.subject_id=d.id
-            WHERE d.owner_context_id=$1 AND d.id=$2 AND j.id=$3 AND j.fencing_token=$4 AND j.leased_by=$5
+            WHERE j.id=$3 AND j.fencing_token=$4 AND j.leased_by=$5
                 AND j.state='running' AND j.lease_until > clock_timestamp()`,
         [lease.owner_context_id, lease.subject_id, lease.id, lease.fencing_token, lease.leased_by]);
         if (!result.rowCount) fail('WORKER_LEASE_LOST', 409);
