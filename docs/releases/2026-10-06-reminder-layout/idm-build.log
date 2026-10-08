@@ -1,0 +1,358 @@
+
+> lawyer-website@0.1.0 prebuild:idm
+> node scripts/copy-pdf-worker.js && node scripts/apply-tenant-branding.js idm
+
+[copy-pdf-worker] Copied pdfjs-dist@5.4.296 worker → public/pdf.worker.min.{mjs,js}
+[apply-tenant-branding] applied branding for idm
+
+> lawyer-website@0.1.0 build:idm
+> cp .env.production.idm .env && craco build
+
+(node:77900) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Creating an optimized production build...
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+postcss-resolve-url: postcss.plugin was deprecated. Migration guide:
+https://evilmartians.com/chronicles/postcss-8-plugin-migration
+Compiled successfully.
+
+File sizes after gzip:
+
+  124.12 kB  build/static/js/vendor-pdf.00620d39.chunk.js
+  115.11 kB  build/static/js/main.0e3bbf8b.js
+  71.49 kB   build/static/js/vendor-fullcalendar.0279c62a.chunk.js
+  61.75 kB   build/static/js/171.71ddace8.chunk.js
+  60.06 kB   build/static/js/vendor-react.a74c0b3a.js
+  52.05 kB   build/static/js/vendor.531fc9dd.js
+  47.7 kB    build/static/js/vendor-charts.aed9f6fd.chunk.js
+  36.94 kB   build/static/js/597.254af919.chunk.js
+  34.33 kB   build/static/js/558.f9159fab.chunk.js
+  22.28 kB   build/static/css/main.2f67e019.css
+  18.04 kB   build/static/js/vendor-i18n.b91f3333.js
+  16.34 kB   build/static/js/533.228136be.chunk.js
+  16.09 kB   build/static/js/661.2fa177f4.chunk.js
+  14.8 kB    build/static/js/74.a2f395cd.chunk.js
+  12.69 kB   build/static/js/627.dcae731b.chunk.js
+  7.8 kB     build/static/js/251.a7774e13.chunk.js
+  7.75 kB    build/static/js/565.7c0fbbb5.chunk.js
+  6.3 kB     build/static/js/276.04d33143.chunk.js
+  5.95 kB    build/static/css/565.1f2f0c2e.chunk.css
+  5.65 kB    build/static/js/103.f96f6c29.chunk.js
+  5.23 kB    build/static/js/479.abde4a70.chunk.js
+  5.06 kB    build/static/js/22.6e278b01.chunk.js
+  4.96 kB    build/static/js/580.734d0eb5.chunk.js
+  4.88 kB    build/static/js/68.f8a60c05.chunk.js
+  4.67 kB    build/static/js/683.3bd3921a.chunk.js
+  4.12 kB    build/static/js/954.b9b4c056.chunk.js
+  4.01 kB    build/static/js/20.cca98a49.chunk.js
+  3.83 kB    build/static/js/566.c0b28a12.chunk.js
+  3.78 kB    build/static/js/912.7de452f2.chunk.js
+  3.62 kB    build/static/js/42.f73359d3.chunk.js
+  3.4 kB     build/static/css/627.5ef29b12.chunk.css
+  3.22 kB    build/static/js/275.7f4fc66a.chunk.js
+  3.19 kB    build/static/css/533.605c22de.chunk.css
+  2.9 kB     build/static/js/913.5bb25b00.chunk.js
+  2.83 kB    build/static/js/32.97fe359b.chunk.js
+  2.78 kB    build/static/css/103.eb9082a1.chunk.css
+  2.73 kB    build/static/js/668.8e44ac4f.chunk.js
+  2.66 kB    build/static/js/920.439f5252.chunk.js
+  2.54 kB    build/static/js/721.e366590e.chunk.js
+  2.5 kB     build/static/js/355.91cd15d1.chunk.js
+  2.44 kB    build/static/js/784.47d9b391.chunk.js
+  2.19 kB    build/static/js/38.c6270e66.chunk.js
+  2.09 kB    build/static/css/721.b212aebe.chunk.css
+  2 kB       build/static/js/992.dd1695f9.chunk.js
+  1.98 kB    build/static/js/243.77df84cb.chunk.js
+  1.94 kB    build/static/css/68.f7ed4542.chunk.css
+  1.82 kB    build/static/css/683.0dc49b3a.chunk.css
+  1.49 kB    build/static/css/20.d1e1c296.chunk.css
+  1.38 kB    build/static/js/227.344db1f0.chunk.js
+  1.37 kB    build/static/css/494.ba08a6f6.chunk.css
+  1.37 kB    build/static/css/913.8650c5b1.chunk.css
+  1.3 kB     build/static/css/566.317d139d.chunk.css
+  1.18 kB    build/static/js/280.45fc86cb.chunk.js
+  1.17 kB    build/static/js/325.13496604.chunk.js
+  1.16 kB    build/static/js/19.0c677eb4.chunk.js
+  1.12 kB    build/static/js/143.8e8dfcf9.chunk.js
+  1.08 kB    build/static/css/873.fda2c963.chunk.css
+  1.07 kB    build/static/css/19.b420745f.chunk.css
+  1.04 kB    build/static/css/42.6bbc786b.chunk.css
+  1.03 kB    build/static/css/227.d528faee.chunk.css
+  1 kB       build/static/css/954.f34a0cf0.chunk.css
+  929 B      build/static/css/479.97843a8f.chunk.css
+  913 B      build/static/css/32.f1973ab9.chunk.css
+  875 B      build/static/css/992.9b660abe.chunk.css
+  871 B      build/static/css/912.2a5695d6.chunk.css
+  863 B      build/static/css/668.269bb531.chunk.css
+  860 B      build/static/css/562.55e5374b.chunk.css
+  854 B      build/static/css/355.89031663.chunk.css
+  769 B      build/static/css/580.9cc0228e.chunk.css
+  760 B      build/static/css/275.7a2c93a5.chunk.css
+  710 B      build/static/js/118.42f66699.chunk.js
+  709 B      build/static/js/357.85a3027f.chunk.js
+  707 B      build/static/js/680.e6012482.chunk.js
+  631 B      build/static/js/494.c64fc78e.chunk.js
+  601 B      build/static/css/118.53950fd3.chunk.css
+  601 B      build/static/css/143.53950fd3.chunk.css
+  601 B      build/static/css/357.53950fd3.chunk.css
+  601 B      build/static/css/680.53950fd3.chunk.css
+  594 B      build/static/css/920.7a845abd.chunk.css
+  467 B      build/static/css/38.760c1495.chunk.css
+  378 B      build/static/css/784.565caf96.chunk.css
+  317 B      build/static/css/325.23f2bced.chunk.css
+  307 B      build/static/css/280.0eec2ecf.chunk.css
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  npm install -g serve
+  serve -s build
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+

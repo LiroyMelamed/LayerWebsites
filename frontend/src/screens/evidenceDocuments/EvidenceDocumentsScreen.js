@@ -18,6 +18,7 @@ import { Text14, TextBold14 } from "../../components/specializedComponents/text/
 import ListPageTitle from "../../components/specializedComponents/text/ListPageTitle";
 import ChooseButton from "../../components/styledComponents/buttons/ChooseButton";
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
+import StatusNotice from "../../components/ui/StatusNotice";
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
 import TertiaryButton from "../../components/styledComponents/buttons/TertiaryButton";
 import Separator from "../../components/styledComponents/separators/Separator";
@@ -350,10 +351,9 @@ export default function EvidenceDocumentsScreen() {
                         ))}
                     </SimpleCard>
                 ) : hasLoadError && items.length === 0 ? (
-                    <SimpleCard className="lw-evidenceDocuments__state">
-                        <Text14 role="alert">{t("evidenceDocuments.errors.load")}</Text14>
-                        <SecondaryButton onPress={onApplySearch}>{t("common.search")}</SecondaryButton>
-                    </SimpleCard>
+                    <StatusNotice onAction={onApplySearch} actionLabel={t("common.search")}>
+                        <p>{t("evidenceDocuments.errors.load")}</p>
+                    </StatusNotice>
                 ) : filteredItems.length === 0 ? (
                     <SimpleCard className="lw-evidenceDocuments__state">
                         <Text14>{t("evidenceDocuments.empty")}</Text14>

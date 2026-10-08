@@ -28,7 +28,7 @@ test('expired background office permissions clear old identity without leaving a
   window.removeEventListener('lw-auth-changed', changed);
 });
 
-test.each(['/SigningFiles/public/qa-token/verify-otp', 'SigningFiles/public/qa-token/verify-otp'])(
+test.each(['/SigningFiles/public/qa-token/verify-otp', 'SigningFiles/public/qa-token/verify-otp', '/signing-v2/public/package'])(
   'public signing rejection does not clear an unrelated office session: %s', async (url) => {
     await rejectResponse({ response: { status: 401 }, config: { url, headers: {} } });
     expect(localStorage.getItem('token')).toBe('synthetic-office-session');

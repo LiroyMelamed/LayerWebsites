@@ -65,6 +65,12 @@ async function scheduleRemindersForSigners({ signingFileId, signerUserIds, invit
     let created = 0;
     for (const signerUserId of ids) {
         try {
+            const batchRecipient = await pool.query(`SELECT r.id FROM signing_batch_files bf JOIN signing_batch_recipients r ON r.batch_id=bf.batch_id
+                WHERE bf.signingfileid=$1 AND r.user_id=$2`, [fileId, signerUserId]);
+            if (batchRecipient.rows[0]) {
+                created += await require('../services/signingBatchReminders').scheduleBatchReminder(batchRecipient.rows[0].id, base);
+                continue;
+            }
             // Cancel any existing pending for this pair, then insert fresh.
             await pool.query(
                 `UPDATE signing_file_reminders
@@ -148,7 +154,8 @@ async function rescheduleUnmodifiedReminders(newOffsetHours) {
                AND auto_managed = TRUE`,
             [hours]
         );
-        return rowCount || 0;
+        const batchRows = await pool.query("UPDATE signing_batch_reminders SET scheduled_for=invited_at+($1::integer*interval '1 hour') WHERE status='pending'", [hours]);
+        return (rowCount || 0) + batchRows.rowCount;
     } catch (err) {
         console.error('[sign-reminders] rescheduleUnmodified failed:', err?.message || err);
         return 0;
@@ -163,7 +170,8 @@ async function cancelAllAutoManagedPending() {
              SET status = 'CANCELLED', cancelled_at = NOW()
              WHERE status = 'PENDING' AND auto_managed = TRUE`
         );
-        return rowCount || 0;
+        const batchRows = await pool.query("UPDATE signing_batch_reminders SET status='cancelled' WHERE status='pending'");
+        return (rowCount || 0) + batchRows.rowCount;
     } catch (err) {
         console.error('[sign-reminders] cancelAllAutoManaged failed:', err?.message || err);
         return 0;
@@ -270,9 +278,10 @@ async function processDueSignReminders({ limit = 50 } = {}) {
     }
     client.release();
 
-    let sent = 0;
-    let cancelled = 0;
-    let failed = 0;
+    const batchCounts = await require('../services/signingBatchReminders').processDueBatchReminders({ limit });
+    let sent = batchCounts.sent;
+    let cancelled = batchCounts.cancelled;
+    let failed = batchCounts.failed;
 
     const smsTemplate = await getSetting(
         'templates',
