@@ -1252,3 +1252,9 @@ ssh: connect to host 37.60.230.148 port 22: Connection refused
 - NEW exact production idm public index/mainJS/mainCSS byte identity and existing API health PASS 0ca0de08ea64c5cb470eb29f1b67448d1a7c5cd5; production-update-20261009/idm/public-proof.json. This proves installed exact QA-approved source, not a repeated behavior suite or native/store upload.
 
 - All four current customer frontend releases completed and exact source/static health verified. Immutable receipts, preserved failed connection attempt, focused QA/hash evidence and full v6 guide saved for reuse in docs/signing-v2/release-20261009. No broader tests or migrations repeated; customer message not yet sent.
+
+- NEW exact production Git verification PASS: atomic no-force push of documentation 309e3da5d933d08dcfc3597aa04a2217790aadd4 and four installed source heads; four new production-signing-v2-20261009 tags peel to exact customer source. Older tags unchanged. Evidence production-update-20261009/git-proof.json. Customer announcement remains separate pending actual send.
+
+- Owner steering9October: do NOT send customer update autonomously. No message has been sent. Draft shortened to new-feature mention plus user-visible functional bug fixes; no optimization/performance claims. Verified recipient inventory stays private, no announcement dispatch initiated.
+
+- Final owner steering incorporated after actual four-tenant release/Git verification: short new-feature intro and functional-fix draft saved, NO customer notification sent. Earlier full-feature draft remains immutable in309e3da5 history and is superseded. Auth/template/navigation source unchanged; no testing/deployment/tag mutation repeated.
