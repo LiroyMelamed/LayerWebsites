@@ -1,0 +1,117 @@
+{
+  "pages": 18,
+  "fontEmbedded": true,
+  "pageSize": "A4",
+  "rtlRenderer": "ReportLab + python-bidi, Arial embedded",
+  "layoutBounds": [
+    {
+      "page": 1,
+      "title": "תבניות וחבילות חתימה",
+      "bottomY": 535.89
+    },
+    {
+      "page": 2,
+      "title": "מתחילים כאן",
+      "bottomY": 194.89
+    },
+    {
+      "page": 3,
+      "title": "מושגים והרשאות",
+      "bottomY": 264.89
+    },
+    {
+      "page": 4,
+      "title": "יצירת תבנית לשימוש חוזר",
+      "bottomY": 256.89
+    },
+    {
+      "page": 5,
+      "title": "מסמכי PDF ומיקום השדות",
+      "bottomY": 256.89
+    },
+    {
+      "page": 6,
+      "title": "מי חותם אחרי מי?",
+      "bottomY": 253.89
+    },
+    {
+      "page": 7,
+      "title": "בחירת אנשים וסמכות לחתימה",
+      "bottomY": 282.89
+    },
+    {
+      "page": 8,
+      "title": "שדות מידע, ברירות מחדל ותנאים",
+      "bottomY": 245.89
+    },
+    {
+      "page": 9,
+      "title": "הכנת שליחה ללקוח או לתיק",
+      "bottomY": 273.89
+    },
+    {
+      "page": 10,
+      "title": "יבוא Excel בלי לנחש מי החותם",
+      "bottomY": 212.89
+    },
+    {
+      "page": 11,
+      "title": "בדיקה לפני שליחה וקריאת המצבים",
+      "bottomY": 250.89
+    },
+    {
+      "page": 12,
+      "title": "מה החותם רואה?",
+      "bottomY": 273.89
+    },
+    {
+      "page": 13,
+      "title": "ניהול החבילות לאחר השליחה",
+      "bottomY": 283.89
+    },
+    {
+      "page": 14,
+      "title": "תזכורות ופעולות מרוכזות",
+      "bottomY": 255.89
+    },
+    {
+      "page": 15,
+      "title": "תיקון פרטים, ביטול וגרסה מחליפה",
+      "bottomY": 235.89
+    },
+    {
+      "page": 16,
+      "title": "אישור פנימי וטיפול בפנייה",
+      "bottomY": 245.89
+    },
+    {
+      "page": 17,
+      "title": "דוגמאות עבודה למשרדים שונים",
+      "bottomY": 279.89
+    },
+    {
+      "page": 18,
+      "title": "פתרון תקלות ורשימת בדיקה",
+      "bottomY": 161.89
+    }
+  ],
+  "pdfBytes": 112761,
+  "sha256": "e06239e196adba1e2e88aec5e6d6b2632f87e5dc30020da5ada77159b793aa57",
+  "sourceSha256": "e51a9c4acc286f81b66afa4ea082150b2b60b158242d94a55a794ba8479b2f91",
+  "visualReviewPending": false,
+  "visualReview": {
+    "allPagesMontage": true,
+    "fullSizePages": [
+      10,
+      12,
+      18
+    ],
+    "noClippingOrOverlapOrMissingHebrewGlyphs": true,
+    "footerCorrected": "עמוד N מתוך 18",
+    "completedUtc": "2026-10-08T19:59:23.375Z"
+  },
+  "textCheck": {
+    "all18PagesHaveText": true,
+    "allUsedTrueTypeFontsEmbedded": true
+  }
+}
