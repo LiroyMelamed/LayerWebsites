@@ -6,6 +6,7 @@ const pool = require('../config/db');
 const { actorScope } = require('../services/signingV2/access');
 const management = require('../services/signingV2/management');
 const actions = require('../services/signingV2/actions');
+const selections = require('../services/signingV2/selections');
 const creation = require('../services/signingV2/creation');
 const drafts = require('../services/signingV2/drafts');
 const caseContext = require('../services/signingV2/caseContext');
@@ -29,6 +30,13 @@ router.use(auth, requireSigningEnabledForUser);
 const target = req => ({ packageId: req.params.id, personId: req.params.personId, purpose: req.body?.purpose, channel: req.body?.channel });
 
 router.get('/submissions', view, run(async (req, res) => res.json(await management.listSubmissions(pool, await actorScope(pool, req, 'view'), req.query))));
+router.post('/selections', send, run(async (req,res) => {
+    const selection = await selections.freezeSelection(pool,await actorScope(pool,req,'upload'),
+        {...(req.body || {}),idempotencyKey:req.get('Idempotency-Key')});
+    res.status(selection.reused ? 200 : 201).json(selection);
+}));
+router.get('/selections/:id', send, run(async (req,res) =>
+    res.json(await selections.getSelection(pool,await actorScope(pool,req,'upload'),req.params.id))));
 router.get('/submissions/:id/packages', view, run(async (req, res) =>
     res.json(await management.listPackages(pool, await actorScope(pool, req, 'view'), req.params.id, req.query))));
 router.get('/packages/:id', view, run(async (req, res) => res.json(await management.packageDetails(pool, await actorScope(pool, req, 'view'), req.params.id))));
