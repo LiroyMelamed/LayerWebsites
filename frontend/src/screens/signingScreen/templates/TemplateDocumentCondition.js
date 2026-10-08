@@ -1,3 +1,4 @@
+import SigningSelect from './SigningSelect';
 import React from 'react';
 import useSigningLocale from './useSigningLocale';
 import TemplateDataValueInput from './TemplateDataValueInput';
@@ -11,9 +12,9 @@ function ConditionRule({ fields, condition, onChange, depth = 0, total }) {
     const first = () => ({ key: fields[0].key, operator: 'present' });
     const canAdd = fields.length > 0 && total < 50 && depth < 4;
     if (condition?.conditions) return <div className="lw-templates__conditionGroup">
-        <label>{text('combine')}<select dir={direction} value={condition.operator} onChange={event => onChange({ ...condition, operator: event.target.value })}>
+        <label>{text('combine')}<SigningSelect dir={direction} value={condition.operator} onChange={event => onChange({ ...condition, operator: event.target.value })}>
             <option value="all">{text('all')}</option><option value="any">{text('any')}</option>
-        </select></label>
+        </SigningSelect></label>
         {condition.conditions.map((child, index) => <fieldset key={index}>
             <legend>{text('rule', { number: number(index + 1) })}</legend>
             <ConditionRule fields={fields} condition={child} depth={depth + 1} total={total} onChange={next => {
@@ -33,16 +34,16 @@ function ConditionRule({ fields, condition, onChange, depth = 0, total }) {
         </div>
     </div>;
     return <div className="lw-templates__conditionLeaf">
-        <label>{text('field')}<select dir={direction} value={condition?.key || ''} onChange={event => onChange(event.target.value ? { key: event.target.value, operator: 'present' } : null)}>
+        <label>{text('field')}<SigningSelect dir={direction} value={condition?.key || ''} onChange={event => onChange(event.target.value ? { key: event.target.value, operator: 'present' } : null)}>
             <option value="">{text(depth > 0 ? 'removeRule' : 'always')}</option>
             {condition && !field && <option value={condition.key}>{text('missing')}</option>}
             {fields.map(item => <option key={item.key} value={item.key}>{item.label || item.key}</option>)}
-        </select></label>
+        </SigningSelect></label>
         {condition && field && <>
-            <label>{text('operator')}<select dir={direction} value={condition.operator} onChange={event => {
+            <label>{text('operator')}<SigningSelect dir={direction} value={condition.operator} onChange={event => {
                 const operator = event.target.value;
                 onChange({ key: field.key, operator, ...(operator === 'equals' ? { value: empty } : operator === 'in' ? { values: [empty] } : {}) });
-            }}>{['present', 'equals', 'in'].map(operator => <option key={operator} value={operator}>{text(operator)}</option>)}</select></label>
+            }}>{['present', 'equals', 'in'].map(operator => <option key={operator} value={operator}>{text(operator)}</option>)}</SigningSelect></label>
             {condition.operator === 'equals' && <TemplateDataValueInput field={field} label={text('value')} value={condition.value} onChange={value => onChange({ ...condition, value })} />}
             {condition.operator === 'in' && <>
                 {(condition.values || []).map((value, index) => <div className="lw-templates__conditionValue" key={index}>
