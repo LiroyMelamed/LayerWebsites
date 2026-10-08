@@ -23,8 +23,10 @@ function suggestedMapping(sheet, roles, dataFields) {
         .map(column => [column.suggestedKey, column.index]));
 }
 
-export default function WorkbookImport({ api, versionId, roles, dataFields = [], layout, hasRecipients, onApply, onPending }) {
+export default function WorkbookImport({ api, versionId, roles: sourceRoles, dataFields = [], layout, hasRecipients, onApply, onPending }) {
     const { t, direction, number, locale } = useSigningLocale();
+    const roles = sourceRoles.flatMap(role => Array.from({ length: role.max ?? 1 }, (_, index) => ({ ...role, sourceKey: role.key, occurrence: index, optional: index >= (role.min ?? 1), key: role.max > 1 ? `${role.key}.people.${index}` : role.key, label: role.max > 1 ? `${role.label} · ${number(index + 1)}` : role.label })));
+    const recipientAt = (row, role) => row.recipients[role.sourceKey]?.people?.[role.occurrence] || (role.occurrence === 0 ? row.recipients[role.sourceKey] : null);
     const [file, setFile] = useState(null);
     const [sheets, setSheets] = useState([]);
     const [sheetId, setSheetId] = useState(null);
@@ -65,7 +67,7 @@ export default function WorkbookImport({ api, versionId, roles, dataFields = [],
         } catch (failure) { if (current === generation.current) setError(failure); }
         finally { if (current === generation.current) setBusy(false); }
     };
-    const complete = Object.keys(columns).length > 0 && roles.every(role => role.when || (columns[`${role.key}.name`] && (columns[`${role.key}.email`] || columns[`${role.key}.phone`])))
+    const complete = Object.keys(columns).length > 0 && roles.every(role => role.optional || role.when || (columns[`${role.key}.name`] && (columns[`${role.key}.email`] || columns[`${role.key}.phone`])))
         && dataFields.every(field => !field.required || field.defaultValue != null || columns[`data:${field.key}`]);
     const duplicate = new Set(Object.values(columns)).size !== Object.keys(columns).length;
     const select = (key, label, required = false) => {
@@ -103,7 +105,7 @@ export default function WorkbookImport({ api, versionId, roles, dataFields = [],
                 {roles.map(role => <fieldset key={role.key} className="lw-signingCompose__mappingRole">
                     <legend>{role.label}</legend>
                     {role.when && <p>{t('signingV2.compose.mapping.conditionalRole')}</p>}
-                    <div className="lw-signingCompose__identity">{FIELDS.map(field => select(`${role.key}.${field}`, t(`signingV2.compose.fields.${field}`), field === 'name' && !role.when))}</div>
+                    <div className="lw-signingCompose__identity">{FIELDS.map(field => select(`${role.key}.${field}`, t(`signingV2.compose.fields.${field}`), field === 'name' && !role.when && !role.optional))}</div>
                 </fieldset>)}
                 {!!dataFields.length && <fieldset className="lw-signingCompose__mappingRole">
                     <legend>{t('signingV2.compose.data.heading')}</legend>
@@ -120,7 +122,7 @@ export default function WorkbookImport({ api, versionId, roles, dataFields = [],
                 <p>{t('signingV2.compose.mapping.previewHelp')}</p>
                 <ul className="lw-signingCompose__plainList">{preview.rows.slice(0, 5).map(row => <li key={row.sourceRow}>
                     <strong>{t('signingV2.compose.excel.issueRow', { row: number(row.sourceRow) })}</strong>
-                    {roles.map(role => <div key={role.key}><bdi>{role.label}</bdi>: <bdi>{[row.recipients[role.key]?.name, row.recipients[role.key]?.email, row.recipients[role.key]?.phone].filter(Boolean).join(' · ')}</bdi></div>)}
+                    {roles.map(role => <div key={role.key}><bdi>{role.label}</bdi>: <bdi>{[recipientAt(row, role)?.name, recipientAt(row, role)?.email, recipientAt(row, role)?.phone].filter(Boolean).join(' · ')}</bdi></div>)}
                     {dataFields.map(field => row.data?.[field.key] == null ? null : <div key={field.key}><bdi>{field.label || field.key}</bdi>: <bdi>{documentDataValue(field, row.data[field.key], { t, locale })}</bdi></div>)}
                 </li>)}</ul>
                 {preview.errors.length > 0 && <StatusNotice embedded>

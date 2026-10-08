@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, within, waitFor } from '@testing-library/react';
 import { createInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import WorkbookImport from './WorkbookImport';
@@ -91,4 +91,22 @@ test('conditional recipient columns are optional at import but are explained bef
     fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.compose.mapping.preview')}));
     await waitFor(()=>expect(props.api.parseWorkbook).toHaveBeenCalledWith('template-v1',expect.any(String),{mapping:{sheetId:1,columns:{'buyer.name':2}}}));
     expect(props.onApply).not.toHaveBeenCalled();
+});
+
+
+test('two required people have separate mappings; an optional third never blocks or shifts them',async()=>{
+    const api={inspectWorkbook:jest.fn().mockResolvedValue({sheets:[{id:1,name:'People',columns:[1,2,3,4].map(index=>({index,header:`Column ${index}`,samples:[]}))}]}),parseWorkbook:jest.fn().mockResolvedValue({rows:[{sourceRow:2,recipients:{buyer:{people:[{name:'First',email:'one@example.invalid'},{name:'Second',email:'two@example.invalid'}]}}}],errors:[]})};
+    const {upload}=await setup('en',{roles:[{key:'buyer',label:'Buyers',min:2,max:3}],api});upload();
+    const first=within(await screen.findByRole('group',{name:'Buyers · 1'}));
+    const second=within(screen.getByRole('group',{name:'Buyers · 2'}));
+    fireEvent.change(first.getByLabelText('Full name (required)'),{target:{value:'1'}});
+    fireEvent.change(first.getByLabelText('Email'),{target:{value:'2'}});
+    expect(screen.getByRole('button',{name:'Review mapping'})).toBeDisabled();
+    fireEvent.change(second.getByLabelText('Full name (required)'),{target:{value:'3'}});
+    fireEvent.change(second.getByLabelText('Email'),{target:{value:'4'}});
+    expect(within(screen.getByRole('group',{name:'Buyers · 3'})).getByLabelText('Full name')).toHaveValue('');
+    fireEvent.click(screen.getByRole('button',{name:'Review mapping'}));
+    await screen.findByText('First · one@example.invalid');
+    expect(screen.getByText('Second · two@example.invalid')).toBeVisible();
+    expect(api.parseWorkbook.mock.calls[0][2].mapping.columns).toEqual({'buyer.people.0.name':1,'buyer.people.0.email':2,'buyer.people.1.name':3,'buyer.people.1.email':4});
 });

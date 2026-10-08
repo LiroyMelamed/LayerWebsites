@@ -1781,7 +1781,7 @@
         "UNSUPPORTED_CELL": "The row contains a formula or a non-text cell. Enter plain values only",
         "INVALID_ROW": "The documents for this row could not be prepared",
         "TEXT_OVERFLOW": "The text is longer than the space in the document",
-        "DISTINCT_PEOPLE_REQUIRED": "The same person cannot fill two roles that need different signers",
+        "DISTINCT_PEOPLE_REQUIRED": "Choose different people for the different positions in this role.",
         "CAPACITY_BUDGET_EXCEEDED": "This run is too large. The limit is 200 rows",
         "RECIPIENT_LINK_CYCLE": "These roles refer back to each other. Enter person details for one of them.",
         "RECIPIENT_LINK_UNAVAILABLE": "The linked role is unavailable. Choose the person again.",
@@ -1790,7 +1790,10 @@
         "UNKNOWN_DATA_KEY": "The file contains a detail that is not defined in this template.",
         "AMBIGUOUS_DATE": "Enter a full date as YYYY-MM-DD.",
         "INVALID_PROVENANCE": "The data source is invalid.",
-        "UNSAFE_DATA_CELL": "Store this value as a text cell to avoid changing its number or date."
+        "UNSAFE_DATA_CELL": "Store this value as a text cell to avoid changing its number or date.",
+        "ROLE_CARDINALITY": "The number of people does not match the positions defined in the template.",
+        "DELIVERY_PROFILE_CONFLICT": "The same person has different delivery settings in different roles. Make them consistent before sending.",
+        "INVALID_PERSON": "The selected person is not valid."
       },
       "errors": {
         "INVALID_WORKBOOK": "This file is not a valid Excel workbook",
@@ -1812,7 +1815,11 @@
         "INCOMPLETE_COLUMN_MAPPING": "Map a name and an email or phone for every role that varies by package.",
         "WORKBOOK_TOO_COMPLEX": "This file is too complex. Use up to 10 sheets, 128 columns and 5,000 rows per sheet, with at most 200 packages per import.",
         "INVALID_CASE": "The selected case is invalid. Please choose it again.",
-        "INVALID_CLIENT": "This client cannot be linked. Choose an existing, available client."
+        "INVALID_CLIENT": "This client cannot be linked. Choose an existing, available client.",
+        "ROLE_CARDINALITY": "The number of people does not match the positions defined in the template.",
+        "DISTINCT_PEOPLE_REQUIRED": "Choose different people for the different positions in this role.",
+        "DELIVERY_PROFILE_CONFLICT": "The same person has different delivery settings in different roles. Make them consistent before sending.",
+        "INVALID_PERSON": "The selected person is not valid."
       },
       "audience": {
         "label": "Who fills {{name}}",
@@ -2311,6 +2318,19 @@
         "documents": "Documents",
         "messages": "Messages"
       }
+    },
+    "people": {
+      "templateOptions": "Number of people in this role",
+      "slotHelp": "Each person has a fixed position in the documents. Increasing the count does not add or move signature fields; place them in the documents step. For people signing at different times, use separate roles and stages.",
+      "minimum": "Minimum people",
+      "maximum": "Maximum people",
+      "slotFor": "Signature position for {{role}}",
+      "personNumber": "Person {{number}}",
+      "countRange": "Assign {{minimum}} to {{maximum}} people to this role, in the same signing stage.",
+      "add": "Add a person to {{role}}",
+      "removeLast": "Remove last person",
+      "countFixed": "This role requires {{formattedCount}} people, in the same signing stage.",
+      "missingPosition": "Add a document field for {{role}} — person {{number}}."
     }
   },
   "calendar": {

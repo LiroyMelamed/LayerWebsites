@@ -34,7 +34,7 @@ export function fromEditor(draft, locale) {
                 }
                 if (field.inactiveTreatment) result.inactiveTreatment = field.inactiveTreatment;
                 else delete result.inactiveTreatment;
-                return { ...result, roleKey: field.roleId, occurrence: field.nativeField?.occurrence || 0 };
+                return { ...result, roleKey: field.roleId, occurrence: field.occurrence ?? field.nativeField?.occurrence ?? 0 };
             }) })),
         signingRules: draft.nativeDefinition?.signingRules || [],
         policy: { ...draft.nativeDefinition?.policy, otpRequired: true, deliveryMode: draft.nativeDefinition?.policy?.deliveryMode || 'invite' } };

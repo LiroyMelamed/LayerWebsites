@@ -14,14 +14,17 @@ const LABELS = {
 const FIELDS = ['name', 'email', 'phone', 'channel'];
 const LEGACY_LOCALE = { he: 'שפה (he / ar / en)', ar: 'اللغة (he / ar / en)', en: 'Language (he / ar / en)' };
 
+const slotKey = (role, index) => role.max > 1 ? `${role.key}.people.${index}` : role.key;
+const slots = role => Array.from({ length: role.max ?? 1 }, (_, index) => ({ key: slotKey(role, index), index }));
+
 function columns(definition, locale, includeLocale = false) {
     const labels = LABELS[locale] || LABELS.he;
     const fields = includeLocale ? [...FIELDS, 'locale'] : FIELDS;
     return [{ key: 'key', header: labels.key }, ...definition.roles.filter(role => role.audience !== 'shared').flatMap(role =>
-        fields.map(field => ({
-            key: `${role.key}.${field}`,
-            header: `${role.label} — ${field === 'locale' ? (LEGACY_LOCALE[locale] || LEGACY_LOCALE.he) : labels[field]}`,
-        }))), ...(definition.dataKeys || []).map(field => ({ key: `data:${field.key}`, header: field.label || field.key }))];
+        slots(role).flatMap(slot => fields.map(field => ({
+            key: `${slot.key}.${field}`,
+            header: `${role.label}${role.max > 1 ? ` · ${new Intl.NumberFormat(locale).format(slot.index + 1)}` : ''} — ${field === 'locale' ? (LEGACY_LOCALE[locale] || LEGACY_LOCALE.he) : labels[field]}`,
+        })))), ...(definition.dataKeys || []).map(field => ({ key: `data:${field.key}`, header: field.label || field.key }))];
 }
 
 async function makeWorkbook(definition, locale, layout = {}) {
@@ -75,7 +78,7 @@ function mappedColumns(sheet, definition, mapping) {
     // Whether a conditional role is required can only be decided per package
     // from normalized business data. Creation preview is that strict boundary.
     for (const role of definition.roles.filter(role => role.audience !== 'shared' && !role.when)) {
-        expect(mapping.columns[`${role.key}.name`] && (mapping.columns[`${role.key}.email`] || mapping.columns[`${role.key}.phone`]), 'INCOMPLETE_COLUMN_MAPPING');
+        for (const slot of slots(role).slice(0, role.min ?? 1)) expect(mapping.columns[`${slot.key}.name`] && (mapping.columns[`${slot.key}.email`] || mapping.columns[`${slot.key}.phone`]), 'INCOMPLETE_COLUMN_MAPPING');
     }
     for (const field of definition.dataKeys || []) if (field.required && field.defaultValue == null) {
         expect(mapping.columns[`data:${field.key}`], 'INCOMPLETE_COLUMN_MAPPING');
@@ -129,11 +132,15 @@ async function parseWorkbook(buffer, definition, layout = {}) {
         if (dataError) { errors.push(dataError); continue; }
         const recipients = {};
         for (const role of definition.roles.filter(item => item.audience !== 'shared')) {
-            const person = Object.fromEntries(FIELDS.map(field => [field, values[`${role.key}.${field}`] || '']));
-            // Spreadsheets drop the leading zero of a numeric Israeli mobile number.
-            if (/^5\d{8}$/.test(person.phone)) person.phone = `0${person.phone}`;
-            recipients[role.key] = { name: person.name, email: person.email, phone: person.phone,
-                ...(person.channel ? { channel: person.channel.toLowerCase() } : {}) };
+            const people = slots(role).map(slot => {
+                const person = Object.fromEntries(FIELDS.map(field => [field, values[`${slot.key}.${field}`] || '']));
+                // Preserve a blank intermediate slot: later people must never move into another PDF position.
+                if (/^5\d{8}$/.test(person.phone)) person.phone = `0${person.phone}`;
+                return { name: person.name, email: person.email, phone: person.phone,
+                    ...(person.channel ? { channel: person.channel.toLowerCase() } : {}) };
+            });
+            while (people.length > (role.min ?? 1) && !Object.values(people[people.length - 1]).some(Boolean)) people.pop();
+            recipients[role.key] = role.max > 1 || !people.length ? { people } : people[0];
         }
         rows.push({ sourceRow: index, ...(values.key ? { key: values.key } : {}), recipients,
             ...((definition.dataKeys || []).length ? { data, dataSources } : {}) });

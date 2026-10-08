@@ -253,6 +253,7 @@ function compilePackage(definition, input, directory, now = new Date()) {
         }
         const active = conditionMatches(role.when, data, dataKeys);
         expect(active ? assignments.length >= role.min && assignments.length <= role.max : assignments.length === 0, 'ROLE_CAPACITY_EXCEEDED', role.key);
+        expect(new Set(assignments.map(assignment => assignment.personId)).size === assignments.length, 'DISTINCT_PEOPLE_REQUIRED', role.key);
         assignments.forEach((assignment, occurrence) => {
             const person = directory.people.get(assignment.personId);
             const party = directory.parties.get(assignment.partyId);

@@ -249,3 +249,34 @@ test('a conditional signer needs an explicit inactive field treatment, preserved
     fireEvent.click(screen.getByRole('button',{name:'Save draft'}));await waitFor(()=>expect(api.saveTemplateDraft).toHaveBeenCalledTimes(2));
     expect(api.saveTemplateDraft.mock.calls[1][1].definition.documents[0].fields[2].inactiveTreatment).toBeUndefined();
 });
+
+test('adding an explicit person position preserves all original fields; a used position cannot be removed by shrinking the role',async()=>{
+    const i18n=await setup('en'),api=fakeApi(),input=version();
+    render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={input} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
+    const maximum=screen.getAllByLabelText('Maximum people')[0];
+    expect(within(maximum).getByRole('option',{name:'7'})).toBeDisabled();
+    expect(within(maximum).getByRole('option',{name:'6'})).toBeEnabled();
+    fireEvent.change(maximum,{target:{value:'2'}});
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.builder.next')}));
+    await screen.findByRole('button',{name:'Move first PDF field'});
+    fireEvent.change(screen.getByLabelText('Signature position for buyer'),{target:{value:'1'}});
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.builder.addField',{page:'1'})}));
+    fireEvent.click(screen.getByRole('button',{name:'Save draft'}));
+    await screen.findByText(i18n.t('signingV2.authoring.saved'));
+    const saved=api.saveTemplateDraft.mock.calls[0][1].definition;
+    expect(saved.roles[0]).toMatchObject({min:1,max:2});
+    expect(saved.documents[0].fields.slice(0,3)).toMatchObject(input.definition.documents[0].fields);
+    expect(saved.documents[0].fields[3]).toMatchObject({occurrence:1,roleKey:'buyer'});
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.builder.previous')}));
+    expect(within(screen.getAllByLabelText('Maximum people')[0]).getByRole('option',{name:'1'})).toBeDisabled();
+});
+
+test('raising a role maximum without authored positions blocks publication and names the missing person',async()=>{
+    const i18n=await setup('en'),api=fakeApi();
+    render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={version()} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
+    fireEvent.change(screen.getAllByLabelText('Maximum people')[0],{target:{value:'2'}});
+    fireEvent.click(screen.getByRole('button',{name:`3 ${i18n.t('signingV2.builder.review')}`}));
+    expect(screen.getByRole('alert')).toHaveTextContent('Add a document field for buyer — person 2.');
+    expect(screen.getByRole('button',{name:'Publish template'})).toBeDisabled();
+    expect(api.publishTemplateDraft).not.toHaveBeenCalled();
+});

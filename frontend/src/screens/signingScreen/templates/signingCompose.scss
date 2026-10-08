@@ -200,3 +200,8 @@
   .lw-signingCompose__choices .lw-segmentedSwitch__option { padding: .5rem .625rem; border-radius: .5rem; }
 }
 .lw-signingCompose__context[hidden] { display: none; }
+
+.lw-signingCompose__people { min-inline-size: 0; }
+.lw-signingCompose__personSlot { min-inline-size: 0; margin: 1rem 0; padding: 1rem 0; border: 0; border-block-start: 1px solid #e2e8f0; }
+.lw-signingCompose__personSlot legend { padding-inline-end: .65rem; font-weight: 600; }
+.lw-signingCompose__people button { min-inline-size: 44px; min-block-size: 44px; }

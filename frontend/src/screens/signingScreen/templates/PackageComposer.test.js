@@ -615,3 +615,32 @@ test.each(['editing', 'submitted'])('a %s draft from another client cannot repla
         expect(api.create).not.toHaveBeenCalled();
     } finally { window.history.replaceState(null, '', '/'); }
 });
+
+test.each(['he','ar','en'])('multiple people keep explicit positions and focused field errors in %s',async language=>{
+    const i18n=await translations(language),api=fakeApi();
+    const multiple={...converted,roles:[{key:'first',label:'Buyers',audience:'each',min:1,max:3},{key:'closing',label:'Closing',audience:'each',min:1,max:1}]};
+    api.templates.mockResolvedValue({templates:[multiple],legacy:[]});
+    render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialTemplateId="t-1" onBack={jest.fn()} onCreated={jest.fn()}/></I18nextProvider>);
+    const label=(key,values)=>i18n.t(`signingV2.people.${key}`,values),fmt=n=>new Intl.NumberFormat({he:'he-IL',ar:'ar-IL',en:'en-GB'}[language]).format(n);
+    const first=await screen.findByRole('group',{name:label('personNumber',{number:fmt(1)})});
+    fireEvent.change(within(first).getByLabelText(i18n.t('signingV2.compose.fields.name')),{target:{value:'First buyer'}});
+    fireEvent.change(within(first).getByLabelText(i18n.t('signingV2.compose.fields.email')),{target:{value:'first@example.invalid'}});
+    fireEvent.click(screen.getByRole('button',{name:label('add',{role:'Buyers'})}));
+    const second=screen.getByRole('group',{name:label('personNumber',{number:fmt(2)})});
+    fireEvent.change(within(second).getByLabelText(i18n.t('signingV2.compose.fields.name')),{target:{value:'Second buyer'}});
+    const email=within(second).getByLabelText(i18n.t('signingV2.compose.fields.email'));
+    fireEvent.change(email,{target:{value:'bad-email'}});
+    const link=screen.getAllByLabelText(i18n.t('signingV2.compose.identity.label')).at(-1);
+    fireEvent.change(link,{target:{value:'first|1'}});
+    api.previewCreation.mockResolvedValue({valid:false,errors:[{path:'rows.0.first.people.1.email',code:'INVALID_EMAIL'}],errorCount:1});
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.compose.check')}));
+    await waitFor(()=>expect(api.previewCreation).toHaveBeenCalled());
+    const body=api.previewCreation.mock.calls[0][0];
+    expect(body.rows[0].recipients.first.people.map(person=>person.name)).toEqual(['First buyer','Second buyer']);
+    expect(body.rows[0].recipients.closing).toEqual({sameAsRole:'first',sameAsOccurrence:1});
+    await waitFor(()=>expect(email).toHaveAttribute('aria-invalid','true'));
+    fireEvent.click(within(screen.getByRole('alert')).getByRole('button'));expect(email).toHaveFocus();
+    expect(within(first).queryByRole('button',{name:label('removeLast')})).toBeNull();
+    fireEvent.click(within(second).getByRole('button',{name:label('removeLast')}));
+    expect(screen.queryByRole('group',{name:label('personNumber',{number:fmt(2)})})).toBeNull();
+});

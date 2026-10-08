@@ -46,11 +46,25 @@ export default function TemplateRoles({ draft, onChange, roleId, onRoleId, nativ
                         if (roleId === role.id) onRoleId(roles[0].id);
                     }}>{t('removeRole')}</button>
                 </div>
+                {native && <details className="lw-templates__roleCondition"><summary>{translate('signingV2.people.templateOptions')}</summary>
+                    <p>{translate('signingV2.people.slotHelp')}</p>
+                    <div className="lw-templates__setup">
+                        <label>{translate('signingV2.people.minimum')}<select dir={direction} value={role.nativeRole?.min ?? 1}
+                            onChange={event => update(role.id, { nativeRole: { ...role.nativeRole, min: Number(event.target.value) } })}>
+                            {Array.from({ length: (role.nativeRole?.max ?? 1) + 1 }, (_, count) => <option value={count} key={count}>{number(count)}</option>)}
+                        </select></label>
+                        <label>{translate('signingV2.people.maximum')}<select dir={direction} value={role.nativeRole?.max ?? 1}
+                            onChange={event => update(role.id, { nativeRole: { ...role.nativeRole, max: Number(event.target.value) } })}>
+                            {Array.from({ length: 8 }, (_, index) => index + 1).map(count => <option value={count} key={count}
+                                disabled={count < (role.nativeRole?.min ?? 1) || count + draft.roles.filter(item => item.id !== role.id).reduce((total, item) => total + (item.nativeRole?.max ?? 1), 0) > 8 || draft.documents.some(doc => doc.fields.some(field => field.roleId === role.id && (field.occurrence ?? field.nativeField?.occurrence ?? 0) >= count))}>{number(count)}</option>)}
+                        </select></label>
+                    </div>
+                </details>}
                 {native && <div className="lw-templates__roleCondition"><TemplateDocumentCondition kind="role" fields={draft.dataKeys || []} condition={role.nativeRole?.when}
                     onChange={when => update(role.id, { nativeRole: { ...role.nativeRole, when } })} /></div>}
             </div>;
         })}</div>
-        <button type="button" disabled={draft.roles.length >= 8} onClick={() => {
+        <button type="button" disabled={draft.roles.length >= 8 || (native && draft.roles.reduce((total, role) => total + (role.nativeRole?.max ?? 1), 0) >= 8)} onClick={() => {
             const id = `role_${crypto.randomUUID().slice(0, 8)}`;
             onChange({ roles: [...draft.roles, { id, name: t('roleDefault', { index: number(draft.roles.length + 1) }), kind: 'custom' }],
                 ...(draft.signingGroups ? { signingGroups: [...draft.signingGroups, [id]] } : {}) });

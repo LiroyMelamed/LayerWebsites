@@ -7,7 +7,7 @@ const { transaction } = require('./transaction');
 const { validateSources } = require('./templates');
 const { createSubmissionInTransaction, loadDirectory, previewHash } = require('./submissions');
 const { personScopeSql } = require('./people');
-const { resolveRecipient, recipientIdentity } = require('../../lib/signingV2/recipientBindings');
+const { resolveRecipient, recipientIdentity, recipientPeople } = require('../../lib/signingV2/recipientBindings');
 const { recipientRoles } = require('../../lib/signingV2/recipientLayout');
 const { assertCases, assertClients, scopeParams } = require('./access');
 const { caseId } = require('./caseContext');
@@ -49,7 +49,7 @@ async function loadVersion(db, scope, versionId) {
 }
 
 function roleSummary(definition) {
-    return definition.roles.map(role => ({ key: role.key, label: role.label, audience: role.audience === 'shared' ? 'shared' : 'each', stage: role.stage,
+    return definition.roles.map(role => ({ key: role.key, label: role.label, audience: role.audience === 'shared' ? 'shared' : 'each', stage: role.stage, min: role.min ?? 1, max: role.max ?? 1, capacity: role.capacity || 'personal',
         ...(role.when ? { when: role.when } : {}) }));
 }
 
@@ -186,6 +186,23 @@ function recipient(input, definition, path, errors) {
         ...(value.bindingKey ? { bindingKey: value.bindingKey } : {}) };
 }
 
+function recipientGroup(roles, input, role, rowIndex, definition, path, errors) {
+    const value = role.audience === 'shared' ? input.shared?.[role.key] : input.rows[rowIndex]?.recipients?.[role.key];
+    const group = value && Object.hasOwn(value, 'people');
+    const people = recipientPeople(value);
+    if ((group && (!Array.isArray(value.people) || Object.keys(value).some(key => key !== 'people')))
+        || people.length < (role.min ?? 1) || people.length > (role.max ?? 1)) {
+        errors.push({ path, code: 'ROLE_CARDINALITY' });
+        return { people: [] };
+    }
+    const normalized = people.map((_, occurrence) => {
+        const itemPath = group ? `${path}.people.${occurrence}` : path;
+        return recipient(resolveRecipient(roles, input, role, rowIndex, itemPath, errors, occurrence), definition, itemPath, errors);
+    });
+    for (const person of normalized) if (person.personId && !UUID.test(person.personId)) errors.push({ path, code: 'INVALID_PERSON' });
+    return group ? { people: normalized } : normalized[0];
+}
+
 function omittedRoles(definition, input, errors) {
     if (input.omittedRoles == null) return new Set();
     const known = new Set(definition.roles.map(role => role.key));
@@ -264,11 +281,10 @@ function normalize(definition, input) {
             }
         }
         return { key, ...(selectedCaseId ? { caseId: selectedCaseId } : {}), ...(selectedClientId ? { clientId: selectedClientId } : {}), ...normalized, activeRoles,
-            recipients: Object.fromEntries(each.filter(role => activeRoles.includes(role.key)).map(role => [role.key, recipient(resolveRecipient(roles, input, role, index, `rows.${index}.${role.key}`, errors), definition, `rows.${index}.${role.key}`, errors)])) };
+            recipients: Object.fromEntries(each.filter(role => activeRoles.includes(role.key)).map(role => [role.key, recipientGroup(roles, input, role, index, definition, `rows.${index}.${role.key}`, errors)])) };
     });
     for (const role of roles.filter(item => item.audience === 'shared' && rows.some(row => row.activeRoles.includes(item.key)))) {
-        shared[role.key] = recipient(resolveRecipient(roles, input, role, null, `shared.${role.key}`, errors), definition, `shared.${role.key}`, errors);
-        if (shared[role.key].personId) expect(UUID.test(shared[role.key].personId), 'INVALID_PERSON');
+        shared[role.key] = recipientGroup(roles, input, role, null, definition, `shared.${role.key}`, errors);
     }
     return { name: input.name.trim(), roles, shared, rows, omitted, signingOrder: signingOrder(definition, input, omitted, errors), errors };
 }
@@ -278,10 +294,15 @@ function packagesFor(definition, plan, personFor) {
         const roles = {}, delivery = {};
         for (const role of plan.roles) {
             if (!row.activeRoles.includes(role.key)) continue;
-            const person = role.audience === 'shared' ? plan.shared[role.key] : row.recipients[role.key];
-            const ids = personFor(role, person, index);
-            roles[role.key] = [{ personId: ids.personId, partyId: ids.partyId }];
-            delivery[ids.personId] = { locale: person.locale, channels: person.channels, ...(person.email ? { email: person.email } : {}), ...(person.phone ? { phone: person.phone } : {}) };
+            const group = role.audience === 'shared' ? plan.shared[role.key] : row.recipients[role.key];
+            roles[role.key] = recipientPeople(group).map((person, occurrence) => {
+                const ids = personFor(role, person, index, occurrence);
+                const profile = { locale: person.locale, channels: person.channels, ...(person.email ? { email: person.email } : {}), ...(person.phone ? { phone: person.phone } : {}) };
+                // A shared identity cannot silently adopt the contact settings of the last role.
+                if (delivery[ids.personId] && digest(delivery[ids.personId]) !== digest(profile)) fail('DELIVERY_PROFILE_CONFLICT', 422);
+                delivery[ids.personId] = profile;
+                return { personId: ids.personId, partyId: ids.partyId };
+            });
         }
         return { externalKey: row.key, ...(row.caseId ? { caseId: row.caseId } : {}), ...(row.clientId ? { clientId: row.clientId } : {}), data: row.data || {}, ...(row.provenance ? { provenance: row.provenance } : {}), roles, delivery,
             ...(plan.signingOrder ? { signingOrder: plan.signingOrder } : {}),
@@ -299,8 +320,8 @@ async function previewCreation(pool, scope, input) {
     await assertCases(pool, scope, [...new Set(plan.rows.map(row => row.caseId).filter(Boolean))]);
     await assertClients(pool, scope, [...new Set(plan.rows.map(row => row.clientId).filter(Boolean))]);
     const people = new Map(), parties = new Map();
-    const personFor = (role, person, index) => {
-        const personId = person.personId || stableUuid('preview', recipientIdentity(role, person, index));
+    const personFor = (role, person, index, occurrence) => {
+        const personId = person.personId || stableUuid('preview', recipientIdentity(role, person, index, occurrence));
         const partyId = stableUuid('preview-party', personId);
         people.set(personId, { id: personId, name: person.name || '-', identity_key: null });
         parties.set(partyId, { id: partyId, kind: 'person', person_id: personId, name: person.name || '-' });
@@ -338,10 +359,10 @@ async function previewCreation(pool, scope, input) {
         omitted: [...plan.omitted].sort(),
         caseId: plan.rows[0]?.caseId || null,
         clientId: plan.rows[0]?.clientId || null,
-        shared: Object.entries(plan.shared).map(([roleKey, person]) => ({ roleKey, name: person.name, channels: person.channels, packageCount: plan.rows.filter(row => row.activeRoles.includes(roleKey)).length })),
+        shared: Object.entries(plan.shared).flatMap(([roleKey, group]) => recipientPeople(group).map((person, occurrence) => ({ roleKey, occurrence, name: person.name, channels: person.channels, packageCount: plan.rows.filter(row => row.activeRoles.includes(roleKey)).length }))),
         sample: plan.rows.slice(0, 5).map((row, index) => ({ key: row.key, ...(row.data ? { data: row.data } : {}),
             ...(plan.errors.length ? {} : { exclusions: compiled[index].snapshot.exclusions.map(item => ({ ...item, name: definition.documents.find(doc => doc.key === item.documentKey).name })) }),
-            recipients: Object.entries(row.recipients).map(([roleKey, person]) => ({ roleKey, name: person.name, channels: person.channels })) })),
+            recipients: Object.entries(row.recipients).flatMap(([roleKey, group]) => recipientPeople(group).map((person, occurrence) => ({ roleKey, occurrence, name: person.name, channels: person.channels }))) })),
         template: { versionId: template.id, name: definition.name, documents: definition.documents.map(document => ({ key: document.key, name: document.name })), roles: roleSummary(definition), dataKeys: definition.dataKeys || [] },
     };
 }
@@ -363,9 +384,9 @@ async function createFromRowsInTransaction(db, scope, input, { reserveCapacity }
     if (input.previewHash !== rowsHash(template, plan)) fail('PREVIEW_CHANGED', 412);
     const seed = [scope.contextId, scope.userId, input.idempotencyKey];
     const created = new Map();
-    const personFor = (role, person, index) => {
+    const personFor = (role, person, index, occurrence) => {
         if (person.personId) return { personId: person.personId, partyId: null, existing: true };
-        const personId = stableUuid(...seed, recipientIdentity(role, person, index));
+        const personId = stableUuid(...seed, recipientIdentity(role, person, index, occurrence));
         const ids = { personId, partyId: stableUuid(...seed, 'party', personId) };
         created.set(personId, { ...ids, name: person.name, endpoints: { ...(person.email ? { email: person.email } : {}), ...(person.phone ? { phone: person.phone } : {}) } });
         return ids;

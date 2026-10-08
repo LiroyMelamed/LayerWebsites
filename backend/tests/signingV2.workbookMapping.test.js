@@ -120,3 +120,20 @@ test('conditional roles may have unmapped columns while unconditional roles stil
     assert.equal(parsed.rows[0].recipients.buyer.name,'Synthetic One');
     await assert.rejects(parseWorkbook(await bytes(book),conditional,{mapping:{sheetId:1,columns:{key:3}}}),matches('INCOMPLETE_COLUMN_MAPPING'));
 });
+
+for(const language of ['he','ar','en']) test(`multiple people in ${language} have explicit columns and optional trailing positions, never compacted gaps`,async()=>{
+    const value={roles:[{key:'buyer',label:'Buyer',audience:'each',min:1,max:3}]};
+    const book=new ExcelJS.Workbook();await book.xlsx.load(await makeWorkbook(value,language));
+    const sheet=book.getWorksheet('recipients');
+    sheet.getRow(2).values=['one','First','first@example.invalid','','','Second','second@example.invalid'];
+    sheet.getRow(3).values=['two','First','first@example.invalid','','','','','','','Third','third@example.invalid'];
+    const buffer=await bytes(book),inspection=await inspectWorkbook(buffer,value);
+    assert.equal(inspection.sheets[0].columns[1].suggestedKey,'buyer.people.0.name');
+    assert.equal(inspection.sheets[0].columns[5].suggestedKey,'buyer.people.1.name');
+    const parsed=await parseWorkbook(buffer,value);
+    assert.equal(parsed.rows[0].recipients.buyer.people.length,2);
+    assert.deepEqual(parsed.rows[1].recipients.buyer.people.map(person=>person.name),['First','','Third']);
+    const mapped=await parseWorkbook(buffer,value,{mapping:{sheetId:1,columns:{'buyer.people.0.name':2,'buyer.people.0.email':3}}});
+    assert.equal(mapped.rows[0].recipients.buyer.people.length,1);
+    await assert.rejects(parseWorkbook(buffer,{roles:[{...value.roles[0],min:2}]},{mapping:{sheetId:1,columns:{'buyer.people.0.name':2,'buyer.people.0.email':3}}}),matches('INCOMPLETE_COLUMN_MAPPING'));
+});
