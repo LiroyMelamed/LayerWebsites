@@ -34,10 +34,14 @@ async function loadTargets(db, scope, selection) {
         FROM picked x JOIN signing_tasks t ON t.owner_context_id=$1 AND t.revision_id=x.active_revision_id
         JOIN signing_participations p ON p.owner_context_id=$1 AND p.id=t.participation_id
         JOIN signing_documents d ON d.owner_context_id=$1 AND d.id=t.document_id GROUP BY t.revision_id,p.person_id
+    ), delivery_links AS (
+        SELECT dp.id AS profile_id,d.id AS delivery_id FROM profiles dp JOIN signing_deliveries d ON d.owner_context_id=$1 AND d.profile_id=dp.id
+        UNION
+        SELECT dp.id,i.delivery_id FROM profiles dp JOIN signing_delivery_items i ON i.owner_context_id=$1 AND i.profile_id=dp.id AND i.state='included'
     ), history AS (
-        SELECT d.profile_id,jsonb_agg(jsonb_build_object('purpose',d.purpose,'channel',d.channel,'state',d.state,'createdAt',d.created_at,
+        SELECT l.profile_id,jsonb_agg(jsonb_build_object('purpose',d.purpose,'channel',d.channel,'state',d.state,'createdAt',d.created_at,
             'attemptedAt',d.attempted_at,'providerAcceptedAt',d.provider_accepted_at) ORDER BY d.created_at DESC,d.id) AS deliveries
-        FROM profiles dp JOIN signing_deliveries d ON d.owner_context_id=$1 AND d.profile_id=dp.id GROUP BY d.profile_id
+        FROM delivery_links l JOIN signing_deliveries d ON d.owner_context_id=$1 AND d.id=l.delivery_id GROUP BY l.profile_id
     ), links AS (
         SELECT DISTINCT ON (i.revision_id,g.person_id) i.revision_id,g.person_id,g.id AS grant_id
         FROM profiles dp JOIN signing_grant_items i ON i.owner_context_id=$1 AND i.delivery_profile_id=dp.id
@@ -125,7 +129,7 @@ function buildPlan(selection,targets,input) {
 function publicReview(row,plan,reused=false) {
     return {reviewId:row.id,previewHash:row.preview_hash,selectionId:row.selection_id,
         createdAt:row.created_at,expiresAt:row.expires_at,reused,purpose:plan.purpose,counts:plan.counts,
-        messages:plan.messages.map(group=>({groupKey:group.groupKey,personId:group.personId,recipientName:group.recipientName,
+        messages:plan.messages.map((group,index)=>({id:`message-${index+1}`,personId:group.personId,recipientName:group.recipientName,
             destination:group.destination,packages:group.items.map(item=>item.display)})),excluded:plan.excluded};
 }
 

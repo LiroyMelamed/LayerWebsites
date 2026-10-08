@@ -118,7 +118,27 @@ function createGrantService({ encryptionKey, keyId = '1' }) {
         [contextId,grant.id,personId,[...new Set(tasks.map(task=>task.documentId))],revisionId,profileId,profileVersion]);
         return grant;
     }
-    return { issueRevisionGrants, tokenForDelivery, issueDownloadGrant, issueFollowupGrant };
+    async function issueBulkGrant(db,{contextId,personId,purpose,items}) {
+        expect(items.length>0 && ['sign','download'].includes(purpose) && items.every(item=>item.personId===personId),'EMPTY_GRANT');
+        const tasks=[...new Set(items.flatMap(item=>item.tasks.map(task=>task.taskId)))];
+        expect(purpose==='download' || tasks.length>0,'EMPTY_GRANT');
+        const documents=items.flatMap(item=>[...new Set((purpose==='download'?item.documents:item.tasks).map(doc=>doc.documentId))]
+            .map(documentId=>({documentId,revisionId:item.revisionId,profileId:item.profileId,profileVersion:item.profileVersion})));
+        expect(documents.length>0,'EMPTY_GRANT');
+        const token=randomBytes(32).toString('base64url');
+        const grant={id:randomUUID(),owner_context_id:contextId,person_id:personId,purpose,token_hash:bytesHash(Buffer.from(token))};
+        grant.encrypted_token=seal(token,grant);
+        const deadlines=purpose==='sign'?items.map(item=>item.deadline).filter(Boolean).map(value=>Date.parse(value)):[];
+        const deadline=deadlines.length?new Date(Math.min(...deadlines)).toISOString():null;
+        await db.query(`INSERT INTO signing_public_grants(id,owner_context_id,person_id,purpose,token_hash,encrypted_token,expires_at,allowed_task_ids)
+            VALUES($1,$2,$3,$4,$5,$6,LEAST(clock_timestamp()+make_interval(secs=>$7),COALESCE($8::timestamptz,'infinity')),$9)`,
+            [grant.id,contextId,personId,purpose,grant.token_hash,grant.encrypted_token,grantSeconds,deadline,purpose==='sign'?tasks:null]);
+        await db.query(`INSERT INTO signing_grant_items(owner_context_id,grant_id,person_id,document_id,revision_id,delivery_profile_id,delivery_profile_version)
+            SELECT $1,$2,$3,(v->>'documentId')::uuid,(v->>'revisionId')::uuid,(v->>'profileId')::uuid,(v->>'profileVersion')::integer
+            FROM jsonb_array_elements($4::jsonb) v`,[contextId,grant.id,personId,JSON.stringify(documents)]);
+        return grant;
+    }
+    return { issueRevisionGrants, tokenForDelivery, issueDownloadGrant, issueFollowupGrant, issueBulkGrant };
 }
 
 async function loadPublicGrant(db,token,{purpose='sign'}={}) {

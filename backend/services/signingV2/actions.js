@@ -53,7 +53,8 @@ async function loadTarget(db, scope, { packageId, personId, purpose }, lock = fa
             AND g.revoked_at IS NULL AND g.expires_at > clock_timestamp() ORDER BY g.created_at DESC LIMIT 1) AS grant_id,
         COALESCE((SELECT jsonb_agg(jsonb_build_object('purpose',d.purpose,'channel',d.channel,'state',d.state,'createdAt',d.created_at,
             'attemptedAt',d.attempted_at,'providerAcceptedAt',d.provider_accepted_at) ORDER BY d.created_at DESC,d.id)
-            FROM signing_deliveries d JOIN signing_delivery_profiles dp ON dp.owner_context_id=d.owner_context_id AND dp.id=d.profile_id
+            FROM signing_delivery_profiles dp JOIN signing_deliveries d ON d.owner_context_id=dp.owner_context_id AND (dp.id=d.profile_id
+                OR EXISTS(SELECT 1 FROM signing_delivery_items i WHERE i.owner_context_id=dp.owner_context_id AND i.delivery_id=d.id AND i.profile_id=dp.id AND i.state='included'))
             WHERE dp.owner_context_id=$1 AND dp.revision_id=$2 AND dp.person_id=$3),'[]') AS deliveries,
         (SELECT c.casename FROM cases c WHERE c.caseid=$4
             AND ($5::boolean OR EXISTS (SELECT 1 FROM case_users cu WHERE cu.caseid=c.caseid AND cu.userid=$6))) AS case_name`,

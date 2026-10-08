@@ -5,6 +5,7 @@ const { transaction } = require('./transaction');
 const { digest } = require('../../lib/signingV2/canonical');
 const { senderCanAccess, taskManifest } = require('./followupScope');
 const { completedDocuments, manifestHash, copiesReady } = require('./completedCopy');
+const { planBulkDelivery } = require('./bulkDispatch');
 const SENDABLE_PURPOSES = new Set(['invitation', 'reminder', 'resend', 'completed_copy']);
 
 // Provider contract: send({ deliveryId, channel, endpoint, locale, purpose, url })
@@ -63,6 +64,7 @@ function createDeliveryService({ pool, grantService, provider, linkFor }) {
             const delivery = found.rows[0];
             const skip = (state, code) => ({ skip: { state, code }, delivery });
             if (delivery.state !== 'pending') return { done: true, delivery };
+            if (delivery.target_snapshot.bulk === true) return planBulkDelivery(db,delivery,grantService);
             if (!SENDABLE_PURPOSES.has(delivery.purpose)) return skip('cancelled', 'PURPOSE_NOT_SUPPORTED');
             const completedCopy = delivery.purpose === 'completed_copy';
             if (delivery.active_revision_id !== delivery.revision_id || !(completedCopy ? ['complete'] : ['active', 'attention']).includes(delivery.workflow_state)) {
@@ -190,7 +192,7 @@ function createDeliveryService({ pool, grantService, provider, linkFor }) {
 async function markAbandonedDispatches(db) {
     return db.query(`UPDATE signing_deliveries d SET state='uncertain',error_code='PROVIDER_OUTCOME_UNKNOWN'
         FROM signing_jobs j WHERE j.owner_context_id=d.owner_context_id AND j.subject_id=d.id
-        AND j.kind='dispatch_delivery' AND j.state='uncertain' AND d.state='dispatching' RETURNING d.id`);
+        AND j.kind='dispatch_delivery' AND j.state='uncertain' AND d.state IN ('pending','dispatching') RETURNING d.id`);
 }
 
 module.exports = { createDeliveryService, markAbandonedDispatches };
