@@ -28,6 +28,10 @@ const signingPackagesApi = {
     inspectWorkbook: (versionId, base64, layout) => signingRequest('post', `${root}/templates/${versionId}/workbook/inspect`, { base64, ...layout }),
     parseWorkbook: (versionId, base64, layout) => signingRequest('post', `${root}/templates/${versionId}/workbook`, { base64, ...layout }),
     previewCreation: body => signingRequest('post', `${root}/creation/preview`, body),
+    drafts: () => signingRequest('get', `${root}/creation/drafts`),
+    draft: id => signingRequest('get', `${root}/creation/drafts/${encodeURIComponent(id)}`),
+    saveDraft: (id, body) => signingRequest('put', `${root}/creation/drafts/${encodeURIComponent(id)}`, body),
+    submitDraft: (id, body) => signingRequest('post', `${root}/creation/drafts/${encodeURIComponent(id)}/submit`, body),
     create: (body, idempotencyKey) => signingRequest('post', `${root}/creation`, body, { headers: { 'Idempotency-Key': idempotencyKey } }),
 };
 

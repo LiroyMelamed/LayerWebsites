@@ -1801,6 +1801,24 @@
         "sameAs": "Same person as: {{role}}",
         "unavailable": "Linked role is no longer available — choose again",
         "linkedHelp": "Uses the person details from the selected role. Roles and signing order stay separate; a later signing stage requires fresh consent and verification."
+      },
+      "draft": {
+        "loading": "Loading your saved draft…",
+        "loadError": "The draft could not be opened. No details were replaced and no additional send was created.",
+        "startNew": "Start a new send",
+        "idle": "Your draft will save automatically",
+        "pending": "Changes not yet saved",
+        "saving": "Saving draft…",
+        "saved": "Draft saved",
+        "error": "Draft not saved",
+        "saveError": "Saving failed. You can keep editing here and retry before leaving.",
+        "changed": "This draft changed or was submitted in another tab. The server version will not be overwritten. Reloading replaces the edits on this screen.",
+        "restoreServer": "Replace these edits with the server version",
+        "recent": "Saved drafts",
+        "resume": "Resume draft",
+        "choose": "Choose a draft by its save time",
+        "submitted": "Send already created",
+        "listError": "Could not load your saved drafts."
       }
     },
     "public": {

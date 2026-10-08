@@ -85,48 +85,54 @@ async function createSubmission(pool, scope, input, { reserveCapacity } = {}) {
     // This adapter is mandatory: technical budgets must never bypass the office's
     // commercial quota. The HTTP integration supplies the transactional adapter.
     expect(typeof reserveCapacity === 'function', 'CAPACITY_ADAPTER_REQUIRED');
+    return transaction(pool, db => createSubmissionInTransaction(db, scope, input, { reserveCapacity }));
+}
+
+// Internal composition point: the caller owns commit/rollback. Never return its
+// receipt to HTTP before the outer transaction has committed.
+async function createSubmissionInTransaction(db, scope, input, { reserveCapacity }) {
+    validateInput(input);
+    expect(typeof reserveCapacity === 'function', 'CAPACITY_ADAPTER_REQUIRED');
     const requestHash = digest(input);
-    return transaction(pool, async db => {
-        // Serialize only retries of this exact request, not every office batch.
-        await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [`signing-v2:${scope.contextId}:${scope.userId}:${input.idempotencyKey}`]);
-        const previous = await db.query(`SELECT * FROM signing_submissions
-            WHERE owner_context_id=$1 AND owner_userid=$2 AND idempotency_key=$3`, [scope.contextId, scope.userId, input.idempotencyKey]);
-        if (previous.rowCount) {
-            if (previous.rows[0].request_hash !== requestHash) fail('IDEMPOTENCY_CONFLICT', 409);
-            return resultFor(previous.rows[0], true);
-        }
-        const templates = await db.query(`SELECT v.* FROM signing_template_versions v
-            JOIN signing_templates t ON t.owner_context_id=v.owner_context_id AND t.id=v.template_id
-            WHERE v.owner_context_id=$1 AND v.id=$2 AND v.state='published' AND NOT t.archived
-              AND ($3::boolean OR t.owner_userid=$4) FOR SHARE OF v,t`, [scope.contextId, input.templateVersionId, scope.all, scope.userId]);
-        if (!templates.rowCount) fail('NOT_FOUND', 404);
-        const template = templates.rows[0];
-        const definition = validateDefinition(template.definition);
-        expect(digest(definition) === template.definition_hash, 'TEMPLATE_CHANGED');
-        // These policies use the prepared-package approval route; a bulk fast path
-        // cannot silently waive their review requirement.
-        expect(!definition.policy.internalApproval && !definition.policy.requiredAllPdfReview, 'APPROVAL_REQUIRED');
-        await assertCases(db, scope, [...new Set(input.packages.map(item => item.caseId).filter(Boolean))]);
-        const directory = await loadDirectory(db, scope, definition, input.packages);
-        const compiled = input.packages.map(item => compilePackage(definition, item, directory));
-        if (input.previewHash !== previewHash(template, input.packages, compiled)) fail('PREVIEW_CHANGED', 412);
-        const capacity = admission(compiled);
-        const submissionId = randomUUID();
-        await reserveCapacity(db, scope, capacity, submissionId);
-        const submission = (await db.query(`INSERT INTO signing_submissions
-            (id,owner_context_id,owner_userid,template_version_id,name,idempotency_key,request_hash,package_count,document_count)
-            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
-        [submissionId, scope.contextId, scope.userId, template.id, input.name.trim(), input.idempotencyKey, requestHash, capacity.packages, capacity.documents])).rows[0];
-        const rows = buildRows(input.packages, compiled);
-        await persistRows(db, scope, submissionId, rows);
-        await db.query(`INSERT INTO signing_events_v2(owner_context_id,package_id,actor_key,kind,details)
-            SELECT $1,id,$2,'package_authorized',jsonb_build_object('submissionId',$3::text,'revisionHash',revision_hash)
-            FROM jsonb_to_recordset($4::jsonb) AS p(id uuid,revision_hash text)`,
-        [scope.contextId, `user:${scope.userId}`, submissionId, JSON.stringify(rows.packages)]);
-        // transaction() returns only AFTER the commit completes, including every
-        // document, task, delivery intent, job and dependency.
-        return resultFor(submission, false);
-    });
+    // Serialize only retries of this exact request, not every office batch.
+    await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [`signing-v2:${scope.contextId}:${scope.userId}:${input.idempotencyKey}`]);
+    const previous = await db.query(`SELECT * FROM signing_submissions
+        WHERE owner_context_id=$1 AND owner_userid=$2 AND idempotency_key=$3`, [scope.contextId, scope.userId, input.idempotencyKey]);
+    if (previous.rowCount) {
+        if (previous.rows[0].request_hash !== requestHash) fail('IDEMPOTENCY_CONFLICT', 409);
+        return resultFor(previous.rows[0], true);
+    }
+    const templates = await db.query(`SELECT v.* FROM signing_template_versions v
+        JOIN signing_templates t ON t.owner_context_id=v.owner_context_id AND t.id=v.template_id
+        WHERE v.owner_context_id=$1 AND v.id=$2 AND v.state='published' AND NOT t.archived
+          AND ($3::boolean OR t.owner_userid=$4) FOR SHARE OF v,t`, [scope.contextId, input.templateVersionId, scope.all, scope.userId]);
+    if (!templates.rowCount) fail('NOT_FOUND', 404);
+    const template = templates.rows[0];
+    const definition = validateDefinition(template.definition);
+    expect(digest(definition) === template.definition_hash, 'TEMPLATE_CHANGED');
+    // These policies use the prepared-package approval route; a bulk fast path
+    // cannot silently waive their review requirement.
+    expect(!definition.policy.internalApproval && !definition.policy.requiredAllPdfReview, 'APPROVAL_REQUIRED');
+    await assertCases(db, scope, [...new Set(input.packages.map(item => item.caseId).filter(Boolean))]);
+    const directory = await loadDirectory(db, scope, definition, input.packages);
+    const compiled = input.packages.map(item => compilePackage(definition, item, directory));
+    if (input.previewHash !== previewHash(template, input.packages, compiled)) fail('PREVIEW_CHANGED', 412);
+    const capacity = admission(compiled);
+    const submissionId = randomUUID();
+    await reserveCapacity(db, scope, capacity, submissionId);
+    const submission = (await db.query(`INSERT INTO signing_submissions
+        (id,owner_context_id,owner_userid,template_version_id,name,idempotency_key,request_hash,package_count,document_count)
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+    [submissionId, scope.contextId, scope.userId, template.id, input.name.trim(), input.idempotencyKey, requestHash, capacity.packages, capacity.documents])).rows[0];
+    const rows = buildRows(input.packages, compiled);
+    await persistRows(db, scope, submissionId, rows);
+    await db.query(`INSERT INTO signing_events_v2(owner_context_id,package_id,actor_key,kind,details)
+        SELECT $1,id,$2,'package_authorized',jsonb_build_object('submissionId',$3::text,'revisionHash',revision_hash)
+        FROM jsonb_to_recordset($4::jsonb) AS p(id uuid,revision_hash text)`,
+    [scope.contextId, `user:${scope.userId}`, submissionId, JSON.stringify(rows.packages)]);
+    // transaction() returns only AFTER the commit completes, including every
+    // document, task, delivery intent, job and dependency.
+    return resultFor(submission, false);
 }
 
 function buildRows(inputs, compiled) {
@@ -202,4 +208,4 @@ async function persistRows(db, scope, submissionId, rows) {
     await enqueue(db, contextId, rows.jobs, rows.dependencies);
 }
 
-module.exports = { createSubmission, loadDirectory, previewHash, buildRows };
+module.exports = { createSubmission, createSubmissionInTransaction, resultFor, loadDirectory, previewHash, buildRows };

@@ -16,6 +16,8 @@ import StatusNotice from '../../../components/ui/StatusNotice';
 import SelectedTemplateEntry from './SelectedTemplateEntry';
 import WorkbookImport from './WorkbookImport';
 import CaseContextPicker from './CaseContextPicker';
+import useSigningDraft from './useSigningDraft';
+import DraftRecoveryList from './DraftRecoveryList';
 import './signingPackages.scss';
 import './signingCompose.scss';
 
@@ -30,7 +32,7 @@ const blankRow = roles => ({ id: `row-${++localId}`, key: '', recipients: Object
 const filled = person => !!person?.sameAsRole || FIELDS.some(field => String(person?.[field] || '').trim());
 const rowFilled = row => row.key.trim() || Object.values(row.recipients).some(filled);
 const clean = (person, language) => person.sameAsRole ? { sameAsRole: person.sameAsRole } : ({
-    name: person.name.trim(), email: person.email.trim(), phone: person.phone.trim(),
+    name: String(person.name || '').trim(), email: String(person.email || '').trim(), phone: String(person.phone || '').trim(),
     ...(person.channel ? { channel: person.channel } : {}),
     locale: LOCALES.has(language) ? language : 'he',
 });
@@ -303,6 +305,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const [leaving, setLeaving] = useState(false);
     const [caseContext, setCaseContext] = useState(null);
     const [casePending, setCasePending] = useState(!!initialCaseId);
+    const [caseRestored, setCaseRestored] = useState(false);
     const createKey = useRef(null);
     const creating = useRef(false);
     const checking = useRef(false);
@@ -429,6 +432,25 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             },
         };
     };
+    const draftPayload = template ? { request: payload().body, editor: {
+        template, name, shared, roleAudience, rows, omitted: [...omitted], orderMode, orderRoles, source, importNote,
+    } } : null;
+    const draft = useSigningDraft({ api, payload: draftPayload, active: !!template && !casePending && step !== 'done',
+        onSubmitted: created => { setResult(created); setStep('done'); },
+        onRestore: async (saved, isCurrent) => {
+            const editor = saved.editor;
+            if (!editor?.template || editor.template.versionId !== saved.request.templateVersionId || !Array.isArray(editor.rows)) {
+                throw Object.assign(new Error('INVALID_DRAFT'), { code: 'INVALID_DRAFT' });
+            }
+            const restoredCase = saved.request.caseId ? await api.caseContext(saved.request.caseId) : null;
+            if (!isCurrent()) return;
+            setTemplate(editor.template); setName(editor.name || ''); setShared(editor.shared || {});
+            setRoleAudience(editor.roleAudience || {});
+            setRows(editor.rows.map(row => ({ ...row, id: `row-${++localId}` })));
+            setOmitted(new Set(editor.omitted || [])); setOrderMode(editor.orderMode || 'parallel');
+            setOrderRoles(editor.orderRoles || []); setSource(editor.source || 'manual'); setImportNote(editor.importNote || null);
+            setCaseContext(restoredCase); setCasePending(false); setCaseRestored(true); invalidate(); setStep('recipients');
+        } });
     const runCheck = async () => {
         if (checking.current || casePending) return;
         setError(null);
@@ -452,7 +474,9 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         if (creating.current || !check?.preview.valid) return;
         creating.current = true; setBusy('create'); setError(null);
         try {
-            const created = await api.create({ ...check.body, previewHash: check.preview.previewHash }, createKey.current);
+            const created = draft.enabled
+                ? await draft.submit({ ...draftPayload, request: check.body }, check.preview.previewHash)
+                : await api.create({ ...check.body, previewHash: check.preview.previewHash }, createKey.current);
             setResult(created); setStep('done');
         } catch (failure) {
             if (failure.code === 'PREVIEW_CHANGED' || failure.code === 'INVALID_ROWS') { invalidate(); setStep('recipients'); }
@@ -460,8 +484,12 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             setError(failure);
         } finally { creating.current = false; setBusy(null); }
     };
-    const leave = () => { if (step !== 'done' && dirty && !leaving) setLeaving(true); else onBack?.(); };
-    const restart = () => { setStep('template'); setTemplate(null); setRows([]); setShared({}); setName(''); setResult(null); setImportNote(null); invalidate(); };
+    const leave = async () => {
+        if (draft.enabled && template && step !== 'done') {
+            try { await draft.flush(); onBack?.(); } catch { setLeaving(true); }
+        } else if (step !== 'done' && dirty && !leaving) setLeaving(true); else onBack?.();
+    };
+    const restart = () => { draft.reset(); setStep('template'); setTemplate(null); setRows([]); setShared({}); setName(''); setResult(null); setImportNote(null); invalidate(); };
 
     const errorCount = check && !check.preview.valid ? check.preview.errorCount : 0;
     const errorEntries = check && !check.preview.valid ? check.preview.errors : [];
@@ -481,6 +509,14 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const preview = check?.preview;
     const sharedNames = [...new Map((preview?.shared || []).map(item => [sharedIdentityKey(check?.body.shared, item.roleKey), item.name])).values()].join(', ');
 
+    if (draft.status === 'loading' || draft.status === 'loadError') return <section className="lw-signingPackages lw-signingCompose" dir={direction}>
+        {draft.status === 'loading' ? <p role="status">{t('signingV2.compose.draft.loading')}</p> : <StatusNotice>
+            <p>{t('signingV2.compose.draft.loadError')}</p>
+            <SecondaryButton onPress={() => draft.recover(draft.id)}>{t('common.retry')}</SecondaryButton>
+            <SigningBackButton onPress={restart}>{t('signingV2.compose.draft.startNew')}</SigningBackButton>
+        </StatusNotice>}
+    </section>;
+
     return <section className="lw-signingPackages lw-signingCompose" dir={direction} aria-labelledby="signing-compose-title">
         <header className="lw-signingPackages__heading">
             <div>
@@ -489,6 +525,15 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 <p>{t('signingV2.compose.subtitle')}</p>
             </div>
         </header>
+        {draft.enabled && template && step !== 'done' && <div className="lw-signingCompose__draftState">
+            <p role="status">{t(`signingV2.compose.draft.${draft.status}`, { defaultValue: t('signingV2.compose.draft.pending') })}</p>
+            {draft.error && <StatusNotice embedded>
+                <p>{t(draft.error.code === 'DRAFT_CHANGED' || draft.error.code === 'DRAFT_ALREADY_SUBMITTED'
+                    ? 'signingV2.compose.draft.changed' : 'signingV2.compose.draft.saveError')}</p>
+                <SecondaryButton onPress={() => draft.flush().catch(() => {})}>{t('common.retry')}</SecondaryButton>
+                <SecondaryButton onPress={() => draft.recover(draft.id)}>{t('signingV2.compose.draft.restoreServer')}</SecondaryButton>
+            </StatusNotice>}
+        </div>}
         {leaving && <div className="lw-signingCompose__confirm" role="alertdialog" aria-labelledby="compose-leave-title" aria-describedby="compose-leave-body">
             <strong id="compose-leave-title">{t('signingV2.compose.discardTitle')}</strong>
             <p id="compose-leave-body">{t('signingV2.compose.discardBody')}</p>
@@ -499,7 +544,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         </div>}
         <Stepper step={step === 'opening' ? 'template' : step} />
         {api.caseContext && step !== 'done' && <SimpleCard className="lw-signingCompose__card lw-signingCompose__context" hidden={step === 'review'}>
-            <CaseContextPicker api={api} initialCaseId={initialCaseId} value={caseContext} onPending={value => { setCasePending(value); if (value) invalidate(); }}
+            <CaseContextPicker api={api} initialCaseId={caseRestored ? null : initialCaseId} value={caseContext} onPending={value => { setCasePending(value); if (value) invalidate(); }}
                 onChange={value => { setCaseContext(value); invalidate(); }} />
         </SimpleCard>}
         {error && <StatusNotice><p>{t(`signingV2.compose.errors.${error.code}`, { defaultValue: errorMessage(error) })}</p></StatusNotice>}
@@ -517,6 +562,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             </div>
         </div>}
         {step === 'template' && <SimpleCard className="lw-signingCompose__card">
+            {draft.enabled && <DraftRecoveryList api={api} onResume={draft.recover} />}
             <TemplateStep api={api} selected={template} onSelect={chooseTemplate} />
             <footer className="lw-signingCompose__footer">
                 <PrimaryButton onPress={() => setStep('recipients')} disabled={!template || !!replacement}>{t('signingV2.compose.next')}</PrimaryButton>
@@ -661,7 +707,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         {step === 'done' && result && <SimpleCard className="lw-signingCompose__card">
             <div role="status">
                 <h2>{t('signingV2.compose.done.heading')}</h2>
-                <p>{t('signingV2.compose.done.body', { count: preview?.packageCount || 0, formattedCount: number(preview?.packageCount || 0) })}</p>
+                <p>{t('signingV2.compose.done.body', { count: result.packageCount ?? preview?.packageCount ?? 0, formattedCount: number(result.packageCount ?? preview?.packageCount ?? 0) })}</p>
                 {result.reused && <p>{t('signingV2.compose.done.reused')}</p>}
             </div>
             <footer className="lw-signingCompose__footer">

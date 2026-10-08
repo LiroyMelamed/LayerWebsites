@@ -5,7 +5,7 @@ const { expect, fail } = require('../../lib/signingV2/errors');
 const limits = require('../../lib/signingV2/limits');
 const { transaction } = require('./transaction');
 const { validateSources } = require('./templates');
-const { createSubmission, loadDirectory, previewHash } = require('./submissions');
+const { createSubmissionInTransaction, loadDirectory, previewHash } = require('./submissions');
 const { personScopeSql } = require('./people');
 const { resolveRecipient, recipientIdentity } = require('../../lib/signingV2/recipientBindings');
 const { recipientRoles } = require('../../lib/signingV2/recipientLayout');
@@ -292,12 +292,18 @@ async function previewCreation(pool, scope, input) {
     };
 }
 
-async function createFromRows(pool, scope, input, { reserveCapacity }) {
+async function createFromRows(pool, scope, input, options) {
+    return transaction(pool, db => createFromRowsInTransaction(db, scope, input, options));
+}
+
+// Directory entries, the complete submission and its recoverable draft receipt
+// can share one commit. An interrupted request cannot leave a half-created send.
+async function createFromRowsInTransaction(db, scope, input, { reserveCapacity }) {
     expect(UUID.test(input.idempotencyKey), 'INVALID_SUBMISSION');
-    const { template, definition } = await loadVersion(pool, scope, input.templateVersionId);
+    const { template, definition } = await loadVersion(db, scope, input.templateVersionId);
     const plan = normalize(definition, input);
     // Check before creating directory entries; createSubmission checks again in its transaction.
-    await assertCases(pool, scope, [...new Set(plan.rows.map(row => row.caseId).filter(Boolean))]);
+    await assertCases(db, scope, [...new Set(plan.rows.map(row => row.caseId).filter(Boolean))]);
     if (plan.errors.length) fail('INVALID_ROWS', 422, plan.errors.slice(0, 50));
     if (input.previewHash !== rowsHash(template, plan)) fail('PREVIEW_CHANGED', 412);
     const seed = [scope.contextId, scope.userId, input.idempotencyKey];
@@ -310,36 +316,34 @@ async function createFromRows(pool, scope, input, { reserveCapacity }) {
         return ids;
     };
     const packages = packagesFor(definition, plan, personFor);
-    await transaction(pool, async db => {
-        await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [`signing-v2-people:${seed.join(':')}`]);
-        const linkedIds = [...new Set(packages.flatMap(item => Object.values(item.roles).flat().filter(person => person.partyId === null).map(person => person.personId)))];
-        if (linkedIds.length) {
-            expect(linkedIds.every(id => UUID.test(id)), 'INVALID_PERSON');
-            const available = (await db.query(`SELECT person.id,party.id AS party_id FROM signing_people person
-                JOIN LATERAL (SELECT id FROM signing_parties WHERE owner_context_id=person.owner_context_id
-                    AND person_id=person.id AND kind='person' ORDER BY id LIMIT 1) party ON TRUE
-                WHERE ${personScopeSql()} AND person.id=ANY($5::uuid[])`, [...scopeParams(scope), linkedIds])).rows;
-            if (available.length !== linkedIds.length) fail('PARTICIPANT_NOT_AVAILABLE', 404);
-            const parties = new Map(available.map(person => [person.id, person.party_id]));
-            for (const item of packages) for (const people of Object.values(item.roles)) for (const person of people) {
-                if (person.partyId === null) person.partyId = parties.get(person.personId);
-            }
+    await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [`signing-v2-people:${seed.join(':')}`]);
+    const linkedIds = [...new Set(packages.flatMap(item => Object.values(item.roles).flat().filter(person => person.partyId === null).map(person => person.personId)))];
+    if (linkedIds.length) {
+        expect(linkedIds.every(id => UUID.test(id)), 'INVALID_PERSON');
+        const available = (await db.query(`SELECT person.id,party.id AS party_id FROM signing_people person
+            JOIN LATERAL (SELECT id FROM signing_parties WHERE owner_context_id=person.owner_context_id
+                AND person_id=person.id AND kind='person' ORDER BY id LIMIT 1) party ON TRUE
+            WHERE ${personScopeSql()} AND person.id=ANY($5::uuid[])`, [...scopeParams(scope), linkedIds])).rows;
+        if (available.length !== linkedIds.length) fail('PARTICIPANT_NOT_AVAILABLE', 404);
+        const parties = new Map(available.map(person => [person.id, person.party_id]));
+        for (const item of packages) for (const people of Object.values(item.roles)) for (const person of people) {
+            if (person.partyId === null) person.partyId = parties.get(person.personId);
         }
-        const rows = [...created.values()];
-        await db.query(`INSERT INTO signing_people(id,owner_context_id,name,contact_endpoints,created_by)
-            SELECT id,$1,name,endpoints,$2 FROM jsonb_to_recordset($3::jsonb) AS p(id uuid,name text,endpoints jsonb) ON CONFLICT DO NOTHING`,
-        [scope.contextId, scope.userId, JSON.stringify(rows.map(row => ({ id: row.personId, name: row.name, endpoints: row.endpoints })))]);
-        await db.query(`INSERT INTO signing_parties(id,owner_context_id,kind,person_id,name,created_by)
-            SELECT id,$1,'person',person_id,name,$2 FROM jsonb_to_recordset($3::jsonb) AS p(id uuid,person_id uuid,name text) ON CONFLICT DO NOTHING`,
-        [scope.contextId, scope.userId, JSON.stringify(rows.map(row => ({ id: row.partyId, person_id: row.personId, name: row.name })))]);
-        const owned = await db.query(`SELECT count(*)::integer AS count FROM signing_people WHERE owner_context_id=$1 AND id=ANY($2::uuid[])`,
-            [scope.contextId, rows.map(row => row.personId)]);
-        expect(owned.rows[0].count === rows.length, 'PARTICIPANT_NOT_AVAILABLE');
-    });
-    const directory = await transaction(pool, db => loadDirectory(db, scope, definition, packages));
+    }
+    const rows = [...created.values()];
+    await db.query(`INSERT INTO signing_people(id,owner_context_id,name,contact_endpoints,created_by)
+        SELECT id,$1,name,endpoints,$2 FROM jsonb_to_recordset($3::jsonb) AS p(id uuid,name text,endpoints jsonb) ON CONFLICT DO NOTHING`,
+    [scope.contextId, scope.userId, JSON.stringify(rows.map(row => ({ id: row.personId, name: row.name, endpoints: row.endpoints })))]);
+    await db.query(`INSERT INTO signing_parties(id,owner_context_id,kind,person_id,name,created_by)
+        SELECT id,$1,'person',person_id,name,$2 FROM jsonb_to_recordset($3::jsonb) AS p(id uuid,person_id uuid,name text) ON CONFLICT DO NOTHING`,
+    [scope.contextId, scope.userId, JSON.stringify(rows.map(row => ({ id: row.partyId, person_id: row.personId, name: row.name })))]);
+    const owned = await db.query(`SELECT count(*)::integer AS count FROM signing_people WHERE owner_context_id=$1 AND id=ANY($2::uuid[])`,
+        [scope.contextId, rows.map(row => row.personId)]);
+    expect(owned.rows[0].count === rows.length, 'PARTICIPANT_NOT_AVAILABLE');
+    const directory = await loadDirectory(db, scope, definition, packages);
     const compiled = packages.map(item => compilePackage(definition, item, directory));
-    return createSubmission(pool, scope, { name: plan.name, templateVersionId: template.id, idempotencyKey: input.idempotencyKey, packages,
+    return createSubmissionInTransaction(db, scope, { name: plan.name, templateVersionId: template.id, idempotencyKey: input.idempotencyKey, packages,
         previewHash: previewHash(template, packages, compiled) }, { reserveCapacity });
 }
 
-module.exports = { listTemplates, loadVersion, importLegacyTemplate, previewCreation, createFromRows, convertLegacy, normalizePhone, stableUuid };
+module.exports = { listTemplates, loadVersion, importLegacyTemplate, previewCreation, createFromRows, createFromRowsInTransaction, convertLegacy, normalizePhone, stableUuid };

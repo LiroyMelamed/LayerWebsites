@@ -7,6 +7,7 @@ const { actorScope } = require('../services/signingV2/access');
 const management = require('../services/signingV2/management');
 const actions = require('../services/signingV2/actions');
 const creation = require('../services/signingV2/creation');
+const drafts = require('../services/signingV2/drafts');
 const caseContext = require('../services/signingV2/caseContext');
 const workbook = require('../lib/signingV2/workbook');
 const { objectStorage, officeQuota } = require('../services/signingV2/runtime');
@@ -78,6 +79,14 @@ router.post('/templates/:versionId/workbook', send, run(async (req, res) => {
     res.json(await workbook.parseWorkbook(Buffer.from(base64, 'base64'), definition, req.body));
 }));
 router.post('/creation/preview', send, run(async (req, res) => res.json(await creation.previewCreation(pool, await actorScope(pool, req, 'upload'), req.body || {}))));
+router.get('/creation/drafts', send, run(async (req, res) => res.json(await drafts.listDrafts(pool, await actorScope(pool, req, 'upload')))));
+router.get('/creation/drafts/:id', send, run(async (req, res) => res.json(await drafts.getDraft(pool, await actorScope(pool, req, 'upload'), req.params.id))));
+router.put('/creation/drafts/:id', send, run(async (req, res) => res.json(await drafts.saveDraft(pool, await actorScope(pool, req, 'upload'), req.params.id, req.body || {}))));
+router.post('/creation/drafts/:id/submit', send, run(async (req, res) => {
+    const draft = await drafts.submitDraft(pool, await actorScope(pool, req, 'upload'), req.params.id, req.body || {},
+        { reserveCapacity: officeQuota({ checkFirmLimits: (...args) => require('../lib/limits/enforceFirmLimits').checkFirmLimitsOrNull(...args) }) });
+    res.status(draft.result.reused ? 200 : 201).json(draft);
+}));
 router.post('/creation', send, run(async (req, res) => {
     const result = await creation.createFromRows(pool, await actorScope(pool, req, 'upload'),
         { ...(req.body || {}), idempotencyKey: req.get('Idempotency-Key') },

@@ -344,7 +344,7 @@ test.each(['he', 'ar', 'en'])('case contacts require a role choice and case asso
     fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.check') }));
     await screen.findByRole('heading', { name: i18n.t('signingV2.compose.review.heading') });
     expect(api.previewCreation.mock.calls[0][0].caseId).toBe(42);
-    expect(screen.getAllByText('Synthetic case').some(el => !el.closest('[hidden]'))).toBe(true);
+    expect(screen.getByText('Synthetic case', { selector: 'dd bdi' })).toBeVisible();
     expect(api.cases).not.toHaveBeenCalled();
 });
 
@@ -409,4 +409,19 @@ test('an explicit same-person role sends a reference, preserves original details
     expect(screen.queryByText(/Same synthetic lawyer, Same synthetic lawyer/)).not.toBeInTheDocument();
     expect(api.previewCreation.mock.calls[0][0].shared.closing).toEqual({sameAsRole:'opening'});
     expect(api.previewCreation.mock.calls[0][0].signingOrder).toEqual({mode:'sequential',roles:['opening','client','closing']});
+});
+
+test('a committed draft restores the actual package count without creating again or needing its old preview', async () => {
+    const i18n = await translations('en'); const api = fakeApi();
+    const previousUrl = window.location.href;
+    window.history.replaceState(null, '', '/?draft=10000000-0000-4000-8000-000000000001');
+    api.draft = jest.fn(async () => ({ id: '10000000-0000-4000-8000-000000000001', version: 4, state: 'submitted',
+        payload: {}, result: { submissionId: 'already-committed', packageCount: 7, documentCount: 21, reused: true } }));
+    api.saveDraft = jest.fn(); api.submitDraft = jest.fn();
+    try {
+        render(<I18nextProvider i18n={i18n}><PackageComposer api={api} /></I18nextProvider>);
+        await screen.findByRole('heading', { name: i18n.t('signingV2.compose.done.heading') });
+        expect(screen.getByText(i18n.t('signingV2.compose.done.body', { count: 7, formattedCount: '7' }))).toBeVisible();
+        expect(api.create).not.toHaveBeenCalled(); expect(api.submitDraft).not.toHaveBeenCalled(); expect(api.saveDraft).not.toHaveBeenCalled();
+    } finally { window.history.replaceState(null, '', previousUrl); }
 });
