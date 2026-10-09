@@ -38,6 +38,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
     const isLawyerStamp = fieldType === 'lawyerstamp';
     const isClientStamp = fieldType === 'clientstamp';
     const isStampType = isLawyerStamp || isClientStamp;
+    const isCompletionMark = spot?.automaticAtCompletion === true;
     const stampImageUrl = spot?.stampImageDataUrl || spot?.StampImageDataUrl;
     const isRequiredRaw = spot?.isRequired ?? spot?.IsRequired;
     const isRequired = typeof isRequiredRaw === 'boolean' ? isRequiredRaw : true;
@@ -366,18 +367,18 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
             ref={ref}
             className={`lw-signing-spot ${colorClass} lw-signing-spot--type-${fieldType} ${isRequired ? 'is-required' : 'is-optional'}${isSigned ? ' is-signed' : ''}${isSelected ? ' is-selected' : ''}${canEditSpot ? ' is-editable' : ''}`}
             style={spotStyle}
-            title={spot?.authoredDataLabel ? t("signingV2.authoring.dataTitleNamed", { name: spot.authoredDataLabel }) : t("signing.spot.signedByTitle", { name: signerNameSafe })}
+            title={isCompletionMark ? t('signingV2.completionMark.title') : spot?.authoredDataLabel ? t("signingV2.authoring.dataTitleNamed", { name: spot.authoredDataLabel }) : t("signing.spot.signedByTitle", { name: signerNameSafe })}
         >
             {!isSigned && (
                 <>
                     <div className="lw-signing-spotMeta">
                         <span className="lw-signing-spotType">
-                            <span className="lw-signing-spotTypeLabel">{spot?.authoredDataLabel ? t('signingV2.authoring.dataField') : fieldTypeLabels[fieldType] || t('signing.fields.signature')}</span>
+                            <span className="lw-signing-spotTypeLabel">{isCompletionMark ? t('signingV2.completionMark.title') : spot?.authoredDataLabel ? t('signingV2.authoring.dataField') : fieldTypeLabels[fieldType] || t('signing.fields.signature')}</span>
                         </span>
                     </div>
-                    <span className={`lw-signing-spotRequired ${isRequired ? 'is-required' : 'is-optional'}`}>
+                    {!isCompletionMark && <span className={`lw-signing-spotRequired ${isRequired ? 'is-required' : 'is-optional'}`}>
                         {isRequired ? t('signing.fieldSettings.requiredShort') : t('signing.fieldSettings.optionalShort')}
-                    </span>
+                    </span>}
                 </>
             )}
 
@@ -395,7 +396,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
             {isStampType && (stampImageUrl || hasSignatureImage) ? (
                 <img
                     src={stampImageUrl || spot.SignatureUrl || spot.signatureUrl}
-                    alt={isClientStamp ? t("signing.fields.clientStamp") : t("signing.fields.lawyerStamp")}
+                    alt={isCompletionMark ? t('signingV2.completionMark.preview') : isClientStamp ? t("signing.fields.clientStamp") : t("signing.fields.lawyerStamp")}
                     className="lw-signing-spotImg lw-signing-spotImg--stamp"
                     draggable={false}
                 />
@@ -406,7 +407,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     className="lw-signing-spotImg"
                     draggable={false}
                 />
-            ) : !showFieldValue && (
+            ) : !showFieldValue && !isCompletionMark && (
                 <div className="lw-signing-spotLabel">
                     <div className="lw-signing-spotLabelText">
                         {signerNameSafe.length > 10 ? signerNameSafe.substring(0, 8) + "..." : signerNameSafe}

@@ -128,6 +128,14 @@ router.post('/authoring/sources', send, run(async (req, res) => {
     res.json({ source: await authoring.registerSource(pool, await actorScope(pool, req, 'upload'), req.body?.fileKey,
         { readPdf: require('../services/signingTemplateService').readPdf, storage: objectStorage({ client: r2, bucket: BUCKET }) }) });
 }));
+router.post('/authoring/completion-marks', send, run(async (req, res) => {
+    const { r2, BUCKET } = require('../utils/r2');
+    res.json({ mark: await require('../services/signingV2/completionMarks').register(pool, await actorScope(pool, req, 'upload'), req.body || {}, objectStorage({ client: r2, bucket: BUCKET })) });
+}));
+router.get('/authoring/completion-marks/:id', send, run(async (req, res) => {
+    const { r2, BUCKET } = require('../utils/r2');
+    res.json({ mark: await require('../services/signingV2/completionMarks').read(pool, await actorScope(pool, req, 'upload'), req.params.id, objectStorage({ client: r2, bucket: BUCKET })) });
+}));
 router.get('/authoring/versions/:id/documents/:key', view, run(async (req, res) => {
     const { r2, BUCKET } = require('../utils/r2');
     pdf(res, await authoring.documentFile(pool, await actorScope(pool, req, 'view'), req.params.id, req.params.key,

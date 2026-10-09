@@ -1,0 +1,11 @@
+{
+  "tenant": "morlevy",
+  "candidate": "03fd5e4ab9bd06f2e0c1add170d67495e232538c",
+  "exitCode": 0,
+  "result": "PASS",
+  "log": {
+    "bytes": 22613,
+    "sha256": "025c976943b755909a8c6db2f9427042f9949a09817f4f8c4fe72b57c56a55d5"
+  },
+  "at": "2026-10-08T22:56:33.938Z"
+}

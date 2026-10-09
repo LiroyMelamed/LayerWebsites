@@ -51,7 +51,7 @@ function uuidv4() {
     }
 }
 
-const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal", filesApi = signingFilesApi, loadPublicPdf = null, nextDocument = null, documentGroup = null, multiDocumentAction = null, deferOtpUntilConsent = false, documentIssueActions = null, signingContext = null }) => {
+const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal", filesApi = signingFilesApi, loadPublicPdf = null, nextDocument = null, documentGroup = null, multiDocumentAction = null, deferOtpUntilConsent = false, documentIssueActions = null, signingContext = null, completionMarkNotice = null }) => {
     const { t } = useTranslation();
     const canvasRef = useRef(null);
     const initializedCanvasRef = useRef(null);
@@ -273,7 +273,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         }
     };
     const sanitizeFieldValue = (type, value) => {
-        const raw = value == null ? '' : String(value);
+        const raw = (value == null ? '' : String(value)).replace(/[٠-٩]/g, digit => String(digit.charCodeAt(0) - 0x660)).replace(/[۰-۹]/g, digit => String(digit.charCodeAt(0) - 0x6f0));
         if (type === 'phone') {
             const trimmed = raw.trim();
             if (trimmed.startsWith('+')) {
@@ -292,7 +292,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
             return emailOk ? { ok: true } : { ok: false, message: t('errors.invalidEmail') };
         }
-        if (type === 'phone' || type === 'number' || type === 'idnumber') {
+        if (type === 'phone') {
+            return /^\+?[0-9]{7,15}$/.test(value) ? { ok: true } : { ok: false, message: t('errors.invalidPhone') };
+        }
+        if (type === 'number' || type === 'idnumber') {
             const digitsOnly = /^[0-9]+$/.test(value);
             return digitsOnly ? { ok: true } : { ok: false, message: t('errors.numbersOnly') };
         }
@@ -2266,6 +2269,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     // ─── Shared signing UI (used in side panel for modal, popup for screen) ───
     const renderConsentAndOtp = () => (
         <>
+            {completionMarkNotice && <p className="lw-signing-inlineHint">{completionMarkNotice}</p>}
             {!consentAccepted && (
                 <div className="lw-signing-legalBox">
                     <label className="lw-signing-legalRow">

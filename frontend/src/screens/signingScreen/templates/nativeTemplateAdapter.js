@@ -28,6 +28,10 @@ export function fromEditor(draft, locale) {
             fields: (doc.fields || []).map(field => {
                 const result = { ...field.nativeField, id: field.id, type: field.fieldType === 'number' ? 'text' : field.fieldType,
                     pageNum: field.pageNum, x: field.x, y: field.y, width: field.width, height: field.height, label: field.fieldLabel || '', required: field.isRequired };
+                if (result.type === 'completionMark') {
+                    delete result.roleKey; delete result.occurrence; delete result.inactiveTreatment;
+                    return { ...result, required: false, assetId: field.assetId, assetHash: field.assetHash, automaticAtCompletion: true };
+                }
                 if (result.type === 'data') {
                     delete result.roleKey; delete result.occurrence;
                     return { ...result, dataKey: field.dataKey, overflow: 'block', fontSize: field.fontSize || 14, align: field.align || 'start' };

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import billingApi from '../api/billingApi';
 
 const BillingLockContext = createContext(null);
@@ -31,7 +31,9 @@ export function BillingLockProvider({ children }) {
         }));
     }, []);
 
+    const request = useRef(0);
     const refresh = useCallback(async () => {
+        const generation = ++request.current;
         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
         if (!token) {
             setLock((prev) => ({ ...prev, locked: false, loaded: true }));
@@ -39,12 +41,14 @@ export function BillingLockProvider({ children }) {
         }
         try {
             const res = await billingApi.getLockStatus();
+            if (generation !== request.current || token !== localStorage.getItem('token')) return;
             if (res?.success && res.data) {
                 applyLock(res.data);
                 return;
             }
             setLock((prev) => ({ ...prev, loaded: true }));
         } catch {
+            if (generation !== request.current || token !== localStorage.getItem('token')) return;
             setLock((prev) => ({ ...prev, loaded: true }));
         }
     }, [applyLock]);
@@ -52,8 +56,10 @@ export function BillingLockProvider({ children }) {
     useEffect(() => {
         void refresh();
         const onLocked = (event) => applyLock(event?.detail || { locked: true });
+        const onAuthChange = () => { setLock({ locked: false, status: null, graceUntil: null, payUrl: null, loaded: false }); void refresh(); };
         window.addEventListener('lw-billing-locked', onLocked);
-        return () => window.removeEventListener('lw-billing-locked', onLocked);
+        window.addEventListener('lw-auth-changed', onAuthChange);
+        return () => { request.current += 1; window.removeEventListener('lw-billing-locked', onLocked); window.removeEventListener('lw-auth-changed', onAuthChange); };
     }, [applyLock, refresh]);
 
     const value = useMemo(

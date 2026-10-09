@@ -41,6 +41,7 @@ async function assertSources(db, scope, definition) {
     expect(Array.isArray(documents) && documents.length <= limits.documentsPerPackage, 'INVALID_DEFINITION');
     const ids = [...new Set(documents.map(doc => doc?.sourceArtifactId))];
     expect(ids.every(id => typeof id === 'string' && UUID.test(id)), 'INVALID_SOURCE');
+    await require('./completionMarks').assertAssets(db, scope, definition);
     if (!ids.length) return;
     const sources = (await db.query(`SELECT a.id,a.content_sha256 FROM signing_artifacts a
         WHERE a.owner_context_id=$1 AND a.id=ANY($2::uuid[]) AND a.kind='source' AND a.state='ready'

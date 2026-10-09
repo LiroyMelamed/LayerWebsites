@@ -3,6 +3,7 @@ import ConfirmationDialog from '../../../components/styledComponents/popups/Conf
 import SigningSelect from './SigningSelect';
 import SigningBackButton from './SigningBackButton';
 import React, { useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import PrimaryButton from '../../../components/styledComponents/buttons/PrimaryButton';
 import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
 import FloatingAddField from '../../../components/specializedComponents/signFiles/fieldToolbar/FloatingAddField';
@@ -13,13 +14,14 @@ import { uploadFileToR2 } from '../../../utils/fileUploadUtils';
 import StatusNotice from '../../../components/ui/StatusNotice';
 import api from '../../../api/signingTemplatesApi';
 import useSigningLocale from './useSigningLocale';
+import CompletionMarkDialog from './CompletionMarkDialog';
 import TemplateRoles from './TemplateRoles';
 import TemplateDataKeys from './TemplateDataKeys';
 import TemplateDocumentCondition from './TemplateDocumentCondition';
 import { conditionSummary } from './templateConditions';
 import './templates.scss';
 
-const FIELD_TYPES = ['signature', 'initials', 'text', 'date', 'number', 'checkbox'];
+const FIELD_TYPES = ['signature', 'email', 'phone', 'initials', 'text', 'date', 'checkbox', 'idnumber', 'lawyerStamp'];
 function LeaveConfirmation(props) {
     const content = useRef(null);
     useEffect(() => {
@@ -43,6 +45,8 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
     const [draft, setDraft] = useState(() => template?.definition || initial(t('roleDefault', { index: number(1) })));
     const [activeDoc, setActiveDoc] = useState(0);const [selected, setSelected] = useState(null);
     const [addMenu, setAddMenu] = useState(null);
+    const [markMenu, setMarkMenu] = useState(null);
+    const [markImages, setMarkImages] = useState({});
     const [editingField, setEditingField] = useState(false);
     const pdfRef = useRef(null);
     const pdfId = `template-pdf-${useId().replace(/:/g, '')}`;
@@ -74,6 +78,16 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
         service.pdf(template.id, document.id).then(blob => { if (!cancelled) setPdfFiles(prev => ({ ...prev, [document.id]: blob })); }).catch(e => { if (!cancelled) setError(e.message); });
         return () => { cancelled = true; };
     }, [template, document, pdfFiles, service]);
+    useEffect(() => {
+        if (!native) return undefined;
+        let active = true;
+        const ids = [...new Set(draft.documents.flatMap(doc => doc.fields).filter(field => field.fieldType === 'completionMark').map(field => field.assetId))].filter(id => id && !markImages[id]);
+        Promise.all(ids.map(async id => {
+            const mark = await service.completionMark(id);
+            if (active) setMarkImages(previous => ({ ...previous, [id]: mark.image }));
+        })).catch(failure => { if (active) setError(failure.message); });
+        return () => { active = false; };
+    }, [native, draft.documents, markImages, service]);
     const change = patch => { if (!native || !saving.current) setDraft(prev => ({ ...prev, ...patch })); };
     const updateDocument = update => { if (!native || !saving.current) setDraft(prev => ({ ...prev, documents: prev.documents.map((doc, i) => i === activeDoc ? update(doc) : doc) })); };
     const updateField = (index, patch) => updateDocument(doc => ({ ...doc, fields: doc.fields.map((item, i) => i === index ? { ...item, ...patch } : item) }));
@@ -94,11 +108,11 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
         {Array.from({ length: current.nativeRole.max }, (_, index) => <option key={index} value={index}>{translate('signingV2.people.personNumber', { number: number(index + 1) })}</option>)}
     </SigningSelect></label>;
     const personLabel = item => { const role = draft.roles.find(role => role.id === item.roleId); return (role?.nativeRole?.max || 1) > 1 ? `${role.name} · ${number((item.occurrence ?? item.nativeField?.occurrence ?? 0) + 1)}` : role?.name; };
-    function addField(nextType, nextPage, anchor = {}) {
+    function addField(nextType, nextPage, anchor = {}, mark = null) {
         if (busy || saving.current || !document || !pdfFiles[document.id] || document.fields.length >= 150 ||
             (nextType === 'data' && !draft.dataKeys?.length)) return;
-        const height = nextType === 'checkbox' ? 24 : 48;
-        const width = nextType === 'checkbox' ? 24 : 180;
+        const height = nextType === 'completionMark' ? 180 : nextType === 'checkbox' ? 24 : 48;
+        const width = nextType === 'completionMark' ? 420 : nextType === 'checkbox' ? 24 : 180;
         const canvas = pdfRef.current?.querySelector(`[data-page-number="${nextPage}"] canvas`);
         const rect = canvas?.getBoundingClientRect();
         const pageHeight = rect?.width > 0 ? SPOT_BASE_WIDTH * rect.height / rect.width : SPOT_BASE_WIDTH * 841.89 / 595.276;
@@ -106,7 +120,7 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
         const next = { ...(native ? { ...(nextType !== 'data' ? { occurrence: Math.min(occurrence, (draft.roles.find(role => role.id === roleId)?.nativeRole?.max || 1) - 1) } : {}), id: `field_${crypto.randomUUID().replace(/-/g, '')}`, ...(nextType === 'data' ? { dataKey: draft.dataKeys[0].key, fontSize: 14, align: 'start' } : {}) } : {}),
             pageNum: nextPage, x: centered ? (SPOT_BASE_WIDTH - width) / 2 : 48,
             y: centered ? Math.max(0, Math.min(pageHeight - height, anchor.yRatio * pageHeight - height / 2)) : 60 + Math.min(document.fields.length, 6) * 60,
-            width, height, roleId, fieldType: nextType, isRequired: true, fieldLabel: '' };
+            width, height, ...(nextType === 'completionMark' ? { assetId: mark.id, assetHash: mark.hash, automaticAtCompletion: true } : { roleId }), fieldType: nextType, isRequired: nextType !== 'completionMark', fieldLabel: '' };
         updateDocument(doc => ({ ...doc, fields: [...doc.fields, next] }));
         setSelected(document.fields.length); setAddMenu(null);
     }
@@ -157,15 +171,15 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
                     {slotSelect('new-field-person', draft.roles.find(role => role.id === roleId), Math.min(occurrence, (draft.roles.find(role => role.id === roleId)?.nativeRole?.max || 1) - 1), setOccurrence)}
                 </div>
                 <p className="lw-templates__hint">{translate('signingV2.authoring.canvasHint')}</p>
-                            <div className="lw-templates__pdf" ref={pdfRef} id={pdfId}>{pdfFiles[document.id] ? <PdfViewer key={document.id} pdfFile={pdfFiles[document.id]} spots={document.fields.map(f => ({ ...f, ...(f.fieldType === 'data' ? { type: 'text', fieldType: 'text', authoredDataLabel: draft.dataKeys?.find(key => key.key === f.dataKey)?.label || translate('signingV2.authoring.dataField'), isRequired: !!draft.dataKeys?.find(key => key.key === f.dataKey)?.required } : {}), signerIndex: draft.roles.findIndex(r => r.id === f.roleId), signerName: f.fieldType === 'data' ? draft.dataKeys?.find(key => key.key === f.dataKey)?.label || translate('signingV2.authoring.dataField') : personLabel(f) }))} signers={draft.roles.map((r, i) => ({ UserId: i + 1, Name: r.name }))} onUpdateSpot={updateField} onRemoveSpot={removeField} onRequestRemove={removeField} onSelectSpot={setSelected} onEditSpot={index => { setSelected(index); setEditingField(true); }} onPageChange={setPage} selectedSpotIndex={selected} /> : <p role="status">{t('loadingPdf')}</p>}</div>
+                            <div className="lw-templates__pdf" ref={pdfRef} id={pdfId}>{pdfFiles[document.id] ? <PdfViewer key={document.id} pdfFile={pdfFiles[document.id]} spots={document.fields.map(f => ({ ...f, ...(f.fieldType === 'completionMark' ? { type: 'lawyerStamp', fieldType: 'lawyerStamp', stampImageDataUrl: markImages[f.assetId] } : {}), ...(f.fieldType === 'data' ? { type: 'text', fieldType: 'text', authoredDataLabel: draft.dataKeys?.find(key => key.key === f.dataKey)?.label || translate('signingV2.authoring.dataField'), isRequired: !!draft.dataKeys?.find(key => key.key === f.dataKey)?.required } : {}), signerIndex: draft.roles.findIndex(r => r.id === f.roleId), signerName: f.fieldType === 'data' ? draft.dataKeys?.find(key => key.key === f.dataKey)?.label || translate('signingV2.authoring.dataField') : personLabel(f) }))} signers={draft.roles.map((r, i) => ({ UserId: i + 1, Name: r.name }))} onUpdateSpot={updateField} onRemoveSpot={removeField} onRequestRemove={removeField} onSelectSpot={setSelected} onEditSpot={index => { setSelected(index); setEditingField(true); }} onPageChange={setPage} selectedSpotIndex={selected} /> : <p role="status">{t('loadingPdf')}</p>}</div>
                 {field && <button type="button" className="lw-templates__editSelected" onClick={() => setEditingField(true)}>{t('selectedField')}</button>}
                 <fieldset className="lw-templates__unboxed" disabled={busy || !pdfFiles[document.id] || document.fields.length >= 150}>
                     <FloatingAddField containerSelector={`#${pdfId} .lw-signing-pdfViewer`} currentPage={page}
                         onAdd={(pageNum, anchor) => { if (!busy && !saving.current && document.fields.length < 150) setAddMenu({ pageNum, ...anchor }); }} />
                 </fieldset>
-                {addMenu && <AddFieldPanel fieldTypeOptions={(native ? [...FIELD_TYPES.filter(key => key !== 'number'), ...(draft.dataKeys?.length ? ['data'] : [])] : FIELD_TYPES)
-                    .map(id => ({ id, label: id === 'data' ? translate('signingV2.authoring.dataField') : t(`types.${id}`) }))}
-                    onSelectField={id => addField(id, addMenu.pageNum, addMenu)} onClose={() => setAddMenu(null)} />}
+                {addMenu && createPortal(<div className="lw-templates__fieldMenu" dir={direction}><AddFieldPanel fieldTypeOptions={(native ? [...FIELD_TYPES, 'completionMark', ...(draft.dataKeys?.length ? ['data'] : [])] : FIELD_TYPES)
+                    .map(id => ({ id, label: id === 'completionMark' ? translate('signingV2.completionMark.title') : id === 'data' ? translate('signingV2.authoring.dataField') : translate(`signing.fields.${id === 'idnumber' ? 'idNumber' : id}`) }))}
+                    onSelectField={id => { if (id === 'completionMark') { setMarkMenu(addMenu); setAddMenu(null); } else addField(id, addMenu.pageNum, addMenu); }} onClose={() => setAddMenu(null)} /></div>, window.document.body)}
             </div>
         </>}
 
@@ -203,6 +217,11 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
         </footer>
         </fieldset>
     </section>
+        {markMenu && <CompletionMarkDialog onClose={() => setMarkMenu(null)} onConfirm={async body => {
+            const mark = await service.registerCompletionMark(body);
+            setMarkImages(previous => ({ ...previous, [mark.id]: body.image }));
+            addField('completionMark', markMenu.pageNum, markMenu, mark); setMarkMenu(null);
+        }} />}
         {editingField && field && <SimplePopUp isOpen onClose={() => setEditingField(false)} role="dialog" aria-modal="true" aria-label={t('selectedField')} dir={direction}>
             <div className="lw-templates lw-templates__fieldDialog">
                 <fieldset disabled={busy}><legend>{t('selectedField')}</legend>
@@ -210,9 +229,9 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
                         <label>{translate('signingV2.authoring.dataField')}<SigningSelect dir={direction} value={field.dataKey || ''} onChange={e => updateField(selected, { dataKey: e.target.value })}>{draft.dataKeys.map(key => <option value={key.key} key={key.key}>{key.label || key.key}</option>)}</SigningSelect></label>
                         <label>{translate('signingV2.authoring.fontSize')}<input type="number" min="8" max="72" value={field.fontSize || 14} onChange={e => updateField(selected, { fontSize: Number(e.target.value) })} /></label>
                         <p>{translate('signingV2.authoring.overflow')}</p>
-                    </> : <label>{t('signer')}<SigningSelect dir={direction} value={field.roleId} onChange={e => updateField(selected, { roleId: e.target.value, occurrence: 0 })}>{draft.roles.map(role => <option key={role.id} value={role.id}>{role.name}</option>)}</SigningSelect></label>}
-                    {field.fieldType !== 'data' && slotSelect('selected-field-person', draft.roles.find(role => role.id === field.roleId), field.occurrence ?? field.nativeField?.occurrence ?? 0, next => updateField(selected, { occurrence: next }))}
-                    {native && field.fieldType !== 'data' && (() => {
+                    </> : field.fieldType === 'completionMark' ? <p>{translate('signingV2.completionMark.help')}</p> : <label>{t('signer')}<SigningSelect dir={direction} value={field.roleId} onChange={e => updateField(selected, { roleId: e.target.value, occurrence: 0 })}>{draft.roles.map(role => <option key={role.id} value={role.id}>{role.name}</option>)}</SigningSelect></label>}
+                    {!['data', 'completionMark'].includes(field.fieldType) && slotSelect('selected-field-person', draft.roles.find(role => role.id === field.roleId), field.occurrence ?? field.nativeField?.occurrence ?? 0, next => updateField(selected, { occurrence: next }))}
+                    {native && !['data', 'completionMark'].includes(field.fieldType) && (() => {
                         const role = draft.roles.find(item => item.id === field.roleId)?.nativeRole;
                         return (role?.when || role?.min <= (field.occurrence ?? field.nativeField?.occurrence ?? 0)) && <label>{translate('signingV2.authoring.condition.inactive')}
                             <SigningSelect dir={direction} value={field.inactiveTreatment || ''} onChange={event => updateField(selected, { inactiveTreatment: event.target.value || undefined })}>
@@ -221,7 +240,7 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
                             </SigningSelect></label>;
                     })()}
                     <label>{t('label')}<input value={field.fieldLabel || ''} maxLength={120} onChange={e => updateField(selected, { fieldLabel: e.target.value })} /></label>
-                    {field.fieldType !== 'data' && <label className="lw-templates__check"><input type="checkbox" checked={field.isRequired} onChange={e => updateField(selected, { isRequired: e.target.checked })} />{t('required')}</label>}
+                    {!['data', 'completionMark'].includes(field.fieldType) && <label className="lw-templates__check"><input type="checkbox" checked={field.isRequired} onChange={e => updateField(selected, { isRequired: e.target.checked })} />{t('required')}</label>}
                     <button type="button" onClick={() => removeField(selected)}>{t('deleteField')}</button>
                 </fieldset>
                 <SecondaryButton onPress={() => setEditingField(false)}>{translate('common.close')}</SecondaryButton>
