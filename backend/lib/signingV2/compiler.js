@@ -6,7 +6,7 @@ const { normalizeSigningOrder } = require('./signingOrder');
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const KEY = /^[a-z][a-zA-Z0-9_]{0,63}$/;
 const DATA_TYPES = new Set(['text', 'identifier', 'decimal', 'date', 'boolean', 'enum']);
-const FIELD_TYPES = new Set(['data', 'signature', 'initials', 'text', 'date', 'checkbox']);
+const FIELD_TYPES = new Set(['data', 'signature', 'initials', 'text', 'date', 'checkbox', 'email', 'phone', 'idnumber', 'lawyerStamp', 'completionMark']);
 const CAPACITIES = new Set(['personal', 'representative', 'professional']);
 const LOCALES = new Set(['he', 'ar', 'en']);
 
@@ -162,7 +162,9 @@ function validateDefinition(input) {
             expect(Number.isInteger(field.pageNum) && field.pageNum >= 1 && field.pageNum <= limits.sourcePagesPerDocument, 'INVALID_GEOMETRY', path);
             expect(['x', 'y', 'width', 'height'].every(key => typeof field[key] === 'number' && Number.isFinite(field[key])), 'INVALID_GEOMETRY', path);
             expect(field.x >= 0 && field.y >= 0 && field.width > 0 && field.height > 0 && field.x + field.width <= 800, 'INVALID_GEOMETRY', path);
-            if (field.type === 'data') {
+            if (field.type === 'completionMark') {
+                expect(UUID.test(field.assetId) && /^[a-f0-9]{64}$/.test(field.assetHash) && field.required === false && field.automaticAtCompletion === true && field.roleKey === undefined, 'COMPLETION_MARK_AUTHORIZATION_REQUIRED', path);
+            } else if (field.type === 'data') {
                 expect(keys.has(field.dataKey), 'INVALID_DEFINITION', path);
                 expect(field.overflow === 'block', 'INVALID_DEFINITION', path);
                 expect(Number.isFinite(field.fontSize) && field.fontSize >= 8 && field.fontSize <= 72, 'INVALID_DEFINITION', path);
@@ -295,7 +297,7 @@ function compilePackage(definition, input, directory, now = new Date()) {
     const exclusions = [];
     const tasks = [];
     for (const document of definition.documents) {
-        const missing = document.fields.filter(field => field.type !== 'data' && !byRole.has(`${field.roleKey}:${field.occurrence}`));
+        const missing = document.fields.filter(field => !['data', 'completionMark'].includes(field.type) && !byRole.has(`${field.roleKey}:${field.occurrence}`));
         const included = conditionMatches(document.when, data, dataKeys);
         if (!included || missing.some(field => field.inactiveTreatment === 'exclude_document')) {
             exclusions.push({ documentKey: document.key, reason: !included ? 'condition' : 'inactive_role' });
@@ -310,10 +312,11 @@ function compilePackage(definition, input, directory, now = new Date()) {
             const page = pages[field.pageNum - 1];
             expect(page && page.width > 0 && page.height > 0 && field.y + field.height <= 800 * page.height / page.width, 'INVALID_GEOMETRY', `${document.key}.${field.id}`);
             if (field.type === 'data') return { ...field, value: data[field.dataKey] };
+            if (field.type === 'completionMark') return { ...field, active: true };
             return { ...field, active: byRole.has(`${field.roleKey}:${field.occurrence}`) };
         });
         const byParticipant = new Map();
-        for (const field of fields.filter(item => item.type !== 'data' && item.active)) {
+        for (const field of fields.filter(item => !['data', 'completionMark'].includes(item.type) && item.active)) {
             const ref = `${field.roleKey}:${field.occurrence}`;
             if (!byParticipant.has(ref)) byParticipant.set(ref, []);
             byParticipant.get(ref).push(field);

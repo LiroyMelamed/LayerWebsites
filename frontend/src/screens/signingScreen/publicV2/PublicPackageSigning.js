@@ -169,6 +169,7 @@ export default function PublicPackageSigning() {
                     <SimpleContainer className="lw-publicSigningScreen__stack">
                         <TextBold24>{t(`signingV2.issue.${current.task.state}Status`)}</TextBold24>
                         <Text14><bdi>{current.document.name}</bdi></Text14>
+                        {current.document.hasCompletionMark && <Text14>{t('signingV2.completionMark.notice')}</Text14>}
                         <Text14>{t('signingV2.issue.pausedHelp')}</Text14>
                         {current.task.issue?.reason && <p className="lw-signingTaskIssue__note">{current.task.issue.reason}</p>}
                         <SecondaryButton onPress={load}>{t('signingV2.refresh')}</SecondaryButton>
@@ -179,6 +180,7 @@ export default function PublicPackageSigning() {
                 <SignatureCanvas
                     key={`${groupSelection ? groupSelection.map(item => `${item.task.taskId}.${item.task.version || 0}`).join(':') : `${current.task.taskId}.${current.task.version || 0}`}:${locale}`}
                     publicToken={token}
+                    completionMarkNotice={(groupSelection || [current]).some(item => item.document.hasCompletionMark) ? t('signingV2.completionMark.notice') : null}
                     signingContext={{byDocument:signingContexts,documentId:current.document.documentId,direction}}
                     variant="screen"
                     filesApi={adapter}
