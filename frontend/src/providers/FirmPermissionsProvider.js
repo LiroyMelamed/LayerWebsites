@@ -6,6 +6,7 @@ const FirmPermissionsContext = createContext(null);
 export function FirmPermissionsProvider({ children }) {
     const [scope, setScope] = useState(null);
     const [loaded, setLoaded] = useState(false);
+    const [error, setError] = useState(null);
 
     const requestRef = useRef(0);
     const refresh = useCallback(async () => {
@@ -13,23 +14,27 @@ export function FirmPermissionsProvider({ children }) {
         const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
         if (!token) {
             setScope(null);
+            setError(null);
             setLoaded(true);
             return;
         }
         try {
             const data = await staffRolesApi.getSessionScope();
-            if (requestId === requestRef.current && token === localStorage.getItem("token")) setScope(data);
-        } catch {
-            if (requestId === requestRef.current) setScope(null);
+            if (requestId === requestRef.current && token === localStorage.getItem("token")) { setScope(data); setError(null); }
+        } catch (failure) {
+            if (requestId === requestRef.current && token === localStorage.getItem("token")) { setScope(null); setError(failure); }
         } finally {
-            if (requestId === requestRef.current && token === localStorage.getItem("token")) setLoaded(true);
+            if (requestId === requestRef.current) {
+                if (token === localStorage.getItem("token")) setLoaded(true);
+                else void refresh();
+            }
         }
     }, []);
 
     useEffect(() => {
         refresh();
         const onFocus = () => refresh();
-        const onAuthChange = () => { setScope(null); setLoaded(false); refresh(); };
+        const onAuthChange = () => { setScope(null); setError(null); setLoaded(false); refresh(); };
         window.addEventListener("lw-auth-changed", onAuthChange);
         const onVisibility = () => {
             if (document.visibilityState === "visible") refresh();
@@ -38,6 +43,7 @@ export function FirmPermissionsProvider({ children }) {
         document.addEventListener("visibilitychange", onVisibility);
         const interval = setInterval(refresh, 60_000);
         return () => {
+            requestRef.current += 1;
             window.removeEventListener("focus", onFocus);
             window.removeEventListener("lw-auth-changed", onAuthChange);
             document.removeEventListener("visibilitychange", onVisibility);
@@ -49,6 +55,7 @@ export function FirmPermissionsProvider({ children }) {
         () => ({
             scope,
             loaded,
+            error,
             refresh,
             permissionMode: scope?.permissionMode || "legacy",
             pages: scope?.pages,
@@ -72,7 +79,7 @@ export function FirmPermissionsProvider({ children }) {
                 return (scope.areas[areaId].actions || []).includes(action);
             },
         }),
-        [scope, loaded, refresh],
+        [scope, loaded, error, refresh],
     );
 
     return (

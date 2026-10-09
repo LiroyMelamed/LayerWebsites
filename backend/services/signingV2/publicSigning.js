@@ -4,6 +4,7 @@ const { expect, fail } = require('../../lib/signingV2/errors');
 const limits = require('../../lib/signingV2/limits');
 const { UUID } = require('../../lib/signingV2/compiler');
 const { signatureImage, IMAGE_TYPES } = require('../../lib/signingV2/stamp');
+const { validateSignerFieldValue } = require('../../lib/signingV2/signerFieldValue');
 const { transaction } = require('./transaction');
 const { loadPublicGrant } = require('./grants');
 const { assertCurrentAuthorities } = require('./authorities');
@@ -77,6 +78,7 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
             const item = packages.get(row.package_id);
             if (!item.documents.has(row.document_id)) {
                 item.documents.set(row.document_id, { documentId: row.document_id, name: row.name, pages: row.pages || [],
+                    hasCompletionMark: row.field_bindings.some(field => field.type === 'completionMark'),
                     final: Boolean(row.final_artifact_id), tasks: [] });
             }
             if (!row.task_id || grant.purpose === 'download') continue;
@@ -311,6 +313,7 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
                 expect(given[id] === undefined || typeof given[id] === 'string', 'INVALID_VALUES', `${item.taskId}.${id}`);
                 expect(value.length <= TEXT_MAX && !/[\u0000-\u0008\u000b-\u001f\u007f]/.test(value), 'INVALID_VALUES', `${item.taskId}.${id}`);
                 if (required) expect(value.length > 0, 'FIELD_REQUIRED', `${item.taskId}.${id}`);
+                validateSignerFieldValue(field.type, value, `${item.taskId}.${id}`);
                 values[item.taskId][id] = value;
             }
         }
@@ -330,14 +333,16 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
         const documents = new Map((await pool.query(`SELECT id,field_bindings FROM signing_documents WHERE owner_context_id=$1 AND id=ANY($2::uuid[])`,
             [grant.owner_context_id, [...new Set(items.map(item => item.documentId))]])).rows.map(row => [row.id, row]));
         const { values, needsSignature } = normalizeValues(items, documents, input.values);
+        const drawings = require('./fieldDrawings').fieldDrawings(items, documents, input.drawings);
         let signature = null;
-        if (needsSignature) {
+        if (needsSignature && drawings.missing) {
             const raw = typeof input.signature === 'string' ? input.signature.replace(/^data:image\/png;base64,/, '') : '';
             expect(raw.length > 0 && raw.length <= 420000 && /^[A-Za-z0-9+/]+={0,2}$/.test(raw), 'SIGNATURE_REQUIRED');
             const bytes = Buffer.from(raw, 'base64');
             signature = { bytes, ...signatureImage(bytes), hash: bytesHash(bytes) };
         }
-        const requestHash = digest({ sessionId, values, signatureHash: signature?.hash || null, consent: true });
+        const requestHash = digest({ sessionId, values, signatureHash: signature?.hash || null, consent: true,
+            ...(drawings.images.size ? { drawings: drawings.bindings } : {}) });
         const previous = (await pool.query(`SELECT * FROM signing_operations WHERE owner_context_id=$1 AND actor_key=$2 AND kind='public_accept' AND idempotency_key=$3`,
             [grant.owner_context_id, actorKey, input.idempotencyKey])).rows[0];
         if (previous) {
@@ -352,6 +357,11 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
             // A failed transaction leaves an unreferenced object; it is never linked to an action.
             await storage.write(upload.key, signature.bytes, { contentType: 'image/png', sha256: signature.hash });
             await storage.verify(upload.key, signature.bytes.length, signature.hash);
+        }
+        for (const drawing of drawings.images.values()) {
+            drawing.id = randomUUID(); drawing.key = `signing-v2/${grant.owner_context_id}/signature/${drawing.id}.png`;
+            await storage.write(drawing.key, drawing.bytes, { contentType: 'image/png', sha256: drawing.hash });
+            await storage.verify(drawing.key, drawing.bytes.length, drawing.hash);
         }
         return transaction(pool, async db => {
             const operation = (await db.query(`INSERT INTO signing_operations(id,owner_context_id,actor_key,kind,idempotency_key,request_hash,state)
@@ -407,19 +417,28 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
                     [grant.owner_context_id, inputsHash])).rows[0].id;
             }
             const date = signingDate(now);
+            const drawingArtifacts = new Map();
+            for (const drawing of drawings.images.values()) {
+                const hash = digest({ sessionId: session.id, signatureHash: drawing.hash, kind: 'signature' });
+                await db.query(`INSERT INTO signing_artifacts(id,owner_context_id,kind,inputs_hash,content_sha256,object_key,bytes,state,metadata,ready_at)
+                    VALUES($1,$2,'signature',$3,$4,$5,$6,'ready',$7,clock_timestamp()) ON CONFLICT(owner_context_id,kind,inputs_hash) DO NOTHING`,
+                [drawing.id, grant.owner_context_id, hash, drawing.hash, drawing.key, drawing.bytes.length, { width: drawing.width, height: drawing.height }]);
+                drawingArtifacts.set(drawing.hash, (await db.query(`SELECT id FROM signing_artifacts WHERE owner_context_id=$1 AND kind='signature' AND inputs_hash=$2`, [grant.owner_context_id, hash])).rows[0].id);
+            }
             const actions = items.map(item => {
                 const task = tasks.get(item.taskId);
                 const bindings = new Map(documents.get(item.documentId).field_bindings.map(field => [field.id, field]));
                 const fields = item.fieldIds.map(id => {
                     const field = bindings.get(id);
-                    const value = IMAGE_TYPES.has(field.type) ? signatureArtifactId : field.type === 'date' ? date : values[item.taskId][id];
+                    const value = IMAGE_TYPES.has(field.type) ? drawingArtifacts.get(drawings.bindings[`${item.taskId}.${id}`]) || signatureArtifactId : field.type === 'date' ? date : values[item.taskId][id];
                     return { id, type: field.type, value };
                 });
                 return { id: randomUUID(), task_id: item.taskId, participation_id: item.participationId, person_id: grant.person_id,
-                    payload_hash: digest({ taskId: item.taskId, fields, signatureHash: signature?.hash || null }),
+                    payload_hash: digest({ taskId: item.taskId, fields, signatureHash: signature?.hash || null,
+                        ...(drawings.images.size ? { drawings: Object.fromEntries(item.fieldIds.filter(id => drawings.bindings[`${item.taskId}.${id}`]).map(id => [id, drawings.bindings[`${item.taskId}.${id}`]])) } : {}) }),
                     authority_snapshot: task.authority_id ? { authorityId: task.authority_id, authorityVersion: task.authority_version, capacity: task.capacity } : null,
                     consent_snapshot: { ...live.consent_snapshot, confirmed: true, roleKey: task.role_key, capacity: task.capacity },
-                    values_snapshot: { fields, stageHash: item.stageHash, date }, signature_artifact_id: signatureArtifactId };
+                    values_snapshot: { fields, stageHash: item.stageHash, date }, signature_artifact_id: signatureArtifactId || fields.find(field => IMAGE_TYPES.has(field.type))?.value || null };
             });
             await db.query(`INSERT INTO signing_actions(id,owner_context_id,task_id,participation_id,person_id,session_id,manifest_hash,payload_hash,
                     authority_snapshot,consent_snapshot,values_snapshot,signature_artifact_id,accepted_at)

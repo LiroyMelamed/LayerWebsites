@@ -46,14 +46,18 @@ async function tryRefreshToken() {
     if (_refreshPromise) return _refreshPromise;
 
     const refreshToken = localStorage.getItem("refreshToken");
+    const previousToken = localStorage.getItem("token");
     if (!refreshToken) return null;
 
     _refreshPromise = axios
-        .post(`${resolveApiBaseUrl()}/Auth/Refresh`, { refreshToken }, { headers: { "x-client-platform": "web" } })
+        .post(`${resolveApiBaseUrl()}/Auth/Refresh`, { refreshToken }, { timeout: 15000, headers: { "x-client-platform": "web" } })
         .then((res) => {
+            // A refresh started by a previous account must not replace a new login.
+            if (localStorage.getItem("token") !== previousToken || localStorage.getItem("refreshToken") !== refreshToken) return null;
             if (res.status === 200 && res.data?.token) {
                 localStorage.setItem("token", res.data.token);
                 if (res.data.refreshToken) localStorage.setItem("refreshToken", res.data.refreshToken);
+                window.dispatchEvent(new Event('lw-auth-changed'));
                 return res.data.token;
             }
             return null;
@@ -132,12 +136,19 @@ ApiUtils.interceptors.response.use(
             return formatError(error);
         }
 
+        const requestToken = String(originalRequest.headers?.Authorization || '').replace(/^Bearer\s+/i, '');
+        // Concurrent startup requests may return 401 after another request has
+        // already rotated the session. Retry with the current token instead of
+        // rotating it again or logging out the newly authenticated account.
+        const tokenAtFailure = localStorage.getItem('token');
+
         // Try refreshing the token once
         originalRequest._retried = true;
-        const newToken = await tryRefreshToken();
+        const newToken = requestToken && tokenAtFailure && requestToken !== tokenAtFailure
+            ? tokenAtFailure : await tryRefreshToken();
 
         if (!newToken) {
-            clearAuthAndRedirect();
+            if (localStorage.getItem('token') === tokenAtFailure) clearAuthAndRedirect();
             return formatError(error);
         }
 
@@ -146,7 +157,7 @@ ApiUtils.interceptors.response.use(
         try {
             return formatSuccess(await axios(originalRequest));
         } catch (retryErr) {
-            if (retryErr.response?.status === 401 && !isPublicSigningApiRequest(retryErr.config)) {
+            if (retryErr.response?.status === 401 && !isPublicSigningApiRequest(retryErr.config) && localStorage.getItem('token') === newToken) {
                 clearAuthAndRedirect();
             }
             return formatError(retryErr);

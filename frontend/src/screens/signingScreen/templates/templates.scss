@@ -106,4 +106,19 @@
 .lw-templates__roleButton[aria-pressed="true"] { box-shadow: 0 0 0 .125rem var(--spot-signature-border, var(--template-accent)); }
 .lw-templates__editSelected { margin-block-start: .75rem; }
 .lw-templates__fieldDialog { padding: 0; fieldset { display: flex; flex-direction: column; gap: .8rem; } > button { margin-block-start: 1rem; } }
-.lw-templates__canvas .lw-addFieldPanel { direction: inherit; max-width: calc(100vw - 3rem); box-sizing: border-box; }
+.lw-templates__canvas .lw-floatingAddField {
+  // The incumbent office sidebar remains on the right in every locale.
+  inset-inline-end: auto;
+  left: 1.5rem;
+  right: auto;
+}
+.lw-templates__fieldMenu .lw-addFieldPanel {
+  direction: inherit;
+  inset-inline-end: auto;
+  left: 1.5rem;
+  right: auto;
+  max-width: calc(100vw - 3rem);
+  max-height: calc(100dvh - 11rem);
+  overflow-y: auto;
+  box-sizing: border-box;
+}

@@ -15,7 +15,7 @@ const { needsApproval, approvalPlan } = require('./approvals');
 const { clientId } = require('./clientContext');
 const { normalizeSigningOrder } = require('../../lib/signingV2/signingOrder');
 
-const LEGACY_FIELD_TYPES = { signature: 'signature', initials: 'initials', text: 'text', date: 'date', checkbox: 'checkbox', number: 'text' };
+const LEGACY_FIELD_TYPES = { signature: 'signature', initials: 'initials', text: 'text', date: 'date', checkbox: 'checkbox', number: 'text', email: 'email', phone: 'phone', idnumber: 'idnumber', lawyerStamp: 'lawyerStamp' };
 const { availableOriginSql, importedOrigins } = require('./templateAvailability');
 const CHANNELS = { email: ['email'], sms: ['sms'], both: ['email', 'sms'] };
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
