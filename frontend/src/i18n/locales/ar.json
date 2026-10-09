@@ -1120,7 +1120,9 @@
       "chooseFile": "اختيار ملف",
       "signOnStampHint": "يمكن التوقيع على الختم (اختياري)",
       "changeStamp": "تغيير الختم",
-      "nextStep": "متابعة"
+      "nextStep": "متابعة",
+      "personalStampUploadHint": "ارفعوا الختم كملف PNG أو JPEG أو PDF من صفحة واحدة، ثم وقّعوا عليه.",
+      "personalStampOnePage": "يجب أن يحتوي ملف الختم على صفحة واحدة فقط."
     },
     "screen": {
       "tabPending": "قيد الانتظار للتوقيع ({{count}})",

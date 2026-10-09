@@ -1715,7 +1715,9 @@
       "chooseFile": "בחירת קובץ",
       "signOnStampHint": "ניתן לחתום על החותמת (אופציונלי)",
       "changeStamp": "החלף חותמת",
-      "nextStep": "המשך"
+      "nextStep": "המשך",
+      "personalStampUploadHint": "העלו חותמת בקובץ PNG, JPEG או PDF בעל עמוד אחד, ואז חתמו עליה.",
+      "personalStampOnePage": "יש להעלות קובץ חותמת בעל עמוד אחד בלבד."
     },
     "screen": {
       "tabPending": "בהמתנה לחתימה ({{count}})",
