@@ -1579,7 +1579,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             let dataUrl;
             if (isPdf) {
                 if (currentSpot?.InteractiveLawyerStamp) {
-                    const { pdfjs } = await import('react-pdf');
+                    const { pdfjs } = await import('../../../utils/pdfjsConfig');
                     dataUrl = await normalizeStampDataUrl(await personalStampPdf(clientStampFile, pdfjs));
                 } else {
                     dataUrl = await fileToDataUrl(clientStampFile);
