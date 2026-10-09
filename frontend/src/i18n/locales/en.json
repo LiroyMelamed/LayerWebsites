@@ -1409,7 +1409,10 @@
         "delivery_contact_correct": "Correct package delivery contact",
         "access_link_renew": "Renew signing links",
         "package_cancel": "Cancel signing packages",
-        "package_assign": "Assign package responsibility"
+        "package_assign": "Assign package responsibility",
+        "package_remind": "Send signing reminders",
+        "delivery_resend": "Resend signing requests",
+        "package_revision_create": "Prepare a replacement revision"
       }
     }
   },

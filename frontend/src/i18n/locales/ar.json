@@ -1608,7 +1608,10 @@
         "delivery_contact_correct": "تصحيح بيانات اتصال الحزم",
         "access_link_renew": "تجديد روابط التوقيع",
         "package_cancel": "إلغاء حزم التوقيع",
-        "package_assign": "تعيين مسؤولين للحزم"
+        "package_assign": "تعيين مسؤولين للحزم",
+        "package_remind": "إرسال تذكيرات بالتوقيع",
+        "delivery_resend": "إعادة إرسال طلب التوقيع",
+        "package_revision_create": "إعداد إصدار بديل"
       },
       "reminders": {
         "view": "عرض",

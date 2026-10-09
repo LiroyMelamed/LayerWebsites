@@ -2246,7 +2246,10 @@
         "delivery_contact_correct": "תיקון פרטי קשר בחבילות",
         "access_link_renew": "חידוש קישורי חתימה",
         "package_cancel": "ביטול חבילות חתימה",
-        "package_assign": "שיוך אחראים לחבילות"
+        "package_assign": "שיוך אחראים לחבילות",
+        "package_remind": "שליחת תזכורות לחתימה",
+        "delivery_resend": "שליחה חוזרת של בקשת חתימה",
+        "package_revision_create": "הכנת גרסה מחליפה"
       },
       "reminders": {
         "view": "צפייה",
