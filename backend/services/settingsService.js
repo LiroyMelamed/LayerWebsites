@@ -8,6 +8,7 @@
  */
 
 const pool = require('../config/db');
+const contractorPolicy = require('../lib/contractorMonitorPolicy');
 
 // ── Cache ───────────────────────────────────────────────────────────
 const CACHE_TTL_MS = 60_000; // 1 minute
@@ -22,7 +23,8 @@ function _isCacheFresh() {
 async function _warmCache() {
     try {
         const { rows } = await pool.query(
-            `SELECT category, setting_key, setting_value, value_type FROM platform_settings`
+            `SELECT category, setting_key, setting_value, value_type FROM platform_settings
+             WHERE category <> 'contractor_monitor' OR pg_catalog.current_database() = 'melamedlaw'`
         );
         const fresh = new Map();
         for (const r of rows) {
@@ -86,9 +88,11 @@ async function _resolveUpdatedBy(updatedBy) {
  * @param {*}      fallback  - default if neither DB nor env has a value
  */
 async function getSetting(category, key, fallback = undefined) {
+    if (contractorPolicy.isContractorSetting(category, key)) await contractorPolicy.assertTenant(pool);
     if (!_isCacheFresh()) await _warmCache();
 
     const cached = _cache.get(`${category}:${key}`);
+    if (cached && cached.value === '' && contractorPolicy.explicitRecipients(category, key)) return '';
     if (cached && cached.value !== null && cached.value !== undefined && cached.value !== '') {
         return _castValue(cached.value, cached.type);
     }
@@ -109,6 +113,7 @@ async function getAllSettings() {
         const { rows } = await pool.query(
             `SELECT id, category, setting_key, setting_value, value_type, label, description, updated_at
              FROM platform_settings
+             WHERE category <> 'contractor_monitor' OR pg_catalog.current_database() = 'melamedlaw'
              ORDER BY category, id`
         );
 
@@ -123,7 +128,7 @@ async function getAllSettings() {
                 description: row.description,
                 updatedAt: row.updated_at,
                 // Also provide current effective value (DB || env)
-                effectiveValue: (row.setting_value !== null && row.setting_value !== '')
+                effectiveValue: (row.setting_value !== null && (row.setting_value !== '' || contractorPolicy.explicitRecipients(row.category, row.setting_key)))
                     ? _castValue(row.setting_value, row.value_type)
                     : (process.env[row.setting_key] || null),
             };
@@ -139,6 +144,9 @@ async function getAllSettings() {
  * Create or update a single setting.
  */
 async function upsertSetting(category, key, value, { valueType, label, description, updatedBy } = {}) {
+    const canonicalType = contractorPolicy.valueType(category, key, value);
+    if (contractorPolicy.isContractorSetting(category, key)) await contractorPolicy.assertTenant(pool);
+    valueType = canonicalType || valueType;
     const safeUpdatedBy = await _resolveUpdatedBy(updatedBy);
     const result = await pool.query(
         `INSERT INTO platform_settings (category, setting_key, setting_value, value_type, label, description, updated_by, updated_at)
@@ -167,22 +175,27 @@ async function upsertSetting(category, key, value, { valueType, label, descripti
  * @param {number} updatedBy - userId
  */
 async function bulkUpsert(settings, updatedBy) {
+    // Validate the entire request before any write, including mixed-category batches.
+    const types = settings.map(s => contractorPolicy.valueType(s.category, s.key, s.value));
+    if (settings.some(s => contractorPolicy.isContractorSetting(s.category, s.key))) await contractorPolicy.assertTenant(pool);
     const safeUpdatedBy = await _resolveUpdatedBy(updatedBy);
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
         const results = [];
-        for (const s of settings) {
+        for (let i = 0; i < settings.length; i++) {
+            const s = settings[i];
             const r = await client.query(
-                `INSERT INTO platform_settings (category, setting_key, setting_value, updated_by, updated_at)
-                 VALUES ($1, $2, $3, $4, NOW())
+                `INSERT INTO platform_settings (category, setting_key, setting_value, updated_by, updated_at, value_type)
+                 VALUES ($1, $2, $3, $4, NOW(), COALESCE($5, 'string'))
                  ON CONFLICT (category, setting_key)
                  DO UPDATE SET
                      setting_value = EXCLUDED.setting_value,
+                     value_type = COALESCE($5, platform_settings.value_type),
                      updated_by    = EXCLUDED.updated_by,
                      updated_at    = NOW()
                  RETURNING *`,
-                [s.category, s.key, s.value == null ? null : String(s.value), safeUpdatedBy]
+                [s.category, s.key, s.value == null ? null : String(s.value), safeUpdatedBy, types[i]]
             );
             results.push(r.rows[0]);
         }

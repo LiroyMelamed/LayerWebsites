@@ -26,7 +26,7 @@ function fixture() {
         preparing_count: 0, attention_count: 0, complete_count: 0, cancelled_count: 0 };
     const child = { id: 'package-1', name: 'Employee 001', workflow_state: 'active', accepted_count: 1, required_count: 9, match_reason: 'person' };
     const detail = {
-        capabilities: { send: true, manage: true }, issues: [],
+        capabilities: { send: true, manage: true, packageRemind: true, deliveryResend: true }, issues: [],
         package: { id: child.id, external_key: child.name, workflow_state: 'active', accepted_count: 1, required_count: 9, prepared_count: 3, document_count: 3 },
         documents: [{ id: 'doc-1', name: 'Employment agreement', state: 'ready', informational: false, final: false,
             spots: [{ id: 'sig', pageNum: 2, x: 30, y: 100, width: 200, height: 60, type: 'signature', required: true, signerName: 'Synthetic employee', signerIndex: 0 }] }],
@@ -203,6 +203,7 @@ test('no action is offered when the person has nothing ready to sign', async () 
     fireEvent.click(await screen.findByRole('button', { name: i18n.t('signingV2.openPackage') }));
     const panel = await screen.findByRole('dialog');
     await within(panel).findByText('Synthetic employee');
+    await expect(api.details.mock.results[0].value).resolves.toMatchObject({capabilities:{packageRemind:true,deliveryResend:true}});
     expect(within(panel).queryByRole('button', { name: i18n.t('signingV2.action.reminder.open') })).toBeNull();
     expect(within(panel).queryByRole('button', { name: i18n.t('signingV2.action.resend.open') })).toBeNull();
 });
@@ -400,4 +401,16 @@ test('a reminder counts distinct PDFs and sits with the ready participation inst
     expect(within(dialog).getByText(i18n.t('signingV2.action.tasks', { count: 1, formattedCount: '1' }))).toBeInTheDocument();
     const row = screen.getAllByRole('listitem').find(item => within(item).queryByRole('button', { name: i18n.t('signingV2.action.reminder.open'), exact: true }));
     expect(within(row).getByText(i18n.t('signingV2.task.ready'))).toBeInTheDocument();
+});
+
+test.each([[false,'reminder'],[undefined,'reminder'],[false,'resend'],[undefined,'resend']])('capability %s denies %s even when send is allowed and a task is ready', async (capability,purpose) => {
+    const i18n = await translations('en'), {api,detail} = fixture();
+    detail.participants[0].tasks.push({id:'task-2',documentId:'doc-2',state:'ready',required:true,acceptedAt:null});
+    detail.deliveries[0].state = purpose==='resend' ? 'failed' : 'provider_accepted';
+    Object.assign(api,{previewAction:jest.fn(),executeAction:jest.fn()});
+    detail.capabilities = {send:true,manage:true,packageRemind:capability,deliveryResend:capability};
+    const panel = await openPackagePanel(i18n, api);
+    expect(within(panel).queryByRole('button',{name:i18n.t('signingV2.action.reminder.open')})).toBeNull();
+    expect(within(panel).queryByRole('button',{name:i18n.t('signingV2.action.resend.open')})).toBeNull();
+    expect(api.previewAction).not.toHaveBeenCalled();expect(api.executeAction).not.toHaveBeenCalled();
 });

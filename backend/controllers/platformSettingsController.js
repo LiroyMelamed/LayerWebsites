@@ -126,6 +126,7 @@ const updateSettings = async (req, res) => {
         return res.json({ message: 'ההגדרות עודכנו בהצלחה', count: results.length });
     } catch (err) {
         console.error('[platformSettings] updateSettings error:', err?.message || err);
+        if (err?.code?.startsWith('CONTRACTOR_MONITOR_')) return res.status(err.status || 400).json({ code: err.code, message: err.message });
         if (err?.code === '23503') {
             return res.status(400).json({
                 message: 'לא ניתן לשמור הגדרות — מזהה המשתמש לא קיים במערכת. נסה להתחבר מחדש.',
@@ -195,6 +196,7 @@ const updateSingleSetting = async (req, res) => {
         return res.json({ message: 'ההגדרה עודכנה', setting: result });
     } catch (err) {
         console.error('[platformSettings] updateSingleSetting error:', err);
+        if (err?.code?.startsWith('CONTRACTOR_MONITOR_')) return res.status(err.status || 400).json({ code: err.code, message: err.message });
         return res.status(500).json({ message: 'שגיאה בעדכון הגדרה' });
     }
 };

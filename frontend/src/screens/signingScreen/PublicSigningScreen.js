@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
@@ -26,7 +26,6 @@ export default function PublicSigningScreen() {
         return sp.get("token") || sp.get("t") || "";
     }, [location.search]);
 
-    const [closed, setClosed] = useState(false);
     const batchToken = new URLSearchParams(location.search).get('batch');
 
     const goToLogin = () => {
@@ -43,11 +42,6 @@ export default function PublicSigningScreen() {
                         <TextBold24>{t('signing.invalidLinkTitle')}</TextBold24>
                         <Text14>{t('signing.missingToken')}</Text14>
                         <PrimaryButton onPress={goToLogin}>{t('common.back')}</PrimaryButton>
-                    </SimpleContainer>
-                ) : closed ? (
-                    <SimpleContainer className="lw-publicSigningScreen__stack">
-                        <TextBold24>{t('signing.public.closedTitle')}</TextBold24>
-                        <Text14>{t('signing.public.closedHint')}</Text14>
                     </SimpleContainer>
                 ) : (
                     <SignatureCanvas

@@ -103,7 +103,7 @@ test.each(['he', 'ar', 'en'])('workspace list, details and actions use platform 
     api.link.mockResolvedValue({ url: 'https://example.invalid/Sign#synthetic' });
     api.downloadPackage.mockResolvedValue(new Blob(['synthetic archive']));
     api.completion.mockResolvedValue(view);
-    const confirm = jest.spyOn(window, 'confirm').mockReturnValue(false);
+    const confirm = jest.spyOn(window, 'confirm').mockImplementation(() => {throw Error('Native confirm must not be used');});
     const onClose = jest.fn();
     const i18n = await showWorkspace({ onClose }, lng);
     const t = (key, args) => i18n.t(`signingV2.workspace.${key}`, args);
@@ -114,8 +114,13 @@ test.each(['he', 'ar', 'en'])('workspace list, details and actions use platform 
     expect(screen.getByText(`${t('documents', { count: 3, formattedCount: number(3) })} · ${t('version', { version: number(12) })}`)).toBeVisible();
     expect(screen.getByText(new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(created)))).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: t('archive') }));
-    expect(confirm).toHaveBeenCalledWith(t('archiveConfirm', { name: template.name }));
+    const archiveDialog = await screen.findByRole('dialog', {name:t('archive')});
+    expect(archiveDialog).toHaveTextContent(i18n.t('signingV2.authoring.archiveConfirm',{name:template.name}));
     expect(api.archive).not.toHaveBeenCalled();
+    fireEvent.click(within(archiveDialog).getByRole('button',{name:i18n.t('common.cancel')}));
+    expect(screen.queryByRole('dialog',{name:t('archive')})).not.toBeInTheDocument();
+    expect(api.archive).not.toHaveBeenCalled();
+    expect(confirm).not.toHaveBeenCalled();
     confirm.mockRestore();
     fireEvent.click(screen.getByRole('button', { name: t('batchDetails') }));
     await screen.findByRole('heading', { name: view.batch.name });

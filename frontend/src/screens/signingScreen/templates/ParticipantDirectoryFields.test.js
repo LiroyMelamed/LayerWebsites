@@ -1,5 +1,5 @@
 import React,{useState} from 'react';
-import {render,screen,fireEvent,waitFor,within,act} from '@testing-library/react';
+import {render,screen,fireEvent,waitFor,act} from '@testing-library/react';
 import {createInstance} from 'i18next';
 import {I18nextProvider,initReactI18next} from 'react-i18next';
 import ParticipantDirectoryFields from './ParticipantDirectoryFields';
@@ -9,6 +9,14 @@ import en from '../../../i18n/locales/en.json';
 import {uploadFileToR2} from '../../../utils/fileUploadUtils';
 jest.mock('../../../utils/fileUploadUtils',()=>({uploadFileToR2:jest.fn()}));
 jest.mock('../../../utils/downloadBlobAsFile',()=>({downloadBlobAsFile:jest.fn()}));
+
+// Drive the real platform picker; DOM change on its combobox button is inert.
+async function choose(control, name) {
+    fireEvent.click(control);
+    const option = await screen.findByRole('option', { name });
+    expect(option).toBeEnabled();
+    fireEvent.pointerDown(option);
+}
 if(!window.crypto?.getRandomValues)Object.defineProperty(window,'crypto',{value:require('crypto').webcrypto});
 const person={id:'person-1',name:'Synthetic signer',version:1,endpoints:{email:'signer@example.invalid'},identityVerified:false};
 const party={id:'party-1',name:'Synthetic Company',kind:'legal_entity'};
@@ -63,12 +71,15 @@ test('a late search response cannot erase the selected person represented partie
     const api=service();let finishSearch;
     api.directory.mockImplementation(()=>new Promise(resolve=>{finishSearch=resolve;}));
     api.personAuthorities.mockResolvedValue({person,parties:[party],authorities:[authority]});
-    const {tr}=await setup('en',api);
+    const {tr,changes}=await setup('en',api);
+    const control = await screen.findByRole('combobox',{name:tr('party')});
+    fireEvent.click(control);
     await screen.findByRole('option',{name:party.name});
     await waitFor(()=>expect(finishSearch).toBeDefined());
     await act(async()=>finishSearch({people:[person],parties:[],canManageAuthority:true}));
-    expect(within(screen.getByLabelText(tr('party'))).getByRole('option',{name:party.name})).toBeInTheDocument();
-    expect(screen.getByLabelText(tr('party'))).toHaveValue(party.id);
+    expect(screen.getByRole('option',{name:party.name})).toBeInTheDocument();
+    expect(screen.getByRole('option',{name:party.name})).toHaveAttribute('aria-selected','true');
+    expect(changes).not.toHaveBeenCalled();
 });
 test('a new represented person uses the returned personal party without a truncated search',async()=>{
     const api=service(),represented={id:'represented-party',name:'Same frequent name',kind:'person',personId:'different-person'};
@@ -76,7 +87,7 @@ test('a new represented person uses the returned personal party without a trunca
     const {tr,changes}=await setup('en',api);
     await screen.findByText(tr('notReady'));await waitFor(()=>expect(api.directory).toHaveBeenCalled());
     fireEvent.click(screen.getByText(tr('newParty')));
-    fireEvent.change(screen.getByLabelText(tr('partyKind')),{target:{value:'person'}});
+    await choose(screen.getByLabelText(tr('partyKind')), tr('person'));
     fireEvent.change(screen.getByLabelText(tr('partyName')),{target:{value:represented.name}});
     fireEvent.click(screen.getByRole('button',{name:tr('addParty')}));
     await waitFor(()=>expect(changes).toHaveBeenLastCalledWith(expect.objectContaining({partyId:represented.id,authorityId:undefined})));

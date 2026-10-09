@@ -53,6 +53,7 @@ import CalendarSmsTemplateEditor, {
 import { getFirmName } from "../../services/firmSettings";
 
 import "./PlatformSettingsScreen.scss";
+import ContractorDatasetCard, { CM_DATASETS } from "./ContractorDatasetCard";
 
 export const PlatformSettingsScreenName = "/PlatformSettingsScreen";
 
@@ -88,7 +89,7 @@ const INTERNAL_MESSAGING_KEYS = [
 ];
 
 // ─── Setting Input Component ────────────────────────────────────────
-function SettingInput({ setting, value, onChange, isTemplate = false }) {
+function SettingInput({ setting, value, onChange, isTemplate = false, inputLabelledBy, inputDescribedBy }) {
     const { t } = useTranslation();
     const inputValue = value ?? setting.effectiveValue ?? "";
 
@@ -97,6 +98,8 @@ function SettingInput({ setting, value, onChange, isTemplate = false }) {
             <SimpleContainer className="lw-platformSettings__toggle">
                 <input
                     type="checkbox"
+                    aria-labelledby={inputLabelledBy}
+                    aria-describedby={inputDescribedBy}
                     checked={inputValue === true || inputValue === "true" || inputValue === "1"}
                     onChange={(e) => onChange(e.target.checked ? "true" : "false")}
                 />
@@ -155,6 +158,8 @@ function SettingInput({ setting, value, onChange, isTemplate = false }) {
             value={inputValue}
             onChange={(e) => onChange(e.target.value)}
             title={setting.label || ""}
+            aria-labelledby={inputLabelledBy}
+            aria-describedby={inputDescribedBy}
             timeToWaitInMilli={0}
         />
     );
@@ -1504,13 +1509,6 @@ export default function PlatformSettingsScreen() {
             };
             const handleChange = (key, val) => handleSettingChange("contractor_monitor", key, val);
 
-            const CM_DATASETS = [
-                { key: "PINKASH", label: "פנקס הקבלנים הרשומים" },
-                { key: "MANPOWER", label: "קבלני כח אדם מורשים" },
-                { key: "CRANE", label: "קבלני כוח אדם – עגורנאי צריח" },
-                { key: "SERVICE", label: "קבלני שירות – שמירה, אבטחה וניקיון" },
-            ];
-
             const lastRunAt = getVal("CM_LAST_RUN_AT");
             const lastRunResult = getVal("CM_LAST_RUN_RESULT");
             const formattedLastRun = lastRunAt
@@ -1614,62 +1612,10 @@ export default function PlatformSettingsScreen() {
 
                     {/* Per-Dataset Cards */}
                     <SimpleContainer style={{ flexDirection: "column", gap: '0.75rem' }}>
-                        {CM_DATASETS.map((ds) => {
-                            const enabledKey = `CM_${ds.key}_ENABLED`;
-                            const emailKey = `CM_${ds.key}_EMAIL_RECIPIENTS`;
-                            const smsKey = `CM_${ds.key}_SMS_RECIPIENTS`;
-                            const globalEmail = getVal("CM_GLOBAL_EMAIL_RECIPIENTS", "");
-                            const globalSms = getVal("CM_GLOBAL_SMS_RECIPIENTS", "");
-
-                            return (
-                                <SimpleCard key={ds.key} className="lw-platformSettings__card">
-                                    <SimpleContainer className="lw-platformSettings__settingsList">
-                                        <SimpleContainer className="lw-platformSettings__settingRow">
-                                            <TextBold14 className="lw-platformSettings__settingName">{ds.label}</TextBold14>
-                                            <SimpleContainer className="lw-platformSettings__settingInput">
-                                                <SettingInput
-                                                    setting={{ valueType: "boolean" }}
-                                                    value={getVal(enabledKey, "true")}
-                                                    onChange={(val) => handleChange(enabledKey, val)}
-                                                />
-                                            </SimpleContainer>
-                                        </SimpleContainer>
-
-                                        <SimpleContainer className="lw-platformSettings__settingRow">
-                                            <SimpleContainer className="lw-platformSettings__settingLabel">
-                                                <Text14>אימייל (ריק = ברירת מחדל)</Text14>
-                                                {globalEmail && (
-                                                    <Text12 className="lw-platformSettings__settingDescription">ברירת מחדל: {globalEmail}</Text12>
-                                                )}
-                                            </SimpleContainer>
-                                            <SimpleContainer className="lw-platformSettings__settingInput">
-                                                <SettingInput
-                                                    setting={{ valueType: "string", label: t("platformSettings.emailOverridePlaceholder") }}
-                                                    value={getVal(emailKey)}
-                                                    onChange={(val) => handleChange(emailKey, val)}
-                                                />
-                                            </SimpleContainer>
-                                        </SimpleContainer>
-
-                                        <SimpleContainer className="lw-platformSettings__settingRow">
-                                            <SimpleContainer className="lw-platformSettings__settingLabel">
-                                                <Text14>SMS (ריק = ברירת מחדל)</Text14>
-                                                {globalSms && (
-                                                    <Text12 className="lw-platformSettings__settingDescription">ברירת מחדל: {globalSms}</Text12>
-                                                )}
-                                            </SimpleContainer>
-                                            <SimpleContainer className="lw-platformSettings__settingInput">
-                                                <SettingInput
-                                                    setting={{ valueType: "string", label: t("platformSettings.smsOverridePlaceholder") }}
-                                                    value={getVal(smsKey)}
-                                                    onChange={(val) => handleChange(smsKey, val)}
-                                                />
-                                            </SimpleContainer>
-                                        </SimpleContainer>
-                                    </SimpleContainer>
-                                </SimpleCard>
-                            );
-                        })}
+                        {CM_DATASETS.map(ds => (
+                            <ContractorDatasetCard key={ds.key} dataset={ds} getValue={getVal}
+                                onChange={handleChange} SettingInput={SettingInput} />
+                        ))}
                     </SimpleContainer>
 
                     {/* Status Section */}
@@ -2536,6 +2482,7 @@ export default function PlatformSettingsScreen() {
                                 key={cat.key}
                                 className={`lw-platformSettings__tab ${activeTab === cat.key ? "lw-platformSettings__tab--active" : ""}`}
                                 onPress={() => setActiveTab(cat.key)}
+                                aria-label={cat.key === "contractor_monitor" ? t(cat.labelKey) : undefined}
                             >
                                 <Text14 className="lw-platformSettings__tabIcon">{cat.icon}</Text14>
                                 <Text14 className="lw-platformSettings__tabLabel">{t(cat.labelKey)}</Text14>
