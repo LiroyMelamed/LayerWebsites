@@ -23,6 +23,7 @@ import "./signFiles.scss";
 import { showAppToast } from "../../ui/showAppToast";
 import "../../../screens/signingScreen/PublicSigningScreen.scss";
 import { measuredPageWidth, spotSpaceScale } from "../../../utils/signingSpotGeometry";
+import { personalStampPdf } from './personalStampPdf';
 
 /** Breathing room above a spot when scrolling it into view, in CSS pixels. */
 const SCROLL_TO_SPOT_MARGIN_PX = 120;
@@ -1558,7 +1559,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const handleClientStampFileSelected = (file) => {
         if (!file) return;
         setClientStampFile(file);
-        const url = URL.createObjectURL(file);
+        const url = currentSpot?.InteractiveLawyerStamp && file.type === 'application/pdf' ? null : URL.createObjectURL(file);
         setClientStampPreview(url);
     };
 
@@ -1577,7 +1578,12 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             const isPdf = clientStampFile.type === 'application/pdf';
             let dataUrl;
             if (isPdf) {
-                dataUrl = await fileToDataUrl(clientStampFile);
+                if (currentSpot?.InteractiveLawyerStamp) {
+                    const { pdfjs } = await import('react-pdf');
+                    dataUrl = await normalizeStampDataUrl(await personalStampPdf(clientStampFile, pdfjs));
+                } else {
+                    dataUrl = await fileToDataUrl(clientStampFile);
+                }
             } else {
                 const rawDataUrl = await fileToDataUrl(clientStampFile);
                 dataUrl = await normalizeStampDataUrl(rawDataUrl);
@@ -1593,7 +1599,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             setHasUserDrawn(false);
         } catch (err) {
             console.error("Failed to process client stamp", err);
-            showAppToast({ type: "error", text: t("signing.canvas.clientStampUploadError") });
+            showAppToast({ type: "error", text: t(err?.message === 'STAMP_PDF_ONE_PAGE'
+                ? 'signing.canvas.personalStampOnePage' : "signing.canvas.clientStampUploadError") });
         } finally {
             setSaving(false);
         }
@@ -2460,7 +2467,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 <div className="lw-signing-canvasSection">
                     <div className="lw-signing-fieldInput">
                         <div className="lw-signing-fieldLabel" style={{ fontSize: '0.8rem', opacity: 0.7 }}>
-                            {t("signing.fieldSettings.clientStampUploadHint")}
+                            {t(currentSpotType === 'lawyerstamp' ? 'signing.canvas.personalStampUploadHint' : "signing.fieldSettings.clientStampUploadHint")}
                         </div>
                         {clientStampPreview && (
                             <img
@@ -2584,7 +2591,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                     <div className="lw-signing-fieldInput">
                         <div className="lw-signing-fieldLabel">{t(currentSpotType === 'lawyerstamp' ? "signing.fields.lawyerStamp" : "signing.fieldSettings.clientStampTitle")}</div>
                         <div className="lw-signing-fieldLabel" style={{ fontSize: '0.8rem', opacity: 0.7 }}>
-                            {t("signing.fieldSettings.clientStampUploadHint")}
+                            {t(currentSpotType === 'lawyerstamp' ? 'signing.canvas.personalStampUploadHint' : "signing.fieldSettings.clientStampUploadHint")}
                         </div>
                         {clientStampPreview && (
                             <img

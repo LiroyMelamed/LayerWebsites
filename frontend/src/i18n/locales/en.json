@@ -1054,7 +1054,9 @@
       "chooseFile": "Choose File",
       "signOnStampHint": "You can sign on the stamp (optional)",
       "changeStamp": "Change stamp",
-      "nextStep": "Continue"
+      "nextStep": "Continue",
+      "personalStampUploadHint": "Upload a PNG, JPEG or single-page PDF stamp, then sign on it.",
+      "personalStampOnePage": "Upload a stamp PDF containing exactly one page."
     },
     "screen": {
       "tabPending": "Pending for signature ({{count}})",
