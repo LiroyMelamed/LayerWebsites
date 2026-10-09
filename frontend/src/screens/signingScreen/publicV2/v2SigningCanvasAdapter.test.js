@@ -12,6 +12,19 @@ const entry = (id, types = ['signature'], documentId = id) => ({
         x: 20, y: 80, width: 150, height: 60, required: true })) },
 });
 const adapterFor = entries => createV2DocumentAdapter({ token: 'token', entries, consentVersion: 'v', locale: 'ar' });
+test('signature, initials and manually drawn stamp keep their own image and exact field bindings', async () => {
+    const api = adapterFor([entry('a', ['signature','initials','lawyerStamp'])]);
+    await api.publicRequestSigningOtp();
+    await api.publicSignFile('token', { signatureSpotId: 1, signatureImage: 'personal-image' });
+    await api.publicSignFile('token', { signatureSpotId: 2, signatureImage: 'initials-image' });
+    await api.publicSignFile('token', { signatureSpotId: 3, signatureImage: 'manual-stamp-image' });
+    expect(signingPublicApi.accept.mock.calls[0][2].drawings).toEqual([
+        {image:'personal-image',fields:[{taskId:'a',fieldId:'signature-0'}]},
+        {image:'initials-image',fields:[{taskId:'a',fieldId:'initials-1'}]},
+        {image:'manual-stamp-image',fields:[{taskId:'a',fieldId:'lawyerStamp-2'}]},
+    ]);
+    expect((await api.getPublicSigningFileDetails()).data.signatureSpots.map(spot=>spot.SignatureUrl)).toEqual(['personal-image','initials-image','manual-stamp-image']);
+});
 beforeEach(() => {
     signingPublicApi.session.mockResolvedValue({ sessionId: 'session-1', channels: [{ channel: 'email' }] });
     signingPublicApi.challenge.mockResolvedValue({ channel: 'email', delivery: 'sent' });
@@ -31,7 +44,7 @@ test('three original PDFs use one manifest/code; geometry and per-document page 
     await api.publicSignFileBatch('token', { signatureSpotIds: [1, 2, 3], signatureImage: 'png' });
     expect(signingPublicApi.session).toHaveBeenCalledWith('token', { taskIds: ['a', 'b', 'c'], consentVersion: 'v', locale: 'ar' });
     expect(signingPublicApi.accept).toHaveBeenCalledTimes(1);
-    expect(signingPublicApi.accept).toHaveBeenCalledWith('token', 'session-1', { consent: true, signature: 'png', values: { a: {}, b: {}, c: {} } }, 'synthetic-key');
+    expect(signingPublicApi.accept).toHaveBeenCalledWith('token', 'session-1', { consent: true, drawings: [{image:'png',fields:entries.map(item=>({taskId:item.task.taskId,fieldId:item.task.fields[0].id}))}], values: { a: {}, b: {}, c: {} } }, 'synthetic-key');
     expect((await api.getPublicSigningFileDetails()).data.signerCompleted).toBe(true);
 });
 
@@ -91,4 +104,17 @@ test('two simultaneous clicks with a failed response leave all affected fields u
     const state = (await api.getPublicSigningFileDetails()).data;
     expect(state.signerCompleted).toBe(false);
     expect(state.signatureSpots.every(spot => !spot.IsSigned)).toBe(true);
+});
+
+
+test('only personal package lawyer stamps opt into the interactive incumbent stamp flow', async () => {
+    const selected = entry('a', ['signature', 'lawyerStamp', 'lawyerStamp']);
+    selected.task.fields[2].required = false;
+    const spots = (await adapterFor([selected]).getPublicSigningFileDetails()).data.signatureSpots;
+    expect(spots.map(spot => [spot.FieldType, spot.InteractiveLawyerStamp, spot.IsRequired])).toEqual([
+        ['signature', false, true], ['lawyerStamp', true, true], ['lawyerStamp', true, false],
+    ]);
+    expect(spots.map(spot => [spot.PageNumber, spot.X, spot.Y, spot.Width, spot.Height])).toEqual([
+        [1, 20, 80, 150, 60], [2, 20, 80, 150, 60], [3, 20, 80, 150, 60],
+    ]);
 });

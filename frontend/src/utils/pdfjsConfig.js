@@ -16,3 +16,5 @@ if (!URL.parse) {
 // breaks module workers in Safari ("Error loading PDF").
 // Version query busts CDN/nginx 1y immutable cache when the unhashed worker updates.
 pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL || ""}/pdf.worker.min.js?v=${pdfjs.version}`;
+
+export { pdfjs };

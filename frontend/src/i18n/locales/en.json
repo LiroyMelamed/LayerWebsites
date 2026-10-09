@@ -74,7 +74,8 @@
     "required": "Required",
     "errorPrefix": "Error: ",
     "networkError": "Network connection error — could not reach the server",
-    "timeout": "Request timed out — please try again"
+    "timeout": "Request timed out — please try again",
+    "permissionsUnavailable": "We could not check your permissions. Please try again."
   },
   "signingManager": {
     "searchTitle": "Search document / customer / case",
@@ -1053,7 +1054,9 @@
       "chooseFile": "Choose File",
       "signOnStampHint": "You can sign on the stamp (optional)",
       "changeStamp": "Change stamp",
-      "nextStep": "Continue"
+      "nextStep": "Continue",
+      "personalStampUploadHint": "Upload a PNG, JPEG or single-page PDF stamp, then sign on it.",
+      "personalStampOnePage": "Upload a stamp PDF containing exactly one page."
     },
     "screen": {
       "tabPending": "Pending for signature ({{count}})",
@@ -1408,7 +1411,10 @@
         "delivery_contact_correct": "Correct package delivery contact",
         "access_link_renew": "Renew signing links",
         "package_cancel": "Cancel signing packages",
-        "package_assign": "Assign package responsibility"
+        "package_assign": "Assign package responsibility",
+        "package_remind": "Send signing reminders",
+        "delivery_resend": "Resend signing requests",
+        "package_revision_create": "Prepare a replacement revision"
       }
     }
   },
@@ -1587,7 +1593,8 @@
       "REPLACEMENT_CHANGED": "The package or its replacement changed. Refresh and review it again.",
       "REPLACEMENT_REASON_REQUIRED": "Enter a reason for this replacement.",
       "REPLACEMENT_NOT_STARTED": "Start a replacement draft before publishing it.",
-      "REPLACEMENT_DRAFT_REQUIRED": "Start a replacement draft before publishing it."
+      "REPLACEMENT_DRAFT_REQUIRED": "Start a replacement draft before publishing it.",
+      "COMPLETION_MARK_AUTHORIZATION_REQUIRED": "I am authorized to use this image and approve its automatic placement in future sends from this template, after signing is complete."
     },
     "actionCancelledReason": {
       "ACTION_SCOPE_CHANGED": "The signing tasks changed while this message was waiting. Review the current selection before sending again.",
@@ -1745,7 +1752,8 @@
       },
       "directoryHelp": {
         "client": "Pick a client from the list, or type a name, email and phone that are not in the system.",
-        "lawyer": "Pick a lawyer from the office, or type the details manually."
+        "lawyer": "Pick a lawyer from the office, or type the details manually.",
+        "all": "Choose an existing manager, lawyer or client, or enter a new signer’s name and contact details."
       },
       "channel": {
         "auto": "Automatic",
@@ -1959,7 +1967,9 @@
         "remove": "Remove client link",
         "without": "Continue without a client link",
         "fill": "Fill details from the client or case"
-      }
+      },
+      "replaceRecipient": "Change signer",
+      "searchRecipients": "Find a signer by name, email or phone"
     },
     "public": {
       "title": "Sign documents",
@@ -2560,6 +2570,22 @@
       "readyPackages": "Ready to sign",
       "waitingPackages": "Waiting",
       "completePackages": "Signing complete"
+    },
+    "completionMark": {
+      "title": "Automatic completion stamp or signature",
+      "help": "The image is placed where you choose, only after all required signatures in the package are complete. It does not appear in intermediate stages.",
+      "manualSigner": "If the lawyer must review and personally approve the document, add them as a signer in the last stage. Automatic placement does not replace that approval.",
+      "kind": "What should be added at completion?",
+      "office_stamp": "Office stamp",
+      "lawyer_signature": "Personal signature image",
+      "combined": "Stamp with signature",
+      "upload": "Upload a stamp or signature image",
+      "preview": "Completion mark preview",
+      "authorize": "I am authorized to use this image and approve its automatic placement in future sends from this template, after signing is complete.",
+      "add": "Add to document",
+      "imageOnly": "Choose a small, clear PNG or JPG image.",
+      "failed": "The image was not saved. Please try again.",
+      "notice": "After signing is complete, a stamp or signature approved in advance by the office will be added."
     }
   },
   "calendar": {

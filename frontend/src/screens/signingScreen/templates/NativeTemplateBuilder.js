@@ -28,6 +28,8 @@ export default function NativeTemplateBuilder({ version, api = apiDefault, onBac
         };
         return {
             saveDraft,
+            registerCompletionMark: body => api.registerCompletionMark(body).then(value => value.mark).catch(translateError),
+            completionMark: id => api.completionMark(id).then(value => value.mark).catch(translateError),
             pdf: (_id, key) => api.templateDocument(checkpoint.current?.id || version?.id, key).catch(translateError),
             source: async key => {
                 try { const { source } = await api.registerTemplateSource(key); return { sourceArtifactId: source.id, sourceHash: source.hash }; }
