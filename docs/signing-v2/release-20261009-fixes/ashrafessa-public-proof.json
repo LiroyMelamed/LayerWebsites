@@ -1,0 +1,35 @@
+{
+  "complete": true,
+  "tenant": "ashrafessa",
+  "candidate": "0a156bfd590aa0bf0addcdc7fa7a6cb4db84d869",
+  "product": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+  "qa": "6a570cc3fddd349ecdef8352b4a267ca49f09596",
+  "verifiedUtc": "2026-10-09T19:08:23.410Z",
+  "files": [
+    {
+      "path": "index.html",
+      "bytes": 8104,
+      "sha256": "22afca8ffcd0b8a67705367a1d1008ae9db9f61d87da99e67ea5fdeb27112889",
+      "url": "https://ashrafessa.mela-media.co.il/"
+    },
+    {
+      "path": "static/css/main.f3c22b58.css",
+      "bytes": 210796,
+      "sha256": "6d2e111aeecef00942fd50f1c99452e7d425077dc64d26a29b68587bd30e703f",
+      "url": "https://ashrafessa.mela-media.co.il/static/css/main.f3c22b58.css"
+    },
+    {
+      "path": "static/js/main.b1eb3fec.js",
+      "bytes": 1409889,
+      "sha256": "b3e701162851a644ce1fc2e5fcef5f2e0facaf049fbcda046d0fc547d92226e6",
+      "url": "https://ashrafessa.mela-media.co.il/static/js/main.b1eb3fec.js"
+    }
+  ],
+  "apiHealthy": true,
+  "frontendOnly": false,
+  "noMigrationOrTestMessage": true,
+  "publicBytesEvidenceReusedFromCompletedAssertionsBeforeHealthFailure": "failure-1791572830670.json",
+  "apiHealthTlsAuthority": "api-ashrafessa.mela-media.co.il",
+  "pinnedBackendTarget": "37.60.230.148",
+  "localDnsResolutionNotClaimed": true
+}

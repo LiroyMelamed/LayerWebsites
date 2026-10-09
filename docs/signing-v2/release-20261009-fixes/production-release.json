@@ -1,0 +1,187 @@
+{
+  "complete": true,
+  "product": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+  "qa": "6a570cc3fddd349ecdef8352b4a267ca49f09596",
+  "at": "2026-10-09T19:10:10.120Z",
+  "ownerLatestDirectAuthorization": "תעלה גרסא, קומיט פוש טאג והודעה מה תיקנו",
+  "supersedesEarlierCustomerBan": true,
+  "noRealTestMessages": true,
+  "noMigrationsOrImports": true,
+  "historicalPerformanceAcceptedNotRelabeled": true,
+  "customerAnnouncement": "DRAFT ONLY per explicit owner instruction",
+  "administratorEmail": "Not sent: full API data export requires an authenticated production API session; do not forge auth or substitute SQL records as API export",
+  "tenants": [
+    {
+      "tenant": "melamedlaw",
+      "branch": "MelamedLaw",
+      "tag": "production-signing-v2-20261009-fixes-melamedlaw",
+      "candidate": "81f17397bce0c613798b7a848d6916a0e0c3cb4b",
+      "remoteBefore": "f722102ef5b20b192f3c538ce9c5487b052f8f89",
+      "website": "https://client.melamedlaw.co.il",
+      "api": "https://api.calls.melamedlaw.co.il",
+      "publicProof": {
+        "complete": true,
+        "tenant": "melamedlaw",
+        "candidate": "81f17397bce0c613798b7a848d6916a0e0c3cb4b",
+        "product": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+        "qa": "6a570cc3fddd349ecdef8352b4a267ca49f09596",
+        "verifiedUtc": "2026-10-09T19:02:48.312Z",
+        "files": [
+          {
+            "path": "index.html",
+            "url": "https://client.melamedlaw.co.il/",
+            "bytes": 9052,
+            "sha256": "df8667920d35b610a5b842fd7d52683cd93808c3509d8e366e28a1d05fd163ea"
+          },
+          {
+            "path": "static/css/main.5ca64f13.css",
+            "url": "https://client.melamedlaw.co.il/static/css/main.5ca64f13.css",
+            "bytes": 210968,
+            "sha256": "eb9112a2bcb71cf152a71ca685c9899cc80fc5203cf8049ff2c0be5b7c3f25aa"
+          },
+          {
+            "path": "static/js/main.5a68b65a.js",
+            "url": "https://client.melamedlaw.co.il/static/js/main.5a68b65a.js",
+            "bytes": 1426177,
+            "sha256": "3c3f8e02a1fc3b3316bd4045f87ed4a18f82c3b5783a44032fc746300e8f84ab"
+          }
+        ],
+        "apiHealthy": true,
+        "frontendOnly": false,
+        "noMigrationOrTestMessage": true
+      },
+      "deploymentInsertedRows": 0,
+      "fullDatabaseBackup": "/root/signing-production-fixes-eb94f66e-20261009/melamedlaw/database-before.dump"
+    },
+    {
+      "tenant": "morlevy",
+      "branch": "MorLevi",
+      "tag": "production-signing-v2-20261009-fixes-morlevy",
+      "candidate": "dfcac2b1b22d3bd08857a33e3adb0cd11fd039a3",
+      "remoteBefore": "03fd5e4ab9bd06f2e0c1add170d67495e232538c",
+      "website": "https://morlevy.mela-media.co.il",
+      "api": "https://api-morlevy.mela-media.co.il",
+      "publicProof": {
+        "complete": true,
+        "tenant": "morlevy",
+        "candidate": "dfcac2b1b22d3bd08857a33e3adb0cd11fd039a3",
+        "product": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+        "qa": "6a570cc3fddd349ecdef8352b4a267ca49f09596",
+        "verifiedUtc": "2026-10-09T19:04:30.853Z",
+        "files": [
+          {
+            "path": "index.html",
+            "url": "https://morlevy.mela-media.co.il/",
+            "bytes": 7954,
+            "sha256": "076fa7567997f7d5382601721ff12c89112783cb96a1cfb5e90a9994a8639492"
+          },
+          {
+            "path": "static/css/main.f3c22b58.css",
+            "url": "https://morlevy.mela-media.co.il/static/css/main.f3c22b58.css",
+            "bytes": 210796,
+            "sha256": "6d2e111aeecef00942fd50f1c99452e7d425077dc64d26a29b68587bd30e703f"
+          },
+          {
+            "path": "static/js/main.5dad4968.js",
+            "url": "https://morlevy.mela-media.co.il/static/js/main.5dad4968.js",
+            "bytes": 1425299,
+            "sha256": "1f3ad11ef1e7cb32cde228c2a488d2d4970c47cfe6e17022fc609ba22ea6b907"
+          }
+        ],
+        "apiHealthy": true,
+        "frontendOnly": false,
+        "noMigrationOrTestMessage": true
+      },
+      "deploymentInsertedRows": 0,
+      "fullDatabaseBackup": "/root/signing-production-fixes-eb94f66e-20261009/morlevy/database-before.dump"
+    },
+    {
+      "tenant": "ashrafessa",
+      "branch": "AshrafEssa",
+      "tag": "production-signing-v2-20261009-fixes-ashrafessa",
+      "candidate": "0a156bfd590aa0bf0addcdc7fa7a6cb4db84d869",
+      "remoteBefore": "7da3564a2bc9229b45d66ef8abfd4522973bdd67",
+      "website": "https://ashrafessa.mela-media.co.il",
+      "api": "https://api-ashrafessa.mela-media.co.il",
+      "publicProof": {
+        "complete": true,
+        "tenant": "ashrafessa",
+        "candidate": "0a156bfd590aa0bf0addcdc7fa7a6cb4db84d869",
+        "product": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+        "qa": "6a570cc3fddd349ecdef8352b4a267ca49f09596",
+        "verifiedUtc": "2026-10-09T19:08:23.410Z",
+        "files": [
+          {
+            "path": "index.html",
+            "bytes": 8104,
+            "sha256": "22afca8ffcd0b8a67705367a1d1008ae9db9f61d87da99e67ea5fdeb27112889",
+            "url": "https://ashrafessa.mela-media.co.il/"
+          },
+          {
+            "path": "static/css/main.f3c22b58.css",
+            "bytes": 210796,
+            "sha256": "6d2e111aeecef00942fd50f1c99452e7d425077dc64d26a29b68587bd30e703f",
+            "url": "https://ashrafessa.mela-media.co.il/static/css/main.f3c22b58.css"
+          },
+          {
+            "path": "static/js/main.b1eb3fec.js",
+            "bytes": 1409889,
+            "sha256": "b3e701162851a644ce1fc2e5fcef5f2e0facaf049fbcda046d0fc547d92226e6",
+            "url": "https://ashrafessa.mela-media.co.il/static/js/main.b1eb3fec.js"
+          }
+        ],
+        "apiHealthy": true,
+        "frontendOnly": false,
+        "noMigrationOrTestMessage": true,
+        "publicBytesEvidenceReusedFromCompletedAssertionsBeforeHealthFailure": "failure-1791572830670.json",
+        "apiHealthTlsAuthority": "api-ashrafessa.mela-media.co.il",
+        "pinnedBackendTarget": "37.60.230.148",
+        "localDnsResolutionNotClaimed": true
+      },
+      "deploymentInsertedRows": 0,
+      "fullDatabaseBackup": "/root/signing-production-fixes-eb94f66e-20261009/ashrafessa/database-before.dump"
+    },
+    {
+      "tenant": "idm",
+      "branch": "Idm",
+      "tag": "production-signing-v2-20261009-fixes-idm",
+      "candidate": "3e0ec71e8b6533c2bcbbed3347fac8a65719ccab",
+      "remoteBefore": "0ca0de08ea64c5cb470eb29f1b67448d1a7c5cd5",
+      "website": "https://idm.mela-media.co.il",
+      "api": "https://api-idm.mela-media.co.il",
+      "publicProof": {
+        "complete": true,
+        "tenant": "idm",
+        "candidate": "3e0ec71e8b6533c2bcbbed3347fac8a65719ccab",
+        "product": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+        "qa": "6a570cc3fddd349ecdef8352b4a267ca49f09596",
+        "verifiedUtc": "2026-10-09T19:09:52.754Z",
+        "files": [
+          {
+            "path": "index.html",
+            "url": "https://idm.mela-media.co.il/",
+            "bytes": 6515,
+            "sha256": "ee12991f6bcc646111804fa7394346f9ff66d4fe55a068d3d310326d78d829a6"
+          },
+          {
+            "path": "static/css/main.f3c22b58.css",
+            "url": "https://idm.mela-media.co.il/static/css/main.f3c22b58.css",
+            "bytes": 210796,
+            "sha256": "6d2e111aeecef00942fd50f1c99452e7d425077dc64d26a29b68587bd30e703f"
+          },
+          {
+            "path": "static/js/main.354dc844.js",
+            "url": "https://idm.mela-media.co.il/static/js/main.354dc844.js",
+            "bytes": 1409840,
+            "sha256": "fedfb8d21a1f01eb231fd370d27716a14855b90e81c1995f983c282fb3014993"
+          }
+        ],
+        "apiHealthy": true,
+        "frontendOnly": false,
+        "noMigrationOrTestMessage": true
+      },
+      "deploymentInsertedRows": 0,
+      "fullDatabaseBackup": "/root/signing-production-fixes-eb94f66e-20261009/idm/database-before.dump"
+    }
+  ]
+}

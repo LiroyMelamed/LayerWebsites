@@ -1,0 +1,650 @@
+{
+  "productCandidate": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+  "qaCandidate": "6a570cc3fddd349ecdef8352b4a267ca49f09596",
+  "qaBuildMain": "main.0ac7c965.js",
+  "source": [
+    {
+      "path": "backend/.env.production.example",
+      "sha256": "116ae3ccc13e1d35e17075cc7ae953c72d061ce2506eb7aa1aa1771ffe6914a7"
+    },
+    {
+      "path": "backend/lib/signingTemplateDefinition.js",
+      "sha256": "421974ef7870c8b1a7589a3a62ff62dc1f63916a1550fc2a2a633297cc3182fa"
+    },
+    {
+      "path": "backend/lib/signingV2/compiler.js",
+      "sha256": "26a3830609f1cf050f371bb1cb2dfba03739c43e52c4bf39dceee898b968478c"
+    },
+    {
+      "path": "backend/lib/signingV2/signerFieldValue.js",
+      "sha256": "b182e643c594318c08c4227bd029e2ebd5a47ee5eeb05b7f3995cd16f2a2d996"
+    },
+    {
+      "path": "backend/lib/signingV2/stamp.js",
+      "sha256": "df65a135e86a83ed08af425015d83790a21ef721024f6780c6199780c62d7e4f"
+    },
+    {
+      "path": "backend/routes/signingV2Routes.js",
+      "sha256": "1d49f700899159927297a0c326b2901671f7af9a8350b63a7e24761dbcc4447c"
+    },
+    {
+      "path": "backend/services/signingBatchService.js",
+      "sha256": "ec555c3c8738d37b809a02be25984e2ee6499b6d54c05ab3bb963e95d6689dbc"
+    },
+    {
+      "path": "backend/services/signingV2/authoring.js",
+      "sha256": "a01b86be2ca36521a79e992cb8be25e3aa0f9a08a9c4ef89840ed30d1ebfcca4"
+    },
+    {
+      "path": "backend/services/signingV2/completion.js",
+      "sha256": "45841506b94e5acb16d98d51b0eb6d237f9d26290f1a981dc055f510b748e1e6"
+    },
+    {
+      "path": "backend/services/signingV2/completionMarks.js",
+      "sha256": "a9a90a87b572d2eda27751943db5ac15bcf233e8ea3cf98113f015da321249c5"
+    },
+    {
+      "path": "backend/services/signingV2/creation.js",
+      "sha256": "5d6eaa13456c198267c0248b4dc5bac23215321217caa28a359287246675492e"
+    },
+    {
+      "path": "backend/services/signingV2/fieldDrawings.js",
+      "sha256": "0baeb63790a8a7a35153c559745a43e4f38980122086b8edc036a7169ef037a1"
+    },
+    {
+      "path": "backend/services/signingV2/publicSigning.js",
+      "sha256": "47172661ae8ae0c7d2de1aa53c0e6a5f155decb0093a40844a1465d9d0b72c60"
+    },
+    {
+      "path": "backend/services/signingV2/templates.js",
+      "sha256": "4c39562462e61d6d71bdaf5866dd5219c762e90a6d0de101a143cea8965ad2fd"
+    },
+    {
+      "path": "backend/tests/helpers/completionMarkPng.js",
+      "sha256": "f545ace3bbda174b013870b76e5de1fc365d0526f5ede4afcbc531e85b5897fd"
+    },
+    {
+      "path": "backend/tests/signingRecipients.generic.integration.test.js",
+      "sha256": "8b6d25a8166c78e2202f0a3c515bb3778bcf395538b2c8adf691133b36673e50"
+    },
+    {
+      "path": "backend/tests/signingV2.completionMarks.integration.test.js",
+      "sha256": "dc240870da90851a92dd90f35ae450b9418bf1c6f81953c43ce3ef8debbffa62"
+    },
+    {
+      "path": "backend/tests/signingV2.completionMarks.test.js",
+      "sha256": "57d933e3d934d1bc05d91fb8a1fe4a035735c9f10fd2af35ea7c72c99c01278b"
+    },
+    {
+      "path": "backend/tests/signingV2.fieldDrawings.test.js",
+      "sha256": "00a50676aa8721f8d43392ff7cefe523cb857e9702e0d561240ecc22d905236e"
+    },
+    {
+      "path": "frontend/src/App.js",
+      "sha256": "654896722bae9e84ba7c382af197076be34ad9e8cb87ae21e9bec5393ceb6c2e"
+    },
+    {
+      "path": "frontend/src/__tests__/billingSessionRotation.test.js",
+      "sha256": "233cfd0ce150de83da79611a8f32c6febf63675b81cc2b3db3b7612a19eea47a"
+    },
+    {
+      "path": "frontend/src/__tests__/startupSessionRotation.test.js",
+      "sha256": "87cb419dd354dc23fb7a66094a7547ef1d7acb175300a3d89e1f4728f69031aa"
+    },
+    {
+      "path": "frontend/src/api/apiUtils.js",
+      "sha256": "2fd2bf4f939bfd446c1dac4df93b3e2b22cb54ad3deea39f126eadca701432cb"
+    },
+    {
+      "path": "frontend/src/api/billingApi.js",
+      "sha256": "c30bdcbe9820d33a8f6b1b4a799158acbf18691c61cad8f18a17fac39e0e3c99"
+    },
+    {
+      "path": "frontend/src/api/signingPackagesApi.js",
+      "sha256": "6d00c1c64b7bf5583364f391abc741681e96df3e906f6cbd52b2fccfc3b2be9d"
+    },
+    {
+      "path": "frontend/src/api/staffRolesApi.js",
+      "sha256": "975ab3c5204f9e3d238405759e9e2c00c159c97aa0a36df951dea361bc3066db"
+    },
+    {
+      "path": "frontend/src/components/specializedComponents/signFiles/SignatureCanvas.js",
+      "sha256": "fbb17f3806344888465c66aa569e3699c85eb574fc34455eecefa518d9e47143"
+    },
+    {
+      "path": "frontend/src/components/specializedComponents/signFiles/personalStampPdf.js",
+      "sha256": "fae010adbcc8dceb8bd1a98eb767e013694e877e537741d00ad6c1218c1fb629"
+    },
+    {
+      "path": "frontend/src/components/specializedComponents/signFiles/personalStampPdf.test.js",
+      "sha256": "458e65cdcdd79827e2c35614b9bdcfbaa393d5669b8f7bdc8dd9737b42553596"
+    },
+    {
+      "path": "frontend/src/components/specializedComponents/signFiles/signatureSpots/SignatureSpot.js",
+      "sha256": "74a75dfd85b12a034ea534b4e17c8eaa57c98366d3eb6226ef1e3d32dacfd13a"
+    },
+    {
+      "path": "frontend/src/i18n/locales/ar.json",
+      "sha256": "d1c24f580ca04fec0e477cf965e5d97b00c436586e118e28107ecdf9ab7f8af7"
+    },
+    {
+      "path": "frontend/src/i18n/locales/en.json",
+      "sha256": "9bd4735aef164657f02cdaac6049b0a0f03ffe8e8a14f0ee4571a31e70ab5398"
+    },
+    {
+      "path": "frontend/src/i18n/locales/he.json",
+      "sha256": "c5762679d92542f06d693c6723a4214bf10496f1626c0cad59b7e01f3878b306"
+    },
+    {
+      "path": "frontend/src/navigation/AdminRouteGuard.js",
+      "sha256": "04cd681e5694cc5446cfe35f64ba15d288790685e54c7367bd5798f71001741c"
+    },
+    {
+      "path": "frontend/src/providers/BillingLockProvider.js",
+      "sha256": "396d77d056c9e2b5e0eb05c4907c5c7e28285b10a361369e90b0ae0dfbb6067e"
+    },
+    {
+      "path": "frontend/src/providers/FirmPermissionsProvider.js",
+      "sha256": "df6e7c568a81b3cb67ce4dd55730c64cc487afa6a43dbc74169806b33c91f9bc"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/publicV2/PublicPackageSigning.js",
+      "sha256": "c3e7c41fbaec5ef1fe640eddefc213898c39a5d93861c328b41dd2eb18133d31"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/publicV2/SignatureCanvas.packages.test.js",
+      "sha256": "36847dc1deb344ea6f0246e82bf19353a8f1655dcfaaddd92bcb66f77b1af104"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/publicV2/v2SigningCanvasAdapter.js",
+      "sha256": "d05e3e3aabe9cdf8d510d122654ccb2072db1ace80de3a34b946ef76ed754073"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/publicV2/v2SigningCanvasAdapter.test.js",
+      "sha256": "3ad076200444a41cebc85b3a7374c2a0c31e668368eb40365fa933852f1de9f0"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/templates/CompletionMarkDialog.js",
+      "sha256": "2ff2bff67f2675f4f43c159c52353c9033ecfa3a14f6c2a55c45a81b27bb4b9e"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/templates/NativeTemplateBuilder.js",
+      "sha256": "af498f44ad20cd5321a05211b99bfcca783bd697bc8a4f5fc5491588e9ef396b"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/templates/PackageComposer.js",
+      "sha256": "8cecb46387480ddee77e7ec5bef8e70dc343bb3ae6300a06c71f2a07a7bd87aa"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/templates/RecipientFields.js",
+      "sha256": "4d9f38203e802b1c71f45ae12161af7370f1ddc386740151c005b49a0c1c6b3c"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/templates/TemplateBuilder.js",
+      "sha256": "fe4cf3c7acd16478ee4521f21583248ea78bd7e18d42632cb7207d789e695e8d"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/templates/TemplateFieldParity.test.js",
+      "sha256": "0caa98f5a33ff9c9e1378574418608c1c7ba44fd6adcc5477984a63b6251a645"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/templates/nativeTemplateAdapter.js",
+      "sha256": "5a7ee5fdcd1db96906109744edc4bf805a370fc9c7d115c47f89c7ccec06d038"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/templates/templates.scss",
+      "sha256": "71a43d2b8e6fb15cd0fae3bd74c2e67898b03ec2eb26183aa59f483eee357b99"
+    },
+    {
+      "path": "frontend/src/utils/pdfjsConfig.js",
+      "sha256": "b83e9f608cb52581fb24862bf167108c0ad70adc1566622d07a92cf1412783ee"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "outputs/signing-fixes-20261009/qa/auth-refresh01.json",
+      "sha256": "900742e2a6f8e9c1e356b2bc28de5ae78dda18e74cf6552ce779b84314ca7d19",
+      "bytes": 674
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/auth01.log",
+      "sha256": "0afafdc46cc40720e7877292ea04595589cc6b750183d67673b52433af980886",
+      "bytes": 46
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/backend-backup.json",
+      "sha256": "4a68dd392f736b214b9732d34f91f733f4c8f740e8c09eeb063bb82df522bb4c",
+      "bytes": 444
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/backend-live.json",
+      "sha256": "401d8bbc654198c7f0eac4dc2648ae848081bd5c1fc382ec2420d9470dba3c46",
+      "bytes": 345
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/backup-backend01.log",
+      "sha256": "084cd48084615aa674d99aafb6e6306277d3d082f4614074a49f921b94c00b0a",
+      "bytes": 97
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/backup-frontend01.log",
+      "sha256": "cb3c414d7037dbde1902770fbe2bbaed340ad4bf56cea626acded0e4f1675e03",
+      "bytes": 98
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/build01.log",
+      "sha256": "bf09f56529a581082db44a595201e8a980715678932e5980c82670e4d900026f",
+      "bytes": 22617
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/deploy-backend01.log",
+      "sha256": "c8ed3a274774e3a56b930a0160e1ebcd742634ef440f7d4f0f8adf87efb6d1e6",
+      "bytes": 163
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/failure-readback01.json",
+      "sha256": "434ec99a07fd928760e07e7f5954f3f1da8f0c760049c1153d3e49b4724ed194",
+      "bytes": 593
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/fixture01.json",
+      "sha256": "8ec7432c8222eaec14b434c005a6572c2c287ce91881348aa59e044370862115",
+      "bytes": 2058
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/fixture01.log",
+      "sha256": "b89b69850febb41f69b0e1f776e491b923bfc5ffd12d9d13bda76d8500c1e6ba",
+      "bytes": 50
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/frontend-backup.json",
+      "sha256": "b24c689ed927cbe9bade93958336186874199f26e1babc09f237e8333f0ce133",
+      "bytes": 224
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/frontend-live.json",
+      "sha256": "a74eea29a11f360b8e7ea6dd15063741366988dfb4ecb60a31c603cd7faa4f4d",
+      "bytes": 247
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/isolated-migrate01.log",
+      "sha256": "43945ecdecc6246b1711716404301c3e2980a233055f95e86ed17da6d8e310b9",
+      "bytes": 1658
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/manifest.json",
+      "sha256": "2bddf5b6262c96b75930fc86c24afb022f3ff7d232aaec918e924ced5287cb2a",
+      "bytes": 285127
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/manual-recipient-he390-live01.jpg",
+      "sha256": "cb3961a4bb6cc5e5c168de93ae0aaf59beda857cb4131078373853085f392bd0",
+      "bytes": 27821
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/manual-stamp-lint01.log",
+      "sha256": "4504d64fae68a804246c7fbb0422c4b6fa89f6b157fdcb0009877535dccc657f",
+      "bytes": 1528
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/manual-stamp-lint02.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/manual-stamp-pdf-lint01.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/manual-stamp-pdf01.log",
+      "sha256": "a04535390c51a887ddad095ffc355c4754eb34dad10008de6c6f6b1f7f550e83",
+      "bytes": 559
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/manual-stamp-ui01.log",
+      "sha256": "6b6f682a960443986ed21ef07d5a359d2a741a1d500065d64d0674d21794014d",
+      "bytes": 12994
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/manual-stamp-ui02.log",
+      "sha256": "466ab2a3183c82c17dbb2e71605436bb8e5cec809c7f8db2e64801c84ceb2970",
+      "bytes": 8994
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/manual-stamp-ui03.log",
+      "sha256": "d5487221812c77dec027c5c65e5bca9e29c1779d8c43bfa073b2cc70eed11c3a",
+      "bytes": 1988
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/manual-stamp-ui04.log",
+      "sha256": "7e2bb534dc84374e777ccf89fcf410b79ae2ce30132ffa188c928230740cb96b",
+      "bytes": 1988
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/mark-dialog-he-live01.jpg",
+      "sha256": "93a626dbb182a211f8be5df60bb1be6bbebdbcda58ae2916fea0d7ee4b0bb8a1",
+      "bytes": 43798
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/menu-he390-actual01.jpg",
+      "sha256": "9141488493bc42691f5dc83999af63b505735db100306df752b947a39a053fe1",
+      "bytes": 34735
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/menu-he390-live01.jpg",
+      "sha256": "b3030da956cbf0e4d2579dedac225e0966ee993dac1539f4fcdf9eecde233994",
+      "bytes": 38067
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/personal-stamp-labels01.json",
+      "sha256": "0117677c427c259c8232d7cf0c8a3981c0b00d80d24b9f766b1dcf481a1a3cb5",
+      "bytes": 171
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/preflight01.json",
+      "sha256": "2edfdcbc1ac765a2eebc285552f0c261f713f96ec5417742e43d733824032cc3",
+      "bytes": 554
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/prepare-failure01.json",
+      "sha256": "49080f2062a843ac010b455b16d8d4b4ff17715ad2cbdb62d04094f0d1c08eb1",
+      "bytes": 314
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/public-bytes02.json",
+      "sha256": "ceee1b64666a5d36d62f54c24224207fe20da291e61eddea0192cda256164975",
+      "bytes": 394
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/publish-frontend01.log",
+      "sha256": "1119c1a2ec65ba8f42fbf13a8f8be6b29c38010e081a0d37bf8096f7073d4691",
+      "bytes": 99
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/readback01.log",
+      "sha256": "87c5148ff7ea90e067e4a3e4a38bd1ddead062e05ace3140eb07773a9a028db0",
+      "bytes": 82
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/readback02.json",
+      "sha256": "c80b00b91e0b44c34e6098018e57ca099fdfde31e81088e56284092f22bcfd9f",
+      "bytes": 1209
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/readback02.log",
+      "sha256": "8b0f31e18731e6526538b8ae3ec3761eaa7ab6ae0a1f545a95350bc90d886cee",
+      "bytes": 50
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/recipient-roles01.log",
+      "sha256": "5aa6eb6fe5a26bf24319fe83625c26a235d4b566cf198f42e7572ef80807f4a5",
+      "bytes": 858
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/remote-isolated-completion01.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/remote-isolated-completion02.log",
+      "sha256": "7759d217cbdd22c452c0b8d765883f87c58be660eabe45b9bdaf70c496532e43",
+      "bytes": 3496
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/remote-isolated-completion03.log",
+      "sha256": "8bf3957400073a33e7741070eb74ffcefa8f3e1ea8051924ba28a0cf44c81ac8",
+      "bytes": 2709
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/remote-isolated-completion04.log",
+      "sha256": "a071abd6f6cd4bcddf05f797c8f83b62d2a6de828569752a6dc2c090f3ad54fd",
+      "bytes": 1297
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/stage-frontend01.log",
+      "sha256": "526d2c78ff91ed2e592db2a6ccb8f9311bd741d74f5d3fe19c5945269a0bfbfa",
+      "bytes": 29509
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa/startup-live01.jpg",
+      "sha256": "d7bddd51932423e37f5c854bc69241f5e6d9d3d4aa7e3831ed3474c3eb301c8e",
+      "bytes": 45175
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp02/advance-source01.log",
+      "sha256": "efaeb14afce325fe6c55b5f89b94492b09b0b3474937832319e8d14029236686",
+      "bytes": 211
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp02/backend-live.json",
+      "sha256": "b22bdfaf89f96446916506045e1d9c633f0968093e765d5e424834c73b961364",
+      "bytes": 454
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp02/backup-frontend01.log",
+      "sha256": "c43022cf0f261d93445f12d80602c3b4b557086ecf8f5ccf75eb7626a40f1b47",
+      "bytes": 98
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp02/build01.log",
+      "sha256": "bda5bb4df6304467814841506827b54917ca2c31810231f2d0eaa1a9444956f6",
+      "bytes": 22617
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp02/frontend-backup.json",
+      "sha256": "5e3621c5c9060bddc0d35be4fbae9d9b6f4af8c4ec193208d7ae7221cc6315c8",
+      "bytes": 224
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp02/frontend-live.json",
+      "sha256": "8ae718f07169bbb37a9a7a383ac58c03f746c01296a483293c3aad9e5d597e95",
+      "bytes": 247
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp02/manifest-attempt01.json",
+      "sha256": "2cfb3f15eec640be4acf33635e1bf12b9db08d52cd93858a978fc9d63f96894c",
+      "bytes": 274095
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp02/manifest.json",
+      "sha256": "73827d533dd137ddb9a6cdaa1d3f8886a5008646ab9bd16f5a8bcc84cae2975d",
+      "bytes": 274095
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp02/manual-stamp-he390-live01.jpg",
+      "sha256": "09b50c5ed20b151710008058736de08a17b826a3fd39f78094aaf70d8d92f045",
+      "bytes": 39135
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp02/public-bytes01.json",
+      "sha256": "49479ca1e69c3428da9835afb1e2d3e28f772676299be7f244deabcd8970f6ae",
+      "bytes": 360
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp02/public-bytes01.log",
+      "sha256": "385127d1aac68b52d85e658a5cd8a18d2ab34c52c723357041287c225e6c6a8a",
+      "bytes": 246
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp02/publish-frontend01.log",
+      "sha256": "ab172f3afb462ec18d0ef6a9e673f6a2e51be3f9c99f3b8ea8f9fa7cce006dab",
+      "bytes": 99
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp02/stage-frontend01.log",
+      "sha256": "574168bf098a5877482dd16c4aa5dd00ed3b94b3249117efd8867fcd50f83c7b",
+      "bytes": 29509
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp02/verify-current02.log",
+      "sha256": "cbf54ec07e309a9c6ec4c819031aa965f3d5c0496406d4d651ba050a2f33f7b9",
+      "bytes": 111
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-pdf03/advance-source01.log",
+      "sha256": "ce1a586c255037d2dd4260358411d1742655a95c28827cca3a15b853691a41f3",
+      "bytes": 177
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-pdf03/backend-live.json",
+      "sha256": "edc8da4fa0749c3267ac93b31e1cbcbd49a343aa0998f23f06f9649e22618827",
+      "bytes": 488
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-pdf03/backup-frontend01.log",
+      "sha256": "e3cacbad9fc3c8a4919a9e7c23c229dc31eb9ecbaaccb98483ac4b96b36bbbc4",
+      "bytes": 98
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-pdf03/build01.log",
+      "sha256": "4145740a24d29bb1e8ca19c803ad6a80723c9697d91c4e5799330b4b363b3fb6",
+      "bytes": 22617
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-pdf03/frontend-backup.json",
+      "sha256": "170d1f6fc151db364fff7e1532e53acca23067a2ce79bd993c6db4c803b37a04",
+      "bytes": 224
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-pdf03/frontend-live.json",
+      "sha256": "12df56b0f122002f8faa1fcb6ff6da2a99c95833ad1a160c255c8aa0642b56a5",
+      "bytes": 247
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-pdf03/manifest.json",
+      "sha256": "fe0dd8e22dccbd4936d6a726e161a02fb0b436240e9913fef6e48a907c4dc3fb",
+      "bytes": 274804
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-pdf03/pdf-upload-failure01.jpg",
+      "sha256": "a37b2b87d00773c2feadde7a1501f879147b7e46adef0b002586b664925b9fb4",
+      "bytes": 32796
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-pdf03/pdf-upload-failure01.json",
+      "sha256": "b447a8e9df71d08f8f62d79e7e492146887dcf81fa57784945c8ee6585e07076",
+      "bytes": 531
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-pdf03/public-bytes01.json",
+      "sha256": "315958ebf4ceb650c28de07b323a59deba71169435757cb495934ccd0ef3dc2a",
+      "bytes": 360
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-pdf03/public-bytes01.log",
+      "sha256": "8dcdd7e89620a8da49e6110a814cff7b6fc53957d79fa901035e9337dacc3261",
+      "bytes": 246
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-pdf03/publish-frontend01.log",
+      "sha256": "3e3d3c2c8f0c588114f512924bb954e16d2b3c531688e721f96400a8762c6148",
+      "bytes": 99
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-pdf03/stage-frontend01.log",
+      "sha256": "939e2be431fd5810b8b3f31f71dcab4736549d72a6859d5d81c1f55cff01a094",
+      "bytes": 29509
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-pdf03/synthetic-stamp-1page.pdf",
+      "sha256": "97ee5c5d570e3c737044293ccffd05111c83fd847ac642c8a569b5844aca8ef2",
+      "bytes": 916
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-pdf03/synthetic-stamp-2page.pdf",
+      "sha256": "f90341c34bc8b7da0ff7e9cab771490461a333dfcbe0e766f5b082cdb6af655f",
+      "bytes": 1189
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-worker04/advance-source01.log",
+      "sha256": "35f3cacaee9a4853cdcb5b0eac68b27706e709ae0e199eeedda3fa9d2f57298d",
+      "bytes": 177
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-worker04/backend-live.json",
+      "sha256": "9e551f6bade707c570d914786fa80904394328b328ab4826984c19360927284f",
+      "bytes": 488
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-worker04/backup-frontend01.log",
+      "sha256": "5bb3c316cd3fd67df6756882c6a2b7a727be1ab8d375d52c618e8f74b3df7ac5",
+      "bytes": 98
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-worker04/build01.log",
+      "sha256": "bb90d73ae8d6b8d33bb23c0488ad6491a488dca3c93651476b15f2fcb5766c1d",
+      "bytes": 22617
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-worker04/frontend-backup.json",
+      "sha256": "9d0e37f332cb3a6c4b0f2037b7ce50b3967d100baacec1b567993d7117825cb6",
+      "bytes": 224
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-worker04/frontend-live.json",
+      "sha256": "f7759ae241f4aeacce4a3517226f66c023926bd81d04565af05581ff4e5e8171",
+      "bytes": 247
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-worker04/manifest.json",
+      "sha256": "7a56ff9a26b6b264fab2560e0c5d32e1b0b8faecc5ced313d438c5a48e7b9769",
+      "bytes": 273883
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-worker04/pdf-stamp-he390-live01.jpg",
+      "sha256": "d1971038e3e04b1756e77ce77d17eb7fe2aab2b04a67234679d655d3a4d80a8f",
+      "bytes": 34399
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-worker04/pdf-stamp-he390-proof01.json",
+      "sha256": "ddd0c03368411aa17306cc55c327a47becd72454191278b5c775a6e74f04bc15",
+      "bytes": 284
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-worker04/pdf-stamp-multipage-he390-live01.jpg",
+      "sha256": "1dbc79acb941c6e44b29d7487e1d8832a5c620b11f891e07a15205fc6d17e4df",
+      "bytes": 36723
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-worker04/public-bytes01.json",
+      "sha256": "3b7ebff2574f6c99ced31c3551b7328d83ac0887629be291d052355c60d2dbf6",
+      "bytes": 360
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-worker04/public-bytes01.log",
+      "sha256": "f3aa9fd28ecf610092e1463aa6ab481550dfc953a8721d966d43b22c97ca8ab7",
+      "bytes": 246
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-worker04/publish-frontend01.log",
+      "sha256": "e3fed98a12be01463643bbf11bd4adfb5c2031396046803a0c54a2f37713135e",
+      "bytes": 99
+    },
+    {
+      "path": "outputs/signing-fixes-20261009/qa-stamp-worker04/stage-frontend01.log",
+      "sha256": "b683fad9fd8e26b95088d09618d7ca1779388bf308e6e50f090878c6a957c7c1",
+      "bytes": 29509
+    }
+  ],
+  "baselineLocalManifest": "outputs/signing-fixes-20261009/candidate-dfa900e6-source-evidence.json",
+  "changedScopeVerification": "PASS local focused + realQA auth/creation/PDF/menu/roles + remote isolated final rendering + actual390 PDF upload; no remaining observed changed-scope failure",
+  "productionDeployed": false,
+  "customerDeploymentAuthorization": "latest owner-supplied AGENTS prohibits MelamedLaw/MorLevi/AshrafEssa/Idm",
+  "newSourcePushed": false,
+  "productionTagCreated": false,
+  "realMessagesSent": false,
+  "invalidation": [
+    "Canvas/adapter changes invalidate personal-stamp admission, consent/OTP and batch-dependent navigation scopes.",
+    "PDF helper/config or upload path changes invalidate helper and actual PDF-browser proofs.",
+    "Corresponding locale keys invalidate rendered text only; unrelated dictionaries remain identical.",
+    "Backend/dependencies/migrations changes invalidate the corresponding remote/auth/creation/acceptance evidence.",
+    "Frontend build/public hash changes require exact new static identity verification; branding/environment stays tenant specific."
+  ],
+  "emailAtProduction": {
+    "recipients": "verified active MelamedLaw platform administrators Liav and owner",
+    "excel": "all records successfully extracted from API; owner clarified scope",
+    "counts": "actual inserted database rows separate from export totals",
+    "status": "not sent, release condition not triggered"
+  }
+}

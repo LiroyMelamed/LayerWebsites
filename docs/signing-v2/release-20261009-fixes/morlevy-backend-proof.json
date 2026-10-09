@@ -1,0 +1,810 @@
+{
+  "complete": true,
+  "tenant": "morlevy",
+  "candidate": "dfcac2b1b22d3bd08857a33e3adb0cd11fd039a3",
+  "product": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+  "qa": "6a570cc3fddd349ecdef8352b4a267ca49f09596",
+  "sourceFiles": 1362,
+  "envSha256": "554d282e06b4a7de92257debf1bd1f57faa5c8de1b3a5bb93d45bd1f2d6a7a4f",
+  "process": {
+    "name": "morlevy-api",
+    "pid": 2188343,
+    "pmId": 4,
+    "status": "online"
+  },
+  "health": true,
+  "locksAndMigrationsUnchanged": true,
+  "sourceBackup": "/root/signing-production-fixes-eb94f66e-20261009/morlevy/previous-backend.tar.gz",
+  "databaseBackup": "/root/signing-production-fixes-eb94f66e-20261009/morlevy/database-before.dump",
+  "databaseMutationsByDeployment": 0,
+  "noImportMigrationTestMessages": true,
+  "beforeCounts": [
+    {
+      "table": "audit_events",
+      "rows": 107
+    },
+    {
+      "table": "birthday_greetings_sent",
+      "rows": 0
+    },
+    {
+      "table": "calendar_event_clients",
+      "rows": 0
+    },
+    {
+      "table": "calendar_event_managers",
+      "rows": 0
+    },
+    {
+      "table": "calendar_events",
+      "rows": 0
+    },
+    {
+      "table": "case_users",
+      "rows": 0
+    },
+    {
+      "table": "casedescriptions",
+      "rows": 0
+    },
+    {
+      "table": "cases",
+      "rows": 0
+    },
+    {
+      "table": "casetypedescriptions",
+      "rows": 4
+    },
+    {
+      "table": "casetypes",
+      "rows": 1
+    },
+    {
+      "table": "chatbot_messages",
+      "rows": 6
+    },
+    {
+      "table": "chatbot_sessions",
+      "rows": 1
+    },
+    {
+      "table": "data_retention_runs",
+      "rows": 0
+    },
+    {
+      "table": "email_templates",
+      "rows": 22
+    },
+    {
+      "table": "firm_billing",
+      "rows": 1
+    },
+    {
+      "table": "firm_payment_events",
+      "rows": 0
+    },
+    {
+      "table": "firm_payment_intents",
+      "rows": 0
+    },
+    {
+      "table": "firm_payment_methods",
+      "rows": 0
+    },
+    {
+      "table": "firm_staff_roles",
+      "rows": 0
+    },
+    {
+      "table": "global_platform_masters",
+      "rows": 0
+    },
+    {
+      "table": "holidays_date",
+      "rows": 93
+    },
+    {
+      "table": "knowledge_chunks",
+      "rows": 0
+    },
+    {
+      "table": "knowledge_documents",
+      "rows": 0
+    },
+    {
+      "table": "law_firm_tenants",
+      "rows": 0
+    },
+    {
+      "table": "message_delivery_events",
+      "rows": 98
+    },
+    {
+      "table": "notification_channel_config",
+      "rows": 21
+    },
+    {
+      "table": "otps",
+      "rows": 2
+    },
+    {
+      "table": "platform_admins",
+      "rows": 2
+    },
+    {
+      "table": "platform_settings",
+      "rows": 90
+    },
+    {
+      "table": "public_short_links",
+      "rows": 0
+    },
+    {
+      "table": "refresh_tokens",
+      "rows": 134
+    },
+    {
+      "table": "reminder_templates",
+      "rows": 0
+    },
+    {
+      "table": "scheduled_email_reminders",
+      "rows": 0
+    },
+    {
+      "table": "schema_migrations",
+      "rows": 138
+    },
+    {
+      "table": "signaturespots",
+      "rows": 22
+    },
+    {
+      "table": "signing_actions",
+      "rows": 0
+    },
+    {
+      "table": "signing_approval_requests",
+      "rows": 0
+    },
+    {
+      "table": "signing_approvals",
+      "rows": 0
+    },
+    {
+      "table": "signing_artifacts",
+      "rows": 0
+    },
+    {
+      "table": "signing_authorities",
+      "rows": 0
+    },
+    {
+      "table": "signing_batch_files",
+      "rows": 0
+    },
+    {
+      "table": "signing_batch_recipients",
+      "rows": 0
+    },
+    {
+      "table": "signing_batch_reminders",
+      "rows": 0
+    },
+    {
+      "table": "signing_batch_sessions",
+      "rows": 0
+    },
+    {
+      "table": "signing_batches",
+      "rows": 0
+    },
+    {
+      "table": "signing_bulk_requests",
+      "rows": 0
+    },
+    {
+      "table": "signing_bulk_reviews",
+      "rows": 0
+    },
+    {
+      "table": "signing_consents",
+      "rows": 7
+    },
+    {
+      "table": "signing_creation_drafts",
+      "rows": 0
+    },
+    {
+      "table": "signing_deliveries",
+      "rows": 0
+    },
+    {
+      "table": "signing_delivery_items",
+      "rows": 0
+    },
+    {
+      "table": "signing_delivery_profiles",
+      "rows": 0
+    },
+    {
+      "table": "signing_documents",
+      "rows": 0
+    },
+    {
+      "table": "signing_error_alerts",
+      "rows": 0
+    },
+    {
+      "table": "signing_error_emails",
+      "rows": 0
+    },
+    {
+      "table": "signing_events_v2",
+      "rows": 0
+    },
+    {
+      "table": "signing_file_reminders",
+      "rows": 0
+    },
+    {
+      "table": "signing_grant_items",
+      "rows": 0
+    },
+    {
+      "table": "signing_job_dependencies",
+      "rows": 0
+    },
+    {
+      "table": "signing_jobs",
+      "rows": 0
+    },
+    {
+      "table": "signing_operations",
+      "rows": 0
+    },
+    {
+      "table": "signing_otp_challenges",
+      "rows": 9
+    },
+    {
+      "table": "signing_otp_challenges_v2",
+      "rows": 0
+    },
+    {
+      "table": "signing_owner_contexts",
+      "rows": 0
+    },
+    {
+      "table": "signing_package_assignments",
+      "rows": 0
+    },
+    {
+      "table": "signing_package_completions",
+      "rows": 0
+    },
+    {
+      "table": "signing_package_revisions",
+      "rows": 0
+    },
+    {
+      "table": "signing_packages",
+      "rows": 0
+    },
+    {
+      "table": "signing_participations",
+      "rows": 0
+    },
+    {
+      "table": "signing_parties",
+      "rows": 0
+    },
+    {
+      "table": "signing_people",
+      "rows": 0
+    },
+    {
+      "table": "signing_preflights",
+      "rows": 0
+    },
+    {
+      "table": "signing_public_grants",
+      "rows": 0
+    },
+    {
+      "table": "signing_replacement_drafts",
+      "rows": 0
+    },
+    {
+      "table": "signing_retention_warnings",
+      "rows": 0
+    },
+    {
+      "table": "signing_selection_items",
+      "rows": 0
+    },
+    {
+      "table": "signing_selection_snapshots",
+      "rows": 0
+    },
+    {
+      "table": "signing_selections",
+      "rows": 0
+    },
+    {
+      "table": "signing_sessions_v2",
+      "rows": 0
+    },
+    {
+      "table": "signing_short_links",
+      "rows": 15
+    },
+    {
+      "table": "signing_signer_delivery",
+      "rows": 6
+    },
+    {
+      "table": "signing_submissions",
+      "rows": 0
+    },
+    {
+      "table": "signing_task_issues",
+      "rows": 0
+    },
+    {
+      "table": "signing_tasks",
+      "rows": 0
+    },
+    {
+      "table": "signing_template_versions",
+      "rows": 0
+    },
+    {
+      "table": "signing_templates",
+      "rows": 0
+    },
+    {
+      "table": "signingfiles",
+      "rows": 7
+    },
+    {
+      "table": "signup_intents",
+      "rows": 0
+    },
+    {
+      "table": "stage_files",
+      "rows": 0
+    },
+    {
+      "table": "subscription_plans",
+      "rows": 3
+    },
+    {
+      "table": "template_attachments",
+      "rows": 0
+    },
+    {
+      "table": "tenant_subscriptions",
+      "rows": 1
+    },
+    {
+      "table": "uploadedfiles",
+      "rows": 0
+    },
+    {
+      "table": "user_calendar_tokens",
+      "rows": 0
+    },
+    {
+      "table": "user_daily_agenda_settings",
+      "rows": 0
+    },
+    {
+      "table": "userdevices",
+      "rows": 3
+    },
+    {
+      "table": "usernotifications",
+      "rows": 79
+    },
+    {
+      "table": "users",
+      "rows": 15
+    }
+  ],
+  "afterCounts": [
+    {
+      "table": "audit_events",
+      "rows": 107
+    },
+    {
+      "table": "birthday_greetings_sent",
+      "rows": 0
+    },
+    {
+      "table": "calendar_event_clients",
+      "rows": 0
+    },
+    {
+      "table": "calendar_event_managers",
+      "rows": 0
+    },
+    {
+      "table": "calendar_events",
+      "rows": 0
+    },
+    {
+      "table": "case_users",
+      "rows": 0
+    },
+    {
+      "table": "casedescriptions",
+      "rows": 0
+    },
+    {
+      "table": "cases",
+      "rows": 0
+    },
+    {
+      "table": "casetypedescriptions",
+      "rows": 4
+    },
+    {
+      "table": "casetypes",
+      "rows": 1
+    },
+    {
+      "table": "chatbot_messages",
+      "rows": 6
+    },
+    {
+      "table": "chatbot_sessions",
+      "rows": 1
+    },
+    {
+      "table": "data_retention_runs",
+      "rows": 0
+    },
+    {
+      "table": "email_templates",
+      "rows": 22
+    },
+    {
+      "table": "firm_billing",
+      "rows": 1
+    },
+    {
+      "table": "firm_payment_events",
+      "rows": 0
+    },
+    {
+      "table": "firm_payment_intents",
+      "rows": 0
+    },
+    {
+      "table": "firm_payment_methods",
+      "rows": 0
+    },
+    {
+      "table": "firm_staff_roles",
+      "rows": 0
+    },
+    {
+      "table": "global_platform_masters",
+      "rows": 0
+    },
+    {
+      "table": "holidays_date",
+      "rows": 93
+    },
+    {
+      "table": "knowledge_chunks",
+      "rows": 0
+    },
+    {
+      "table": "knowledge_documents",
+      "rows": 0
+    },
+    {
+      "table": "law_firm_tenants",
+      "rows": 0
+    },
+    {
+      "table": "message_delivery_events",
+      "rows": 98
+    },
+    {
+      "table": "notification_channel_config",
+      "rows": 21
+    },
+    {
+      "table": "otps",
+      "rows": 2
+    },
+    {
+      "table": "platform_admins",
+      "rows": 2
+    },
+    {
+      "table": "platform_settings",
+      "rows": 90
+    },
+    {
+      "table": "public_short_links",
+      "rows": 0
+    },
+    {
+      "table": "refresh_tokens",
+      "rows": 134
+    },
+    {
+      "table": "reminder_templates",
+      "rows": 0
+    },
+    {
+      "table": "scheduled_email_reminders",
+      "rows": 0
+    },
+    {
+      "table": "schema_migrations",
+      "rows": 138
+    },
+    {
+      "table": "signaturespots",
+      "rows": 22
+    },
+    {
+      "table": "signing_actions",
+      "rows": 0
+    },
+    {
+      "table": "signing_approval_requests",
+      "rows": 0
+    },
+    {
+      "table": "signing_approvals",
+      "rows": 0
+    },
+    {
+      "table": "signing_artifacts",
+      "rows": 0
+    },
+    {
+      "table": "signing_authorities",
+      "rows": 0
+    },
+    {
+      "table": "signing_batch_files",
+      "rows": 0
+    },
+    {
+      "table": "signing_batch_recipients",
+      "rows": 0
+    },
+    {
+      "table": "signing_batch_reminders",
+      "rows": 0
+    },
+    {
+      "table": "signing_batch_sessions",
+      "rows": 0
+    },
+    {
+      "table": "signing_batches",
+      "rows": 0
+    },
+    {
+      "table": "signing_bulk_requests",
+      "rows": 0
+    },
+    {
+      "table": "signing_bulk_reviews",
+      "rows": 0
+    },
+    {
+      "table": "signing_consents",
+      "rows": 7
+    },
+    {
+      "table": "signing_creation_drafts",
+      "rows": 0
+    },
+    {
+      "table": "signing_deliveries",
+      "rows": 0
+    },
+    {
+      "table": "signing_delivery_items",
+      "rows": 0
+    },
+    {
+      "table": "signing_delivery_profiles",
+      "rows": 0
+    },
+    {
+      "table": "signing_documents",
+      "rows": 0
+    },
+    {
+      "table": "signing_error_alerts",
+      "rows": 0
+    },
+    {
+      "table": "signing_error_emails",
+      "rows": 0
+    },
+    {
+      "table": "signing_events_v2",
+      "rows": 0
+    },
+    {
+      "table": "signing_file_reminders",
+      "rows": 0
+    },
+    {
+      "table": "signing_grant_items",
+      "rows": 0
+    },
+    {
+      "table": "signing_job_dependencies",
+      "rows": 0
+    },
+    {
+      "table": "signing_jobs",
+      "rows": 0
+    },
+    {
+      "table": "signing_operations",
+      "rows": 0
+    },
+    {
+      "table": "signing_otp_challenges",
+      "rows": 9
+    },
+    {
+      "table": "signing_otp_challenges_v2",
+      "rows": 0
+    },
+    {
+      "table": "signing_owner_contexts",
+      "rows": 0
+    },
+    {
+      "table": "signing_package_assignments",
+      "rows": 0
+    },
+    {
+      "table": "signing_package_completions",
+      "rows": 0
+    },
+    {
+      "table": "signing_package_revisions",
+      "rows": 0
+    },
+    {
+      "table": "signing_packages",
+      "rows": 0
+    },
+    {
+      "table": "signing_participations",
+      "rows": 0
+    },
+    {
+      "table": "signing_parties",
+      "rows": 0
+    },
+    {
+      "table": "signing_people",
+      "rows": 0
+    },
+    {
+      "table": "signing_preflights",
+      "rows": 0
+    },
+    {
+      "table": "signing_public_grants",
+      "rows": 0
+    },
+    {
+      "table": "signing_replacement_drafts",
+      "rows": 0
+    },
+    {
+      "table": "signing_retention_warnings",
+      "rows": 0
+    },
+    {
+      "table": "signing_selection_items",
+      "rows": 0
+    },
+    {
+      "table": "signing_selection_snapshots",
+      "rows": 0
+    },
+    {
+      "table": "signing_selections",
+      "rows": 0
+    },
+    {
+      "table": "signing_sessions_v2",
+      "rows": 0
+    },
+    {
+      "table": "signing_short_links",
+      "rows": 15
+    },
+    {
+      "table": "signing_signer_delivery",
+      "rows": 6
+    },
+    {
+      "table": "signing_submissions",
+      "rows": 0
+    },
+    {
+      "table": "signing_task_issues",
+      "rows": 0
+    },
+    {
+      "table": "signing_tasks",
+      "rows": 0
+    },
+    {
+      "table": "signing_template_versions",
+      "rows": 0
+    },
+    {
+      "table": "signing_templates",
+      "rows": 0
+    },
+    {
+      "table": "signingfiles",
+      "rows": 7
+    },
+    {
+      "table": "signup_intents",
+      "rows": 0
+    },
+    {
+      "table": "stage_files",
+      "rows": 0
+    },
+    {
+      "table": "subscription_plans",
+      "rows": 3
+    },
+    {
+      "table": "template_attachments",
+      "rows": 0
+    },
+    {
+      "table": "tenant_subscriptions",
+      "rows": 1
+    },
+    {
+      "table": "uploadedfiles",
+      "rows": 0
+    },
+    {
+      "table": "user_calendar_tokens",
+      "rows": 0
+    },
+    {
+      "table": "user_daily_agenda_settings",
+      "rows": 0
+    },
+    {
+      "table": "userdevices",
+      "rows": 3
+    },
+    {
+      "table": "usernotifications",
+      "rows": 79
+    },
+    {
+      "table": "users",
+      "rows": 15
+    }
+  ],
+  "at": "2026-10-09T19:04:23.310Z"
+}
