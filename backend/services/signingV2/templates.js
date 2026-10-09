@@ -23,6 +23,7 @@ async function loadHead(db, scope, templateId, lock = false) {
 }
 
 async function validateSources(db, scope, definition) {
+    await require('./completionMarks').assertAssets(db, scope, definition);
     const sourceIds = [...new Set(definition.documents.map(document => document.sourceArtifactId))];
     const result = await db.query(`SELECT * FROM signing_artifacts WHERE owner_context_id=$1 AND id=ANY($2::uuid[])
         AND kind='source' AND state='ready' FOR SHARE`, [scope.contextId, sourceIds]);

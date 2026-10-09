@@ -69,7 +69,7 @@ function Field({ id, label, help, error, className = '', children }) {
     </div>;
 }
 
-function SuggestField({ id, label, value, error, errorText, dir, type, inputMode, maxLength, suggestLawyers, onValue, onPick }) {
+function SuggestField({ id, label, value, error, errorText, dir, type, inputMode, maxLength, onValue, onPick }) {
     const [results, setResults] = useState([]);
     const [busy, setBusy] = useState(false);
     const timer = useRef(null);
@@ -84,7 +84,7 @@ function SuggestField({ id, label, value, error, errorText, dir, type, inputMode
         timer.current = setTimeout(async () => {
             setBusy(true);
             try {
-                const data = await signingTemplatesApi.contacts(query, suggestLawyers ? 'lawyer' : 'client');
+                const data = await signingTemplatesApi.contacts(query);
                 if (generation === searchGeneration.current) setResults(Array.isArray(data?.contacts) ? data.contacts : []);
             } catch { if (generation === searchGeneration.current) setResults([]); } finally { if (generation === searchGeneration.current) setBusy(false); }
         }, 150);
@@ -101,7 +101,7 @@ function SuggestField({ id, label, value, error, errorText, dir, type, inputMode
     </div>;
 }
 
-function PersonFields({ scope, roleKey, person, errors, onChange, compact, suggestLawyers, casePeople, peopleLabel, capacity, otherRoles = [] }) {
+function PersonFields({ scope, roleKey, person, errors, onChange, compact, casePeople, peopleLabel, capacity, otherRoles = [] }) {
     const { t, direction, number } = useSigningLocale();
     const choices = otherRoles.flatMap(role => Array.from({ length: role.max ?? 1 }, (_, index) => ({ key: role.key, occurrence: index, value: role.max > 1 ? `${role.key}|${index}` : role.key, label: role.max > 1 ? `${role.label} · ${number(index + 1)}` : role.label })));
     const linkedValue = person.sameAsRole ? (person.sameAsOccurrence != null ? `${person.sameAsRole}|${person.sameAsOccurrence}` : person.sameAsRole) : '';
@@ -112,8 +112,7 @@ function PersonFields({ scope, roleKey, person, errors, onChange, compact, sugge
         onChange(roleKey, 'phone', item?.phone || '');
     };
     const suggest = (name, extra) => <SuggestField key={name} id={fieldId(scope, roleKey, name)} label={t(`signingV2.compose.fields.${name}`)}
-        value={person[name]} error={errors?.[name]} errorText={message(name)} suggestLawyers={suggestLawyers}
-        onValue={value => onChange(roleKey, name, value)} onPick={pick} {...extra} />;
+        value={person[name]} error={errors?.[name]} errorText={message(name)}         onValue={value => onChange(roleKey, name, value)} onPick={pick} {...extra} />;
     const choice = (name, first, values) => <SegmentedSwitch key={name} title={t(`signingV2.compose.fields.${name}`)} ariaLabel={t(`signingV2.compose.fields.${name}`)}
         value={person[name]} onChange={value => onChange(roleKey, name, value)}
         options={[{ value: '', label: first }, ...values.map(value => ({ value, label: t(`signingV2.compose.${name}.${value}`) }))]} />;
@@ -138,7 +137,7 @@ function PersonFields({ scope, roleKey, person, errors, onChange, compact, sugge
             {suggest('email', { type: 'email', inputMode: 'email', maxLength: 254, dir: 'ltr' })}
             {suggest('phone', { type: 'tel', inputMode: 'tel', maxLength: 20, dir: 'ltr' })}
             <Text12 className="lw-signingCompose__hint" color={colors.winter}>
-                {t(suggestLawyers ? 'signingV2.compose.directoryHelp.lawyer' : 'signingV2.compose.directoryHelp.client')}
+                {t('signingV2.compose.directoryHelp.all')}
             </Text12>
         </div>
         <div className="lw-signingCompose__choices">
@@ -225,7 +224,7 @@ const RecipientRow = memo(function RecipientRow({ row, index, roles, errors, onC
             {errors?.row?.key && <p className="lw-signingCompose__fieldError" role="note">{t(`signingV2.compose.rowErrors.${errors.row.key}`, { defaultValue: t('signingV2.compose.rowErrors.INVALID_ROW') })}</p>}
             {roles.map(role => <div key={role.key} className="lw-signingCompose__roleBlock">
                 {roles.length > 1 && <h4>{role.label}</h4>}
-                <RolePeople scope={row.id} role={role} person={row.recipients[role.key] || blankRole(role)} errors={errors?.[role.key]} onChange={change} suggestLawyers={role.key === 'lawyer'} compact casePeople={casePeople} peopleLabel={peopleLabel} otherRoles={allRoles.filter(other => other.key !== role.key)} />
+                <RolePeople scope={row.id} role={role} person={row.recipients[role.key] || blankRole(role)} errors={errors?.[role.key]} onChange={change} compact casePeople={casePeople} peopleLabel={peopleLabel} otherRoles={allRoles.filter(other => other.key !== role.key)} />
             </div>)}
             <DocumentDataFields row={row} fields={dataFields} errors={errors?.data} onChange={onDataChange} />
         </fieldset>
@@ -820,7 +819,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 <p>{t(activeShare.some(role => role.when) ? 'signingV2.compose.shared.conditionalHelp' : 'signingV2.compose.shared.help')}</p>
                 {activeShare.map(role => <fieldset key={role.key} className="lw-signingCompose__shared">
                     <legend>{role.label}</legend>
-                    <RolePeople scope="shared" role={role} person={shared[role.key] || blankRole(role)} errors={check?.indexed.shared[role.key]} onChange={changeShared} suggestLawyers={role.key === 'lawyer'} casePeople={contextPeople} peopleLabel={peopleLabel} otherRoles={activeShare.filter(other => other.key !== role.key)} />
+                    <RolePeople scope="shared" role={role} person={shared[role.key] || blankRole(role)} errors={check?.indexed.shared[role.key]} onChange={changeShared} casePeople={contextPeople} peopleLabel={peopleLabel} otherRoles={activeShare.filter(other => other.key !== role.key)} />
                 </fieldset>)}
             </SimpleCard>}
             {(activeEach.length > 0 || dataFields.length > 0) && <SimpleCard className="lw-signingCompose__card">

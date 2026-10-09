@@ -108,3 +108,66 @@ test('incumbent controls delegate refusal/clarification to the viewed PDF withou
     expect(nativePrompt).not.toHaveBeenCalled(); expect(signingPublicApi.challenge).not.toHaveBeenCalled();
     nativePrompt.mockRestore();
 });
+
+
+test('interactive package lawyer stamp uses upload/draw and consent/OTP, and required text still blocks completion', async () => {
+    const stampEntry = { document: { documentId: 'stamp-pdf', name: 'Original stamp PDF' }, task: { taskId: 'stamp-task', state: 'ready', fields: [
+        { id: 'personal-stamp', type: 'lawyerStamp', label: 'Personal office stamp', pageNum: 1, x: 40, y: 80, width: 100, height: 30, required: true },
+        { id: 'name', type: 'text', label: 'Required name', pageNum: 1, x: 40, y: 180, width: 100, height: 30, required: true },
+    ] } };
+    const api = createV2DocumentAdapter({ token: 'synthetic', entries: [stampEntry], consentVersion: 'v', locale: 'he' });
+    const ctx = { clearRect: jest.fn(), fillText: jest.fn(), setTransform: jest.fn(), drawImage: jest.fn(), getImageData: () => ({ data: new Uint8ClampedArray(16) }), putImageData: jest.fn(), beginPath: jest.fn(), moveTo: jest.fn(), lineTo: jest.fn(), stroke: jest.fn() };
+    const contextMock = jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(ctx);
+    const dataMock = jest.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,personal-composite');
+    const OriginalImage = window.Image;
+    window.Image = class { naturalWidth = 2; naturalHeight = 2; set src(value) { queueMicrotask(() => this.onload?.()); } };
+    URL.createObjectURL = jest.fn(() => 'blob:personal-stamp'); URL.revokeObjectURL = jest.fn();
+    try {
+        const { container } = render(<SignatureCanvas variant="screen" publicToken="synthetic" filesApi={api} onClose={() => {}} deferOtpUntilConsent
+            documentGroup={{ documents: [{ id: 'stamp-pdf', name: 'Original stamp PDF' }], loadPdf: async () => new Blob(['PDF']), consentText: 'Consent to this PDF' }} />);
+        fireEvent.click(await screen.findByRole('button', { name: 'Personal office stamp' }));
+        expect((await screen.findAllByText('signing.fields.lawyerStamp')).length).toBeGreaterThan(0);
+        expect(screen.queryByPlaceholderText('signing.canvas.fieldValuePlaceholder')).toBeNull();
+        expect(signingPublicApi.challenge).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Consent to this PDF' }));
+        await waitFor(() => expect(signingPublicApi.challenge).toHaveBeenCalledTimes(1));
+        fireEvent.change(screen.getByRole('textbox', { name: 'signing.canvas.otpPlaceholder' }), { target: { value: '123456' } });
+        await waitFor(() => expect(screen.queryByRole('textbox', { name: 'signing.canvas.otpPlaceholder' })).toBeNull());
+        const input = screen.getByLabelText('signing.canvas.chooseFile');
+        expect(input).toHaveAttribute('accept', 'image/png,image/jpeg,application/pdf');
+        fireEvent.change(input, { target: { files: [new File(['synthetic stamp'], 'stamp.png', { type: 'image/png' })] } });
+        fireEvent.click(screen.getByRole('button', { name: 'signing.canvas.nextStep' }));
+        await screen.findByText('signing.canvas.signOnStampHint');
+        // The drawing canvas has no input role; exercise its native pointer handlers.
+        // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+        const canvas = container.querySelector('canvas');
+        fireEvent.pointerDown(canvas, { clientX: 4, clientY: 4, pointerId: 1 });
+        fireEvent.pointerMove(canvas, { clientX: 10, clientY: 10, pointerId: 1 });
+        fireEvent.pointerUp(canvas, { pointerId: 1 });
+        fireEvent.click(screen.getByRole('button', { name: 'signing.canvas.saveField' }));
+        await screen.findByPlaceholderText('signing.canvas.fieldValuePlaceholder');
+        expect(signingPublicApi.accept).not.toHaveBeenCalled();
+        expect((await api.getPublicSigningFileDetails()).data.signatureSpots[0].IsSigned).toBe(true);
+        fireEvent.change(screen.getByPlaceholderText('signing.canvas.fieldValuePlaceholder'), { target: { value: 'Explicit legal name' } });
+        fireEvent.click(screen.getByRole('button', { name: 'signing.canvas.saveField' }));
+        await waitFor(() => expect(signingPublicApi.accept).toHaveBeenCalledTimes(1));
+        expect(signingPublicApi.accept.mock.calls[0][2].drawings).toEqual([{ image: 'data:image/png;base64,personal-composite', fields: [{ taskId: 'stamp-task', fieldId: 'personal-stamp' }] }]);
+        expect(signingPublicApi.accept.mock.calls[0][2].values).toEqual({ 'stamp-task': { name: 'Explicit legal name' } });
+        expect(signingPublicApi.verify).toHaveBeenCalledWith('synthetic', 's', '123456');
+        expect(await screen.findByText('signing.canvas.signingCompleteTitle')).toBeInTheDocument();
+    } finally { window.Image = OriginalImage; contextMock.mockRestore(); dataMock.mockRestore(); }
+});
+
+test('legacy sender-applied lawyer stamp stays hidden and does not become a personal upload task', async () => {
+    const api = createV2DocumentAdapter({ token: 'synthetic', entries: [entries[0]], consentVersion: 'v', locale: 'he' });
+    const legacyApi = { ...api, getPublicSigningFileDetails: async () => {
+        const result = await api.getPublicSigningFileDetails();
+        result.data.signatureSpots.push({ SignatureSpotId: 99, FieldType: 'lawyerStamp', FieldLabel: 'Fixed sender stamp', PageNumber: 1, IsSigned: true, CanSign: false });
+        return result;
+    } };
+    render(<SignatureCanvas variant="screen" publicToken="synthetic" filesApi={legacyApi} loadPublicPdf={async () => new Blob(['PDF'])} onClose={() => {}} deferOtpUntilConsent />);
+    await screen.findByRole('button', { name: 'Name a' });
+    expect(screen.queryByRole('button', { name: 'Fixed sender stamp' })).toBeNull();
+    expect(screen.queryByLabelText('signing.canvas.chooseFile')).toBeNull();
+    expect(signingPublicApi.challenge).not.toHaveBeenCalled();
+});

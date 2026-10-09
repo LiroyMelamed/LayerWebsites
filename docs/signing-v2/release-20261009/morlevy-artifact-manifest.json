@@ -1,0 +1,1643 @@
+{
+  "tenant": "morlevy",
+  "candidate": "03fd5e4ab9bd06f2e0c1add170d67495e232538c",
+  "product": "d93f821780d1e0458705fee37ea96887dca80218",
+  "backendTree": "db0c5f57fb25453b50ac0ea98463bac8aa7b080d",
+  "migrationsTree": "22ef9a6717a3ec606de5ad9f72531ed7513e02da",
+  "changedPaths": [
+    "docs/signing-v2/followups/navigation-guide-20261009/MANIFEST.json",
+    "docs/signing-v2/followups/navigation-guide-20261009/README.md",
+    "docs/signing-v2/followups/navigation-guide-20261009/TEST-LEDGER-SNAPSHOT.md",
+    "docs/signing-v2/release-20261008/README.md",
+    "docs/signing-v2/release-20261008/TEST-LEDGER-snapshot.md",
+    "docs/signing-v2/release-20261008/ashrafessa-backend-readonly-proof03.json",
+    "docs/signing-v2/release-20261008/ashrafessa-frontend-live-proof03.json",
+    "docs/signing-v2/release-20261008/ashrafessa-public-live-proof03.json",
+    "docs/signing-v2/release-20261008/dependabot-artifact-scope03.json",
+    "docs/signing-v2/release-20261008/dependabot-readonly03.json",
+    "docs/signing-v2/release-20261008/dependency-installed-readonly03.json",
+    "docs/signing-v2/release-20261008/evidence-hashes.json",
+    "docs/signing-v2/release-20261008/git-production-proof03.json",
+    "docs/signing-v2/release-20261008/idm-backend-readonly-proof03.json",
+    "docs/signing-v2/release-20261008/idm-frontend-live-proof03.json",
+    "docs/signing-v2/release-20261008/idm-public-live-proof03.json",
+    "docs/signing-v2/release-20261008/manual-verification.json",
+    "docs/signing-v2/release-20261008/melamedlaw-backend-readonly-proof03.json",
+    "docs/signing-v2/release-20261008/melamedlaw-frontend-live-proof03.json",
+    "docs/signing-v2/release-20261008/melamedlaw-public-live-proof03.json",
+    "docs/signing-v2/release-20261008/morlevy-backend-readonly-proof03.json",
+    "docs/signing-v2/release-20261008/morlevy-frontend-live-proof03.json",
+    "docs/signing-v2/release-20261008/morlevy-public-live-proof03.json",
+    "docs/signing-v2/release-20261008/production-release.json",
+    "docs/signing-v2/release-20261008/signing-templates-operating-guide-he.md",
+    "docs/signing-v2/release-20261008/signing-templates-operating-guide-he.pdf",
+    "docs/signing-v2/release-20261008/ui-source-evidence.json",
+    "frontend/src/i18n/locales/ar.json",
+    "frontend/src/i18n/locales/en.json",
+    "frontend/src/i18n/locales/he.json",
+    "frontend/src/screens/loginScreen/components/TopCenteredLogo.js",
+    "frontend/src/screens/loginScreen/components/TopCenteredLogo.test.js",
+    "frontend/src/screens/otpScreen/components/TopCenteredLogoOtp.js",
+    "frontend/src/screens/signingScreen/SigningManagerScreen.js",
+    "frontend/src/screens/signingScreen/templates/NativeTemplateBuilder.test.js",
+    "frontend/src/screens/signingScreen/templates/SigningNavigation.test.js",
+    "frontend/src/screens/signingScreen/templates/SigningPackagesHub.js",
+    "frontend/src/screens/signingScreen/templates/TemplateBuilder.js",
+    "frontend/src/screens/signingScreen/templates/TemplateBuilder.test.js",
+    "frontend/src/screens/signingScreen/templates/TemplatesWorkspace.js",
+    "frontend/src/screens/signingScreen/templates/templates.scss"
+  ],
+  "apiOrigins": [
+    "https://api-morlevy.mela-media.co.il/api",
+    "https://central-api.mela-media.co.il"
+  ],
+  "frontendBuildFiles": [
+    {
+      "path": ".htaccess",
+      "bytes": 690,
+      "sha256": "d24d3b8df54866ced75a46de5cb6a6d7f040c9ef51659932c5165324187b43ab"
+    },
+    {
+      "path": ".well-known/apple-app-site-association",
+      "bytes": 554,
+      "sha256": "0cc6c72c18f978dff35563e29ee2c90960c1e33d8523b163dffa72e5c85bde46"
+    },
+    {
+      "path": ".well-known/assetlinks.json",
+      "bytes": 341,
+      "sha256": "27b0fb377ab283c2e6ab0b64abb4edd45e5e4d0647c9d78a07e43093f072ed88"
+    },
+    {
+      "path": "android-chrome-192x192.png",
+      "bytes": 20956,
+      "sha256": "ab5434f9efbb315eb1fda80982959675366f314ab59d98fc72964355c8c14fcb"
+    },
+    {
+      "path": "android-chrome-512x512.png",
+      "bytes": 92418,
+      "sha256": "dd63a85b6e9997ac65c645442b371efaeafb1b0c244905dbd51c9d3e48b6d177"
+    },
+    {
+      "path": "apple-app-site-association",
+      "bytes": 554,
+      "sha256": "0cc6c72c18f978dff35563e29ee2c90960c1e33d8523b163dffa72e5c85bde46"
+    },
+    {
+      "path": "apple-touch-icon.png",
+      "bytes": 19300,
+      "sha256": "e79ee8588c885f201ab5ac71a4281c2f213967aa704b7632b2a36494b648ae84"
+    },
+    {
+      "path": "asset-manifest.json",
+      "bytes": 14240,
+      "sha256": "e95b68aa7da25e9f400949bc36fd00cecbf2cd58435ee59e11d42d6ae75c3286"
+    },
+    {
+      "path": "chatbot-widget.js",
+      "bytes": 5881,
+      "sha256": "0a9f59b7bf0e365d997a853de2ee8559070c19151b894c84c28420ce2dff664e"
+    },
+    {
+      "path": "favicon-16x16.png",
+      "bytes": 1149,
+      "sha256": "4e6ea9eed8be5d3d859006c16e532424627687f6f9e1ecd30efaf3f63aaa5b18"
+    },
+    {
+      "path": "favicon-32x32.png",
+      "bytes": 2101,
+      "sha256": "26cab43d59c8e1a00a92c33c49b639af2e9c8efc961e61919d9f72a085da6797"
+    },
+    {
+      "path": "favicon.ico",
+      "bytes": 5430,
+      "sha256": "1235cc7128c44375efccddde4f88d4bb8282bc39c4fd1e9f2b0deea14a832c10"
+    },
+    {
+      "path": "favicon.png",
+      "bytes": 2101,
+      "sha256": "26cab43d59c8e1a00a92c33c49b639af2e9c8efc961e61919d9f72a085da6797"
+    },
+    {
+      "path": "firm-logo.png",
+      "bytes": 20108,
+      "sha256": "df1a1a097e081dcae854f1d9798985f31b0a94375c3b6dfa41aa9c172b6d3888"
+    },
+    {
+      "path": "index.html",
+      "bytes": 7954,
+      "sha256": "ac19886e0afffe7b9fb62113b102d086a5686bdcb265b67b82884ad0ad89c30d"
+    },
+    {
+      "path": "logo192.png",
+      "bytes": 20956,
+      "sha256": "ab5434f9efbb315eb1fda80982959675366f314ab59d98fc72964355c8c14fcb"
+    },
+    {
+      "path": "logo512.png",
+      "bytes": 92418,
+      "sha256": "dd63a85b6e9997ac65c645442b371efaeafb1b0c244905dbd51c9d3e48b6d177"
+    },
+    {
+      "path": "logoLMwhite.png",
+      "bytes": 10007,
+      "sha256": "3a7213f1d68d266a7026f904e8635804972023162a3566a9cae06da870debb94"
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 470,
+      "sha256": "7859688dd9ab9c3464e12735a2fd2b57367794cb52e02991e3d8396c627aad30"
+    },
+    {
+      "path": "pdf.worker.min.js",
+      "bytes": 1046214,
+      "sha256": "dbcae78a691b3c501508f74b774c6066a57a14a76cefdc9e25ad86b651bb75d5"
+    },
+    {
+      "path": "pdf.worker.min.mjs",
+      "bytes": 1046214,
+      "sha256": "dbcae78a691b3c501508f74b774c6066a57a14a76cefdc9e25ad86b651bb75d5"
+    },
+    {
+      "path": "robots.txt",
+      "bytes": 219,
+      "sha256": "25c0f5d8ea4885a2cb32c3d4e0273804e9768eb61dc6d90bbacc35f3b92edaf4"
+    },
+    {
+      "path": "sitemap.xml",
+      "bytes": 945,
+      "sha256": "fe63d97de62e84451f6ee00f32f57422842cf50e9abe8b99f4ec52f79c8bf718"
+    },
+    {
+      "path": "static/css/151.504eff5d.chunk.css",
+      "bytes": 4538,
+      "sha256": "e010645751be8ebecbed164c8e5dc5b09435a765c82afb84817e60ec81235033"
+    },
+    {
+      "path": "static/css/151.504eff5d.chunk.css.map",
+      "bytes": 8490,
+      "sha256": "bea6410f3298639efa7ceb9f8956ae0a04ad4522b550a7ed8758a2fcbcfbee76"
+    },
+    {
+      "path": "static/css/152.4cc5609b.chunk.css",
+      "bytes": 5385,
+      "sha256": "e072bbc38208be795da23aaa63120561b709a43b3e8bd5c5f4dcdeb138621967"
+    },
+    {
+      "path": "static/css/152.4cc5609b.chunk.css.map",
+      "bytes": 11381,
+      "sha256": "2aa7a3f1f25be33c86eaf0bdf0eb3c643d9f2ed544f72dabb43aed245accb64b"
+    },
+    {
+      "path": "static/css/173.7b493b7e.chunk.css",
+      "bytes": 4240,
+      "sha256": "446313b19656c5e1d47358c47193ce772081c303e975cbffe462e9ed7acacea3"
+    },
+    {
+      "path": "static/css/173.7b493b7e.chunk.css.map",
+      "bytes": 9241,
+      "sha256": "7dfd834885f9f39822b509f65c925eeacffe837142a7da7097c7e6c960db8a87"
+    },
+    {
+      "path": "static/css/177.e218488e.chunk.css",
+      "bytes": 8964,
+      "sha256": "b5c767cfb8cf4d87deae36888dcb466667f3c7b8e72a47cf08e8eaa41ee5a92e"
+    },
+    {
+      "path": "static/css/177.e218488e.chunk.css.map",
+      "bytes": 15202,
+      "sha256": "62d7e25e16d2af7eccfb33adb5109db081c3be5f2f47904147295703afe4bc3f"
+    },
+    {
+      "path": "static/css/20.9caf9479.chunk.css",
+      "bytes": 3326,
+      "sha256": "938130ac6a3044d2b7037d74fdf2aa6b942e9ab738e7b6eb6bcf2dc6362869b8"
+    },
+    {
+      "path": "static/css/20.9caf9479.chunk.css.map",
+      "bytes": 7527,
+      "sha256": "dbc48f31043b5497c360761b14ea16b5d374d432198b4ef13edc783aead2c622"
+    },
+    {
+      "path": "static/css/207.47e8c2b6.chunk.css",
+      "bytes": 2353,
+      "sha256": "6e436873442acee5e2f11ea523b092735f9b39014be4baae043492e09f2162c2"
+    },
+    {
+      "path": "static/css/207.47e8c2b6.chunk.css.map",
+      "bytes": 3895,
+      "sha256": "8d9a83bad2ed398d0198caf7d1b137ab528fba63d971325126bc336a132412f2"
+    },
+    {
+      "path": "static/css/208.7f1d0b0b.chunk.css",
+      "bytes": 2816,
+      "sha256": "aeecb7bdd5621cf53505fd2d91eeed5dbb0923654d1a97589929d1de03302e09"
+    },
+    {
+      "path": "static/css/208.7f1d0b0b.chunk.css.map",
+      "bytes": 6821,
+      "sha256": "7a007935d63348e8d05cf9d4fc9146c8af7e2b7c73c8fa03f69d019f7bbf478f"
+    },
+    {
+      "path": "static/css/211.63160d1a.chunk.css",
+      "bytes": 3445,
+      "sha256": "827f20716f3bc21556b114dfee81e0550e06bfdef61e2c3d709cb965bcd9ae8c"
+    },
+    {
+      "path": "static/css/211.63160d1a.chunk.css.map",
+      "bytes": 7049,
+      "sha256": "7c788827bf89c19f7501939b28bbf0e78e79e6c7f3cc2c9ad592ad7472070dce"
+    },
+    {
+      "path": "static/css/218.d184a44b.chunk.css",
+      "bytes": 17991,
+      "sha256": "0d828e90f74b09b5b6deb83bd35902241f0d71e173092de001a1dca2f7c66f18"
+    },
+    {
+      "path": "static/css/218.d184a44b.chunk.css.map",
+      "bytes": 32672,
+      "sha256": "a3fed14730352746bf71effab7b7b9d3188feab03d6503da1c7beac0e664df3f"
+    },
+    {
+      "path": "static/css/224.0bb3fdbc.chunk.css",
+      "bytes": 662,
+      "sha256": "9b616391af409e935195cea27c996e969f14eed10daa01873d8069e70036f1c0"
+    },
+    {
+      "path": "static/css/224.0bb3fdbc.chunk.css.map",
+      "bytes": 1192,
+      "sha256": "ad757fbb24d7fb324c7053524be5fe438ab1202a775b0df9140e4bd9f443ebdd"
+    },
+    {
+      "path": "static/css/227.bdc137a2.chunk.css",
+      "bytes": 6360,
+      "sha256": "33b87b8142d6d926525516342742aa545d83e752aa47ee73a306d5f323bae059"
+    },
+    {
+      "path": "static/css/227.bdc137a2.chunk.css.map",
+      "bytes": 12370,
+      "sha256": "c422f2069f868b96e495cce35015a4d64474703392f342e0852810b43b6b9c5f"
+    },
+    {
+      "path": "static/css/237.b928b7d5.chunk.css",
+      "bytes": 5252,
+      "sha256": "ce417678d99804c45d629a13436dce3c350180a97cfe8efbf512823606564391"
+    },
+    {
+      "path": "static/css/237.b928b7d5.chunk.css.map",
+      "bytes": 10339,
+      "sha256": "2159a35eebb171f09f5f5294f1597b6e0ff3d294f6da31a8acbc03beb8d9bb82"
+    },
+    {
+      "path": "static/css/238.22c12a0d.chunk.css",
+      "bytes": 777,
+      "sha256": "c51e75393d2367a9e8faeaa913c6efd11a3c2a7bc87d38487aa744ab78d0775f"
+    },
+    {
+      "path": "static/css/238.22c12a0d.chunk.css.map",
+      "bytes": 3087,
+      "sha256": "17f71731be9315732af0b5c904d9d6ed1e370c72a9721fd2b274b37147a7564b"
+    },
+    {
+      "path": "static/css/245.5956b7a9.chunk.css",
+      "bytes": 2954,
+      "sha256": "a64ec8cd1c800dcddc3e5289a0d77092154f30a92c8884be8b082d933af15d32"
+    },
+    {
+      "path": "static/css/245.5956b7a9.chunk.css.map",
+      "bytes": 6499,
+      "sha256": "ca1d75e7c1c10afc77cba76330d3ebf3125067b07e58ab286420db96d5d1255b"
+    },
+    {
+      "path": "static/css/254.e05d589c.chunk.css",
+      "bytes": 944,
+      "sha256": "88f485f296ecee832debb6dfd079cff1fbba51fcc24e439c0abe84e2f02b3407"
+    },
+    {
+      "path": "static/css/254.e05d589c.chunk.css.map",
+      "bytes": 1721,
+      "sha256": "439a0f2b18cae4818420b25058f7ce2ce27d6358199841b5bf263eb3fce357bb"
+    },
+    {
+      "path": "static/css/314.b34f051c.chunk.css",
+      "bytes": 1642,
+      "sha256": "27ae5cc94555a4746eeb434adfb720c9486f132c8c6d0f6461ff9854784b9c86"
+    },
+    {
+      "path": "static/css/314.b34f051c.chunk.css.map",
+      "bytes": 4626,
+      "sha256": "60e19967bda64c06e8fa04374b56766c5e63ccc7eed95e8de921c67593b49a06"
+    },
+    {
+      "path": "static/css/334.d0fa0eac.chunk.css",
+      "bytes": 13235,
+      "sha256": "f2205418929d046ab551fd89a47460e3cf3005b05967c1a5d36ab8b0e5b79e5b"
+    },
+    {
+      "path": "static/css/334.d0fa0eac.chunk.css.map",
+      "bytes": 23750,
+      "sha256": "31495c4cd8b2ae78283c96e98e41d854be2be21a38b6df7c0ec4604200e49557"
+    },
+    {
+      "path": "static/css/369.a60694b1.chunk.css",
+      "bytes": 1766,
+      "sha256": "63d1cbcbbd46fccde07d50b4b8fa13a2d9613bce8d76ca5007ed66dca5e1e565"
+    },
+    {
+      "path": "static/css/369.a60694b1.chunk.css.map",
+      "bytes": 4730,
+      "sha256": "dcc25db4a73dbe3cd2f60ca5a61cd335f4063a02e07886da295498edc97d1e16"
+    },
+    {
+      "path": "static/css/397.d53d2698.chunk.css",
+      "bytes": 2005,
+      "sha256": "a3f660421ea906b2a8940a9ed1b43338de5f97c53aa0f4530d162ce5ec129557"
+    },
+    {
+      "path": "static/css/397.d53d2698.chunk.css.map",
+      "bytes": 3090,
+      "sha256": "409cfa9d2b5365ef30ce10d31d755c2d494bd7ac3837b96d2089fb0a4e6e0d94"
+    },
+    {
+      "path": "static/css/407.dad89f4f.chunk.css",
+      "bytes": 8160,
+      "sha256": "73f6e165ec7715ea12a3d883e1563f7dc7c41d02eb2c58507de9d68817b3fd7a"
+    },
+    {
+      "path": "static/css/407.dad89f4f.chunk.css.map",
+      "bytes": 15243,
+      "sha256": "025919e235818b3a359f5ea4c349e39ef163e7d961e4c0c0785dedc3fa51f240"
+    },
+    {
+      "path": "static/css/452.8dc77456.chunk.css",
+      "bytes": 3259,
+      "sha256": "b3eed3d54bbb9b8ecbc5f5a311e4666962b4a222dc9d254760a4059e39cd367b"
+    },
+    {
+      "path": "static/css/452.8dc77456.chunk.css.map",
+      "bytes": 6644,
+      "sha256": "621ae743c3b7bd1513dbe2231cf8d09277c919f727d2d4563c2e6f95ae1a0567"
+    },
+    {
+      "path": "static/css/457.6f7c2840.chunk.css",
+      "bytes": 2805,
+      "sha256": "58059d6cd39e00bcd03044fd23e92b61ef737e6c424e14d23372250de8ade80d"
+    },
+    {
+      "path": "static/css/457.6f7c2840.chunk.css.map",
+      "bytes": 6627,
+      "sha256": "22ab1612f14b5f8024dec96a7ea417fe60bce2a678f27631c3b7a2bb4596ccd4"
+    },
+    {
+      "path": "static/css/589.d68c1897.chunk.css",
+      "bytes": 9097,
+      "sha256": "ee072407e220c35860aa99e011cd229568cc3486244430e3d35ff8aba70c38de"
+    },
+    {
+      "path": "static/css/589.d68c1897.chunk.css.map",
+      "bytes": 17258,
+      "sha256": "669c58e316b0e3f5679bde2191667c3c53d068379cc07aaaccf0763b9c610b55"
+    },
+    {
+      "path": "static/css/595.96db8c92.chunk.css",
+      "bytes": 1658,
+      "sha256": "0cf84aa06871372092f09fadff3c0a72491f29c7b438f8ea1bd27a5720d26fad"
+    },
+    {
+      "path": "static/css/595.96db8c92.chunk.css.map",
+      "bytes": 3184,
+      "sha256": "a5b2b09fbab01e1c53a08723033e874fd2d967aaefc6caa395ff9cde959b952a"
+    },
+    {
+      "path": "static/css/640.9d47a4d4.chunk.css",
+      "bytes": 18603,
+      "sha256": "4ff0983632d1f34d35f4892701de938245656e713d5863ec9be2f867ddc9bff7"
+    },
+    {
+      "path": "static/css/640.9d47a4d4.chunk.css.map",
+      "bytes": 35355,
+      "sha256": "c830db28883b6c5efe8f6e06a2a50c0fed6fdbffe98c23fc9d2ff29ffefd6ee9"
+    },
+    {
+      "path": "static/css/673.dad2aef7.chunk.css",
+      "bytes": 2662,
+      "sha256": "46b13cf0d4d175e2dd8e74b0832ceb3bb01c8cd9e80459c51b7533c32b9c2863"
+    },
+    {
+      "path": "static/css/673.dad2aef7.chunk.css.map",
+      "bytes": 4342,
+      "sha256": "2ae689098d50664a2c6ed578aa001c3dfd3e1450d27274e9230c4b15fe787554"
+    },
+    {
+      "path": "static/css/693.c544beca.chunk.css",
+      "bytes": 3626,
+      "sha256": "16593612309216d41c4ad65d38ef49c848ae4918b5e082166950b5496e7ab0ec"
+    },
+    {
+      "path": "static/css/693.c544beca.chunk.css.map",
+      "bytes": 7893,
+      "sha256": "2cbbe3b44a24c76162c18fb779583ac782d659f10f85ad4d5b17c880b0be9a37"
+    },
+    {
+      "path": "static/css/695.3537b275.chunk.css",
+      "bytes": 3664,
+      "sha256": "4d7b5a0394415833ca18167b382de8bf1c78d74b7021117dc78e9ad1288f2da7"
+    },
+    {
+      "path": "static/css/695.3537b275.chunk.css.map",
+      "bytes": 8027,
+      "sha256": "3280ea60e6c98fe86b60b42e0d74c6f0e514645b71b313b3807e93574a1bdf64"
+    },
+    {
+      "path": "static/css/706.96db8c92.chunk.css",
+      "bytes": 1658,
+      "sha256": "2f1104ed6172e0007067696ecf2b1562d0db4bc2c538c73f075d31bef741e972"
+    },
+    {
+      "path": "static/css/706.96db8c92.chunk.css.map",
+      "bytes": 3184,
+      "sha256": "bd530910a76ac5671189b52664fd2bbb3736ce15e51b798b4cbf4dfdd2a0eea9"
+    },
+    {
+      "path": "static/css/802.4a636456.chunk.css",
+      "bytes": 3098,
+      "sha256": "4806fd6bfa3a3452e7b8546994a232e28428abce81e45d42644d546880907692"
+    },
+    {
+      "path": "static/css/802.4a636456.chunk.css.map",
+      "bytes": 5985,
+      "sha256": "9228d261a5264d1856d089d3ba96cf6503c612698eba7342bb217cded80bc258"
+    },
+    {
+      "path": "static/css/803.96db8c92.chunk.css",
+      "bytes": 1658,
+      "sha256": "f867250ef73f2b4f987b684333b2e13e2a7b84bedbb50273eab906dab8028012"
+    },
+    {
+      "path": "static/css/803.96db8c92.chunk.css.map",
+      "bytes": 3184,
+      "sha256": "93f722635a37a413421f86c8504a570095408ac83fb9d457dc70d1a50c7c7618"
+    },
+    {
+      "path": "static/css/812.96db8c92.chunk.css",
+      "bytes": 1658,
+      "sha256": "4c70c5b00f796a4d9c4279481ed41df88f44f2d3c9650fa9f814034685226bb3"
+    },
+    {
+      "path": "static/css/812.96db8c92.chunk.css.map",
+      "bytes": 3184,
+      "sha256": "60bba9b33ff232ee7e8ab135655229a0a0d2e8fce568ad79153d7767908e56ea"
+    },
+    {
+      "path": "static/css/870.e1d9f53c.chunk.css",
+      "bytes": 5385,
+      "sha256": "3ff78a68bf41f4b8f9b02cfa824d1b2bb921ce2f49b2ced8a634ba5ba03d035b"
+    },
+    {
+      "path": "static/css/870.e1d9f53c.chunk.css.map",
+      "bytes": 11380,
+      "sha256": "0605f8c43e743ad808ec2e95c70962904c941d20cc403895faa6f9fec6f00f2d"
+    },
+    {
+      "path": "static/css/876.0bb4f0a4.chunk.css",
+      "bytes": 4411,
+      "sha256": "b76e64fd6a726fd34dc32f2482e36fbf755e65c1e3d578ad7d100521fc65c43e"
+    },
+    {
+      "path": "static/css/876.0bb4f0a4.chunk.css.map",
+      "bytes": 9019,
+      "sha256": "46e6b63717d572626792631296c5c2e70d5606c233fb10334b222c7e9aa94140"
+    },
+    {
+      "path": "static/css/main.e6c0dc47.css",
+      "bytes": 210614,
+      "sha256": "3a96a39b165abfeb1057758f49121d74d567eef74a02b9a559d35f924bb0a7c2"
+    },
+    {
+      "path": "static/css/main.e6c0dc47.css.map",
+      "bytes": 311897,
+      "sha256": "9b913caa42b9f240576fa94d9d9b53060a6ccd495660cb9a1cbda90919fd4696"
+    },
+    {
+      "path": "static/js/152.d6cef14e.chunk.js",
+      "bytes": 9509,
+      "sha256": "aaf137121e21e618223e95f0df8e3f514446c2168fa05a8326cd997351d24e59"
+    },
+    {
+      "path": "static/js/152.d6cef14e.chunk.js.map",
+      "bytes": 31513,
+      "sha256": "70027105b7a6e14a88b5834a05e1c87825af5798bb28fe21750666d337392beb"
+    },
+    {
+      "path": "static/js/173.61005556.chunk.js",
+      "bytes": 2237,
+      "sha256": "ff8e5c9428926152044c1ad3d48a26f1d1d0c4106dc90d42be55d751f011879b"
+    },
+    {
+      "path": "static/js/173.61005556.chunk.js.map",
+      "bytes": 11261,
+      "sha256": "8b6cb89026bf91ebadaa4966c903bbc6b48615bf3fa5b703f238cff229b60ffb"
+    },
+    {
+      "path": "static/js/176.66e1fa74.chunk.js",
+      "bytes": 26139,
+      "sha256": "ebee087ee8aeb4859ddbaaeff356922bcf5f354cf6660f10939308368d12cd0d"
+    },
+    {
+      "path": "static/js/176.66e1fa74.chunk.js.map",
+      "bytes": 35124,
+      "sha256": "10100161542fcebe56cf426ad76e88c0015e690258a53758d3d21d1b799d397b"
+    },
+    {
+      "path": "static/js/177.cb8df982.chunk.js",
+      "bytes": 17062,
+      "sha256": "255147d34dfd9069c9d92822fcdbf8fb1315a20f0205bc2ce840341ab65886ef"
+    },
+    {
+      "path": "static/js/177.cb8df982.chunk.js.map",
+      "bytes": 53512,
+      "sha256": "c028a6ae549571e4082cb6af8592c870734a20081a3b32bf283dd7764a478ce9"
+    },
+    {
+      "path": "static/js/20.09b11411.chunk.js",
+      "bytes": 13207,
+      "sha256": "2ce5108426a76d7b9a4e731ab5fd15909f52f09a0c45c05d50f19eb647c9b00c"
+    },
+    {
+      "path": "static/js/20.09b11411.chunk.js.map",
+      "bytes": 45008,
+      "sha256": "d8575578e8684ef22d5bdb47052bcc52408feedf0148c5eb4d9703757e38d734"
+    },
+    {
+      "path": "static/js/205.5820949b.chunk.js",
+      "bytes": 28564,
+      "sha256": "785334b4eae70f49e48ac8d6b38c7ea6ce9ca4cc7dce38497518f44ce4971ea7"
+    },
+    {
+      "path": "static/js/205.5820949b.chunk.js.map",
+      "bytes": 106444,
+      "sha256": "652b6945f1548f1a7b932b3cf9f499a67bf34d1e432943a78223dfd8f71b97fd"
+    },
+    {
+      "path": "static/js/207.21e74c02.chunk.js",
+      "bytes": 8939,
+      "sha256": "5450fb075382bc5a2cf87ef6767648aa9d03784e9546cf260c2f608362e08b36"
+    },
+    {
+      "path": "static/js/207.21e74c02.chunk.js.map",
+      "bytes": 19230,
+      "sha256": "1b0aa7c0a0410e2df5e4e18df41851a83c49cddf87834c8855fa8cdb6c7ae417"
+    },
+    {
+      "path": "static/js/21.806f554c.chunk.js",
+      "bytes": 149792,
+      "sha256": "9c03e40b263c63b8e05bcb372b9aaa40a5183b6db868dafefd43dea4123514ff"
+    },
+    {
+      "path": "static/js/21.806f554c.chunk.js.map",
+      "bytes": 501177,
+      "sha256": "77e08262eeeb60ba2bb611d86bc9ce6ae5863f5648bf7fbed15f1562b2ab797c"
+    },
+    {
+      "path": "static/js/211.72d0170f.chunk.js",
+      "bytes": 20580,
+      "sha256": "dc8a6765eca930d5b565e1f30c549f437b78fd9ad87ac588178df7687dcd738d"
+    },
+    {
+      "path": "static/js/211.72d0170f.chunk.js.map",
+      "bytes": 38590,
+      "sha256": "df6491c99a5587ec3fceea1ef2f570a944d0e514a2c988e78963a23b6551b602"
+    },
+    {
+      "path": "static/js/218.c580b2c2.chunk.js",
+      "bytes": 50065,
+      "sha256": "abb7f945c723228155db83c8f9f10e6941ab50aa252460db0634d359f2d5c2c8"
+    },
+    {
+      "path": "static/js/218.c580b2c2.chunk.js.map",
+      "bytes": 183105,
+      "sha256": "9c60e2ebfdde939e94e1e92e27fad8e5cf786b0d7437f76652056f1c0eabc2dd"
+    },
+    {
+      "path": "static/js/224.58b3f9af.chunk.js",
+      "bytes": 7772,
+      "sha256": "c27cde39322efd00c9543bed2033b291fcec5fbbc21094792558cddbf2b31db7"
+    },
+    {
+      "path": "static/js/224.58b3f9af.chunk.js.map",
+      "bytes": 22838,
+      "sha256": "0bd1300b4898bfa3b06c7dbf533d5ef35ac87f4ce73ef6e57c7d3e6c88b13677"
+    },
+    {
+      "path": "static/js/227.241afcec.chunk.js",
+      "bytes": 14149,
+      "sha256": "265e01253d60a27776254a75f4444333c3e13ebccb77cae40376cf17418d5602"
+    },
+    {
+      "path": "static/js/227.241afcec.chunk.js.map",
+      "bytes": 42517,
+      "sha256": "51b24f63e8fcced9f221bd43cb23380ac452020a490cb27b19625f3717566639"
+    },
+    {
+      "path": "static/js/237.86a8dc73.chunk.js",
+      "bytes": 12431,
+      "sha256": "9503bfd06a1a298edf707cb50f42cde89a101965e718ed41ab52cc30f77b4436"
+    },
+    {
+      "path": "static/js/237.86a8dc73.chunk.js.map",
+      "bytes": 50753,
+      "sha256": "f153d76e660fd84880199e38163b4812a3210e991bceff55e2084362e4fab0ab"
+    },
+    {
+      "path": "static/js/238.1f950f1a.chunk.js",
+      "bytes": 3123,
+      "sha256": "fced6274c9ecd51c45b276ded00cf337c92c50cb3c9e2f04817042b6400c5b47"
+    },
+    {
+      "path": "static/js/238.1f950f1a.chunk.js.map",
+      "bytes": 11399,
+      "sha256": "9420fe7ae7676504ebb40432725d5e804541f799b445c0b0345a59e26d24fcb1"
+    },
+    {
+      "path": "static/js/239.4d227f35.chunk.js",
+      "bytes": 25167,
+      "sha256": "2b1401a4cd76ac07cb2db3e5ef35522c104a94d053081dc037501f65d15a5542"
+    },
+    {
+      "path": "static/js/239.4d227f35.chunk.js.map",
+      "bytes": 50897,
+      "sha256": "9c2019337b0ae42b8bc7aa59631b46bb28794ffb5cd88a75a7b33e62dcfb7104"
+    },
+    {
+      "path": "static/js/245.3e061b0b.chunk.js",
+      "bytes": 7906,
+      "sha256": "19a325c60186a8bd9c89616d5a8acd2cb362a15f0657d6f98db93a7005a8f7ad"
+    },
+    {
+      "path": "static/js/245.3e061b0b.chunk.js.map",
+      "bytes": 27230,
+      "sha256": "994bd0a06e46f04815465f2494d9d390240f74b4132e90ba5ec991960e3b1875"
+    },
+    {
+      "path": "static/js/254.6e4f752a.chunk.js",
+      "bytes": 9038,
+      "sha256": "5a0580514059ff681cddb02ee64abd7d6266e73d686bb3c298390dd09ef02aae"
+    },
+    {
+      "path": "static/js/254.6e4f752a.chunk.js.map",
+      "bytes": 24506,
+      "sha256": "5b6fee9a3b57b0fccd961cd535a684bf0d53cdf2748e4e9672a0ede65fe7b158"
+    },
+    {
+      "path": "static/js/314.ed2214e4.chunk.js",
+      "bytes": 6363,
+      "sha256": "21622055b5beb705fb08015593686938edfc77fd623bf99db7584ea2c38a12df"
+    },
+    {
+      "path": "static/js/314.ed2214e4.chunk.js.map",
+      "bytes": 26265,
+      "sha256": "c82e75765da831c051f780c40955623b5cb9362582b95ae92602b28330b78cce"
+    },
+    {
+      "path": "static/js/334.5448743d.chunk.js",
+      "bytes": 22384,
+      "sha256": "91a586e3d135d7c80a0b5baf9c1ed2f6691e0abbe2e002fd5c8264fe55701cf5"
+    },
+    {
+      "path": "static/js/334.5448743d.chunk.js.map",
+      "bytes": 76628,
+      "sha256": "59ca488210d6542b643f25de0f37c7d0e04418f34930db895e96c9e1b02c1dc7"
+    },
+    {
+      "path": "static/js/369.debf2ccc.chunk.js",
+      "bytes": 8858,
+      "sha256": "a65ad21d5e60257b10813bd49c9b814272c6e5959c68200500d33682446c78ef"
+    },
+    {
+      "path": "static/js/369.debf2ccc.chunk.js.map",
+      "bytes": 34465,
+      "sha256": "9a5e321e391cd7e5a3b0d076f7a6ab0b3c17350eb9ac5fcfe81e6c5fe4a609ee"
+    },
+    {
+      "path": "static/js/397.e6e7bb54.chunk.js",
+      "bytes": 19716,
+      "sha256": "0658f7f52480a90fc5aab0e64cf9867f75708afd7fe20da03e84a55df5727698"
+    },
+    {
+      "path": "static/js/397.e6e7bb54.chunk.js.map",
+      "bytes": 61063,
+      "sha256": "105b5868489c1771b5f2fc1ddb28baed82d1a2f5c794377d08cc4e45f00bc7d2"
+    },
+    {
+      "path": "static/js/407.b239dc99.chunk.js",
+      "bytes": 14710,
+      "sha256": "80f9da4536a8dd84ccff7b261b605c8176210855ef6022964797a0ecb776345a"
+    },
+    {
+      "path": "static/js/407.b239dc99.chunk.js.map",
+      "bytes": 56463,
+      "sha256": "783c8cbe76d754e9f031a829e5d6cc330c9fcdfc689988e8107d8f7c5d7fd1aa"
+    },
+    {
+      "path": "static/js/452.2786c2f8.chunk.js",
+      "bytes": 10249,
+      "sha256": "6f13fef6c0a6677e508f04e222a7e981bba7aac535a79871153204ac9fc80447"
+    },
+    {
+      "path": "static/js/452.2786c2f8.chunk.js.map",
+      "bytes": 34568,
+      "sha256": "3ffffc2264470582984dc91c2d6ad5fa9177a024cec77484922e2ffcc5f9f53d"
+    },
+    {
+      "path": "static/js/457.3f39af94.chunk.js",
+      "bytes": 5955,
+      "sha256": "0f10a2dcc46c6467e3337d3443be04d3ec3aa69e92f7ecc316bb71f51e5710f5"
+    },
+    {
+      "path": "static/js/457.3f39af94.chunk.js.map",
+      "bytes": 17457,
+      "sha256": "76093487a02e12ae13fa2ff9c7f60f83ec1b5f1879661ace8a38517ddb0dec68"
+    },
+    {
+      "path": "static/js/589.8448b3e7.chunk.js",
+      "bytes": 15492,
+      "sha256": "a9577da671c742da8ff25a31985bab118136f7c9c321ea0f4b36768c1d77501d"
+    },
+    {
+      "path": "static/js/589.8448b3e7.chunk.js.map",
+      "bytes": 51056,
+      "sha256": "a6e768dff455cdb394dee45776e0d0aa2fec3640250094555041c42305f915e5"
+    },
+    {
+      "path": "static/js/595.58df31e1.chunk.js",
+      "bytes": 2064,
+      "sha256": "a4826831c43e009422d6a4ef380728b3df288cd97e4704149b793855fe40561f"
+    },
+    {
+      "path": "static/js/595.58df31e1.chunk.js.map",
+      "bytes": 5391,
+      "sha256": "0db7bed6cb9ad39da7447974027443d0fbb2979b0435a1092234c264af0d5d1e"
+    },
+    {
+      "path": "static/js/640.05a9dbf3.chunk.js",
+      "bytes": 78864,
+      "sha256": "6a4c8190327a328af329b8cb388e340cf18f24f5b34e28e0332e4222eaed5396"
+    },
+    {
+      "path": "static/js/640.05a9dbf3.chunk.js.map",
+      "bytes": 238242,
+      "sha256": "9c67ead649c2e598cc49858aff63e3045e072537239c3066445a3947991e44cd"
+    },
+    {
+      "path": "static/js/673.c84b803e.chunk.js",
+      "bytes": 3497,
+      "sha256": "471de44bc3eafdc1c800fa2a7c0306884b58fc9b4eda6747b96541c1095be924"
+    },
+    {
+      "path": "static/js/673.c84b803e.chunk.js.map",
+      "bytes": 9255,
+      "sha256": "51e090b395a704b3c719eff5105c2685bf0a97ac7113eb99c8aace9a545e4d8d"
+    },
+    {
+      "path": "static/js/693.e180d9da.chunk.js",
+      "bytes": 13889,
+      "sha256": "30782fa5744e2c2ce9c71106217247d618d0a5d6137f5dcc21c5125729c96194"
+    },
+    {
+      "path": "static/js/693.e180d9da.chunk.js.map",
+      "bytes": 52338,
+      "sha256": "ebdf40aa59b23ad8f579373da247531d2d5c998355be4061b72cf2a5140cb3f4"
+    },
+    {
+      "path": "static/js/695.ff300153.chunk.js",
+      "bytes": 9930,
+      "sha256": "c8318a4c521dcc05d4fe2654193d15f9ff15124794c31a9a8eaf6991c3e218fc"
+    },
+    {
+      "path": "static/js/695.ff300153.chunk.js.map",
+      "bytes": 33988,
+      "sha256": "bdd0b1312dced5c1c39fa0dff1470cb913caec3be550e47afefad29777fefe5d"
+    },
+    {
+      "path": "static/js/706.df4e855c.chunk.js",
+      "bytes": 5608,
+      "sha256": "435d760bbf513e28aa2081498da523e6e27956fa4679ace374d07496fbd60980"
+    },
+    {
+      "path": "static/js/706.df4e855c.chunk.js.map",
+      "bytes": 13050,
+      "sha256": "9a3f55d824c5736228f1ddc6db142dda8a22c49046c06a5bd8c466a6cb998b88"
+    },
+    {
+      "path": "static/js/740.cfae06c0.chunk.js",
+      "bytes": 5474,
+      "sha256": "487c4ddc600cd96f2fb2f947b2174749f146936682469aee8733937503314402"
+    },
+    {
+      "path": "static/js/740.cfae06c0.chunk.js.map",
+      "bytes": 18578,
+      "sha256": "a18df06bd63db80deb4eb9d16813ad36a867b9ee261456a77a07c671db295788"
+    },
+    {
+      "path": "static/js/802.46367597.chunk.js",
+      "bytes": 21423,
+      "sha256": "830c04513a8a6fc492c29cb3e531650d5187a63e095de9c6d4d459f94a379d5a"
+    },
+    {
+      "path": "static/js/802.46367597.chunk.js.map",
+      "bytes": 39835,
+      "sha256": "566e2c939b35f0526416f674afb8266d0d660244b4e2073379142bb6bae9b6d2"
+    },
+    {
+      "path": "static/js/803.0192295a.chunk.js",
+      "bytes": 2103,
+      "sha256": "c4c04e38887177101d84232d3522cc35d7b8f576121e71ea96eeef709c9458ee"
+    },
+    {
+      "path": "static/js/803.0192295a.chunk.js.map",
+      "bytes": 5442,
+      "sha256": "954b0cfd2aff02b47596e6de5cac5ade9ef8215c0b899a11ed98529f0acc7001"
+    },
+    {
+      "path": "static/js/812.89ae3e38.chunk.js",
+      "bytes": 2085,
+      "sha256": "71add8f249f078a7d7a2ce9517c5d3b3eb3884de3da62fa650f2d2e3a62941b1"
+    },
+    {
+      "path": "static/js/812.89ae3e38.chunk.js.map",
+      "bytes": 5425,
+      "sha256": "0657e2b96c9a987e1b68854588c3a97d0c0e3711f9b2f48ab864a661f849ac46"
+    },
+    {
+      "path": "static/js/870.5cf9c2e1.chunk.js",
+      "bytes": 23602,
+      "sha256": "98cb095f9cfa4ed220af0d760445c0ba0067123d067922b29733d781a04527c1"
+    },
+    {
+      "path": "static/js/870.5cf9c2e1.chunk.js.map",
+      "bytes": 56952,
+      "sha256": "0012cdaf446135a116291a3ed62feb3faaf31355c7671dcbff58c1fa515ab93d"
+    },
+    {
+      "path": "static/js/876.b5d6d81e.chunk.js",
+      "bytes": 12050,
+      "sha256": "2e708f7b92db01c5581af83cec07b2f471fe0e54afdbcc3c64fe16b35722651e"
+    },
+    {
+      "path": "static/js/876.b5d6d81e.chunk.js.map",
+      "bytes": 47837,
+      "sha256": "702a1f8a96c55002f70a2a7b557032742e19e74b601edffefe3b17ae18a2c883"
+    },
+    {
+      "path": "static/js/965.a84dd645.chunk.js",
+      "bytes": 113990,
+      "sha256": "e680cfb7fa64eb169767f6f74c3b95b08b2b60378b1c5be51b73f7587285390d"
+    },
+    {
+      "path": "static/js/965.a84dd645.chunk.js.map",
+      "bytes": 333969,
+      "sha256": "86d623b1f0eaaaf59ead4a69be99d1f5de4a6313278f51dbd86e58ff5797eda0"
+    },
+    {
+      "path": "static/js/977.b4a17ea0.chunk.js",
+      "bytes": 15158,
+      "sha256": "d25f0a27f231d95c57eaee2fc0ca519a3b1b63a231425deb8f7b01bb61778b37"
+    },
+    {
+      "path": "static/js/977.b4a17ea0.chunk.js.map",
+      "bytes": 57357,
+      "sha256": "d4014c394908b4660cd138a554d443e6d4245ceaf9c8ba171450b8f468b6737a"
+    },
+    {
+      "path": "static/js/986.b2ea2ccb.chunk.js",
+      "bytes": 64100,
+      "sha256": "4bcf8a1f4f30aa1147651a82b7894309cecd65634a42694af1f3e8939158a6b5"
+    },
+    {
+      "path": "static/js/986.b2ea2ccb.chunk.js.map",
+      "bytes": 233391,
+      "sha256": "fc85e6ce837cd683e012e95935521ba729aff372dbf1422f4964bb92750b24ee"
+    },
+    {
+      "path": "static/js/main.9310fb54.js",
+      "bytes": 1401032,
+      "sha256": "d87c9f6a81b02f78a005779bd78daadff684f7d5dcb2766c757f6be01ce2ed5c"
+    },
+    {
+      "path": "static/js/main.9310fb54.js.map",
+      "bytes": 1195336,
+      "sha256": "66fd9f6a31b79ec89ce715a038c08c602e91d212613c882f9acdfd8592a6d548"
+    },
+    {
+      "path": "static/js/vendor-charts.c8f5c9c4.chunk.js",
+      "bytes": 142623,
+      "sha256": "74b7b1f856f1db460c4669e8e9f1946a365ff0afac0c8e9d4627f0321d9fa17b"
+    },
+    {
+      "path": "static/js/vendor-charts.c8f5c9c4.chunk.js.LICENSE.txt",
+      "bytes": 122,
+      "sha256": "bb18f0767ad13e07f0bdf92aa7a0307117a7f9f8f0de5fed060f7ed797b1cbc0"
+    },
+    {
+      "path": "static/js/vendor-charts.c8f5c9c4.chunk.js.map",
+      "bytes": 731332,
+      "sha256": "436fb16a2dd4f3d186272757cf91309ac5dd1e0f87ad46f138909f18e4d2e2a1"
+    },
+    {
+      "path": "static/js/vendor-fullcalendar.ccd5d332.chunk.js",
+      "bytes": 251126,
+      "sha256": "52fd9bcce35aca1f3d71980a6e2e1af3cdb39bd3cd796585fb8cf9ab23f78356"
+    },
+    {
+      "path": "static/js/vendor-fullcalendar.ccd5d332.chunk.js.map",
+      "bytes": 949581,
+      "sha256": "9e31a2828028acaa9c6a693e0b1523ca7e57a16b9fc0081539c14506129b1a99"
+    },
+    {
+      "path": "static/js/vendor-i18n.4e02076c.js",
+      "bytes": 58665,
+      "sha256": "b85720c4c8380b0b421e7aa027a8752d3b2922d39882c66295023bbd5582ef18"
+    },
+    {
+      "path": "static/js/vendor-i18n.4e02076c.js.map",
+      "bytes": 186117,
+      "sha256": "c818e1e3be102e450b0da42f80f2a8ce5d8841eb2a1ba696ec7490d74d50bb52"
+    },
+    {
+      "path": "static/js/vendor-pdf.fd4d23b6.js",
+      "bytes": 430455,
+      "sha256": "1704ea1616bf14d646e6084085a8351d9f7b6a3f17fabff34a4a1b547d328f64"
+    },
+    {
+      "path": "static/js/vendor-pdf.fd4d23b6.js.LICENSE.txt",
+      "bytes": 795,
+      "sha256": "b5e8c493d516d9b156045ec3b83cc3e26785363af56db22bd52382942b394242"
+    },
+    {
+      "path": "static/js/vendor-pdf.fd4d23b6.js.map",
+      "bytes": 1742089,
+      "sha256": "4f2fb2864e432ae466e76d64041d9842b9b2546f5c71e37bd83338d24e4cec98"
+    },
+    {
+      "path": "static/js/vendor-react.d753c979.js",
+      "bytes": 185945,
+      "sha256": "7bd62c830a27a2314b3c2c83ee79d7b54cbcbea5d213555a3eab7303fea260e0"
+    },
+    {
+      "path": "static/js/vendor-react.d753c979.js.LICENSE.txt",
+      "bytes": 1195,
+      "sha256": "ead2821d1d48556ebb5cac3a8f871ef89d19885ed024cff1b7b0e79ca7a33ae4"
+    },
+    {
+      "path": "static/js/vendor-react.d753c979.js.map",
+      "bytes": 802708,
+      "sha256": "6a921a38172dd853b752b45a46709f9c66a0a1cc6f07a325f530743cbf9d30c2"
+    },
+    {
+      "path": "static/js/vendor.0d82bcdc.js",
+      "bytes": 152480,
+      "sha256": "0996cb720146f880cac67b91aa0749c9c0ac878bee4526aa199f0aa4043f25f0"
+    },
+    {
+      "path": "static/js/vendor.0d82bcdc.js.LICENSE.txt",
+      "bytes": 839,
+      "sha256": "ea5f5d0b2767c6851eb8e9f13be90b0a2332c37e65b0628f5672f14f87b02c72"
+    },
+    {
+      "path": "static/js/vendor.0d82bcdc.js.map",
+      "bytes": 889724,
+      "sha256": "4deaf02eac8e9a6de85ff763e0344e0dea34c821ae2a3d13da3064cb074da2e3"
+    },
+    {
+      "path": "static/media/AllManagers.7126a03d7c27213de2ad.png",
+      "bytes": 18485,
+      "sha256": "ae04bb95437a4aedfe27a877dfe95961d65d29a2511aff19d369fde44e006742"
+    },
+    {
+      "path": "static/media/AppBackground.620be0dabb2027013c3f.jpg",
+      "bytes": 204139,
+      "sha256": "4de367198ef35b3a1855605bc892c137e95ef6e2fb18960659ce0c8651a51817"
+    },
+    {
+      "path": "static/media/ISO-27701-logo.01351318947ec05ce0f5.png",
+      "bytes": 26901,
+      "sha256": "e3b558590436b4fbb58793129f59aaedfb37c085c7e4ebad2b7e7a906adf70c7"
+    },
+    {
+      "path": "static/media/ISO-logo.7ef757781907c8eef229.png",
+      "bytes": 44873,
+      "sha256": "77781356f741e025b382f5dac0444a5ad131fe5cc73b23938d6ab67c2ab12754"
+    },
+    {
+      "path": "static/media/Iso22301-logo.14c4de0849abf697840c.png",
+      "bytes": 103108,
+      "sha256": "e93cf6af2d26d245f38e3388b94ae5f2e48624a28524a646419ee5dc818dd3c8"
+    },
+    {
+      "path": "static/media/MagnifyingGlass.d466bf7953662b736fc7.png",
+      "bytes": 13089,
+      "sha256": "4a08cd91f45232d5e25a421a76f93275aaf1c3073a93f428e9f013a57b1a7e18"
+    },
+    {
+      "path": "static/media/Weight.ee6259e93735981156d0.png",
+      "bytes": 10031,
+      "sha256": "d36570267480237fe827776323587c8b239e0a79938c9a7e3a5c9eda837851b6"
+    },
+    {
+      "path": "static/media/X.28e784309fe66fcff48d.png",
+      "bytes": 58171,
+      "sha256": "3c6b21410949be41624a0230097a6b0135441f39489aef1f5a5001b7ffdc16e2"
+    },
+    {
+      "path": "static/media/analytics.bf28dfb8ee06dc5f0eba.png",
+      "bytes": 1117826,
+      "sha256": "2fd9dad2424c47d8c908c183427d446d944dfdd5d8c3da7330d7856a57f39a2b"
+    },
+    {
+      "path": "static/media/apple-calendar.c79c232980dc078c4ba7.png",
+      "bytes": 62336,
+      "sha256": "ef788105d9095a052ae3eb841e7b638c179226da227ea7eeecdad53ccf2e6380"
+    },
+    {
+      "path": "static/media/cases.bafbde8cf2510c7929f7.png",
+      "bytes": 89683,
+      "sha256": "b055e06346430275a3cb81e5b2026644ca0416d441589c60c9d5ed832fa89dc3"
+    },
+    {
+      "path": "static/media/casesType.d6cef8ef5aef864321f3.png",
+      "bytes": 242740,
+      "sha256": "1924619f26a827d207f358d9d579c4254923a5af78af480275cd9b3657828381"
+    },
+    {
+      "path": "static/media/dataFlowing.9f81647815d15e83ce62.png",
+      "bytes": 1404266,
+      "sha256": "93b8309fa24a0369fd5ddffdd3465d65c338e85bba1a9f15a4e2fdd65111454d"
+    },
+    {
+      "path": "static/media/google-maps.f8ffe032804f4d25073f.png",
+      "bytes": 10863,
+      "sha256": "43b8629b52f47ec21c73d2b99ab0105e6182fa162162ec2bca341c1782d44f35"
+    },
+    {
+      "path": "static/media/logo.2c5d6b013a8ac4d265ae.png",
+      "bytes": 10007,
+      "sha256": "3a7213f1d68d266a7026f904e8635804972023162a3566a9cae06da870debb94"
+    },
+    {
+      "path": "static/media/logo2.50b70182ecf501da0321.png",
+      "bytes": 20108,
+      "sha256": "df1a1a097e081dcae854f1d9798985f31b0a94375c3b6dfa41aa9c172b6d3888"
+    },
+    {
+      "path": "static/media/managers.fadbb2bc0cda1f1394dc.png",
+      "bytes": 184762,
+      "sha256": "e64b64324b1891b4c6359ba56033c9ad13fdb946c10f32bb4b726b237093084a"
+    },
+    {
+      "path": "static/media/searchingClient.f27d1f338e64df970a12.png",
+      "bytes": 122123,
+      "sha256": "fe47745915fadea0636f7900b4a182d74c424b2492d873a9ffd6368ab3c5f42c"
+    },
+    {
+      "path": "static/media/taggedCase.dea931141e9585cbfd33.png",
+      "bytes": 339203,
+      "sha256": "5ef806b21a31be9880091a5a5c9b24e03bc73b383c94ebf7af0eeb9fe34353f0"
+    },
+    {
+      "path": "templates/clients-demo.xlsx",
+      "bytes": 6800,
+      "sha256": "b1e20a8e64ab87b4b883b841bcf386f5105489ea77245c6366614ccae32daf6f"
+    },
+    {
+      "path": "templates/reminders-demo.xlsx",
+      "bytes": 17033,
+      "sha256": "16335d9e54411e62ae7c34eb30a4e2bde6016d72ef92ad701dd6da5df8d63111"
+    },
+    {
+      "path": "tenants/ashrafessa/.well-known/apple-app-site-association",
+      "bytes": 560,
+      "sha256": "1479cf5c8b843d26dcdc39829a5c971da1a3d2b3f377feea9d0d0c3bd924217e"
+    },
+    {
+      "path": "tenants/ashrafessa/.well-known/assetlinks.json",
+      "bytes": 344,
+      "sha256": "08b7a288147e6077fca8d97bcef84b035772fb83882d66f737d87192bd85ff57"
+    },
+    {
+      "path": "tenants/ashrafessa/android-chrome-192x192.png",
+      "bytes": 7597,
+      "sha256": "55ee341bab892325c41af88e5713481fd7b56b32e47b56172fd98bea34354682"
+    },
+    {
+      "path": "tenants/ashrafessa/android-chrome-512x512.png",
+      "bytes": 30179,
+      "sha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b"
+    },
+    {
+      "path": "tenants/ashrafessa/apple-touch-icon.png",
+      "bytes": 6830,
+      "sha256": "7019f391c502bd9dd0a4ea332d141b4bc078bcde3d3a5c9bc4ac010237412253"
+    },
+    {
+      "path": "tenants/ashrafessa/favicon-16x16.png",
+      "bytes": 333,
+      "sha256": "123091e779f964977ca5fc879ea7d712f7834a9d95f7d79afd3058d17243d0e3"
+    },
+    {
+      "path": "tenants/ashrafessa/favicon-32x32.png",
+      "bytes": 650,
+      "sha256": "f6d903577d671c805fc8c045ba7083cef5c5e09dea2df7e8ad11e05be10d8148"
+    },
+    {
+      "path": "tenants/ashrafessa/favicon.ico",
+      "bytes": 5430,
+      "sha256": "7e35d911c2bcdd6d091cd716f51b630e17fde315196431d0964bac2969943ce4"
+    },
+    {
+      "path": "tenants/ashrafessa/favicon.png",
+      "bytes": 650,
+      "sha256": "f6d903577d671c805fc8c045ba7083cef5c5e09dea2df7e8ad11e05be10d8148"
+    },
+    {
+      "path": "tenants/ashrafessa/firm-logo.png",
+      "bytes": 30179,
+      "sha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b"
+    },
+    {
+      "path": "tenants/ashrafessa/index.html",
+      "bytes": 10457,
+      "sha256": "0b1dd45614ecfd76ad1a19eb3d5087d65c28630ed22adf4d7825d992448cbd87"
+    },
+    {
+      "path": "tenants/ashrafessa/logo192.png",
+      "bytes": 7597,
+      "sha256": "55ee341bab892325c41af88e5713481fd7b56b32e47b56172fd98bea34354682"
+    },
+    {
+      "path": "tenants/ashrafessa/logo512.png",
+      "bytes": 30179,
+      "sha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b"
+    },
+    {
+      "path": "tenants/ashrafessa/logos/logo.png",
+      "bytes": 36811,
+      "sha256": "0c25449fe261ed58a0e8edf5427b1f7dfa2b140e25469532648136369a318d20"
+    },
+    {
+      "path": "tenants/ashrafessa/logos/logo2.png",
+      "bytes": 258128,
+      "sha256": "27a4633e7842f106f37f3e0b0cfffb7a80593dd01fcea4bb9c3f9d5269548b2e"
+    },
+    {
+      "path": "tenants/ashrafessa/logos/logoLM.png",
+      "bytes": 27629,
+      "sha256": "069ea24b4d3a201a161cdf882e128d369f276c710687a08abc561af07bf8dec7"
+    },
+    {
+      "path": "tenants/ashrafessa/logos/logoLMwhite.png",
+      "bytes": 68090,
+      "sha256": "8483bf94ec0c21d53409b7c9960e5269abdb079e330ec5c259fbef5cc73c7900"
+    },
+    {
+      "path": "tenants/ashrafessa/manifest.json",
+      "bytes": 483,
+      "sha256": "b8de8a18ad1d29a42658dbab96679ed992dd513e7b0b5069741c2cc283fe9d64"
+    },
+    {
+      "path": "tenants/idm/apple-touch-icon.png",
+      "bytes": 9418,
+      "sha256": "b363c4f7e3deb5cb91f3e87434af4cde279fd0570cca47e854653d5c11ca3e95"
+    },
+    {
+      "path": "tenants/idm/favicon-16x16.png",
+      "bytes": 584,
+      "sha256": "dd73a6da82033d7f516776713b67bf67b57407b2405908d1f9a649e6fe837fe1"
+    },
+    {
+      "path": "tenants/idm/favicon-32x32.png",
+      "bytes": 1181,
+      "sha256": "e22eb1948ae61b76aaa61ef720f98bc610ff130a348bc2585fd3f3b7b361944c"
+    },
+    {
+      "path": "tenants/idm/favicon.ico",
+      "bytes": 1361,
+      "sha256": "0863a016428a855ca5da0bd21d0d1dc92de07a05235bc1f0bf8e428e725197ea"
+    },
+    {
+      "path": "tenants/idm/favicon.png",
+      "bytes": 36825,
+      "sha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5"
+    },
+    {
+      "path": "tenants/idm/firm-logo.png",
+      "bytes": 237802,
+      "sha256": "808748756abf4482fccd7af896989ab7ae66ee3ea440784ecd63ec4416f125fd"
+    },
+    {
+      "path": "tenants/idm/firm-logo.svg",
+      "bytes": 6089,
+      "sha256": "797f4987981c87d9d600e6993fd1ea7edb030f866cd76d7d66768349fa2eb539"
+    },
+    {
+      "path": "tenants/idm/index.html",
+      "bytes": 10440,
+      "sha256": "3d32e4676498d7081e24810200c82fff06920447a24159d0057dbd2ecb741de8"
+    },
+    {
+      "path": "tenants/idm/logo192.png",
+      "bytes": 10159,
+      "sha256": "0ddee67f7e4dc520d2a4e7e95ad39bc7587fd166b397d05dfba2b3aea4174943"
+    },
+    {
+      "path": "tenants/idm/logo512.png",
+      "bytes": 36825,
+      "sha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5"
+    },
+    {
+      "path": "tenants/idm/logos/logo.png",
+      "bytes": 36825,
+      "sha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5"
+    },
+    {
+      "path": "tenants/idm/logos/logo2.png",
+      "bytes": 36825,
+      "sha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5"
+    },
+    {
+      "path": "tenants/idm/logos/logoLM.png",
+      "bytes": 36825,
+      "sha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5"
+    },
+    {
+      "path": "tenants/idm/logos/logoLMwhite.png",
+      "bytes": 36825,
+      "sha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5"
+    },
+    {
+      "path": "tenants/idm/manifest.json",
+      "bytes": 470,
+      "sha256": "69acb23ba720415a428ef04ccd686281643bbdfff2235fcd85bbcbf30001ffaa"
+    },
+    {
+      "path": "tenants/lawyer/android-chrome-192x192.png",
+      "bytes": 42215,
+      "sha256": "1b59c135435791372b56b7431338e63519bb05c430f3fd730a35b172979af860"
+    },
+    {
+      "path": "tenants/lawyer/android-chrome-512x512.png",
+      "bytes": 192538,
+      "sha256": "8eafabab4a66a47fc9ebc05fdf6346f82252f29b8a048bd3eb89fc1fa4cc26fc"
+    },
+    {
+      "path": "tenants/lawyer/apple-touch-icon.png",
+      "bytes": 37850,
+      "sha256": "9ea39ce0ea7c51a677bac8228ba5d05ed6192395a7f7406af44bb67180819af9"
+    },
+    {
+      "path": "tenants/lawyer/favicon-16x16.png",
+      "bytes": 961,
+      "sha256": "5127ba1ffd001770bb9bef6c05af604d8f4c8b7540bc36c8e0acfe9020f221ef"
+    },
+    {
+      "path": "tenants/lawyer/favicon-32x32.png",
+      "bytes": 2446,
+      "sha256": "73af27353d9e3f408895df43b791e7f3ab04be80b7fb5ec697824798942641c2"
+    },
+    {
+      "path": "tenants/lawyer/favicon.ico",
+      "bytes": 5430,
+      "sha256": "242abf57d50895694c8dc4050fdc87e91566cf82aace2d9594a944e3044ced3a"
+    },
+    {
+      "path": "tenants/lawyer/favicon.png",
+      "bytes": 2446,
+      "sha256": "73af27353d9e3f408895df43b791e7f3ab04be80b7fb5ec697824798942641c2"
+    },
+    {
+      "path": "tenants/lawyer/firm-logo.png",
+      "bytes": 78324,
+      "sha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e"
+    },
+    {
+      "path": "tenants/lawyer/index.html",
+      "bytes": 2903,
+      "sha256": "0ff7d62b9481e8578983ebee2f3230b27b999188bb785829a0fa6d83595bedb8"
+    },
+    {
+      "path": "tenants/lawyer/logo192.png",
+      "bytes": 42215,
+      "sha256": "1b59c135435791372b56b7431338e63519bb05c430f3fd730a35b172979af860"
+    },
+    {
+      "path": "tenants/lawyer/logo512.png",
+      "bytes": 192538,
+      "sha256": "8eafabab4a66a47fc9ebc05fdf6346f82252f29b8a048bd3eb89fc1fa4cc26fc"
+    },
+    {
+      "path": "tenants/lawyer/logos/logo.png",
+      "bytes": 78324,
+      "sha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e"
+    },
+    {
+      "path": "tenants/lawyer/logos/logo2.png",
+      "bytes": 78324,
+      "sha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e"
+    },
+    {
+      "path": "tenants/lawyer/logos/logoLM.png",
+      "bytes": 78324,
+      "sha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e"
+    },
+    {
+      "path": "tenants/lawyer/logos/logoLMwhite.png",
+      "bytes": 78324,
+      "sha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e"
+    },
+    {
+      "path": "tenants/lawyer/melamedia-mark.png",
+      "bytes": 78324,
+      "sha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e"
+    },
+    {
+      "path": "tenants/melamedia/.well-known/apple-app-site-association",
+      "bytes": 574,
+      "sha256": "5614b6684ce8846d6fc21450d24722ab7db5aed3397200246e9635b6e3076a76"
+    },
+    {
+      "path": "tenants/melamedia/android-chrome-192x192.png",
+      "bytes": 40879,
+      "sha256": "a41470a71c06de90e023b8a980350c91ec66cf0f33ffbb0d53d4c0a96cba88b0"
+    },
+    {
+      "path": "tenants/melamedia/android-chrome-512x512.png",
+      "bytes": 187982,
+      "sha256": "fd501809e8aa48e1283dbec82a5f0f949898b01193ee76816c035e577f31e8a8"
+    },
+    {
+      "path": "tenants/melamedia/apple-touch-icon.png",
+      "bytes": 36796,
+      "sha256": "3750b65efbc52e9552a888c05c614daf13fb015289ca6d1778060652b5a17a2b"
+    },
+    {
+      "path": "tenants/melamedia/favicon-16x16.png",
+      "bytes": 891,
+      "sha256": "b2add3fa98e47823865ceea0ae31ecbcdad4473d16e18c95603bd1edb5468430"
+    },
+    {
+      "path": "tenants/melamedia/favicon-32x32.png",
+      "bytes": 2657,
+      "sha256": "4da8d1a591b040c7745fbb9cad192b0bd1f6e87f91a8ec27918ee158f50f6114"
+    },
+    {
+      "path": "tenants/melamedia/favicon.ico",
+      "bytes": 3614,
+      "sha256": "ad1875090d981632d5eb8f1bf6af89c0c946d645a58e376b636e4dd74c37b40a"
+    },
+    {
+      "path": "tenants/melamedia/favicon.png",
+      "bytes": 187982,
+      "sha256": "fd501809e8aa48e1283dbec82a5f0f949898b01193ee76816c035e577f31e8a8"
+    },
+    {
+      "path": "tenants/melamedia/firm-logo.png",
+      "bytes": 76251,
+      "sha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264"
+    },
+    {
+      "path": "tenants/melamedia/index.html",
+      "bytes": 2903,
+      "sha256": "0ff7d62b9481e8578983ebee2f3230b27b999188bb785829a0fa6d83595bedb8"
+    },
+    {
+      "path": "tenants/melamedia/logo192.png",
+      "bytes": 40879,
+      "sha256": "a41470a71c06de90e023b8a980350c91ec66cf0f33ffbb0d53d4c0a96cba88b0"
+    },
+    {
+      "path": "tenants/melamedia/logo512.png",
+      "bytes": 187982,
+      "sha256": "fd501809e8aa48e1283dbec82a5f0f949898b01193ee76816c035e577f31e8a8"
+    },
+    {
+      "path": "tenants/melamedia/logos/logo.png",
+      "bytes": 76251,
+      "sha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264"
+    },
+    {
+      "path": "tenants/melamedia/logos/logo2.png",
+      "bytes": 76251,
+      "sha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264"
+    },
+    {
+      "path": "tenants/melamedia/logos/logoLM.png",
+      "bytes": 76251,
+      "sha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264"
+    },
+    {
+      "path": "tenants/melamedia/logos/logoLMwhite.png",
+      "bytes": 76251,
+      "sha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264"
+    },
+    {
+      "path": "tenants/melamedia/manifest.json",
+      "bytes": 466,
+      "sha256": "802a02ac9eca1489b2b43537612acb87b28e454b0953321cae32a3126f8f2c30"
+    },
+    {
+      "path": "tenants/melamedia/site.webmanifest",
+      "bytes": 314,
+      "sha256": "fc28f60711838f69d35ddd823290defa64ce021b026bd3193327e29733ad7790"
+    },
+    {
+      "path": "tenants/melamedlaw/.well-known/apple-app-site-association",
+      "bytes": 560,
+      "sha256": "d2a40a96997065ac714fe5254af824f00063f6e4b96fb19122bbdde6c5031693"
+    },
+    {
+      "path": "tenants/melamedlaw/.well-known/assetlinks.json",
+      "bytes": 451,
+      "sha256": "8dd1174757afe081c042ecc05af82a2d9309cce863498158ca96765be19d748f"
+    },
+    {
+      "path": "tenants/melamedlaw/android-chrome-192x192.png",
+      "bytes": 9957,
+      "sha256": "57c64f9486a9ecd4837eac4855cf79c780ea698b5d286a14164cb79aeb85fe71"
+    },
+    {
+      "path": "tenants/melamedlaw/android-chrome-512x512.png",
+      "bytes": 56537,
+      "sha256": "1fa5005cdee840cfc3efebcfef300507b5b467536c6cc6fc1e0ef6505ba52db1"
+    },
+    {
+      "path": "tenants/melamedlaw/apple-touch-icon.png",
+      "bytes": 9222,
+      "sha256": "1fb0daa9e2a26dd4342ac9ae02b14afab850c55d13bf59bc87241e08c18f0045"
+    },
+    {
+      "path": "tenants/melamedlaw/favicon-16x16.png",
+      "bytes": 611,
+      "sha256": "c4aac9323e6c3647b2aee798ef53a95fecfe6c05c15bf382e45ca0dd5b80b20c"
+    },
+    {
+      "path": "tenants/melamedlaw/favicon-32x32.png",
+      "bytes": 1124,
+      "sha256": "344876a46a433c4d1a9ebfdf87c512beebf5f651f6761f80d91ffa1f7172e6eb"
+    },
+    {
+      "path": "tenants/melamedlaw/favicon.ico",
+      "bytes": 5430,
+      "sha256": "04093669c1c03dae2c062a66a3dd5c7b83726d3c5cc2bbca196571c13b2f763c"
+    },
+    {
+      "path": "tenants/melamedlaw/favicon.png",
+      "bytes": 1124,
+      "sha256": "344876a46a433c4d1a9ebfdf87c512beebf5f651f6761f80d91ffa1f7172e6eb"
+    },
+    {
+      "path": "tenants/melamedlaw/firm-logo.png",
+      "bytes": 56537,
+      "sha256": "1fa5005cdee840cfc3efebcfef300507b5b467536c6cc6fc1e0ef6505ba52db1"
+    },
+    {
+      "path": "tenants/melamedlaw/index.html",
+      "bytes": 10776,
+      "sha256": "1ffccbdd2e2280767c2b0ebb1322e8c78bdac3b8b2d755a16c78555d1682e05f"
+    },
+    {
+      "path": "tenants/melamedlaw/logo192.png",
+      "bytes": 9957,
+      "sha256": "57c64f9486a9ecd4837eac4855cf79c780ea698b5d286a14164cb79aeb85fe71"
+    },
+    {
+      "path": "tenants/melamedlaw/logo512.png",
+      "bytes": 56537,
+      "sha256": "1fa5005cdee840cfc3efebcfef300507b5b467536c6cc6fc1e0ef6505ba52db1"
+    },
+    {
+      "path": "tenants/melamedlaw/logos/logo.png",
+      "bytes": 10469,
+      "sha256": "8899e54b782e4a68e718c40fd9ae1bf0865adc0bf76fb8e570acf12b2719074c"
+    },
+    {
+      "path": "tenants/melamedlaw/logos/logo2.png",
+      "bytes": 178506,
+      "sha256": "fca6833f1e5ebc26883ca69fe4168e6180e5c7198b80e4fabe1c66926387a705"
+    },
+    {
+      "path": "tenants/melamedlaw/logos/logoLM.png",
+      "bytes": 2178,
+      "sha256": "eed6152e5cdb7e12a4e2e02aa50eca8c59a78f5ea4b200f945a9c43ca48d9ea0"
+    },
+    {
+      "path": "tenants/melamedlaw/logos/logoLMwhite.png",
+      "bytes": 9770,
+      "sha256": "ad6d8fb204b5611af660ee8e75fe64ac42dc37ed5c7d1adbe556a6a41cfe0b56"
+    },
+    {
+      "path": "tenants/melamedlaw/manifest.json",
+      "bytes": 469,
+      "sha256": "7bc073853901651f74a20c4b47cbe5c207b1dea3536311b0baff8b0a8dd746f1"
+    },
+    {
+      "path": "tenants/morlevy/.well-known/apple-app-site-association",
+      "bytes": 554,
+      "sha256": "0cc6c72c18f978dff35563e29ee2c90960c1e33d8523b163dffa72e5c85bde46"
+    },
+    {
+      "path": "tenants/morlevy/.well-known/assetlinks.json",
+      "bytes": 341,
+      "sha256": "27b0fb377ab283c2e6ab0b64abb4edd45e5e4d0647c9d78a07e43093f072ed88"
+    },
+    {
+      "path": "tenants/morlevy/android-chrome-192x192.png",
+      "bytes": 20956,
+      "sha256": "ab5434f9efbb315eb1fda80982959675366f314ab59d98fc72964355c8c14fcb"
+    },
+    {
+      "path": "tenants/morlevy/android-chrome-512x512.png",
+      "bytes": 92418,
+      "sha256": "dd63a85b6e9997ac65c645442b371efaeafb1b0c244905dbd51c9d3e48b6d177"
+    },
+    {
+      "path": "tenants/morlevy/apple-touch-icon.png",
+      "bytes": 19300,
+      "sha256": "e79ee8588c885f201ab5ac71a4281c2f213967aa704b7632b2a36494b648ae84"
+    },
+    {
+      "path": "tenants/morlevy/favicon-16x16.png",
+      "bytes": 1149,
+      "sha256": "4e6ea9eed8be5d3d859006c16e532424627687f6f9e1ecd30efaf3f63aaa5b18"
+    },
+    {
+      "path": "tenants/morlevy/favicon-32x32.png",
+      "bytes": 2101,
+      "sha256": "26cab43d59c8e1a00a92c33c49b639af2e9c8efc961e61919d9f72a085da6797"
+    },
+    {
+      "path": "tenants/morlevy/favicon.ico",
+      "bytes": 5430,
+      "sha256": "1235cc7128c44375efccddde4f88d4bb8282bc39c4fd1e9f2b0deea14a832c10"
+    },
+    {
+      "path": "tenants/morlevy/favicon.png",
+      "bytes": 2101,
+      "sha256": "26cab43d59c8e1a00a92c33c49b639af2e9c8efc961e61919d9f72a085da6797"
+    },
+    {
+      "path": "tenants/morlevy/firm-logo.png",
+      "bytes": 20108,
+      "sha256": "df1a1a097e081dcae854f1d9798985f31b0a94375c3b6dfa41aa9c172b6d3888"
+    },
+    {
+      "path": "tenants/morlevy/index.html",
+      "bytes": 10362,
+      "sha256": "b3f95e252d4d72add4b8684c21743317622c1e57ece85038f9ba8c23b8c2f2dd"
+    },
+    {
+      "path": "tenants/morlevy/logo192.png",
+      "bytes": 20956,
+      "sha256": "ab5434f9efbb315eb1fda80982959675366f314ab59d98fc72964355c8c14fcb"
+    },
+    {
+      "path": "tenants/morlevy/logo512.png",
+      "bytes": 92418,
+      "sha256": "dd63a85b6e9997ac65c645442b371efaeafb1b0c244905dbd51c9d3e48b6d177"
+    },
+    {
+      "path": "tenants/morlevy/logos/logo.png",
+      "bytes": 10007,
+      "sha256": "3a7213f1d68d266a7026f904e8635804972023162a3566a9cae06da870debb94"
+    },
+    {
+      "path": "tenants/morlevy/logos/logo2.png",
+      "bytes": 20108,
+      "sha256": "df1a1a097e081dcae854f1d9798985f31b0a94375c3b6dfa41aa9c172b6d3888"
+    },
+    {
+      "path": "tenants/morlevy/logos/logoLM.png",
+      "bytes": 3039,
+      "sha256": "5b2ecda9791a89448cafea69570ce40512a6e66fa85420472f91ae351e1cffc0"
+    },
+    {
+      "path": "tenants/morlevy/logos/logoLMwhite.png",
+      "bytes": 8582,
+      "sha256": "0cb25a911a221e32f9bb812d9d854594a592bc8f2f3ae03c5e0c45296f6769d6"
+    },
+    {
+      "path": "tenants/morlevy/manifest.json",
+      "bytes": 470,
+      "sha256": "7859688dd9ab9c3464e12735a2fd2b57367794cb52e02991e3d8396c627aad30"
+    }
+  ],
+  "archive": {
+    "file": "frontend.tar.gz",
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/signing-implementation-20261007/production-update-20261009/morlevy/frontend.tar.gz",
+    "bytes": 11974782,
+    "sha256": "e6d45147cee95aa276f5ea4da92949e5bce124a51dd84eefa0645d8cf1a17609"
+  },
+  "gitBundle": {
+    "file": "candidate.bundle",
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/signing-implementation-20261007/production-update-20261009/morlevy/candidate.bundle",
+    "bytes": 255096,
+    "sha256": "16113e8d4e3391cd4110d8eb462f3f6491ef7dc4ed9be191bbcad4900c6f6ffb"
+  }
+}

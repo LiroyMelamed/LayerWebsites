@@ -7,6 +7,8 @@ import { useFirmPermissions } from "../providers/FirmPermissionsProvider";
 import { navKeyForPathname } from "../lib/firmPermissionNav";
 import { firstAllowedStaffPath } from "../lib/firmPermissionRoutes";
 import RouteFallback from "../components/simpleComponents/RouteFallback";
+import StatusNotice from "../components/ui/StatusNotice";
+import { useTranslation } from "react-i18next";
 import { AdminStackName } from "./AdminStack";
 import { NoPermissionsScreenName } from "../screens/noPermissions/NoPermissionsScreen";
 
@@ -17,8 +19,9 @@ const PLATFORM_ADMIN_ROUTE_KEYS = new Set([
 ]);
 
 export default function AdminRouteGuard({ children }) {
+    const { t } = useTranslation();
     const location = useLocation();
-    const { permissionMode, canPage, loaded, pages, refresh } = useFirmPermissions() || {};
+    const { permissionMode, canPage, loaded, pages, refresh, error } = useFirmPermissions() || {};
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     const isPlatformAdmin = localStorage.getItem("isPlatformAdmin") === "true";
 
@@ -35,6 +38,9 @@ export default function AdminRouteGuard({ children }) {
     }
     if (token && !loaded) {
         return <RouteFallback />;
+    }
+    if (token && error) {
+        return <StatusNotice actionLabel={t('common.retry')} onAction={refresh}>{t('errors.permissionsUnavailable')}</StatusNotice>;
     }
 
     if (permissionMode === "platform_admin") {

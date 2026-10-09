@@ -1,0 +1,125 @@
+{
+  "productCommit": "98fd566255167aa284f3cc2509b7b04db611b652",
+  "documentationCommit": "d93f821780d1e0458705fee37ea96887dca80218",
+  "qaCommit": "47227c891968dd7db88cc230b3b343111e8d3ab2",
+  "noCustomerDeployment": true,
+  "proofScope": "New navigation only; unchanged evidence reused; no real messages",
+  "files": {
+    "browser-build01.log": {
+      "bytes": 28,
+      "sha256": "d5be26fb25e299ad0cdab1571a5940a82439d0053d436d98651b64c21e8b9b41"
+    },
+    "desktop-en-management01.png": {
+      "bytes": 36915,
+      "sha256": "938e5ea824b12a997bca01d1d9ac966c5b0a180d3af3b14857fb09e89f5dfde7"
+    },
+    "focused01.log": {
+      "bytes": 67845,
+      "sha256": "106403f4b8449ced87d67d1c01273d743169e067864ba64aac32c1d95580cd36"
+    },
+    "lint01.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "mobile-ar-management01.png": {
+      "bytes": 20866,
+      "sha256": "7765b35fa64bdf365f177a49f39e0cef85512eb0cdcf3729898d2f3137481661"
+    },
+    "mobile-ar-templates01.png": {
+      "bytes": 15216,
+      "sha256": "cf386eaf3825bb8134fd2b3638f39c6f290f286eb2b54fb9ed74798bff7153b9"
+    },
+    "mobile-he-management01.png": {
+      "bytes": 23147,
+      "sha256": "c48df2c79ff2aa3ca4abf0bf8cbecb29d95a02de17c53144bf8fadbee49f0372"
+    },
+    "private-stage-failure01.txt": {
+      "bytes": 1133,
+      "sha256": "7106c8a23ed11142f08c3b6ff3a9c9fdabeaf2951c939001000e625ee179dcfb"
+    },
+    "private-stage01.log": {
+      "bytes": 403,
+      "sha256": "bd8820d5ba0b41b34f46878972d16b1878fdb64df752352c794bc5e7905f0a36"
+    },
+    "qa-mobile-main01.png": {
+      "bytes": 25174,
+      "sha256": "0682a1174dc90c1b241a05b52a50e801d1a6ab70977e95c52652e14c90fa7e70"
+    },
+    "qa-mobile-management01.png": {
+      "bytes": 41244,
+      "sha256": "0b1a20868f30d7bdbd6d830793cb24454ade8c43be1497ea46b625652e6ac304"
+    },
+    "qa-mobile-templates01.png": {
+      "bytes": 15741,
+      "sha256": "8cdb40eb632ac17fcb13776b7b69c35f99bb0a8f99c017350f92abc4847d3c5a"
+    },
+    "qa-navigation-controls01.png": {
+      "bytes": 5798,
+      "sha256": "081b7c3aac1572cd5832c539246ba25d730e3e4199e5baea894ab018d7721025"
+    },
+    "qa-prepare01.log": {
+      "bytes": 859,
+      "sha256": "b8e71397a5c48fc3b72bb7f40120845e7748bbd23f377656eb3d1b5266c5d3b8"
+    },
+    "qa-prepare02.log": {
+      "bytes": 551,
+      "sha256": "d07c53342f1d814e8ca85cdade231d81d11af4ed5b47f0440b75ec34574f3cf9"
+    },
+    "qa-private-stage01.json": {
+      "bytes": 403,
+      "sha256": "bd8820d5ba0b41b34f46878972d16b1878fdb64df752352c794bc5e7905f0a36"
+    },
+    "qa-publication-proof01.json": {
+      "bytes": 392,
+      "sha256": "55f182b715eaf2a5eb078320b1493571a53f88efeb3a9f99f70165496c949470"
+    },
+    "qa-publication01.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "qa-resume-source02.log": {
+      "bytes": 3032,
+      "sha256": "f9b45809b6f4d4daaa5661e9077d38c00763ce6835948023108bda78d5f8ac0f"
+    },
+    "qa-source-proof01.json": {
+      "bytes": 871,
+      "sha256": "3fd73b0de7e72c162651a353297edcc2f92733e53b437dcc21a039d549bd7b46"
+    },
+    "qa-stage-source01.log": {
+      "bytes": 1297,
+      "sha256": "393a8c721fb25a701c33bc202271ed18cbd8963de205a65f3d625749e53a56d3"
+    },
+    "qa-stage-source02.log": {
+      "bytes": 31412,
+      "sha256": "6ea1ba5d53562f59af57d999c68e09d2994c0a3d3ab09b65307dcede1ed7fbc6"
+    },
+    "qa-static-proof01.json": {
+      "bytes": 1201,
+      "sha256": "049e25a4f05fedda1f8f951caab62c787732b09aad002fdc856266758ffd9526"
+    },
+    "qa-static01.log": {
+      "bytes": 1201,
+      "sha256": "049e25a4f05fedda1f8f951caab62c787732b09aad002fdc856266758ffd9526"
+    },
+    "qa-templates-loaded01.png": {
+      "bytes": 48728,
+      "sha256": "021983049be43bc715cccea25650b56462fbc2ef4d3a132e499cfc38a3512bce"
+    },
+    "source-candidate01.json": {
+      "bytes": 1140,
+      "sha256": "62ea91e5fcde177c82174f537f399e866ced3b411041c911495fdc6c6f96c4fe"
+    },
+    "source-update-failure02.txt": {
+      "bytes": 1059,
+      "sha256": "be09763811f9cd89eccfcc7b56b679a349af93d0f4d382d60cf54d65259adf64"
+    },
+    "source-update01.log": {
+      "bytes": 871,
+      "sha256": "3fd73b0de7e72c162651a353297edcc2f92733e53b437dcc21a039d549bd7b46"
+    },
+    "templates-he01.png": {
+      "bytes": 20767,
+      "sha256": "6d7a27088951e02b72a45138846ee18dfbc23ce095ecefb69a141c6696d4f0f3"
+    }
+  }
+}
