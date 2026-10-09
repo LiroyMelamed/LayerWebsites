@@ -126,7 +126,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         const t0 = String(type || 'signature').toLowerCase();
         if (t0 === 'initials') return 'initials';
         if (t0 === 'signature') return 'signature';
-        if (t0 === 'clientstamp') return 'clientStamp';
+        if (t0 === 'clientstamp' || t0 === 'lawyerstamp') return 'clientStamp';
         return 'field';
     };
 
@@ -134,7 +134,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const getActiveSpotForMode = (details, current) => {
         const canAct = (spot) => {
-            if (!spot || spot.IsSigned) return false;
+            if (!spot || spot.IsSigned || isFixedLawyerStamp(spot)) return false;
             const flag = spot?.CanSign ?? spot?.canSign;
             if (typeof flag === 'boolean') return flag;
             if (!isPublic) return true;
@@ -144,7 +144,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             return Number(spotSignerId) === Number(myId);
         };
         if (canAct(current)) return current;
-        const allSpots = (details?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
+        const allSpots = (details?.signatureSpots || []).filter((s) => !isFixedLawyerStamp(s));
         const unsignedRequired = getUnsignedRequiredSpots(allSpots);
         if (unsignedRequired.length > 0) return unsignedRequired[0];
         return null;
@@ -241,8 +241,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         if (raw === true || raw === false || raw === 'true' || raw === 'false') {
             return raw === true || raw === 'true';
         }
-        const type = getSpotType(spot);
-        if (type === 'lawyerstamp') return false;
+        if (isFixedLawyerStamp(spot)) return false;
         // Default fillable fields to required (matches lawyer create defaults).
         return true;
     };
@@ -302,6 +301,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         return { ok: true };
     };
     const getSpotType = (spot) => String(spot?.FieldType ?? spot?.fieldType ?? spot?.type ?? 'signature').toLowerCase();
+    const isFixedLawyerStamp = (spot) => getSpotType(spot) === 'lawyerstamp' && spot?.InteractiveLawyerStamp !== true;
     const getFieldTypeKey = (type) => {
         switch (type) {
             case 'idnumber':
@@ -598,7 +598,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             || showCompletion;
         if (locked) return;
 
-        const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
+        const allSpots = (fileDetails?.signatureSpots || []).filter((s) => !isFixedLawyerStamp(s));
         const unsignedRequired = getUnsignedRequiredSpots(allSpots);
         const remainingSigs = unsignedRequired.filter((s) => isSignatureLike(getSpotType(s))).length;
         // Signatures already done: completion overlay offers continue-to-fields. Don't auto-open a field pad.
@@ -617,7 +617,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     // Celebrate when signatures are done (even if data fields remain).
     useEffect(() => {
         if (!fileDetails || loading || showCompletion) return;
-        const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
+        const allSpots = (fileDetails?.signatureSpots || []).filter((s) => !isFixedLawyerStamp(s));
         const unsignedRequired = getUnsignedRequiredSpots(allSpots);
         const remainingSigs = unsignedRequired.filter((s) => isSignatureLike(getSpotType(s))).length;
         if (remainingSigs > 0) return;
@@ -1070,7 +1070,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         if (!spot || spot.IsSigned) return false;
 
         const spotType = getSpotType(spot);
-        if (!isSignatureLike(spotType) && spotType !== 'clientstamp') return false;
+        if (!isSignatureLike(spotType) && spotType !== 'clientstamp'
+            && !(spotType === 'lawyerstamp' && !isFixedLawyerStamp(spot))) return false;
 
         const requireOtp = otpRequired;
         const consentVersion = String(fileDetails?.file?.SigningPolicyVersion || "2026-01-11");
@@ -1657,7 +1658,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const applySavedSignatureForNext = async (savedItem = null) => {
         try {
-            const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
+            const allSpots = (fileDetails?.signatureSpots || []).filter((s) => !isFixedLawyerStamp(s));
             const unsigned = getUnsignedRequiredSpots(allSpots).filter((s) => getSpotType(s) === 'signature');
             const target = (!currentSpot || currentSpot.IsSigned) ? (unsigned[0] || null) : currentSpot;
             if (!target) return;
@@ -1714,7 +1715,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const applySavedStampForNext = async (savedItem = null) => {
         try {
-            const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
+            const allSpots = (fileDetails?.signatureSpots || []).filter((s) => !isFixedLawyerStamp(s));
             const unsigned = getUnsignedRequiredSpots(allSpots).filter((s) => getSpotType(s) === 'signature');
             const target = (!currentSpot || currentSpot.IsSigned) ? (unsigned[0] || null) : currentSpot;
             if (!target) return;
@@ -1774,7 +1775,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 showAppToast({ type: "warning", text: t("signing.canvas.otpRequired") });
                 return false;
             }
-            const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
+            const allSpots = (fileDetails?.signatureSpots || []).filter((s) => !isFixedLawyerStamp(s));
             const unsignedRequired = getUnsignedRequiredSpots(allSpots);
             // Sign-all applies one drawn/saved signature to every remaining
             // signature-like spot this signer can act on (signature + initials).
@@ -2053,11 +2054,11 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const waitingForOthers = fileDetails?.signingOrder === 'sequential' && fileDetails?.isMyTurn === false;
     const allSpots = fileDetails.signatureSpots || [];
-    // LawyerStamp spots are pre-signed by the lawyer — hide them from the client view entirely.
+    // Legacy LawyerStamp is already applied by the sender; only explicitly interactive package stamps are fillable.
     // Multi-signer: show everyone's signed spots (so later signers see prior signatures),
     // but only show unsigned spots the current user can actually sign.
     const spots = allSpots.filter((s) => {
-        if (getSpotType(s) === 'lawyerstamp') return false;
+        if (isFixedLawyerStamp(s)) return false;
         if (s?.IsSigned) return true;
         return isMyActionableSpot(s);
     });
@@ -2464,7 +2465,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         {clientStampPreview && (
                             <img
                                 src={clientStampPreview}
-                                alt={t("signing.fields.clientStamp")}
+                                alt={t(currentSpotType === 'lawyerstamp' ? "signing.fields.lawyerStamp" : "signing.fields.clientStamp")}
                                 className="lw-signing-savedSigPreview"
                                 style={{ maxHeight: 120, objectFit: 'contain', margin: '0.5rem 0' }}
                             />
@@ -2552,7 +2553,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             {currentSpot && !currentSpot.IsSigned && currentSignMode === 'clientStamp' && !stampSignPhase && signatureMode === 'savedStamp' && savedStamp.exists && (
                 <div className="lw-signing-canvasSection">
                     <div className="lw-signing-savedSigBox">
-                        <div className="lw-signing-fieldLabel">{t("signing.fieldSettings.clientStampTitle")}</div>
+                        <div className="lw-signing-fieldLabel">{t(currentSpotType === 'lawyerstamp' ? "signing.fields.lawyerStamp" : "signing.fieldSettings.clientStampTitle")}</div>
                         <div className="lw-signing-savedSigPreviewWrap">
                             {savedStamp.url ? (
                                 <img
@@ -2581,14 +2582,14 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             {currentSpot && !currentSpot.IsSigned && currentSignMode === 'clientStamp' && !stampSignPhase && signatureMode !== 'savedStamp' && (
                 <div className="lw-signing-canvasSection">
                     <div className="lw-signing-fieldInput">
-                        <div className="lw-signing-fieldLabel">{t("signing.fieldSettings.clientStampTitle")}</div>
+                        <div className="lw-signing-fieldLabel">{t(currentSpotType === 'lawyerstamp' ? "signing.fields.lawyerStamp" : "signing.fieldSettings.clientStampTitle")}</div>
                         <div className="lw-signing-fieldLabel" style={{ fontSize: '0.8rem', opacity: 0.7 }}>
                             {t("signing.fieldSettings.clientStampUploadHint")}
                         </div>
                         {clientStampPreview && (
                             <img
                                 src={clientStampPreview}
-                                alt={t("signing.fields.clientStamp")}
+                                alt={t(currentSpotType === 'lawyerstamp' ? "signing.fields.lawyerStamp" : "signing.fields.clientStamp")}
                                 className="lw-signing-savedSigPreview"
                                 style={{ maxHeight: 120, objectFit: 'contain', margin: '0.5rem 0' }}
                             />

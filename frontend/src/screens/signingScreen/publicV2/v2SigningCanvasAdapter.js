@@ -30,6 +30,9 @@ export function createV2DocumentAdapter({ token, document, task, entries, person
         PageNumber: field.pageNum,
         X: field.x, Y: field.y, Width: field.width, Height: field.height,
         FieldType: field.type,
+        // Legacy LawyerStamp is already applied by the sender. Package tasks
+        // explicitly require the current person's own stamp/drawing instead.
+        InteractiveLawyerStamp: field.type === 'lawyerStamp',
         FieldLabel: field.label || '',
         IsRequired: field.required !== false,
         IsSigned: accepted || signed.has(index + 1),
