@@ -1558,3 +1558,5 @@ ssh: connect to host 37.60.230.148 port 22: Connection refused
 - NEW production frontend publication idm 3e0ec71e8b6533c2bcbbed3347fac8a65719ccab PASS; front-proof.json index atomic last/rollback index retained/old assets retained. 313 assets freshly hash-verified. Public proof remains separate.
 
 - NEW exact production idm public index/mainJS/mainCSS byte identity and existing API health PASS 3e0ec71e8b6533c2bcbbed3347fac8a65719ccab; production-fixes-20261009/idm/public-proof.json. This proves installed exact QA-approved source, not a repeated behavior suite or native/store upload.
+
+- New production Git readback PASS: no-force atomic push of final documentation 1e47af42bd1a75044f02dc09917d8b54a0b659ea, four actual customer heads and four annotated production-signing-v2-20261009-fixes tags. producteb94f66e/QA6a570cc3, exact peeled refs verified; previous tags retained. production-fixes-20261009/git-proof.json. Dirty original customer announcement remains preserved; customer message not sent.

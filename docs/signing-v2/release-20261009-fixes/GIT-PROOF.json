@@ -1,0 +1,49 @@
+{
+  "complete": true,
+  "at": "2026-10-09T19:10:13.601Z",
+  "documentationCommit": "1e47af42bd1a75044f02dc09917d8b54a0b659ea",
+  "product": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+  "qa": "6a570cc3fddd349ecdef8352b4a267ca49f09596",
+  "atomicNoForce": true,
+  "refs": {
+    "refs/heads/AshrafEssa": "0a156bfd590aa0bf0addcdc7fa7a6cb4db84d869",
+    "refs/heads/Idm": "3e0ec71e8b6533c2bcbbed3347fac8a65719ccab",
+    "refs/heads/MelamedLaw": "81f17397bce0c613798b7a848d6916a0e0c3cb4b",
+    "refs/heads/MorLevi": "dfcac2b1b22d3bd08857a33e3adb0cd11fd039a3",
+    "refs/heads/codex/signing-templates-20261006": "1e47af42bd1a75044f02dc09917d8b54a0b659ea",
+    "refs/tags/production-signing-v2-20261009-fixes-ashrafessa^{}": "0a156bfd590aa0bf0addcdc7fa7a6cb4db84d869",
+    "refs/tags/production-signing-v2-20261009-fixes-idm^{}": "3e0ec71e8b6533c2bcbbed3347fac8a65719ccab",
+    "refs/tags/production-signing-v2-20261009-fixes-melamedlaw^{}": "81f17397bce0c613798b7a848d6916a0e0c3cb4b",
+    "refs/tags/production-signing-v2-20261009-fixes-morlevy^{}": "dfcac2b1b22d3bd08857a33e3adb0cd11fd039a3"
+  },
+  "tags": [
+    {
+      "tenant": "melamedlaw",
+      "branch": "MelamedLaw",
+      "tag": "production-signing-v2-20261009-fixes-melamedlaw",
+      "candidate": "81f17397bce0c613798b7a848d6916a0e0c3cb4b",
+      "remoteBefore": "f722102ef5b20b192f3c538ce9c5487b052f8f89"
+    },
+    {
+      "tenant": "morlevy",
+      "branch": "MorLevi",
+      "tag": "production-signing-v2-20261009-fixes-morlevy",
+      "candidate": "dfcac2b1b22d3bd08857a33e3adb0cd11fd039a3",
+      "remoteBefore": "03fd5e4ab9bd06f2e0c1add170d67495e232538c"
+    },
+    {
+      "tenant": "ashrafessa",
+      "branch": "AshrafEssa",
+      "tag": "production-signing-v2-20261009-fixes-ashrafessa",
+      "candidate": "0a156bfd590aa0bf0addcdc7fa7a6cb4db84d869",
+      "remoteBefore": "7da3564a2bc9229b45d66ef8abfd4522973bdd67"
+    },
+    {
+      "tenant": "idm",
+      "branch": "Idm",
+      "tag": "production-signing-v2-20261009-fixes-idm",
+      "candidate": "3e0ec71e8b6533c2bcbbed3347fac8a65719ccab",
+      "remoteBefore": "0ca0de08ea64c5cb470eb29f1b67448d1a7c5cd5"
+    }
+  ]
+}
