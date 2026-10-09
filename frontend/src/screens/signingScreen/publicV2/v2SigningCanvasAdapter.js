@@ -1,6 +1,6 @@
 import signingPublicApi from '../../../api/signingPublicApi';
 
-const IMAGE_TYPES = new Set(['signature', 'initials']);
+const IMAGE_TYPES = new Set(['signature', 'initials', 'lawyerStamp']);
 const ok = (data = {}) => ({ success: true, data });
 
 // Adapt package tasks to the incumbent SignatureCanvas. The manifest, OTP and
@@ -15,7 +15,7 @@ export function createV2DocumentAdapter({ token, document, task, entries, person
     const bySpot = new Map(fields.map((field, index) => [index + 1, field]));
     const signed = new Set();
     const textValues = new Map();
-    let signatureImage = null;
+    const signatureImages = new Map();
     let session = null;
     let sessionPromise = null;
     let accepted = finished;
@@ -30,6 +30,9 @@ export function createV2DocumentAdapter({ token, document, task, entries, person
         PageNumber: field.pageNum,
         X: field.x, Y: field.y, Width: field.width, Height: field.height,
         FieldType: field.type,
+        // Legacy LawyerStamp is already applied by the sender. Package tasks
+        // explicitly require the current person's own stamp/drawing instead.
+        InteractiveLawyerStamp: field.type === 'lawyerStamp',
         FieldLabel: field.label || '',
         IsRequired: field.required !== false,
         IsSigned: accepted || signed.has(index + 1),
@@ -38,7 +41,7 @@ export function createV2DocumentAdapter({ token, document, task, entries, person
         CanSign: !waiting && !accepted,
         IsMine: true,
         FieldValue: textValues.get(index + 1) ?? '',
-        SignatureUrl: signed.has(index + 1) && IMAGE_TYPES.has(field.type) ? signatureImage : null,
+        SignatureUrl: signed.has(index + 1) && IMAGE_TYPES.has(field.type) ? signatureImages.get(index + 1) : null,
     }));
 
     const details = () => ok({
@@ -72,7 +75,14 @@ export function createV2DocumentAdapter({ token, document, task, entries, person
                     ? value === true || value === 'true'
                     : String(value || '').trim();
             });
-            frozenBody = { consent: true, values, ...(signatureImage ? { signature: signatureImage } : {}) };
+            const drawings = new Map();
+            signatureImages.forEach((image, spotId) => {
+                if (!signed.has(spotId)) return;
+                const field = bySpot.get(spotId);
+                if (!drawings.has(image)) drawings.set(image, { image, fields: [] });
+                drawings.get(image).fields.push({ taskId: field.taskId, fieldId: field.id });
+            });
+            frozenBody = { consent: true, values, drawings: [...drawings.values()] };
         }
         // A lost response must retry exactly the same payload and idempotency key.
         if (!acceptPromise) {
@@ -87,7 +97,7 @@ export function createV2DocumentAdapter({ token, document, task, entries, person
         if (frozenBody) return; // do not mutate an acceptance whose response was lost
         const spotId = Number(body.signatureSpotId);
         if (!bySpot.has(spotId)) throw new Error('Unknown signing field');
-        if (body.signatureImage) signatureImage = body.signatureImage;
+        if (body.signatureImage && IMAGE_TYPES.has(bySpot.get(spotId).type)) signatureImages.set(spotId, body.signatureImage);
         if (body.fieldValue !== undefined) textValues.set(spotId, body.fieldValue);
         signed.add(spotId);
     }
@@ -136,7 +146,7 @@ export function createV2DocumentAdapter({ token, document, task, entries, person
         publicSignFileBatch: (_token, body) => applyMarks(() => {
             const ids = (body.signatureSpotIds || []).map(Number);
             if (ids.some(id => !IMAGE_TYPES.has(bySpot.get(id)?.type))) throw new Error('Unknown signing field');
-            if (!frozenBody && body.signatureImage) signatureImage = body.signatureImage;
+            if (!frozenBody && body.signatureImage) ids.forEach(id => signatureImages.set(id, body.signatureImage));
             ids.forEach(id => signed.add(id));
         }),
         // PublicPackageSigning opens the scoped in-page issue dialog. Never

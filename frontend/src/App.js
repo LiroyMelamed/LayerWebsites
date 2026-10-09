@@ -117,6 +117,7 @@ const App = () => {
     const isDeepLink = !isPublicSignRoute && !!(searchParams.get('token') && searchParams.get('role'));
 
     if (token && role) {
+      const authChanged = token !== localStorage.getItem('token') || role !== localStorage.getItem('role');
       localStorage.setItem('token', token);
       localStorage.setItem('role', role);
 
@@ -124,6 +125,7 @@ const App = () => {
       if (isPlatformAdminParam === 'true') {
         localStorage.setItem('isPlatformAdmin', 'true');
       }
+      if (authChanged) window.dispatchEvent(new Event('lw-auth-changed'));
 
       if (signingFileId) {
         sessionStorage.setItem('lw_signing_deeplink_fileId', String(signingFileId));

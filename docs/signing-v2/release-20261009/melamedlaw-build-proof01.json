@@ -1,0 +1,11 @@
+{
+  "tenant": "melamedlaw",
+  "candidate": "180277727e4d926809c6a456ed16e9df0adb9c4a",
+  "exitCode": 0,
+  "result": "PASS",
+  "log": {
+    "bytes": 22628,
+    "sha256": "e50d631639056d1c083f729d2ec167bd0cf4284c1b8f2622521104d44fde6424"
+  },
+  "at": "2026-10-08T22:56:32.929Z"
+}
