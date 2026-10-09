@@ -105,3 +105,16 @@ test('two simultaneous clicks with a failed response leave all affected fields u
     expect(state.signerCompleted).toBe(false);
     expect(state.signatureSpots.every(spot => !spot.IsSigned)).toBe(true);
 });
+
+
+test('only personal package lawyer stamps opt into the interactive incumbent stamp flow', async () => {
+    const selected = entry('a', ['signature', 'lawyerStamp', 'lawyerStamp']);
+    selected.task.fields[2].required = false;
+    const spots = (await adapterFor([selected]).getPublicSigningFileDetails()).data.signatureSpots;
+    expect(spots.map(spot => [spot.FieldType, spot.InteractiveLawyerStamp, spot.IsRequired])).toEqual([
+        ['signature', false, true], ['lawyerStamp', true, true], ['lawyerStamp', true, false],
+    ]);
+    expect(spots.map(spot => [spot.PageNumber, spot.X, spot.Y, spot.Width, spot.Height])).toEqual([
+        [1, 20, 80, 150, 60], [2, 20, 80, 150, 60], [3, 20, 80, 150, 60],
+    ]);
+});
