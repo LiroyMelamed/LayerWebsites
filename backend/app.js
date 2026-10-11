@@ -164,13 +164,14 @@ app.use(
     authRoutes
 );
 
-app.use(requireBillingAccess);
 
 app.use("/api/webhooks/payments", paymentWebhookRoutes);
 app.use("/api/public/signup", publicSignupRoutes);
+app.use('/api/business-control',require('./routes/businessControl'));
 app.use("/api/master-admin", masterAdminRoutes);
 
 app.use(resolveTenant);
+app.use(requireBillingAccess);
 
 app.use("/api/Customers", customerRoutes);
 app.use("/api/Cases", caseRoutes);

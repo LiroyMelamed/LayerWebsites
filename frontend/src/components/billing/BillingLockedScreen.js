@@ -10,12 +10,14 @@ import { AdminStackName } from '../../navigation/AdminStack';
 import { PlanUsageScreenName } from '../../navigation/screenPaths';
 import { useBillingLock } from '../../providers/BillingLockProvider';
 import './BillingLockedScreen.scss';
+import ServiceUnavailableScreen from './ServiceUnavailableScreen';
 
 export default function BillingLockedScreen() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { graceUntil } = useBillingLock();
-    const isPlatformAdmin = typeof window !== 'undefined' && localStorage.getItem('isPlatformAdmin') === 'true';
+    const { graceUntil, canManageBilling } = useBillingLock();
+    const isPlatformAdmin = canManageBilling === true;
+    if (!isPlatformAdmin) return <ServiceUnavailableScreen />;
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>

@@ -5,6 +5,8 @@ const { createAppError } = require('../utils/appError');
 const { getHebrewMessage } = require('../utils/errors.he');
 const attachFirmPermissions = require('./attachFirmPermissions');
 const { applyLegacyOfficeRole } = require('../lib/officeRole');
+const { runWithTenant } = require('../lib/tenant/tenantContext');
+const { requireBillingAccess } = require('./requireBillingAccess');
 
 const SECRET_KEY = process.env.JWT_SECRET;
 if (!SECRET_KEY) {
@@ -89,6 +91,11 @@ const authMiddleware = (req, res, next) => {
         attachFirmPermissions(req, res, (permErr) => {
             if (permErr) return next(permErr);
             applyLegacyOfficeRole(req);
+            // The current DB identity is authoritative even when no tenant header
+            // was sent. A header cannot bypass the owning firm's billing gate.
+            if (req.firmTenantId && String(req.tenant?.id || '') !== String(req.firmTenantId)) {
+                return runWithTenant({ id: req.firmTenantId }, () => requireBillingAccess(req, res, next));
+            }
             return next();
         });
     });

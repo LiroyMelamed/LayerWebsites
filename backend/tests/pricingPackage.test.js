@@ -153,3 +153,8 @@ test('yearly billing is 10% off 12 months, rounded', () => {
     assert.equal(enterprise.yearlyTotal, 14612);
     assert.equal(enterprise.yearlySavings, 1624);
 });
+
+ test('new package choices reject a platform-free contract even from legacy none', () => {
+ const ev=evaluatePackageChange({current:{platformId:'none',resourceId:'basic',signingId:'none'},next:{platformId:'none',resourceId:'basic',signingId:'none'},usage:{}});
+ assert.equal(ev.allowed,false); assert.ok(ev.blocks.some(b=>b.field==='platformId'));
+ });
