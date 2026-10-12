@@ -34,7 +34,7 @@ async function getPublicIp() {
 
 const server = app.listen(PORT, HOST, async () => {
     try { await pool.ensureOfficeIsolation(); }
-    catch (error) { console.error('[office-isolation] startup refused:', error.message); server.close(); process.exitCode=1; await pool.end(); return; }
+    catch (error) { console.error('[office-isolation] startup refused:', error.message); server.close(); setTimeout(() => process.exit(1), 1000).unref(); await pool.end(); process.exit(1); }
     console.log(`Server running on ${HOST}:${PORT}`);
     await getPublicIp();
     await signingSchemaStartupCheck();

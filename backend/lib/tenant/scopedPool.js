@@ -10,10 +10,12 @@ function installScopedPool(pool) {
         scope.assertConfigured();
         if (!scope.enabled()) return Promise.resolve();
         if (!readiness) readiness = (async () => {
+            // Defer the socket handshake until synchronous application imports finish.
+            await new Promise(resolve => setImmediate(resolve));
             const client = await connect();
             try { await require('./isolationSchema').assertIsolationReady(client); }
             finally { client.release(); }
-        })();
+        })().catch(error => { readiness = undefined; throw error; });
         return readiness;
     };
     async function lease() {
