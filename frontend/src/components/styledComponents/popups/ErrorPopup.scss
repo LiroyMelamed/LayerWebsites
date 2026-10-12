@@ -1,26 +1,30 @@
 @use '../../../styles/mixins' as m;
 @use '../../../styles/variables' as v;
 
-.lw-errorPopup.lw-statusNotice {
-    flex-direction: row;
-    align-items: flex-start;
-    inline-size: 100%;
-}
-
-.lw-errorPopup .lw-statusNotice__body {
+.lw-errorPopup {
+    display: flex;
     flex-direction: column;
-    align-items: stretch;
+    align-items: center;
+    gap: v.$space-3;
+    inline-size: 100%;
+    min-inline-size: 0;
+    box-sizing: border-box;
+    padding: v.$space-4;
 }
 
-.lw-errorPopup__separator {
-    --lw-separator-margin-block: 1.25rem; /* 1.25rem */
+.lw-errorPopup__title,
+.lw-errorPopup__message {
+    text-align: center;
+    max-inline-size: 100%;
+    overflow-wrap: anywhere;
 }
 
 .lw-errorPopup__message {
-    margin-block: 1.25rem; /* 1.25rem */
+    color: var(--lw-color-text-secondary, #555);
 }
 
 .lw-errorPopup__actions {
     @include m.row(v.$space-2);
-    align-self: flex-start;
+    justify-content: center;
+    margin-block-start: v.$space-2;
 }
