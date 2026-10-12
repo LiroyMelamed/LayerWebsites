@@ -93,6 +93,9 @@ async function sendAndStoreNotification(userId, title, message, data = {}, optio
                         const dataResp = resp?.data;
                         if (dataResp?.data?.length) {
                             const failures = dataResp.data.filter((r) => r?.status !== "ok");
+                            if (options.throwOnError && failures.length === dataResp.data.length) {
+                                throw new Error('push_provider_rejected');
+                            }
                             if (failures.length) {
                                 console.error(
                                     `❌ Expo push failures for UserId ${userId}:`,
@@ -107,6 +110,7 @@ async function sendAndStoreNotification(userId, title, message, data = {}, optio
                             "UserId:",
                             userId
                         );
+                        if (options.throwOnError) throw err;
                     }
                 }
             } else {
@@ -164,6 +168,7 @@ async function sendAndStoreNotification(userId, title, message, data = {}, optio
 
     } catch (error) {
         console.error("Error in sendAndStoreNotification:", error);
+        if (options.throwOnError) throw error;
     }
 }
 

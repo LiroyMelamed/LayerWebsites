@@ -22,15 +22,16 @@ const calendarReminderSql = `
              ELSE COALESCE(managers.contacts, u_manager.email, u_owner.email, '') END AS to_email,
         ce.title AS subject,
         CASE ce.event_type WHEN 'hearing' THEN 'CALENDAR_HEARING' WHEN 'appointment' THEN 'CALENDAR_APPOINTMENT' ELSE 'CALENDAR_REMINDER' END::text AS template_key,
-        CASE WHEN offsets.minutes = 0 THEN ce.created_at ELSE ce.start_time - offsets.minutes * INTERVAL '1 minute' END AS scheduled_for,
+        COALESCE((ce.reminder_deferred_until->>(audience.role||':'||offsets.minutes))::timestamptz, CASE WHEN offsets.minutes = 0 THEN ce.created_at ELSE ce.start_time - offsets.minutes * INTERVAL '1 minute' END) AS scheduled_for,
         CASE
           WHEN COALESCE(ce.reminders_sent_offsets, '[]'::jsonb) @> to_jsonb(audience.role || ':' || offsets.minutes)
             OR COALESCE(ce.reminders_sent_offsets, '[]'::jsonb) @> to_jsonb(offsets.minutes)
           THEN 'SENT'
           WHEN ce.event_status = 'cancelled' THEN 'CANCELLED'
+          WHEN EXISTS(SELECT 1 FROM jsonb_array_elements_text(COALESCE(ce.reminders_sent_offsets,'[]'::jsonb)) k WHERE CASE WHEN k ~ ('^claim:'||audience.role||':'||offsets.minutes||':[0-9]+$') THEN split_part(k,':',4)::numeric ELSE NULL END < extract(epoch FROM NOW())*1000-900000) THEN 'FAILED'
           ELSE 'PENDING'
         END::text AS status,
-        NULL::text AS error, ce.created_at, NULL::timestamptz AS sent_at,
+        CASE WHEN EXISTS(SELECT 1 FROM jsonb_array_elements_text(COALESCE(ce.reminders_sent_offsets,'[]'::jsonb)) k WHERE CASE WHEN k ~ ('^claim:'||audience.role||':'||offsets.minutes||':[0-9]+$') THEN split_part(k,':',4)::numeric ELSE NULL END < extract(epoch FROM NOW())*1000-900000) THEN 'פעולת השליחה הופסקה; יש לבדוק אם ההודעה נמסרה לפני שליחה חוזרת' ELSE NULL END::text AS error, ce.created_at, NULL::timestamptz AS sent_at,
         CASE WHEN ce.event_status = 'cancelled' THEN ce.updated_at ELSE NULL END AS cancelled_at,
         ce.id AS calendar_event_id, 'calendar'::text AS source,
         audience.role::text AS audience, ce.reminder_channels AS channels,

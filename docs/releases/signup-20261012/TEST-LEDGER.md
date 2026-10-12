@@ -41,3 +41,5 @@ Initial schema restoration FAILED because pgvector is absent on this local Postg
 
 
 2026-10-12 centering refinement:87ef76ee + scoped CSS/button-class patch. Frontend production-mode CI build PASS (`legal-centered-unavailable-build.log`). Integrated browser checked compiled client unavailable screen with synthetic loopback API at desktop1280x720 and mobile390x844: title/body/retry button centered; no billing disclosure. Evidence screenshots/client-temporary-unavailable-centered.png and client-temporary-unavailable-centered-mobile.png. No backend changes/provider calls/production deployment. Previous backend verification remains applicable.
+
+2026-10-12 LawyerPlatform isolated compatibility release: preserves deployedc77a499 customizationsfa6e26ce; owner/customer identity/privacy tests8PASS (lawyer-legacy-access-tests.log). Normal production build PASS with pre-existing legacy ESLint warnings (lawyer-legacy-access-build-r2.log); strict CI first failed on those historical warnings. Only billing access/UI backported; this does not activate pending new signup contracts. Main compatibility patch records exact change. No changes to existing signing/calendar code.
