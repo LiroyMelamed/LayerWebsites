@@ -83,7 +83,7 @@ function clearAuthAndRedirect() {
 
     // An expired office session must not interrupt a valid public signing link.
     // Background permission requests can fail while this independent flow is open.
-    if (/^\/(?:PublicSignScreen|ViewSignedDocument\/(?:Package|Sign)|s)(?:\/|$)/i.test(window.location.pathname)) return;
+    if (/^\/(?:PublicSignScreen|ViewSignedDocument|s)(?:\/|$)/i.test(window.location.pathname)) return;
 
     if (window.ReactNativeWebView?.postMessage) {
         window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'LOGOUT' }));

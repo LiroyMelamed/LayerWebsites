@@ -18,9 +18,9 @@ jest.mock('../lib/tenantSlug', () => ({ isMultiTenantApp: () => false }));
 beforeEach(() => { jest.clearAllMocks(); localStorage.clear(); sessionStorage.clear(); mockLocation = { pathname: '/entry', search: '' }; });
 afterEach(() => { document.body.classList.remove('lw-fromApp'); document.documentElement.classList.remove('lw-noPullRefresh'); });
 
-test('public signing query tokens cannot replace the logged-in session', () => {
+test.each(['/s/synthetic-link', '/PublicSignScreen', '/ViewSignedDocument', '/ViewSignedDocument/Signing', '/ViewSignedDocument/Link/Abcd_123', '/ViewSignedDocument/Package', '/ViewSignedDocument/Sign'])('public signing query tokens cannot replace the logged-in session: %s', (pathname) => {
   localStorage.setItem('token', 'existing-synthetic'); localStorage.setItem('role', 'User');
-  mockLocation = { pathname: '/s/synthetic-link', search: '?token=public-synthetic&role=Admin' };
+  mockLocation = { pathname, search: '?token=public-synthetic&role=Admin' };
   render(<App />);
   expect(localStorage.getItem('token')).toBe('existing-synthetic');
   expect(localStorage.getItem('role')).toBe('User');

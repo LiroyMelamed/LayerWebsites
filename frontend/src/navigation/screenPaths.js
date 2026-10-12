@@ -36,6 +36,8 @@ export const ClientTicketScreenName = "/TicketScreen";
 export const LoginScreenName = "/LoginScreen";
 export const LoginOtpScreenName = "/LoginOtpScreen";
 
+export const BrowserSigningScreenName = "/ViewSignedDocument/Signing";
+export const BrowserSigningLinkScreenName = "/ViewSignedDocument/Link/:slug";
 export const PublicSignScreenName = "/PublicSignScreen";
 export const ShortSignRedirectScreenName = "/s/:slug";
 export const ViewSignedDocumentName = "/ViewSignedDocument";
