@@ -1,3 +1,4 @@
+const { assertSignupAvailable } = require('./signupAvailability');
 const crypto = require('node:crypto');
 const pool = require('../../config/db');
 const { formatPhoneNumber } = require('../../utils/phoneUtils');
@@ -48,6 +49,7 @@ function mapSignupRow(row) {
 }
 
 async function createSignupIntent(payload) {
+    assertSignupAvailable();
     const slug = normalizeSlug(payload.slug);
     const firmName = String(payload.firmName || '').trim();
     const adminName = String(payload.adminName || '').trim();
@@ -121,6 +123,7 @@ function signupIpnUrl() {
 }
 
 async function createSignupCheckout(intentId) {
+    assertSignupAvailable();
     const intent = await getSignupIntent(intentId);
     if (!intent) {
         const err = new Error('SIGNUP_NOT_FOUND');
@@ -194,6 +197,7 @@ async function createSignupCheckout(intentId) {
 }
 
 async function provisionTenantFromSignup(signupIntentId, { tokenInfo } = {}) {
+    assertSignupAvailable();
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
