@@ -1,10 +1,8 @@
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
-import { Text14, TextBold16 } from "../../specializedComponents/text/AllTextKindFile";
+import { Text14, TextBold20 } from "../../specializedComponents/text/AllTextKindFile";
 import PrimaryButton from "../buttons/PrimaryButton";
-import Separator from "../separators/Separator";
 import { useTranslation } from "react-i18next";
 
-import "../../ui/StatusNotice.scss";
 import "./ErrorPopup.scss";
 
 export default function ErrorPopup({
@@ -28,20 +26,11 @@ export default function ErrorPopup({
     const resolvedOk = okKey ? t(okKey, okValues) : t("common.ok");
 
     return (
-        <SimpleContainer className="lw-errorPopup lw-statusNotice is-embedded">
-            <span className="lw-statusNotice__mark" aria-hidden="true" />
-            <SimpleContainer className="lw-statusNotice__body">
-            <TextBold16>{resolvedTitle}</TextBold16>
-
-            <Separator className="lw-errorPopup__separator" />
-
+        <SimpleContainer className="lw-errorPopup">
+            <TextBold20 className="lw-errorPopup__title">{resolvedTitle}</TextBold20>
             <Text14 className="lw-errorPopup__message">{resolvedMessage}</Text14>
-
-            <Separator className="lw-errorPopup__separator" />
-
             <SimpleContainer className="lw-errorPopup__actions">
                 <PrimaryButton onPress={() => closePopup()}>{resolvedOk}</PrimaryButton>
-            </SimpleContainer>
             </SimpleContainer>
         </SimpleContainer>
     );

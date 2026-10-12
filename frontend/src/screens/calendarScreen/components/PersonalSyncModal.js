@@ -61,6 +61,14 @@ function channelsToString(set) {
     return ordered.join(",") || "email";
 }
 
+function extractAgendaSettings(response) {
+    if (!response?.success) return null;
+    const settings = response?.data?.settings || response?.settings;
+    if (!settings || typeof settings !== "object" || Array.isArray(settings)) return null;
+    if (typeof settings.enabled !== "boolean" || typeof settings.channels !== "string" || typeof settings.sendTime !== "string") return null;
+    return settings;
+}
+
 /**
  * Per-lawyer calendar sync + personal daily agenda digest.
  * Opened from CalendarScreen only (not Platform Settings).
@@ -83,6 +91,8 @@ export default function PersonalSyncModal({ onEventsChanged }) {
     const [agendaSaving, setAgendaSaving] = useState(false);
     const [agendaMsg, setAgendaMsg] = useState("");
     const [agendaError, setAgendaError] = useState(false);
+    const [agendaLoaded, setAgendaLoaded] = useState(false);
+    const [agendaDeliveryWarning, setAgendaDeliveryWarning] = useState(false);
 
     const applyIcalPayload = useCallback((data) => {
         if (!data) return;
@@ -97,6 +107,7 @@ export default function PersonalSyncModal({ onEventsChanged }) {
         setIcalError("");
         try {
             const res = await calendarApi.getIcalToken();
+            if (!res?.success || !res?.data?.subscriptionUrl) throw new Error(t("calendar.icalLoadError"));
             applyIcalPayload(res?.data);
         } catch {
             setIcalError(t("calendar.icalLoadError"));
@@ -109,16 +120,23 @@ export default function PersonalSyncModal({ onEventsChanged }) {
         setAgendaLoading(true);
         try {
             const res = await calendarApi.getDailyAgendaSettings();
-            const s = res?.data?.settings || res?.settings || {};
+            const s = extractAgendaSettings(res);
+            if (!s) throw new Error(res?.data?.message || "Calendar settings unavailable");
             setAgendaEnabled(!!s.enabled);
             setAgendaChannels(parseChannelSet(s.channels || "email"));
             setAgendaSendTime(s.sendTime || "07:30");
+            setAgendaDeliveryWarning(Boolean(s.deliveryWarning));
+            setAgendaLoaded(true);
+            setAgendaError(false);
+            setAgendaMsg("");
         } catch {
-            /* keep defaults */
+            setAgendaLoaded(false);
+            setAgendaError(true);
+            setAgendaMsg(t("calendar.dailyAgendaLoadError"));
         } finally {
             setAgendaLoading(false);
         }
-    }, []);
+    }, [t]);
 
     useEffect(() => {
         loadIcal();
@@ -135,6 +153,7 @@ export default function PersonalSyncModal({ onEventsChanged }) {
     };
 
     const handleSaveAgenda = async () => {
+        if (!agendaLoaded) return;
         setAgendaSaving(true);
         setAgendaMsg("");
         setAgendaError(false);
@@ -145,16 +164,18 @@ export default function PersonalSyncModal({ onEventsChanged }) {
                 recipients: "", // always self — lawyer email/phone from profile
                 sendTime: agendaSendTime,
             });
-            const s = res?.data?.settings || res?.settings;
+            const s = extractAgendaSettings(res);
+            if (!s) throw new Error(res?.data?.message || t("calendar.dailyAgendaSaveError"));
             if (s) {
                 setAgendaEnabled(!!s.enabled);
                 setAgendaChannels(parseChannelSet(s.channels || "email"));
                 setAgendaSendTime(s.sendTime || "07:30");
+                setAgendaDeliveryWarning(Boolean(s.deliveryWarning));
             }
             setAgendaMsg(t("calendar.dailyAgendaSaved"));
         } catch (err) {
             setAgendaError(true);
-            setAgendaMsg(err?.response?.data?.message || t("calendar.dailyAgendaSaveError"));
+            setAgendaMsg(err?.response?.data?.message || err?.message || t("calendar.dailyAgendaSaveError"));
         } finally {
             setAgendaSaving(false);
         }
@@ -167,6 +188,7 @@ export default function PersonalSyncModal({ onEventsChanged }) {
         setIcalError("");
         try {
             const res = await calendarApi.getIcalToken();
+            if (!res?.success || !res?.data?.subscriptionUrl) throw new Error(t("calendar.icalLoadError"));
             applyIcalPayload(res?.data);
             return toWebcalUrl(res?.data?.subscriptionUrl || res?.data?.httpsSubscriptionUrl);
         } catch {
@@ -203,6 +225,7 @@ export default function PersonalSyncModal({ onEventsChanged }) {
         setIcalError("");
         try {
             const res = await calendarApi.rotateIcalToken();
+            if (!res?.success || !res?.data?.subscriptionUrl) throw new Error(t("calendar.icalLoadError"));
             applyIcalPayload(res?.data);
             setIcalCopied(false);
         } catch {
@@ -245,8 +268,12 @@ export default function PersonalSyncModal({ onEventsChanged }) {
         setGoogleSyncMsg("");
         setGoogleSyncError(false);
         try {
-            await calendarApi.disconnectGoogle();
-            refetchGoogleStatus();
+            const res = await calendarApi.disconnectGoogle();
+            if (!res?.success) throw new Error(res?.data?.message || t("calendar.googleSyncError"));
+            await refetchGoogleStatus();
+        } catch (err) {
+            setGoogleSyncMsg(err?.response?.data?.message || err?.message || t("calendar.googleSyncError"));
+            setGoogleSyncError(true);
         } finally {
             setDisconnecting(false);
         }
@@ -310,8 +337,12 @@ export default function PersonalSyncModal({ onEventsChanged }) {
         setOutlookSyncMsg("");
         setOutlookSyncError(false);
         try {
-            await calendarApi.disconnectOutlook();
-            refetchOutlookStatus();
+            const res = await calendarApi.disconnectOutlook();
+            if (!res?.success) throw new Error(res?.data?.message || t("calendar.outlookSyncError"));
+            await refetchOutlookStatus();
+        } catch (err) {
+            setOutlookSyncMsg(err?.response?.data?.message || err?.message || t("calendar.outlookSyncError"));
+            setOutlookSyncError(true);
         } finally {
             setOutlookDisconnecting(false);
         }
@@ -400,12 +431,14 @@ export default function PersonalSyncModal({ onEventsChanged }) {
                         placeholder="07:30"
                     />
 
-                    <PrimaryButton onPress={handleSaveAgenda} isPerforming={agendaSaving || agendaLoading}>
+                    <PrimaryButton onPress={handleSaveAgenda} disabled={!agendaLoaded} isPerforming={agendaSaving || agendaLoading}>
                         {t("calendar.dailyAgendaSave")}
                     </PrimaryButton>
                     {agendaMsg && (
                         <Text14 color={agendaError ? "#E53E3E" : colors.positive}>{agendaMsg}</Text14>
                     )}
+                    {!agendaLoaded && !agendaLoading && <SecondaryButton onPress={loadAgenda}>{t("calendar.retry")}</SecondaryButton>}
+                    {agendaDeliveryWarning && <Text14 role="alert" color={NAVY}>{t("calendar.dailyAgendaDeliveryUncertain")}</Text14>}
                 </SimpleContainer>
 
                 <SimpleContainer className="lw-personalSyncModal__section lw-personalSyncModal__section--border">
