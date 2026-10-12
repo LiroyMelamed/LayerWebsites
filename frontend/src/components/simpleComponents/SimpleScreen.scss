@@ -26,7 +26,7 @@
 
   width: 100%;
   height: 100%;
-  margin-right: 0;
+  margin-inline-start: 0;
   align-items: center;
   overflow: hidden;
 }
@@ -48,7 +48,7 @@
 @media (min-width: v.$bp-lg) {
   .lw-simpleScreen__content {
     width: calc(100% - 15.625rem);
-    margin-right: 15.625rem;
+    margin-inline-start: 15.625rem;
     align-items: flex-end;
   }
 }

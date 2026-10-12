@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import CalendarSmsTemplateEditor, { CALENDAR_SMS_VARS, renderSmsPreview as formatPreview } from './CalendarSmsTemplateEditor';
-const mockT = (key, options = {}) => options.defaultValue || key;
+import englishLocale from '../../../i18n/locales/en.json';
+let mockLabels = {};
+const mockT = (key, options = {}) => mockLabels[key] || options.defaultValue || key;
+beforeEach(() => { mockLabels = {}; });
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: mockT }) }));
 function Draft({ initial = 'Hello TOKEN, bye', onDraft = jest.fn(), ...props }) {
     const [value, setValue] = useState(initial);
@@ -44,4 +47,35 @@ test('phone and Zoom preview match place semantics and unresolved supported valu
     expect(phone).toBe('Hello Dana');
     const zoom = formatPreview(template, { recipientName: 'Dana', meetingType: 'zoom', address: 'https://zoom.us/j/123' }); expect(zoom).toContain('קישור לזום: https://zoom.us/j/123'); expect(zoom).not.toContain('כתובתנו'); expect(zoom).not.toContain('מפות');
     expect(formatPreview('{{meetingTypeLabel}}', {})).toBe('"סוג פגישה"');
+});
+
+
+test('English variable labels appear on every supported chip and unresolved preview without changing the draft', () => {
+    mockLabels = Object.fromEntries(Object.entries(englishLocale.calendar).map(([key, value]) => [`calendar.${key}`, value]));
+    const onDraft = jest.fn();
+    const template = 'Meeting: {{meetingTypeLabel}} at {{firmName}}';
+    render(<Draft initial={template} onDraft={onDraft} defaultOpen />);
+    for (const key of CALENDAR_SMS_VARS) {
+        expect(screen.getByRole('button', { name: `${englishLocale.calendar[`smsVarLabel_${key}`]} {{${key}}}` })).toBeInTheDocument();
+    }
+    expect(screen.getByText('Meeting: "Meeting type" at "Office name"')).toBeInTheDocument();
+    expect(screen.getByRole('textbox')).toHaveValue(template);
+    expect(onDraft).not.toHaveBeenCalled();
+});
+
+test('English UI keeps customer-authored Hebrew and English message text verbatim and inserts the original variable token', () => {
+    mockLabels = Object.fromEntries(Object.entries(englishLocale.calendar).map(([key, value]) => [`calendar.${key}`, value]));
+    const onDraft = jest.fn();
+    const authored = 'שלום {{recipientName}}, פגישה {{meetingTypeLabel}} אצלנו. Authored English {{title}}';
+    render(<Draft initial={authored} onDraft={onDraft} defaultOpen previewValues={{ recipientName: 'Dana', meetingTypeLabel: 'Remote call', title: 'Consultation', date: '12/10/2026' }} />);
+    const textarea = screen.getByRole('textbox');
+    expect(textarea).toHaveValue(authored);
+    expect(screen.getByText('שלום Dana, פגישה Remote call אצלנו. Authored English Consultation')).toBeInTheDocument();
+    expect(onDraft).not.toHaveBeenCalled();
+    act(() => { textarea.focus(); textarea.setSelectionRange(authored.length, authored.length); });
+    fireEvent.select(textarea);
+    fireEvent.click(screen.getByRole('button', { name: 'Date {{date}}' }));
+    expect(onDraft).toHaveBeenLastCalledWith(`${authored}{{date}}`);
+    expect(textarea).toHaveValue(`${authored}{{date}}`);
+    expect(screen.getByText('שלום Dana, פגישה Remote call אצלנו. Authored English Consultation12/10/2026')).toBeInTheDocument();
 });

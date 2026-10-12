@@ -1058,6 +1058,7 @@ export default function CalendarScreen() {
     return (
         <SimpleScreen
             imageBackgroundSource={images.Backgrounds.AppBackground}
+            dir={String(i18n.language || "he").startsWith("en") ? "ltr" : "rtl"}
             className={`lw-calendarRedesign${calendarNativeCapabilities().footerManaged ? " has-nativeFooter" : ""}`}
             contentClassName={calendarExpanded ? "is-calendarFullscreen" : undefined}
         >

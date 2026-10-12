@@ -51,11 +51,11 @@ const CHIP_GROUPS = [
 ];
 
 /** Fill {{placeholders}} with real event data; unresolved ones fall back to the Hebrew label. */
-export function renderSmsPreview(template, values) {
+export function renderSmsPreview(template, values, labels = CALENDAR_SMS_VAR_LABELS) {
     const filled = String(template || "").replace(/\{\{\s*(\w+)\s*\}\}/g, (_m, key) => {
         const val = values?.[key];
         if (val != null && String(val).trim()) return String(val).trim();
-        return `"${CALENDAR_SMS_VAR_LABELS[key] || key}"`;
+        return `"${labels[key] || key}"`;
     });
     return polishSmsPreviewText(filled, values);
 }
@@ -145,6 +145,9 @@ export default function CalendarSmsTemplateEditor({
     defaultOpen = false,
 }) {
     const { t } = useTranslation();
+    const labels = useMemo(() => Object.fromEntries(CALENDAR_SMS_VARS.map((key) => [key,
+        t(`calendar.smsVarLabel_${key}`, { defaultValue: CALENDAR_SMS_VAR_LABELS[key] || key }),
+    ])), [t]);
     const [editing, setEditing] = useState(!!defaultOpen);
     const textareaRef = useRef(null);
     const selectionRef = useRef({ start: 0, end: 0 });
@@ -178,7 +181,7 @@ export default function CalendarSmsTemplateEditor({
                         ...previewValues,
                         recipientName: name,
                         clientsNames: previewValues?.clientsNames || name,
-                    }),
+                    }, labels),
                 };
             });
         }
@@ -186,9 +189,9 @@ export default function CalendarSmsTemplateEditor({
             key: "primary",
             label: previewValues?.recipientName || "",
             phone: "",
-            text: renderSmsPreview(value, previewValues),
+            text: renderSmsPreview(value, previewValues, labels),
         }];
-    }, [previewRecipients, previewValues, value, t]);
+    }, [previewRecipients, previewValues, value, t, labels]);
 
     const rememberSelection = () => {
         const el = textareaRef.current;
@@ -252,7 +255,7 @@ export default function CalendarSmsTemplateEditor({
                                 {item.phone ? ` · ${item.phone}` : ""}
                             </Text12>
                         ) : null}
-                        <Text14 className="lw-calendarSmsEditor__bubbleBody">{item.text}</Text14>
+                        <Text14 className="lw-calendarSmsEditor__bubbleBody" dir="auto">{item.text}</Text14>
                     </div>
                 ))}
             </SimpleContainer>
@@ -301,10 +304,10 @@ export default function CalendarSmsTemplateEditor({
                                         onPress={() => insertAtCaret(`{{${key}}}`)}
                                         tabIndex={-1}
                                         title={`{{${key}}}`}
-                                        aria-label={`${CALENDAR_SMS_VAR_LABELS[key] || key} {{${key}}}`}
+                                        aria-label={`${labels[key] || key} {{${key}}}`}
                                     >
                                         <span className="lw-calendarSmsEditor__chipLabel">
-                                            {CALENDAR_SMS_VAR_LABELS[key] || key}
+                                            {labels[key] || key}
                                         </span>
                                         <span className="lw-calendarSmsEditor__chipKey">{`{{${key}}}`}</span>
                                     </SimpleButton>
@@ -318,7 +321,7 @@ export default function CalendarSmsTemplateEditor({
                         value={value || ""}
                         onChange={onChange}
                         rows={8}
-                        dir="rtl"
+                        dir="auto"
                         textareaRef={textareaRef}
                         onSelect={rememberSelection}
                         onClick={rememberSelection}
