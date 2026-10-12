@@ -1,8 +1,10 @@
+const { signupAvailable, assertSignupAvailable } = require('../lib/tenant/signupAvailability');
 const signupService = require('../lib/tenant/signupService');
 const { getFrontendBaseUrl } = require('../lib/billing/tenantBillingDefaults');
 
 async function startSignup(req, res) {
     try {
+        assertSignupAvailable();
         const intent = await signupService.createSignupIntent(req.body || {});
         return res.status(201).json({
             intentId: intent.id,
@@ -14,19 +16,20 @@ async function startSignup(req, res) {
         });
     } catch (e) {
         const code = e?.code || 'SIGNUP_FAILED';
-        const status = code === 'SLUG_TAKEN' ? 409 : code === 'INVALID_SLUG' || code === 'MISSING_FIELDS' || code === 'INVALID_PACKAGE' || code === 'CONSENT_REQUIRED' || code === 'PRICE_CHANGED' || code === 'INVALID_IDEMPOTENCY_KEY' ? 400 : code === 'TAKBULL_NOT_CONFIGURED' ? 503 : 500;
+        const status = code === 'SLUG_TAKEN' ? 409 : code === 'INVALID_SLUG' || code === 'MISSING_FIELDS' || code === 'INVALID_PACKAGE' || code === 'CONSENT_REQUIRED' || code === 'PRICE_CHANGED' || code === 'INVALID_IDEMPOTENCY_KEY' ? 400 : ['TAKBULL_NOT_CONFIGURED','SIGNUP_NOT_AVAILABLE'].includes(code) ? 503 : 500;
         return res.status(status).json({ error: code, message: e?.message || 'Signup failed' });
     }
 }
 
 async function checkoutSignup(req, res) {
     try {
+        assertSignupAvailable();
         const intentId = req.params.intentId;
         const checkout = await signupService.createSignupCheckout(intentId);
         return res.json(checkout);
     } catch (e) {
         const code = e?.code || 'CHECKOUT_FAILED';
-        const status = code === 'SIGNUP_NOT_FOUND' ? 404 : code === 'TAKBULL_NOT_CONFIGURED' ? 503 : 400;
+        const status = code === 'SIGNUP_NOT_FOUND' ? 404 : ['TAKBULL_NOT_CONFIGURED','SIGNUP_NOT_AVAILABLE'].includes(code) ? 503 : 400;
         return res.status(status).json({ error: code, message: e?.message });
     }
 }
@@ -48,6 +51,7 @@ async function getSignupStatus(req, res) {
 
 async function completeSignup(req, res) {
     try {
+        assertSignupAvailable();
         const result = await signupService.completeSignupWithoutPayment(req.params.intentId);
         return res.json({
             status: 'completed',
@@ -59,7 +63,7 @@ async function completeSignup(req, res) {
         });
     } catch (e) {
         const code = e?.code || 'COMPLETE_FAILED';
-        const status = code === 'SIGNUP_NOT_FOUND' ? 404
+        const status = code === 'SIGNUP_NOT_AVAILABLE' ? 503 : code === 'SIGNUP_NOT_FOUND' ? 404
             : code === 'PAYMENT_REQUIRED' ? 402 : code === 'SIGNUP_INVALID_STATUS' ? 409
                 : 500;
         return res.status(status).json({ error: code, message: e?.message || 'Signup completion failed' });
@@ -67,8 +71,8 @@ async function completeSignup(req, res) {
 }
 
 async function syncSignup(req, res) {
-    try { await signupService.syncSignup(req.params.intentId); return getSignupStatus(req,res); }
-    catch(e) { return res.status(400).json({error:e?.code||'PAYMENT_NOT_VERIFIED',message:'התשלום או שמירת הכרטיס טרם אומתו. אין לשלם שוב.'}); }
+    try { assertSignupAvailable(); await signupService.syncSignup(req.params.intentId); return getSignupStatus(req,res); }
+    catch(e) { return res.status(e?.code === 'SIGNUP_NOT_AVAILABLE' ? 503 : 400).json({error:e?.code||'PAYMENT_NOT_VERIFIED',message:'התשלום או שמירת הכרטיס טרם אומתו. אין לשלם שוב.'}); }
 }
 
 async function takbullReturn(req, res) {
@@ -87,7 +91,13 @@ async function takbullCancel(req, res) {
     return res.redirect(`${frontend}/signup?cancelled=1${intentId ? `&intentId=${encodeURIComponent(intentId)}` : ''}`);
 }
 
+function getSignupConfiguration(req, res) {
+    res.setHeader('Cache-Control', 'no-store');
+    return res.json({ available: signupAvailable(), setupAmountIls: 1, trialMonths: 3, consentVersion: 'signup-1ils-3months-v2' });
+}
+
 module.exports = {
+    getSignupConfiguration,
     startSignup,
     checkoutSignup,
     completeSignup,

@@ -13,6 +13,8 @@ const startLimit = limit('signup-create', process.env.RATE_LIMIT_SIGNUP_MAX || 2
 const checkoutLimit = limit('signup-checkout', 30, 3600000);
 const verifyLimit = limit('signup-verify', 60, 3600000);
 const statusLimit = limit('signup-status', 120, 60000);
+router.get('/config', controller.getSignupConfiguration);
+
 router.post('/start', startLimit, controller.startSignup);
 router.post('/:intentId/complete', checkoutLimit, controller.completeSignup);
 router.post('/:intentId/checkout', checkoutLimit, controller.checkoutSignup);

@@ -30,6 +30,12 @@ export default function SignupScreen() {
     const embedded = isSignupEmbedded();
     const [step, setStep] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [signupAvailable, setSignupAvailable] = useState(null);
+    useEffect(() => {
+        let active = true;
+        ApiUtils.get('/public/signup/config').then(({data}) => { if (active) setSignupAvailable(data?.available === true); }).catch(() => { if (active) setSignupAvailable(false); });
+        return () => { active = false; };
+    }, []);
     const [error, setError] = useState('');
     const [form, setForm] = useState({
         firmName: '',
@@ -90,6 +96,7 @@ export default function SignupScreen() {
     const back = () => setStep((s) => Math.max(s - 1, 0));
 
     const submitSignup = async () => {
+        if (signupAvailable !== true) { setError('הרשמה אוטומטית אינה זמינה כרגע. לא יבוצע חיוב.'); return; }
         if (!billingConsent) { setError('יש לאשר את תנאי התשלום ושמירת הכרטיס'); return; }
         sessionStorage.setItem('legal-signup-form',JSON.stringify(form));
         setLoading(true);
@@ -141,11 +148,11 @@ export default function SignupScreen() {
                 </SecondaryButton>
             )}
             {step < STEPS.length - 1 ? (
-                <PrimaryButton onPress={next}>
+                <PrimaryButton onPress={next} disabled={signupAvailable !== true}>
                     המשך
                 </PrimaryButton>
             ) : (
-                <PrimaryButton isPerforming={loading} onPress={submitSignup} disabled={loading}>
+                <PrimaryButton isPerforming={loading} onPress={submitSignup} disabled={loading || signupAvailable !== true}>
                     המשיכו לתשלום ₪1
                 </PrimaryButton>
             )}
@@ -169,6 +176,8 @@ export default function SignupScreen() {
                 <Text14 className="lw-signup__subtitle">
                     3 חודשים ללא דמי מנוי · ₪1 בהרשמה · כרטיס לחידוש עתידי
                 </Text14>
+
+                {signupAvailable !== true && <SimpleContainer className="lw-signup__error" role="status">{signupAvailable === null ? 'בודקים זמינות הרשמה…' : 'ההרשמה האוטומטית למשרדים חדשים אינה זמינה כרגע. לא יבוצע חיוב. משרדים קיימים יכולים להמשיך להתחבר כרגיל.'}</SimpleContainer>}
 
                 <SimpleCard className="lw-signup__trialCard">
                     <TextBold14>החבילה שבחרתם</TextBold14>

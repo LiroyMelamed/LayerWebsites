@@ -1,3 +1,4 @@
+const { assertSignupAvailable } = require('./signupAvailability');
 const crypto = require('node:crypto');
 const pool = require('../../config/db');
 const { formatPhoneNumber } = require('../../utils/phoneUtils');
@@ -43,6 +44,7 @@ function mapSignupRow(row) {
 }
 
 async function createSignupIntent(payload) {
+    assertSignupAvailable();
     if (payload.billingConsent !== true || payload.consentVersion !== CONSENT_VERSION) {
         throw Object.assign(new Error('יש לאשר חיוב שקל ושמירת כרטיס לחידוש לאחר שלושה חודשים'), { code: 'CONSENT_REQUIRED' });
     }
@@ -135,6 +137,7 @@ function signupIpnUrl() {
 }
 
 async function createSignupCheckout(intentId) {
+    assertSignupAvailable();
     const creds = getTakbullCredentialsFromEnv();
     if (!creds || !getProviderSecretsKey()) throw Object.assign(new Error('ההרשמה בתשלום עדיין אינה זמינה'), { code: 'TAKBULL_NOT_CONFIGURED' });
     const c = await pool.connect();
@@ -169,6 +172,7 @@ async function createSignupCheckout(intentId) {
 }
 
 async function provisionTenantFromSignup(signupIntentId, { tokenInfo } = {}) {
+    assertSignupAvailable();
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
