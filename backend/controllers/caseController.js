@@ -287,11 +287,11 @@ const getCases = async (req, res) => {
         // Paginate by caseId (not joined rows) so descriptions aren't truncated.
         const idsQuery =
             userRole === 'Admin'
-                ? `SELECT DISTINCT C.caseid
+                ? `SELECT DISTINCT C.caseid, C.createdat
                    FROM cases C
                    ORDER BY C.createdat DESC, C.caseid DESC
                    LIMIT $1 OFFSET $2`
-                : `SELECT DISTINCT C.caseid
+                : `SELECT DISTINCT C.caseid, C.createdat
                    FROM cases C
                    JOIN case_users CU ON C.caseid = CU.caseid
                    WHERE CU.userid = $1
@@ -1258,7 +1258,7 @@ const getTaggedCases = async (req, res) => {
 
         const { limit, offset } = pagination;
 
-        const idsQuery = `SELECT DISTINCT C.caseid
+        const idsQuery = `SELECT DISTINCT C.caseid, C.createdat
                    FROM cases C
                    WHERE C.istagged = true AND C.casemanagerid = $1
                    ORDER BY C.createdat DESC, C.caseid DESC
@@ -1301,7 +1301,7 @@ const getTaggedCasesByName = async (req, res) => {
             const limit = pagination.enabled ? pagination.limit : 200;
             const offset = pagination.enabled ? pagination.offset : 0;
 
-            const idsQuery = `SELECT DISTINCT C.caseid
+            const idsQuery = `SELECT DISTINCT C.caseid, C.createdat
                        FROM cases C
                        WHERE C.istagged = true AND C.casemanagerid = $1
                        ORDER BY C.createdat DESC, C.caseid DESC
@@ -1498,7 +1498,7 @@ const getMyCases = async (req, res) => {
 
         const { limit, offset } = pagination;
 
-        const idsQuery = `SELECT DISTINCT C.caseid
+        const idsQuery = `SELECT DISTINCT C.caseid, C.createdat
                   FROM cases C
                   WHERE C.casemanagerid = $1
                   ORDER BY C.createdat DESC, C.caseid DESC
