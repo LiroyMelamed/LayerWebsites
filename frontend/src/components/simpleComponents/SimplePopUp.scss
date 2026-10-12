@@ -96,6 +96,42 @@
     }
 }
 
+.lw-simplePopUp__back {
+    position: absolute;
+    top: -0.75rem;
+    right: -0.75rem;
+    z-index: 2;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background-color: var(--lw-color-white);
+    border: 0.0625rem solid rgba(226, 232, 240, 0.8);
+    box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.12);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
+    padding: 0;
+
+    &:hover {
+        background-color: #f1f5f9;
+        color: #334155;
+        box-shadow: 0 0.125rem 0.75rem rgba(0, 0, 0, 0.18);
+    }
+
+    &--disabled {
+        pointer-events: none;
+        opacity: 0.55;
+    }
+}
+
+.lw-simplePopUp__content--embeddedScroll {
+    overflow: visible;
+    max-height: none;
+}
+
 .lw-simpleContainer.lw-simplePopUp__content,
 .lw-simplePopUp__content {
     display: flex;
@@ -112,15 +148,24 @@
 }
 
 @media (max-width: 40rem) {
-    .lw-simplePopUp__container {
-        width: calc(100vw - 1.25rem);
-        max-width: calc(100vw - 1.25rem);
-        padding: 0.75rem;
-        max-height: calc(100dvh - 1.5rem);
-    }
+    .lw-simplePopUp__overlay:not(.lw-simplePopUp__overlay--transparent) {
+        --lw-popup-available-height: calc(100dvh - 3rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+        // Reserve room for the close/back controls outside the dialog's corners.
+        padding: calc(1.5rem + env(safe-area-inset-top, 0px))
+            calc(1.5rem + env(safe-area-inset-right, 0px))
+            calc(1.5rem + env(safe-area-inset-bottom, 0px))
+            calc(1.5rem + env(safe-area-inset-left, 0px));
 
-    .lw-simplePopUp__content {
-        max-height: calc(100dvh - 3.5rem);
+        .lw-simplePopUp__container:not(.lw-simplePopUp__container--floating) {
+            width: 100%;
+            max-width: 100%;
+            padding: 0.75rem;
+            max-height: var(--lw-popup-available-height);
+        }
+
+        .lw-simplePopUp__content {
+            max-height: calc(var(--lw-popup-available-height) - 1.5rem);
+        }
     }
 }
 

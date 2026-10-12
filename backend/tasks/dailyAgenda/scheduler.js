@@ -6,6 +6,7 @@
  */
 
 const cron = require('node-cron');
+const crypto = require('node:crypto');
 const pool = require('../../config/db');
 const { sendMessage } = require('../../utils/sendMessage');
 const { sendTransactionalCustomHtmlEmail } = require('../../utils/smooveEmailCampaignService');
@@ -102,7 +103,7 @@ async function _sendForUser(row, date) {
         `SELECT ce.title, ce.location, ce.start_time, ce.end_time, ce.invite_status, ce.event_type
          FROM calendar_events ce
          WHERE ${personalCalendarSql(2)}
-           AND ce.start_time >= ($1::date AT TIME ZONE 'Asia/Jerusalem')
+           AND ce.end_time > ($1::date AT TIME ZONE 'Asia/Jerusalem')
            AND ce.start_time < (($1::date + INTERVAL '1 day') AT TIME ZONE 'Asia/Jerusalem')
          ORDER BY ce.start_time ASC
          LIMIT 200`,
@@ -126,46 +127,44 @@ async function _sendForUser(row, date) {
         ? `${holidayLines.length + events.length} פריטים ביומן להיום`
         : 'אין אירועים להיום';
 
-    let sentAny = false;
-
-    if (channels.push) {
-        try {
-            await sendAndStoreNotification(
-                row.user_id,
-                `יומן יומי — ${date}`,
-                pushBody,
-                { type: 'DAILY_AGENDA', date },
-                { sendPush: true }
-            );
-            sentAny = true;
-        } catch (err) {
-            console.error('[daily-agenda] push failed user=', row.user_id, err.message);
-        }
+    const jobs = [];
+    if (channels.push) jobs.push({ channel: 'push', recipient: String(row.user_id), send: () => sendAndStoreNotification(row.user_id, `יומן יומי — ${date}`, pushBody, { type: 'DAILY_AGENDA', date }, { sendPush: true, throwOnError: true }) });
+    for (const recipient of [...new Set(recipients)]) {
+        if (channels.email && _isEmail(recipient)) jobs.push({ channel: 'email', recipient, send: () => sendTransactionalCustomHtmlEmail({ toEmail: recipient, subject: `יומן יומי — ${date}`, htmlBody: html, logLabel: 'daily-agenda' }) });
+        if (channels.sms && !_isEmail(recipient)) jobs.push({ channel: 'sms', recipient, send: () => sendMessage(body, recipient) });
     }
-
-    for (const recipient of recipients) {
+    if (!jobs.length) return false;
+    let complete = true;
+    for (const job of jobs) {
+        const hash = crypto.createHash('sha256').update(job.recipient.trim().toLowerCase()).digest('hex').slice(0,24);
+        const key = `${date}:${job.channel}:${hash}`;
+        const { rows } = await pool.query('SELECT delivery_receipts FROM user_daily_agenda_settings WHERE user_id=$1', [row.user_id]);
+        const receipt = rows[0]?.delivery_receipts?.[key];
+        if (receipt?.status === 'sent') continue;
+        if (['sending','uncertain'].includes(receipt?.status)) {
+            complete = false;
+            console.error('[daily-agenda] uncertain delivery needs inspection user=', row.user_id, 'channel=', job.channel);
+            continue;
+        }
+        const write = async (status, error = null) => pool.query(`UPDATE user_daily_agenda_settings SET delivery_receipts=COALESCE(delivery_receipts,'{}'::jsonb)||jsonb_build_object($2::text,$3::jsonb),updated_at=NOW() WHERE user_id=$1`, [row.user_id, key, JSON.stringify({ status, channel: job.channel, date, at: new Date().toISOString(), error })]);
+        await write('sending');
         try {
-            const isMail = _isEmail(recipient);
-            if (channels.email && isMail) {
-                await sendTransactionalCustomHtmlEmail({
-                    toEmail: recipient,
-                    subject: `יומן יומי — ${date}`,
-                    htmlBody: html,
-                    logLabel: 'daily-agenda',
-                });
-                sentAny = true;
-            } else if (channels.sms && !isMail) {
-                await sendMessage(body, recipient);
-                sentAny = true;
-            } else if (channels.email && !isMail && channels.sms) {
-                await sendMessage(body, recipient);
-                sentAny = true;
+            const result = await job.send();
+            if (job.channel !== 'push' && !result?.ok) {
+                const error = new Error(result?.errorCode || result?.error || 'provider_rejected');
+                error.providerRejected = true;
+                throw error;
             }
+            await write('sent');
         } catch (err) {
-            console.error('[daily-agenda] send failed user=', row.user_id, 'to=', recipient, err.message);
+            complete = false;
+            const uncertain = !err.providerRejected && (['ECONNRESET','ETIMEDOUT','ECONNABORTED'].includes(err.code) || /timeout|socket hang up/i.test(err.message));
+            await write(uncertain ? 'uncertain' : 'failed', uncertain ? 'delivery_acceptance_unknown' : 'delivery_failed');
+            console.error('[daily-agenda] send failed user=', row.user_id, 'channel=', job.channel, err.message);
         }
     }
-    return sentAny;
+    return complete;
+
 }
 
 async function processDailyAgendaDigest() {
@@ -174,12 +173,13 @@ async function processDailyAgendaDigest() {
     let rows;
     try {
         const result = await pool.query(
-            `SELECT s.user_id, s.enabled, s.channels, s.recipients, s.send_time, s.last_sent_date,
+            `SELECT s.user_id, s.enabled, s.channels, s.recipients, s.send_time, s.last_sent_date, s.delivery_receipts,
                     u.email, u.phonenumber, u.name
              FROM user_daily_agenda_settings s
              JOIN users u ON u.userid = s.user_id
              WHERE s.enabled = TRUE
-               AND COALESCE(u.role, '') IN ('Admin', 'Lawyer', 'PlatformAdmin')`
+               AND COALESCE(u.role, '') IN ('Admin', 'Lawyer', 'PlatformAdmin', 'Staff')
+               AND s.last_sent_date::text IS DISTINCT FROM (NOW() AT TIME ZONE 'Asia/Jerusalem')::date::text`
         );
         rows = result.rows;
     } catch (err) {
@@ -193,7 +193,13 @@ async function processDailyAgendaDigest() {
         if (hhmm < sendTime) continue;
         if (String(row.last_sent_date || '') === date) continue;
 
+        const lock = await pool.connect();
         try {
+            // Reserve only this user's digest while concurrent workers are active.
+            const { rows: locks } = await lock.query('SELECT pg_try_advisory_lock(71920, $1::int) AS acquired', [row.user_id]);
+            if (!locks[0]?.acquired) continue;
+            const { rows: current } = await lock.query('SELECT last_sent_date::text AS last_sent_date, enabled FROM user_daily_agenda_settings WHERE user_id=$1', [row.user_id]);
+            if (!current[0]?.enabled || current[0]?.last_sent_date === date) continue;
             const sent = await _sendForUser(row, date);
             if (!sent) continue;
             await pool.query(
@@ -205,6 +211,9 @@ async function processDailyAgendaDigest() {
             console.log(`[daily-agenda] sent for ${date} user=${row.user_id}`);
         } catch (err) {
             console.error('[daily-agenda] user tick failed', row.user_id, err.message);
+        } finally {
+            await lock.query('SELECT pg_advisory_unlock(71920, $1::int)', [row.user_id]).catch(() => {});
+            lock.release();
         }
     }
 }
