@@ -1,3 +1,4 @@
+const { saveSignupLogo } = require('./signupLogo');
 const { assertSignupAvailable } = require('./signupAvailability');
 const crypto = require('node:crypto');
 const pool = require('../../config/db');
@@ -79,7 +80,7 @@ async function createSignupIntent(payload) {
     if (Number(payload.expectedPriceIls) !== quoted) throw Object.assign(new Error('המחיר השתנה; יש לרענן ולאשר מחדש'), {code:'PRICE_CHANGED'});
     const id = String(payload.idempotencyKey || '');
     if (!/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(id)) throw Object.assign(new Error('INVALID_IDEMPOTENCY_KEY'), {code:'INVALID_IDEMPOTENCY_KEY'});
-    const requestHash = crypto.createHash('sha256').update(JSON.stringify({slug,firmName,adminName,adminPhone,adminEmail,platformId,resourceId,signingId,billingInterval,quoted})).digest('hex');
+    const requestHash = crypto.createHash('sha256').update(JSON.stringify({slug,firmName,adminName,adminPhone,adminEmail,platformId,resourceId,signingId,billingInterval,quoted,...(payload.logoDataUrl ? {logoSourceSha256:crypto.createHash('sha256').update(String(payload.logoDataUrl)).digest('hex')} : {})})).digest('hex');
     const c = await pool.connect();
     try {
     await c.query('BEGIN');
@@ -91,12 +92,13 @@ async function createSignupIntent(payload) {
         return mapSignupRow(previous);
     }
     if (!(await slugAvailable(slug))) throw Object.assign(new Error('כתובת המשרד כבר תפוסה'), {code:'SLUG_TAKEN'});
+    const logo = await saveSignupLogo(payload.logoDataUrl, id);
     const res = await c.query(
         `INSERT INTO signup_intents (
             id, request_hash, slug, firm_name, admin_name, admin_phone, admin_email,
             lawyer_count, practice_areas,
-            platform_id, resource_id, signing_id, billing_interval, price_monthly_ils, consent_version, consented_at, recurring_amount_ils, vat_percent
-         ) VALUES ($13,$14,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$15,now(),$16,$17)
+            platform_id, resource_id, signing_id, billing_interval, price_monthly_ils, consent_version, consented_at, recurring_amount_ils, vat_percent, logo
+         ) VALUES ($13,$14,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$15,now(),$16,$17,$18)
          RETURNING *`,
         [
             slug,
@@ -110,7 +112,7 @@ async function createSignupIntent(payload) {
             resourceId,
             signingId,
             billingInterval,
-            pkg.total, id, requestHash, CONSENT_VERSION, quoted, pkg.vatPercent,
+            pkg.total, id, requestHash, CONSENT_VERSION, quoted, pkg.vatPercent, logo,
         ]
     );
     await c.query('COMMIT');
@@ -221,7 +223,7 @@ async function provisionTenantFromSignup(signupIntentId, { tokenInfo } = {}) {
                 signup.admin_email,
                 signup.practice_areas || [],
                 signup.lawyer_count,
-                { firmDisplayName: signup.firm_name },
+                { firmDisplayName: signup.firm_name, ...(signup.logo ? { logoUrl:signup.logo.url, logoAsset:signup.logo } : {}) },
             ]
         );
         const tenant = tenantRes.rows[0];

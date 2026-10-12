@@ -1,3 +1,4 @@
+const { readSignupLogo } = require('../lib/tenant/signupLogo');
 const express = require('express');
 const controller = require('../controllers/publicSignupController');
 const { createRateLimitMiddleware, getClientIp } = require('../utils/rateLimiter');
@@ -13,6 +14,16 @@ const startLimit = limit('signup-create', process.env.RATE_LIMIT_SIGNUP_MAX || 2
 const checkoutLimit = limit('signup-checkout', 30, 3600000);
 const verifyLimit = limit('signup-verify', 60, 3600000);
 const statusLimit = limit('signup-status', 120, 60000);
+router.get('/logos/:id/:file', async(req,res)=>{try { const data=await readSignupLogo(req.params.id,req.params.file);res.set({'Content-Type':'image/png','X-Content-Type-Options':'nosniff','Cache-Control':'public, max-age=86400'});return res.send(data); } catch {return res.status(404).end();} });
+router.get('/branding/:slug/logo', async(req,res)=>{
+    try {
+        const tenant=await require('../lib/tenant/tenantService').getTenantBySlug(req.params.slug);
+        const match=/^signup-logos\/([a-f0-9-]{36})\/([a-f0-9]{64}\.png)$/.exec(tenant?.branding?.logoAsset?.key || '');
+        if (!match) return res.redirect(require('../lib/billing/tenantBillingDefaults').getFrontendBaseUrl() + '/firm-logo.png');
+        const data=await readSignupLogo(match[1],match[2]);
+        return res.set({'Content-Type':'image/png','X-Content-Type-Options':'nosniff','Cache-Control':'public, max-age=300'}).send(data);
+    } catch { return res.status(404).end(); }
+});
 router.get('/config', controller.getSignupConfiguration);
 
 router.post('/start', startLimit, controller.startSignup);

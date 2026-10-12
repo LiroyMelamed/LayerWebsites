@@ -1,3 +1,4 @@
+import { getTenantLogoUrl } from '../../lib/tenantBranding';
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { usePopup } from "../../providers/PopUpProvider";
@@ -51,7 +52,7 @@ export default function TopAndRightNavBar({ children, LogoNavigate, GetNavBarDat
         <SimpleContainer className="lw-topAndRightNavBar__sidebar">
           <SimpleContainer className="lw-topAndRightNavBar__logoRow">
             <ImageButton
-              src={Logo}
+              src={getTenantLogoUrl() || Logo}
               className="lw-topAndRightNavBar__logoBtn"
               onPress={() => {
                 navigate(LogoNavigate);

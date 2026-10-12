@@ -1,3 +1,4 @@
+import { getTenantLogoUrl } from '../../../lib/tenantBranding';
 import { useFirmPermissions } from "../../../providers/FirmPermissionsProvider";
 import React, { useState } from "react";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
@@ -62,7 +63,7 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, chosenNavKey, 
         <>
             <SimpleContainer className="lw-topToolBarSmallScreen">
                 <ImageButton
-                    src={Logo}
+                    src={getTenantLogoUrl() || Logo}
                     className="lw-topToolBarSmallScreen__logoButton"
                     onPress={() => { navigate(LogoNavigate) }}
                 />
