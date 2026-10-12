@@ -1,0 +1,478 @@
+diff --git a/backend/app.js b/backend/app.js
+index 16170481..17695169 100644
+--- a/backend/app.js
++++ b/backend/app.js
+@@ -160,13 +160,13 @@ app.use(
+     authRoutes
+ );
+ 
+-app.use(requireBillingAccess);
+ 
+ app.use("/api/webhooks/payments", paymentWebhookRoutes);
+ app.use("/api/public/signup", publicSignupRoutes);
+ app.use("/api/master-admin", masterAdminRoutes);
+ 
+ app.use(resolveTenant);
++app.use(requireBillingAccess);
+ 
+ app.use("/api/Customers", customerRoutes);
+ app.use("/api/Cases", caseRoutes);
+diff --git a/backend/controllers/billingController.js b/backend/controllers/billingController.js
+index 42a135d1..1e44124a 100644
+--- a/backend/controllers/billingController.js
++++ b/backend/controllers/billingController.js
+@@ -11,6 +11,7 @@ function billingPayload(snap, extra = {}) {
+         billing: {
+             status: snap.status,
+             billingEnabled: snap.billingEnabled,
++            autoRenew: snap.autoRenew !== false,
+             stillComplimentary: snap.stillComplimentary,
+             isUnlimited: snap.isUnlimited,
+             complimentaryUntil: snap.complimentaryUntil,
+@@ -36,7 +37,12 @@ function billingPayload(snap, extra = {}) {
+ exports.getLockStatus = async (req, res) => {
+     try {
+         const snap = await billing.getBillingSnapshot();
++        let canManageBilling = false;
++        await require('../middlewares/requirePlatformAdmin')(req, res, error => { canManageBilling = !error; });
++        res.setHeader?.('Cache-Control', 'no-store');
++        if (!canManageBilling) return res.status(200).json({ locked: Boolean(snap.locked), canManageBilling: false });
+         return res.status(200).json({
++            canManageBilling: true,
+             locked: Boolean(snap.locked),
+             status: snap.status || 'complimentary',
+             stillComplimentary: Boolean(snap.stillComplimentary),
+@@ -46,7 +52,7 @@ exports.getLockStatus = async (req, res) => {
+         });
+     } catch (e) {
+         console.error('getLockStatus error:', e);
+-        return res.status(200).json({ locked: false, status: 'unknown' });
++        return res.status(503).json({ errorCode: 'SERVICE_TEMPORARILY_UNAVAILABLE', message: 'השירות אינו זמין כרגע. נסו שוב מאוחר יותר.' });
+     }
+ };
+ 
+diff --git a/backend/middlewares/authMiddleware.js b/backend/middlewares/authMiddleware.js
+index c4c20c4e..f49047fd 100644
+--- a/backend/middlewares/authMiddleware.js
++++ b/backend/middlewares/authMiddleware.js
+@@ -85,8 +85,18 @@ const authMiddleware = (req, res, next) => {
+             );
+         }
+ 
+-        // Pass control to the next handler in the middleware chain
+-        next();
++        // Resolve billing scope from the authenticated DB identity, including headerless requests.
++        const pool = require('../config/db');
++        const { runWithTenant } = require('../lib/tenant/tenantContext');
++        const { requireBillingAccess } = require('./requireBillingAccess');
++        void pool.query('SELECT userid, role, law_firm_tenant_id FROM users WHERE userid=$1 LIMIT 1', [req.user.UserId]).then(({ rows }) => {
++            const current = rows[0];
++            if (!current) return next(createAppError('UNAUTHORIZED', 401, getHebrewMessage('UNAUTHORIZED')));
++            if (req.tenant?.id && String(current.law_firm_tenant_id || '') !== String(req.tenant.id)) return next(createAppError('FORBIDDEN', 403, getHebrewMessage('FORBIDDEN')));
++            req.user.Role = current.role;
++            if (current.law_firm_tenant_id) return runWithTenant({ id: current.law_firm_tenant_id }, () => requireBillingAccess(req, res, next));
++            return next();
++        }).catch(() => next(createAppError('SERVICE_TEMPORARILY_UNAVAILABLE', 503, 'השירות אינו זמין כרגע. נסו שוב מאוחר יותר.')));
+     } catch (error) {
+         // If token verification fails (e.g., invalid or expired token), return a 401 Unauthorized response
+         console.warn(
+diff --git a/backend/middlewares/requireBillingAccess.js b/backend/middlewares/requireBillingAccess.js
+index f7eba088..e88dfa44 100644
+--- a/backend/middlewares/requireBillingAccess.js
++++ b/backend/middlewares/requireBillingAccess.js
+@@ -10,7 +10,11 @@ function isExemptPath(req) {
+     if (p === '/' || p === '/health' || p === '/api/health') return true;
+     if (p.startsWith('/api/Auth')) return true;
+     if (p.startsWith('/api/webhooks')) return true;
++    if (p === '/api/public/signup' || p.startsWith('/api/public/signup/')) return true;
++    // This route enforces a separate owner service key before any read or write.
++    if (p === '/api/business-control') return true;
+     if (p.startsWith('/api/billing')) return true;
++    if (p === '/api/staff/session-scope') return true; // Authenticated recovery navigation only.
+     if (p.startsWith('/api/SigningFiles/public')) return true;
+     if (p.startsWith('/api/platform-settings/public')) return true;
+     if (p.startsWith('/api/platform/v1')) return true;
+@@ -27,23 +31,24 @@ async function requireBillingAccess(req, res, next) {
+         const snap = await getBillingSnapshot();
+         if (!snap?.locked) return next();
+ 
++        // Business billing details are available only from the owner-authorized
++        // billing routes. Public/client requests always receive a neutral outage.
++        res.setHeader?.('Cache-Control', 'no-store');
+         return sendError(res, {
+-            httpStatus: 402,
+-            errorCode: 'BILLING_LOCKED',
+-            message: getHebrewMessage('BILLING_LOCKED'),
+-            extras: {
+-                billingLocked: true,
+-                graceUntil: snap.graceUntil || null,
+-                status: snap.status,
+-                payUrl: snap.payUrl,
+-            },
++            httpStatus: 503,
++            errorCode: 'SERVICE_TEMPORARILY_UNAVAILABLE',
++            message: 'השירות אינו זמין כרגע עקב תקלה זמנית. נסו שוב מאוחר יותר.',
+         });
+     } catch (e) {
+         if (e?.code === '42P01' || String(e?.message || '').includes('does not exist')) {
+             return next();
+         }
+         console.warn('[billing-lock] snapshot failed:', e?.message);
+-        return next();
++        return sendError(res, {
++            httpStatus: 503,
++            errorCode: 'SERVICE_TEMPORARILY_UNAVAILABLE',
++            message: getHebrewMessage('INTERNAL_ERROR'),
++        });
+     }
+ }
+ 
+diff --git a/backend/tests/billingIdentity.test.js b/backend/tests/billingIdentity.test.js
+new file mode 100644
+index 00000000..c1d71b6b
+--- /dev/null
++++ b/backend/tests/billingIdentity.test.js
+@@ -0,0 +1,25 @@
++'use strict';
++process.env.NODE_ENV='test';
++process.env.JWT_SECRET='synthetic-billing-identity-test';
++const test=require('node:test'),assert=require('node:assert/strict');
++const express=require('express'),request=require('supertest'),jwt=require('jsonwebtoken');
++const pool=require('../config/db'),billing=require('../lib/billing/firmBillingService');
++const {getCurrentTenantId}=require('../lib/tenant/tenantContext');
++const auth=require('../middlewares/authMiddleware');
++const errorHandler=require('../middlewares/errorHandler');
++
++test('missing tenant header cannot bypass the current customer identity billing lock',async()=>{
++ const oldQuery=pool.query,oldSnapshot=billing.getBillingSnapshot;
++ const tenantId='11223344-1122-3344-5566-778899aabbcc';let checked;
++ pool.query=async()=>({rows:[{userid:71,role:'Client',law_firm_tenant_id:tenantId}]});
++ billing.getBillingSnapshot=async()=>{checked=getCurrentTenantId();return {locked:checked===tenantId,payUrl:'/owner/payment',graceUntil:new Date()};};
++ try{
++  const app=express();app.get('/api/Cases',auth,(_q,r)=>r.json({secret:'must not be reached'}));app.get('/api/billing/lock-status',auth,(_q,r)=>r.json({recovery:true,tenantId:getCurrentTenantId()}));app.use(errorHandler);
++  const token=jwt.sign({userid:71,role:'Client'},process.env.JWT_SECRET);
++  const blocked=await request(app).get('/api/Cases').set('Authorization','Bearer '+token);
++  assert.equal(checked,tenantId);assert.equal(blocked.status,503);assert.equal(blocked.body.errorCode,'SERVICE_TEMPORARILY_UNAVAILABLE');
++  assert.doesNotMatch(blocked.text,/תשלום|graceUntil|payUrl|secret/);
++  const recovery=await request(app).get('/api/billing/lock-status').set('Authorization','Bearer '+token);
++  assert.equal(recovery.status,200);assert.equal(recovery.body.tenantId,tenantId);
++ }finally{pool.query=oldQuery;billing.getBillingSnapshot=oldSnapshot;}
++});
+diff --git a/backend/tests/billingPrivacy.test.js b/backend/tests/billingPrivacy.test.js
+new file mode 100644
+index 00000000..b452183f
+--- /dev/null
++++ b/backend/tests/billingPrivacy.test.js
+@@ -0,0 +1,20 @@
++process.env.NODE_ENV='test';
++const test=require('node:test');
++const assert=require('node:assert/strict');
++const billing=require('../lib/billing/firmBillingService');
++const settings=require('../services/settingsService');
++const controller=require('../controllers/billingController');
++function response(){return{code:200,body:null,status(n){this.code=n;return this;},json(v){this.body=v;return this;},setHeader(){}};}
++test('client lock status contains no payment reason, deadline, amount or pay link',async()=>{
++ const old=billing.getBillingSnapshot,admin=settings.isPlatformAdmin;
++ billing.getBillingSnapshot=async()=>({locked:true,status:'past_due',graceUntil:'2026-10-15',payUrl:'/private/pay',complimentaryUntil:'2026-10-12'});
++ settings.isPlatformAdmin=async()=>true;
++ try{const res=response();await controller.getLockStatus({user:{UserId:17,Role:'Client'}},res);assert.deepEqual(res.body,{locked:true,canManageBilling:false});}
++ finally{billing.getBillingSnapshot=old;settings.isPlatformAdmin=admin;}
++});
++test('verified authorized business owner receives recovery details',async()=>{
++ const old=billing.getBillingSnapshot,admin=settings.isPlatformAdmin;
++ billing.getBillingSnapshot=async()=>({locked:true,status:'past_due',graceUntil:'2026-10-15',payUrl:'/private/pay'});settings.isPlatformAdmin=async()=>true;
++ try{const res=response();await controller.getLockStatus({user:{UserId:18,Role:'Admin'}},res);assert.equal(res.body.canManageBilling,true);assert.equal(res.body.graceUntil,'2026-10-15');assert.equal(res.body.payUrl,'/private/pay');}
++ finally{billing.getBillingSnapshot=old;settings.isPlatformAdmin=admin;}
++});
+diff --git a/backend/tests/requireBillingAccess.test.js b/backend/tests/requireBillingAccess.test.js
+new file mode 100644
+index 00000000..2857be37
+--- /dev/null
++++ b/backend/tests/requireBillingAccess.test.js
+@@ -0,0 +1,102 @@
++process.env.NODE_ENV = 'test';
++
++const test = require('node:test');
++const assert = require('node:assert/strict');
++
++const billing = require('../lib/billing/firmBillingService');
++const { requireBillingAccess } = require('../middlewares/requireBillingAccess');
++
++function mockRes() {
++    const res = {
++        statusCode: 200,
++        body: null,
++        status(code) {
++            this.statusCode = code;
++            return this;
++        },
++        json(payload) {
++            this.body = payload;
++            return this;
++        },
++    };
++    return res;
++}
++
++test('requireBillingAccess allows when snapshot not locked', async () => {
++    const orig = billing.getBillingSnapshot;
++    billing.getBillingSnapshot = async () => ({ locked: false, status: 'active' });
++    try {
++        let nextCalled = false;
++        const req = { originalUrl: '/api/Cases', path: '/api/Cases' };
++        const res = mockRes();
++        await requireBillingAccess(req, res, () => { nextCalled = true; });
++        assert.equal(nextCalled, true);
++    } finally {
++        billing.getBillingSnapshot = orig;
++    }
++});
++
++test('requireBillingAccess returns a neutral 503 without financial details when locked', async () => {
++    const orig = billing.getBillingSnapshot;
++    billing.getBillingSnapshot = async () => ({
++        locked: true,
++        status: 'past_due',
++        payUrl: '/pay',
++        graceUntil: null,
++    });
++    try {
++        let nextCalled = false;
++        const req = { originalUrl: '/api/Cases', path: '/api/Cases' };
++        const res = mockRes();
++        await requireBillingAccess(req, res, () => { nextCalled = true; });
++        assert.equal(nextCalled, false);
++        assert.equal(res.statusCode, 503);
++        assert.equal(res.body?.errorCode, 'SERVICE_TEMPORARILY_UNAVAILABLE');
++        for (const key of ['status', 'payUrl', 'graceUntil', 'billingLocked']) assert.equal(res.body?.[key], undefined);
++        assert.ok(!JSON.stringify(res.body).includes('תשלום'));
++    } finally {
++        billing.getBillingSnapshot = orig;
++    }
++});
++
++test('requireBillingAccess fails closed when snapshot throws', async () => {
++    const orig = billing.getBillingSnapshot;
++    billing.getBillingSnapshot = async () => {
++        throw new Error('db timeout');
++    };
++    try {
++        let nextCalled = false;
++        const req = { originalUrl: '/api/Cases', path: '/api/Cases' };
++        const res = mockRes();
++        await requireBillingAccess(req, res, () => { nextCalled = true; });
++        assert.equal(nextCalled, false);
++        assert.equal(res.statusCode, 503);
++        assert.equal(res.body?.errorCode, 'SERVICE_TEMPORARILY_UNAVAILABLE');
++        assert.ok(!String(res.body?.message || '').includes('db timeout'));
++    } finally {
++        billing.getBillingSnapshot = orig;
++    }
++});
++
++test('requireBillingAccess still exempts auth paths when snapshot throws', async () => {
++    const orig = billing.getBillingSnapshot;
++    billing.getBillingSnapshot = async () => {
++        throw new Error('db timeout');
++    };
++    try {
++        let nextCalled = false;
++        const req = { originalUrl: '/api/Auth/RequestOtp', path: '/api/Auth/RequestOtp' };
++        const res = mockRes();
++        await requireBillingAccess(req, res, () => { nextCalled = true; });
++        assert.equal(nextCalled, true);
++    } finally {
++        billing.getBillingSnapshot = orig;
++    }
++});
++
++
++test('only session identity lookup remains available for owner recovery navigation', () => {
++    const {isExemptPath}=require('../middlewares/requireBillingAccess');
++    assert.equal(isExemptPath({originalUrl:'/api/staff/session-scope'}),true);
++    assert.equal(isExemptPath({originalUrl:'/api/staff/roles'}),false);
++});
+diff --git a/frontend/src/api/apiUtils.js b/frontend/src/api/apiUtils.js
+index 2a2987b8..c1d374a7 100644
+--- a/frontend/src/api/apiUtils.js
++++ b/frontend/src/api/apiUtils.js
+@@ -113,6 +113,9 @@ ApiUtils.interceptors.response.use(
+         const status = error.response?.status || 500;
+         const originalRequest = error.config;
+ 
++        if (status === 503 && error.response?.data?.errorCode === 'SERVICE_TEMPORARILY_UNAVAILABLE') {
++            window.dispatchEvent(new CustomEvent('lw-billing-locked', { detail: { locked: true } }));
++        }
+         if (status === 402 && (error.response?.data?.errorCode === 'BILLING_LOCKED' || error.response?.data?.billingLocked)) {
+             window.dispatchEvent(new CustomEvent('lw-billing-locked', { detail: error.response.data || {} }));
+         }
+diff --git a/frontend/src/components/billing/BillingLockedScreen.js b/frontend/src/components/billing/BillingLockedScreen.js
+index 0c9924f3..25cc8e19 100644
+--- a/frontend/src/components/billing/BillingLockedScreen.js
++++ b/frontend/src/components/billing/BillingLockedScreen.js
+@@ -10,12 +10,14 @@ import { AdminStackName } from '../../navigation/AdminStack';
+ import { PlanUsageScreenName } from '../../navigation/screenPaths';
+ import { useBillingLock } from '../../providers/BillingLockProvider';
+ import './BillingLockedScreen.scss';
++import ServiceUnavailableScreen from './ServiceUnavailableScreen';
+ 
+ export default function BillingLockedScreen() {
+     const { t } = useTranslation();
+     const navigate = useNavigate();
+-    const { graceUntil } = useBillingLock();
+-    const isPlatformAdmin = typeof window !== 'undefined' && localStorage.getItem('isPlatformAdmin') === 'true';
++    const { graceUntil, canManageBilling } = useBillingLock();
++    const isPlatformAdmin = canManageBilling === true;
++    if (!isPlatformAdmin) return <ServiceUnavailableScreen />;
+ 
+     return (
+         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
+diff --git a/frontend/src/components/billing/BillingLockedScreen.scss b/frontend/src/components/billing/BillingLockedScreen.scss
+index 595c929c..ea7ca705 100644
+--- a/frontend/src/components/billing/BillingLockedScreen.scss
++++ b/frontend/src/components/billing/BillingLockedScreen.scss
+@@ -2,6 +2,7 @@
+ 
+ .lw-billingLockedScreen__card {
+     flex-direction: column;
++    align-items: center;
+     gap: v.$space-3;
+     max-width: 32rem;
+     margin: 4rem auto;
+@@ -9,6 +10,10 @@
+     text-align: center;
+ }
+ 
++.lw-billingLockedScreen__card .lw-simpleText {
++    text-align: center;
++}
++
+ .lw-billingLockedScreen__body,
+ .lw-billingLockedScreen__deadline,
+ .lw-billingLockedScreen__hint {
+diff --git a/frontend/src/components/billing/ServiceUnavailableScreen.js b/frontend/src/components/billing/ServiceUnavailableScreen.js
+new file mode 100644
+index 00000000..caa340bf
+--- /dev/null
++++ b/frontend/src/components/billing/ServiceUnavailableScreen.js
+@@ -0,0 +1,10 @@
++import React from 'react';
++import SimpleScreen from '../simpleComponents/SimpleScreen';
++import SimpleCard from '../simpleComponents/SimpleCard';
++import SimpleButton from '../simpleComponents/SimpleButton';
++import { Text14, TextBold24 } from '../specializedComponents/text/AllTextKindFile';
++import { images } from '../../assets/images/images';
++import './BillingLockedScreen.scss';
++export default function ServiceUnavailableScreen() {
++    return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleCard className="lw-billingLockedScreen__card"><TextBold24>השירות אינו זמין כרגע</TextBold24><Text14 className="lw-billingLockedScreen__body">עקב תקלה זמנית, לא ניתן לגשת למערכת כרגע. נסו שוב מאוחר יותר.</Text14><SimpleButton className="lw-billingLockedScreen__button" onPress={() => window.location.reload()}><Text14>ניסיון נוסף</Text14></SimpleButton></SimpleCard></SimpleScreen>;
++}
+diff --git a/frontend/src/navigation/AdminStack.js b/frontend/src/navigation/AdminStack.js
+index 0268bbcd..00e27453 100644
+--- a/frontend/src/navigation/AdminStack.js
++++ b/frontend/src/navigation/AdminStack.js
+@@ -57,8 +57,8 @@ function AdminStack() {
+     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+     const calendarEnabled = useCalendarModuleEnabled();
+     const location = useLocation();
+-    const { locked, loaded } = useBillingLock();
+-    const isPlatformAdmin = typeof window !== "undefined" && localStorage.getItem("isPlatformAdmin") === "true";
++    const { locked, loaded, canManageBilling } = useBillingLock();
++    const isPlatformAdmin = canManageBilling === true;
+     if (!token) return <Navigate to={LoginStackName + LoginScreenName} replace />;
+ 
+     const onBillingRoute = /PlanUsage|PlansPricing/i.test(location.pathname || "");
+diff --git a/frontend/src/navigation/ClientStack.js b/frontend/src/navigation/ClientStack.js
+index 8ab1a7f9..48cacd06 100644
+--- a/frontend/src/navigation/ClientStack.js
++++ b/frontend/src/navigation/ClientStack.js
+@@ -19,7 +19,7 @@ import ClientCasesScreen from "../screens/client/clientCasesScreen/ClientCasesSc
+ import SigningScreen from "../screens/signingScreen/SigningScreen";
+ import NotificationsScreen from "../screens/client/notifications/NotificationsScreen";
+ import ProfileScreen from "../screens/client/profile/ProfileScreen";
+-import BillingLockedScreen from "../components/billing/BillingLockedScreen";
++import ServiceUnavailableScreen from "../components/billing/ServiceUnavailableScreen";
+ import { useBillingLock } from "../providers/BillingLockProvider";
+ 
+ export const ClientStackName = "/ClientStack";
+@@ -33,7 +33,7 @@ function ClientStack() {
+     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+     const { locked, loaded } = useBillingLock();
+     if (!token) return <Navigate to={LoginStackName + LoginScreenName} replace />;
+-    if (loaded && locked) return <BillingLockedScreen />;
++    if (loaded && locked) return <ServiceUnavailableScreen />;
+ 
+     return (
+         <TopAndRightNavBar LogoNavigate={ClientStackName + ClientMainScreenName} GetNavBarData={getClientNavBarData}>
+diff --git a/frontend/src/providers/BillingLockProvider.js b/frontend/src/providers/BillingLockProvider.js
+index 3300e572..accef5f2 100644
+--- a/frontend/src/providers/BillingLockProvider.js
++++ b/frontend/src/providers/BillingLockProvider.js
+@@ -1,4 +1,4 @@
+-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
++import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+ import billingApi from '../api/billingApi';
+ 
+ const BillingLockContext = createContext(null);
+@@ -12,8 +12,10 @@ export function useBillingLock() {
+ }
+ 
+ export function BillingLockProvider({ children }) {
++    const refreshing = useRef(false);
+     const [lock, setLock] = useState({
+         locked: false,
++        canManageBilling: false,
+         status: null,
+         graceUntil: null,
+         payUrl: null,
+@@ -23,22 +25,26 @@ export function BillingLockProvider({ children }) {
+     const applyLock = useCallback((payload = {}) => {
+         setLock((prev) => ({
+             ...prev,
++            canManageBilling: payload.canManageBilling === true,
+             locked: payload.locked === true || payload.billingLocked === true || payload.errorCode === 'BILLING_LOCKED',
+-            status: payload.status || prev.status,
+-            graceUntil: payload.graceUntil || prev.graceUntil,
+-            payUrl: payload.payUrl || prev.payUrl,
++            status: payload.canManageBilling === true ? payload.status || null : null,
++            graceUntil: payload.canManageBilling === true ? payload.graceUntil || null : null,
++            payUrl: payload.canManageBilling === true ? payload.payUrl || null : null,
+             loaded: true,
+         }));
+     }, []);
+ 
+     const refresh = useCallback(async () => {
++        if (refreshing.current) return;
+         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+         if (!token) {
+-            setLock((prev) => ({ ...prev, locked: false, loaded: true }));
++            setLock({ locked: false, canManageBilling: false, status: null, graceUntil: null, payUrl: null, loaded: true });
+             return;
+         }
++        refreshing.current = true;
+         try {
+             const res = await billingApi.getLockStatus();
++            if (localStorage.getItem('token') !== token) return;
+             if (res?.success && res.data) {
+                 applyLock(res.data);
+                 return;
+@@ -46,14 +52,17 @@ export function BillingLockProvider({ children }) {
+             setLock((prev) => ({ ...prev, loaded: true }));
+         } catch {
+             setLock((prev) => ({ ...prev, loaded: true }));
+-        }
++        } finally { refreshing.current = false; }
+     }, [applyLock]);
+ 
+     useEffect(() => {
+         void refresh();
+-        const onLocked = (event) => applyLock(event?.detail || { locked: true });
++        const onLocked = () => { setLock(prev => ({ ...prev, locked: true, loaded: true })); void refresh(); };
++        const onAuthChanged = () => { setLock({ locked: false, canManageBilling: false, status: null, graceUntil: null, payUrl: null, loaded: false }); void refresh(); };
++        const timer = window.setInterval(refresh, 30000);
+         window.addEventListener('lw-billing-locked', onLocked);
+-        return () => window.removeEventListener('lw-billing-locked', onLocked);
++        window.addEventListener('lw-auth-changed', onAuthChanged);
++        return () => { window.clearInterval(timer); window.removeEventListener('lw-billing-locked', onLocked); window.removeEventListener('lw-auth-changed', onAuthChanged); };
+     }, [applyLock, refresh]);
+ 
+     const value = useMemo(
