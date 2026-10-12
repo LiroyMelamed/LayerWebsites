@@ -151,7 +151,9 @@ export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t, pe
     const canAction = permCtx?.canAction || (() => true);
 
     const businessLinks = buildBusinessNavLinks({ navigate, openPopup, closePopup, t, calendarEnabled });
-    const platformLinks = buildPlatformAdminLinks({ navigate, t, isPlatformAdmin });
+    const isOfficeOwner = permCtx?.scope?.isOfficeOwner === true;
+    const platformLinks = buildPlatformAdminLinks({ navigate, t, isPlatformAdmin: isPlatformAdmin || isOfficeOwner })
+        .filter(item => isPlatformAdmin || item.navKey !== 'platformSettings');
 
     if (permissionMode === "role") {
         const officeManagers = { navKey: 'allManagers', routeMatch: AllMangerScreenName, buttonText: t('nav.allManagers'), buttonScreen: t('nav.allManagers'), icon: null, onClick: () => navigate(AdminStackName + AllMangerScreenName) };

@@ -72,7 +72,7 @@ function initBirthdayGreetingsScheduler() {
         running = true;
         try {
             console.log(JSON.stringify({ event: 'birthday_greetings_run_start', tz, dayKey, hour, minute }));
-            const result = await processBirthdayGreetings({ timeZone: tz });
+            const result = await require('../../lib/tenant/officeJobs').forEachOffice(() => processBirthdayGreetings({ timeZone: tz }));
             console.log(JSON.stringify({ event: 'birthday_greetings_run_result', tz, dayKey, result }));
             lastRunDayKey = dayKey;
         } catch (e) {

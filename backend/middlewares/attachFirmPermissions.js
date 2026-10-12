@@ -2,6 +2,10 @@ const pool = require('../config/db');
 const { normalizeRolePermissions } = require('../lib/firmRolePermissions');
 const { createAppError } = require('../utils/appError');
 const { getHebrewMessage } = require('../utils/errors.he');
+const { withSystem } = require('../lib/tenant/databaseScope');
+const { isMultiTenantMode } = require('../lib/tenant/tenantContext');
+// Only the verified JWT's numeric identity is bootstrapped. Never run next() in system scope.
+const identityQuery = (...args) => withSystem(() => pool.query(...args));
 
 /**
  * Loads firm_staff_role permissions from DB (every authenticated request).
@@ -24,7 +28,7 @@ module.exports = async function attachFirmPermissions(req, res, next) {
     try {
         // Customer identities validate their current base role without staff-schema dependencies.
         if (['User', 'Client', 'ExternalSigner'].includes(req.user?.Role)) {
-            const identity = await pool.query('SELECT userid, role, law_firm_tenant_id FROM users WHERE userid = $1 LIMIT 1', [userId]);
+            const identity = await identityQuery('SELECT userid, role, law_firm_tenant_id FROM users WHERE userid = $1 LIMIT 1', [userId]);
             const current = identity.rows[0];
             if (!current || !['User', 'Client', 'ExternalSigner'].includes(current.role)) {
                 return next(createAppError('UNAUTHORIZED', 401, getHebrewMessage('UNAUTHORIZED')));
@@ -37,7 +41,7 @@ module.exports = async function attachFirmPermissions(req, res, next) {
             req.firmTenantId = current.law_firm_tenant_id || null;
             return next();
         }
-        const result = await pool.query(
+        const result = await identityQuery(
             `SELECT u.userid,
                     u.role,
                     u.law_firm_tenant_id,
@@ -73,7 +77,7 @@ module.exports = async function attachFirmPermissions(req, res, next) {
         if (row.role) req.user.Role = row.role;
         req.firmPermissionContextValidated = true;
         req.firmTenantId = row.law_firm_tenant_id || null;
-        req.isPlatformAdminUser = Boolean(row.is_platform_admin);
+        req.isPlatformAdminUser = Boolean(row.is_platform_admin) && !(isMultiTenantMode() && row.law_firm_tenant_id);
 
         if (req.isPlatformAdminUser) {
             req.firmPermissionMode = 'platform_admin';

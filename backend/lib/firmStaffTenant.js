@@ -18,7 +18,9 @@ async function assertPlatformAdminSameTenant(req) {
     if (!Number.isFinite(userId) || userId <= 0) {
         throw createAppError('UNAUTHORIZED', 401, getHebrewMessage('AUTH_REQUIRED'));
     }
-    const isPa = await settingsService.isPlatformAdmin(userId);
+    const isPa = isMultiTenantMode()
+        ? req.firmPermissionContextValidated && req.firmTenantId && req.user?.Role === 'Admin' && req.isOfficeOwner === true
+        : await settingsService.isPlatformAdmin(userId);
     if (!isPa) {
         throw createAppError('FORBIDDEN', 403, getHebrewMessage('FORBIDDEN'));
     }

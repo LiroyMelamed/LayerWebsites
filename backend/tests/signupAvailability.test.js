@@ -19,6 +19,7 @@ test('closed shared signup cannot create an order or office; status exposes no c
   const filename=path.resolve(__dirname,'../lib/tenant/signupService.js');
   vm.runInNewContext(fs.readFileSync(filename,'utf8'),{module:mod,process:{env:{}},require(id){
    if(id==='./signupAvailability')return require('../lib/tenant/signupAvailability');
+   if(id==='./databaseScope')return require('../lib/tenant/databaseScope');
    if(id==='node:crypto')return require(id);
    return {};
   }});

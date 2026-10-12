@@ -11,6 +11,8 @@
 const { getSetting } = require('../services/settingsService');
 
 async function getLawFirmNameHe() {
+    const tenant = require('./tenant/tenantContext').getCurrentTenant();
+    if (tenant?.id) return String(tenant.branding?.firmDisplayName || tenant.name || '').trim();
     return String(
         (await getSetting('firm', 'LAW_FIRM_NAME', null))
         || process.env.LAW_FIRM_NAME
@@ -19,6 +21,8 @@ async function getLawFirmNameHe() {
 }
 
 async function getFirmNameEn() {
+    const tenant = require('./tenant/tenantContext').getCurrentTenant();
+    if (tenant?.id) return String(tenant.branding?.companyName || tenant.name || '').trim();
     return String(
         (await getSetting('firm', 'COMPANY_NAME', null))
         || process.env.COMPANY_NAME

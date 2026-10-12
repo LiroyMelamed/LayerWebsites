@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middlewares/authMiddleware');
-const requirePlatformAdmin = require('../middlewares/requirePlatformAdmin');
+const requirePlatformAdmin = require('../middlewares/requireOfficeOwner');
 const staffRolesController = require('../controllers/staffRolesController');
 
 router.get('/permission-catalog', authMiddleware, staffRolesController.getPermissionCatalog);

@@ -35,6 +35,7 @@ export default function TopAndRightNavBar({ children, LogoNavigate, GetNavBarDat
         permissionMode: firmPerms.permissionMode,
         canPage: firmPerms.canPage,
         canAction: firmPerms.canAction,
+        scope: firmPerms.scope,
       }
     : null;
   const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup, isFromApp, t, permCtx);

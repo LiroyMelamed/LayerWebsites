@@ -80,10 +80,10 @@ function createSignupRenewal({database=pool,charge=chargeTakbullToken,verify=ver
         }
     }
     async function due(){
-        const rows=(await database.query(`SELECT b.law_firm_tenant_id id FROM firm_billing b JOIN signup_intents s ON s.law_firm_tenant_id=b.law_firm_tenant_id
+        const rows=(await require('../tenant/databaseScope').withSystem(()=>database.query(`SELECT b.law_firm_tenant_id id FROM firm_billing b JOIN signup_intents s ON s.law_firm_tenant_id=b.law_firm_tenant_id
           WHERE s.status='completed' AND s.consent_version IN ('signup-1ils-3months-v1','signup-1ils-3months-v2') AND b.billing_enabled AND b.auto_renew AND b.renews_at<=$1
-          AND (b.complimentary_until IS NULL OR b.complimentary_until<=$1) ORDER BY b.renews_at LIMIT 100`,[now()])).rows;
-        const result=[];for(const r of rows){try{result.push({id:r.id,...await renew(r.id)});}catch{result.push({id:r.id,handled:true,status:'needs_review'});}}return result;
+          AND (b.complimentary_until IS NULL OR b.complimentary_until<=$1) ORDER BY b.renews_at LIMIT 100`,[now()]))).rows;
+        const result=[];for(const r of rows){try{result.push({id:r.id,...await require('../tenant/tenantContext').runWithTenant({id:r.id},()=>renew(r.id))});}catch{result.push({id:r.id,handled:true,status:'needs_review'});}}return result;
     }
     return {renew,due};
 }

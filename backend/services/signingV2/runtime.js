@@ -178,8 +178,10 @@ function createRuntime({ pool, env = process.env, storage, provider, renderer, c
         running = true;
         let processed = 0;
         try {
-            if (Date.now() - recoveredAt > 30000) {
-                recoveredAt = Date.now();
+            const recover = Date.now() - recoveredAt > 30000;
+            if (recover) recoveredAt = Date.now();
+            await require('../../lib/tenant/officeJobs').forEachOffice(async () => {
+            if (recover) {
                 await jobs.recoverExpired(pool);
                 await markAbandonedDispatches(pool);
             }
@@ -190,6 +192,7 @@ function createRuntime({ pool, env = process.env, storage, provider, renderer, c
                 processed += batch.length;
                 await Promise.all(batch.map(lease => runLease(kind, lease)));
             }
+            });
         } catch (error) {
             log.error('[signing-v2] worker tick failed', error?.errorCode || error?.code || 'ERROR');
         } finally {

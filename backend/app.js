@@ -43,6 +43,7 @@ const errorHandler = require('./middlewares/errorHandler');
 const { sendError } = require('./utils/appError');
 
 const app = express();
+app.use((_req, _res, next) => require('./lib/tenant/databaseScope').withoutScope(next));
 
 // Only trust proxy headers when explicitly enabled (prevents spoofing x-forwarded-for)
 app.set('trust proxy', process.env.TRUST_PROXY === 'true');

@@ -72,12 +72,8 @@ async function ensureShowcaseTenant() {
         );
     }
     const adminUserId = adminRes.rows[0]?.userid;
-    if (adminUserId) {
-        await pool.query(
-            `INSERT INTO platform_admins (user_id, is_active) VALUES ($1, true)
-             ON CONFLICT (user_id) DO UPDATE SET is_active = true`,
-            [adminUserId]
-        );
+    if (adminUserId && require('../lib/tenant/databaseScope').enabled()) {
+        await pool.query('UPDATE law_firm_tenants SET owner_user_id=$2 WHERE id=$1',[tenant.id,adminUserId]);
     }
 
     console.log('[seed-lawyer] created showcase tenant:', tenant.slug);
@@ -91,7 +87,7 @@ async function ensureGlobalMaster() {
     }
 
     let userRes = await pool.query(
-        `SELECT userid, name FROM users WHERE phonenumber = $1 LIMIT 1`,
+        `SELECT userid, name FROM users WHERE phonenumber = $1 AND law_firm_tenant_id IS NULL AND role='Admin' LIMIT 1`,
         [MASTER_PHONE]
     );
     let userId = userRes.rows[0]?.userid;
@@ -140,7 +136,7 @@ async function main() {
     console.log('[seed-lawyer] done');
 }
 
-main()
+require('../lib/tenant/databaseScope').withSystem(main)
     .catch((err) => {
         console.error('[seed-lawyer] FAILED', err);
         process.exit(1);

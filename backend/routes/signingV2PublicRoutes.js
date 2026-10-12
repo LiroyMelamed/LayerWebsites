@@ -22,6 +22,7 @@ const signing = () => (service ||= require('../services/signingV2/runtime').publ
 router.use((req, res, next) => (process.env.SIGNING_V2_ENABLED === 'true' ? next() : next(createAppError('NOT_FOUND', 404))));
 router.use((req, res, next) => { res.set({ 'Cache-Control': 'private, no-store', 'Referrer-Policy': 'no-referrer', 'X-Robots-Tag': 'noindex' }); next(); });
 router.use(ipLimit);
+router.use(require('../middlewares/publicOfficeScope').signingGrant);
 
 const pdf = (res, file, name) => res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': `inline; filename="${name}"`,
     'X-Content-Type-Options': 'nosniff' }).send(file.bytes);
