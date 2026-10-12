@@ -3,6 +3,8 @@
  */
 
 const { runBillingMaintenance } = require('../../lib/billing/firmBillingService');
+const { withLegacyOffice } = require('../../lib/tenant/databaseScope');
+const { runWithTenant } = require('../../lib/tenant/tenantContext');
 
 function toPositiveIntOrNull(v) {
     const n = Number(v);
@@ -43,7 +45,9 @@ function initBillingRenewalScheduler() {
             // Run at most once per poll window key; maintenance itself is idempotent.
             if (lastRunKey === key) return;
             lastRunKey = key;
-            const result = await runBillingMaintenance();
+            // This legacy scheduler has always maintained the deployment's id=1
+            // account. Do not turn it into an unconsented tenant charging loop.
+            const result = await withLegacyOffice(() => runWithTenant(null, runBillingMaintenance));
             if (!result?.skipped) {
                 console.log('[billing-renewal]', JSON.stringify(result?.result?.ok != null ? { ok: result.result.ok } : result));
             }
