@@ -1,0 +1,385 @@
+{
+  "schemaVersion": 1,
+  "releasedAtUtc": "2026-10-12T04:06:29.396196+00:00",
+  "scope": "WEB calendar release; native OTA and final Figma audit remain separate",
+  "productRuntimeCommit": "a746b915d0262eb75c43e2985ffa29eb64f6792e",
+  "qaRuntimeCommit": "e39b3347f2eee45a4b7f1aa15300da42ae942d12",
+  "customers": [
+    {
+      "tenant": "melamedlaw",
+      "deployedSource": "6edfeb1f3d69ef3506eedb4b0e37927d1056e4b1",
+      "artifactBuiltOn": "6edfeb1f3d69ef3506eedb4b0e37927d1056e4b1",
+      "backendFilesMatched": 10,
+      "nonprotectedBuildFilesVerified": 305,
+      "indexSha256": "b1aafb3690f1a1090fdfdc93d5e829a96d9cd47a2c0efab449d649bb192139b7",
+      "publicHealth": 200,
+      "publicArtifactProof": [
+        {
+          "path": "index.html",
+          "status": 200,
+          "sha256": "b1aafb3690f1a1090fdfdc93d5e829a96d9cd47a2c0efab449d649bb192139b7"
+        },
+        {
+          "path": "asset-manifest.json",
+          "status": 200,
+          "sha256": "0b1c7b423d0ddf1e2f22630096d649b51c4e6c17c4c74b9baf1a3b0c410a7216"
+        },
+        {
+          "path": "static/js/vendor-pdf.eafc7c93.js",
+          "status": 200,
+          "sha256": "6787779779717a199acb85cf48efae3cd467e99f2c83c7e1a2be2a22c561f36a"
+        },
+        {
+          "path": "static/js/vendor-i18n.4b11dc25.js",
+          "status": 200,
+          "sha256": "d0a50599db1eb6658bfa86f9a4f12defd1f56519e8d4a5e660fedd766e13f21c"
+        },
+        {
+          "path": "static/js/vendor-react.358aa04b.js",
+          "status": 200,
+          "sha256": "9bde6873e0fcbd27accbc2bc4cc72faccb990e9289c5ba5e5c074265742c0fe1"
+        },
+        {
+          "path": "static/js/vendor.3298fd67.js",
+          "status": 200,
+          "sha256": "a058cedb8e702a8ccb3cb60693e776030c54b3b5e3676df879fda39ef828c7ca"
+        },
+        {
+          "path": "static/css/main.aa4c0450.css",
+          "status": 200,
+          "sha256": "8cda58f41511ec841cc27c3b7088153de7c83aeee0199f1256d4d5300f0a17ae"
+        },
+        {
+          "path": "static/js/main.8647e737.js",
+          "status": 200,
+          "sha256": "64f009b67d7496fc7971853f0aadf51659380fc9c0c518551fc6f93872509f91"
+        }
+      ],
+      "immutableReadbackReceiptHashes": {
+        "backendActivation": "eacecc5eb3ea20d2b500cc54fc0d73be78492b695b871f6470e45ac7989d5855",
+        "frontendActivation": "4fa0349b4ab40bb2b4ff897e8c56872c09b6510b56d1ac0dcaf9d8a5ff27ddc1",
+        "backendReadback": "4d45f2e9140bc3f374ed78039e09c94145c703967813007c4f10f6ca26967494",
+        "publicReadback": "fc8cdd14ac29f5d4e1d1ca6ae2fc89f8501ceeb0e0242751c471552297a3ec4d"
+      }
+    },
+    {
+      "tenant": "morlevy",
+      "deployedSource": "93daf72062fcfc08322be6e07ea8d55cc3dfe4da",
+      "artifactBuiltOn": "93daf72062fcfc08322be6e07ea8d55cc3dfe4da",
+      "backendFilesMatched": 10,
+      "nonprotectedBuildFilesVerified": 305,
+      "indexSha256": "0f5c88cbf41990700dcc7bc5553721bee448042d33c5cdfd0bb61aa4a54005af",
+      "publicHealth": 200,
+      "publicArtifactProof": [
+        {
+          "path": "index.html",
+          "status": 200,
+          "sha256": "0f5c88cbf41990700dcc7bc5553721bee448042d33c5cdfd0bb61aa4a54005af"
+        },
+        {
+          "path": "asset-manifest.json",
+          "status": 200,
+          "sha256": "e1ed6d77caa3c1feb02c7d23cc8f825d6eb5cfee4f40d4467e28ccc8e0e2ed2c"
+        },
+        {
+          "path": "static/js/vendor-pdf.eafc7c93.js",
+          "status": 200,
+          "sha256": "6787779779717a199acb85cf48efae3cd467e99f2c83c7e1a2be2a22c561f36a"
+        },
+        {
+          "path": "static/js/vendor-i18n.4b11dc25.js",
+          "status": 200,
+          "sha256": "d0a50599db1eb6658bfa86f9a4f12defd1f56519e8d4a5e660fedd766e13f21c"
+        },
+        {
+          "path": "static/js/vendor-react.358aa04b.js",
+          "status": 200,
+          "sha256": "9bde6873e0fcbd27accbc2bc4cc72faccb990e9289c5ba5e5c074265742c0fe1"
+        },
+        {
+          "path": "static/js/vendor.3298fd67.js",
+          "status": 200,
+          "sha256": "a058cedb8e702a8ccb3cb60693e776030c54b3b5e3676df879fda39ef828c7ca"
+        },
+        {
+          "path": "static/css/main.c193327d.css",
+          "status": 200,
+          "sha256": "31e1b3c407ec15646ff54ec2ac47e359b604babd2d906137f43b010ec886b73f"
+        },
+        {
+          "path": "static/js/main.50ea3f87.js",
+          "status": 200,
+          "sha256": "ba74a8ec760516a69d05496a7a62f0bba0d59d8564be8393746f5ecc82a318f3"
+        }
+      ],
+      "immutableReadbackReceiptHashes": {
+        "backendActivation": "711516978e27c98939c1ede42c51fb51d25af993515796ea5dd6023180b74055",
+        "frontendActivation": "ae088369e83a20b18d3acc105c600b7c5420e001640fc350694bbfe19c4aa7bf",
+        "backendReadback": "67ec6f77bd8ee12ac7889f9856f07a8b315024c14881ba6d9d354148b31b7e78",
+        "publicReadback": "a4505e09b20e6cea48c8613c998830bffa103d20d1832c5ae5b7195463f68487"
+      }
+    },
+    {
+      "tenant": "ashrafessa",
+      "deployedSource": "466e971e510ec02eef26bd36994dc202f9d15fa1",
+      "artifactBuiltOn": "466e971e510ec02eef26bd36994dc202f9d15fa1",
+      "backendFilesMatched": 10,
+      "nonprotectedBuildFilesVerified": 307,
+      "indexSha256": "552b966748d50b210bfe8b2f272763ed9ac3ff02b66e8b3e8dd44281656c0fb7",
+      "publicHealth": 200,
+      "publicArtifactProof": [
+        {
+          "path": "index.html",
+          "status": 200,
+          "sha256": "552b966748d50b210bfe8b2f272763ed9ac3ff02b66e8b3e8dd44281656c0fb7"
+        },
+        {
+          "path": "asset-manifest.json",
+          "status": 200,
+          "sha256": "a1bd5c40065f2479b829e27ec065ce86f5f810ac2d46caf9d7fd10d549ed112a"
+        },
+        {
+          "path": "static/js/vendor-pdf.eafc7c93.js",
+          "status": 200,
+          "sha256": "6787779779717a199acb85cf48efae3cd467e99f2c83c7e1a2be2a22c561f36a"
+        },
+        {
+          "path": "static/js/vendor-i18n.4b11dc25.js",
+          "status": 200,
+          "sha256": "d0a50599db1eb6658bfa86f9a4f12defd1f56519e8d4a5e660fedd766e13f21c"
+        },
+        {
+          "path": "static/js/vendor-react.358aa04b.js",
+          "status": 200,
+          "sha256": "9bde6873e0fcbd27accbc2bc4cc72faccb990e9289c5ba5e5c074265742c0fe1"
+        },
+        {
+          "path": "static/js/vendor.3298fd67.js",
+          "status": 200,
+          "sha256": "a058cedb8e702a8ccb3cb60693e776030c54b3b5e3676df879fda39ef828c7ca"
+        },
+        {
+          "path": "static/css/main.c193327d.css",
+          "status": 200,
+          "sha256": "31e1b3c407ec15646ff54ec2ac47e359b604babd2d906137f43b010ec886b73f"
+        },
+        {
+          "path": "static/js/main.f2e4c3fd.js",
+          "status": 200,
+          "sha256": "313fc3113f56b20233bba3047cba814069ea2f266104748b6b376b5100205e7b"
+        }
+      ],
+      "immutableReadbackReceiptHashes": {
+        "backendActivation": "b9ae47ff5607ef7872de931e3b9aa77182a47244efaa32ee69adb70a3ec7674f",
+        "frontendActivation": "b07740baf4f5d6991ec14e69aa9610bf58656c7f00fc74e7a4a4736a3e5f7901",
+        "backendReadback": "82e55285cc46d305bc56eb55cac3b7d351a844af79b9fd40eb29fd2c82a9fe8f",
+        "publicReadback": "602471695cd09d2330ef3cf1c812e87aa22792aff95dbd0c5085ef62fadc2adb"
+      }
+    },
+    {
+      "tenant": "idm",
+      "deployedSource": "28adf8e91dbc3ce3f7ce96523f6097c7c01f349b",
+      "artifactBuiltOn": "28adf8e91dbc3ce3f7ce96523f6097c7c01f349b",
+      "backendFilesMatched": 10,
+      "nonprotectedBuildFilesVerified": 304,
+      "indexSha256": "8df5986323c352cc46af70086d5d5c125bd756a63311877479ef14f8aca26a6b",
+      "publicHealth": 200,
+      "publicArtifactProof": [
+        {
+          "path": "index.html",
+          "status": 200,
+          "sha256": "8df5986323c352cc46af70086d5d5c125bd756a63311877479ef14f8aca26a6b"
+        },
+        {
+          "path": "asset-manifest.json",
+          "status": 200,
+          "sha256": "4dd0577fdb2b6fa9e312388fb6f88951105b8fa7965cf8c2dc5eb1069a3a4b2a"
+        },
+        {
+          "path": "static/js/vendor-pdf.eafc7c93.js",
+          "status": 200,
+          "sha256": "6787779779717a199acb85cf48efae3cd467e99f2c83c7e1a2be2a22c561f36a"
+        },
+        {
+          "path": "static/js/vendor-i18n.4b11dc25.js",
+          "status": 200,
+          "sha256": "d0a50599db1eb6658bfa86f9a4f12defd1f56519e8d4a5e660fedd766e13f21c"
+        },
+        {
+          "path": "static/js/vendor-react.358aa04b.js",
+          "status": 200,
+          "sha256": "9bde6873e0fcbd27accbc2bc4cc72faccb990e9289c5ba5e5c074265742c0fe1"
+        },
+        {
+          "path": "static/js/vendor.3298fd67.js",
+          "status": 200,
+          "sha256": "a058cedb8e702a8ccb3cb60693e776030c54b3b5e3676df879fda39ef828c7ca"
+        },
+        {
+          "path": "static/css/main.c193327d.css",
+          "status": 200,
+          "sha256": "31e1b3c407ec15646ff54ec2ac47e359b604babd2d906137f43b010ec886b73f"
+        },
+        {
+          "path": "static/js/main.aa319e30.js",
+          "status": 200,
+          "sha256": "7c5d11b1e14ecb94b262d7f10b2653e3b3b8006646ab096c71e44ebfde3c2843"
+        }
+      ],
+      "immutableReadbackReceiptHashes": {
+        "backendActivation": "0f98b2c744441fedb63c7db77189a5597b03922ac1b66343b9a98ef795422315",
+        "frontendActivation": "e3692b9fb3e17325e03348571347a6593e2537052593a34c17e3c9fead4c2983",
+        "backendReadback": "1f36de848747e71d4af8ebe861caee74c15a03dea02846c3dcff62ad34918911",
+        "publicReadback": "171d351890ce78c1414dc6d6aaafdb4f37664812bff4a59afd32a56728e80b47"
+      }
+    },
+    {
+      "tenant": "lawyer",
+      "deployedSource": "82202c18a5ac09d7e277e68245be86211d403349",
+      "artifactBuiltOn": "62948a8c142cc951865680f7676261457f4aa207",
+      "backendFilesMatched": 9,
+      "nonprotectedBuildFilesVerified": 143,
+      "indexSha256": "002498cbcd37f326e7b9dea78e2601bcd6a15cd8897e3435d3c3c611e0702582",
+      "publicHealth": 200,
+      "publicArtifactProof": [
+        {
+          "path": "index.html",
+          "status": 200,
+          "sha256": "002498cbcd37f326e7b9dea78e2601bcd6a15cd8897e3435d3c3c611e0702582"
+        },
+        {
+          "path": "asset-manifest.json",
+          "status": 200,
+          "sha256": "c10d8eaf5f28c1f787ad59d3ee8400c949f9eb60252220e999f168411c19da10"
+        },
+        {
+          "path": "static/css/main.0db069a8.css",
+          "status": 200,
+          "sha256": "d202e5aeb838c114f6c5a2686216d3ac560e03cd68a02c5a4df6791b1228290b"
+        },
+        {
+          "path": "static/js/main.6a4aa174.js",
+          "status": 200,
+          "sha256": "14092b7d449df9405c567bd4981f19a5f1d39b8ae7667e1dc286c668f9b96069"
+        }
+      ],
+      "immutableReadbackReceiptHashes": {
+        "backendActivation": "9e1169622d491c9e590907fffb58640a033f403174ce186564753dfeb81054f8",
+        "frontendActivation": "e12aa6ab5cced126955224266bbec500fdce1e8565b136caadce61bbf60753ab",
+        "backendReadback": "f2fc9f461e9503b29673399add2646747289438647fdc48500fcf6f28fd37e98",
+        "publicReadback": "5d2d6b11023196eae7eeb9228e25e1a829759d7ace857722fe1dcf20ca55c46c"
+      }
+    }
+  ],
+  "requiredMigration": {
+    "path": "backend/migrations/2026-10-12_00_calendar_daily_agenda_delivery_receipts.sql",
+    "sha256": "94318af9e4c1b020ed5615ef0ffd3e03b3ee3b278ccbde9835ff06c8373cdd55",
+    "readback": "delivery_receipts JSONB NOT NULL DEFAULT {}"
+  },
+  "reusableTestEvidence": {
+    "modernBackend": {
+      "sourceHashes": {
+        "backend/controllers/calendarController.js": "d92cf3e895a43df50384cf8c1931be10f5fe326847534999936db04967e33191",
+        "backend/lib/calendarEventReminders.js": "6a7eceebfc102a4563af5d193a62690669944cce0c456ab010002bbd257a9dcb",
+        "backend/lib/calendarRecurrence.js": "170abed2a358fd28044a434a58d6e3c098b730ebbb0985da1362d30b11f32cd4",
+        "backend/lib/calendarReminderDispatch.js": "fbfd30d5b630009e6b1ba850e6b89600f75b75df656e17c0af70169033b788dc",
+        "backend/lib/calendarEmail.js": "e02504665d25056b01670d4885942106b04a83333fd05de4a192090dba29570d",
+        "backend/tasks/calendarReminders/scheduler.js": "7f5cd273ee0ad2536b16760a66b1647dcc765881c071f97bee347991410e5825",
+        "backend/tasks/dailyAgenda/scheduler.js": "83cde17faf44fac06302e628d038486cb781aea7b1c9ca3dba4c82ca96cca575",
+        "backend/utils/sendAndStoreNotification.js": "96bbecb301ab971a4335700fde2464c8d8e2a6b7cd7cd08153ce6d60c527f3b4",
+        "backend/lib/calendarReminderListing.js": "379210fda8bb4fec2bfdbb8e9e91a379ea524c1fbf2c5757060e7fd1ca4d4ee5",
+        "backend/migrations/2026-10-12_00_calendar_daily_agenda_delivery_receipts.sql": "94318af9e4c1b020ed5615ef0ffd3e03b3ee3b278ccbde9835ff06c8373cdd55",
+        "backend/tests/calendar.releaseReadiness.integration.test.js": "62eec228857fcbc0789bea53207e0f0d8435298933780de11c739c35b383ce0c",
+        "backend/tests/calendarDailyAgenda.release.integration.test.js": "a8e2903c1bf96a4336cfdd2134212bb5c3cdd5ad80533229fddd320faad2a095",
+        "backend/tests/calendarDispatch.release.test.js": "827868ed63f916823d2eaa1a5d0eb61a32db1850395cd5b15fea25de7e16afec",
+        "backend/tests/calendarInviteDelivery.release.integration.test.js": "f30353cfc0da68668214b988298dd26ca7c879c0be48844945d287b63f25b010",
+        "backend/tests/calendarMessageSettings.release.integration.test.js": "2677c6d177b741643168d4ec3704f3fd5cfb8dd71a34ff766a967f233c11ac55",
+        "backend/tests/calendarRecurrence.release.test.js": "8d05b0de64f8ad36ea05f075d0f02c131403158bdc94a083f1596e7d0a8abb54",
+        "backend/tests/calendarReminderDelivery.release.integration.test.js": "8f3ad1e0b25993542209ddfba87b917e82769e91a52aceae49e0d159ca4b8838",
+        "backend/tests/calendarToday.release.integration.test.js": "188305172504fe285089f98af0c38a0199f5990362a544fea1558d37caca592a"
+      },
+      "providerMode": "fake SMS/email/push; no external delivery",
+      "evidenceManifestSha256": "b7a2f1477bfe599b299b1b11f824ea595fe6fa55f120ba08347ac75c45b8edb4"
+    },
+    "legacyBackend": {
+      "sourceHashes": {
+        "backend/controllers/calendarController.js": "e455ff95f2bdaf4640d2ab4da4dbe7ac2614d3b4ec38b0274865f059363cf86f",
+        "backend/lib/calendarEventReminders.js": "7cdc6ae82b1e9cd423ea7c06c525a3697be37cb0cbb451095223e8349b504ddf",
+        "backend/lib/calendarRecurrence.js": "170abed2a358fd28044a434a58d6e3c098b730ebbb0985da1362d30b11f32cd4",
+        "backend/lib/calendarReminderDispatch.js": "fbfd30d5b630009e6b1ba850e6b89600f75b75df656e17c0af70169033b788dc",
+        "backend/lib/calendarEmail.js": "e02504665d25056b01670d4885942106b04a83333fd05de4a192090dba29570d",
+        "backend/tasks/calendarReminders/scheduler.js": "472944278640f30906b5cd7862468d40925752c743e891510d5f28d1ccced106",
+        "backend/tasks/dailyAgenda/scheduler.js": "5336580773e978b2f9ee7e00bc8573cf7d7af472fd16036efb229bbf9cf88770",
+        "backend/utils/sendAndStoreNotification.js": "6cfc1e0867b39d030d8c9cea430ec327b137e821675347f5b6365c81c3a8dcd4",
+        "backend/migrations/2026-10-12_00_calendar_daily_agenda_delivery_receipts.sql": "94318af9e4c1b020ed5615ef0ffd3e03b3ee3b278ccbde9835ff06c8373cdd55",
+        "backend/tests/calendar.releaseReadiness.integration.test.js": "0f68e0ccb06375aac9050c2ad87e10376f414d49a2019cf002018590d65e15f6",
+        "backend/tests/calendarDailyAgenda.release.integration.test.js": "13223d30bc5567cdb4e81921bf90dc392465bd18e0435645ab93177a7ebd9466",
+        "backend/tests/calendarDispatch.release.test.js": "827868ed63f916823d2eaa1a5d0eb61a32db1850395cd5b15fea25de7e16afec",
+        "backend/tests/calendarInviteDelivery.release.integration.test.js": "f30353cfc0da68668214b988298dd26ca7c879c0be48844945d287b63f25b010",
+        "backend/tests/calendarMessageSettings.release.integration.test.js": "394d66aa463e036a95170f7e00d92bff3b6248df5ddce6350e8fb9eab2c62575",
+        "backend/tests/calendarRecurrence.release.test.js": "8d05b0de64f8ad36ea05f075d0f02c131403158bdc94a083f1596e7d0a8abb54",
+        "backend/tests/calendarReminderDelivery.release.integration.test.js": "4d1d5f098ef8eccec41e23ad51603390493913dbae6394accc0c91ca27316f2b",
+        "backend/tests/helpers/identityFixture.js": "2ba3107a7f9fb32c501f4eea47d830de2bdf8108311901a931a1d8b7bad9ec5f",
+        "backend/tests/helpers/integrationEnv.js": "524c15dc9fd6c1046b0e6515060f3683f8400d6b1ec7bd1ce54e6600989d96fe",
+        "backend/tests/helpers/preload.js": "70981bfb1d07f6c2e36543b71287f399d033aee9ae53768aaacbc745cabab971",
+        "backend/tests/calendarToday.release.integration.test.js": "7c91a6665c4a0058fa161420eb70f95bd95e26f960d9e76784d661831eabd787"
+      },
+      "providerMode": "fake SMS/email/push; exact isolated legacy schema",
+      "evidenceManifestSha256": "66bccd86f474f2aba94c2426260da6dbced0239f31757e2e553d4055bfc14007"
+    },
+    "actualQaBrowser": {
+      "candidate": "e39b3347f2eee45a4b7f1aa15300da42ae942d12",
+      "result": "PASS",
+      "scope": [
+        "desktop1280 week / seven columns",
+        "mobile390 distinct day/week/month",
+        "event editor open/close without Save"
+      ],
+      "evidenceSha256": "c9e51071fe61e9cd325fe8fad9e409d0fe1596149a89913af9e9897a8a7992ce"
+    },
+    "actualLocales": {
+      "result": "PASS",
+      "scope": [
+        "Hebrew RTL",
+        "Arabic mobile day/week/month",
+        "English desktop week/month logical sidebar and translated editor"
+      ],
+      "evidenceSha256": "a363ffbbdba3ef5cbb117b0e76397d10a9e8afeceab241cb195eba61c92697c3"
+    },
+    "brandedBuilds": {
+      "modern5": "CI=true PASS",
+      "legacy": "CI=false PASS under explicit bounded exception: zero new scoped lint findings; original CI=true failure and incumbent warnings retained",
+      "legacyBaselineEvidenceSha256": "01a3d847a3d9c0c29efa53e3f4c39e25b6cc7b0cb7794909359a144a43d59f6b"
+    },
+    "fullWebManifestSha256": "56ca52b288409a4add88c1b6b2bcd1ff5bbec22efed32cd64205271c34479501"
+  },
+  "executionSetupFailuresPreserved": [
+    {
+      "scope": "MelamedLaw operator",
+      "finding": "QA-only absence guard rejected the incumbent production DATABASE_URL before any activation mutation",
+      "resolution": "Private parse verified exact existing target; bounded operator retry with URL and flag hash preservation"
+    },
+    {
+      "scope": "legacy readiness",
+      "finding": "Initial ten-second health readiness window expired after the single process restart",
+      "resolution": "Bounded completion on the same stable process verified health200, exact source, migration and preserved operational flags; no second restart or DDL"
+    }
+  ],
+  "preservation": {
+    "oneNamedRestartPerTenant": true,
+    "existingEnvironmentAndOperationalFlagsPreserved": true,
+    "oldHashedAssetsBrandingAndHostingFilesRetained": true,
+    "privateVerifiedCheckpointsRetained": true,
+    "legacyOriginalRuntimeCapturedBeforeMetadataTransition": "ebb6e1dbeb44c057bd228b544224382ae316830d",
+    "legacyFinalTreeIdenticalBuiltSource": true
+  },
+  "limits": {
+    "nativeOtaReleased": false,
+    "finalFigmaAuditComplete": false,
+    "announcementsSent": false,
+    "productionCalendarFixturesCreated": 0,
+    "realProviderTestMessagesSent": 0,
+    "existingNormalProductionReminderTraffic": "preserved under incumbent customer flags"
+  },
+  "invalidation": "Reuse applies only while the recorded runtime source, dependencies, environment, process, schema and public artifact hashes remain unchanged. Documentation-only commits do not invalidate runtime proof."
+}
