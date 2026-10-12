@@ -11,7 +11,7 @@ test('shared office database + HTTP isolation', { skip: !configPath }, async t =
     const config = JSON.parse(fs.readFileSync(configPath));
     assert.ok(['127.0.0.1','localhost'].includes(config.host));
     assert.equal(String(config.port), '55440');
-    assert.equal(config.database, 'legal_office_isolation_20261012_qa');
+    assert.ok(['legal_office_isolation_20261012_qa','legal_office_v2_scope_20261012_qa'].includes(config.database));
     const adminEnv = JSON.parse(fs.readFileSync(process.env.OFFICE_ISOLATION_QA_ADMIN_CONFIG));
     assert.equal(adminEnv.DB_HOST, config.host);
     assert.equal(String(adminEnv.DB_PORT), String(config.port));
@@ -27,6 +27,7 @@ test('shared office database + HTTP isolation', { skip: !configPath }, async t =
         BACKGROUND_JOBS_ENABLED:'false', NOTIFICATIONS_NOOP:'true', BILLING_ENABLED:'false' });
     await admin.query(fs.readFileSync(path.join(__dirname,'../migrations/2026-10-03_00_firm_staff_roles.sql'),'utf8'));
     await admin.query('GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA public TO legal_office_isolation_qa');
+    await admin.query('GRANT USAGE,SELECT ON ALL SEQUENCES IN SCHEMA public TO legal_office_isolation_qa');
     // The source sandbox contains abandoned signup fixtures without owners. Make their ownership explicit
     // in this disposable clone only; the installer must never infer an owner for those rows in production.
     await admin.query(`INSERT INTO users(name,role,law_firm_tenant_id)
@@ -67,7 +68,7 @@ test('shared office database + HTTP isolation', { skip: !configPath }, async t =
         process.env.MULTI_TENANT_MODE='true';
         const previous=process.env.CENTRAL_SERVICE_KEY;delete process.env.CENTRAL_SERVICE_KEY;
         const body=Buffer.from(JSON.stringify({v:1,productId:'layerwebsites',jti:crypto.randomUUID(),exp:Date.now()+60000})).toString('base64url');
-        const sig=crypto.createHmac('sha256','central-dev-service-key').update(body).digest('base64url');
+        const sig=crypto.createHmac('sha256','dev-central-service-key-change-me').update(body).digest('base64url');
         assert.equal(require('../utils/centralHandoff').verifyAndConsumeCentralHandoff(body+'.'+sig,'layerwebsites'),null);
         if(previous)process.env.CENTRAL_SERVICE_KEY=previous;
     });
@@ -219,4 +220,30 @@ test('shared office database + HTTP isolation', { skip: !configPath }, async t =
         assert.ok(visited.get(A).includes(customers[0]));assert.ok(!visited.get(A).includes(customers[1]));
         assert.ok(visited.get(B).includes(customers[1]));assert.ok(visited.get('').includes(legacy));
     });
+    if((await admin.query("SELECT to_regclass('public.signing_public_grants') AS present")).rows[0].present){
+        await t.test('v2 composite references, public grants and worker claims retain office ownership',async()=>{
+            const contexts=[crypto.randomUUID(),crypto.randomUUID()],people=[crypto.randomUUID(),crypto.randomUUID()];
+            const tokens=[crypto.randomBytes(32).toString('base64url'),crypto.randomBytes(32).toString('base64url')];
+            for(const i of [0,1]) await (i?inB:inA)(async()=>{
+                await pool.query('INSERT INTO signing_owner_contexts(id,deployment_key,scope_key) VALUES($1,$2,$3)',[contexts[i],'synthetic.invalid',i?B:A]);
+                await pool.query('INSERT INTO signing_people(id,owner_context_id,name) VALUES($1,$2,$3)',[people[i],contexts[i],'Synthetic signer']);
+                await pool.query("INSERT INTO signing_public_grants(id,owner_context_id,person_id,purpose,token_hash,expires_at) VALUES($1,$2,$3,'sign',$4,now()+interval '1 hour')",[crypto.randomUUID(),contexts[i],people[i],crypto.createHash('sha256').update(tokens[i]).digest('hex')]);
+                await pool.query("INSERT INTO signing_jobs(id,owner_context_id,kind,subject_id,dedupe_key,input_hash) VALUES($1,$2,'reconcile_delivery',$3,'synthetic-claim',$4)",[crypto.randomUUID(),contexts[i],crypto.randomUUID(),'a'.repeat(64)]);
+            });
+            // Composite FKs bypass RLS in PostgreSQL unless the ownership guard checks them as well.
+            await assert.rejects(inA(()=>pool.query("INSERT INTO signing_public_grants(id,owner_context_id,person_id,purpose,token_hash,expires_at) VALUES($1,$2,$3,'sign',$4,now()+interval '1 hour')",[crypto.randomUUID(),contexts[1],people[1],'b'.repeat(64)])),{code:'42501'});
+            const jobs=require('../services/signingV2/jobs');
+            const claimed=await inA(()=>jobs.claim(pool,{workerId:'synthetic-qa',kinds:['reconcile_delivery'],limit:5}));
+            assert.equal(claimed.length,1);assert.equal(claimed[0].owner_context_id,contexts[0]);
+            assert.equal((await inA(()=>jobs.claim(pool,{workerId:'synthetic-qa',kinds:['reconcile_delivery'],contextIds:[contexts[1]],limit:5}))).length,0);
+            const express=require('express'),request=require('supertest');
+            const app=express();app.use((_q,_s,next)=>scope.withoutScope(next));app.use(require('../middlewares/resolveTenant'));
+            app.get('/grant',require('../middlewares/publicOfficeScope').signingGrant,async(_req,res)=>res.json((await pool.query('SELECT DISTINCT law_firm_tenant_id AS id FROM signing_public_grants')).rows));
+            app.use(require('../middlewares/errorHandler'));
+            for(const i of [0,1]){
+                const r=await request(app).get('/grant').set('X-Signing-Grant',tokens[i]);assert.equal(r.status,200);assert.deepEqual(r.body,[{id:i?B:A}]);
+                assert.equal((await request(app).get('/grant').set('X-Signing-Grant',tokens[i]).set('x-tenant-slug',i?slugA:slugB)).status,404);
+            }
+        });
+    }
 });

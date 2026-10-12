@@ -16,13 +16,14 @@ beforeEach(() => {
 });
 afterEach(() => { delete window.location; window.location = originalLocation; delete window.ReactNativeWebView; });
 
-test('expired background office permissions clear old identity without leaving a public signing link', async () => {
+test.each(['/PublicSignScreen', '/ViewSignedDocument/Signing', '/ViewSignedDocument/Link/Abcd_123', '/ViewSignedDocument', '/ViewSignedDocument/Package'])('expired background office permissions keep public link: %s', async (pathname) => {
+  window.location = { pathname, href: pathname + '?token=synthetic-public-link' };
   const changed = jest.fn(); window.addEventListener('lw-auth-changed', changed);
   const result = await rejectResponse({ response: { status: 401 }, config: { url: '/firm-staff/session-scope', headers: {} } });
   expect(result.status).toBe(401);
   expect(localStorage.getItem('token')).toBeNull();
   expect(localStorage.getItem('role')).toBeNull();
-  expect(window.location.href).toBe('/PublicSignScreen?token=synthetic-public-link');
+  expect(window.location.href).toBe(pathname + '?token=synthetic-public-link');
   expect(window.ReactNativeWebView.postMessage).not.toHaveBeenCalled();
   expect(changed).toHaveBeenCalledTimes(1);
   window.removeEventListener('lw-auth-changed', changed);

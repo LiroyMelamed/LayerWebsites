@@ -18,7 +18,9 @@ const office = new Set(`users cases case_users casedescriptions casetypes casety
  signing_package_assignments signing_package_revisions signing_participations signing_documents signing_tasks
  signing_delivery_profiles signing_public_grants signing_grant_items signing_sessions_v2 signing_actions
  signing_approvals signing_operations signing_jobs signing_job_dependencies signing_deliveries signing_events_v2
- signing_selections signing_selection_items signing_otp_challenges_v2 signing_preflights`.trim().split(/\s+/));
+ signing_selections signing_selection_items signing_otp_challenges_v2 signing_preflights
+ signing_task_issues signing_bulk_reviews signing_replacement_drafts signing_approval_requests signing_bulk_requests
+ signing_delivery_items signing_creation_drafts signing_error_alerts signing_error_emails signing_selection_snapshots`.trim().split(/\s+/));
 
 async function tables(client) {
     return (await client.query(`SELECT c.relname AS name, c.relrowsecurity AS rls, c.relforcerowsecurity AS force,

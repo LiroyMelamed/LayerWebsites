@@ -1,9 +1,9 @@
-const pool = require('../../config/db');
 const scope = require('./databaseScope');
 const { runWithTenant } = require('./tenantContext');
 
 async function forEachOffice(job) {
     if (!scope.enabled()) return job();
+    const pool = require('../../config/db');
     const tenants = (await scope.withSystem(() => pool.query('SELECT id,slug,name,branding FROM law_firm_tenants WHERE is_active=true ORDER BY id'))).rows;
     const results=[], errors=[];
     // Legacy NULL rows keep their own partition; they never join a tenant's delivery job.

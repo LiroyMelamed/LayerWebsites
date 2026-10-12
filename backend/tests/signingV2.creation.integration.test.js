@@ -26,7 +26,9 @@ test('v2 creation from the product: explicit legacy import, row validation, appr
     assert.equal((await as(request(f.app).post(`/api/signing-v2/templates/legacy/${legacy.id}/import`), clientToken).send({})).status, 403);
     assert.equal((await as(request(f.app).post('/api/signing-v2/creation/preview'), clientToken).send({})).status, 403);
 
-    const [first, again] = await Promise.all([0, 1].map(() => as(request(f.app).post(`/api/signing-v2/templates/legacy/${legacy.id}/import`)).send({ locale: 'he' })));
+    assert.equal((await as(request(f.app).post(`/api/signing-v2/templates/legacy/${legacy.id}/import`)).send({ expectedVersion: legacy.version + 1 })).status, 409,
+        'a stale template selection is rejected before importing');
+    const [first, again] = await Promise.all([0, 1].map(() => as(request(f.app).post(`/api/signing-v2/templates/legacy/${legacy.id}/import`)).send({ locale: 'he', expectedVersion: legacy.version })));
     assert.deepEqual([first.status, again.status].sort(), [200, 201], 'a double click imports once');
     assert.equal(first.body.versionId, again.body.versionId);
     const versionId = first.body.versionId;
@@ -121,4 +123,31 @@ test('v2 creation from the product: explicit legacy import, row validation, appr
     const bundled = (await f.pool.query(`SELECT count(*)::integer AS count FROM signing_deliveries WHERE owner_context_id=$1
         AND state='bundled' AND (target_snapshot->>'endpoint')='lawyer@example.invalid'`, [contextId])).rows[0].count;
     assert.equal(bundled, 398);
+    // The same template can use a shared client and different representatives
+    // without changing its immutable role definitions or signature geometry.
+    const swapped = { name: 'Shared client with separate representatives', templateVersionId: versionId,
+        roleAudience: { first: 'shared', shared: 'each' }, shared: { first: lawyer },
+        rows: [1, 2].map(index => ({ key: `case-${index}`, recipients: { shared: { name: `Representative ${index}`, email: `rep-${index}@example.invalid` } } })) };
+    const swapPreview = ok(await as(request(f.app).post('/api/signing-v2/creation/preview')).send(swapped), 200);
+    assert.equal(swapPreview.valid, true, JSON.stringify(swapPreview));
+    assert.equal(swapPreview.recipientCount, 3);
+    assert.deepEqual(swapPreview.shared.map(person => person.roleKey), ['first']);
+    const swappedRun = ok(await as(request(f.app).post('/api/signing-v2/creation')).set('Idempotency-Key', randomUUID()).send({ ...swapped, previewHash: swapPreview.previewHash }), 201);
+    const assignment = (await f.pool.query(`SELECT role_key,count(DISTINCT person_id)::integer AS people
+        FROM signing_participations WHERE revision_id IN (SELECT active_revision_id FROM signing_packages WHERE submission_id=$1) GROUP BY role_key ORDER BY role_key`, [swappedRun.submissionId])).rows;
+    assert.deepEqual(assignment, [{ role_key: 'first', people: 1 }, { role_key: 'shared', people: 2 }]);
+    assert.deepEqual((await f.pool.query('SELECT definition FROM signing_template_versions WHERE id=$1', [versionId])).rows[0].definition, version,
+        'per-send audiences never alter the published roles or field coordinates');
+    const invalidAudience = { ...swapped, roleAudience: { unknown: 'shared' } };
+    assert.equal((await as(request(f.app).post('/api/signing-v2/creation/preview')).send(invalidAudience)).status, 422);
+    const inspected = ok(await as(request(f.app).post(`/api/signing-v2/templates/${versionId}/workbook/inspect`))
+        .send({ base64: Buffer.from(await book.xlsx.writeBuffer()).toString('base64') }), 200);
+    assert.equal(inspected.sheets[0].columns[1].suggestedKey, 'first.name');
+
+    ok(await as(request(f.app).post(`/api/signing-templates/${legacy.id}/archive`)).send({ expectedVersion: legacy.version }), 200);
+    const afterArchive = ok(await as(request(f.app).get('/api/signing-v2/templates')), 200);
+    assert.equal(afterArchive.templates.some(item => item.versionId === versionId), false, 'archived source cannot reappear through its imported copy');
+    assert.equal((await as(request(f.app).post('/api/signing-v2/creation/preview')).send(body)).status, 404);
+    assert.equal((await as(request(f.app).get(`/api/signing-v2/submissions/${submissionId}/packages`))).status, 200, 'existing submissions remain available');
+
 });

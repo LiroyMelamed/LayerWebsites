@@ -19,6 +19,8 @@ import {
   PricingScreenName,
   PrivacyPageName,
   PublicSignScreenName,
+  BrowserSigningScreenName,
+  BrowserSigningLinkScreenName,
   SecurityScreenName,
   ShortNavRedirectScreenName,
   ShortSignRedirectScreenName,
@@ -68,7 +70,7 @@ const App = () => {
       /(?:^|\/)(SigningScreen|SigningManagerScreen)(?:$|\/)/i.test(p) ||
       /(?:^|\/)(upload-file-for-signing)(?:$|\/)/i.test(p) ||
       /(?:^|\/)(PublicSignScreen)(?:$|\/)/i.test(p) ||
-      /^\/ViewSignedDocument\/(?:Package|Sign)(?:$|\/)/i.test(p) ||
+      /^\/ViewSignedDocument(?:$|\/)/i.test(p) ||
       /(?:^|\/)s(?:$|\/)/i.test(p) ||
       /(?:^|\/)(Verify\/Evidence)(?:$|\/)/i.test(p);
 
@@ -109,7 +111,8 @@ const App = () => {
     }
 
     const isPublicSignRoute = /^\/PublicSign/i.test(location?.pathname || '')
-      || /^\/s(?:\/|$)/i.test(location?.pathname || '');
+      || /^\/s(?:\/|$)/i.test(location?.pathname || '')
+      || /^\/ViewSignedDocument(?:\/|$)/i.test(location?.pathname || '');
 
     const token = (!isPublicSignRoute && searchParams.get('token')) || localStorage.getItem('token');
     const role = (!isPublicSignRoute && searchParams.get('role')) || localStorage.getItem('role');
@@ -117,6 +120,7 @@ const App = () => {
     const isDeepLink = !isPublicSignRoute && !!(searchParams.get('token') && searchParams.get('role'));
 
     if (token && role) {
+      const authChanged = token !== localStorage.getItem('token') || role !== localStorage.getItem('role');
       localStorage.setItem('token', token);
       localStorage.setItem('role', role);
 
@@ -124,6 +128,7 @@ const App = () => {
       if (isPlatformAdminParam === 'true') {
         localStorage.setItem('isPlatformAdmin', 'true');
       }
+      if (authChanged) window.dispatchEvent(new Event('lw-auth-changed'));
 
       if (signingFileId) {
         sessionStorage.setItem('lw_signing_deeplink_fileId', String(signingFileId));
@@ -167,6 +172,8 @@ const App = () => {
     <Suspense fallback={<RouteFallback />}>
       <Routes>
         <Route path={PublicSignScreenName} element={<PublicSigningScreen />} />
+        <Route path={BrowserSigningScreenName} element={<PublicSigningScreen />} />
+        <Route path={BrowserSigningLinkScreenName} element={<ShortSignRedirectScreen />} />
         <Route path="/ViewSignedDocument/Package" element={<PublicSigningScreen />} />
         <Route path="/ViewSignedDocument/Sign" element={<PublicPackageSigning />} />
         <Route path={ShortSignRedirectScreenName} element={<ShortSignRedirectScreen />} />

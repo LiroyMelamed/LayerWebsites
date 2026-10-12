@@ -1,0 +1,20 @@
+{
+  "complete": true,
+  "tenant": "ashrafessa",
+  "candidate": "7da3564a2bc9229b45d66ef8abfd4522973bdd67",
+  "product": "d93f821780d1e0458705fee37ea96887dca80218",
+  "qa": "47227c891968dd7db88cc230b3b343111e8d3ab2",
+  "oldHead": "bd9fb6383a00c6c29869e3d9620535bbfff99e96",
+  "backendTree": "1faa4466f83aadf3c216b1ae536809546cd4e943",
+  "migrationsTree": "22ef9a6717a3ec606de5ad9f72531ed7513e02da",
+  "environmentSha256": "db7b4c794e141b10efbce82c270a92798d60d8c45ab02817868ca4b0b790be92",
+  "process": {
+    "name": "ashrafessa-api",
+    "pid": 2061519,
+    "pmId": 3,
+    "status": "online"
+  },
+  "backendUnchanged": true,
+  "noRestartMigrationSend": true,
+  "at": "2026-10-08T23:01:29.613Z"
+}

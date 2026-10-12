@@ -44,13 +44,12 @@ async function resolveContact(db, contact, scope, role) {
     if (user) {
         if ((contact.email && contact.email !== String(user.email || '').trim().toLowerCase()) || (contact.phone && contact.phone !== formatPhoneNumber(user.phonenumber))) invalid('פרטי הקשר שונים מכרטיס הלקוח. יש לתקן את הנמען או את כרטיס הלקוח');
     } else {
-        if (role.kind === 'lawyer') invalid('לתפקיד עורך הדין יש לבחור משתמש משרד קיים');
         // Serialize identity creation in this batch transaction. Never alter an existing identity.
         const created = await db.query(`INSERT INTO users(name,email,phonenumber,role,law_firm_tenant_id)
             VALUES($1,$2,$3,$4,$5) RETURNING userid,name,email,phonenumber,role`, [contact.name, contact.email || null, contact.phone || null, contact.phone ? 'User' : 'ExternalSigner', scope.tenantId]);
         user = created.rows[0];
     }
-    if (role.kind === 'lawyer' && !['Admin', 'Lawyer'].includes(user.role)) invalid('לתפקיד עורך הדין יש לבחור עורך דין או מנהל משרד');
+    if (user.role === 'Deleted') throw createAppError('FORBIDDEN', 403);
     const result = { userId: user.userid, name: user.name, email: user.email || '', phone: user.phonenumber || '', deliveryMethod: contact.deliveryMethod };
     if ((['email', 'both'].includes(result.deliveryMethod) && !result.email) || (['phone', 'both'].includes(result.deliveryMethod) && !formatPhoneNumber(result.phone))) invalid('לנמען חסרים פרטי קשר עבור ערוץ השליחה שנבחר');
     return result;

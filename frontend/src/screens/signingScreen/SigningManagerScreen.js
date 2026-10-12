@@ -71,6 +71,7 @@ export default function SigningManagerScreen() {
         const next = new URLSearchParams(searchParams);
         if (value) next.set("panel", value);
         else next.delete("panel");
+        if (value !== "compose") { next.delete("template"); next.delete("templateVersion"); }
         setSearchParams(next);
     };
     const showTemplates = panel.startsWith("template");
@@ -368,10 +369,10 @@ export default function SigningManagerScreen() {
         );
     };
 
-    if (showTemplates) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><TemplatesWorkspace onSendTemplate={signingV2Available ? template => {
-        const next = new URLSearchParams(searchParams); next.set('panel', 'compose'); next.set('template', template.id); setSearchParams(next);
+    if (showTemplates) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><TemplatesWorkspace nativeAvailable={signingV2Available} onSendTemplate={signingV2Available ? template => {
+        const next = new URLSearchParams(searchParams); next.set('panel', 'compose'); next.set('template', template.id); next.set('templateVersion', String(template.version)); setSearchParams(next);
     } : undefined} canUpload={canSignUpload} canManage={canSignManage} onClose={() => { setPanel(null); reloadFiles(); }} /></SimpleScrollView></SimpleScreen>;
-    if (showRuns) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><SigningPackagesHub canCreate={canSignUpload} onClose={() => { setPanel(null); reloadFiles(); }} /></SimpleScrollView></SimpleScreen>;
+    if (showRuns) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><SigningPackagesHub canCreate={canSignUpload} canManage={canSignManage} onClose={() => { setPanel(null); reloadFiles(); }} /></SimpleScrollView></SimpleScreen>;
 
     return (
         <SimpleScreen
