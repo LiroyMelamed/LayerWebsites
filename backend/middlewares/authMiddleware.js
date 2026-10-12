@@ -85,8 +85,18 @@ const authMiddleware = (req, res, next) => {
             );
         }
 
-        // Pass control to the next handler in the middleware chain
-        next();
+        // Resolve billing scope from the authenticated DB identity, including headerless requests.
+        const pool = require('../config/db');
+        const { runWithTenant } = require('../lib/tenant/tenantContext');
+        const { requireBillingAccess } = require('./requireBillingAccess');
+        void pool.query('SELECT userid, role, law_firm_tenant_id FROM users WHERE userid=$1 LIMIT 1', [req.user.UserId]).then(({ rows }) => {
+            const current = rows[0];
+            if (!current) return next(createAppError('UNAUTHORIZED', 401, getHebrewMessage('UNAUTHORIZED')));
+            if (req.tenant?.id && String(current.law_firm_tenant_id || '') !== String(req.tenant.id)) return next(createAppError('FORBIDDEN', 403, getHebrewMessage('FORBIDDEN')));
+            req.user.Role = current.role;
+            if (current.law_firm_tenant_id) return runWithTenant({ id: current.law_firm_tenant_id }, () => requireBillingAccess(req, res, next));
+            return next();
+        }).catch(() => next(createAppError('SERVICE_TEMPORARILY_UNAVAILABLE', 503, 'השירות אינו זמין כרגע. נסו שוב מאוחר יותר.')));
     } catch (error) {
         // If token verification fails (e.g., invalid or expired token), return a 401 Unauthorized response
         console.warn(

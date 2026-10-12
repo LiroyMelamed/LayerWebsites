@@ -8,7 +8,7 @@ const RESERVED_SLUGS = new Set([
     'signup',
     'login',
     'health',
-    'melamedia',
+    
     'master',
     'platform',
     'publicsign',

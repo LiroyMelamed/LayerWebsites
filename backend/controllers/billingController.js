@@ -11,6 +11,7 @@ function billingPayload(snap, extra = {}) {
         billing: {
             status: snap.status,
             billingEnabled: snap.billingEnabled,
+            autoRenew: snap.autoRenew !== false,
             stillComplimentary: snap.stillComplimentary,
             isUnlimited: snap.isUnlimited,
             complimentaryUntil: snap.complimentaryUntil,
@@ -36,7 +37,12 @@ function billingPayload(snap, extra = {}) {
 exports.getLockStatus = async (req, res) => {
     try {
         const snap = await billing.getBillingSnapshot();
+        let canManageBilling = false;
+        await require('../middlewares/requirePlatformAdmin')(req, res, error => { canManageBilling = !error; });
+        res.setHeader?.('Cache-Control', 'no-store');
+        if (!canManageBilling) return res.status(200).json({ locked: Boolean(snap.locked), canManageBilling: false });
         return res.status(200).json({
+            canManageBilling: true,
             locked: Boolean(snap.locked),
             status: snap.status || 'complimentary',
             stillComplimentary: Boolean(snap.stillComplimentary),
@@ -46,7 +52,7 @@ exports.getLockStatus = async (req, res) => {
         });
     } catch (e) {
         console.error('getLockStatus error:', e);
-        return res.status(200).json({ locked: false, status: 'unknown' });
+        return res.status(503).json({ errorCode: 'SERVICE_TEMPORARILY_UNAVAILABLE', message: 'השירות אינו זמין כרגע. נסו שוב מאוחר יותר.' });
     }
 };
 

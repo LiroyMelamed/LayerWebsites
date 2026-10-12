@@ -44,6 +44,26 @@ async function getSignupStatus(req, res) {
     }
 }
 
+async function completeSignup(req, res) {
+    try {
+        const result = await signupService.completeSignupWithoutPayment(req.params.intentId);
+        return res.json({
+            status: 'completed',
+            slug: result.slug,
+            tenantId: result.tenantId,
+            loginUrl: result.slug
+                ? `${getFrontendBaseUrl()}/${result.slug}/LoginStack/LoginScreen`
+                : null,
+        });
+    } catch (e) {
+        const code = e?.code || 'COMPLETE_FAILED';
+        const status = code === 'SIGNUP_NOT_FOUND' ? 404
+            : code === 'SIGNUP_INVALID_STATUS' ? 409
+                : 500;
+        return res.status(status).json({ error: code, message: e?.message || 'Signup completion failed' });
+    }
+}
+
 async function takbullReturn(req, res) {
     const intentId = String(req.query.intentId || '').trim();
     const frontend = getFrontendBaseUrl();
@@ -62,6 +82,7 @@ async function takbullCancel(req, res) {
 module.exports = {
     startSignup,
     checkoutSignup,
+    completeSignup,
     getSignupStatus,
     takbullReturn,
     takbullCancel,
