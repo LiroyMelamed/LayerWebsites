@@ -36,7 +36,7 @@ const CHIP_GROUPS = [
     {
         id: "event",
         labelKey: "calendar.smsVarGroupEvent",
-        keys: ["recipientName", "clientsNames", "firmName", "title", "lawyerName"],
+        keys: ["recipientName", "clientsNames", "firmName", "title", "lawyerName", "meetingTypeLabel"],
     },
     {
         id: "whenWhere",

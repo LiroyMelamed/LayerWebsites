@@ -2,9 +2,11 @@ import React, { useState, useCallback, useRef, useEffect, useMemo } from "react"
 import { useTranslation } from "react-i18next";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import FullCalendar from "@fullcalendar/react";
+import { ChevronLeft, ChevronRight, Search, RotateCw } from "lucide-react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
+import luxonPlugin from "@fullcalendar/luxon3";
 import heLocale from "@fullcalendar/core/locales/he";
 import arLocale from "@fullcalendar/core/locales/ar";
 import enGbLocale from "@fullcalendar/core/locales/en-gb";
@@ -15,7 +17,6 @@ import SimpleCard from "../../components/simpleComponents/SimpleCard";
 import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
 import SimpleButton from "../../components/simpleComponents/SimpleButton";
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
-import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
 import { buttonSizes } from "../../styles/buttons/buttonSizes";
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
@@ -35,13 +36,20 @@ import { customersApi } from "../../api/customersApi";
 import casesApi from "../../api/casesApi";
 
 import SegmentedSwitch from "../../components/styledComponents/SegmentedSwitch";
+import SimpleInput from "../../components/simpleComponents/SimpleInput";
+import FloatingAddField from "../../components/specializedComponents/signFiles/fieldToolbar/FloatingAddField";
+import { CalendarAgenda, CalendarWeekOverview, CalendarDayRibbon, CalendarOwners, CalendarGridEventContent } from "./components/CalendarAgenda";
+import { calendarEventsForDay, calendarEventSearchText, calendarInstant } from "./utils/calendarPresentation";
+import { loadCalendarPages, calendarRequestGate } from "./utils/calendarLoading";
+import { calendarNativeCapabilities } from "./utils/calendarNativeBridge";
 
 import EventFormModal from "./components/EventFormModal";
 import PersonalSyncModal from "./components/PersonalSyncModal";
 import { colorForKey, colorKeyForEvent, leaveColor, holidayColor, buildLawyerLegend, getEventTypeDefaultColor, isStockEventColor } from "./utils/lawyerColors";
 import { toastError, toastSuccess, toastWarning } from "../../components/ui/toast";
 import { buildNewEventPrefill } from "./utils/eventDefaults";
-import { parseDatetimeLocal, toLocalYmdFromApi, jerusalemParts, zonedJerusalemInstant } from "../../functions/date/datetimeLocal";
+import { calendarEventInteractionOptions } from "./utils/eventInteraction";
+import { toLocalYmdFromApi, jerusalemParts, zonedJerusalemInstant } from "../../functions/date/datetimeLocal";
 import {
     defaultSchedule,
     parseScheduleFromCalendarSettings,
@@ -68,8 +76,6 @@ const SCOPE_FIRM = "firm";
 
 const EVENT_TYPE_ALL = "all";
 
-/** FullCalendar day indices: hide Fri/Sat in expanded (work-week) view. */
-const EXPANDED_HIDDEN_WEEKDAYS = [5, 6];
 const EVENT_TYPE_APPT = "appointment";
 const EVENT_TYPE_LEAVE = "leave";
 const EVENT_TYPE_HEARING = "hearing";
@@ -119,8 +125,7 @@ function normalizeAllDayEndInclusive(startTime, endTime) {
     const start = toLocalYmd(startTime);
     let endInclusive = toLocalYmd(endTime) || start;
     try {
-        const endLocal = parseDatetimeLocal(endTime)
-            || (endTime instanceof Date ? endTime : new Date(endTime));
+        const endLocal = calendarInstant(endTime);
         const endParts = endLocal ? jerusalemParts(endLocal) : null;
         if (endParts
             && endParts.hour === 0
@@ -173,7 +178,7 @@ function buildHolidayHintEvent(h, t) {
     const end = addLocalDaysYmd(date, 1);
     return {
         id: `holiday-hint-${h.id || date}-${title}`,
-        title: `[חג] ${title}`,
+        title: `[${t("calendar.holidayHintPrefix")}] ${title}`,
         start: date,
         end,
         allDay: true,
@@ -218,11 +223,6 @@ function inviteStatusClass(inviteStatus, ev) {
     if (inviteStatus === "declined") return "lw-fcEvent--inviteDeclined";
     if (inviteStatus === "pending") return "lw-fcEvent--invitePending";
     return null;
-}
-
-function eventShowsRsvpIndicator(ev) {
-    const eventType = String(ev?.eventType || ev?.event_type || "").trim().toLowerCase();
-    return eventType === "appointment" || eventType === "hearing";
 }
 
 function clientPhoneTooltip(ev) {
@@ -281,13 +281,6 @@ function buildFullCalendarEvent(ev, { scope }) {
         });
     }
 
-    if (isHoliday) {
-        return buildInternalAllDayEvent(ev, {
-            labelPrefix: "[חג]",
-            color: holidayColor(),
-            className: "lw-fcEvent--holiday",
-        });
-    }
 
     const typeDefault = getEventTypeDefaultColor(ev?.eventType);
     const hasCustomColor = !isStockEventColor(ev?.color, ev?.eventType);
@@ -423,7 +416,25 @@ export default function CalendarScreen() {
 
     // ── View / scope / filters ─────────────────────────────────────────────
     const [events, setEvents] = useState([]);
-    const [view, setView] = useState(isSmallScreen ? "timeGridDay" : "timeGridWeek");
+    const [phone, setPhone] = useState(() => window.matchMedia("(max-width: 767px)").matches);
+    const [view, setView] = useState(() => ({ day: "timeGridDay", week: "timeGridWeek", month: "dayGridMonth" }[searchParams.get("view")] || (window.matchMedia("(max-width: 767px)").matches ? "timeGridDay" : "timeGridWeek")));
+    const [selectedDate, setSelectedDate] = useState(() => {
+        const initial = searchParams.get("calendarDate");
+        return /^\d{4}-\d{2}-\d{2}$/.test(initial || "") && !Number.isNaN(new Date(`${initial}T12:00:00Z`).getTime()) && new Date(`${initial}T12:00:00Z`).toISOString().slice(0, 10) === initial ? initial : toLocalYmd(new Date());
+    });
+    const [query, setQuery] = useState("");
+    const [timeLayout, setTimeLayout] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(false);
+    const [holidayError, setHolidayError] = useState(false);
+    const requestGateRef = useRef(calendarRequestGate());
+    const currentFiltersRef = useRef("");
+    useEffect(() => {
+        const media = window.matchMedia("(max-width: 767px)");
+        const update = () => setPhone(media.matches);
+        media.addEventListener("change", update);
+        return () => media.removeEventListener("change", update);
+    }, []);
     viewRef.current = view;
     const [scope, setScope] = useState(SCOPE_MINE);
     const [filters, setFilters] = useState({
@@ -432,7 +443,7 @@ export default function CalendarScreen() {
         case_id: null,
         event_type: EVENT_TYPE_ALL, // 'all' is UI-only; we don't send it to the API
     });
-    const [filtersPanelOpen, setFiltersPanelOpen] = useState(!isSmallScreen);
+    const [filtersPanelOpen, setFiltersPanelOpen] = useState(false);
     const [calendarExpanded, setCalendarExpanded] = useState(false);
 
     useEffect(() => {
@@ -471,7 +482,7 @@ export default function CalendarScreen() {
             }
         });
         return () => cancelAnimationFrame(handle);
-    }, [calendarExpanded, view]);
+    }, [calendarExpanded, view, phone, timeLayout]);
 
     // ── Working-hours config (per weekday) ─────────────────────────────────
     const [workingSchedule, setWorkingSchedule] = useState(() => defaultSchedule());
@@ -565,6 +576,12 @@ export default function CalendarScreen() {
         return f;
     }, [scope, filters, canUseFirmView]);
 
+    const filterIdentity = JSON.stringify(apiFilters);
+    if (currentFiltersRef.current !== filterIdentity) {
+        currentFiltersRef.current = filterIdentity;
+        requestGateRef.current.retire();
+    }
+
     // ── Load firm working hours + per-type default colors ─────────────────
     useEffect(() => {
         let cancelled = false;
@@ -618,15 +635,19 @@ export default function CalendarScreen() {
         if (fetchInFlightKeyRef.current === fetchKey) return;
 
         fetchInFlightKeyRef.current = fetchKey;
+        const stillLatest = requestGateRef.current.next();
+        const isCurrent = () => stillLatest() && currentFiltersRef.current === JSON.stringify(apiFilters);
+        setLoading(true);
+        setLoadError(false);
         try {
-            const [res, holidaysRes] = await Promise.all([
-                calendarApi.listEvents({ from, to, limit: 500, ...apiFilters }),
+            const [list, holidaysRes] = await Promise.all([
+                loadCalendarPages(calendarApi.listEvents, { from, to, ...apiFilters }, isCurrent),
                 calendarApi.listHolidays({
                     from: String(from).slice(0, 10),
                     to: String(to).slice(0, 10),
                 }).catch(() => null),
             ]);
-            const list = res?.data?.events || [];
+            if (!isCurrent() || !list) return;
             const scopeKey = apiFilters.scope || SCOPE_MINE;
             const built = list.map((ev) => buildFullCalendarEvent(ev, { scope: scopeKey }));
             const holidayHints = (holidaysRes?.data?.holidays || [])
@@ -636,14 +657,15 @@ export default function CalendarScreen() {
                     const dateYmd = String(hint.start || "").slice(0, 10);
                     return !list.some((ev) => holidayEventCoversDate(ev, dateYmd));
                 });
+            setHolidayError(!holidaysRes || (holidaysRes.status !== 200 && !holidaysRes.success));
             setEvents([...holidayHints, ...built]);
             lastFetchKeyRef.current = fetchKey;
         } catch {
-            // leave the last successful calendar state visible
+            // Refresh failure keeps the last success. A changed scope is cleared below.
+            if (isCurrent()) setLoadError(true);
         } finally {
-            if (fetchInFlightKeyRef.current === fetchKey) {
-                fetchInFlightKeyRef.current = null;
-            }
+            if (isCurrent()) setLoading(false);
+            if (fetchInFlightKeyRef.current === fetchKey) fetchInFlightKeyRef.current = null;
         }
     }, [apiFilters, t]);
 
@@ -658,11 +680,13 @@ export default function CalendarScreen() {
 
     useEffect(() => () => {
         if (fetchDebounceRef.current) clearTimeout(fetchDebounceRef.current);
+        requestGateRef.current.retire();
     }, []);
 
     // Re-fetch whenever filters/scope change (range is reused from the last datesSet).
     useEffect(() => {
         lastFetchKeyRef.current = "";
+        setEvents([]);
         fetchEvents(null, { force: true });
     }, [fetchEvents]);
 
@@ -779,6 +803,7 @@ export default function CalendarScreen() {
     const lastCreateOpenRef = useRef({ key: null, ts: 0 });
 
     const openCreateModal = useCallback((selectInfo) => {
+        if (!canManageCalendar) return;
         const prefill = buildNewEventPrefill(selectInfo, { workingSchedule });
 
         const dedupeKey = prefill.startTime;
@@ -805,7 +830,7 @@ export default function CalendarScreen() {
                 onClose={closePopup}
             />
         );
-    }, [openPopup, closePopup, upsertLocally, handleEventSaved, workingSchedule]);
+    }, [openPopup, closePopup, upsertLocally, handleEventSaved, workingSchedule, canManageCalendar]);
 
     const openEditModal = useCallback((clickInfo) => {
         const ev = clickInfo.event.extendedProps || {};
@@ -879,47 +904,6 @@ export default function CalendarScreen() {
         if (!arg.isAxis) return null;
         const label = _formatNowBadgeTime(arg.date);
         return { html: `<span class="lw-fcNowBadge">${label}</span>` };
-    }, []);
-
-    const renderEventContent = useCallback((arg) => {
-        const ev = arg.event.extendedProps || {};
-        if (ev.hint) return true;
-        const showRsvp = eventShowsRsvpIndicator(ev);
-        const status = showRsvp
-            ? (aggregateInviteStatus(ev) || (ev.inviteStatus !== "none" ? ev.inviteStatus : null))
-            : null;
-        const multi = Array.isArray(ev.clients) && ev.clients.length > 1;
-        const invitedClients = multi
-            ? ev.clients.filter((c) => {
-                const st = c.inviteStatus || c.invite_status;
-                return st && st !== "none";
-            })
-            : [];
-        const acceptedCount = multi
-            ? invitedClients.filter((c) => (c.inviteStatus || c.invite_status) === "accepted").length
-            : 0;
-        const invitedCount = invitedClients.length;
-        return (
-            <div className="lw-fcEventContent">
-                {status === "accepted" && (
-                    <span className="lw-fcEventRsvpBadge lw-fcEventRsvpBadge--accepted" aria-hidden="true">
-                        {multi && acceptedCount > 0 ? `${acceptedCount}` : "✓"}
-                    </span>
-                )}
-                {status === "partial" && (
-                    <span className="lw-fcEventRsvpBadge lw-fcEventRsvpBadge--partial" aria-hidden="true">
-                        {invitedCount > 0 ? `${acceptedCount}/${invitedCount}` : "½"}
-                    </span>
-                )}
-                {status === "pending" && (
-                    <span className="lw-fcEventRsvpBadge lw-fcEventRsvpBadge--pending" aria-hidden="true" />
-                )}
-                {status === "declined" && (
-                    <span className="lw-fcEventRsvpBadge lw-fcEventRsvpBadge--declined" aria-hidden="true" />
-                )}
-                <div className="fc-event-title">{arg.event.title}</div>
-            </div>
-        );
     }, []);
 
     const handleEventDidMount = useCallback((info) => {
@@ -1028,11 +1012,53 @@ export default function CalendarScreen() {
         && Number(filters.lawyer_id) !== Number(currentUserId)
     );
 
+    const visibleEvents = useMemo(() => {
+        const words = query.trim().toLocaleLowerCase(i18n.language).split(/\s+/).filter(Boolean);
+        return words.length ? events.filter((event) => {
+            const haystack = calendarEventSearchText(event, lawyers).toLocaleLowerCase(i18n.language);
+            return words.every((word) => haystack.includes(word));
+        }) : events;
+    }, [events, query, lawyers, i18n.language]);
+    const agendaMode = !timeLayout && (view === "timeGridDay" || (phone && view === "timeGridWeek"));
+    const locale = String(i18n.language || "he").startsWith("ar") ? "ar" : String(i18n.language || "he").startsWith("en") ? "en-GB" : "he-IL";
+    const dateTitle = useMemo(() => {
+        const date = new Date(`${selectedDate}T12:00:00Z`);
+        if (view === "dayGridMonth") return new Intl.DateTimeFormat(locale, { month: "long", year: "numeric", timeZone: "UTC" }).format(date);
+        if (view === "timeGridWeek") {
+            const first = new Date(date); first.setUTCDate(first.getUTCDate() - first.getUTCDay());
+            const last = new Date(first); last.setUTCDate(last.getUTCDate() + 6);
+            return new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).formatRange(first, last);
+        }
+        return new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(date);
+    }, [selectedDate, view, locale]);
+    const selectDate = (date) => {
+        setSelectedDate(date);
+        calendarRef.current?.getApi()?.gotoDate(date);
+    };
+    const selectView = (next, date = selectedDate) => {
+        setSelectedDate(date);
+        setView(next);
+        calendarRef.current?.getApi()?.changeView(next, date);
+    };
+    const moveDate = (step) => {
+        const date = new Date(`${selectedDate}T12:00:00Z`);
+        if (view === "dayGridMonth") {
+            const day = date.getUTCDate();
+            date.setUTCDate(1); date.setUTCMonth(date.getUTCMonth() + step);
+            const last = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
+            date.setUTCDate(Math.min(day, last));
+        } else date.setUTCDate(date.getUTCDate() + step * (view === "timeGridWeek" ? 7 : 1));
+        selectDate(date.toISOString().slice(0, 10));
+    };
+    const openAgendaEvent = (event) => openEditModal({ event });
+    const agendaProps = { events: visibleEvents, date: selectedDate, lawyers, onOpenEvent: openAgendaEvent, t, language: i18n.language };
+
     if (!calendarEnabled) return null;
 
     return (
         <SimpleScreen
             imageBackgroundSource={images.Backgrounds.AppBackground}
+            className={`lw-calendarRedesign${calendarNativeCapabilities().footerManaged ? " has-nativeFooter" : ""}`}
             contentClassName={calendarExpanded ? "is-calendarFullscreen" : undefined}
         >
             {isSmallScreen && !calendarExpanded && (
@@ -1045,6 +1071,19 @@ export default function CalendarScreen() {
                     <Text24>{t("calendar.title")}</Text24>
 
                     <SimpleContainer className="lw-calendarScreen__headerActions">
+                        <SecondaryButton
+                            className="lw-calendarScreen__syncBtn"
+                            onPress={openPersonalSyncModal}
+                            aria-label={t("calendar.openPersonalSyncAria")}
+                        >
+                            {t("calendar.openPersonalSync")}
+                        </SecondaryButton>
+
+
+                    </SimpleContainer>
+                </SimpleContainer>
+
+                <div className="lw-calendarRedesign__controls">
                         {canUseFirmView && (
                             <SegmentedSwitch
                                 className="lw-calendarScreen__scopeSwitch"
@@ -1061,7 +1100,19 @@ export default function CalendarScreen() {
                             />
                         )}
 
-                        {isSmallScreen && (
+                    <SegmentedSwitch ariaLabel={t("calendar.viewAria")} value={view} onChange={selectView}
+                        options={[
+                            { value: "timeGridDay", label: t("calendar.dayView") },
+                            { value: "timeGridWeek", label: t("calendar.weekView") },
+                            { value: "dayGridMonth", label: t("calendar.monthView") },
+                        ]} />
+                    <div className="lw-calendarRedesign__searchRow">
+                    <div className="lw-calendarRedesign__search">
+                        <SimpleInput title={t(phone ? "calendar.searchEventsShort" : "calendar.searchEvents")} value={query} timeToWaitInMilli={0}
+                            onChange={(event) => setQuery(event.target.value)} aria-label={t("calendar.searchEvents")} />
+                        <Search size={18} aria-hidden="true" />
+                    </div>
+                        {(
                             <SecondaryButton
                                 onPress={() => setFiltersPanelOpen((v) => !v)}
                                 aria-label={filtersPanelOpen ? t("calendar.closeFiltersAria") : t("calendar.openFiltersAria")}
@@ -1070,21 +1121,28 @@ export default function CalendarScreen() {
                             </SecondaryButton>
                         )}
 
-                        <SecondaryButton
-                            className="lw-calendarScreen__syncBtn"
-                            onPress={openPersonalSyncModal}
-                            aria-label={t("calendar.openPersonalSyncAria")}
-                        >
-                            {t("calendar.openPersonalSync")}
-                        </SecondaryButton>
-
-                        {canManageCalendar && (
-                        <PrimaryButton onPress={() => openCreateModal(null)}>
-                            {t("calendar.addEvent")}
-                        </PrimaryButton>
-                        )}
-                    </SimpleContainer>
-                </SimpleContainer>
+                    </div>
+                </div>
+                {canUseFirmView && scope === SCOPE_FIRM && lawyers.length > 0 && (
+                    <div className="lw-calendarRedesign__managers" aria-label={t("calendar.lawyersLegend")}>
+                        <SimpleButton type="button" className={`lw-calendarRedesign__manager${!filters.lawyer_id ? " is-active" : ""}`}
+                            aria-pressed={!filters.lawyer_id} onPress={() => { setFilter("lawyer_id", null); setManagerFilterLabel(""); }}>
+                            {t("calendar.eventTypeAll")}
+                        </SimpleButton>
+                        {lawyers.map((manager) => {
+                            const id = manager.userid ?? manager.UserId ?? manager.id;
+                            const name = manager.name ?? manager.Name;
+                            return <SimpleButton key={id} type="button" className={`lw-calendarRedesign__manager${Number(filters.lawyer_id) === Number(id) ? " is-active" : ""}`}
+                                aria-pressed={Number(filters.lawyer_id) === Number(id)} onPress={() => {
+                                    const next = Number(filters.lawyer_id) === Number(id) ? null : id;
+                                    setFilter("lawyer_id", next); setManagerFilterLabel(next ? name : "");
+                                }}>
+                                <CalendarOwners event={{ extendedProps: { managers: [{ userId: id, name }] } }} lawyers={lawyers} small />
+                                <span>{name}</span>
+                            </SimpleButton>;
+                        })}
+                    </div>
+                )}
 
                 {viewingOtherEmployee && (
                     <SimpleContainer className="lw-calendarScreen__employeeBanner">
@@ -1261,6 +1319,21 @@ export default function CalendarScreen() {
                         {/* Calendar */}
                         <SimpleCard className={`lw-calendarScreen__calendarCard${calendarExpanded ? " is-expanded" : ""}`}>
                             <SimpleContainer className="lw-calendarScreen__calendarToolbar">
+                                <div className="lw-calendarRedesign__date">
+                                    <SimpleButton type="button" aria-label={t("calendar.previousPeriod")} className="lw-calendarRedesign__arrow" onPress={() => moveDate(-1)}>
+                                        {locale === "en-GB" ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+                                    </SimpleButton>
+                                    <h2>{dateTitle}</h2>
+                                    <SimpleButton type="button" aria-label={t("calendar.nextPeriod")} className="lw-calendarRedesign__arrow" onPress={() => moveDate(1)}>
+                                        {locale === "en-GB" ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+                                    </SimpleButton>
+                                </div>
+                                <div className="lw-calendarRedesign__tools">
+                                <SecondaryButton size={buttonSizes.SMALL} onPress={() => selectDate(toLocalYmd(new Date()))}>{t("calendar.today")}</SecondaryButton>
+                                <SimpleButton type="button" className="lw-calendarRedesign__arrow" onPress={() => fetchEvents(null, { force: true })} aria-label={t("calendar.refreshEvents")}><RotateCw size={18} /></SimpleButton>
+                                {view !== "dayGridMonth" && <SecondaryButton size={buttonSizes.SMALL} onPress={() => setTimeLayout((value) => !value)} aria-pressed={timeLayout}>
+                                    {timeLayout ? t("calendar.agendaLayout") : t("calendar.hoursLayout")}
+                                </SecondaryButton>}
                                 <SecondaryButton
                                     size={buttonSizes.SMALL}
                                     className="lw-calendarScreen__expandBtn"
@@ -1269,17 +1342,39 @@ export default function CalendarScreen() {
                                 >
                                     {calendarExpanded ? t("calendar.collapseCalendar") : t("calendar.expandCalendar")}
                                 </SecondaryButton>
+                                </div>
                             </SimpleContainer>
+                            <div className="lw-calendarRedesign__status" role="status" aria-live="polite">
+                                {loading && <span>{t("calendar.loadingEvents")}</span>}
+                                {loadError && <span>{t("calendar.loadFailed")} <SimpleButton type="button" onPress={() => fetchEvents(null, { force: true })}>{t("calendar.retry")}</SimpleButton></span>}
+                                {holidayError && !loadError && <span>{t("calendar.holidaysUnavailable")}</span>}
+                            </div>
+                            {view === "timeGridDay" && !timeLayout && <CalendarDayRibbon {...agendaProps} onSelectDate={selectDate} />}
+                            {agendaMode && (view === "timeGridWeek"
+                                ? <CalendarWeekOverview {...agendaProps} onOpenDay={(date) => selectView("timeGridDay", date)} />
+                                : <CalendarAgenda {...agendaProps} />)}
+                            <div className={`lw-calendarRedesign__engine${agendaMode ? " is-hidden" : ""}${phone && view === "dayGridMonth" ? " is-phoneMonth" : ""}`}>
                             <FullCalendar
                                 ref={calendarRef}
-                                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, luxonPlugin]}
+                                timeZone="Asia/Jerusalem"
                                 initialView={view}
                                 locale={fullCalendarLocaleFor(i18n.language)}
                                 direction={String(i18n.language || "he").startsWith("en") ? "ltr" : "rtl"}
-                                headerToolbar={{
-                                    start: "prev,next today",
-                                    center: "title",
-                                    end: "dayGridMonth,timeGridWeek,timeGridDay",
+                                headerToolbar={false}
+                                initialDate={selectedDate}
+                                firstDay={0}
+                                fixedWeekCount={false}
+                                dayMaxEvents={3}
+                                navLinks
+                                navLinkDayClick={(date) => selectView("timeGridDay", toLocalYmd(date))}
+                                dayCellClassNames={(arg) => toLocalYmd(arg.date) === selectedDate ? ["lw-calendarRedesign__selectedDate"] : []}
+                                dayCellContent={(arg) => {
+                                    const date = toLocalYmd(arg.date);
+                                    const count = calendarEventsForDay(visibleEvents, date).length;
+                                    return <div className="lw-calendarRedesign__monthCell"><span>{arg.dayNumberText}</span>
+                                        {phone && view === "dayGridMonth" && count > 0 && <span className="lw-calendarRedesign__monthCount" aria-label={t("calendar.eventsCount", { count })}>{count}<i /></span>}
+                                    </div>;
                                 }}
                                 buttonText={{
                                     today: t("calendar.today", { defaultValue: "היום" }),
@@ -1288,15 +1383,24 @@ export default function CalendarScreen() {
                                     day: t("calendar.dayView"),
                                 }}
                                 slotEventOverlap={false}
-                                events={events}
-                                selectable
+                                events={visibleEvents}
+                                selectable={canManageCalendar}
                                 selectMirror
-                                select={openCreateModal}
+                                select={(info) => {
+                                    if (viewRef.current === "dayGridMonth" && info.end - info.start <= 25 * 60 * 60 * 1000) {
+                                        selectDate(info.startStr.slice(0, 10));
+                                        info.view.calendar.unselect();
+                                    } else openCreateModal(info);
+                                }}
                                 // Touch devices: a plain tap doesn't trigger `select`
                                 // (that needs a long-press), so open the create modal
                                 // from dateClick as well. openCreateModal dedupes the
                                 // double-fire on desktop clicks.
                                 dateClick={(info) => {
+                                    if (viewRef.current === "dayGridMonth") {
+                                        selectDate(info.dateStr.slice(0, 10));
+                                        return;
+                                    }
                                     const start = info.date;
                                     let end = null;
                                     if (!info.allDay && start instanceof Date) {
@@ -1306,12 +1410,12 @@ export default function CalendarScreen() {
                                     openCreateModal({ start, end, allDay: info.allDay });
                                 }}
                                 eventClick={openEditModal}
-                                eventContent={renderEventContent}
+                                eventContent={(arg) => <CalendarGridEventContent info={arg} lawyers={lawyers} events={visibleEvents} t={t} language={i18n.language} />}
                                 eventDidMount={handleEventDidMount}
                                 displayEventTime={false}
-                                editable
-                                eventStartEditable
-                                eventDurationEditable
+                                editable={canManageCalendar}
+                                eventStartEditable={canManageCalendar}
+                                eventDurationEditable={canManageCalendar}
                                 eventDrop={async (info) => {
                                     const id = parseInt(info.event.id, 10);
                                     if (!Number.isFinite(id)) {
@@ -1351,6 +1455,8 @@ export default function CalendarScreen() {
                                         info.revert();
                                         return;
                                     }
+                                    const previousEvent = events.find((event) => String(event.id) === String(id));
+                                    const restoreLocalEvent = () => setEvents((current) => current.map((event) => String(event.id) === String(id) && previousEvent ? previousEvent : event));
                                     const patchLocalEvent = () => {
                                         const startIso = info.event.start?.toISOString?.();
                                         const endIso = (info.event.end || info.event.start)?.toISOString?.();
@@ -1388,12 +1494,14 @@ export default function CalendarScreen() {
                                         });
                                         if (!res?.success) {
                                             info.revert();
+                                            restoreLocalEvent();
                                             toastError(res?.data?.message || res?.message || t("calendar.googleSyncError"));
                                             return;
                                         }
                                         fetchEvents(null, { force: true });
                                     } catch (err) {
                                         info.revert();
+                                        restoreLocalEvent();
                                         toastError(err?.response?.data?.message || t("calendar.googleSyncError"));
                                     }
                                 }}
@@ -1402,13 +1510,20 @@ export default function CalendarScreen() {
                                     if (nextView && nextView !== viewRef.current) {
                                         setView(nextView);
                                     }
+                                    if (fetchRangeRef.current.from !== arg.startStr || fetchRangeRef.current.to !== arg.endStr) {
+                                        requestGateRef.current.retire();
+                                        fetchInFlightKeyRef.current = null;
+                                        setLoading(true);
+                                    }
+                                    fetchRangeRef.current = { from: arg.startStr, to: arg.endStr };
                                     scheduleFetchEvents(arg);
                                 }}
                                 longPressDelay={350}
                                 selectLongPressDelay={350}
-                                eventLongPressDelay={0}
-                                hiddenDays={calendarExpanded ? EXPANDED_HIDDEN_WEEKDAYS : []}
-                                height={calendarExpanded ? "100%" : (isSmallScreen ? "auto" : 780)}
+                                {...calendarEventInteractionOptions(phone)}
+                                hiddenDays={[]}
+                                height={view === "dayGridMonth" ? "auto" : (calendarExpanded ? "auto" : (phone ? 560 : 640))}
+                                scrollTime="08:00:00"
                                 slotDuration="00:30:00"
                                 expandRows
                                 businessHours={businessHours}
@@ -1421,10 +1536,22 @@ export default function CalendarScreen() {
                                 eventTimeFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
                                 noEventsText={t("calendar.noEvents")}
                             />
+                            </div>
+                            {!agendaMode && <div className="lw-calendarRedesign__selectedAgenda">
+                                <h3>{new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${selectedDate}T12:00:00Z`))}</h3>
+                                <CalendarAgenda {...agendaProps} />
+                            </div>}
                         </SimpleCard>
                     </SimpleContainer>
                 </SimpleContainer>
             </SimpleScrollView>
+            {canManageCalendar && <div className="lw-calendarRedesign__add">
+                <FloatingAddField label={t("calendar.addEvent")} containerSelector=".lw-calendarRedesign"
+                    onAdd={() => {
+                        const [year, month, day] = selectedDate.split("-").map(Number);
+                        openCreateModal({ start: zonedJerusalemInstant(year, month, day, 12, 0, 0), allDay: false });
+                    }} />
+            </div>}
         </SimpleScreen>
     );
 }
