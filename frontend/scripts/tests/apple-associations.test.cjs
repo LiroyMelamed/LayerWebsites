@@ -7,7 +7,7 @@ for(const [tenant,bundle] of Object.entries({melamedlaw:'MelamedLaw',morlevy:'Mo
   const root=fs.mkdtempSync(path.join(os.tmpdir(),'law-aasa-'));
   try {vm.runInNewContext(block,{fs,path,root,src:path.join(frontend,'public/tenants',tenant)});
    for(const name of ['apple-app-site-association','.well-known/apple-app-site-association']) {
-    const json=JSON.parse(fs.readFileSync(path.join(root,'public',name)));assert.equal(json.applinks.details[0].appID,'A38RHM586C.com.melamedia.'+bundle);assert.ok(json.applinks.details[0].paths.includes('/s/*'));
+    const json=JSON.parse(fs.readFileSync(path.join(root,'public',name)));assert.equal(json.applinks.details[0].appID,'A38RHM586C.com.melamedia.'+bundle);for(const excluded of ['NOT /s/*','NOT /PublicSign*','NOT /ViewSignedDocument*']) assert.ok(json.applinks.details[0].paths.includes(excluded));
    }
   } finally {fs.rmSync(root,{recursive:true,force:true});}
  });
