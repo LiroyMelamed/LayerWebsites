@@ -20,3 +20,5 @@ Public pages load in the integrated browser. A Python default-user-agent HTTP pr
 No live charge, forced production-customer suspension, real SMS or data deletion was performed. Provider acceptance and native-store behavior retain their separate earlier evidence. This release does not certify unfinished signup activation/renewal scheduling or Central business integration.
 
 Backups: server-private /root/billing-access-backups on both hosts; prior Motion/Barber executable directories in /opt/billing-access-releases. Legal client branding and existing runtime customizations preserved. FTPS used a validated hostname matching the server certificate; no certificate verification was disabled.
+
+Screenshots: legal-customer-unavailable-preview.png shows the local synthetic blocked-customer state; legal-live-qa-calendar.png shows the live QA owner calendar after recovery. Neither screenshot alone proves the server-side enforcement; that evidence is recorded above.
