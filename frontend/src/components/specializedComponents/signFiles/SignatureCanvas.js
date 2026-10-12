@@ -1044,12 +1044,18 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const saveSignatureAsDefault = async (dataUrl) => {
         if (!dataUrl) return;
-        if (isPublic) {
-            await filesApi.savePublicSavedSignature(publicToken, dataUrl);
-        } else {
-            await filesApi.saveSavedSignature(dataUrl);
+        try {
+            if (isPublic) {
+                await filesApi.savePublicSavedSignature(publicToken, dataUrl);
+            } else {
+                await filesApi.saveSavedSignature(dataUrl);
+            }
+            await refreshSavedItems();
+        } catch (err) {
+            // The document signature may already be accepted. Optional library
+            // storage must not turn that success into a failed signing attempt.
+            console.warn("Failed to save signature as default", err);
         }
-        await refreshSavedItems();
     };
 
     const saveStampAsDefault = async (dataUrl) => {
@@ -1067,6 +1073,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     };
 
     const signCurrentSpotWithImage = async (dataUrl, spotOverride = null) => {
+        if (pdfError) return false;
         const spot = spotOverride || currentSpot;
         if (!spot || spot.IsSigned) return false;
 
@@ -1120,6 +1127,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     };
 
     const signCurrentSpotWithValue = async (value, spotOverride = null) => {
+        if (pdfError) return false;
         const spot = spotOverride || currentSpot;
         if (!spot || spot.IsSigned) return false;
 
@@ -1773,6 +1781,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     };
 
     const signAllRemainingSpots = async (savedItem = null) => {
+        if (pdfError) return false;
         try {
             if (!consentAccepted) {
                 showAppToast({ type: "warning", text: t("signing.canvas.consentRequired") });
@@ -2781,7 +2790,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const renderSpotPopup = () => {
         // Never keep the pad open over the finish / optional overlays.
-        if (!showSpotPopup || !currentSpot || showCompletion || showOptionalRemaining || isDocumentLocked
+        if (!showSpotPopup || !currentSpot || showCompletion || showOptionalRemaining || isDocumentLocked || pdfError
             || (documentGroup && (!pdfReady || pdfError || currentSpot.DocumentId !== activeDocumentId))) {
             return null;
         }
@@ -2975,6 +2984,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                     showAddSpotButtons={false}
                                     selectedSpotId={currentSpot?.SignatureSpotId || currentSpot?.signatureSpotId || null}
                                     onPageChange={setViewedPage}
+                                    onDocumentReady={success => { setPdfReady(true); setPdfError(success === false); }}
                                 />
                             ) : (
                                 <SimpleContainer className="lw-signing-pdfLoading">
