@@ -565,7 +565,7 @@ function getWebsiteDomain() {
 function buildLongPublicSigningUrl(token) {
     const domain = getWebsiteDomain();
     if (!domain) return null;
-    return `https://${domain}/PublicSignScreen?token=${encodeURIComponent(String(token))}`;
+    return `https://${domain}/ViewSignedDocument/Signing?token=${encodeURIComponent(String(token))}`;
 }
 
 function generateSigningShortSlug() {
@@ -585,7 +585,7 @@ function decodeJwtExpDate(token) {
 }
 
 /**
- * Persist JWT under /s/<slug>. Falls back to longUrl if insert fails.
+ * Persist JWT under the browser-only /ViewSignedDocument/Link/<slug> route. Falls back to longUrl if insert fails.
  * Used for both signing invites and signed-document view links (DOC_SIGNED SMS).
  */
 async function persistSigningShortLink(token, longUrl) {
@@ -604,7 +604,7 @@ async function persistSigningShortLink(token, longUrl) {
                  VALUES ($1, $2, $3)`,
                 [slug, String(token), expiresAt]
             );
-            return `https://${domain}/s/${encodeURIComponent(slug)}`;
+            return `https://${domain}/ViewSignedDocument/Link/${encodeURIComponent(slug)}`;
         } catch (err) {
             // Unique violation → retry with a new slug; anything else → long URL fallback.
             if (err?.code === '23505') continue;
@@ -618,7 +618,7 @@ async function persistSigningShortLink(token, longUrl) {
 }
 
 /**
- * Prefer a short /s/<slug> link. Falls back to the long JWT URL if persistence fails.
+ * Prefer a short browser-only link. Falls back to the long JWT URL if persistence fails.
  */
 async function buildPublicSigningUrl(token) {
     return persistSigningShortLink(token, buildLongPublicSigningUrl(token));

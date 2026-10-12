@@ -19,6 +19,8 @@ import {
   PricingScreenName,
   PrivacyPageName,
   PublicSignScreenName,
+  BrowserSigningScreenName,
+  BrowserSigningLinkScreenName,
   ShortNavRedirectScreenName,
   ShortSignRedirectScreenName,
   SecurityScreenName,
@@ -64,6 +66,7 @@ const App = () => {
       /(?:^|\/)(SigningScreen|SigningManagerScreen)(?:$|\/)/i.test(p) ||
       /(?:^|\/)(upload-file-for-signing)(?:$|\/)/i.test(p) ||
       /(?:^|\/)(PublicSignScreen)(?:$|\/)/i.test(p) ||
+      /^\/ViewSignedDocument(?:$|\/)/i.test(p) ||
       /(?:^|\/)s(?:$|\/)/i.test(p) ||
       /(?:^|\/)(Verify\/Evidence)(?:$|\/)/i.test(p);
 
@@ -103,7 +106,8 @@ const App = () => {
     // token.  Skip URL-param extraction so we don't overwrite the real auth
     // token in localStorage.
     const isPublicSignRoute = /^\/PublicSign/i.test(location?.pathname || '')
-      || /^\/s(?:\/|$)/i.test(location?.pathname || '');
+      || /^\/s(?:\/|$)/i.test(location?.pathname || '')
+      || /^\/ViewSignedDocument(?:\/|$)/i.test(location?.pathname || '');
 
     // Auth credentials: prefer URL params (legacy/deep-links), fall back to
     // localStorage (injected by mobile WebView before page load).
@@ -175,6 +179,8 @@ const App = () => {
     <Suspense fallback={<RouteFallback />}>
       <Routes>
         <Route path={PublicSignScreenName} element={<PublicSigningScreen />} />
+        <Route path={BrowserSigningScreenName} element={<PublicSigningScreen />} />
+        <Route path={BrowserSigningLinkScreenName} element={<ShortSignRedirectScreen />} />
         <Route path={ShortSignRedirectScreenName} element={<ShortSignRedirectScreen />} />
         <Route path={ShortNavRedirectScreenName} element={<ShortNavRedirectScreen />} />
         <Route path={ViewSignedDocumentName} element={<ViewSignedDocument />} />
