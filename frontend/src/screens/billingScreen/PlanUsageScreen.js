@@ -312,12 +312,13 @@ export default function PlanUsageScreen() {
     const nextChargeDate = normalized.billing?.renewsAt
         ? formatDisplayDate(normalized.billing.renewsAt)
         : complimentaryUntil;
-    const nextChargeCopy = nextChargeDate && (isYearly ? yearlyIls : monthlyIls)
+    const renewalIls = normalized.billing?.nextChargeIls != null ? formatIls(normalized.billing.nextChargeIls) : (isYearly ? yearlyIls : monthlyIls);
+    const nextChargeCopy = nextChargeDate && renewalIls
         ? t(
             normalized.billing?.stillComplimentary
                 ? (isYearly ? 'planUsage.nextChargeComplimentaryYearly' : 'planUsage.nextChargeComplimentaryMonthly')
                 : (isYearly ? 'planUsage.nextChargeActiveYearly' : 'planUsage.nextChargeActiveMonthly'),
-            { date: nextChargeDate, amount: isYearly ? yearlyIls : monthlyIls }
+            { date: nextChargeDate, amount: renewalIls }
         )
         : null;
     const paymentRows = normalized.payments;
@@ -420,7 +421,7 @@ export default function PlanUsageScreen() {
                             </SimpleContainer>
 
                             {nextChargeCopy && (
-                                <Text14 className="lw-planUsageScreen__nextCopy">{nextChargeCopy}</Text14>
+                                <Text14 className="lw-planUsageScreen__nextCopy">{nextChargeCopy}{normalized.billing?.signupPriceIsFinal ? " · מחיר סופי ללא תוספת מע״מ" : ""}</Text14>
                             )}
                             {normalized.billing?.status === 'past_due' && normalized.billing?.graceUntil && (
                                 <Text14 className="lw-planUsageScreen__warnCopy">
@@ -492,7 +493,8 @@ export default function PlanUsageScreen() {
                                         <Text14>{t('planUsage.replaceCard')}</Text14>
                                     </SimpleButton>
                                 )}
-                                {normalized.billing?.billingEnabled !== false && (
+                                {normalized.billing?.autoRenew === false && <Text14>החידוש האוטומטי בוטל. הגישה תישמר עד תום התקופה ששולמה ותקופת החסד. הנתונים נשמרים גם לאחר מכן.</Text14>}
+                                {normalized.billing?.billingEnabled !== false && normalized.billing?.autoRenew !== false && (
                                     <SimpleButton
                                         className="lw-planUsageScreen__cancelAction"
                                         onPress={cancelSubscription}

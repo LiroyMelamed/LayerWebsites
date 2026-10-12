@@ -26,7 +26,7 @@ export default function PublicSigningScreen() {
         return sp.get("token") || sp.get("t") || "";
     }, [location.search]);
 
-    const [closed, setClosed] = useState(false);
+    const [closed] = useState(false);
     const batchToken = new URLSearchParams(location.search).get('batch');
 
     const goToLogin = () => {

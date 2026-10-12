@@ -123,6 +123,9 @@ ApiUtils.interceptors.response.use(
         const status = error.response?.status || 500;
         const originalRequest = error.config;
 
+        if (status === 503 && error.response?.data?.errorCode === 'SERVICE_TEMPORARILY_UNAVAILABLE') {
+            window.dispatchEvent(new CustomEvent('lw-billing-locked', { detail: { locked: true } }));
+        }
         if (status === 402 && (error.response?.data?.errorCode === 'BILLING_LOCKED' || error.response?.data?.billingLocked)) {
             window.dispatchEvent(new CustomEvent('lw-billing-locked', { detail: error.response.data || {} }));
         }

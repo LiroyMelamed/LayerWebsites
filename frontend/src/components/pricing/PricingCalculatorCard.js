@@ -21,7 +21,7 @@ import "./PricingCalculatorCard.scss";
 function formatMoney(amount) {
     const n = Number(amount);
     const safe = Number.isFinite(n) ? n : 0;
-    return `${safe} ${PRICING_CONFIG.currency}`;
+    return `${safe.toLocaleString("he-IL", { useGrouping: true, maximumFractionDigits: 2 })} ${PRICING_CONFIG.currency}`;
 }
 
 // Single source of truth for the resource storage label (matches DB storage_mb_quota).
