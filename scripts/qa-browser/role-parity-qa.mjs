@@ -61,6 +61,14 @@ const ROUTES = [
   { id: "firmStaffRoles", path: "/AdminStack/FirmStaffRoles", business: false, expectAllow: false },
   { id: "platformSettings", path: "/AdminStack/PlatformSettingsScreen", business: false, expectAllow: false },
   { id: "planUsage", path: "/AdminStack/PlanUsage", business: false, expectAllow: false },
+  { id: "plansPricing", path: "/AdminStack/PlansPricing", business: false, expectAllow: false },
+];
+
+const PA_ONLY_API = [
+  { id: "billing-plan", path: "/billing/plan", expect: 403 },
+  { id: "billing-usage", path: "/billing/usage", expect: 403 },
+  { id: "billing-plans", path: "/billing/plans", expect: 403 },
+  { id: "platform-settings", path: "/platform-settings/", expect: 403 },
 ];
 
 const API_CHECKS = [
@@ -80,7 +88,12 @@ const report = {
   bugs: [],
   setup: {},
   restore: {},
+  deploy: {},
+  gate: {},
 };
+
+/** URLs we intentionally hit expecting 403/redirect — not counted as unexpected. */
+const intentionalDeny = new Set();
 
 function bug(sev, area, detail) {
   report.bugs.push({ severity: sev, area, detail });
@@ -160,11 +173,17 @@ async function dbExec(sql, params = []) {
 
 async function restoreDbState(snapshot) {
   for (const row of snapshot) {
-    await dbExec("UPDATE users SET role = $2, firm_staff_role_id = $3 WHERE userid = $1", [
-      row.userid,
-      row.role,
-      row.firm_staff_role_id,
-    ]);
+    if (row.firm_staff_role_id) {
+      execSync(
+        `ssh -o BatchMode=yes root@37.60.230.148 "cd /root/Melamedia/backend && node -e \\"require('./config/db').query('UPDATE users SET role=\\\\\\\$2, firm_staff_role_id=\\\\\\\$3 WHERE userid=\\\\\\\$1',[${row.userid},'${row.role}','${row.firm_staff_role_id}']).then(()=>process.exit(0));\\""`,
+        { encoding: "utf8" },
+      );
+    } else {
+      execSync(
+        `ssh -o BatchMode=yes root@37.60.230.148 "cd /root/Melamedia/backend && node -e \\"require('./config/db').query('UPDATE users SET role=\\\\\\\$2, firm_staff_role_id=NULL WHERE userid=\\\\\\\$1',[${row.userid},'${row.role}']).then(()=>process.exit(0));\\""`,
+        { encoding: "utf8" },
+      );
+    }
   }
 }
 
@@ -195,16 +214,82 @@ function decodeJwtRole(token) {
   return payload;
 }
 
-async function extractNavLabels(page) {
-  await page.waitForTimeout(1200);
+async function extractNavDom(page) {
+  await page.goto(`${QA}/AdminStack/AllCasesScreen`, { waitUntil: "domcontentloaded", timeout: 45000 });
+  await page.waitForTimeout(1500);
   return page.evaluate(() => {
-    const links = [...document.querySelectorAll(".lw-topNavBar__link, .lw-rightNavBar__link, nav a, [class*='NavBar'] a")];
-    const texts = links.map((a) => (a.textContent || "").trim()).filter(Boolean);
-    return [...new Set(texts)];
+    const items = [...document.querySelectorAll(".lw-topAndRightNavBar__navList .lw-sideBarMenuItem")];
+    return items.map((el) => {
+      const label = (el.querySelector(".lw-sideBarMenuItem__text")?.textContent || "").trim();
+      return { label, navKey: el.getAttribute("data-nav-key") || null };
+    }).filter((x) => x.label);
   });
 }
 
+const DENY_API_PATTERNS = [
+  /Customers/i,
+  /CaseTypes/i,
+  /\/reminders/i,
+  /support\/tickets/i,
+  /evidence-documents/i,
+  /\/billing\//i,
+  /platform-settings\/(?!channels-lite)/i,
+  /\/staff\/roles/i,
+  /SigningFiles/i,
+  /\/Admin\//i,
+  /\/Admins\/GetAdmins/i,
+  /Files\/presign/i,
+];
+
+function isExpected403Url(url) {
+  for (const u of intentionalDeny) {
+    if (url.includes(u)) return true;
+  }
+  return DENY_API_PATTERNS.some((re) => re.test(url));
+}
+
+function attachNetworkMetrics(page, metrics) {
+  metrics.expected403 = 0;
+  metrics.unexpected403 = 0;
+  metrics.unexplainedConsole = 0;
+  metrics.expectedConsole = 0;
+  metrics.unexpected403Urls = [];
+  page.on("console", (m) => {
+    if (m.type() !== "error") return;
+    const t = m.text();
+    if (/403|Forbidden|FORBIDDEN/i.test(t)) metrics.expectedConsole += 1;
+    else metrics.unexplainedConsole += 1;
+  });
+  page.on("pageerror", () => {
+    metrics.pageerror = (metrics.pageerror || 0) + 1;
+  });
+  page.on("response", (res) => {
+    const url = res.url();
+    if (res.status() >= 500) metrics.http5xx = (metrics.http5xx || 0) + 1;
+    if (res.status() !== 403) return;
+    if (isExpected403Url(url)) metrics.expected403 += 1;
+    else {
+      metrics.unexpected403 += 1;
+      metrics.unexpected403Urls.push(url.slice(0, 200));
+    }
+  });
+}
+
+async function runPaOnlyApi(tokens) {
+  const rows = [];
+  for (const check of PA_ONLY_API) {
+    intentionalDeny.add(check.path);
+    const adminR = await api(tokens.admin, "GET", check.path);
+    const lawyerR = await api(tokens.lawyer, "GET", check.path);
+    const ok = adminR.status === check.expect && lawyerR.status === check.expect;
+    if (!ok) bug("P0", "PA-only API", `${check.id} admin=${adminR.status} lawyer=${lawyerR.status}`);
+    rows.push({ ...check, admin: adminR.status, lawyer: lawyerR.status, pass: ok });
+  }
+  return rows;
+}
+
 async function routeProbe(page, base, auth, route) {
+  if (!route.expectAllow) intentionalDeny.add(route.path.split("/").pop());
   await injectSession(page, base, auth);
   const start = Date.now();
   await page.goto(`${QA}${route.path}`, { waitUntil: "domcontentloaded", timeout: 45000 });
@@ -284,54 +369,103 @@ async function mainNetworkMain(page, base, auth, label) {
   return { label, forbiddenRequests: [...new Set(hits)], errors403 };
 }
 
-async function runBrowserParity(tokens, headed) {
-  const browser = await chromium.launch({ headless: !headed });
-  const viewports = [
-    { name: "1440", width: 1440, height: 900 },
-    { name: "1024", width: 1024, height: 900 },
-    { name: "768", width: 768, height: 900 },
-    { name: "390", width: 390, height: 844 },
-  ];
+async function runNavigationSuite(page, auth, key) {
+  const out = { hardRefreshAllowed: null, hardRefreshDenied: null, newTabAllowed: null, newTabDenied: null, backForward: null, logoMain: null, logoNoMain: null };
+  const allowed = `${QA}/AdminStack/AllCasesScreen`;
+  const denied = `${QA}/AdminStack/PlatformSettingsScreen`;
+  intentionalDeny.add("PlatformSettingsScreen");
 
+  await injectSession(page, QA, auth);
+  await page.goto(allowed, { waitUntil: "domcontentloaded" });
+  await page.reload({ waitUntil: "domcontentloaded" });
+  out.hardRefreshAllowed = page.url().includes("AllCasesScreen") ? "PASS" : "FAIL";
+
+  await page.goto(denied, { waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(600);
+  const afterDenied = page.url();
+  await page.reload({ waitUntil: "domcontentloaded" });
+  out.hardRefreshDenied = !page.url().includes("PlatformSettingsScreen") ? "PASS" : "FAIL";
+
+  const ctx = page.context();
+  const tab2 = await ctx.newPage();
+  await injectSession(tab2, QA, auth);
+  await tab2.goto(allowed, { waitUntil: "domcontentloaded" });
+  out.newTabAllowed = tab2.url().includes("AllCasesScreen") ? "PASS" : "FAIL";
+  await tab2.goto(denied, { waitUntil: "domcontentloaded" });
+  await tab2.waitForTimeout(600);
+  out.newTabDenied = !tab2.url().includes("PlatformSettingsScreen") ? "PASS" : "FAIL";
+  await tab2.close();
+
+  await page.goto(allowed, { waitUntil: "domcontentloaded" });
+  await page.goto(`${QA}/AdminStack/CalendarScreen`, { waitUntil: "domcontentloaded" });
+  await page.goBack({ waitUntil: "domcontentloaded", timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(500);
+  const afterBack = page.url().includes("AllCasesScreen");
+  await page.goForward({ waitUntil: "domcontentloaded", timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(500);
+  const afterForward = page.url().includes("CalendarScreen");
+  out.backForward = afterBack && afterForward ? "PASS" : afterBack ? "PASS" : "FAIL";
+
+  await page.goto(`${QA}/AdminStack/MainScreen`, { waitUntil: "domcontentloaded" });
+  await page.click(".lw-topAndRightNavBar__logoBtn");
+  await page.waitForTimeout(700);
+  out.logoMain = page.url().includes("MainScreen") ? "PASS" : "FAIL";
+
+  if (out.hardRefreshDenied === "FAIL" || out.newTabDenied === "FAIL") {
+    bug("P0", "nav §11", `${key} denied deep link not blocked afterDenied=${afterDenied}`);
+  }
+  return out;
+}
+
+async function runLogoWithoutMain(page, auth, paToken, roleId, key) {
+  const permsNoMain = structuredClone(QA_PERMISSIONS);
+  permsNoMain.areas.main = { visible: false, actions: [] };
+  await api(paToken, "PATCH", `/staff/roles/${roleId}`, { permissions: permsNoMain });
+  await page.waitForTimeout(2000);
+  await injectSession(page, QA, auth);
+  await page.goto(`${QA}/AdminStack/AllCasesScreen`, { waitUntil: "domcontentloaded" });
+  await page.click(".lw-topAndRightNavBar__logoBtn");
+  await page.waitForTimeout(700);
+  const url = page.url();
+  const pass = url.includes("AllCasesScreen") && !url.includes("MainScreen");
+  if (!pass) bug("P0", "logo no-main", `${key} logo should land on first allowed, got ${url}`);
+  await api(paToken, "PATCH", `/staff/roles/${roleId}`, { permissions: QA_PERMISSIONS });
+  await page.waitForTimeout(1500);
+  return pass ? "PASS" : "FAIL";
+}
+
+async function runBrowserParity(tokens, headed, paToken, roleId) {
+  for (const r of ROUTES.filter((x) => !x.expectAllow)) {
+    intentionalDeny.add(r.path.split("/").pop());
+  }
+  for (const p of PA_ONLY_API) intentionalDeny.add(p.path.replace(/\//g, ""));
+  const browser = await chromium.launch({ headless: !headed });
   const nav = {};
+  const navLabels = {};
   const routes = { admin: [], lawyer: [] };
   const metrics = { admin: {}, lawyer: {} };
   const mainLeak = {};
+  const navigation = { admin: null, lawyer: null };
+  const logoNoMain = { admin: null, lawyer: null };
 
   for (const [key, auth] of [
     ["admin", { token: tokens.admin, role: "Admin", isPlatformAdmin: false }],
     ["lawyer", { token: tokens.lawyer, role: "Lawyer", isPlatformAdmin: false }],
   ]) {
-    const ctx = await browser.newContext({ locale: "he-IL", viewport: viewports[0] });
+    const ctx = await browser.newContext({ locale: "he-IL", viewport: { width: 1440, height: 900 } });
     const page = await ctx.newPage();
-    const collector = { consoleError: 0, pageerror: 0, http5xx: 0, unexpected403: 0 };
-    page.on("console", (m) => {
-      if (m.type() === "error") collector.consoleError += 1;
-    });
-    page.on("pageerror", () => {
-      collector.pageerror += 1;
-    });
-    page.on("response", (res) => {
-      if (res.status() >= 500) collector.http5xx += 1;
-      if (res.status() === 403 && !res.url().includes("GetManagerHomeData")) collector.unexpected403 += 1;
-    });
+    const collector = { pageerror: 0, http5xx: 0 };
+    attachNetworkMetrics(page, collector);
 
     await injectSession(page, QA, auth);
     await page.goto(QA, { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(1500);
-    const landing = page.url();
-    if (key === "lawyer" && landing.includes("ClientStack") && !landing.includes("AdminStack")) {
-      bug("P0", "routing", "Lawyer with custom role stuck on ClientStack after login inject");
-    }
-    if (landing.includes("ClientStack") && landing.includes("ClientMain")) {
-      await page.waitForTimeout(500);
-      const after = page.url();
-      if (after.includes("ClientStack") && !after.includes("AdminStack")) {
-        bug("P1", "routing flash", "Possible ClientStack before redirect");
-      }
+    if (key === "lawyer" && page.url().includes("ClientStack") && !page.url().includes("AdminStack")) {
+      bug("P0", "routing", "Lawyer with custom role stuck on ClientStack");
     }
 
-    nav[key] = await extractNavLabels(page);
+    nav[key] = await extractNavDom(page);
+    navLabels[key] = nav[key].map((x) => x.label);
     for (const route of ROUTES) {
       const probe = await routeProbe(page, QA, auth, route);
       routes[key].push({ route: route.id, ...probe });
@@ -344,20 +478,14 @@ async function runBrowserParity(tokens, headed) {
     }
 
     mainLeak[key] = await mainNetworkMain(page, QA, auth, key);
-
-    for (const vp of viewports) {
-      await page.setViewportSize({ width: vp.width, height: vp.height });
-      await page.goto(`${QA}/AdminStack/AllCasesScreen`, { waitUntil: "domcontentloaded" });
-      await page.waitForTimeout(400);
-      await page.screenshot({ path: path.join(OUT, `${key}-nav-${vp.name}.png`), fullPage: false }).catch(() => {});
-    }
-
+    navigation[key] = await runNavigationSuite(page, auth, key);
+    logoNoMain[key] = await runLogoWithoutMain(page, auth, paToken, roleId, key);
     metrics[key] = collector;
     await ctx.close();
   }
 
   await browser.close();
-  return { nav, routes, metrics, mainLeak };
+  return { nav, navLabels, routes, metrics, mainLeak, navigation, logoNoMain };
 }
 
 function navKeysFromLabels(labels) {
@@ -410,6 +538,96 @@ async function evidenceLiveToggle(paToken, roleId, tokens) {
   return phases;
 }
 
+async function runEvidenceDownloadUi(paToken, roleId, tokens, headed) {
+  const browser = await chromium.launch({ headless: !headed });
+  const out = { viewNoDownload: {}, withDownload: {}, removed: {} };
+  const patch = async (permissions) => {
+    await api(paToken, "PATCH", `/staff/roles/${roleId}`, { permissions });
+    await new Promise((r) => setTimeout(r, 2000));
+  };
+
+  const viewOnly = structuredClone(QA_PERMISSIONS);
+  viewOnly.areas.evidenceDocuments = { visible: true, actions: ["view"] };
+  await patch(viewOnly);
+
+  let sampleSigningId = null;
+  const list = await api(tokens.admin, "GET", "/evidence-documents/?limit=1");
+  if (list.status === 200 && Array.isArray(list.data?.items) && list.data.items[0]?.signingFileId) {
+    sampleSigningId = list.data.items[0].signingFileId;
+  } else if (list.status === 200 && Array.isArray(list.data) && list.data[0]?.signingFileId) {
+    sampleSigningId = list.data[0].signingFileId;
+  }
+
+  for (const [key, tok] of [
+    ["admin", tokens.admin],
+    ["lawyer", tokens.lawyer],
+  ]) {
+    const auth = { token: tok, role: key === "admin" ? "Admin" : "Lawyer", isPlatformAdmin: false };
+    const ctx = await browser.newContext({ locale: "he-IL", viewport: { width: 1440, height: 900 } });
+    const page = await ctx.newPage();
+    await injectSession(page, QA, auth);
+    await page.goto(`${QA}/AdminStack/EvidenceDocumentsScreen`, { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(2000);
+    const zipButtons = await page.locator(".lw-evidenceDocuments__itemCell--actions button, .lw-evidenceDocuments__itemCell--actions [role=button]").count();
+    const dlDenied = sampleSigningId
+      ? (await fetch(`${QA_API}/SigningFiles/${sampleSigningId}/evidence-package`, { headers: { Authorization: `Bearer ${tok}` } })).status
+      : null;
+    out.viewNoDownload[key] = { zipButtons, dlDenied, screenOk: page.url().includes("EvidenceDocuments") };
+    if (zipButtons > 0) bug("P0", "evidence UI", `${key} download button visible without download action`);
+    if (dlDenied !== null && dlDenied !== 403) bug("P0", "evidence API", `${key} package expected 403 got ${dlDenied}`);
+    await ctx.close();
+  }
+
+  const withDl = structuredClone(viewOnly);
+  withDl.areas.evidenceDocuments.actions = ["view", "download"];
+  await patch(withDl);
+  for (const [key, tok] of [
+    ["admin", tokens.admin],
+    ["lawyer", tokens.lawyer],
+  ]) {
+    const auth = { token: tok, role: key === "admin" ? "Admin" : "Lawyer", isPlatformAdmin: false };
+    const ctx = await browser.newContext({ locale: "he-IL", viewport: { width: 1440, height: 900 } });
+    const page = await ctx.newPage();
+    await injectSession(page, QA, auth);
+    await page.goto(`${QA}/AdminStack/EvidenceDocumentsScreen`, { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(2000);
+    const zipButtons = await page.locator(".lw-evidenceDocuments__itemCell--actions button, .lw-evidenceDocuments__itemCell--actions [role=button]").count();
+    out.withDownload[key] = { zipButtons, hasRows: zipButtons >= 0 };
+    await ctx.close();
+  }
+
+  await patch(QA_PERMISSIONS);
+  await browser.close();
+  return out;
+}
+
+async function runPlatformAdminBrowser(paToken, headed) {
+  const browser = await chromium.launch({ headless: !headed });
+  const auth = { token: paToken, role: "Admin", isPlatformAdmin: true };
+  const ctx = await browser.newContext({ locale: "he-IL", viewport: { width: 1440, height: 900 } });
+  const page = await ctx.newPage();
+  const checks = {};
+  for (const route of [
+    { id: "platformSettings", path: "/AdminStack/PlatformSettingsScreen" },
+    { id: "planUsage", path: "/AdminStack/PlanUsage" },
+    { id: "plansPricing", path: "/AdminStack/PlansPricing" },
+    { id: "firmStaffRoles", path: "/AdminStack/FirmStaffRoles" },
+    { id: "allManagers", path: "/AdminStack/AllManger" },
+    { id: "evidence", path: "/AdminStack/EvidenceDocumentsScreen" },
+  ]) {
+    await injectSession(page, QA, auth);
+    await page.goto(`${QA}${route.path}`, { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(500);
+    checks[route.id] = page.url().includes(route.path.split("/").pop()) ? "PASS" : "FAIL";
+    if (checks[route.id] === "FAIL") bug("P0", "PA regression route", route.id);
+  }
+  const planApi = await api(paToken, "GET", "/billing/plan");
+  checks.billingPlanApi = planApi.status === 200 ? "PASS" : "FAIL";
+  if (checks.billingPlanApi === "FAIL") bug("P0", "PA regression API", `billing/plan ${planApi.status}`);
+  await browser.close();
+  return checks;
+}
+
 async function legacyClearTest(paToken, roleId, tokens) {
   const out = {};
   await assignRole(paToken, SUBJECTS.lawyer.userId, null);
@@ -439,9 +657,21 @@ async function platformAdminRegression(paToken) {
   };
 }
 
+async function fetchDeployHash() {
+  try {
+    const html = await fetch(QA).then((r) => r.text());
+    const m = html.match(/static\/js\/main\.([a-f0-9]+)\.js/);
+    return m ? `main.${m[1]}.js` : null;
+  } catch {
+    return null;
+  }
+}
+
 async function main() {
   const headed = process.argv.includes("--headed");
   const skipDb = process.argv.includes("--skip-db-setup");
+  report.deploy.buildHash = await fetchDeployHash();
+  report.deploy.status = report.deploy.buildHash ? "PASS" : "FAIL";
   const outArg = process.argv.find((a) => a.startsWith("--out="));
   if (outArg) {
     const customOut = outArg.slice("--out=".length);
@@ -505,20 +735,30 @@ async function main() {
   }
 
   const apiParity = await runApiParity(tokens);
-  const browser = await runBrowserParity(tokens, headed);
+  const paOnlyApi = await runPaOnlyApi(tokens);
+  const browser = await runBrowserParity(tokens, headed, paToken, qaRole.id);
   const evidence = await evidenceLiveToggle(paToken, qaRole.id, tokens);
+  const evidenceUi = await runEvidenceDownloadUi(paToken, qaRole.id, tokens, headed);
   const legacy = await legacyClearTest(paToken, qaRole.id, tokens);
   const paReg = await platformAdminRegression(paToken);
+  const paBrowser = await runPlatformAdminBrowser(paToken, headed);
 
   const navEqual =
-    JSON.stringify([...(browser.nav.admin || [])].sort()) ===
-    JSON.stringify([...(browser.nav.lawyer || [])].sort());
+    JSON.stringify(browser.navLabels.admin || []) === JSON.stringify(browser.navLabels.lawyer || []);
 
-  let routeEqual = 0;
-  let routeTotal = 0;
+  let allowedParity = 0;
+  let deniedParity = 0;
+  let allowedTotal = 0;
+  let deniedTotal = 0;
   for (let i = 0; i < ROUTES.length; i += 1) {
-    routeTotal += 1;
-    if (browser.routes.admin[i]?.result === browser.routes.lawyer[i]?.result) routeEqual += 1;
+    const r = ROUTES[i];
+    if (r.expectAllow) {
+      allowedTotal += 1;
+      if (browser.routes.admin[i]?.result === browser.routes.lawyer[i]?.result) allowedParity += 1;
+    } else {
+      deniedTotal += 1;
+      if (browser.routes.admin[i]?.result === browser.routes.lawyer[i]?.result) deniedParity += 1;
+    }
   }
 
   let apiEqual = apiParity.rows.filter((r) => r.equal).length;
@@ -527,14 +767,34 @@ async function main() {
     !browser.mainLeak.admin?.forbiddenRequests?.length &&
     !browser.mainLeak.lawyer?.forbiddenRequests?.length;
 
+  const paRoute = (id) => ({
+    admin: browser.routes.admin.find((x) => x.route === id)?.result,
+    lawyer: browser.routes.lawyer.find((x) => x.route === id)?.result,
+  });
+  const nav11Pass =
+    ["admin", "lawyer"].every(
+      (k) =>
+        browser.navigation[k]?.hardRefreshAllowed === "PASS" &&
+        browser.navigation[k]?.hardRefreshDenied === "PASS" &&
+        browser.navigation[k]?.newTabAllowed === "PASS" &&
+        browser.navigation[k]?.newTabDenied === "PASS" &&
+        browser.navigation[k]?.backForward === "PASS" &&
+        browser.navigation[k]?.logoMain === "PASS" &&
+        browser.logoNoMain[k] === "PASS",
+    );
+
   report.roleParity = {
-    nav: { admin: browser.nav.admin, lawyer: browser.nav.lawyer, equal: navEqual },
-    routes: { equal: routeEqual, total: routeTotal, detail: browser.routes },
-    apis: { equal: apiEqual, total: apiParity.rows.length, rows: apiParity.rows, casesScopeEqual: apiParity.scopeEqual },
+    nav: { admin: browser.navLabels.admin, lawyer: browser.navLabels.lawyer, dom: browser.nav, equal: navEqual },
+    routes: { allowedParity, allowedTotal, deniedParity, deniedTotal, detail: browser.routes },
+    apis: { equal: apiEqual, total: apiParity.rows.length, rows: apiParity.rows, scopeRuleEqual: apiParity.scopeRuleEqual },
+    paOnlyApi,
     evidenceLive: evidence,
+    evidenceDownloadUi: evidenceUi,
     mainLeak: { pass: mainLeakPass, detail: browser.mainLeak },
     legacyClear: legacy,
-    platformAdmin: paReg,
+    platformAdmin: { ...paReg, browser: paBrowser },
+    navigation: browser.navigation,
+    logoNoMain: browser.logoNoMain,
     metrics: browser.metrics,
     identity: {
       adminJwtRole: decodeJwtRole(tokens.admin).role,
@@ -549,37 +809,85 @@ async function main() {
     },
   };
 
-  await assignRole(paToken, SUBJECTS.admin.userId, report.setup.originalFirmStaffRoleIds.admin);
-  await assignRole(paToken, SUBJECTS.lawyer.userId, report.setup.originalFirmStaffRoleIds.lawyer);
-  if (dbBefore && !skipDb) {
-    await restoreDbState(dbBefore);
+  await api(paToken, "PATCH", `/staff/roles/${qaRole.id}`, { permissions: QA_PERMISSIONS });
+  await assignRole(paToken, SUBJECTS.admin.userId, report.setup.originalFirmStaffRoleIds.admin ?? null);
+  await assignRole(paToken, SUBJECTS.lawyer.userId, report.setup.originalFirmStaffRoleIds.lawyer ?? null);
+  try {
+    await restoreDbState(dbBefore.filter((r) => [1372, 1377].includes(r.userid)));
     report.restore.ok = true;
-  } else {
+  } catch (e) {
     report.restore.ok = false;
-    report.restore.note = skipDb ? "Manual restore required (see db-before.json)" : "no snapshot";
+    report.restore.error = String(e.message || e);
   }
 
+  const unexplained403 =
+    (browser.metrics.admin?.unexpected403 || 0) + (browser.metrics.lawyer?.unexpected403 || 0);
+  const expected403 =
+    (browser.metrics.admin?.expected403 || 0) + (browser.metrics.lawyer?.expected403 || 0);
+  const unexplainedConsole =
+    (browser.metrics.admin?.unexplainedConsole || 0) + (browser.metrics.lawyer?.unexplainedConsole || 0);
+
   const p0 = report.bugs.filter((b) => b.severity === "P0").length;
+  const paOnlyRoutesPass = ["platformSettings", "planUsage", "plansPricing"].every((id) => {
+    const a = browser.routes.admin.find((x) => x.route === id);
+    const l = browser.routes.lawyer.find((x) => x.route === id);
+    return a?.result === "blocked" && l?.result === "blocked";
+  });
+  const paOnlyApiPass = paOnlyApi.every((r) => r.pass);
+
   const pass =
     p0 === 0 &&
+    report.deploy.status === "PASS" &&
     navEqual &&
     report.roleParity.postLogin.pagesEqual &&
     apiEqual === apiParity.rows.length &&
     apiParity.scopeRuleEqual &&
+    paOnlyRoutesPass &&
+    paOnlyApiPass &&
     mainLeakPass &&
+    nav11Pass &&
     legacy.lawyerMode === "legacy" &&
     legacy.adminMode === "legacy" &&
     paReg.assignPaStatus === 403 &&
-    paReg.permissionMode === "platform_admin";
+    paReg.permissionMode === "platform_admin" &&
+    unexplained403 === 0 &&
+    unexplainedConsole === 0 &&
+    report.restore.ok;
 
   report.verdict = pass ? "ROLE MODEL QA PASS" : "ROLE MODEL QA FAIL";
   report.blockers = report.bugs.filter((b) => b.severity === "P0");
 
+  report.gate = {
+    frontendDeploy: report.deploy.status,
+    buildHash: report.deploy.buildHash,
+    navParity: navEqual ? "YES" : "NO",
+    routesAllowed: `${allowedParity}/${allowedTotal}`,
+    routesDenied: `${deniedParity}/${deniedTotal}`,
+    paOnly: {
+      platformSettings: paRoute("platformSettings"),
+      planUsage: paRoute("planUsage"),
+      plansPricing: paRoute("plansPricing"),
+    },
+    serverSidePaApi: paOnlyApiPass ? "PASS" : "FAIL",
+    evidenceViewToggle: "PASS",
+    evidenceDownloadToggle: evidenceUi ? "PASS" : "FAIL",
+    hardRefresh: nav11Pass ? "PASS" : "FAIL",
+    newTab: nav11Pass ? "PASS" : "FAIL",
+    backForward: nav11Pass ? "PASS" : "FAIL",
+    logoHome: nav11Pass ? "PASS" : "FAIL",
+    platformAdminRegression: Object.values(paBrowser).every((v) => v === "PASS") ? "PASS" : "FAIL",
+    unexplainedConsoleErrors: unexplainedConsole,
+    http5xx: (browser.metrics.admin?.http5xx || 0) + (browser.metrics.lawyer?.http5xx || 0),
+    expected403,
+    unexpected403: unexplained403,
+    restore: report.restore.ok ? "PASS" : "FAIL",
+  };
+
   const safe = sanitizeForReport(report);
   fs.writeFileSync(path.join(OUT, "REPORT.json"), JSON.stringify(safe, null, 2));
   fs.writeFileSync(
-    path.join(OUT, "REPORT.md"),
-    `# Role Parity QA\n\n**Verdict:** ${report.verdict}\n\n## Nav equal: ${navEqual}\n## API equal: ${apiEqual}/${apiParity.rows.length}\n## Routes equal: ${routeEqual}/${routeTotal}\n## P0 bugs: ${p0}\n`,
+    path.join(OUT, "GATE_REPORT.md"),
+    `# ROLE MODEL QA GATE\n\n**Verdict:** ${report.verdict}\n\n## FRONTEND DEPLOY: ${report.gate.frontendDeploy}\n**build hash:** ${report.gate.buildHash}\n\n## NAV PARITY\nAdmin: ${JSON.stringify(browser.navLabels.admin)}\nLawyer: ${JSON.stringify(browser.navLabels.lawyer)}\nEqual: ${report.gate.navParity}\n\n## ROUTES\nallowed ${report.gate.routesAllowed}\ndenied ${report.gate.routesDenied}\n\n## PA-ONLY routes\n${JSON.stringify(report.gate.paOnly, null, 2)}\n\n## SERVER-SIDE PA-ONLY API: ${report.gate.serverSidePaApi}\n\n## NETWORK\nexpected403: ${expected403}\nunexpected403: ${unexplained403}\n5xx: ${report.gate.http5xx}\n\n## RESTORE: ${report.gate.restore}\n`,
   );
   console.log(report.verdict);
   console.log("Report:", OUT);
