@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiUtils from '../../api/apiUtils';
 import { getPricingSelectionDefaults } from '../../components/pricing/pricingConfig';
+import { signupSelection, signupQuote } from '../../lib/signupPricing';
 import PoweredByMela from '../../components/PoweredByMela';
 import SimpleCard from '../../components/simpleComponents/SimpleCard';
 import SimpleContainer from '../../components/simpleComponents/SimpleContainer';
@@ -18,9 +19,9 @@ import './SignupScreen.scss';
 const STEPS = ['firm', 'contact', 'confirm'];
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
 const TRIAL_POINTS = [
-    '3 חודשים חינם — ללא התחייבות',
+    '3 חודשים ללא דמי מנוי; חיוב חד־פעמי של ₪1 בהרשמה',
     'כניסה מיידית עם OTP לטלפון',
-    'בחירת חבילה ותמחור — אחרי תקופת הניסיון, מהגדרות המערכת',
+    'הכרטיס יישמר אצל ספק הסליקה לצורך חידוש המנוי',
     'ניתן לבטל את המנוי בכל עת — ללא חיובים עתידיים',
 ];
 
@@ -38,6 +39,22 @@ export default function SignupScreen() {
         adminEmail: '',
         ...getPricingSelectionDefaults(),
     });
+
+    useEffect(() => {
+        let saved = {};
+        try { saved = JSON.parse(sessionStorage.getItem('legal-signup-form') || '{}') || {}; } catch (_) {}
+        // An explicit new choice from the price list wins over a saved draft.
+        const choice = signupSelection(window.location.search);
+        setForm(previous => {
+            const restored = { ...previous, ...saved, ...choice };
+            const valid = signupSelection(new URLSearchParams(restored).toString());
+            return { ...restored, ...getPricingSelectionDefaults(), ...valid };
+        });
+    }, []);
+    const [billingConsent, setBillingConsent] = useState(false);
+    const price = signupQuote(form);
+    const recurringPrice = price.recurringAmountIls.toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const pricingLink = 'https://mela-media.co.il/platform/pricing/?' + new URLSearchParams({ platformId: form.platformId, resourceId: form.resourceId, signingId: form.signingId, billingInterval: form.billingInterval || 'monthly' }).toString();
 
     const update = (patch) => setForm((prev) => ({ ...prev, ...patch }));
 
@@ -73,9 +90,13 @@ export default function SignupScreen() {
     const back = () => setStep((s) => Math.max(s - 1, 0));
 
     const submitSignup = async () => {
+        if (!billingConsent) { setError('יש לאשר את תנאי התשלום ושמירת הכרטיס'); return; }
+        sessionStorage.setItem('legal-signup-form',JSON.stringify(form));
         setLoading(true);
         setError('');
         try {
+            const key=sessionStorage.getItem('legal-signup-key')||crypto.randomUUID();
+            sessionStorage.setItem('legal-signup-key',key);
             const res = await ApiUtils.post('/public/signup/start', {
                 firmName: form.firmName.trim(),
                 slug: form.slug.trim().toLowerCase(),
@@ -86,16 +107,22 @@ export default function SignupScreen() {
                 resourceId: form.resourceId,
                 signingId: form.signingId,
                 billingInterval: form.billingInterval,
+                billingConsent: true, consentVersion: 'signup-1ils-3months-v2',
+                idempotencyKey:key,expectedPriceIls:price.recurringAmountIls,
             });
             const intentId = res.data?.intentId;
             if (!intentId) {
                 setError('הרשמה נכשלה');
                 return;
             }
-            const complete = await ApiUtils.post(`/public/signup/${intentId}/complete`);
-            const slug = complete.data?.slug;
-            if (slug) {
-                navigateAfterSignup(slug, navigate);
+            sessionStorage.setItem('legal-signup-intent', intentId);
+            const checkout = await ApiUtils.post(`/public/signup/${intentId}/checkout`);
+            if(checkout.data?.status==='completed'){sessionStorage.removeItem('legal-signup-key');sessionStorage.removeItem('legal-signup-intent');navigateAfterSignup(checkout.data.slug,navigate);return;}
+            const target = checkout.data?.redirectUrl;
+            if (target) {
+                const url = new URL(target);
+                if (url.protocol !== 'https:' || !(url.hostname === 'takbull.co.il' || url.hostname.endsWith('.takbull.co.il'))) throw new Error('Invalid checkout');
+                window.location.assign(target);
                 return;
             }
             setError('פתיחת המשרד נכשלה');
@@ -119,7 +146,7 @@ export default function SignupScreen() {
                 </PrimaryButton>
             ) : (
                 <PrimaryButton isPerforming={loading} onPress={submitSignup} disabled={loading}>
-                    התחילו 3 חודשים חינם
+                    המשיכו לתשלום ₪1
                 </PrimaryButton>
             )}
         </SimpleContainer>
@@ -140,8 +167,15 @@ export default function SignupScreen() {
             <SimpleContainer className={embedded ? 'lw-signup__content lw-signup__content--embed' : 'lw-signup__content'}>
                 <TextBold24 className="lw-signup__title">פתיחת משרד עורכי דין</TextBold24>
                 <Text14 className="lw-signup__subtitle">
-                    3 חודשים חינם · ביטול בכל עת · ללא כרטיס אשראי
+                    3 חודשים ללא דמי מנוי · ₪1 בהרשמה · כרטיס לחידוש עתידי
                 </Text14>
+
+                <SimpleCard className="lw-signup__trialCard">
+                    <TextBold14>החבילה שבחרתם</TextBold14>
+                    <Text14>{price.platform.label} · {price.resource.label} · {price.signing.label}</Text14>
+                    <Text14>בתום 3 חודשי הניסיון: ₪{recurringPrice} {form.billingInterval === 'yearly' ? 'לשנה' : 'לחודש'}, מחיר סופי ללא תוספת מע״מ. הכרטיס יחויב אוטומטית, אלא אם ביטלתם את החידוש.</Text14>
+                    <a href={pricingLink} target={embedded ? '_top' : '_self'}>שינוי החבילה במחירון</a>
+                </SimpleCard>
 
                 <SimpleContainer className="lw-signup__steps" aria-label="שלבי הרשמה">
                     {STEPS.map((id, i) => (
@@ -208,6 +242,8 @@ export default function SignupScreen() {
                     <SimpleContainer className="lw-signup__confirm">
                         <SimpleCard className="lw-signup__trialCard">
                             <TextBold14>מה מקבלים עכשיו</TextBold14>
+                        <Text14>לאחר שלושה חודשים: ₪{recurringPrice} {form.billingInterval === 'yearly' ? 'לשנה' : 'לחודש'}, מחיר סופי ללא תוספת מע״מ, בהתאם לחבילה שנבחרה. ניתן לבטל לפני החידוש.</Text14>
+                        <label><input type="checkbox" checked={billingConsent} onChange={(e) => setBillingConsent(e.target.checked)} />אני מאשר/ת חיוב חד־פעמי של ₪1, שמירת הכרטיס אצל ספק הסליקה וחידוש המנוי לפי המחיר המוצג לאחר שלושה חודשים.</label>
                             <ul className="lw-signup__trialList">
                                 {TRIAL_POINTS.map((line) => (
                                     <li key={line}><Text14>{line}</Text14></li>
@@ -215,7 +251,7 @@ export default function SignupScreen() {
                             </ul>
                         </SimpleCard>
 
-                        <Text14>לאחר לחיצה המשרד ייפתח מיד ותועברו למסך ההתחברות.</Text14>
+                        <Text14>המשרד ייפתח לאחר אימות חיוב ₪1 ושמירת הכרטיס.</Text14>
 
                         <ul className="lw-signup__summary">
                             <li><Text14>משרד: {form.firmName}</Text14></li>
@@ -231,36 +267,27 @@ export default function SignupScreen() {
 
 export function SignupCompleteScreen() {
     const navigate = useNavigate();
-    const params = new URLSearchParams(window.location.search);
-    const intentId = params.get('intentId');
-
+    const intentId = new URLSearchParams(window.location.search).get('intentId');
+    const [status,setStatus]=useState('בודקים את התשלום ושמירת הכרטיס…');
+    const [busy,setBusy]=useState(false);
+    const check=useCallback(async()=>{if(!intentId)return;setBusy(true);try{await ApiUtils.post(`/public/signup/${intentId}/sync`);}catch(_){setStatus('התשלום או שמירת הכרטיס טרם אומתו. אין לשלם שוב; אפשר לבדוק שוב או לפנות לתמיכה.');}finally{setBusy(false);}},[intentId]);
     useEffect(() => {
-        if (!intentId) return;
-        let tries = 0;
+        if (!intentId) {setStatus('קישור הרשמה אינו תקין');return;}
+        let stopped=false,timer;
         const poll = async () => {
             try {
                 const res = await ApiUtils.get(`/public/signup/${intentId}/status`);
                 if (res.data?.status === 'completed' && res.data?.slug) {
-                    navigateAfterSignup(res.data.slug, navigate);
-                    return;
+                    ['legal-signup-intent','legal-signup-key','legal-signup-form'].forEach(k=>sessionStorage.removeItem(k));
+                    navigateAfterSignup(res.data.slug, navigate);return;
                 }
-            } catch (_) { /* retry */ }
-            tries += 1;
-            if (tries < 20) setTimeout(poll, 2000);
+            } catch (_) { /* retry only status; never another charge */ }
+            if(!stopped)timer=setTimeout(poll,3000);
         };
-        poll();
-    }, [intentId, navigate]);
-
-    return (
-        <LoginSimpleScreen
-            unScrollableTopComponent={(
-                <MelaMediaLogo markSize={72} className="lw-melaMediaLogo--signup" />
-            )}
-        >
-            <SimpleContainer className="lw-signup__content lw-signup__content--center">
-                <TextBold24>פותחים את המשרד...</TextBold24>
-                <Text14 className="lw-signup__subtitle">מיד תועברו להתחברות.</Text14>
-            </SimpleContainer>
-        </LoginSimpleScreen>
-    );
+        check();poll();return()=>{stopped=true;clearTimeout(timer);};
+    }, [check, intentId, navigate]);
+    return <LoginSimpleScreen unScrollableTopComponent={<MelaMediaLogo markSize={72} className="lw-melaMediaLogo--signup" />}>
+        <SimpleContainer className="lw-signup__content lw-signup__content--center"><TextBold24>השלמת ההרשמה</TextBold24><Text14>{status}</Text14>
+        <PrimaryButton onPress={check} disabled={busy||!intentId} isPerforming={busy}>בדקו שוב</PrimaryButton></SimpleContainer>
+    </LoginSimpleScreen>;
 }
