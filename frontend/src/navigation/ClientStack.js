@@ -19,7 +19,7 @@ import ClientCasesScreen from "../screens/client/clientCasesScreen/ClientCasesSc
 import SigningScreen from "../screens/signingScreen/SigningScreen";
 import NotificationsScreen from "../screens/client/notifications/NotificationsScreen";
 import ProfileScreen from "../screens/client/profile/ProfileScreen";
-import BillingLockedScreen from "../components/billing/BillingLockedScreen";
+import ServiceUnavailableScreen from "../components/billing/ServiceUnavailableScreen";
 import { useBillingLock } from "../providers/BillingLockProvider";
 
 export const ClientStackName = "/ClientStack";
@@ -33,7 +33,7 @@ function ClientStack() {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     const { locked, loaded } = useBillingLock();
     if (!token) return <Navigate to={LoginStackName + LoginScreenName} replace />;
-    if (loaded && locked) return <BillingLockedScreen />;
+    if (loaded && locked) return <ServiceUnavailableScreen />;
 
     return (
         <TopAndRightNavBar LogoNavigate={ClientStackName + ClientMainScreenName} GetNavBarData={getClientNavBarData}>
