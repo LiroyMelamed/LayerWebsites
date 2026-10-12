@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "releasedAtUtc": "2026-10-12T04:06:29.396196+00:00",
-  "scope": "WEB calendar release; native OTA and final Figma audit remain separate",
+  "scope": "Calendar release: five websites, three registered native production app projects, and changed Figma design scope",
   "productRuntimeCommit": "a746b915d0262eb75c43e2985ffa29eb64f6792e",
   "qaRuntimeCommit": "e39b3347f2eee45a4b7f1aa15300da42ae942d12",
   "customers": [
@@ -351,7 +351,13 @@
       "legacy": "CI=false PASS under explicit bounded exception: zero new scoped lint findings; original CI=true failure and incumbent warnings retained",
       "legacyBaselineEvidenceSha256": "01a3d847a3d9c0c29efa53e3f4c39e25b6cc7b0cb7794909359a144a43d59f6b"
     },
-    "fullWebManifestSha256": "56ca52b288409a4add88c1b6b2bcd1ff5bbec22efed32cd64205271c34479501"
+    "fullWebManifestSha256": "56ca52b288409a4add88c1b6b2bcd1ff5bbec22efed32cd64205271c34479501",
+    "remoteQaFixtures": {
+      "evidenceSha256": "67ad171780abe0f0ac684dc04b9c99a25004df7cc8b2db5728b3d3ed858f9da7",
+      "scope": "Two own future synthetic fixtures; sixteen HTTP requests under disabled delivery settings, cleanup verified; separate from native simulator data.",
+      "customerDataCopied": false,
+      "realProviderTestMessages": 0
+    }
   },
   "executionSetupFailuresPreserved": [
     {
@@ -374,12 +380,90 @@
     "legacyFinalTreeIdenticalBuiltSource": true
   },
   "limits": {
-    "nativeOtaReleased": false,
-    "finalFigmaAuditComplete": false,
+    "nativeOtaReleased": true,
+    "finalFigmaAuditComplete": true,
     "announcementsSent": false,
     "productionCalendarFixturesCreated": 0,
     "realProviderTestMessagesSent": 0,
     "existingNormalProductionReminderTraffic": "preserved under incumbent customer flags"
   },
-  "invalidation": "Reuse applies only while the recorded runtime source, dependencies, environment, process, schema and public artifact hashes remain unchanged. Documentation-only commits do not invalidate runtime proof."
+  "invalidation": "Reuse applies only while the recorded runtime source, dependencies, environment, process, schema and public artifact hashes remain unchanged. Documentation-only commits do not invalidate runtime proof.",
+  "completionVerifiedAtUtc": "2026-10-12T04:25:44.875754+00:00",
+  "nativeProduction": {
+    "status": "PASS",
+    "otaReceiptSha256": "5b3158dae5a394455715a80e4925ed5b4c47f6879e831d0fecb9afb452667f92",
+    "gitReceiptSha256": "3e91655c8dcb36aa7fefd52747970d6d14518556d91f1f84f78e6d5c1d4345ed",
+    "productionChannel": "production",
+    "projects": [
+      {
+        "tenant": "melamedlaw",
+        "candidate": "1a4e37eacd7346f00125d0ccfc19fc38c88014f7",
+        "runtime": "1.0.11",
+        "group": "5686ad8b-49ed-4cbd-924c-5e16696723f9",
+        "platforms": [
+          "ios",
+          "android"
+        ],
+        "publishedAtUtc": "2026-10-12T04:20:38.900255+00:00"
+      },
+      {
+        "tenant": "morlevi",
+        "candidate": "c05dc4d19970ac3fa3e8ed388825406e22da14b5",
+        "runtime": "1.0.5",
+        "group": "5768aa40-ae4b-4198-896d-0cc0896345d0",
+        "platforms": [
+          "ios",
+          "android"
+        ],
+        "publishedAtUtc": "2026-10-12T04:21:12.488701+00:00"
+      },
+      {
+        "tenant": "ashrafessa",
+        "candidate": "32c0a622c686cddfc9ca187b06563f6b11b4a6df",
+        "runtime": "1.0.8",
+        "group": "8c4351a0-75cb-42d9-ba3a-0c21a4fa1d50",
+        "platforms": [
+          "ios",
+          "android"
+        ],
+        "publishedAtUtc": "2026-10-12T04:21:43.366292+00:00"
+      }
+    ],
+    "gitPublication": {
+      "atomic": true,
+      "forceUsed": false,
+      "remoteHeadsAndAnnotatedPeeledTagsVerified": true,
+      "priorTagsPreserved": true,
+      "tags": {
+        "PROD_12_10_2026_LIROY_CALENDAR_NATIVE": "61ecd5aafa985755a2a7167a8ecfe0dcee60f60c",
+        "PROD_12_10_2026_LIROY_CALENDAR_NATIVE_MELAMEDLAW": "1a4e37eacd7346f00125d0ccfc19fc38c88014f7",
+        "PROD_12_10_2026_LIROY_CALENDAR_NATIVE_MORLEVI": "c05dc4d19970ac3fa3e8ed388825406e22da14b5",
+        "PROD_12_10_2026_LIROY_CALENDAR_NATIVE_ASHRAFESSA": "32c0a622c686cddfc9ca187b06563f6b11b4a6df"
+      }
+    },
+    "deliveryLimit": "Matching installed runtime versions receive OTA according to the existing app update flow; receipt does not prove every physical client device has installed it.",
+    "deviceProof": {
+      "iOS": "Actual isolated simulator day/week/month/editor interaction and OS permission/save/readback passed under native evidence.",
+      "android": "Hermes export and focused logic passed; no physical or Android OS interaction is claimed.",
+      "iOSEvidenceSha256": "5bff4d0e2192ece81c8476766de882f74c31706375c9892b7e1f802cacbd7591",
+      "scope": "One synthetic EventKit record in an owned isolated iOS simulator; fresh local synthetic API payload, not a live QA/customer calendar record."
+    },
+    "optionalDirectManifestProbe": {
+      "status": "UNVERIFIED",
+      "reason": "Tool HTTP403; no retries or bypass. Authenticated EAS group/platform/runtime/source readbacks passed. Physical installation is not implied."
+    }
+  },
+  "figma": {
+    "status": "PASS_ACTUALLY_APPLIED_AND_VISUALLY_REVIEWED",
+    "fileUrl": "https://www.figma.com/design/qnclFuKDylmbBZ9ASZiTet/MelamedLaw?node-id=3-1454",
+    "evidenceSha256": "70657bec41c53a0b3dd8a280a62f5d3296392b16ef0b050edf15640c5563e307",
+    "originalPageCountPreserved": 49,
+    "ownedTargetCount": 41,
+    "editableComponentFamilies": 8,
+    "sourceVariants": 16,
+    "sourceHashDrift": false,
+    "originalMasterAndNavigationIdsPreserved": true,
+    "stagedNodesRemaining": 0,
+    "actualNativeOsProofSeparate": true
+  }
 }

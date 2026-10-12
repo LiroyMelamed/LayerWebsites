@@ -1,6 +1,6 @@
 # Calendar WEB release receipt — 12 October 2026
 
-The new calendar is deployed to all five customer websites. Each deployment passed exact source, environment, migration, process, health and public compiled-artifact readback. The customer update remains an unsent draft. Native OTA and the final Figma audit remain pending and are not implied by this WEB release.
+The new calendar is deployed to all five customer websites. Each deployment passed exact source, environment, migration, process, health and public compiled-artifact readback. The customer update remains an unsent draft. Native OTA and the final Figma audit have since passed; their separate proof and limits are recorded in [release verification](RELEASE-VERIFICATION.md).
 
 The product runtime is `a746b915d0262eb75c43e2985ffa29eb64f6792e`. The product tag `PROD_12_10_2026_LIROY_CALENDAR` pins that tested runtime. The main branch may include this later documentation-only receipt; it does not change the deployed runtime or move any existing production tag.
 
