@@ -8,11 +8,13 @@ async function startSignup(req, res) {
             intentId: intent.id,
             slug: intent.slug,
             priceMonthlyIls: intent.priceMonthlyIls,
-            trialDays: signupService.TRIAL_DAYS,
+            recurringAmountIls: intent.recurringAmountIls,
+            trialMonths: 3,
+            setupAmountIls: 1,
         });
     } catch (e) {
         const code = e?.code || 'SIGNUP_FAILED';
-        const status = code === 'SLUG_TAKEN' ? 409 : code === 'INVALID_SLUG' || code === 'MISSING_FIELDS' ? 400 : 500;
+        const status = code === 'SLUG_TAKEN' ? 409 : code === 'INVALID_SLUG' || code === 'MISSING_FIELDS' || code === 'INVALID_PACKAGE' || code === 'CONSENT_REQUIRED' || code === 'PRICE_CHANGED' || code === 'INVALID_IDEMPOTENCY_KEY' ? 400 : code === 'TAKBULL_NOT_CONFIGURED' ? 503 : 500;
         return res.status(status).json({ error: code, message: e?.message || 'Signup failed' });
     }
 }
@@ -34,7 +36,7 @@ async function getSignupStatus(req, res) {
         const intent = await signupService.getSignupIntent(req.params.intentId);
         if (!intent) return res.status(404).json({ error: 'SIGNUP_NOT_FOUND' });
         return res.json({
-            ...intent,
+            id: intent.id, slug: intent.slug, status: intent.status, trialMonths: 3,
             loginUrl: intent.status === 'completed' && intent.slug
                 ? `${getFrontendBaseUrl()}/${intent.slug}/admin`
                 : null,
@@ -58,10 +60,15 @@ async function completeSignup(req, res) {
     } catch (e) {
         const code = e?.code || 'COMPLETE_FAILED';
         const status = code === 'SIGNUP_NOT_FOUND' ? 404
-            : code === 'SIGNUP_INVALID_STATUS' ? 409
+            : code === 'PAYMENT_REQUIRED' ? 402 : code === 'SIGNUP_INVALID_STATUS' ? 409
                 : 500;
         return res.status(status).json({ error: code, message: e?.message || 'Signup completion failed' });
     }
+}
+
+async function syncSignup(req, res) {
+    try { await signupService.syncSignup(req.params.intentId); return getSignupStatus(req,res); }
+    catch(e) { return res.status(400).json({error:e?.code||'PAYMENT_NOT_VERIFIED',message:'התשלום או שמירת הכרטיס טרם אומתו. אין לשלם שוב.'}); }
 }
 
 async function takbullReturn(req, res) {
@@ -70,6 +77,7 @@ async function takbullReturn(req, res) {
     if (!intentId) {
         return res.redirect(`${frontend}/signup?error=missing_intent`);
     }
+    try { await signupService.syncSignup(intentId); } catch (_) { /* Completion screen can safely verify again. */ }
     return res.redirect(`${frontend}/signup/complete?intentId=${encodeURIComponent(intentId)}`);
 }
 
@@ -84,6 +92,7 @@ module.exports = {
     checkoutSignup,
     completeSignup,
     getSignupStatus,
+    syncSignup,
     takbullReturn,
     takbullCancel,
 };
