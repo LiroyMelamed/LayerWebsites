@@ -45,7 +45,7 @@ for (const file of files) {
   const label = path.relative(frontend, file);
   for (const [device, userAgent] of Object.entries(agents)) {
     test(`${label}: ${device} public signing stays in browser without a registered app`, () => {
-      for (const route of ['/s/Abcd_123', '/PublicSignScreen?token=synthetic-only', '/ViewSignedDocument/Sign#synthetic-only', '/ViewSignedDocument/Package?batch=synthetic-only', '/ViewSignedDocument?token=synthetic-only']) {
+      for (const route of ['/ViewSignedDocument/Link/Abcd_123', '/ViewSignedDocument/Signing?token=synthetic-only', '/s/Abcd_123', '/PublicSignScreen?token=synthetic-only', '/ViewSignedDocument/Sign#synthetic-only', '/ViewSignedDocument/Package?batch=synthetic-only', '/ViewSignedDocument?token=synthetic-only']) {
         const result = runPage(file, route, userAgent);
         assert.deepEqual(result.frames, [], route + ': must not attempt an app scheme');
         assert.deepEqual(result.banners, [], route + ': must not divert to an app store');
