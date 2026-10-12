@@ -12,8 +12,8 @@ jest.mock('../api/signingFilesApi', () => ({ __esModule: true, default: {
   getPublicSavedStampDataUrl: jest.fn(),
 } }));
 jest.mock('../components/ui/showAppToast', () => ({ showAppToast: jest.fn() }));
-jest.mock('../components/specializedComponents/signFiles/pdfViewer/PdfViewer', () => ({ onSelectSpot }) => (
-  <div data-page-number="1"><button onClick={() => onSelectSpot(0)}>Select field</button></div>
+jest.mock('../components/specializedComponents/signFiles/pdfViewer/PdfViewer', () => ({ onSelectSpot, onDocumentReady }) => (
+  <div data-page-number="1"><button onClick={() => onSelectSpot(0)}>Select field</button><button onClick={() => onDocumentReady(false)}>PDF failure</button></div>
 ));
 jest.mock('../components/styledComponents/buttons/GenericButton', () => ({ children, onPress, disabled }) => (
   <button onClick={onPress} disabled={disabled}>{children}</button>
@@ -32,6 +32,17 @@ beforeEach(() => {
   signingFilesApi.getPublicSigningFileDetails.mockResolvedValue({ status: 200, data: details });
   signingFilesApi.listPublicSavedItems.mockResolvedValue({ status: 200, data: { signatures: [], stamps: [] } });
   signingFilesApi.publicSignFile.mockResolvedValue({ status: 200, data: {} });
+});
+
+test('a PDF rendering failure cannot submit a field even after consent was given', async () => {
+  render(<SignatureCanvas publicToken="qa-pdf-failure" onClose={() => {}} />);
+  fireEvent.click(await screen.findByRole('checkbox', { name: 'signing.canvas.consentText' }));
+  fireEvent.click(await screen.findByText('Select field'));
+  fireEvent.change(await screen.findByPlaceholderText('signing.canvas.fieldValuePlaceholder'), { target: { value: 'QA text' } });
+  fireEvent.click(screen.getByText('PDF failure'));
+  await act(async () => fireEvent.click(screen.getByText('signing.canvas.saveField')));
+  expect(signingFilesApi.publicSignFile).not.toHaveBeenCalled();
+  expect(screen.queryByText('signing.canvas.signingCompleteTitle')).not.toBeInTheDocument();
 });
 afterEach(() => { global.fetch = originalFetch; });
 
