@@ -3,7 +3,6 @@ import { ChevronLeft, ChevronRight, Repeat2, MapPin, Check, Clock3, CircleAlert,
 import SimpleButton from '../../../components/simpleComponents/SimpleButton';
 import { colorForKey } from '../utils/lawyerColors';
 import { CalendarOwners } from './CalendarOwners';
-export { CalendarOwners } from './CalendarOwners';
 import {
     calendarConflictOwners, calendarDateKey, calendarEventPeopleText, calendarEventStartTime,
     calendarEventsForDay, calendarEventTime, calendarEventTypeKey, calendarFormatDate,
@@ -11,6 +10,7 @@ import {
     calendarRsvp, calendarRsvpLabel, calendarWeekDates,
 } from '../utils/calendarPresentation';
 import './CalendarAgenda.scss';
+export { CalendarOwners } from './CalendarOwners';
 
 function CalendarRsvpBadge({ event, t }) {
     const state = calendarRsvp(event);
