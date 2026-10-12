@@ -13,6 +13,7 @@ function hashToken(raw) {
     return crypto.createHash('sha256').update(token).digest('hex').slice(0, 32);
 }
 
+const publicOffice = require('../middlewares/publicOfficeScope');
 const publicViewLimiter = createRateLimitMiddleware({
     name: 'public_signing_view',
     windowMs: 60 * 1000,
@@ -33,29 +34,29 @@ function extendTimeout(ms) {
 router.post("/detect-spots", authMiddleware, requireSigningEnabledForUser, signingFileController.detectSignatureSpots);
 
 // Public view of signed document (JWT view token, no auth)
-router.get("/public/view/:token", publicViewLimiter, signingFileController.getPublicSignedDocumentView);
-router.get("/public/view/:token/evidence-certificate", publicViewLimiter, extendTimeout(120_000), signingFileController.getPublicEvidenceCertificate);
+router.get("/public/view/:token", publicOffice.signing('signed_view'), publicViewLimiter, signingFileController.getPublicSignedDocumentView);
+router.get("/public/view/:token/evidence-certificate", publicOffice.signing('signed_view'), publicViewLimiter, extendTimeout(120_000), signingFileController.getPublicEvidenceCertificate);
 
 // Public short-link resolver (slug → JWT). Must be registered before /public/:token.
-router.get("/public/short/:slug", publicViewLimiter, signingFileController.resolvePublicSigningShortLink);
+router.get("/public/short/:slug", publicOffice.signingShort, publicViewLimiter, signingFileController.resolvePublicSigningShortLink);
 
 // Public signing (no auth) via signed token
-router.get("/public/:token/pdf", publicViewLimiter, signingFileController.getPublicSigningFilePdf);
-router.get("/public/:token", publicViewLimiter, signingFileController.getPublicSigningFileDetails);
-router.post("/public/:token/otp/request", signingFileController.publicRequestSigningOtp);
-router.post("/public/:token/otp/verify", signingFileController.publicVerifySigningOtp);
-router.post("/public/:token/sign", extendTimeout(60_000), optionalAuthMiddleware, signingFileController.publicSignFile);
-router.post("/public/:token/sign-batch", extendTimeout(60_000), optionalAuthMiddleware, signingFileController.publicSignFileBatch);
-router.post("/public/:token/reject", signingFileController.publicRejectSigning);
-router.get("/public/:token/saved-signature", publicViewLimiter, signingFileController.getPublicSavedSignature);
-router.get("/public/:token/saved-signature/data-url", publicViewLimiter, signingFileController.getPublicSavedSignatureDataUrl);
-router.post("/public/:token/saved-signature", signingFileController.savePublicSavedSignature);
-router.get("/public/:token/saved-stamp", publicViewLimiter, signingFileController.getPublicSavedStamp);
-router.get("/public/:token/saved-stamp/data-url", publicViewLimiter, signingFileController.getPublicSavedStampDataUrl);
-router.post("/public/:token/saved-stamp", signingFileController.savePublicSavedStamp);
-router.get("/public/:token/saved-items", publicViewLimiter, signingFileController.listPublicSavedItems);
-router.get("/public/:token/saved-items/:type/:index/data-url", publicViewLimiter, signingFileController.getPublicSavedItemDataUrl);
-router.delete("/public/:token/saved-items/:type/:index", signingFileController.deletePublicSavedItem);
+router.get("/public/:token/pdf", publicOffice.signing('signing_public'), publicViewLimiter, signingFileController.getPublicSigningFilePdf);
+router.get("/public/:token", publicOffice.signing('signing_public'), publicViewLimiter, signingFileController.getPublicSigningFileDetails);
+router.post("/public/:token/otp/request", publicOffice.signing('signing_public'), signingFileController.publicRequestSigningOtp);
+router.post("/public/:token/otp/verify", publicOffice.signing('signing_public'), signingFileController.publicVerifySigningOtp);
+router.post("/public/:token/sign", publicOffice.signing('signing_public'), extendTimeout(60_000), optionalAuthMiddleware, signingFileController.publicSignFile);
+router.post("/public/:token/sign-batch", publicOffice.signing('signing_public'), extendTimeout(60_000), optionalAuthMiddleware, signingFileController.publicSignFileBatch);
+router.post("/public/:token/reject", publicOffice.signing('signing_public'), signingFileController.publicRejectSigning);
+router.get("/public/:token/saved-signature", publicOffice.signing('signing_public'), publicViewLimiter, signingFileController.getPublicSavedSignature);
+router.get("/public/:token/saved-signature/data-url", publicOffice.signing('signing_public'), publicViewLimiter, signingFileController.getPublicSavedSignatureDataUrl);
+router.post("/public/:token/saved-signature", publicOffice.signing('signing_public'), signingFileController.savePublicSavedSignature);
+router.get("/public/:token/saved-stamp", publicOffice.signing('signing_public'), publicViewLimiter, signingFileController.getPublicSavedStamp);
+router.get("/public/:token/saved-stamp/data-url", publicOffice.signing('signing_public'), publicViewLimiter, signingFileController.getPublicSavedStampDataUrl);
+router.post("/public/:token/saved-stamp", publicOffice.signing('signing_public'), signingFileController.savePublicSavedStamp);
+router.get("/public/:token/saved-items", publicOffice.signing('signing_public'), publicViewLimiter, signingFileController.listPublicSavedItems);
+router.get("/public/:token/saved-items/:type/:index/data-url", publicOffice.signing('signing_public'), publicViewLimiter, signingFileController.getPublicSavedItemDataUrl);
+router.delete("/public/:token/saved-items/:type/:index", publicOffice.signing('signing_public'), signingFileController.deletePublicSavedItem);
 
 // Saved signature for current user (auth)
 router.get("/saved-signature", authMiddleware, requireSigningEnabledForUser, signingFileController.getSavedSignature);

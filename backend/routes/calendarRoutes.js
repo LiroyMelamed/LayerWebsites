@@ -67,9 +67,9 @@ router.put('/daily-agenda-settings', ...protect, cal.updateDailyAgendaSettings);
 router.get('/agenda/:date', ...protect, cal.getDayAgenda);
 
 // Public invite RSVP (no auth)
-router.get('/invite/:token', cal.getInviteByToken);
-router.post('/invite/:token', cal.respondToInvite);
-router.get('/short-links/:slug', cal.resolvePublicShortLink);
+router.get('/invite/:token', require('../middlewares/publicOfficeScope').invite, cal.getInviteByToken);
+router.post('/invite/:token', require('../middlewares/publicOfficeScope').invite, cal.respondToInvite);
+router.get('/short-links/:slug', require('../middlewares/publicOfficeScope').calendarShort, cal.resolvePublicShortLink);
 
 // ─── CRM (Step 2) ─────────────────────────────────────────────────────────────
 // All named routes go BEFORE the generic /:id handlers below.
@@ -92,19 +92,19 @@ router.post('/feed/rotate-token', ...protect, cal.rotateIcalToken);
 
 // Public feed — no JWT; the opaque token IS the auth secret
 // Accepts both /feed/<token> and /feed/<token>.ics (the controller strips the suffix)
-router.get('/feed/:token', cal.serveIcalFeed);
+router.get('/feed/:token', require('../middlewares/publicOfficeScope').calendarFeed, cal.serveIcalFeed);
 
 // ─── Google Calendar ──────────────────────────────────────────────────────────
 router.get('/google/auth-url', ...protect, cal.getGoogleAuthUrl);
 // OAuth2 callback is PUBLIC — Google redirects the browser here after consent
-router.get('/google/callback', cal.handleGoogleCallback);
+router.get('/google/callback', require('../middlewares/publicOfficeScope').calendarOAuth, cal.handleGoogleCallback);
 router.get('/google/status', ...protect, cal.getGoogleStatus);
 router.delete('/google/disconnect', ...protect, cal.disconnectGoogle);
 router.post('/google/sync', ...protect, cal.syncGoogleEvents);
 
 // ─── Outlook Calendar ───────────────────────────────────────────────────────
 router.get('/outlook/auth-url', ...protect, cal.getOutlookAuthUrl);
-router.get('/outlook/callback', cal.handleOutlookCallback);
+router.get('/outlook/callback', require('../middlewares/publicOfficeScope').calendarOAuth, cal.handleOutlookCallback);
 router.get('/outlook/status', ...protect, cal.getOutlookStatus);
 router.delete('/outlook/disconnect', ...protect, cal.disconnectOutlook);
 router.post('/outlook/sync', ...protect, cal.syncOutlookEvents);

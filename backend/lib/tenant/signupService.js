@@ -266,12 +266,12 @@ async function provisionTenantFromSignup(signupIntentId, { tokenInfo } = {}) {
             [signup.admin_name, signup.admin_phone, signup.admin_email, tenant.id]
         );
         const adminUserId = adminRes.rows[0].userid;
+        if (require('./databaseScope').enabled()) {
+            await client.query('UPDATE law_firm_tenants SET owner_user_id=$2 WHERE id=$1',[tenant.id,adminUserId]);
+            await require('./seedOfficeDefaults').seedOfficeDefaults(client,tenant);
+        }
 
-        await client.query(
-            `INSERT INTO platform_admins (user_id, is_active) VALUES ($1, true)
-             ON CONFLICT (user_id) DO UPDATE SET is_active = true`,
-            [adminUserId]
-        );
+        // An office owner is an Admin of this office, never a platform administrator.
 
         if (tokenInfo?.token) {
             const encrypted = encryptSecret(tokenInfo.token);
@@ -346,3 +346,9 @@ module.exports = {
     completeSignupFromPaymentIntent,
     mapSignupRow,
 };
+// These entry points operate on platform-owned signup intents; each validates its own
+// capability/payment before provisioning. Ordinary business controllers never use this scope.
+for (const name of ['createSignupIntent','getSignupIntent','createSignupCheckout','provisionTenantFromSignup','completeSignupFromPaymentIntent','syncSignup']) {
+    const fn=module.exports[name];
+    module.exports[name]=(...args)=>require('./databaseScope').withSystem(()=>fn(...args));
+}

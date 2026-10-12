@@ -70,6 +70,9 @@ async function queryWithRetry(text, params) {
 // Replace pool.query so all controllers get retry for free
 pool.query = queryWithRetry;
 
+// Shared-office isolation also covers direct pool.connect() transactions.
+require('../lib/tenant/scopedPool').installScopedPool(pool);
+
 // Test the connection (skip in tests to avoid noisy timeouts when DB isn't configured)
 const shouldTestConnection =
     process.env.NODE_ENV !== 'test' &&

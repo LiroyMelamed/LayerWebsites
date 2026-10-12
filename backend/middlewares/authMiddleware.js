@@ -89,11 +89,22 @@ const authMiddleware = (req, res, next) => {
         const pool = require('../config/db');
         const { runWithTenant } = require('../lib/tenant/tenantContext');
         const { requireBillingAccess } = require('./requireBillingAccess');
-        void pool.query('SELECT userid, role, law_firm_tenant_id FROM users WHERE userid=$1 LIMIT 1', [req.user.UserId]).then(({ rows }) => {
+        const dbScope=require('../lib/tenant/databaseScope');
+        void dbScope.withSystem(()=>pool.query('SELECT userid, role, law_firm_tenant_id FROM users WHERE userid=$1 LIMIT 1', [req.user.UserId])).then(async ({ rows }) => {
             const current = rows[0];
-            if (!current) return next(createAppError('UNAUTHORIZED', 401, getHebrewMessage('UNAUTHORIZED')));
+            if (!current || !['Admin','Lawyer','Staff','User','Client','ExternalSigner'].includes(current.role)) return next(createAppError('UNAUTHORIZED', 401, getHebrewMessage('UNAUTHORIZED')));
             if (req.tenant?.id && String(current.law_firm_tenant_id || '') !== String(req.tenant.id)) return next(createAppError('FORBIDDEN', 403, getHebrewMessage('FORBIDDEN')));
             req.user.Role = current.role;
+            req.firmTenantId = current.law_firm_tenant_id || null;
+            req.firmPermissionContextValidated = true;
+            if (dbScope.enabled()) {
+                if (!current.law_firm_tenant_id) return dbScope.withLegacyOffice(()=>requireBillingAccess(req,res,next));
+                const tenant = await require('../lib/tenant/tenantService').getTenantById(current.law_firm_tenant_id);
+                if (!tenant?.isActive) return next(createAppError('FORBIDDEN',403));
+                req.tenant=tenant;req.tenantSlug=tenant.slug;
+                req.isOfficeOwner=Number(tenant.ownerUserId)===Number(current.userid) && current.role==='Admin';
+                return runWithTenant(tenant,()=>requireBillingAccess(req,res,next));
+            }
             if (current.law_firm_tenant_id) return runWithTenant({ id: current.law_firm_tenant_id }, () => requireBillingAccess(req, res, next));
             return next();
         }).catch(() => next(createAppError('SERVICE_TEMPORARILY_UNAVAILABLE', 503, 'השירות אינו זמין כרגע. נסו שוב מאוחר יותר.')));

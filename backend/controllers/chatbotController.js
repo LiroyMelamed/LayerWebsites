@@ -326,7 +326,7 @@ const requestOtp = async (req, res) => {
         await pool.query(
             `INSERT INTO otps (phonenumber, otp, expiry, userid)
              VALUES ($1, $2, $3, $4)
-             ON CONFLICT (phonenumber) DO UPDATE
+             ON CONFLICT (${require('../lib/tenant/databaseScope').enabled() ? 'law_firm_tenant_id, ' : ''}phonenumber) WHERE phonenumber IS NOT NULL DO UPDATE
              SET otp = EXCLUDED.otp, expiry = EXCLUDED.expiry, userid = EXCLUDED.userid`,
             [phoneNumber, hashOtp(otp), expiry, userResult.rows[0].userid]
         );

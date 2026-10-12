@@ -36,7 +36,9 @@ function isValidSlug(slug) {
 }
 
 function runWithTenant(tenant, fn) {
-    return storage.run(tenant || null, fn);
+    const scope = require('./databaseScope');
+    const run = () => storage.run(tenant || null, fn);
+    return scope.enabled() && tenant?.id ? scope.withOffice(tenant.id, run) : run();
 }
 
 function getCurrentTenant() {

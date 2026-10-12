@@ -276,6 +276,7 @@ const requestOtp = async (req, res) => {
 };
 
 const verifyOtp = async (req, res) => {
+    if (isMultiTenantMode() && !req.tenant?.id) return res.status(400).json({ error: 'TENANT_REQUIRED' });
     let { phoneNumber, email, otp, tenantSlug } = req.body;
     const emailNorm = String(email || "").trim().toLowerCase();
     const useEmail = !phoneNumber && !!emailNorm;
@@ -403,7 +404,7 @@ const verifyOtp = async (req, res) => {
             }
         }
 
-        // Check if user is a platform admin (for frontend nav visibility)
+        // Shared offices never receive a global-admin flag; dedicated login retains its prior behavior.
         const platformAdminIds = String(process.env.PLATFORM_ADMIN_USER_IDS || '').trim();
         let isPlatformAdmin = false;
         if (role === 'Admin') {
@@ -415,6 +416,7 @@ const verifyOtp = async (req, res) => {
             }
         }
 
+        if(isMultiTenantMode()) isPlatformAdmin=await require('../services/settingsService').isPlatformAdmin(userid);
         return res.status(200).json({ message: "קוד אומת בהצלחה", token, role, refreshToken, isPlatformAdmin });
     } catch (error) {
         console.error("שגיאה בתהליך האימות:", error);
@@ -484,7 +486,7 @@ const refreshToken = async (req, res) => {
 
         const token = signAccessToken({ userid: row.userid, role: row.role, phonenumber: row.phonenumber });
 
-        // Check if user is a platform admin (for frontend nav visibility)
+        // Shared offices never receive a global-admin flag; dedicated login retains its prior behavior.
         const platformAdminIds = String(process.env.PLATFORM_ADMIN_USER_IDS || '').trim();
         let isPlatformAdmin = false;
         if (row.role === 'Admin') {
@@ -496,6 +498,7 @@ const refreshToken = async (req, res) => {
             }
         }
 
+        if(isMultiTenantMode()) isPlatformAdmin=await require('../services/settingsService').isPlatformAdmin(row.userid);
         return res.status(200).json({ token, role: row.role, refreshToken: newTokenRow.refreshToken, isPlatformAdmin });
     } catch (error) {
         try {
@@ -572,6 +575,7 @@ const logout = async (req, res) => {
 };
 
 const register = async (req, res) => {
+    if (isMultiTenantMode() && !req.tenant?.id) return res.status(400).json({ error: 'TENANT_REQUIRED' });
     try {
         let { name, phoneNumber } = req.body || {};
 

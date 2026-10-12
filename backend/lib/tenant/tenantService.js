@@ -1,10 +1,12 @@
 const pool = require('../../config/db');
 const { normalizeSlug, isValidSlug } = require('./tenantContext');
+const { withSystem } = require('./databaseScope');
 
 function mapTenantRow(row) {
     if (!row) return null;
     return {
         id: row.id,
+        ownerUserId: row.owner_user_id,
         slug: row.slug,
         name: row.name,
         isActive: row.is_active !== false,
@@ -21,15 +23,15 @@ function mapTenantRow(row) {
 async function getTenantBySlug(slug) {
     const normalized = normalizeSlug(slug);
     if (!normalized) return null;
-    const res = await pool.query(
+    const res = await withSystem(() => pool.query(
         `SELECT * FROM law_firm_tenants WHERE lower(slug) = $1 LIMIT 1`,
         [normalized]
-    );
+    ));
     return mapTenantRow(res.rows?.[0] || null);
 }
 
 async function getTenantById(id) {
-    const res = await pool.query(`SELECT * FROM law_firm_tenants WHERE id = $1 LIMIT 1`, [id]);
+    const res = await withSystem(() => pool.query(`SELECT * FROM law_firm_tenants WHERE id = $1 LIMIT 1`, [id]));
     return mapTenantRow(res.rows?.[0] || null);
 }
 
@@ -59,14 +61,14 @@ async function listTenantsWithStats() {
     }));
 }
 
-async function createTenant({ slug, name, adminPhone, adminEmail, practiceAreas, lawyerCount, branding }) {
+async function createTenant({ slug, name, adminPhone, adminEmail, practiceAreas, lawyerCount, branding }, db = pool) {
     const normalized = normalizeSlug(slug);
     if (!isValidSlug(normalized)) {
         const err = new Error('INVALID_SLUG');
         err.code = 'INVALID_SLUG';
         throw err;
     }
-    const res = await pool.query(
+    const res = await db.query(
         `INSERT INTO law_firm_tenants (slug, name, admin_phone, admin_email, practice_areas, lawyer_count, branding)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING *`,

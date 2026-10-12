@@ -450,7 +450,7 @@ async function generateAiMorningBrief({
     const facts = buildFactsSnapshot(payload, { now: referenceNow });
     const fingerprint = factsFingerprint(facts);
     const timeBucket = aiBriefTimeBucket(facts.contextNow);
-    const cacheKey = `managerHomeAiBrief:${userId || 'admin'}:${fingerprint}:${timeBucket}`;
+    const cacheKey = `managerHomeAiBrief:${require('../../lib/tenant/databaseScope').cacheKey()}:${userId || 'admin'}:${fingerprint}:${timeBucket}`;
 
     const cached = cache.get(cacheKey);
     if (cached !== undefined) return cached;

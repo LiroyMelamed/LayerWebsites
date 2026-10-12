@@ -17,7 +17,7 @@ import {
 } from "../../../navigation/screenPaths";
 import { getCalendarModuleEnabledCached, loadFirmSettings } from "../../../services/firmSettings";
 
-export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t) => {
+export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t, permissions = null) => {
     loadFirmSettings();
     const calendarEnabled = getCalendarModuleEnabledCached();
     const isPlatformAdmin = typeof window !== 'undefined' && localStorage.getItem('isPlatformAdmin') === 'true';
@@ -107,8 +107,8 @@ export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t) =>
             icon: null,
             onClick: () => navigate(AdminStackName + EvidenceDocumentsScreenName),
         }] : []),
-        // ── Plan & Usage — platform admin only ──
-        ...(isPlatformAdmin ? [{
+        // ── Plan & Usage — verified business owner or platform admin ──
+        ...((isPlatformAdmin || permissions?.canManageBilling === true) ? [{
             navKey: 'planUsage',
             routeMatch: [PlanUsageScreenName, PlansPricingScreenName],
             buttonText: t('nav.planUsage'),

@@ -719,7 +719,7 @@ const createCustomTemplate = async (req, res, next) => {
         const { rows } = await pool.query(
             `INSERT INTO reminder_templates (template_key, label, description, subject_template, body_html, created_by)
              VALUES ($1, $2, $3, $4, $5, $6)
-             ON CONFLICT (template_key) DO UPDATE SET
+             ON CONFLICT (${require('../lib/tenant/databaseScope').enabled() ? 'law_firm_tenant_id, ' : ''}template_key) DO UPDATE SET
                 label = EXCLUDED.label,
                 description = EXCLUDED.description,
                 subject_template = EXCLUDED.subject_template,

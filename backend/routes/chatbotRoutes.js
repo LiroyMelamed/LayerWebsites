@@ -1,5 +1,9 @@
 const express = require('express');
 const router = express.Router();
+router.use((req,res,next) => {
+    if (require('../lib/tenant/tenantContext').isMultiTenantMode() && !req.tenant?.id) return res.status(400).json({error:'TENANT_REQUIRED'});
+    return next();
+});
 const chatbotController = require('../controllers/chatbotController');
 const { createRateLimitMiddleware, getClientIp } = require('../utils/rateLimiter');
 

@@ -642,20 +642,24 @@ async function _readSchedulerSettings() {
 
 async function initCalendarReminderScheduler() {
     let running = false;
-    let lastRun = 0;
+    const officeRuns = new Map();
     let lastEnabled = false;
     async function tick() {
         if (running) return;
         running = true;
         try {
+            await require('../../lib/tenant/officeJobs').forEachOffice(async () => {
+            const key = require('../../lib/tenant/databaseScope').cacheKey();
+            const previous = officeRuns.get(key) || { enabled: false, lastRun: 0 };
             const { enabled, pollMinutes } = await _readSchedulerSettings();
             const active = enabled === 'true' || enabled === '1';
             const interval = Math.max(1, Math.min(60, pollMinutes || 5)) * 60000;
-            if (!active) { lastEnabled = false; return; }
-            if (lastEnabled && Date.now() - lastRun < interval) return;
+            if (!active) { officeRuns.set(key, { enabled: false, lastRun: 0 }); return; }
+            if (previous.enabled && Date.now() - previous.lastRun < interval) return;
             lastEnabled = true;
-            lastRun = Date.now();
             await processCalendarReminders();
+            officeRuns.set(key, { enabled: true, lastRun: Date.now() });
+            });
         } catch (err) {
             console.error('[calendar-reminders] Unhandled tick error:', err.message);
         } finally { running = false; }

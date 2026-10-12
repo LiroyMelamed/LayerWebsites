@@ -3,10 +3,11 @@ const authMiddleware = require('../middlewares/authMiddleware');
 const requireAdmin = require('../middlewares/requireAdmin');
 
 const router = express.Router();
+const run = fn => (req,res,next) => Promise.resolve().then(()=>fn(req,res)).catch(next);
 
 const PROJECT_ID = 'layerwebsites';
 const SERVICE_KEY =
-  process.env.CENTRAL_SERVICE_KEY?.trim() || 'dev-central-service-key-change-me';
+  process.env.CENTRAL_SERVICE_KEY?.trim() || '';
 const CENTRAL_API_URL = (
   process.env.CENTRAL_API_URL ||
   process.env.REACT_APP_CENTRAL_API_URL ||
@@ -14,6 +15,11 @@ const CENTRAL_API_URL = (
 ).replace(/\/$/, '');
 
 function firmSlug() {
+  if (require('../lib/tenant/tenantContext').isMultiTenantMode()) {
+    const slug = require('../lib/tenant/tenantContext').getCurrentTenant()?.slug;
+    if (!slug) throw new Error('SUPPORT_OFFICE_CONTEXT_REQUIRED');
+    return slug;
+  }
   return String(process.env.FIRM_NAME || process.env.RUNTIME_TENANT || 'default')
     .trim()
     .toLowerCase();
@@ -36,8 +42,8 @@ function centralHeaders(actor) {
 function actorFromReq(req) {
   const user = req.user || {};
   return {
-    userId: String(user.userid || user.userId || user.id || 'admin'),
-    name: String(user.name || user.username || user.role || 'Admin'),
+    userId: String(user.UserId || user.userid || user.userId || user.id || 'admin'),
+    name: String(user.name || user.username || user.Role || user.role || 'Admin'),
   };
 }
 
@@ -49,23 +55,24 @@ async function proxyJson(res, path, init = {}) {
 }
 
 router.use(authMiddleware, requireAdmin);
+router.use((_req,res,next)=>SERVICE_KEY.length>=32?next():res.status(503).json({error:'SUPPORT_UNAVAILABLE'}));
 
-router.get('/tickets', async (req, res) => {
+router.get('/tickets', run(async (req, res) => {
   const slug = firmSlug();
   await proxyJson(
     res,
     `/api/v1/tickets?projectId=${encodeURIComponent(PROJECT_ID)}&tenantSlug=${encodeURIComponent(slug)}&limit=100`,
     { headers: centralHeaders() },
   );
-});
+}));
 
-router.get('/tickets/:id', async (req, res) => {
-  await proxyJson(res, `/api/v1/tickets/${req.params.id}?include=details`, {
+router.get('/tickets/:id', run(async (req, res) => {
+  await proxyJson(res, `/api/v1/tickets/${encodeURIComponent(req.params.id)}?include=details`, {
     headers: centralHeaders(),
   });
-});
+}));
 
-router.post('/tickets', async (req, res) => {
+router.post('/tickets', run(async (req, res) => {
   const slug = firmSlug();
   const actor = actorFromReq(req);
   const { title, description } = req.body || {};
@@ -82,16 +89,16 @@ router.post('/tickets', async (req, res) => {
       metadata: { path: '/AdminStack/support', firm: slug },
     }),
   });
-});
+}));
 
-router.post('/tickets/:id/comments', async (req, res) => {
+router.post('/tickets/:id/comments', run(async (req, res) => {
   const actor = actorFromReq(req);
   const { body } = req.body || {};
-  await proxyJson(res, `/api/v1/tickets/${req.params.id}/comments`, {
+  await proxyJson(res, `/api/v1/tickets/${encodeURIComponent(req.params.id)}/comments`, {
     method: 'POST',
     headers: centralHeaders(actor),
     body: JSON.stringify({ body, visibility: 'tenant', author: actor }),
   });
-});
+}));
 
 module.exports = router;

@@ -1,6 +1,7 @@
 import { getTenantLogoUrl } from '../../../lib/tenantBranding';
 import { useFirmPermissions } from "../../../providers/FirmPermissionsProvider";
 import React, { useState } from "react";
+import { useBillingLock } from "../../../providers/BillingLockProvider";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { images } from "../../../assets/images/images";
 import SimpleButton from "../../simpleComponents/SimpleButton";
@@ -32,7 +33,8 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, chosenNavKey, 
     const { openPopup, closePopup } = usePopup();
 
     const firmPerms = useFirmPermissions();
-    const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup, isFromApp, t, isClient ? null : firmPerms);
+    const { canManageBilling } = useBillingLock();
+    const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup, isFromApp, t, isClient ? null : { ...firmPerms, canManageBilling });
 
     const routeMatchesPath = (item, pathname) => {
         if (!item.routeMatch) return false;

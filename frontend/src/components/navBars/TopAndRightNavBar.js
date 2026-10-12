@@ -1,5 +1,6 @@
 import { getTenantLogoUrl } from '../../lib/tenantBranding';
 import React from "react";
+import { useBillingLock } from "../../providers/BillingLockProvider";
 import { useNavigate, useLocation } from "react-router-dom";
 import { usePopup } from "../../providers/PopUpProvider";
 import { getNavBarData } from '../navBars/data/NavBarData';
@@ -30,13 +31,15 @@ export default function TopAndRightNavBar({ children, LogoNavigate, GetNavBarDat
   const { isFromApp } = useFromApp();
   const { t } = useTranslation();
   const firmPerms = useFirmPermissions();
+  const { canManageBilling } = useBillingLock();
   const permCtx = firmPerms
     ? {
         permissionMode: firmPerms.permissionMode,
         canPage: firmPerms.canPage,
         canAction: firmPerms.canAction,
+        canManageBilling,
       }
-    : null;
+    : { canManageBilling };
   const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup, isFromApp, t, permCtx);
 
   /** Check if a nav item matches the current URL pathname */
