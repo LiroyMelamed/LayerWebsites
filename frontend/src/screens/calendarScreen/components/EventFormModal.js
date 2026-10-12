@@ -44,6 +44,7 @@ import emailValidation from "../../../functions/validation/EmailValidation";
 import { toast, toastError, toastSuccess, toastWarning } from "../../../components/ui/toast";
 import { parseDatetimeLocal, toDatetimeLocal, toLocalYmdFromInput, jerusalemParts, zonedJerusalemInstant } from "../../../functions/date/datetimeLocal";
 import { meetingTypeLabelHe } from "../../../functions/calendar/meetingTypeLabelHe";
+import { calendarNativeCapabilities, saveEventToDeviceCalendar } from "../utils/calendarNativeBridge";
 import { supportsCalendarInviteSms } from "../../../functions/calendar/reminderKindLabelHe";
 import {
     pickCalendarSmsPair,
@@ -2207,6 +2208,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 {/* ─── Header ─── */}
                 <SimpleContainer className="lw-eventFormModal__header">
                     <Text24>{isEdit ? t("calendar.editEvent") : t("calendar.addEvent")}</Text24>
+                    {isEdit && title && <Text14 className="lw-eventFormModal__fullTitle">{title}</Text14>}
                     {isEdit && (event?.createdByName || event?.ownerName || event?.updatedByName) && (
                         <SimpleContainer className="lw-eventFormModal__auditTrail">
                             <Text12 color="#718096">
@@ -2611,6 +2613,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
 
                     {showReminderPicker && (
                         <SimpleContainer className="lw-eventFormModal__reminders">
+                            {event?.reminderDeliveryWarning && <Text14 role="alert">{t("calendar.reminderDeliveryUncertain")}</Text14>}
                             <TextBold14 color={NAVY}>{t("calendar.eventRemindersTitle")}</TextBold14>
                             <Text12 color="#718096">{t("calendar.eventRemindersHint")}</Text12>
 
@@ -3122,6 +3125,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
 
                 {/* ─── Footer actions ─── */}
                 <SimpleContainer className="lw-eventFormModal__actions">
+                    {isEdit && calendarNativeCapabilities().saveToDevice && <SecondaryButton onPress={() => saveEventToDeviceCalendar(event.id)}>{t("calendar.addToDeviceCalendar")}</SecondaryButton>}
                     <PrimaryButton onPress={handleSave} isPerforming={saving}>
                         {t("calendar.save")}
                     </PrimaryButton>

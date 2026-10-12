@@ -1,15 +1,17 @@
-import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
+import SimpleButton from "../../../components/simpleComponents/SimpleButton";
 import Skeleton from "../../../components/simpleComponents/Skeleton";
 import { Text12, Text14, TextBold14, TextBold16 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../constant/colors";
 import { AdminStackName, CalendarScreenName } from "../../../navigation/screenPaths";
-import { formatDisplayTime } from "../../../functions/date/formatDateForInput";
 import { useCalendarModuleEnabled } from "../../../services/firmSettings";
 import { leaveColor } from "../../calendarScreen/utils/lawyerColors";
+import { CalendarOwners } from "../../calendarScreen/components/CalendarOwners";
+import { calendarAllDayRange, calendarEventsForDay, calendarEventStartTime, calendarOwners } from "../../calendarScreen/utils/calendarPresentation";
+import { useMemo } from "react";
 import "./CalendarWidget.scss";
 
 const NAVY = "#2A4365";
@@ -29,43 +31,45 @@ function addJerusalemDays(fromDate, days) {
     return jerusalemDateKey(shifted);
 }
 
-function bucketEvents(events) {
+export function bucketEvents(events) {
     const todayKey = jerusalemDateKey(new Date());
     const tomorrowKey = addJerusalemDays(new Date(), 1);
 
-    const inTodayBucket = [];
-    const inTomorrowBucket = [];
-
-    for (const ev of events || []) {
-        if (!ev?.startTime) continue;
-        const key = jerusalemDateKey(ev.startTime);
-        if (!key) continue;
-        if (key === todayKey) inTodayBucket.push(ev);
-        else if (key === tomorrowKey) inTomorrowBucket.push(ev);
-    }
-
-    inTodayBucket.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-    inTomorrowBucket.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-
-    return { today: inTodayBucket, tomorrow: inTomorrowBucket };
+    const inputs = (events || []).filter((ev) => ev.eventStatus !== 'cancelled').map((ev) => ({
+        id: ev.id, title: ev.title, extendedProps: ev, allDay: Boolean(ev.allDay || ['leave', 'holiday'].includes(ev.eventType)),
+        ...(ev.allDay || ['leave', 'holiday'].includes(ev.eventType) ? calendarAllDayRange(ev.startTime, ev.endTime) : { start: ev.startTime, end: ev.endTime }),
+    }));
+    return {
+        today: calendarEventsForDay(inputs, todayKey).map((ev) => ev.extendedProps),
+        tomorrow: calendarEventsForDay(inputs, tomorrowKey).map((ev) => ev.extendedProps),
+    };
 }
 
-function EventRow({ ev }) {
+function EventRow({ ev, onPress, t, language }) {
     const isLeave = ev?.eventType === "leave";
     const dotColor = isLeave ? leaveColor() : (ev?.color || NAVY);
     return (
-        <SimpleContainer className={`lw-calendarWidget__item ${isLeave ? "lw-calendarWidget__item--leave" : ""}`}>
+        <SimpleButton type="button"
+            className={`lw-calendarWidget__item ${isLeave ? "lw-calendarWidget__item--leave" : ""}`}
+            onPress={(e) => {
+                e?.stopPropagation?.();
+                onPress?.(ev);
+            }}
+            aria-label={t("calendar.openEventAria", { title: ev.title, time: calendarEventStartTime(ev, language, t) })}
+        >
             <SimpleContainer className="lw-calendarWidget__itemTime">
-                <TextBold14 color={NAVY}>{formatDisplayTime(ev.startTime)}</TextBold14>
+                <TextBold14 color={NAVY}>{calendarEventStartTime(ev, language, t)}</TextBold14>
             </SimpleContainer>
             <SimpleContainer
                 className={`lw-calendarWidget__itemDot ${isLeave ? "lw-calendarWidget__itemDot--striped" : ""}`}
                 style={{ backgroundColor: dotColor }}
             />
+            <CalendarOwners event={ev} small />
             <SimpleContainer className="lw-calendarWidget__itemBody">
-                <TextBold14 numberOfLines={1}>
-                    {isLeave ? `[חופשה] ${ev.ownerName || ev.title || ""}` : ev.title}
+                <TextBold14 numberOfLines={2} title={ev.title}>
+                    {isLeave ? `[${t("calendar.leaveLabel")}] ${ev.ownerName || ev.title || ""}` : ev.title}
                 </TextBold14>
+                {calendarOwners(ev).length > 0 && <Text12 color={SLATE} numberOfLines={1}>{calendarOwners(ev).map((owner) => owner.name).join(' · ')}</Text12>}
                 {ev.location && !isLeave && (
                     <Text12 color={SLATE} numberOfLines={1}>{ev.location}</Text12>
                 )}
@@ -75,11 +79,11 @@ function EventRow({ ev }) {
                     </Text12>
                 )}
             </SimpleContainer>
-        </SimpleContainer>
+        </SimpleButton>
     );
 }
 
-function BucketSection({ heading, events, t }) {
+function BucketSection({ heading, events, t, language, onEventPress }) {
     return (
         <SimpleContainer className="lw-calendarWidget__bucket">
             <SimpleContainer className="lw-calendarWidget__bucketHeader">
@@ -92,15 +96,17 @@ function BucketSection({ heading, events, t }) {
                 </SimpleContainer>
             ) : (
                 <SimpleContainer className="lw-calendarWidget__list">
-                    {events.map((ev) => <EventRow key={ev.id} ev={ev} />)}
+                    {events.map((ev) => (
+                        <EventRow key={ev.id} ev={ev} onPress={onEventPress} t={t} language={language} />
+                    ))}
                 </SimpleContainer>
             )}
         </SimpleContainer>
     );
 }
 
-export default function CalendarWidget({ events = [], isPerforming }) {
-    const { t } = useTranslation();
+export default function CalendarWidget({ events = [], isPerforming, onEventPress }) {
+    const { t, i18n } = useTranslation();
     const navigate = useNavigate();
     const calendarEnabled = useCalendarModuleEnabled();
 
@@ -109,15 +115,17 @@ export default function CalendarWidget({ events = [], isPerforming }) {
 
     if (!calendarEnabled) return null;
 
-    const handleNavigate = () => navigate(AdminStackName + CalendarScreenName);
+    if (!isPerforming && totalCount === 0) return null;
+
+    const handleOpenCalendar = () => navigate(AdminStackName + CalendarScreenName);
 
     return (
-        <SimpleCard className="lw-calendarWidget" onPress={handleNavigate}>
+        <SimpleCard className="lw-calendarWidget lw-calendarWidget--home">
             <SimpleContainer className="lw-calendarWidget__header">
                 <TextBold16 color={colors.primary}>{t("calendar.widgetTitle")}</TextBold16>
-                {!isPerforming && totalCount > 0 && (
-                    <Text12 color={SLATE}>{totalCount}</Text12>
-                )}
+                <SimpleButton type="button" className="lw-commandCenter__link" onPress={handleOpenCalendar}>
+                    <Text12 color={colors.primary}>{t("managerHome.actions.openCalendar")}</Text12>
+                </SimpleButton>
             </SimpleContainer>
 
             {isPerforming ? (
@@ -135,9 +143,21 @@ export default function CalendarWidget({ events = [], isPerforming }) {
                 </SimpleContainer>
             ) : (
                 <SimpleContainer className="lw-calendarWidget__split">
-                    <BucketSection heading={t("calendar.widgetTodayHeading")} events={buckets.today} t={t} />
+                    <BucketSection
+                        heading={t("calendar.widgetTodayHeading")}
+                        events={buckets.today}
+                        t={t}
+                        language={i18n.language}
+                        onEventPress={onEventPress}
+                    />
                     <SimpleContainer className="lw-calendarWidget__divider" />
-                    <BucketSection heading={t("calendar.widgetTomorrowHeading")} events={buckets.tomorrow} t={t} />
+                    <BucketSection
+                        heading={t("calendar.widgetTomorrowHeading")}
+                        events={buckets.tomorrow}
+                        t={t}
+                        language={i18n.language}
+                        onEventPress={onEventPress}
+                    />
                 </SimpleContainer>
             )}
         </SimpleCard>

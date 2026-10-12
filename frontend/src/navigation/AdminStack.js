@@ -57,8 +57,8 @@ function AdminStack() {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     const calendarEnabled = useCalendarModuleEnabled();
     const location = useLocation();
-    const { locked, loaded } = useBillingLock();
-    const isPlatformAdmin = typeof window !== "undefined" && localStorage.getItem("isPlatformAdmin") === "true";
+    const { locked, loaded, canManageBilling } = useBillingLock();
+    const isPlatformAdmin = canManageBilling === true;
     if (!token) return <Navigate to={LoginStackName + LoginScreenName} replace />;
 
     const onBillingRoute = /PlanUsage|PlansPricing/i.test(location.pathname || "");

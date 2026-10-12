@@ -212,12 +212,12 @@ function computeRemindersSentOnUpdate(prevRaw, {
     }
 
     if (timeChanged && !remindersChanged) {
-        return sentKeysToJson(prev.filter((key) => /:(0)$/.test(key)));
+        return sentKeysToJson(prev.filter((key) => /^(?:receipt:)?(?:lawyer|client):0(?::|$)/.test(key)));
     }
 
     const kept = [];
     for (const key of prev) {
-        const m = String(key).match(/^(lawyer|client):(\d+)$/);
+        const m = String(key).match(/^(?:receipt:)?(lawyer|client):(\d+)(?::|$)/);
         if (!m) continue;
         const role = m[1];
         const off = Number(m[2]);
