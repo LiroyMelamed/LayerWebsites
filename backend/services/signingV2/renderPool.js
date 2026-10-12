@@ -43,8 +43,16 @@ class RenderPool {
         const slot = { worker, task: null, timer: null, failed: false, browserPid: null };
         this.slots.push(slot);
         worker.on('message', message => {
+            if (slot.failed) return;
             if (message.type === 'browser_started') { slot.browserPid = message.pid; return; }
-            if (message.type === 'browser_closed') { slot.browserPid = null; return; }
+            if (message.type === 'browser_closed') {
+                // The worker's renderer retains this browser connection. Retire
+                // the whole slot so its next job receives a fresh renderer.
+                slot.browserPid = null;
+                lost();
+                void worker.terminate();
+                return;
+            }
             if (!slot.task || message.id !== slot.task.id) return;
             const task = slot.task;
             slot.task = null; clearTimeout(slot.timer); this.bytes -= task.bytes;

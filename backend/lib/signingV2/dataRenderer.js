@@ -6,7 +6,7 @@ const { bytesHash, digest } = require('./canonical');
 const { expect, fail } = require('./errors');
 const limits = require('./limits');
 
-const RENDERER_VERSION = 'signing-data-v2.3';
+const RENDERER_VERSION = 'signing-data-v2.6';
 const FONTS_DIR = path.join(__dirname, '../../assets/fonts');
 // Neither Noto file has Latin letters; without this font, English values would use whatever the host has installed.
 const LATIN_DIR = path.join(path.dirname(require.resolve('pdfjs-dist/package.json')), 'standard_fonts');
@@ -36,7 +36,7 @@ function displayValue(value, locale) {
     return value === null ? '' : String(value);
 }
 
-function overlayHtml(pages, fields, locale, fonts) {
+function overlayContent(pages, fields, locale) {
     const cssPages = pages.map((geometry, index) => `@page p${index}{size:${geometry.visualWidth / geometry.scale}pt ${geometry.visualHeight / geometry.scale}pt;margin:0}
         .p${index}{page:p${index};width:${geometry.visualWidth / geometry.scale}pt;height:${geometry.visualHeight / geometry.scale}pt}`).join('\n');
     const body = pages.map((geometry, index) => {
@@ -46,9 +46,13 @@ function overlayHtml(pages, fields, locale, fonts) {
         }).join('');
         return `<section class="sheet p${index}">${content}</section>`;
     }).join('');
-    return `<!doctype html><html lang="${locale}"><head><meta charset="utf-8"><style>
+    return { cssPages, body };
+}
+
+function overlayHtml(pages, fields, locale, fonts) {
+    const { cssPages, body } = overlayContent(pages, fields, locale);
+    return `<!doctype html><html lang="${locale}"><head><meta charset="utf-8"><style id="signing-page-geometry">${cssPages}</style><style>
         ${fonts.map(font => `@font-face{font-family:${font.family};src:url('${font.uri}') format('truetype');font-weight:400}`).join('\n')}
-        ${cssPages}
         *{box-sizing:border-box}html,body{margin:0;padding:0;background:transparent}
         .sheet{position:relative;break-after:page;overflow:hidden}.sheet:last-child{break-after:auto}
         .value{position:absolute;font-family:${FONT_STACK};line-height:normal;color:#000;font-weight:400;overflow:visible;overflow-wrap:normal}
@@ -73,13 +77,52 @@ async function isolatedPage(context) {
     return page;
 }
 
-async function createDataRenderer({ executablePath, noSandbox = false } = {}) {
+async function createDataRenderer({ executablePath, noSandbox = false, reuseTemplatePage = true } = {}) {
     const puppeteer = require('puppeteer');
     const browser = await puppeteer.launch({ ...(executablePath ? { executablePath } : {}),
         ...(noSandbox ? { args: ['--no-sandbox', '--disable-setuid-sandbox'] } : {}) });
     const fontAssets = rendererAssets();
     // One renderer belongs to one worker. It never handles two packages at once.
     let active = false;
+    let dataContext = null, dataPage = null;
+    const printSessions = new WeakMap();
+    async function resetDataPage() {
+        const context = dataContext;
+        dataPage = null; dataContext = null;
+        if (context) await context.close().catch(() => {});
+    }
+    async function templatePage() {
+        if (!dataPage) {
+            dataContext = await browser.createBrowserContext();
+            dataPage = await isolatedPage(dataContext);
+            // Only immutable styles and embedded fonts survive between jobs.
+            // Business values are installed below and removed before the slot is reusable.
+            await dataPage.setContent(overlayHtml([], [], 'en', fontAssets.fonts), { waitUntil: 'domcontentloaded', timeout: 15000 });
+            await dataPage.evaluate(loadFonts);
+        }
+        return dataPage;
+    }
+    async function printDataOverlay(page) {
+        let session = printSessions.get(page);
+        if (!session) {
+            session = await page.createCDPSession();
+            await session.send('Emulation.setDefaultBackgroundColorOverride', { color: { r: 0, g: 0, b: 0, a: 0 } });
+            printSessions.set(page, session);
+        }
+        // Fonts were explicitly loaded and measured above. Keep the data-only
+        // page transparent and return bytes in one command, avoiding repeated
+        // background resets/font waits/stream reads for every employee PDF.
+        // Overlay structure tags are not retained by pdf-lib's XObject embedding;
+        // the source PDF and the standalone evidence printer remain unchanged.
+        const result = await session.send('Page.printToPDF', {
+            landscape: false, displayHeaderFooter: false, printBackground: false, scale: 1,
+            paperWidth: 8.5, paperHeight: 11, marginTop: 0, marginBottom: 0, marginLeft: 0, marginRight: 0,
+            pageRanges: '', preferCSSPageSize: true, generateTaggedPDF: false, generateDocumentOutline: false,
+            transferMode: 'ReturnAsBase64',
+        }, { timeout: 15000 });
+        expect(typeof result.data === 'string' && result.data.length > 0, 'RENDER_FAILED');
+        return Buffer.from(result.data, 'base64');
+    }
     return {
         assets: fontAssets,
         browserProcess: browser.process(),
@@ -104,12 +147,27 @@ async function createDataRenderer({ executablePath, noSandbox = false } = {}) {
                 }
                 if (!dataFields.length) return { bytes: Buffer.from(sourceBytes), contentHash: expectedSourceHash,
                     rendererHash: fontAssets.hash, geometry: geometries.map(item => ({ width: item.visualWidth, height: item.visualHeight })), overflow: [] };
-                const html = overlayHtml(geometries, dataFields, locale, fontAssets.fonts);
-                const context = await browser.createBrowserContext();
+                // A long source PDF often has data on only one page. Print only
+                // those overlays; leave every other source page entirely alone.
+                const sourceIndexes = [...new Set(dataFields.map(field => field.pageNum - 1))].sort((a, b) => a - b);
+                const overlayIndex = new Map(sourceIndexes.map((index, position) => [index, position]));
+                const overlayGeometries = sourceIndexes.map(index => geometries[index]);
+                const overlayFields = dataFields.map(field => ({ ...field, pageNum: overlayIndex.get(field.pageNum - 1) + 1 }));
+                const context = reuseTemplatePage ? null : await browser.createBrowserContext();
                 try {
-                    page = await isolatedPage(context);
-                    await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 15000 });
-                    await page.evaluate(loadFonts);
+                    if (reuseTemplatePage) {
+                        page = await templatePage();
+                        const content = overlayContent(overlayGeometries, overlayFields, locale);
+                        await page.evaluate(({ cssPages, body, language }) => {
+                            document.getElementById('signing-page-geometry').textContent = cssPages;
+                            document.documentElement.lang = language;
+                            document.body.innerHTML = body;
+                        }, { ...content, language: locale });
+                    } else {
+                        page = await isolatedPage(context);
+                        await page.setContent(overlayHtml(overlayGeometries, overlayFields, locale, fontAssets.fonts), { waitUntil: 'domcontentloaded', timeout: 15000 });
+                        await page.evaluate(loadFonts);
+                    }
                     const measurement = await page.evaluate(() => ({
                         fontsReady: Array.from(document.fonts).every(font => font.status === 'loaded'),
                         overflow: Array.from(document.querySelectorAll('.value')).filter(element => {
@@ -124,27 +182,41 @@ async function createDataRenderer({ executablePath, noSandbox = false } = {}) {
                     }));
                     expect(measurement.fontsReady, 'FONT_LOAD_FAILED');
                     if (measurement.overflow.length) fail('TEXT_OVERFLOW', 422, measurement.overflow.map(id => ({ path: id, code: 'TEXT_OVERFLOW' })));
-                    const overlayBytes = await page.pdf({ preferCSSPageSize: true, printBackground: false, omitBackground: true,
-                        displayHeaderFooter: false, timeout: 15000 });
+                    const overlayBytes = await printDataOverlay(page);
                     const overlay = await PDFDocument.load(overlayBytes);
-                    expect(overlay.getPageCount() === pdf.getPageCount(), 'RENDER_PAGE_MISMATCH');
+                    expect(overlay.getPageCount() === sourceIndexes.length, 'RENDER_PAGE_MISMATCH');
                     const embedded = await pdf.embedPages(overlay.getPages());
-                    pdf.getPages().forEach((sourcePage, index) => {
+                    sourceIndexes.forEach((index, overlayPosition) => {
+                        const sourcePage = pdf.getPage(index), overlayPage = embedded[overlayPosition];
                         const geometry = geometries[index];
                         const frame = visualDrawingFrame(geometry, { x: 0, y: 0, width: 800, height: geometry.visualHeight });
-                        expect(Math.abs(embedded[index].width - frame.width) <= 0.5 && Math.abs(embedded[index].height - frame.height) <= 0.5, 'RENDER_PAGE_MISMATCH');
+                        expect(Math.abs(overlayPage.width - frame.width) <= 0.5 && Math.abs(overlayPage.height - frame.height) <= 0.5, 'RENDER_PAGE_MISMATCH');
                         sourcePage.pushOperators(pushGraphicsState(), concatTransformationMatrix(...frame.transform));
                         // Chromium rounds paper dimensions to device pixels. Keep
                         // glyph coordinates at 1:1 scale and align the top edge;
                         // stretching the page would move distant signature fields.
-                        sourcePage.drawPage(embedded[index], { x: 0, y: frame.height - embedded[index].height });
+                        sourcePage.drawPage(overlayPage, { x: 0, y: frame.height - overlayPage.height });
                         sourcePage.pushOperators(popGraphicsState());
                     });
                     const bytes = Buffer.from(await pdf.save({ useObjectStreams: true }));
                     return { bytes, contentHash: bytesHash(bytes), rendererHash: fontAssets.hash,
                         geometry: geometries.map(item => ({ width: item.visualWidth, height: item.visualHeight })), overflow: [] };
+                } catch (error) {
+                    if (reuseTemplatePage && error.errorCode !== 'TEXT_OVERFLOW') await resetDataPage();
+                    throw error;
                 } finally {
-                    await context.close();
+                    if (context) await context.close();
+                    else if (dataPage) {
+                        try {
+                            // Clear personal values even after overflow/print errors. A
+                            // cleanup failure destroys the whole context before the next job.
+                            await dataPage.evaluate(() => {
+                                document.body.replaceChildren();
+                                document.getElementById('signing-page-geometry').textContent = '';
+                                document.documentElement.lang = 'en';
+                            });
+                        } catch { await resetDataPage(); }
+                    }
                 }
             } finally {
                 active = false;

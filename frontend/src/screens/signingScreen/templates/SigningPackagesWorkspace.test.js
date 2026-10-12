@@ -1,14 +1,14 @@
-import React from 'react';
+import React, { act } from 'react';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { createInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import SigningPackagesWorkspace from './SigningPackagesWorkspace';
-
-jest.mock('../../../components/specializedComponents/signFiles/pdfViewer/PdfViewer', () => ({ spots = [] }) =>
-    <div data-testid="package-pdf">{spots.map(spot => spot.signerName).join('|')}</div>);
 import he from '../../../i18n/locales/he.json';
 import ar from '../../../i18n/locales/ar.json';
 import en from '../../../i18n/locales/en.json';
+
+jest.mock('../../../components/specializedComponents/signFiles/pdfViewer/PdfViewer', () => ({ spots = [], pdfFile }) =>
+    <div data-testid="package-pdf" data-bytes={pdfFile?.size}>{spots.map(spot => spot.signerName).join('|')}</div>);
 
 // CRA's jsdom has no Web Crypto; browsers do.
 if (!window.crypto) Object.defineProperty(window, 'crypto', { value: require('crypto').webcrypto });
@@ -26,6 +26,7 @@ function fixture() {
         preparing_count: 0, attention_count: 0, complete_count: 0, cancelled_count: 0 };
     const child = { id: 'package-1', name: 'Employee 001', workflow_state: 'active', accepted_count: 1, required_count: 9, match_reason: 'person' };
     const detail = {
+        capabilities: { send: true, manage: true }, issues: [],
         package: { id: child.id, external_key: child.name, workflow_state: 'active', accepted_count: 1, required_count: 9, prepared_count: 3, document_count: 3 },
         documents: [{ id: 'doc-1', name: 'Employment agreement', state: 'ready', informational: false, final: false,
             spots: [{ id: 'sig', pageNum: 2, x: 30, y: 100, width: 200, height: 60, type: 'signature', required: true, signerName: 'Synthetic employee', signerIndex: 0 }] }],
@@ -39,6 +40,18 @@ function fixture() {
         details: jest.fn().mockResolvedValue(detail),
     } };
 }
+
+test('opening a created run requests that exact submission and expands its packages immediately', async () => {
+    const i18n = await translations('en'), { api } = fixture();
+    const onClearFocus = jest.fn();
+    render(<I18nextProvider i18n={i18n}><SigningPackagesWorkspace api={api} initialSubmissionId="send-1" onClearFocus={onClearFocus} /></I18nextProvider>);
+    await screen.findByText('Employee 001');
+    expect(api.list).toHaveBeenCalledWith(expect.objectContaining({ state: 'all', submissionId: 'send-1' }), expect.any(Object));
+    expect(screen.getByRole('button', { name: /October employees/ })).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Show all runs' }));
+    await waitFor(() => expect(api.list).toHaveBeenLastCalledWith(expect.not.objectContaining({ submissionId: 'send-1' }), expect.any(Object)));
+    expect(onClearFocus).toHaveBeenCalledTimes(1);
+});
 
 test.each(['he', 'ar', 'en'])('uses existing translated controls, correct direction and actual delivery state in %s', async language => {
     const i18n = await translations(language), { api } = fixture();
@@ -222,4 +235,169 @@ test('all locale plural forms resolve for 0/1/2/3/11/200 without falling back to
             expect(language === 'he' ? '' : text).not.toMatch(/[\u0590-\u05ff]/);
         }
     }
+});
+
+async function openPackagePanel(i18n, api) {
+    render(<I18nextProvider i18n={i18n}><SigningPackagesWorkspace api={api} /></I18nextProvider>);
+    fireEvent.click(await screen.findByRole('button', { name: /October employees/ }));
+    fireEvent.click(await screen.findByRole('button', { name: i18n.t('signingV2.openPackage') }));
+    const panel = await screen.findByRole('dialog');
+    await within(panel).findByText('Synthetic employee');
+    return panel;
+}
+
+test('an open unsigned preview refreshes on completion and final download obtains fresh bytes through the incumbent file bridge', async () => {
+    const i18n = await translations('en'), { api, detail } = fixture();
+    const preview = new Blob(['unsigned'], { type: 'application/pdf' });
+    const final = new Blob(['signed final PDF with the accepted signature'], { type: 'application/pdf' });
+    const evidence = new Blob(['synthetic evidence'], { type: 'application/pdf' });
+    api.documentFile = jest.fn().mockResolvedValueOnce(preview).mockResolvedValue(final);
+    api.evidenceFile = jest.fn().mockResolvedValue(evidence);
+    window.ReactNativeWebView = { postMessage: jest.fn() };
+    jest.useFakeTimers();
+    try {
+        const panel = await openPackagePanel(i18n, api);
+        fireEvent.click(within(panel).getByRole('button', { name: 'View document: Employment agreement' }));
+        expect(await within(panel).findByTestId('package-pdf')).toHaveAttribute('data-bytes', String(preview.size));
+        api.details.mockResolvedValue({ ...detail, package: { ...detail.package, workflow_state: 'complete' }, documents: [{ ...detail.documents[0], final: true, prepared: true, state: 'final', name: 'Employment agreement.pdf' }] });
+        await act(async () => { jest.advanceTimersByTime(8000); });
+        await waitFor(() => expect(within(panel).getByTestId('package-pdf')).toHaveAttribute('data-bytes', String(final.size)));
+        // Let FileReader use real timers; polling has already proven the transition.
+        jest.useRealTimers();
+        fireEvent.click(within(panel).getByRole('button', { name: 'Download signed document: Employment agreement.pdf' }));
+        await waitFor(() => expect(window.ReactNativeWebView.postMessage).toHaveBeenCalledTimes(1));
+        expect(api.documentFile).toHaveBeenCalledTimes(3);
+        const message = JSON.parse(window.ReactNativeWebView.postMessage.mock.calls[0][0]);
+        expect(message.payload).toMatchObject({ fileName: 'Employment agreement.pdf', mimeType: 'application/pdf' });
+        expect(atob(message.payload.base64)).toBe('signed final PDF with the accepted signature');
+        fireEvent.click(within(panel).getByRole('button', { name: i18n.t('signingV2.public.downloadEvidence') }));
+        await waitFor(() => expect(window.ReactNativeWebView.postMessage).toHaveBeenCalledTimes(2));
+        expect(atob(JSON.parse(window.ReactNativeWebView.postMessage.mock.calls[1][0]).payload.base64)).toBe('synthetic evidence');
+    } finally { delete window.ReactNativeWebView; jest.useRealTimers(); }
+});
+
+test('reopening a document abandons its old request and cannot get stuck on a cached loading state', async () => {
+    const i18n = await translations('en'), { api } = fixture();
+    let oldRequest;
+    api.documentFile = jest.fn().mockReturnValueOnce(new Promise(resolve => { oldRequest = resolve; })).mockResolvedValue(new Blob(['newer preview']));
+    const panel = await openPackagePanel(i18n, api);
+    fireEvent.click(within(panel).getByRole('button', { name: 'View document: Employment agreement' }));
+    await waitFor(() => expect(api.documentFile).toHaveBeenCalledTimes(1));
+    fireEvent.click(within(panel).getByRole('button', { name: 'Hide document: Employment agreement' }));
+    fireEvent.click(within(panel).getByRole('button', { name: 'View document: Employment agreement' }));
+    expect(await within(panel).findByTestId('package-pdf')).toHaveAttribute('data-bytes', String('newer preview'.length));
+    await act(async () => { oldRequest(new Blob(['obsolete'])); });
+    expect(within(panel).getByTestId('package-pdf')).toHaveAttribute('data-bytes', String('newer preview'.length));
+});
+
+test('an open partial document refreshes after a signing stage but not for an unchanged polling version', async () => {
+    const i18n = await translations('en'), { api, detail } = fixture();
+    detail.documents[0] = { ...detail.documents[0], prepared: true, artifactVersion: 'prepared-version' };
+    api.documentFile = jest.fn().mockResolvedValueOnce(new Blob(['prepared'])).mockResolvedValue(new Blob(['first signature already applied']));
+    jest.useFakeTimers();
+    try {
+        const panel = await openPackagePanel(i18n, api);
+        fireEvent.click(within(panel).getByRole('button', { name: 'View document: Employment agreement' }));
+        expect(await within(panel).findByTestId('package-pdf')).toHaveAttribute('data-bytes', '8');
+        api.details.mockResolvedValue({ ...detail, documents: [{ ...detail.documents[0], artifactVersion: 'after-first-signature' }] });
+        await act(async () => { jest.advanceTimersByTime(8000); });
+        await waitFor(() => expect(within(panel).getByTestId('package-pdf')).toHaveAttribute('data-bytes', String('first signature already applied'.length)));
+        expect(api.documentFile).toHaveBeenCalledTimes(2);
+        expect(within(panel).queryByRole('button', { name: 'Download signed document: Employment agreement' })).not.toBeInTheDocument();
+        await act(async () => { jest.advanceTimersByTime(8000); });
+        expect(api.documentFile).toHaveBeenCalledTimes(2);
+    } finally { jest.useRealTimers(); }
+});
+
+test('a file bridge failure is shown as a localized error and allows retry', async () => {
+    const i18n = await translations('ar'), { api, detail } = fixture();
+    detail.package.workflow_state = 'complete';
+    api.evidenceFile = jest.fn().mockResolvedValue(new Blob(['evidence']));
+    window.ReactNativeWebView = { postMessage: jest.fn() };
+    const failedReader = jest.spyOn(FileReader.prototype, 'readAsDataURL').mockImplementation(function () { this.onerror(); });
+    try {
+        const panel = await openPackagePanel(i18n, api);
+        const download = within(panel).getByRole('button', { name: i18n.t('signingV2.public.downloadEvidence') });
+        fireEvent.click(download);
+        await within(panel).findByText(i18n.t('signingV2.errors.REQUEST_FAILED'));
+        expect(download).toBeEnabled();
+        expect(window.ReactNativeWebView.postMessage).not.toHaveBeenCalled();
+        failedReader.mockRestore();
+        fireEvent.click(download);
+        await waitFor(() => expect(window.ReactNativeWebView.postMessage).toHaveBeenCalledTimes(1));
+        expect(within(panel).queryByText(i18n.t('signingV2.errors.REQUEST_FAILED'))).not.toBeInTheDocument();
+    } finally { failedReader.mockRestore(); delete window.ReactNativeWebView; }
+});
+
+
+test.each(['he', 'ar', 'en'])('a completed package offers a copy of scoped final documents, not another signing request in %s', async language => {
+    const i18n = await translations(language), { api, detail, preview } = actionFixture();
+    detail.package.workflow_state = 'complete';
+    detail.participants.forEach(person => person.tasks.forEach(task => { task.state = 'accepted'; }));
+    preview.tasks = [];
+    preview.documents = [{ documentId: 'doc-1', documentName: 'Final employment agreement' }];
+    const dialog = await openAction(i18n, api, 'completed_copy');
+    expect(await within(dialog).findByText('Final employment agreement')).toBeInTheDocument();
+    expect(within(dialog).getByText(i18n.t('signingV2.action.finalDocuments', { count: 1, formattedCount: '1' }))).toBeInTheDocument();
+    expect(api.previewAction).toHaveBeenCalledWith('package-1', 'person-1', { purpose: 'completed_copy' }, expect.any(Object));
+    const confirm = within(dialog).getByRole('button', { name: i18n.t('signingV2.action.completed_copy.confirm') });
+    fireEvent.click(confirm); fireEvent.click(confirm);
+    await within(dialog).findByText(i18n.t('signingV2.action.queued'));
+    expect(api.executeAction).toHaveBeenCalledTimes(1);
+    expect(api.executeAction).toHaveBeenCalledWith('package-1', 'person-1', { purpose: 'completed_copy', previewHash: 'hash-1' }, expect.any(String));
+});
+
+test('view-only office can read a request but cannot resume or send any message', async () => {
+    const i18n = await translations('en'), { api, detail } = fixture();
+    detail.capabilities = { send: false, manage: false };
+    detail.package.workflow_state = 'attention';
+    detail.participants[0].tasks[0].state = 'clarification';
+    detail.issues = [{ id: 'issue-1', taskId: 'task-1', kind: 'clarify', reason: 'Please explain clause 3', state: 'open', canResume: true, documentName: 'Employment agreement', createdAt: '2026-10-08T08:00:00Z' }];
+    render(<I18nextProvider i18n={i18n}><SigningPackagesWorkspace api={api} initialSubmissionId="send-1" /></I18nextProvider>);
+    fireEvent.click(await screen.findByRole('button', { name: i18n.t('signingV2.openPackage') }));
+    expect(await screen.findByText('Please explain clause 3')).toBeVisible();
+    expect(screen.queryByRole('button', { name: i18n.t('signingV2.issue.resolveTitle') })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: i18n.t('signingV2.action.reminder.open') })).not.toBeInTheDocument();
+});
+
+test.each(['he','ar','en'])('authorized office responds to an issue using the existing controls in %s', async language => {
+    const i18n = await translations(language), { api, detail } = fixture();
+    detail.participants[0].tasks[0].state = 'clarification';
+    detail.issues = [{ id: 'issue-1', taskId: 'task-1', kind: 'clarify', reason: 'Please explain clause 3', state: 'open', canResume: true, documentName: 'Employment agreement', createdAt: '2026-10-08T08:00:00Z' }];
+    api.resolveIssue = jest.fn().mockResolvedValue({ state: 'ready' });
+    render(<I18nextProvider i18n={i18n}><SigningPackagesWorkspace api={api} initialSubmissionId="send-1" /></I18nextProvider>);
+    fireEvent.click(await screen.findByRole('button', { name: i18n.t('signingV2.openPackage') }));
+    fireEvent.click(await screen.findByRole('button', { name: i18n.t('signingV2.issue.resolveTitle') }));
+    const form = screen.getByRole('dialog', { name: i18n.t('signingV2.issue.resolveTitle') });
+    const confirm = within(form).getByRole('button', { name: i18n.t('signingV2.issue.resolveConfirm') });
+    expect(confirm).toBeDisabled();
+    fireEvent.change(within(form).getByRole('textbox'), { target: { value: 'Explained without changing the document' } });
+    fireEvent.click(confirm);
+    await waitFor(() => expect(api.resolveIssue).toHaveBeenCalledWith('package-1', 'issue-1', { resolution: 'Explained without changing the document' }, expect.any(String)));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: i18n.t('signingV2.issue.resolveTitle') })).not.toBeInTheDocument());
+    expect(api.details).toHaveBeenCalledTimes(2);
+});
+
+
+test.each(['he', 'ar', 'en'])('cancelled follow-up explains the changed selection in %s', async language => {
+    const i18n = await translations(language), { api } = actionFixture();
+    api.executeAction.mockResolvedValue({ operationId: 'op-1', state: 'complete', items: [{ personId: 'person-1', state: 'cancelled', errorCode: 'ACTION_SCOPE_CHANGED' }] });
+    const dialog = await openAction(i18n, api);
+    fireEvent.click(await within(dialog).findByRole('button', { name: i18n.t('signingV2.action.reminder.confirm') }));
+    expect(await within(dialog).findByText(i18n.t('signingV2.actionCancelledReason.ACTION_SCOPE_CHANGED'))).toBeInTheDocument();
+    expect(within(dialog).queryByText(i18n.t('signingV2.delivery.provider_accepted'))).not.toBeInTheDocument();
+});
+
+
+test('a reminder counts distinct PDFs and sits with the ready participation instead of a future role', async () => {
+    const i18n = await translations('en'), { api, detail, preview } = actionFixture();
+    const ready = detail.participants[0];
+    const later = { ...ready, id: 'later-role', tasks: ready.tasks.map((task, index) => ({ ...task, id: `later-task-${index}`, state: 'blocked', stage: 2 })) };
+    detail.participants = [later, ready];
+    preview.tasks = [{ taskId: 'one', documentId: 'same-pdf', documentName: 'One PDF' }, { taskId: 'two', documentId: 'same-pdf', documentName: 'One PDF' }];
+    const dialog = await openAction(i18n, api);
+    expect(await within(dialog).findAllByText('One PDF')).toHaveLength(1);
+    expect(within(dialog).getByText(i18n.t('signingV2.action.tasks', { count: 1, formattedCount: '1' }))).toBeInTheDocument();
+    const row = screen.getAllByRole('listitem').find(item => within(item).queryByRole('button', { name: i18n.t('signingV2.action.reminder.open'), exact: true }));
+    expect(within(row).getByText(i18n.t('signingV2.task.ready'))).toBeInTheDocument();
 });

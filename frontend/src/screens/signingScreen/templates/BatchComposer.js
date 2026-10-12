@@ -1,7 +1,7 @@
+import SigningBackButton from './SigningBackButton';
 import React, { useRef, useState } from 'react';
 import api from '../../../api/signingTemplatesApi';
 import { downloadBlobAsFile } from '../../../utils/downloadBlobAsFile';
-import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
 import StatusNotice from '../../../components/ui/StatusNotice';
 import RecipientFields from './RecipientFields';
 
@@ -34,7 +34,7 @@ export default function BatchComposer({ template, onBack, onCreated }) {
     }
     const editRow = (index, patch) => setRows(prev => prev.map((row, i) => index === i ? { ...row, ...patch } : row));
     return <section className="lw-templates" dir="rtl">
-        <SecondaryButton onPress={onBack} disabled={busy}>חזרה לתבניות</SecondaryButton>
+        <SigningBackButton onPress={onBack} disabled={busy}>חזרה לתבניות</SigningBackButton>
         <header className="lw-templates__heading"><div><h1>שליחה מתבנית</h1><p>{template.name} · גרסה {template.version} · {definition.documents.length} מסמכים בכל חבילה</p></div></header>
         {error && <StatusNotice><p>{error}</p></StatusNotice>}
         <fieldset disabled={busy || locked} className="lw-templates__unboxed">

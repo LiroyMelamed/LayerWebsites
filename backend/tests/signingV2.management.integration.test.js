@@ -13,12 +13,28 @@ test('pending management groups sends, sums obligations and never exposes inacce
     const first = await createSubmission(pool, f.scope, f.input, options);
     const second = await createSubmission(pool, f.scope, { ...f.input, idempotencyKey: randomUUID(), name: 'Second send, same template' }, options);
     const packages = (await pool.query('SELECT * FROM signing_packages WHERE submission_id=$1 ORDER BY external_key', [first.submissionId])).rows;
+    await t.test('a direct run selection ignores other newer runs and still applies access before counts', async () => {
+        const selected = await listSubmissions(pool, f.scope, { state: 'all', submissionId: first.submissionId });
+        assert.equal(selected.total, 1); assert.equal(selected.rows[0].id, first.submissionId);
+        const hidden = await listSubmissions(pool, { ...f.scope, all: false, userId: -1 }, { state: 'all', submissionId: first.submissionId });
+        assert.equal(hidden.total, 0); assert.deepEqual(hidden.rows, []);
+        await assert.rejects(listSubmissions(pool, f.scope, { submissionId: 'invalid' }), { errorCode: 'INVALID_SUBMISSION' });
+    });
     await t.test('same-template sends are distinct and pagination is stable', async () => {
         const page1 = await listSubmissions(pool, f.scope, { state: 'all', limit: 1 });
         assert.equal(page1.total, 2); assert.equal(page1.rows.length, 1); assert.ok(page1.nextCursor);
         const page2 = await listSubmissions(pool, f.scope, { state: 'all', limit: 1, cursor: page1.nextCursor });
         assert.equal(page2.total, 2); assert.notEqual(page1.rows[0].id, page2.rows[0].id); assert.equal(page2.nextCursor, null);
         assert.deepEqual(new Set([page1.rows[0].id, page2.rows[0].id]), new Set([first.submissionId, second.submissionId]));
+    });
+    await t.test('flat bulk picker scopes before count, paginates across runs and exposes only send capability', async () => {
+        const one = await listPackages(pool, { ...f.scope, send: true }, null, { state: 'all', limit: 1 });
+        assert.equal(one.total, 4); assert.equal(one.capabilities.send, true); assert.ok(one.nextCursor);
+        const two = await listPackages(pool, f.scope, null, { state: 'all', limit: 1, cursor: one.nextCursor });
+        assert.notEqual(one.rows[0].id, two.rows[0].id); assert.equal(two.total, 4); assert.equal(two.capabilities.send, false);
+        const hidden = await listPackages(pool, { ...f.scope, all: false, userId: -1 }, null, { state: 'all' });
+        assert.equal(hidden.total, 0); assert.deepEqual(hidden.rows, []);
+        assert.equal((await listSubmissions(pool, { ...f.scope, send: true }, {})).capabilities.send, true);
     });
     await t.test('1/1 plus 1/9 is 2/10, not averaged percentages, and completion is not inferred from signatures alone', async () => {
         for (let index = 0; index < packages.length; index += 1) {

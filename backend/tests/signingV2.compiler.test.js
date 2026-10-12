@@ -150,3 +150,76 @@ test('a send can ask everyone to sign together or one role after another without
     assert.deepEqual(ordered.snapshot.stages.map(stage => stage.label), ['Lawyer', 'Employee']);
     assert.throws(() => compilePackage(published, { ...input, signingOrder: { mode: 'sequential', roles: ['employee'] } }, f.directory), error('INVALID_WORKFLOW'));
 });
+
+
+test('grouped signing order rejects missing, duplicate, foreign or empty stage members and never mutates input', () => {
+    const { normalizeSigningOrder } = require('../lib/signingV2/signingOrder');
+    const input = { mode: 'grouped', groups: [['buyer', 'seller'], ['lawyer']] };
+    const normalized = normalizeSigningOrder(input, ['buyer', 'seller', 'lawyer']);
+    assert.deepEqual(normalized, input); normalized.groups[0].pop(); assert.equal(input.groups[0].length, 2);
+    for (const groups of [null, [], [[]], [['buyer'], []], [['buyer','seller']], [['buyer','seller'], ['buyer','lawyer']],
+        [['buyer','seller'], ['foreign']], [['buyer','seller'], 'lawyer'], [['buyer','seller'], [null]]]) {
+        assert.throws(() => normalizeSigningOrder({mode:'grouped',groups}, ['buyer','seller','lawyer']), error('INVALID_WORKFLOW'));
+    }
+    assert.deepEqual(normalizeSigningOrder({ mode:'grouped', groups:[['buyer','lawyer']] }, ['buyer','lawyer']).groups, [['buyer','lawyer']]);
+});
+
+test('comparison conditions block unknown data; only presence explicitly accepts missing values', () => {
+    const { conditionMatches, validateDefinition } = require('../lib/signingV2/compiler');
+    for (const operator of ['equals', 'in']) {
+        const condition = { key: 'flag', operator, value: false, values: [false] };
+        for (const value of [undefined, null, '']) assert.throws(() => conditionMatches(condition, { flag: value }), { errorCode: 'DATA_REQUIRED' });
+        assert.equal(conditionMatches(condition, { flag: false }), true);
+        assert.equal(conditionMatches(condition, { flag: true }), false);
+    }
+    for (const value of [undefined, null, '']) assert.equal(conditionMatches({ key: 'flag', operator: 'present' }, { flag: value }), false);
+    assert.equal(conditionMatches({ key: 'flag', operator: 'present' }, { flag: false }), true);
+    const { compilerFixture } = require('./helpers/signingV2Fixture');
+    const definition = structuredClone(compilerFixture().definition);
+    definition.documents[0].when = { key: 'salary', operator: 'equals', value: null };
+    assert.throws(() => validateDefinition(definition), { errorCode: 'INVALID_CONDITION' });
+    definition.documents[0].when = { key: 'salary', operator: 'in', values: ['1.00', null] };
+    assert.throws(() => validateDefinition(definition), { errorCode: 'INVALID_CONDITION' });
+});
+
+test('nested rules use order-independent three-valued logic and exact decimal equality', () => {
+    const { conditionMatches } = require('../lib/signingV2/compiler');
+    const keys = new Map([['salary',{type:'decimal'}],['employeeId',{type:'identifier'}]]);
+    const missing = {key:'salary',operator:'equals',value:'1.00'};
+    const yes = {key:'employeeId',operator:'equals',value:'0001'};
+    const no = {...yes,value:'1'};
+    for (const children of [[missing,yes],[yes,missing]]) assert.equal(conditionMatches({operator:'any',conditions:children},{employeeId:'0001'},keys),true);
+    for (const children of [[missing,no],[no,missing]]) assert.equal(conditionMatches({operator:'all',conditions:children},{employeeId:'0001'},keys),false);
+    for (const condition of [{operator:'all',conditions:[missing,yes]},{operator:'any',conditions:[missing,no]}]) {
+        assert.throws(()=>conditionMatches(condition,{employeeId:'0001'},keys), error('DATA_REQUIRED'));
+    }
+    for (const [expected,actual] of [['1.000000','1'],['-0.000','0.00'],['9007199254740993.123456','9007199254740993.123456'],['-123456789123456789.120000','-123456789123456789.12']]) {
+        assert.equal(conditionMatches({...missing,value:expected},{salary:actual},keys),true);
+        assert.equal(conditionMatches({key:'salary',operator:'in',values:['3',expected]},{salary:actual},keys),true);
+    }
+    assert.equal(conditionMatches({...missing,value:'9007199254740993.123456'},{salary:'9007199254740993.123455'},keys),false);
+    assert.equal(conditionMatches(yes,{employeeId:'1'},keys),false);
+    const f = compilerFixture(), definition = clone(f.definition);
+    definition.documents[1].when = {operator:'all',conditions:[{operator:'any',conditions:[missing,yes]}, {key:'salary',operator:'present'}]};
+    const validated = validateDefinition(definition);
+    const compiled = compilePackage(validated,{...f.input,data:{employeeId:'0001',salary:'1.000000'}},f.directory);
+    assert.equal(compiled.snapshot.documents.length,3);
+    assert.equal(compiled.snapshot.data.salary,'1.000000');
+    assert.deepEqual(compiled.snapshot.documents[1].inclusionReason.rule,definition.documents[1].when);
+    assert.deepEqual(validated,definition);
+});
+
+test('recursive conditions reject empty/null groups, ambiguity, excessive depth and node budgets', () => {
+    const f = compilerFixture(), leaf = {key:'salary',operator:'equals',value:'1.0'};
+    const definition = clone(f.definition);
+    const invalid = [
+        {operator:'all',conditions:[]},{operator:'any',conditions:[null]},
+        {operator:'all',key:'salary',conditions:[leaf]}, {key:'salary',operator:'present',conditions:[]},
+        {operator:'any',conditions:Array(21).fill(leaf)},
+        {operator:'all',conditions:Array(3).fill({operator:'any',conditions:Array(20).fill(leaf)})},
+    ];
+    let deep=leaf;for(let i=0;i<5;i++)deep={operator:'all',conditions:[deep]};invalid.push(deep);
+    for(const condition of invalid) {definition.documents[0].when=condition;assert.throws(()=>validateDefinition(definition),error('INVALID_CONDITION'));}
+    definition.documents[0].when={operator:'all',conditions:[{operator:'any',conditions:[leaf,{key:'employeeId',operator:'present'}]}]};
+    assert.doesNotThrow(()=>validateDefinition(definition));
+});

@@ -17,7 +17,7 @@ function unwrap(res) {
 
 export const staffRolesApi = {
     getPermissionCatalog: async () => unwrap(await ApiUtils.get(`${BASE}/permission-catalog`)),
-    getSessionScope: async () => unwrap(await ApiUtils.get(`${BASE}/session-scope`)),
+    getSessionScope: async () => unwrap(await ApiUtils.get(`${BASE}/session-scope`, { timeout: 15000 })),
     listRoles: async () => unwrap(await ApiUtils.get(`${BASE}/roles`)),
     createRole: async (payload) => unwrap(await ApiUtils.post(`${BASE}/roles`, payload)),
     updateRole: async (roleId, payload) => unwrap(await ApiUtils.patch(`${BASE}/roles/${roleId}`, payload)),

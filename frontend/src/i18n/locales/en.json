@@ -74,11 +74,12 @@
     "required": "Required",
     "errorPrefix": "Error: ",
     "networkError": "Network connection error — could not reach the server",
-    "timeout": "Request timed out — please try again"
+    "timeout": "Request timed out — please try again",
+    "permissionsUnavailable": "We could not check your permissions. Please try again."
   },
   "signingManager": {
     "searchTitle": "Search document / customer / case",
-    "templatesAndBulk": "Templates and bulk sending",
+    "templatesAndBulk": "Signing templates",
     "dateFrom": "From date",
     "dateTo": "To date",
     "tabs": {
@@ -182,7 +183,7 @@
       "evidencePackageDownloadError": "Error downloading evidence package",
       "deleteError": "Error deleting the document"
     },
-    "signingRuns": "Signing runs"
+    "signingRuns": "Manage sends"
   },
   "evidenceDocuments": {
     "pageTitle": "Evidence documents",
@@ -863,6 +864,7 @@
       "clientStampShort": "C.Stamp"
     },
     "fieldSettings": {
+      "resize": "Resize field",
       "addFieldTitle": "Add field",
       "title": "Field settings",
       "type": "Field type",
@@ -1052,7 +1054,9 @@
       "chooseFile": "Choose File",
       "signOnStampHint": "You can sign on the stamp (optional)",
       "changeStamp": "Change stamp",
-      "nextStep": "Continue"
+      "nextStep": "Continue",
+      "personalStampUploadHint": "Upload a PNG, JPEG or single-page PDF stamp, then sign on it.",
+      "personalStampOnePage": "Upload a stamp PDF containing exactly one page."
     },
     "screen": {
       "tabPending": "Pending for signature ({{count}})",
@@ -1124,7 +1128,11 @@
         "duplicateSignerContact": "This email or phone is already used by another signer on this document. Each signer needs a unique email/phone.",
         "manualSignerPhoneRequired": "To save a signer as a new client, enter a unique phone number.",
         "manualSignerCreateFailed": "Could not create a new client. Check that the phone number is not already in the system."
-      }
+      },
+      "signingOrderLabel": "Signing order",
+      "signingOrderParallel": "Everyone can sign at the same time",
+      "signingOrderSequential": "Signers take turns in the order below",
+      "sequentialOrderTitle": "Signer order (drag or use the arrows to reorder):"
     }
   },
   "verifyEvidence": {
@@ -1396,11 +1404,22 @@
       "evidenceDocuments": {
         "view": "View",
         "download": "Download"
+      },
+      "signing": {
+        "authority_manage": "Approve and revoke signing authority",
+        "package_approve": "Approve signing packages",
+        "delivery_contact_correct": "Correct package delivery contact",
+        "access_link_renew": "Renew signing links",
+        "package_cancel": "Cancel signing packages",
+        "package_assign": "Assign package responsibility",
+        "package_remind": "Send signing reminders",
+        "delivery_resend": "Resend signing requests",
+        "package_revision_create": "Prepare a replacement revision"
       }
     }
   },
   "signingV2": {
-    "title": "Pending signatures",
+    "title": "Manage sends",
     "subtitle": "Track the packages, signers and delivery for each send.",
     "newPackage": "New package",
     "backToDocuments": "Back to documents",
@@ -1453,7 +1472,7 @@
     },
     "capacity": {
       "personal": "Personal capacity",
-      "representative": "On behalf of the company",
+      "representative": "For another person or organization",
       "professional": "Professional capacity"
     },
     "channel": {
@@ -1470,7 +1489,8 @@
       "complete": "Completed",
       "cancelled": "Cancelled",
       "superseded": "Replaced by a new revision",
-      "expired": "Signing deadline passed"
+      "expired": "Signing deadline passed",
+      "replacement_pending": "Stopped for replacement"
     },
     "task": {
       "blocked": "Not available to sign yet",
@@ -1480,7 +1500,8 @@
       "expired": "Signing deadline passed",
       "cancelled": "Cancelled",
       "preparing": "Waiting for document preparation",
-      "previousStage": "Waiting for the previous stage"
+      "previousStage": "Waiting for the previous stage",
+      "clarification": "Awaiting clarification"
     },
     "document": {
       "pending": "Waiting for preparation",
@@ -1519,7 +1540,7 @@
       "IDEMPOTENCY_CONFLICT": "This request was saved with different details. Check its status before creating another request.",
       "TEXT_OVERFLOW": "The text does not fit. Enlarge the field or revise its content.",
       "CAPACITY_BUDGET_EXCEEDED": "This batch exceeds a count or size limit. Review the documents before continuing.",
-      "AUTHORITY_EXPIRED": "Authority to represent the company is no longer valid. Update the evidence and approval.",
+      "AUTHORITY_EXPIRED": "Authority is unapproved, expired or revoked.",
       "DISTINCT_PEOPLE_REQUIRED": "Choose two different people as authorized signers.",
       "SOURCE_CHANGED": "The source file changed. Select it and review the template again.",
       "INVALID_FILTER": "This filter is invalid. Select it again.",
@@ -1533,20 +1554,66 @@
       "PREVIOUS_OUTCOME_UNCERTAIN": "We do not know whether the previous message went out. Check delivery before sending another.",
       "MESSAGE_ALREADY_QUEUED": "A message to this signer is already waiting to go out. Track it in the Delivery tab.",
       "COOLDOWN_ACTIVE": "A message was just sent to this signer. Wait a little before sending another.",
-      "INVALID_ACTION": "This request is invalid. Refresh and try again."
+      "INVALID_ACTION": "This request is invalid. Refresh and try again.",
+      "TEMPLATE_ARCHIVED": "This template is archived. Restore it before a new send.",
+      "TEMPLATE_SOURCE_ARCHIVED": "The source template is archived. Its imported version cannot be restored.",
+      "COMPLETED_COPY_NOT_READY": "The copy is not ready. Signatures and final document preparation must finish first.",
+      "COMPLETED_COPY_CHANGED": "The prepared documents changed. Reopen the send details and review the copy before sending.",
+      "INVALID_TASK_ISSUE": "This action is unavailable. Refresh the document and try again.",
+      "ISSUE_NOTE_REQUIRED": "Enter an explanation of up to 2,000 characters.",
+      "ISSUE_ALREADY_RESOLVED": "This request has already been handled. Refresh the page.",
+      "TASK_STAGE_PASSED": "This signing stage is closed. Document changes require a new revision.",
+      "TASK_REQUIRES_ATTENTION": "Signing is waiting for a refusal or clarification request to be handled.",
+      "SELECTION_EXPIRED": "The selection expired. Review these packages again before sending.",
+      "SELECTION_ACCESS_CHANGED": "Your access changed. Clear the selection and reload your authorized packages.",
+      "EMPTY_SELECTION": "No authorized packages match this selection.",
+      "SELECTION_TOO_LARGE": "Select up to 1,000 packages at a time.",
+      "INVALID_SELECTION": "The selection could not be read. Select the packages again.",
+      "AUTHORITY_REQUIRED": "A saved signer, represented party and approved authority are required.",
+      "AUTHORITY_SCOPE_MISMATCH": "Authority does not cover this role.",
+      "PERSON_CHANGED": "Saved person details changed. Select them again and review the send.",
+      "IDENTITY_ALREADY_EXISTS": "This identity already exists. Select the existing person; no automatic merge occurred.",
+      "IDENTITY_ALREADY_VERIFIED": "A verified identity cannot be changed to another person.",
+      "IDENTITY_VERIFICATION_REQUIRED": "Review both representatives’ identities before sending.",
+      "INVALID_CAPACITY": "The represented party does not match this signing capacity.",
+      "CONTACT_UNCHANGED": "The contact details have not changed.",
+      "INVALID_DELIVERY": "Check that the email and phone number are valid.",
+      "CHANNEL_REQUIRED": "Choose a channel for the new link.",
+      "SIGNING_ALREADY_COMPLETE": "All signatures are already complete. This request cannot be cancelled.",
+      "ASSIGNMENT_UNCHANGED": "The handling team has not changed.",
+      "ASSIGNEE_UNAVAILABLE": "A selected staff member is no longer available. Reload the list.",
+      "APPROVER_REQUIRED": "Choose an internal reviewer.",
+      "APPROVER_UNAVAILABLE": "The selected reviewer is unavailable or no longer authorized.",
+      "SEPARATE_APPROVER_REQUIRED": "Choose someone else to approve this work.",
+      "SOLO_PROFILE_ADMIN_REQUIRED": "Only the office administrator can enable self-approval.",
+      "PDF_REVIEW_REQUIRED": "Review every document and explicitly approve the wording.",
+      "APPROVAL_NOT_READY": "This package is not ready for approval yet.",
+      "APPROVAL_NOT_REQUIRED": "This template does not require internal approval.",
+      "REPLACEMENT_UNAVAILABLE": "This replacement cannot be opened. Refresh the package and try again.",
+      "REPLACEMENT_CHANGED": "The package or its replacement changed. Refresh and review it again.",
+      "REPLACEMENT_REASON_REQUIRED": "Enter a reason for this replacement.",
+      "REPLACEMENT_NOT_STARTED": "Start a replacement draft before publishing it.",
+      "REPLACEMENT_DRAFT_REQUIRED": "Start a replacement draft before publishing it.",
+      "COMPLETION_MARK_AUTHORIZATION_REQUIRED": "I am authorized to use this image and approve its automatic placement in future sends from this template, after signing is complete."
+    },
+    "actionCancelledReason": {
+      "ACTION_SCOPE_CHANGED": "The signing tasks changed while this message was waiting. Review the current selection before sending again.",
+      "SENDER_ACCESS_CHANGED": "Your permission to send or access this package changed. No message was sent.",
+      "ACTION_REVIEW_REQUIRED": "This request needs a new review before sending. No message was sent.",
+      "other": "The request is no longer valid. No message was sent; refresh the package before trying again."
     },
     "action": {
       "reminder": {
         "open": "Send reminder",
         "title": "Send a reminder to this signer",
         "confirm": "Send reminder",
-        "effect": "Only this signer receives the reminder, with the same signing link. Signatures already accepted do not change."
+        "effect": "Only this signer will receive a reminder linking to the selected documents. Accepted signatures stay unchanged."
       },
       "resend": {
         "open": "Send again",
         "title": "Send the signing request again",
         "confirm": "Send again",
-        "effect": "Only this signer receives the invitation again. No new package is created and accepted signatures do not change."
+        "effect": "Only this signer will receive another invitation linking to the selected documents. Accepted signatures stay unchanged."
       },
       "recipient": "Recipient",
       "package": "Package",
@@ -1560,7 +1627,22 @@
       "queuedHelp": "The status updates here when the provider confirms receipt. You can close this window; sending continues in the background.",
       "failedHelp": "The provider rejected the message. Check the contact details before trying again.",
       "tasks_one": "1 document waiting for their signature",
-      "tasks_other": "{{formattedCount}} documents waiting for their signature"
+      "tasks_other": "{{formattedCount}} documents waiting for their signature",
+      "completed_copy": {
+        "title": "Send completed copy",
+        "open": "Send completed copy",
+        "confirm": "Send copy",
+        "effect": "A personal link to the final documents listed here will be sent. No new signature will be requested."
+      },
+      "finalDocuments": "{{formattedCount}} final documents",
+      "finalDocuments_one": "1 final document",
+      "finalDocuments_other": "{{formattedCount}} final documents",
+      "renew_link": {
+        "open": "Renew link",
+        "title": "Renew signing link",
+        "confirm": "Renew and send link",
+        "effect": "The previous link and verification for this package will close. A new link covers only the currently available documents listed here. Fresh consent and verification are required; the deadline stays unchanged."
+      }
     },
     "reasons": {
       "REVISION_INACTIVE": "This package is not active, so there is nobody to ask for a signature.",
@@ -1571,11 +1653,19 @@
       "LINK_UNAVAILABLE": "This signer has no valid signing link. The link needs to be renewed.",
       "PREVIOUS_OUTCOME_UNCERTAIN": "We do not know whether the previous message went out. Check delivery before sending another.",
       "MESSAGE_ALREADY_QUEUED": "A message to this signer is already waiting to go out. Track it in the Delivery tab.",
-      "COOLDOWN_ACTIVE": "A message was just sent to this signer. You can send again from {{time}}."
+      "COOLDOWN_ACTIVE": "A message was just sent to this signer. You can send again from {{time}}.",
+      "COMPLETED_COPY_NOT_READY": "The copy is not ready. Signatures and final document preparation must finish first.",
+      "COMPLETED_COPY_CHANGED": "The prepared documents changed. Reopen the send details and review the copy before sending.",
+      "TASK_REQUIRES_ATTENTION": "Signing is waiting for a refusal or clarification request to be handled.",
+      "ACCESS_CHANGED": "You no longer have access to this package.",
+      "REVISION_CHANGED": "The package was replaced or revised. Review it again.",
+      "CONTACT_CHANGED": "The contact details changed. Review the new destination.",
+      "ACTION_SCOPE_CHANGED": "The ready signing tasks changed. Review the package again.",
+      "CHANNEL_REQUIRED": "Choose a channel for the new link."
     },
     "compose": {
       "title": "New signing run",
-      "subtitle": "Choose a template, add recipients by hand or from an Excel file, check, and approve. Each row becomes its own package.",
+      "subtitle": "Complete the signers, review who signs each document, and confirm the send.",
       "back": "Back to signing runs",
       "stepsLabel": "Creation steps",
       "steps": {
@@ -1604,7 +1694,13 @@
         "legacyHeading": "Existing templates",
         "legacyHelp": "Converting creates a copy for bulk sending. The original template does not change, and its documents and fields stay exactly as they are.",
         "convert": "Convert and choose",
-        "converting": "Converting…"
+        "converting": "Converting…",
+        "opening": "Preparing your selected template…",
+        "openFailed": "The template could not be opened. You can retry without creating another send.",
+        "chooseAnother": "Choose another template",
+        "replaceTitle": "Replace this template?",
+        "replaceBody": "Replacing the template clears the signers entered for this send. Cancel to keep them.",
+        "replaceConfirm": "Replace template and clear signers"
       },
       "details": "Run details",
       "runName": "Run name",
@@ -1621,11 +1717,17 @@
       },
       "order": {
         "up": "Move {{name}} earlier",
-        "down": "Move {{name}} later"
+        "down": "Move {{name}} later",
+        "grouped": "Sign in stages — several signers together in each stage",
+        "groupHelp": "Signers in the same stage can sign in parallel. The next stage opens only when everyone in the previous stage has finished. A person returning later needs fresh consent and verification.",
+        "stageFor": "Signing stage for {{name}}",
+        "stage": "Stage {{number}}",
+        "newStage": "New stage at the end"
       },
       "shared": {
         "heading": "Shared signer",
-        "help": "Choose one person to sign in every package: a client, representative, lawyer or anyone else."
+        "help": "Choose one person to sign in every package: a client, representative, lawyer or anyone else.",
+        "conditionalHelp": "Enter this person once. They participate only in packages where the template rules require their role; the review before sending shows the included package count."
       },
       "rows": {
         "heading": "Recipients",
@@ -1650,7 +1752,8 @@
       },
       "directoryHelp": {
         "client": "Pick a client from the list, or type a name, email and phone that are not in the system.",
-        "lawyer": "Pick a lawyer from the office, or type the details manually."
+        "lawyer": "Pick a lawyer from the office, or type the details manually.",
+        "all": "Choose an existing manager, lawyer or client, or enter a new signer’s name and contact details."
       },
       "channel": {
         "auto": "Automatic",
@@ -1665,9 +1768,9 @@
         "en": "English"
       },
       "excel": {
-        "stepDownload": "Download a sample file that matches this template.",
+        "stepDownload": "Use an existing recipient file, or download a sample.",
         "download": "Download sample file",
-        "stepFill": "Fill in one row per recipient, up to {{max}} rows. Do not change the column headings.",
+        "stepFill": "Up to {{max}} packages. Each row includes all signers for that package; shared signers are entered once above.",
         "upload": "Upload the completed file",
         "reading": "Reading the file…",
         "imported_one": "1 row was loaded from the file and replaced the previous list.",
@@ -1698,8 +1801,11 @@
         "confirm_one": "Create 1 package",
         "confirm_other": "Create {{formattedCount}} packages",
         "creating": "Creating…",
-        "sharedInvitations_one": "{{name}} will receive an invitation for 1 package.",
-        "sharedInvitations_other": "{{name}} will receive one invitation covering all {{formattedCount}} packages and can sign them together."
+        "sharedInvitations_one": "{{name}} will receive one link for this package. Only documents that are ready for this signer can be signed together.",
+        "sharedInvitations_other": "{{name}} will receive one link for all {{formattedCount}} packages. Only documents whose signing turn has arrived can be signed together.",
+        "inclusion": "Included in {{included}} of {{total}} packages; excluded from {{excluded}} by template rules",
+        "excluded": "Documents excluded by template rules: {{names}}",
+        "conditionalRoles": "Signers included by template rules"
       },
       "done": {
         "heading": "The run was created",
@@ -1724,8 +1830,34 @@
         "UNSUPPORTED_CELL": "The row contains a formula or a non-text cell. Enter plain values only",
         "INVALID_ROW": "The documents for this row could not be prepared",
         "TEXT_OVERFLOW": "The text is longer than the space in the document",
-        "DISTINCT_PEOPLE_REQUIRED": "The same person cannot fill two roles that need different signers",
-        "CAPACITY_BUDGET_EXCEEDED": "This run is too large. The limit is 200 rows"
+        "DISTINCT_PEOPLE_REQUIRED": "Choose different people for the different positions in this role.",
+        "CAPACITY_BUDGET_EXCEEDED": "This run is too large. The limit is 200 rows",
+        "RECIPIENT_LINK_CYCLE": "These roles refer back to each other. Enter person details for one of them.",
+        "RECIPIENT_LINK_UNAVAILABLE": "The linked role is unavailable. Choose the person again.",
+        "DATA_REQUIRED": "Enter the required detail.",
+        "INVALID_DATA": "This value does not match the field type.",
+        "UNKNOWN_DATA_KEY": "The file contains a detail that is not defined in this template.",
+        "AMBIGUOUS_DATE": "Enter a full date as YYYY-MM-DD.",
+        "INVALID_PROVENANCE": "The data source is invalid.",
+        "UNSAFE_DATA_CELL": "Store this value as a text cell to avoid changing its number or date.",
+        "ROLE_CARDINALITY": "The number of people does not match the positions defined in the template.",
+        "DELIVERY_PROFILE_CONFLICT": "The same person has different delivery settings in different roles. Make them consistent before sending.",
+        "INVALID_PERSON": "The selected person is not valid.",
+        "AUTHORITY_REQUIRED": "A saved signer, represented party and approved authority are required.",
+        "AUTHORITY_EXPIRED": "Authority is unapproved, expired or revoked.",
+        "AUTHORITY_SCOPE_MISMATCH": "Authority does not cover this role.",
+        "PERSON_CHANGED": "Saved person details changed. Select them again and review the send.",
+        "IDENTITY_ALREADY_EXISTS": "This identity already exists. Select the existing person; no automatic merge occurred.",
+        "IDENTITY_ALREADY_VERIFIED": "A verified identity cannot be changed to another person.",
+        "IDENTITY_VERIFICATION_REQUIRED": "Review both representatives’ identities before sending.",
+        "INVALID_CAPACITY": "The represented party does not match this signing capacity.",
+        "APPROVER_REQUIRED": "Choose an internal reviewer.",
+        "APPROVER_UNAVAILABLE": "The selected reviewer is unavailable or no longer authorized.",
+        "SEPARATE_APPROVER_REQUIRED": "Choose someone else to approve this work.",
+        "SOLO_PROFILE_ADMIN_REQUIRED": "Only the office administrator can enable self-approval.",
+        "PDF_REVIEW_REQUIRED": "Review every document and explicitly approve the wording.",
+        "APPROVAL_NOT_READY": "This package is not ready for approval yet.",
+        "APPROVAL_NOT_REQUIRED": "This template does not require internal approval."
       },
       "errors": {
         "INVALID_WORKBOOK": "This file is not a valid Excel workbook",
@@ -1738,8 +1870,106 @@
         "INVALID_ROWS": "Some rows have errors. Check them again",
         "INVALID_SUBMISSION": "The run details are not valid",
         "PARTICIPANT_NOT_AVAILABLE": "One of the signers is not available in this office",
-        "INVALID_SOURCE": "One of the template documents is not available. Check the template"
-      }
+        "INVALID_SOURCE": "One of the template documents is not available. Check the template",
+        "SELECTED_TEMPLATE_CHANGED": "The template has changed since you selected it. Choose the updated version and review its documents and signers before sending.",
+        "SELECTED_TEMPLATE_UNAVAILABLE": "This template is unavailable or you do not have access. Choose another template or contact your office administrator.",
+        "NOT_FOUND": "This template is unavailable or you do not have access. Choose another template or contact your office administrator.",
+        "INVALID_RECIPIENT_LAYOUT": "The role assignments do not match the template. Review the signers for this send.",
+        "INVALID_COLUMN_MAPPING": "Map each column to one field only. Check for duplicate columns.",
+        "INCOMPLETE_COLUMN_MAPPING": "Map a name and an email or phone for every role that varies by package.",
+        "WORKBOOK_TOO_COMPLEX": "This file is too complex. Use up to 10 sheets, 128 columns and 5,000 rows per sheet, with at most 200 packages per import.",
+        "INVALID_CASE": "The selected case is invalid. Please choose it again.",
+        "INVALID_CLIENT": "This client cannot be linked. Choose an existing, available client.",
+        "ROLE_CARDINALITY": "The number of people does not match the positions defined in the template.",
+        "DISTINCT_PEOPLE_REQUIRED": "Choose different people for the different positions in this role.",
+        "DELIVERY_PROFILE_CONFLICT": "The same person has different delivery settings in different roles. Make them consistent before sending.",
+        "INVALID_PERSON": "The selected person is not valid."
+      },
+      "audience": {
+        "label": "Who fills {{name}}",
+        "each": "Different person per package",
+        "shared": "Same person in every package",
+        "help": "This choice applies to this send only. Changing it preserves previous entries but never copies a person into other packages automatically."
+      },
+      "mapping": {
+        "heading": "Who is in each column?",
+        "help": "Each row creates a separate package. Match columns to roles using their headings and samples. People in the same package must be in columns on the same row.",
+        "required": "required",
+        "skip": "Not mapped",
+        "noHeader": "No heading",
+        "noSample": "No sample in the first rows",
+        "sheet": "Worksheet",
+        "contactRequired": "Map a name and at least an email or phone for every role. Column headings must be in the first row.",
+        "preview": "Review mapping",
+        "previewTitle": "{{formattedCount}} packages read from the file",
+        "previewHelp": "These are the first five rows at most. Check each person and contact under the correct role. All data will be validated before sending.",
+        "replaceWarning": "Confirming this import replaces your current recipient list. Shared signers are kept.",
+        "edit": "Edit mapping",
+        "replace": "Replace recipients with file data",
+        "apply": "Use these recipients",
+        "conditionalRole": "This signer is needed only for packages matching the template rules. If their columns are absent, you can import the file and complete their details before confirming the send."
+      },
+      "context": {
+        "label": "Case for this send (optional)",
+        "selected": "Linked case:",
+        "remove": "Remove case link",
+        "help": "The case link applies to every package in this send. Choose people from the case below; choosing a person does not establish signing authority or change their client record.",
+        "without": "Continue without a case",
+        "fill": "Fill from case contacts",
+        "choose": "Choose a person for this role",
+        "noContact": "Contact details missing",
+        "open": "Send documents for signing",
+        "back": "Back to case"
+      },
+      "identity": {
+        "label": "Who fills this role?",
+        "separate": "Separate person — enter details",
+        "sameAs": "Same person as: {{role}}",
+        "unavailable": "Linked role is no longer available — choose again",
+        "linkedHelp": "Uses the person details from the selected role. Roles and signing order stay separate; a later signing stage requires fresh consent and verification."
+      },
+      "draft": {
+        "loading": "Loading your saved draft…",
+        "loadError": "The draft could not be opened. No details were replaced and no additional send was created.",
+        "startNew": "Start a new send",
+        "idle": "Your draft will save automatically",
+        "pending": "Changes not yet saved",
+        "saving": "Saving draft…",
+        "saved": "Draft saved",
+        "error": "Draft not saved",
+        "saveError": "Saving failed. You can keep editing here and retry before leaving.",
+        "changed": "This draft changed or was submitted in another tab. The server version will not be overwritten. Reloading replaces the edits on this screen.",
+        "restoreServer": "Replace these edits with the server version",
+        "recent": "Saved drafts",
+        "resume": "Resume draft",
+        "choose": "Choose a draft by its save time",
+        "submitted": "Send already created",
+        "listError": "Could not load your saved drafts.",
+        "contextChanged": "This draft belongs to a different client or case. Start a new send here; the previous draft will remain in your saved drafts."
+      },
+      "data": {
+        "heading": "Details to fill in the documents",
+        "help": "These values appear in this package’s documents. Entering them here does not change the client record.",
+        "choose": "Choose",
+        "yes": "Yes",
+        "no": "No",
+        "decimalHelp": "Enter an exact amount with a decimal point and no thousands separators.",
+        "excelHelp": "Store identifiers and amounts as text cells. Use YYYY-MM-DD for dates, and true or false for yes/no values.",
+        "rowsHelp": "Each row creates a separate package with its own details, even when all signers are shared."
+      },
+      "clientContext": {
+        "back": "Back to client",
+        "send": "Send for signature",
+        "sendNamed": "Send for signature for {{name}}",
+        "selected": "Linked client:",
+        "loading": "Loading client details…",
+        "help": "Every package in this send will be linked to this client. Choose the person for each signing role explicitly; linking a client does not authorize anyone to sign on their behalf.",
+        "remove": "Remove client link",
+        "without": "Continue without a client link",
+        "fill": "Fill details from the client or case"
+      },
+      "replaceRecipient": "Change signer",
+      "searchRecipients": "Find a signer by name, email or phone"
     },
     "public": {
       "title": "Sign documents",
@@ -1865,8 +2095,14 @@
       "group": {
         "signAll": "Sign all documents",
         "document": "Documents to sign ({{count}})",
-        "consent": "I have read the selected documents and agree to apply my signature to all {{count}} documents. Submission is completed only after all required fields are filled.",
-        "changeScope": "Switch to signing all documents? Unsubmitted values will be cleared and the new signing scope requires your consent."
+        "consent": "I have read the selected documents and agree to apply my signature to all {{documentCount}} documents. Submission is completed only after all required fields are filled.",
+        "changeScope": "Switch to signing all documents? Unsubmitted values will be cleared and the new signing scope requires your consent.",
+        "signBatch": "Sign {{documentCount}} of {{total}} ready documents",
+        "signSelected": "Sign the {{documentCount}} selected documents",
+        "continueRemaining": "Continue to {{documentCount}} remaining documents",
+        "continueRemaining_one": "Continue to the remaining document",
+        "completedPart": "You signed {{signed}} documents. {{remaining}} documents still need a separate signature.",
+        "completedPart_one": "You signed {{signed}} documents. One document still needs a separate signature."
       }
     },
     "builder": {
@@ -1931,7 +2167,7 @@
       "completionMode": "Office completion notification",
       "completionDocument": "For each completed document",
       "completionPackage": "When the package is complete",
-      "fields": "Fields: {{count}}",
+      "fields": "Fields: {{formattedCount}}",
       "missingFields": "Assign at least one field to each signer before saving.",
       "types": {
         "signature": "Signature",
@@ -1941,6 +2177,415 @@
         "number": "Number",
         "checkbox": "Checkbox"
       }
+    },
+    "showAllRuns": "Show all runs",
+    "workspace": {
+      "title": "Signing templates",
+      "subtitle": "Reusable documents with defined fields and signer roles.",
+      "backToTemplates": "Back to templates",
+      "batchSubtitle": "Packages, invitations and signing progress",
+      "previousBatches": "Previous sends",
+      "backToRuns": "Back to send management",
+      "loading": "Loading…",
+      "officeTemplates": "Office templates",
+      "newTemplate": "New template",
+      "emptyTitle": "Prepare once, send again",
+      "emptyBody": "Add your office documents and define where each role signs.",
+      "documents_zero": "No documents",
+      "documents_one": "1 document",
+      "documents_other": "{{formattedCount}} documents",
+      "recipients_zero": "No recipients",
+      "recipients_one": "1 recipient",
+      "recipients_other": "{{formattedCount}} recipients",
+      "version": "Version {{version}}",
+      "templateVersion": "Template version {{version}}",
+      "sendFromTemplate": "Send from template",
+      "edit": "Edit",
+      "archive": "Archive",
+      "archiveConfirm": "Archive “{{name}}”? Existing packages will remain unchanged.",
+      "batches": "Bulk sends",
+      "batchDetails": "Send details",
+      "emptyBatches": "Sends created from templates will appear here for tracking.",
+      "sendInvitations": "Send invitations to recipients",
+      "invitations": "Invitations",
+      "uncertainHelp": "The message may have arrived. An invitation will not be sent again automatically.",
+      "signingLink": "Signing link",
+      "linkForRecipient": "Link to share with the recipient",
+      "copyLink": "Copy link",
+      "copyFailed": "Select the link and copy it manually.",
+      "packageDocuments": "Package documents",
+      "fieldsCompleted": "{{signed}} of {{required}} fields completed",
+      "downloadEvidence": "Download {{name}} and evidence",
+      "packageNumber": "Package {{index}}",
+      "completedPackages": "Completed package delivery",
+      "completionHelp": "The completion message links to the signed documents and evidence certificates together. A package is delivered after all its documents have been signed.",
+      "completionSent": "Completion message sent",
+      "completionUnconfirmed": "Delivery not confirmed",
+      "checkCompletion": "Check completion and deliver ready packages",
+      "unknownStatus": "Status unavailable",
+      "channel": {
+        "email": "Email",
+        "sms": "SMS",
+        "both": "Email and SMS"
+      },
+      "status": {
+        "draft": "Draft — not yet published to recipients",
+        "ready": "Published — awaiting signatures",
+        "sending": "Sending",
+        "sent": "Invitations sent",
+        "partial": "Delivery needs review",
+        "pending": "Pending",
+        "uncertain": "Delivery not confirmed",
+        "signed": "Signed",
+        "rejected": "Rejected",
+        "cancelled": "Cancelled"
+      }
+    },
+    "authoring": {
+      "dataTitleNamed": "Information before sending: {{name}}",
+      "dataTitle": "Information to fill in the documents",
+      "dataHelp": "Define the information that changes between packages once. Enter values when sending and place them on the PDF in the documents step.",
+      "newData": "New data field",
+      "label": "Field name",
+      "type": "Information type",
+      "options": "Choices — one per line",
+      "required": "Required before sending",
+      "removeData": "Remove data field",
+      "addData": "Add data field",
+      "dataField": "Information filled before sending",
+      "fontSize": "Text size",
+      "overflow": "Text that does not fit stops preparation for correction. It will not be clipped or move signatures.",
+      "saveDraft": "Save draft",
+      "publish": "Publish template",
+      "saved": "Template draft saved. You can return to it from the templates list.",
+      "library": "Templates and drafts",
+      "draft": "Private draft",
+      "types": {
+        "text": "Text",
+        "identifier": "Identifier — keeps leading zeros",
+        "decimal": "Exact amount or decimal number",
+        "date": "Date",
+        "boolean": "Yes or no",
+        "enum": "Choice list"
+      },
+      "activeTemplates": "Active templates",
+      "archivedTemplates": "Archive",
+      "emptyArchive": "No archived templates.",
+      "archiveHelp": "Archiving prevents new sends. Packages already created continue as usual.",
+      "archiveConfirm": "Archive “{{name}}”? New sends will be unavailable until it is restored. Existing drafts and packages will be preserved.",
+      "restore": "Restore",
+      "restoreConfirm": "Restore “{{name}}” to active templates?",
+      "sourceArchived": "The source template is archived. Its imported version cannot be used for new sends.",
+      "defaultTitle": "Default value (optional)",
+      "defaultHelp": "Prefill this value when preparing a package. It can be changed for each recipient; the value used is saved with the package.",
+      "useDefault": "Use a default value",
+      "defaultValue": "Default value",
+      "unavailableValue": "{{value}} (no longer a choice)",
+      "conditionReference": "This field is used by a condition. Remove that condition before changing its type or deleting the field.",
+      "condition": {
+        "title": "When to include this document",
+        "help": "Always include it, or include it only when the package data matches a rule. The source PDF is not changed. Every selected signer must still have a document to sign.",
+        "field": "Based on field",
+        "always": "Always include",
+        "missing": "Unavailable field — choose another",
+        "operator": "Include when",
+        "present": "A value is provided",
+        "equals": "Equals",
+        "in": "Matches any of these values",
+        "value": "Comparison value",
+        "numberedValue": "Comparison value {{number}}",
+        "add": "Add a value",
+        "remove": "Remove",
+        "removeValue": "Remove comparison value {{number}}",
+        "review": "Conditional on {{field}}",
+        "combine": "Match these rules",
+        "all": "All rules must match",
+        "any": "At least one rule must match",
+        "rule": "Rule {{number}}",
+        "addRule": "Add a rule",
+        "addGroup": "Add a group of rules",
+        "removeRule": "Remove this rule",
+        "clear": "Remove all rules — always include",
+        "and": "and",
+        "or": "or",
+        "summaryPresent": "{{field}} has a value",
+        "summaryEquals": "{{field}} equals {{value}}",
+        "summaryIn": "{{field}} is one of: {{value}}",
+        "true": "Yes",
+        "false": "No",
+        "roleTitle": "When this signer is required",
+        "roleHelp": "Choose when this signing role participates. For every affected PDF field, explicitly choose what happens when the signer is not included.",
+        "inactive": "When this signer is not included",
+        "chooseTreatment": "Choose how to handle this field",
+        "exclude_document": "Do not include this PDF",
+        "authored_inactive": "The source already marks this field as not applicable"
+      },
+      "documentSettings": "Document details",
+      "canvasHint": "Choose a role above, press + and choose a field. Drag the field to its place in the document."
+    },
+    "completedCopy": {
+      "title": "Completed documents",
+      "help": "These completed documents are available for you to download. No further signature is needed.",
+      "receipt": "Download my signing receipt",
+      "finish": "Finish",
+      "unavailable": "This copy link is no longer available. Contact the office for a new link.",
+      "lastCopy": "Last completed copy"
+    },
+    "issue": {
+      "clarifyButton": "Ask for clarification",
+      "declineTitle": "Decline this document",
+      "clarifyTitle": "Ask the office for clarification",
+      "resolveTitle": "Respond and reopen signing",
+      "declineHelp": "This refusal applies only to this document. Existing signatures are preserved. The office will see your request; a stage depending on this signature will wait for a response.",
+      "clarifyHelp": "Explain what needs clarification in this document. Signing it will pause for the office to respond. You can still sign other documents that are ready for you.",
+      "resolveHelp": "Add a response for the signer. This reopens the same unchanged document and requires fresh consent and a new verification code. Changes to content or signers require a new revision.",
+      "reason": "What needs clarification?",
+      "optionalReason": "Reason for declining (optional)",
+      "resolution": "Office response",
+      "declineConfirm": "Confirm refusal",
+      "clarifyConfirm": "Send request to the office",
+      "resolveConfirm": "Save response and reopen signing",
+      "declinedStatus": "Your refusal was sent to the office",
+      "clarificationStatus": "Your clarification request was sent to the office",
+      "pausedHelp": "Signing this document is paused for the office to respond. Existing signatures are preserved.",
+      "officePaused": "This needs attention before signing can continue. A signed document cannot be changed."
+    },
+    "bulkshortlabels": {
+      "reminder": "Reminder",
+      "resend": "Resend",
+      "completed_copy": "Signed copy",
+      "policy": "Current",
+      "email": "Email",
+      "sms": "SMS"
+    },
+    "bulk": {
+      "title": "Bulk actions",
+      "back": "Back to signing runs",
+      "help": "Select packages, review the recipients and message count, then confirm. Nothing is selected automatically.",
+      "reviewTitle": "Review before sending",
+      "reviewHelp": "Only the documents listed here are included. Compatible packages for the same person share one message.",
+      "resultTitle": "Request progress",
+      "resultHelp": "Processing continues when you leave this screen. Return through Recent requests to see the current outcome.",
+      "selected": "Selected packages: {{value}}",
+      "clear": "Clear selection",
+      "expires": "Selection valid until {{time}}",
+      "previousFilter": "This selection belongs to the previous filter. Review it as selected, or clear it before selecting from the new results.",
+      "selectPage": "Select packages on this page ({{value}})",
+      "selectAll": "Select all matching packages ({{value}})",
+      "narrow": "More than 1,000 packages match. Narrow the search before selecting all.",
+      "action": "Action",
+      "policyChannel": "Existing delivery channel",
+      "review": "Review recipients",
+      "recent": "Recent requests",
+      "noRecent": "No bulk requests yet.",
+      "excludedChanged": "This package changed and is excluded. Review its current details before trying again.",
+      "packageNumber": "Package {{value}}",
+      "excluded": "Excluded recipients: {{value}}",
+      "reviewAgain": "Review updated selection",
+      "confirm": "Confirm messages ({{value}})",
+      "editSelection": "Edit selection",
+      "processing": "Processing your request",
+      "finished": "Request processing finished",
+      "accepted": "Messages accepted by the provider: {{value}}",
+      "updated": "Last updated: {{time}}",
+      "newSelection": "Start a new selection",
+      "count": {
+        "packages": "Packages",
+        "participations": "Signing capacities",
+        "people": "People",
+        "documents": "Documents",
+        "messages": "Messages"
+      }
+    },
+    "people": {
+      "templateOptions": "Number of people in this role",
+      "slotHelp": "Each person has a fixed position in the documents. Increasing the count does not add or move signature fields; place them in the documents step. For people signing at different times, use separate roles and stages.",
+      "minimum": "Minimum people",
+      "maximum": "Maximum people",
+      "slotFor": "Signature position for {{role}}",
+      "personNumber": "Person {{number}}",
+      "countRange": "Assign {{minimum}} to {{maximum}} people to this role, in the same signing stage.",
+      "add": "Add a person to {{role}}",
+      "removeLast": "Remove last person",
+      "countFixed": "This role requires {{formattedCount}} people, in the same signing stage.",
+      "missingPosition": "Add a document field for {{role}} — person {{number}}."
+    },
+    "authority": {
+      "capacity": "Signing capacity",
+      "capacities": {
+        "personal": "For themselves",
+        "professional": "In a professional capacity",
+        "representative": "For another person or organization"
+      },
+      "templateHelp": "When sending, choose a named person, who they represent and an approved authority. For two representatives, set both counts to 2 and verify both identities.",
+      "directoryTitle": "Use a saved person",
+      "representativeTitle": "Signer and authority",
+      "directoryHelp": "Selecting a saved person explicitly links them to the package. Shared phone numbers or email addresses never merge people.",
+      "representativeHelp": "Choose the actual signer and the person or organization they represent. An approved, current authority is required.",
+      "identityVerified": "Identity reviewed by the office",
+      "identityUnverified": "Identity not yet reviewed",
+      "changePerson": "Choose another person",
+      "searchPerson": "Find a saved person",
+      "savePerson": "Save the entered person",
+      "party": "Who do they represent?",
+      "chooseParty": "Choose a person or organization",
+      "savedParty": "Party saved in this package",
+      "newParty": "Add a represented person or organization",
+      "partyKind": "Party type",
+      "company": "Organization or company",
+      "person": "Person",
+      "partyName": "Person or organization name",
+      "registration": "Registration number (optional)",
+      "addParty": "Add and select",
+      "authority": "Signing authority",
+      "chooseAuthority": "Choose an authority",
+      "states": {
+        "pending": "Awaiting approval",
+        "approved": "Approved",
+        "revoked": "Revoked"
+      },
+      "ready": "Authority is approved for this role. It will be checked again before signing.",
+      "notReady": "Authority is not ready: check approval, validity and role.",
+      "reviewEvidence": "Evidence and authority review",
+      "reviewHelp": "Approval records the office review. It does not replace any professional review required for the document.",
+      "uploadEvidence": "Upload PDF evidence",
+      "evidenceSaved": "Evidence saved privately.",
+      "viewEvidence": "Open evidence",
+      "reason": "Review note or revocation reason",
+      "validFrom": "Valid from",
+      "validUntil": "Valid until (optional)",
+      "createAuthority": "Save authority for review",
+      "approve": "Approve reviewed authority",
+      "revoke": "Revoke authority",
+      "verifyIdentity": "Review signer identity",
+      "identityHelp": "Required when the template needs two distinct representatives. Enter the identifier checked against the evidence; never merge people by contact details.",
+      "country": "Issuing country (two-letter code)",
+      "identityType": "Identifier type",
+      "identityValue": "Reviewed identifier",
+      "confirmIdentity": "Confirm identity review",
+      "needsApprover": "Ask an office member with authority approval permission to review and approve the evidence.",
+      "pdfOnly": "Choose a PDF up to 20MB.",
+      "uploadFailed": "Evidence upload failed.",
+      "requestFailed": "The action did not finish. You can try again.",
+      "identityTypes": {
+        "id": "Identity card",
+        "passport": "Passport",
+        "other": "Other official identifier"
+      },
+      "onBehalfOf": "On behalf of {{name}}"
+    },
+    "contact": {
+      "title": "Correct delivery contact",
+      "open": "Correct contact",
+      "help": "This changes delivery contact for the same person in this package only. Its previous links and verification sessions will close. The client card and existing signatures stay unchanged. Saving alone sends no message.",
+      "email": "Delivery email",
+      "phone": "Delivery phone",
+      "reason": "Reason for correction",
+      "save": "Save only",
+      "saveAndReview": "Save and review sending",
+      "saved": "Contact saved. No message was sent.",
+      "chooseChannel": "How should we send the new link?"
+    },
+    "lifecycle": {
+      "reason": "Reason for change",
+      "cancel": {
+        "title": "Cancel signing request",
+        "help": "Remaining signing tasks and signing access to this package will be blocked. Existing signatures are preserved. Messages already being sent cannot be recalled. Cancellation does not send another message.",
+        "remaining": "Tasks to cancel: {{formattedCount}} · Documents: {{documents}}",
+        "preserved": "Existing signatures to preserve: {{formattedCount}}",
+        "confirm": "Confirm cancellation",
+        "saved": "The signing request was cancelled. Existing signatures were preserved."
+      },
+      "assign": {
+        "title": "Assign responsibility",
+        "help": "Choose office staff who can handle this package. Each person’s system permissions still apply. This does not replace signers or send a message.",
+        "owner": "The creator keeps access",
+        "current": "Current handling team",
+        "next": "Handling team after this change",
+        "none": "No additional staff",
+        "select": "Choose staff",
+        "review": "Review change",
+        "edit": "Change selection",
+        "confirm": "Save responsibility",
+        "saved": "Responsibility updated.",
+        "search": "Find staff"
+      }
+    },
+    "approval": {
+      "title": "Approve wording for delivery",
+      "reviewer": "Internal reviewer",
+      "beforeSending": "Documents will be prepared for review. Signing invitations will be sent only after internal approval by",
+      "choose": "Choose a reviewer",
+      "solo": "Solo office profile",
+      "preparer": "Prepared by",
+      "help": "Review every document and approve the wording for delivery. This approval does not sign the documents.",
+      "soloNotice": "This template explicitly enables a solo office profile, allowing the preparer to approve their own work.",
+      "reviewed": "I reviewed every document and approve the wording for delivery",
+      "confirm": "Approve wording and continue delivery",
+      "return": "Return for correction",
+      "returnConfirm": "Return with this reason",
+      "reason": "What needs correcting?",
+      "approved": "Wording approved. Delivery will continue in the background.",
+      "returned": "The package was returned for correction. Signing invitations will not be sent.",
+      "templateEnable": "Require internal approval before sending the package",
+      "templateSolo": "Solo office profile: the office administrator permits preparers to approve their own work",
+      "state": {
+        "preparing": "Preparing documents for review",
+        "pending": "Waiting for internal approval",
+        "approved": "Internal approval received",
+        "returned": "Returned for correction"
+      },
+      "waitingHelp": "Documents will be prepared for review. Signing invitations will be sent only after the selected reviewer approves them."
+    },
+    "replacement": {
+      "title": "Prepare replacement revision",
+      "help": "Changes to content, participants, order or the deadline require a new revision. The previous revision and its signature evidence stay in history. All required participants must sign the new revision again.",
+      "preserved": "{{formattedCount}} accepted signatures retained in history",
+      "reason": "Reason for replacement",
+      "stop": "Stop the current revision while preparing its replacement",
+      "stoppedHelp": "The current revision is stopped. Its links cannot accept signatures while you prepare the replacement. Publishing activates the new revision.",
+      "activeHelp": "The current revision remains active until you publish the replacement. Participants can still sign it during preparation. Publishing stops its old links.",
+      "start": "Continue to replacement draft",
+      "composeTitle": "Edit replacement revision",
+      "composeHelp": "Review the changes to this package before publishing its new revision. Previous signatures are never copied.",
+      "rowHelp": "This replacement applies to one package. Edit its participants and document data here.",
+      "confirmFresh": "I reviewed the replacement and understand that all required participants must sign it again.",
+      "publish": "Publish replacement revision",
+      "saved": "Replacement revision saved",
+      "savedHelp": "The previous revision is now in history. The new revision is being prepared and will use fresh consent and verification codes.",
+      "leaveHelp": "Unsaved edits will be lost. The replacement can be reopened from this package. A revision you stopped stays stopped until its replacement is published.",
+      "history": "Revision history",
+      "revision": "Revision {{number}}",
+      "downloadDocument": "Download document",
+      "stopPlanHelp": "The current revision will stop when you continue to the replacement draft. Its links will not accept signatures during preparation. Publishing will activate the new revision."
+    },
+    "sharedSummary": {
+      "title": "Shared signers summary",
+      "scope": "Counts cover the full run you can access, regardless of the current package filter. Each package appears in one state per person, capacity and represented party.",
+      "asOf": "Updated",
+      "lastAvailable": "Showing the last available summary until the next successful refresh.",
+      "empty": "No participants are available in this run.",
+      "packageCount": "{{formattedCount}} packages",
+      "attentionPackages": "Needs attention",
+      "readyPackages": "Ready to sign",
+      "waitingPackages": "Waiting",
+      "completePackages": "Signing complete"
+    },
+    "completionMark": {
+      "title": "Automatic completion stamp or signature",
+      "help": "The image is placed where you choose, only after all required signatures in the package are complete. It does not appear in intermediate stages.",
+      "manualSigner": "If the lawyer must review and personally approve the document, add them as a signer in the last stage. Automatic placement does not replace that approval.",
+      "kind": "What should be added at completion?",
+      "office_stamp": "Office stamp",
+      "lawyer_signature": "Personal signature image",
+      "combined": "Stamp with signature",
+      "upload": "Upload a stamp or signature image",
+      "preview": "Completion mark preview",
+      "authorize": "I am authorized to use this image and approve its automatic placement in future sends from this template, after signing is complete.",
+      "add": "Add to document",
+      "imageOnly": "Choose a small, clear PNG or JPG image.",
+      "failed": "The image was not saved. Please try again.",
+      "notice": "After signing is complete, a stamp or signature approved in advance by the office will be added."
     }
   },
   "calendar": {

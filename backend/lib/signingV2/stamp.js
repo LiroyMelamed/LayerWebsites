@@ -3,8 +3,8 @@ const { pageGeometryFromPdfLibPage, visualDrawingFrame } = require('../signingGe
 const { bytesHash } = require('./canonical');
 const { expect, fail } = require('./errors');
 
-const TEXT_TYPES = new Set(['text', 'date']);
-const IMAGE_TYPES = new Set(['signature', 'initials']);
+const TEXT_TYPES = new Set(['text', 'date', 'email', 'phone', 'idnumber']);
+const IMAGE_TYPES = new Set(['signature', 'initials', 'lawyerStamp', 'completionMark']);
 const SIGNATURE_MAX_BYTES = 300 * 1024;
 const SIGNATURE_MAX_SIDE = 2400;
 const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);

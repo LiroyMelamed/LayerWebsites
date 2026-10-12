@@ -93,6 +93,11 @@ test('v2 public signing: exact manifest, OTP per session, sequential stages, one
     process.env.SIGNING_V2_ENABLED = 'true';
 
     const one = tokenFor('one@example.invalid');
+    const beforeCopyPackage = ok(await pub('get', '/package', one), 200).packages[0].packageId;
+    const beforeCopyPerson = (await f.pool.query('SELECT person_id FROM signing_delivery_profiles WHERE revision_id=(SELECT active_revision_id FROM signing_packages WHERE id=$1) ORDER BY id LIMIT 1', [beforeCopyPackage])).rows[0].person_id;
+    const beforeCopy = ok(await as(request(f.app).post(`/api/signing-v2/packages/${beforeCopyPackage}/participants/${beforeCopyPerson}/action-preview`)).send({purpose:'completed_copy'}), 200);
+    assert.equal(beforeCopy.eligible, false); assert.equal(beforeCopy.reason, 'COMPLETED_COPY_NOT_READY');
+
     const view = ok(await pub('get', '/package', one), 200);
     assert.equal(view.person.name, 'Synthetic Employee One');
     assert.equal(view.locale, 'en');
@@ -247,4 +252,93 @@ test('v2 public signing: exact manifest, OTP per session, sequential stages, one
     const extra = (await f.pool.query(`SELECT count(*)::integer AS count FROM signing_actions a JOIN signing_tasks t ON t.id=a.task_id
         JOIN signing_packages p ON p.active_revision_id=t.revision_id WHERE p.submission_id=$1`, [submissionId])).rows[0].count;
     assert.equal(extra, 6, 'three employee signatures and three lawyer signatures, no duplicates');
+
+    // Use the shared lawyer to prove a copy for one package never opens the other two.
+    const sharedPerson = (await f.pool.query(`SELECT person_id FROM signing_public_grants WHERE token_hash=$1`,
+        [require('../lib/signingV2/canonical').bytesHash(Buffer.from(lawyerToken))])).rows[0].person_id;
+    const copyPreview = target => as(request(f.app).post(`/api/signing-v2/packages/${target.packageId}/participants/${target.personId}/action-preview`)).send({purpose:'completed_copy'});
+    const queueCopy = (target, hash, idempotencyKey = randomUUID()) => as(request(f.app).post(`/api/signing-v2/packages/${target.packageId}/participants/${target.personId}/actions`))
+        .set('Idempotency-Key', idempotencyKey).send({purpose:'completed_copy', previewHash:hash});
+    const target = { packageId: view.packages[0].packageId, personId: sharedPerson, purpose: 'completed_copy' };
+    let copyToken;
+    await t.test('completed copy uses scoped final PDFs, a read-only grant and durable idempotent delivery', async () => {
+        const clientToken = require('jsonwebtoken').sign({userid:f.users[1].userid,role:f.users[1].role},process.env.JWT_SECRET);
+        assert.equal((await request(f.app).post(`/api/signing-v2/packages/${target.packageId}/participants/${target.personId}/action-preview`)
+            .set('Authorization',`Bearer ${clientToken}`).send({purpose:'completed_copy'})).status,403,'client cannot send office copies');
+        const previewCopy = ok(await copyPreview(target), 200);
+        assert.equal(previewCopy.eligible, true); assert.equal(previewCopy.tasks.length, 0);
+        assert.deepEqual(previewCopy.documents.map(doc => doc.documentId), [view.packages[0].documents[0].documentId]);
+        const copyKey = randomUUID();
+        const queuedCopy = ok(await queueCopy(target, previewCopy.previewHash, copyKey), 202);
+        assert.equal(queuedCopy.items[0].state, 'queued');
+        assert.equal(ok(await queueCopy(target, previewCopy.previewHash, copyKey), 200).operationId, queuedCopy.operationId);
+        assert.equal(code(await queueCopy(target, previewCopy.previewHash)), 'MESSAGE_ALREADY_QUEUED');
+        const calls = provider.calls.length; await runtime.drain();
+        assert.equal(provider.calls.length, calls+1); assert.equal(provider.calls.at(-1).purpose, 'completed_copy');
+        copyToken = new URL(provider.calls.at(-1).url).hash.slice(1);
+        const download = ok(await pub('get','/package',copyToken),200);
+        assert.equal(download.readOnly, true); assert.equal(download.packages.length,1);
+        assert.equal(download.packages[0].packageId,target.packageId);
+        assert.equal(download.packages[0].documents[0].tasks.length,0);
+        assert.deepEqual(download.counts,{ready:0,accepted:0,waiting:0});
+        const pdf = await pub('get',`/documents/${previewCopy.documents[0].documentId}`,copyToken).buffer(true).parse((response,done)=>{
+            const chunks=[];response.on('data',chunk=>chunks.push(chunk));response.on('end',()=>done(null,Buffer.concat(chunks)));
+        });
+        assert.equal(pdf.status,200); assert.equal(pdf.headers['x-document-final'],'true');
+        assert.ok(pdf.body.equals(final.body),'the exact signed PDF is reused, no regeneration or geometry changes');
+        assert.equal((await pub('get',`/documents/${lawyerView.packages[1].documents[0].documentId}`,copyToken)).status,404);
+        assert.equal((await pub('get',`/packages/${target.packageId}/evidence`,copyToken)).status,200);
+        assert.equal((await pub('get',`/packages/${lawyerView.packages[1].packageId}/evidence`,copyToken)).status,404);
+        for(const [path,body] of [['/sessions',{taskIds:[task.taskId],consentVersion:CONSENT_VERSION}],
+            [`/sessions/${session.sessionId}/challenge`,{}],[`/sessions/${session.sessionId}/verify`,{code:'123456'}],
+            [`/sessions/${session.sessionId}/accept`,{consent:true}]]) {
+            assert.equal((await pub('post',path,copyToken).set('Idempotency-Key',randomUUID()).send(body)).status,404,'download grant cannot sign or request OTP');
+        }
+        // Read the operation through the same authenticated API rather than inventing actor scope.
+        const outcome=ok(await as(request(f.app).get(`/api/signing-v2/operations/${queuedCopy.operationId}`)),200);
+        assert.equal(outcome.items[0].state,'provider_accepted');
+        assert.equal(ok(await copyPreview(target),200).reason,'COOLDOWN_ACTIVE');
+    });
+    await t.test('completed-copy capability expiration and revocation are enforced',async()=>{
+        const hash=require('../lib/signingV2/canonical').bytesHash(Buffer.from(copyToken));
+        await f.pool.query('UPDATE signing_public_grants SET revoked_at=clock_timestamp() WHERE token_hash=$1',[hash]);
+        assert.equal((await pub('get','/package',copyToken)).status,404);
+        await f.pool.query("UPDATE signing_public_grants SET revoked_at=NULL,created_at=clock_timestamp()-interval '1 hour',expires_at=clock_timestamp()-interval '1 minute' WHERE token_hash=$1",[hash]);
+        assert.equal((await pub('get','/package',copyToken)).status,404);
+    });
+    await t.test('a queued copy rechecks profile version and creates no grant or message when revoked',async()=>{
+        const other={...target,packageId:lawyerView.packages[1].packageId};
+        const previewCopy=ok(await copyPreview(other),200), queuedCopy=ok(await queueCopy(other,previewCopy.previewHash),202);
+        await f.pool.query(`UPDATE signing_delivery_profiles SET version=version+1 WHERE person_id=$1
+            AND revision_id=(SELECT active_revision_id FROM signing_packages WHERE id=$2)`,[sharedPerson,other.packageId]);
+        const calls=provider.calls.length; await runtime.drain();assert.equal(provider.calls.length,calls);
+        const outcome=ok(await as(request(f.app).get(`/api/signing-v2/operations/${queuedCopy.operationId}`)),200);
+        assert.equal(outcome.items[0].state,'cancelled');assert.equal(outcome.items[0].errorCode,'CONTACT_CHANGED');
+        assert.equal((await f.pool.query('SELECT grant_id FROM signing_deliveries WHERE id=$1',[queuedCopy.items[0].deliveryId])).rows[0].grant_id,null);
+    });
+    await t.test('immutable final artifacts and the frozen copy manifest cannot be replaced before dispatch',async()=>{
+        const other={...target,packageId:lawyerView.packages[2].packageId};
+        const previewCopy=ok(await copyPreview(other),200), queuedCopy=ok(await queueCopy(other,previewCopy.previewHash),202);
+        const doc=lawyerView.packages[2].documents[0].documentId;
+        await assert.rejects(f.pool.query("UPDATE signing_artifacts SET state='failed' WHERE id=(SELECT final_artifact_id FROM signing_documents WHERE id=$1)",[doc]),/immutable/);
+        await f.pool.query(`UPDATE signing_deliveries SET target_snapshot=jsonb_set(target_snapshot,'{documents,0,contentHash}',to_jsonb($2::text)) WHERE id=$1`,
+            [queuedCopy.items[0].deliveryId,'0'.repeat(64)]);
+        const calls=provider.calls.length;await runtime.drain();assert.equal(provider.calls.length,calls);
+        const outcome=ok(await as(request(f.app).get(`/api/signing-v2/operations/${queuedCopy.operationId}`)),200);
+        assert.equal(outcome.items[0].state,'cancelled');assert.equal(outcome.items[0].errorCode,'COMPLETED_COPY_CHANGED');
+        assert.equal(ok(await copyPreview(other),200).eligible,true);
+    });
+    await t.test('uncertain completed-copy delivery is quarantined and never blindly resent',async()=>{
+        const other={...target,packageId:lawyerView.packages[2].packageId};
+        const previewCopy=ok(await copyPreview(other),200), queuedCopy=ok(await queueCopy(other,previewCopy.previewHash),202);
+        const originalSend=provider.send;let attempts=0;
+        provider.send=async()=>{attempts+=1;throw new Error('fake timeout after acceptance');};
+        try {await runtime.drain();await runtime.drain();} finally {provider.send=originalSend;}
+        assert.equal(attempts,1);
+        const outcome=ok(await as(request(f.app).get(`/api/signing-v2/operations/${queuedCopy.operationId}`)),200);
+        assert.equal(outcome.items[0].state,'uncertain');
+        assert.equal(ok(await copyPreview(other),200).reason,'PREVIOUS_OUTCOME_UNCERTAIN');
+        assert.equal(code(await queueCopy(other,previewCopy.previewHash)),'PREVIOUS_OUTCOME_UNCERTAIN');
+    });
+
 });

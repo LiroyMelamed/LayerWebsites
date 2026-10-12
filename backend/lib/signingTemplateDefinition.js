@@ -2,7 +2,7 @@ const crypto = require('node:crypto');
 const { createAppError } = require('../utils/appError');
 
 const LIMITS = Object.freeze({ documents: 10, roles: 8, fieldsPerDocument: 150, packages: 50, totalFiles: 200 });
-const FIELD_TYPES = new Set(['signature', 'initials', 'text', 'date', 'checkbox', 'number']);
+const FIELD_TYPES = new Set(['signature', 'initials', 'text', 'date', 'checkbox', 'number', 'email', 'phone', 'idnumber', 'lawyerStamp']);
 const ROLE_KINDS = new Set(['first', 'second', 'shared', 'lawyer', 'custom']);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

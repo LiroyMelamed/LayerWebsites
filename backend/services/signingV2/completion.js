@@ -3,8 +3,9 @@ const { digest, bytesHash } = require('../../lib/signingV2/canonical');
 const { expect, fail } = require('../../lib/signingV2/errors');
 const { rendererAssets, FONT_STACK } = require('../../lib/signingV2/dataRenderer');
 const { stampDocument } = require('../../lib/signingV2/stamp');
-const { complete, enqueue, job } = require('./jobs');
+const { complete, enqueue, job, heartbeat } = require('./jobs');
 const { lockRevision } = require('./workflow');
+const { personalEvidence, personalEvidenceInput, evidenceJobInput } = require('../../lib/signingV2/personalEvidence');
 
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 
@@ -40,11 +41,23 @@ function timestamp(value, locale) {
 
 function evidenceHtml(data) {
     const locale = TEXT[data.locale] ? data.locale : 'he';
-    const t = TEXT[locale], dir = locale === 'en' ? 'ltr' : 'rtl';
+    const t = { ...TEXT[locale] }, dir = locale === 'en' ? 'ltr' : 'rtl';
+    if (data.personal) {
+        t.title = { he: 'אישור החתימה שלך', ar: 'إيصال توقيعك', en: 'Your signing receipt' }[locale];
+        t.note = { he: 'אישור אישי של החתימות שביצעת והמסמכים שבהם השתתפת. פרטי האימות של חותמים אחרים אינם כלולים באישור זה.',
+            ar: 'إيصال شخصي للتوقيعات التي أجريتها والمستندات التي شاركت فيها. لا يتضمن بيانات التحقق الخاصة بالموقّعين الآخرين.',
+            en: 'A personal receipt for your signatures and the documents you participated in. It does not include other signers’ verification details.' }[locale];
+    }
     const hash = value => `<bdi class="hash" dir="ltr">${escapeHtml(value)}</bdi>`;
     const row = (label, value) => `<tr><th scope="row">${escapeHtml(label)}</th><td>${value}</td></tr>`;
     const fonts = rendererAssets().fonts.map(font => `@font-face{font-family:${font.family};src:url('${font.uri}') format('truetype')}`).join('\n');
     const documents = data.documents.map(doc => `<tr><td><bdi>${escapeHtml(doc.name)}</bdi></td><td>${doc.pages}</td><td>${hash(doc.preparedHash)}</td><td>${hash(doc.finalHash)}</td></tr>`).join('');
+    const automaticText = {
+        he: 'חותמת או חתימת משרד שנוספה אוטומטית בסיום, לפי אישור מפורש בתבנית. זו אינה פעולת חתימה אישית שאומתה בקוד חד־פעמי.',
+        ar: 'ختم أو توقيع مكتب أضيف تلقائيًا عند الاكتمال بموافقة صريحة في القالب. ليس إجراء توقيع شخصي تم التحقق منه برمز لمرة واحدة.',
+        en: 'An office mark added automatically at completion, explicitly authorized in the template. This is not a personal signing action verified by a one-time code.',
+    }[locale];
+    const automatic = data.documents.filter(doc => doc.completionMarks?.length).map(doc => `<section class="action"><h3><bdi>${escapeHtml(doc.name)}</bdi></h3><p>${escapeHtml(automaticText)}</p>${doc.completionMarks.map(mark => `<p>${hash(mark.hash)}</p>`).join('')}</section>`).join('');
     const actions = data.actions.map(action => `<section class="action"><h3><bdi>${escapeHtml(action.name)}</bdi> · <bdi>${escapeHtml(action.document)}</bdi></h3><table>
         ${row(t.role, `<bdi>${escapeHtml(action.role)}</bdi>`)}
         ${row(t.capacity, escapeHtml(t.capacities[action.capacity] || action.capacity) + (action.partyName && action.capacity === 'representative' ? ` · ${escapeHtml(t.represents)} <bdi>${escapeHtml(action.partyName)}</bdi>` : ''))}
@@ -80,6 +93,7 @@ function evidenceHtml(data) {
         <table><thead><tr><th>${escapeHtml(t.document)}</th><th>${escapeHtml(t.pages)}</th><th>${escapeHtml(t.prepared)}</th><th>${escapeHtml(t.final)}</th></tr></thead><tbody>${documents}</tbody></table>
         <h2>${escapeHtml(t.signers)}</h2>
         ${actions}
+        ${automatic}
         <p class="note">${escapeHtml(t.note)}</p>
     </body></html>`;
 }
@@ -114,20 +128,28 @@ function createCompletionService({ pool, renderer, storage }) {
                 images.set(action.signature_artifact_id, await readArtifact(action));
             }
         }
+        const additionalImages = [...new Set(actions.flatMap(action => action.values_snapshot.fields
+            .filter(field => require('../../lib/signingV2/stamp').IMAGE_TYPES.has(field.type) && field.value && !images.has(field.value)).map(field => field.value)))];
+        if (additionalImages.length) {
+            const rows = (await pool.query(`SELECT * FROM signing_artifacts WHERE owner_context_id=$1 AND kind='signature' AND state='ready' AND id=ANY($2::uuid[])`, [contextId, additionalImages])).rows;
+            expect(rows.length === additionalImages.length, 'ARTIFACT_NOT_READY');
+            for (const row of rows) images.set(row.id, await readArtifact(row));
+        }
         const marks = actions.flatMap(action => action.values_snapshot.fields
             .filter(field => field.value !== null && field.value !== undefined && field.value !== '' && field.value !== false)
             .map(field => ({ fieldId: field.id, type: field.type, value: field.value })));
-        const inputsHash = digest({ documentId, preparedHash: document.content_sha256, actions: actions.map(action => action.id), rendererHash, kind });
+        const completionMarks = await require('./completionMarks').applyMarks(pool, document, kind, readArtifact, images, marks);
+        const inputsHash = digest({ documentId, preparedHash: document.content_sha256, actions: actions.map(action => action.id), rendererHash, kind, ...(completionMarks.length ? { completionMarks } : {}) });
         const existing = (await pool.query(`SELECT id FROM signing_artifacts WHERE owner_context_id=$1 AND kind=$2 AND inputs_hash=$3 AND state='ready'`,
             [contextId, kind, inputsHash])).rows[0];
-        if (existing) return { document, inputsHash, artifactId: existing.id, reused: true };
+        if (existing) return { document, inputsHash, artifactId: existing.id, reused: true, completionMarks };
         const result = await stampDocument({ renderer, baseBytes: await readArtifact(document), baseHash: document.content_sha256,
             bindings: document.field_bindings, marks, images, locale: document.locale });
         const artifactId = randomUUID();
         const key = `signing-v2/${contextId}/${kind}/${artifactId}.pdf`;
         await storage.write(key, result.bytes, { contentType: 'application/pdf', sha256: result.contentHash });
         await storage.verify(key, result.bytes.length, result.contentHash);
-        return { document, inputsHash, artifactId, key, bytes: result.bytes.length, contentHash: result.contentHash };
+        return { document, inputsHash, artifactId, key, bytes: result.bytes.length, contentHash: result.contentHash, completionMarks };
     }
 
     async function persist(db, contextId, kind, composed, metadata) {
@@ -141,7 +163,7 @@ function createCompletionService({ pool, renderer, storage }) {
     }
 
     async function openStage(contextId, revisionId) {
-        return (await pool.query(`SELECT count(*) FILTER (WHERE required AND state='ready')::integer AS ready,
+        return (await pool.query(`SELECT count(*) FILTER (WHERE required AND state IN ('ready','declined','clarification','expired'))::integer AS ready,
                 min(stage) FILTER (WHERE state='blocked') AS next FROM signing_tasks WHERE owner_context_id=$1 AND revision_id=$2`,
         [contextId, revisionId])).rows[0];
     }
@@ -197,7 +219,8 @@ function createCompletionService({ pool, renderer, storage }) {
         return complete(pool, lease, async db => {
             const live = await lockRevision(db, contextId, document.revision_id);
             expect(['active', 'attention'].includes(live.workflow_state), 'REVISION_INACTIVE');
-            const artifactId = await persist(db, contextId, 'final', composed, { documentKey: document.document_key });
+            const artifactId = await persist(db, contextId, 'final', composed, { documentKey: document.document_key, ...(composed.completionMarks?.length ? { completionMarks: composed.completionMarks } : {}) });
+            if (composed.completionMarks?.length) await db.query(`INSERT INTO signing_events_v2(owner_context_id,package_id,actor_key,kind,details) VALUES($1,$2,'system:workflow','completion_marks_applied',$3)`, [contextId, live.package_id, { revisionId: live.id, documentId: document.id, artifactId, marks: composed.completionMarks }]);
             const updated = await db.query(`UPDATE signing_documents SET final_artifact_id=$3,state='final'
                 WHERE owner_context_id=$1 AND id=$2 AND (final_artifact_id IS NULL OR final_artifact_id=$3)`, [contextId, document.id, artifactId]);
             expect(updated.rowCount === 1, 'ARTIFACT_CHANGED');
@@ -216,14 +239,14 @@ function createCompletionService({ pool, renderer, storage }) {
             JOIN users owner ON owner.userid=pk.owner_userid
             WHERE r.owner_context_id=$1 AND r.id=$2`, [contextId, revisionId])).rows[0];
         if (!revision) fail('NOT_FOUND', 404);
-        const documents = (await pool.query(`SELECT d.name,d.document_key,d.state,pa.content_sha256 AS prepared_hash,pa.metadata->'pages' AS pages,fa.content_sha256 AS final_hash
+        const documents = (await pool.query(`SELECT d.id,d.name,d.document_key,d.state,pa.content_sha256 AS prepared_hash,pa.metadata->'pages' AS pages,fa.content_sha256 AS final_hash,fa.metadata->'completionMarks' AS completion_marks
             FROM signing_documents d
             JOIN signing_artifacts pa ON pa.owner_context_id=d.owner_context_id AND pa.id=d.prepared_artifact_id
             LEFT JOIN signing_artifacts fa ON fa.owner_context_id=d.owner_context_id AND fa.id=d.final_artifact_id
             WHERE d.owner_context_id=$1 AND d.revision_id=$2 ORDER BY d.document_key`, [contextId, revisionId])).rows;
         expect(documents.length > 0 && documents.every(doc => doc.state === 'final' && doc.final_hash), 'SIGNATURES_INCOMPLETE');
         const actions = (await pool.query(`SELECT a.accepted_at,a.manifest_hash,a.payload_hash,a.consent_snapshot,a.session_id,
-                p.identity_snapshot,p.role_key,p.capacity,d.name AS document_name,c.channel,c.endpoint_hint,c.verified_at
+                p.person_id,p.identity_snapshot,p.role_key,p.capacity,d.id AS document_id,d.name AS document_name,c.channel,c.endpoint_hint,c.verified_at
             FROM signing_actions a
             JOIN signing_tasks t ON t.owner_context_id=a.owner_context_id AND t.id=a.task_id
             JOIN signing_documents d ON d.owner_context_id=t.owner_context_id AND d.id=t.document_id
@@ -234,8 +257,10 @@ function createCompletionService({ pool, renderer, storage }) {
         const labels = new Map((revision.definition?.roles || []).map(role => [role.key, role.label]));
         return { revision, data: { locale: revision.snapshot.locale, runName: revision.run_name, reference: revision.external_key, ownerName: revision.owner_name,
             completedAt: actions.length ? actions[actions.length - 1].accepted_at : new Date(), revisionHash: revision.revision_hash,
-            documents: documents.map(doc => ({ name: doc.name, pages: (doc.pages || []).length, preparedHash: doc.prepared_hash, finalHash: doc.final_hash })),
-            actions: actions.map(action => ({ name: action.identity_snapshot.name, partyName: action.identity_snapshot.partyName, document: action.document_name,
+            documents: documents.map(doc => ({ id: doc.id, name: doc.name, pages: (doc.pages || []).length, preparedHash: doc.prepared_hash, finalHash: doc.final_hash,
+                ...(doc.completion_marks?.length ? { completionMarks: doc.completion_marks.map(mark => ({ hash: mark.hash, kind: mark.kind })) } : {}) })),
+            actions: actions.map(action => ({ personId: action.person_id, documentId: action.document_id,
+                name: action.identity_snapshot.name, partyName: action.identity_snapshot.partyName, document: action.document_name,
                 role: labels.get(action.role_key) || action.role_key, capacity: action.capacity, acceptedAt: action.accepted_at,
                 channel: action.channel, hint: action.endpoint_hint, verifiedAt: action.verified_at, sessionId: action.session_id,
                 manifestHash: action.manifest_hash, payloadHash: action.payload_hash, ip: action.consent_snapshot.ip,
@@ -247,26 +272,39 @@ function createCompletionService({ pool, renderer, storage }) {
         const contextId = lease.owner_context_id;
         const { revision, data } = await evidenceData(contextId, lease.subject_id);
         const inputsHash = digest({ revisionId: revision.id, revisionHash: revision.revision_hash, kind: 'evidence' });
-        expect(lease.input_hash === digest({ revisionHash: revision.revision_hash, kind: 'evidence' }), 'REVISION_CHANGED');
-        const existing = (await pool.query(`SELECT id FROM signing_artifacts WHERE owner_context_id=$1 AND kind='evidence' AND inputs_hash=$2 AND state='ready'`,
-            [contextId, inputsHash])).rows[0];
-        let written = null;
-        if (!existing) {
-            const rendered = await renderer.renderHtml({ html: evidenceHtml(data) });
+        expect([evidenceJobInput(revision.revision_hash), digest({ revisionHash: revision.revision_hash, kind: 'evidence' })].includes(lease.input_hash), 'REVISION_CHANGED');
+        const variants = [{ inputsHash, data, metadata: { revisionId: revision.id, actions: data.actions.length, visibility: 'office' } }];
+        for (const personId of new Set(data.actions.map(action => action.personId))) {
+            const receipt = personalEvidence(data, personId);
+            variants.push({ inputsHash: personalEvidenceInput(revision.id, revision.revision_hash, personId), data: receipt,
+                metadata: { revisionId: revision.id, visibility: 'personal', personId, documentIds: receipt.documents.map(doc => doc.id) } });
+        }
+        const existing = new Map((await pool.query(`SELECT id,inputs_hash FROM signing_artifacts
+            WHERE owner_context_id=$1 AND kind='evidence' AND inputs_hash=ANY($2::text[]) AND state='ready'`,
+        [contextId, variants.map(item => item.inputsHash)])).rows.map(row => [row.inputs_hash, row.id]));
+        // At most eight people per package. Keep only one receipt in memory per
+        // job; the existing renderer pool bounds parallel work across packages.
+        for (const variant of variants) {
+            variant.existing = existing.get(variant.inputsHash);
+            if (variant.existing) continue;
+            if (!await heartbeat(pool, lease)) fail('WORKER_LEASE_LOST', 409);
+            const rendered = await renderer.renderHtml({ html: evidenceHtml(variant.data) });
             expect(bytesHash(rendered.bytes) === rendered.contentHash, 'ARTIFACT_HASH_MISMATCH');
             const artifactId = randomUUID();
             const key = `signing-v2/${contextId}/evidence/${artifactId}.pdf`;
             await storage.write(key, rendered.bytes, { contentType: 'application/pdf', sha256: rendered.contentHash });
             await storage.verify(key, rendered.bytes.length, rendered.contentHash);
-            written = { artifactId, inputsHash, key, bytes: rendered.bytes.length, contentHash: rendered.contentHash };
+            variant.written = { artifactId, inputsHash: variant.inputsHash, key, bytes: rendered.bytes.length, contentHash: rendered.contentHash };
         }
         return complete(pool, lease, async db => {
             const live = await lockRevision(db, contextId, revision.id);
             expect(['active', 'attention', 'complete'].includes(live.workflow_state), 'REVISION_INACTIVE');
-            const artifactId = written ? await persist(db, contextId, 'evidence', written, { revisionId: revision.id, actions: data.actions.length }) : existing.id;
-            await db.query(`UPDATE signing_package_revisions SET workflow_state='complete',version=version+1
-                WHERE owner_context_id=$1 AND id=$2 AND workflow_state IN ('active','attention')`, [contextId, revision.id]);
-            await db.query(`INSERT INTO signing_events_v2(owner_context_id,package_id,actor_key,kind,details) VALUES($1,$2,'system:workflow','package_completed',$3)`,
+            for (const variant of variants) variant.artifactId = variant.existing
+                || await persist(db, contextId, 'evidence', variant.written, variant.metadata);
+            const artifactId = variants[0].artifactId;
+            const completed = await db.query(`UPDATE signing_package_revisions SET workflow_state='complete',version=version+1
+                WHERE owner_context_id=$1 AND id=$2 AND workflow_state IN ('active','attention') RETURNING id`, [contextId, revision.id]);
+            if (completed.rowCount) await db.query(`INSERT INTO signing_events_v2(owner_context_id,package_id,actor_key,kind,details) VALUES($1,$2,'system:workflow','package_completed',$3)`,
                 [contextId, revision.package_id, { revisionId: revision.id, evidenceArtifactId: artifactId }]);
             if (revision.submission_id) {
                 await db.query(`UPDATE signing_submissions s SET state='complete' WHERE s.owner_context_id=$1 AND s.id=$2 AND s.state<>'complete'
