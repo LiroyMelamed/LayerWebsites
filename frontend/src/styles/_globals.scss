@@ -36,7 +36,7 @@ body {
   font-family: var(--lw-font-stack);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  direction: rtl;
+  direction: inherit;
   unicode-bidi: plaintext;
 }
 
@@ -66,12 +66,12 @@ body::-webkit-scrollbar {
   scrollbar-width: none;
 }
 
-/* Default RTL for form controls (unless explicitly overridden with dir=...). */
+/* Follow the platform language unless a field supplies its own direction. */
 input:not([dir]),
 textarea:not([dir]),
 select:not([dir]) {
-  direction: rtl;
-  text-align: right;
+  direction: inherit;
+  text-align: start;
 }
 
 /* Phase F+: accessibility quick win — visible keyboard focus */
