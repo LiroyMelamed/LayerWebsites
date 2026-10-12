@@ -20,5 +20,5 @@
 
 ---
 
-קבצים לצירוף: calendar-user-guide-he-v1.pdf ו-calendar-user-guide-he-v1.pptx.
+קבצים לצירוף: calendar-user-guide-he-v2.pdf ו-calendar-user-guide-he-v2.pptx.
 אין לצרף את תמונות בדיקות הביניים או את תיקיית הבנייה. הטיוטה אינה נשלחת אוטומטית.
