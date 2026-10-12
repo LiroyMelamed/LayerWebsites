@@ -62,8 +62,7 @@ if $BACKEND; then
   run ./scripts/deploy-tenant-backend.sh melamedia
   run ./scripts/deploy-tenant-backend.sh idm
   echo ""
-  echo "== Backend overlay (local → all tenants, same code + migrations) =="
-  run ./scripts/sync-local-backend-all-tenants.sh
+  echo "# Each backend retains its exact tenant commit; no local source overlay."
 fi
 
 if $FRONTEND; then
