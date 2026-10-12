@@ -1,3 +1,4 @@
+import { SignupLogoPicker } from './SignupLogoPicker';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiUtils from '../../api/apiUtils';
@@ -38,6 +39,7 @@ export default function SignupScreen() {
     }, []);
     const [error, setError] = useState('');
     const [form, setForm] = useState({
+        logoDataUrl: '',
         firmName: '',
         slug: '',
         adminName: '',
@@ -77,6 +79,7 @@ export default function SignupScreen() {
     const validateStep = () => {
         setError('');
         if (step === 0) {
+            if (!form.logoDataUrl) return setError('יש להעלות לוגו למשרד כדי להמשיך.');
             if (!form.firmName.trim()) return setError('נא להזין שם משרד');
             const slug = form.slug.trim().toLowerCase();
             if (!SLUG_RE.test(slug)) return setError('כתובת משרד: אותיות באנגלית, מספרים ומקף בלבד');
@@ -105,6 +108,7 @@ export default function SignupScreen() {
             const key=sessionStorage.getItem('legal-signup-key')||crypto.randomUUID();
             sessionStorage.setItem('legal-signup-key',key);
             const res = await ApiUtils.post('/public/signup/start', {
+                logoDataUrl: form.logoDataUrl,
                 firmName: form.firmName.trim(),
                 slug: form.slug.trim().toLowerCase(),
                 adminName: form.adminName.trim(),
@@ -134,7 +138,7 @@ export default function SignupScreen() {
             }
             setError('פתיחת המשרד נכשלה');
         } catch (e) {
-            setError(e?.response?.data?.message || e?.response?.data?.error || 'הרשמה נכשלה');
+            setError(({LOGO_REQUIRED:'יש להעלות לוגו למשרד.',LOGO_INVALID:'בחרו קובץ לוגו PNG או JPG תקין.',LOGO_DIMENSIONS:'נדרש לוגו ריבועי בגודל 1,024–4,096 פיקסלים.',LOGO_TOO_LARGE:'גודל הלוגו המרבי הוא 2MB.',LOGO_STORAGE_UNAVAILABLE:'שמירת הלוגו נכשלה. לא נוצר תשלום; נסו שוב.'}[e?.response?.data?.error]) || e?.response?.data?.message || e?.response?.data?.error || 'הרשמה נכשלה');
         } finally {
             setLoading(false);
         }
@@ -196,6 +200,7 @@ export default function SignupScreen() {
 
                 {step === 0 && (
                     <SimpleContainer className="lw-signup__fields">
+                        <SignupLogoPicker value={form.logoDataUrl || ''} onChange={logoDataUrl=>update({logoDataUrl})} disabled={loading} />
                         <SimpleInput
                             title="שם המשרד"
                             className="lw-signup__input"

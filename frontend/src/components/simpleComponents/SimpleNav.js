@@ -1,3 +1,4 @@
+import { getTenantLogoUrl } from '../../lib/tenantBranding';
 import React from 'react';
 import { getNavBarData } from '../navBars/data/NavBarData';
 import Separator from '../styledComponents/separators/Separator';
@@ -30,7 +31,7 @@ const SimpleNav = ({ activeButton }) => {
         <SimpleContainer className={"lw-simpleNav__inner" + (isSmallScreen ? " is-mobile" : "") }>
           {!isSmallScreen &&
             <SimpleImage
-              src={images.Logos.FullLogoOriginal}
+              src={getTenantLogoUrl() || images.Logos.FullLogoOriginal}
               className="lw-simpleNav__logo"
             />
           }
