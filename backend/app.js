@@ -178,6 +178,7 @@ app.use("/api/Data", dataRoutes);
 app.use("/api/Notifications", notificationRoutes);
 app.use("/api/Files", filesRoutes);
 app.use("/api/SigningFiles", signingFileRoutes);
+app.use("/api/signing-v2/client", require("./routes/clientPortalCapabilitiesRoutes"));
 app.use("/api/billing", billingRoutes);
 app.use("/api/audit-events", auditEventsRoutes);
 app.use("/api/evidence-documents", evidenceDocumentsRoutes);

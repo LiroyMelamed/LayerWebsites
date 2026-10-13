@@ -4,6 +4,7 @@ import { toastFromApiError } from '../components/ui/showAppToast';
 const useHttpRequest = (requestFunction, onSuccess, onFailure) => {
   const [isPerforming, setIsPerforming] = useState(false);
   const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
 
   const requestSeqRef = useRef(0);
   const isMountedRef = useRef(true);
@@ -38,6 +39,7 @@ const useHttpRequest = (requestFunction, onSuccess, onFailure) => {
     // Latest-wins: rapid typing must not keep an older search's results.
     const seq = ++requestSeqRef.current;
     setIsPerforming(true);
+    setError(null);
 
     try {
       const data = await requestFunctionRef.current(...args);
@@ -45,6 +47,7 @@ const useHttpRequest = (requestFunction, onSuccess, onFailure) => {
       if (!isMountedRef.current || seq !== requestSeqRef.current) return;
 
       if (data.status !== 200 && data.status !== 201) {
+        setError(data);
 
         if (onFailureRef.current) onFailureRef.current(data)
         else defaultOnFailure(data);
@@ -59,6 +62,7 @@ const useHttpRequest = (requestFunction, onSuccess, onFailure) => {
 
       if (!isMountedRef.current || seq !== requestSeqRef.current) return;
 
+      setError(err);
       setResult([]);
 
       if (onFailureRef.current) onFailureRef.current(err);
@@ -73,6 +77,7 @@ const useHttpRequest = (requestFunction, onSuccess, onFailure) => {
 
   return {
     result: result ?? [],
+    error,
     isPerforming: isPerforming,
     performRequest
   };

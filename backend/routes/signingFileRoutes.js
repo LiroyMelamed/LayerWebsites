@@ -6,6 +6,7 @@ const signingFileController = require("../controllers/signingFileController");
 const crypto = require('crypto');
 const { createRateLimitMiddleware } = require('../utils/rateLimiter');
 const { requireSigningEnabledForUser, requireSigningEnabledForSigningFile } = require('../middlewares/requireSigningEnabled');
+const requireClientSigningLink = require('../middlewares/requireClientSigningLink');
 const requireLawyerOrAdmin = require('../middlewares/requireLawyerOrAdmin');
 
 function hashToken(raw) {
@@ -84,6 +85,9 @@ router.get("/lawyer-files", authMiddleware, requireLawyerOrAdmin, requireSigning
 
 // (אופציונלי) רק בהמתנה ללקוח
 router.get("/pending", authMiddleware, requireSigningEnabledForUser, signingFileController.getPendingSigningFiles);
+
+// Customer self-entry retains current DB identity, turn, tenant and signing-policy checks.
+router.post("/:signingFileId/client-public-link", authMiddleware, requireClientSigningLink, requireSigningEnabledForSigningFile, signingFileController.createPublicSigningLink);
 
 // Generate a public signing link token (lawyer/admin)
 router.post("/:signingFileId/public-link", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.createPublicSigningLink);

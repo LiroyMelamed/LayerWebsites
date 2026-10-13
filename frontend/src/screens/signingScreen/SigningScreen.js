@@ -1,5 +1,5 @@
 // src/screens/signingScreen/SigningScreen.js
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import Skeleton from "../../components/simpleComponents/Skeleton";
@@ -26,7 +26,8 @@ import { toastError } from "../../components/ui/toast";
 import "./SigningScreen.scss";
 import SimpleCard from "../../components/simpleComponents/SimpleCard";
 import Separator from "../../components/styledComponents/separators/Separator";
-import { PublicSignScreenName } from "../../navigation/screenPaths";
+import { BrowserSigningScreenName } from "../../navigation/screenPaths";
+import RequestLoadError from '../../components/ui/RequestLoadError';
 
 export const SigningScreenName = "/SigningScreen";
 
@@ -37,11 +38,13 @@ export default function SigningScreen() {
     const navigate = useNavigate();
     const { isFromApp } = useFromApp();
     const { openPopup, closePopup } = usePopup();
-    const [activeTab, setActiveTab] = useState("pending");
+    const [activeTab, setActiveTab] = useState(() => new URLSearchParams(location.search).get('tab') === 'signed' ? 'signed' : 'pending');
+    const portalOpenRef = useRef(null);
+    const [portalUnavailable, setPortalUnavailable] = useState(false);
     const [selectedFileId, setSelectedFileId] = useState(null);
     const [isPublicSigningSession, setIsPublicSigningSession] = useState(false);
 
-    const { result: clientFilesData, isPerforming, performRequest } = useAutoHttpRequest(
+    const { result: clientFilesData, isPerforming, performRequest, error } = useAutoHttpRequest(
         signingFilesApi.getClientSigningFiles
     );
 
@@ -104,14 +107,23 @@ export default function SigningScreen() {
         setIsPublicSigningSession(false);
     };
 
+    const [nativeSigningError, setNativeSigningError] = useState(null);
+    const nativeOpeningRef = useRef(false);
+    const signingMountedRef = useRef(true);
+    useEffect(() => { signingMountedRef.current = true; return () => { signingMountedRef.current = false; }; }, []);
     const openSigning = async (file) => {
         if (!file?.SigningFileId) return;
-        if (isFromApp && window.ReactNativeWebView) {
+        if (isFromApp) {
+            if (!window.ReactNativeWebView?.postMessage) { setNativeSigningError(file); return; }
+            if (nativeOpeningRef.current) return;
+            nativeOpeningRef.current = true;
+            setNativeSigningError(null);
             try {
-                const res = await signingFilesApi.createPublicSigningLink(file.SigningFileId);
+                const res = await signingFilesApi.createClientPublicSigningLink(file.SigningFileId);
+                if (!signingMountedRef.current) return;
                 const token = res?.data?.token || res?.token;
-                if (token) {
-                    const nativeUrl = `${window.location.origin}${PublicSignScreenName}?token=${encodeURIComponent(token)}`;
+                if (res?.status === 200 && typeof token === "string" && token.length > 0) {
+                    const nativeUrl = `${window.location.origin}${BrowserSigningScreenName}?token=${encodeURIComponent(token)}`;
                     window.ReactNativeWebView.postMessage(JSON.stringify({
                         type: "OPEN_URL",
                         payload: { url: nativeUrl },
@@ -119,9 +131,13 @@ export default function SigningScreen() {
                     closePopup();
                     return;
                 }
-            } catch (err) {
-                console.warn("Native public-sign open failed, falling back to in-app pad", err);
+                setNativeSigningError(file);
+            } catch {
+                if (signingMountedRef.current) setNativeSigningError(file);
+            } finally {
+                nativeOpeningRef.current = false;
             }
+            return;
         }
         openSigningPad(file);
     };
@@ -172,6 +188,28 @@ export default function SigningScreen() {
         }
     };
 
+    // Dashboard entry uses the authenticated list, then the same native/browser
+    // handler as the incumbent details button. It never creates consent or OTP.
+    useEffect(() => {
+        const query = new URLSearchParams(location.search);
+        const requested = query.get('fileId');
+        const key = `${location.key}:${location.search}`;
+        if (!requested || !Array.isArray(clientFilesData?.files) || isPerforming || error || portalOpenRef.current === key) return;
+        portalOpenRef.current = key;
+        const file = clientFilesData.files.find(item => String(item.SigningFileId) === requested);
+        if (!file) { setPortalUnavailable(true); return; }
+        setPortalUnavailable(false);
+        if (query.get('open') === 'sign' && file.CanSignNow === true) openSigning(file);
+        else handleOpenDetails(file);
+        // These handlers read the settled list/native flag; one entry per location.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [location.key, location.search, clientFilesData, isPerforming, error, isFromApp]);
+
+    useEffect(() => {
+        const queryTab = new URLSearchParams(location.search).get('tab');
+        if (queryTab === 'signed' || queryTab === 'pending') setActiveTab(queryTab);
+    }, [location.search]);
+
     return (
         <SimpleScreen
             imageBackgroundSource={images.Backgrounds.AppBackground}
@@ -185,7 +223,10 @@ export default function SigningScreen() {
             )}
 
             <SimpleScrollView className="lw-signingScreen__scroll">
+                {error ? <RequestLoadError onRetry={() => performRequest()} /> :
                 <SimpleContainer className="lw-signingScreen">
+                    {nativeSigningError && <div role="alert"><p>{t('clientPortal.openDocumentError')}</p><SecondaryButton onPress={() => openSigning(nativeSigningError)}>{t('common.retry')}</SecondaryButton></div>}
+                {portalUnavailable && <p role="alert">{t('clientPortal.documentUnavailable')}</p>}
                     <SimpleContainer className="lw-signingScreen__tabsRow">
                         <TabButton
                             active={activeTab === "pending"}
@@ -238,6 +279,7 @@ export default function SigningScreen() {
                         })
                     )}
                 </SimpleContainer>
+                }
             </SimpleScrollView>
 
             {selectedFileId && (
@@ -272,6 +314,7 @@ function ClientSigningFileDetails({ file, formatDotDate, onClose, onSign, onDown
     const { t } = useTranslation();
     const status = String(file?.Status || "pending").toLowerCase();
     const isPending = status === "pending" || status === "rejected";
+    const canSign = typeof file?.CanSignNow === 'boolean' ? file.CanSignNow : isPending;
     const isSigned = status === "signed";
     const totalSpots = Number(file?.TotalSpots || 0);
     const signedSpots = Number(file?.SignedSpots || 0);
@@ -317,7 +360,7 @@ function ClientSigningFileDetails({ file, formatDotDate, onClose, onSign, onDown
                 </SimpleContainer>
             )}
             <SimpleContainer className="lw-signingScreen__actionsRow">
-                {isPending && (
+                {canSign && (
                     <PrimaryButton onPress={onSign}>{t("signing.screen.signDocument")}</PrimaryButton>
                 )}
                 {isSigned && (

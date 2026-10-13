@@ -5,6 +5,8 @@ const requireAdmin = require("../middlewares/requireAdmin");
 const filesController = require("../controllers/filesController");
 const stageFilesController = require("../controllers/stageFilesController");
 
+router.get("/client-files", authMiddleware, stageFilesController.getClientFiles);
+
 // Presigned URL endpoints
 router.get("/presign-upload", authMiddleware, filesController.presignUpload);
 router.get("/presign-read", authMiddleware, filesController.presignRead);
