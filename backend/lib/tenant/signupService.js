@@ -1,3 +1,5 @@
+const { validEmail } = require('./signupWelcomeTemplate');
+const { flushWelcome } = require('./signupWelcomeEmail');
 const { saveSignupLogo } = require('./signupLogo');
 const { assertSignupAvailable } = require('./signupAvailability');
 const crypto = require('node:crypto');
@@ -74,6 +76,8 @@ async function createSignupIntent(payload) {
         err.code = 'MISSING_FIELDS';
         throw err;
     }
+
+    if (!validEmail(adminEmail)) throw Object.assign(new Error('נא להזין כתובת דוא״ל תקינה לקבלת פרטי החשבון'), {code:'INVALID_EMAIL'});
 
     const pkg = quoteSignup({ platformId, resourceId, signingId, billingInterval });
     const quoted = pkg.recurringAmountIls;
@@ -288,7 +292,17 @@ async function provisionTenantFromSignup(signupIntentId, { tokenInfo } = {}) {
             [signupIntentId, tenant.id]
         );
 
+        const welcomeLogin = `${getFrontendBaseUrl()}/${tenant.slug}/LoginStack/LoginScreen`;
+        // Queue atomically with the paid account. Existing intents without an email
+        // may still complete, but never fabricate a recipient or notify other admins.
+        if (validEmail(signup.admin_email)) {
+            await client.query(`UPDATE signup_intents SET welcome_email=$2,welcome_email_status='pending',welcome_email_next_at=now(),welcome_email_updated_at=now() WHERE id=$1`,
+                [signupIntentId,{toEmail:signup.admin_email,adminName:signup.admin_name,firmName:signup.firm_name,adminPhone:signup.admin_phone,loginUrl:welcomeLogin,trialEndsAt:complimentaryUntil.toISOString(),
+                    recurringAmountIls:require('../billing/signupQuote').renewalAmount({price_monthly_ils:signup.price_monthly_ils,billing_interval:signup.billing_interval},signup),billingInterval:signup.billing_interval}]);
+        }
         await client.query('COMMIT');
+        // Delivery failure must not undo an already-created account; the worker retries safe failures.
+        try { await flushWelcome(signupIntentId); } catch (_) { console.error('[signup-welcome] queued delivery needs retry'); }
 
         const loginUrl = `${getFrontendBaseUrl()}/${tenant.slug}/admin`;
         try {

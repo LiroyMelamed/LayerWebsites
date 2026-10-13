@@ -90,6 +90,7 @@ export default function SignupScreen() {
         if (step === 1) {
             if (!form.adminName.trim()) return setError('נא להזין שם מנהל');
             if (!form.adminPhone.trim()) return setError('נא להזין טלפון');
+            if (!/^[^\s@<>,;:]+@[^\s@<>,;:]+\.[^\s@<>,;:]+$/.test(form.adminEmail.trim()) || form.adminEmail.trim().length > 254) return setError('נא להזין כתובת דוא״ל תקינה לקבלת פרטי החשבון');
         }
         return true;
     };
@@ -250,7 +251,9 @@ export default function SignupScreen() {
                             maxLength={10}
                         />
                         <SimpleInput
-                            title="דוא״ל (אופציונלי)"
+                            title="דוא״ל לקבלת פרטי החשבון"
+                            required
+                            maxLength={254}
                             type="email"
                             className="lw-signup__input"
                             value={form.adminEmail}
