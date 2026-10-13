@@ -10,6 +10,7 @@ const requireLawyerOrAdmin = require('../middlewares/requireLawyerOrAdmin');
 const requireFirmAction = require('../middlewares/requireFirmAction');
 const requireFirmEvidencePackageAccess = require('../middlewares/requireFirmEvidencePackageAccess');
 const requireSigningOfficeAccess = require('../middlewares/requireSigningOfficeAccess');
+const requireClientSigningLink = require('../middlewares/requireClientSigningLink');
 
 const requireSigningReadAccess = require('../middlewares/requireSigningReadAccess');
 const signerRead = [authMiddleware, requireSigningReadAccess];
@@ -94,6 +95,10 @@ router.get("/lawyer-files", ...signView, requireSigningEnabledForUser, signingFi
 
 // (אופציונלי) רק בהמתנה ללקוח
 router.get("/pending", ...signerRead, requireSigningEnabledForUser, signingFileController.getPendingSigningFiles);
+
+// Open only the current customer's ready document in the browser. This route
+// never accepts another recipient and does not grant office manage permission.
+router.post("/:signingFileId/client-public-link", authMiddleware, requireClientSigningLink, requireSigningEnabledForSigningFile, signingFileController.createPublicSigningLink);
 
 // Generate a public signing link token (lawyer/admin)
 router.post("/:signingFileId/public-link", ...signManage, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.createPublicSigningLink);
