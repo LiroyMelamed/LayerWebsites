@@ -6,6 +6,35 @@ const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { r2, BUCKET } = require("../utils/r2");
 const { invalidateOperationalDashboardCaches } = require("../utils/operationalDashboardCache");
 
+/** GET /api/Files/client-files — metadata for this client's linked cases. */
+exports.getClientFiles = async (req, res) => {
+    res.set('Cache-Control', 'private, no-store');
+    if (!req.user?.UserId) return res.status(401).json({ errorCode: 'UNAUTHORIZED' });
+    if (!['User', 'Client'].includes(req.user.Role) || req.firmPermissionMode === 'role' ||
+        req.firmPermissionMode === 'platform_admin') {
+        return res.status(403).json({ errorCode: 'FORBIDDEN' });
+    }
+    try {
+        const { clientTenantId } = require('../lib/clientSigningReadiness');
+        const tenantId = clientTenantId(req);
+        const result = await pool.query(
+            `SELECT sf.id, sf.caseid, sf.stage, sf.file_name, sf.file_ext,
+                    sf.file_mime, sf.file_size, sf.created_at, c.casename AS "CaseName"
+             FROM stage_files sf
+             JOIN cases c ON c.caseid = sf.caseid
+             WHERE EXISTS (SELECT 1 FROM case_users cu WHERE cu.caseid = c.caseid AND cu.userid = $1)
+               AND (to_jsonb(c)->>'law_firm_tenant_id') IS NOT DISTINCT FROM $2::text
+             ORDER BY sf.created_at DESC, sf.id DESC`,
+            [req.user.UserId, tenantId],
+        );
+        return res.json(result.rows);
+    } catch (err) {
+        if (err.errorCode === 'FORBIDDEN') return res.status(403).json({ errorCode: 'FORBIDDEN' });
+        console.error('getClientFiles error:', err);
+        return res.status(500).json({ message: 'שגיאה בשליפת קבצי הלקוח', errorCode: 'INTERNAL_ERROR' });
+    }
+};
+
 /**
  * GET /api/Files/stage-files/:caseId
  * Returns all stage files for a case.
