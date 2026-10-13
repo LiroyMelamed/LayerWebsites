@@ -64,7 +64,10 @@ export default function SignupScreen() {
     const recurringPrice = price.recurringAmountIls.toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const pricingLink = 'https://mela-media.co.il/platform/pricing/?' + new URLSearchParams({ platformId: form.platformId, resourceId: form.resourceId, signingId: form.signingId, billingInterval: form.billingInterval || 'monthly' }).toString();
 
-    const update = (patch) => setForm((prev) => ({ ...prev, ...patch }));
+    const update = (patch) => {
+        setError('');
+        setForm((prev) => ({ ...prev, ...patch }));
+    };
 
     const handlePhoneChange = (event) => {
         const raw = event?.target?.value ?? '';
@@ -96,7 +99,7 @@ export default function SignupScreen() {
         setStep((s) => Math.min(s + 1, STEPS.length - 1));
     };
 
-    const back = () => setStep((s) => Math.max(s - 1, 0));
+    const back = () => { setError(''); setStep((s) => Math.max(s - 1, 0)); };
 
     const submitSignup = async () => {
         if (signupAvailable !== true) { setError('הרשמה אוטומטית אינה זמינה כרגע. לא יבוצע חיוב.'); return; }
@@ -146,6 +149,12 @@ export default function SignupScreen() {
 
     const footer = (
         <SimpleContainer className="lw-signup__footer">
+            {error && (
+                <div className="lw-signup__feedback" role="alert" aria-atomic="true">
+                    <span>{error}</span>
+                    <button type="button" className="lw-signup__feedbackClose" aria-label="סגירת הודעת השגיאה" onClick={() => setError('')}>×</button>
+                </div>
+            )}
             {step > 0 && (
                 <SecondaryButton onPress={back} disabled={loading}>
                     חזרה
@@ -195,8 +204,6 @@ export default function SignupScreen() {
                         <span key={id} className={i <= step ? 'is-active' : ''}>{i + 1}</span>
                     ))}
                 </SimpleContainer>
-
-                {error && <SimpleContainer className="lw-signup__error">{error}</SimpleContainer>}
 
                 {step === 0 && (
                     <SimpleContainer className="lw-signup__fields">
