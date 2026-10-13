@@ -1218,7 +1218,11 @@
       "failed": "נכשל",
       "cancelled": "בוטל",
       "scheduled": "מתוכנן"
-    }
+    },
+    "cancelSubscription": "ביטול מנוי",
+    "cancelSubscriptionConfirm": "לבטל את המנוי? לא יחויבו תשלומים עתידיים. המערכת תמשיך לעבוד עד סוף תקופת הניסיון (אם עדיין בתוכה).",
+    "cancelSubscriptionOk": "המנוי בוטל",
+    "subscriptionCancelled": "המנוי בוטל — לא יחויבו תשלומים עתידיים"
   },
   "planPricing": {
     "title": "חבילות ותמחור",

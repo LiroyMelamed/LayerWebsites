@@ -30,7 +30,7 @@ function invalidateBillingCaches() {
 const billingApi = {
     invalidateCaches: invalidateBillingCaches,
 
-    getLockStatus: async () => ApiUtils.get(`${base}/lock-status`),
+    getLockStatus: async () => ApiUtils.get(`${base}/lock-status`, { timeout: 15000 }),
 
     getPlan: async () => {
         const now = Date.now();
@@ -99,6 +99,11 @@ const billingApi = {
     chargeNow: async (body) => {
         invalidateBillingCaches();
         return ApiUtils.post(`${base}/charge`, body || {});
+    },
+
+    cancelSubscription: async () => {
+        invalidateBillingCaches();
+        return ApiUtils.post(`${base}/cancel-subscription`, {});
     },
 };
 

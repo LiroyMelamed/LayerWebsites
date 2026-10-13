@@ -4,7 +4,7 @@
 
 const { runBillingMaintenance } = require('../../lib/billing/firmBillingService');
 const { withLegacyOffice } = require('../../lib/tenant/databaseScope');
-const { runWithTenant } = require('../../lib/tenant/tenantContext');
+const { runWithTenant, isMultiTenantMode } = require('../../lib/tenant/tenantContext');
 
 function toPositiveIntOrNull(v) {
     const n = Number(v);
@@ -45,8 +45,13 @@ function initBillingRenewalScheduler() {
             // Run at most once per poll window key; maintenance itself is idempotent.
             if (lastRunKey === key) return;
             lastRunKey = key;
-            // This legacy scheduler has always maintained the deployment's id=1
-            // account. Do not turn it into an unconsented tenant charging loop.
+            if(isMultiTenantMode()){
+                const results=await require('../../lib/billing/selfServiceRenewal').signupRenewal.due();
+                console.log('[billing-renewal] self-service',JSON.stringify({processed:results.length,needsReview:results.filter(r=>r.status==='needs_review').length}));
+                return;
+            }
+            // The dedicated deployment account remains separate from signup
+            // renewals, which require consent and their own office context.
             const result = await withLegacyOffice(() => runWithTenant(null, runBillingMaintenance));
             if (!result?.skipped) {
                 console.log('[billing-renewal]', JSON.stringify(result?.result?.ok != null ? { ok: result.result.ok } : result));

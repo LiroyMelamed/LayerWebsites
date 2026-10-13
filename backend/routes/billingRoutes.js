@@ -14,6 +14,8 @@ router.get('/usage', authMiddleware, requireOfficeOwner, billingController.getCu
 router.get('/plans', authMiddleware, requireOfficeOwner, billingController.listPlans);
 router.post('/package', authMiddleware, requireOfficeOwner, billingController.savePackage);
 router.post('/checkout', authMiddleware, requireOfficeOwner, billingController.createCheckout);
+router.post('/checkout/confirm', authMiddleware, requireOfficeOwner, billingController.confirmCheckout);
 router.post('/charge', authMiddleware, requireOfficeOwner, billingController.chargeNow);
+router.post('/cancel-subscription', authMiddleware, requireOfficeOwner, billingController.cancelSubscription);
 
 module.exports = router;

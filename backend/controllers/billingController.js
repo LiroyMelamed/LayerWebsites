@@ -28,6 +28,8 @@ function billingPayload(snap, extra = {}) {
             payUrl: snap.payUrl,
             payments: snap.payments || [],
             upcomingPayment: snap.upcomingPayment || null,
+            setupCheckoutAmountIls: snap.setupCheckoutAmountIls ?? 1,
+            takbullMode: snap.takbullMode || 'prod',
         },
         package: snap.package,
         ...extra,
@@ -173,6 +175,13 @@ exports.savePackage = async (req, res) => {
                 blocks: e.blocks || [],
             });
         }
+        if (e?.code === 'PACKAGE_PERSIST_AFTER_CHARGE') {
+            console.error('savePackage error:', e.code);
+            return res.status(500).json({
+                message: e.message,
+                errorCode: e.code,
+            });
+        }
         console.error('savePackage error:', e);
         return res.status(500).json({ message: e.message || 'שגיאה בשמירת חבילה' });
     }
@@ -197,6 +206,25 @@ exports.createCheckout = async (req, res) => {
     }
 };
 
+exports.confirmCheckout = async (req, res) => {
+    try {
+        const intentId = req.body?.intentId || null;
+        const uniqId = req.body?.uniqId || null;
+        if (!intentId && !uniqId) {
+            return res.status(400).json({ message: 'חסר מזהה תשלום' });
+        }
+        await billing.handleTakbullReturn({ uniqId, intentId });
+        const snap = await billing.getBillingSnapshot();
+        return res.status(200).json({
+            success: true,
+            ...billingPayload(snap),
+        });
+    } catch (e) {
+        console.error('confirmCheckout error:', e);
+        return res.status(500).json({ message: e.message || 'שגיאה באימות התשלום' });
+    }
+};
+
 exports.chargeNow = async (req, res) => {
     try {
         const result = await billing.chargeSavedCard({ kind: req.body?.kind || 'retry' });
@@ -204,6 +232,22 @@ exports.chargeNow = async (req, res) => {
     } catch (e) {
         console.error('chargeNow error:', e);
         return res.status(500).json({ message: e.message || 'שגיאה בחיוב' });
+    }
+};
+
+exports.cancelSubscription = async (req, res) => {
+    try {
+        const snap = await billing.cancelSubscription();
+        return res.status(200).json({
+            success: true,
+            ...billingPayload(snap),
+        });
+    } catch (e) {
+        if (e?.code === 'NO_BILLING') {
+            return res.status(404).json({ message: e.message });
+        }
+        console.error('cancelSubscription error:', e);
+        return res.status(500).json({ message: e.message || 'שגיאה בביטול מנוי' });
     }
 };
 

@@ -77,14 +77,15 @@ function computeFlags(row, now = new Date()) {
     const billingEnabled = row?.billingEnabled !== false;
     const complimentaryUntil = row?.complimentaryUntil || null;
     const stillComplimentary = !billingEnabled || isDateInFuture(complimentaryUntil, now);
-    const graceUntil = row?.graceUntil ? new Date(row.graceUntil) : null;
+    const cancelledDue = row?.autoRenew === false && Number(row?.priceMonthlyIls) > 0 && row?.renewsAt ? new Date(row.renewsAt) : null;
+    const graceUntil = row?.graceUntil ? new Date(row.graceUntil) : cancelledDue ? new Date(cancelledDue.getTime() + 72 * 60 * 60 * 1000) : null;
     const graceExpired = Boolean(
-        row?.status === 'past_due' && graceUntil && graceUntil.getTime() <= now.getTime()
+        (row?.status === 'past_due' || cancelledDue) && graceUntil && graceUntil.getTime() <= now.getTime()
     );
     const locked = Boolean(
         billingEnabled && !stillComplimentary && (row?.status === 'suspended' || graceExpired)
     );
-    return { billingEnabled, stillComplimentary, graceExpired, locked, complimentaryUntil };
+    return { billingEnabled, stillComplimentary, graceExpired, locked, complimentaryUntil, graceUntil };
 }
 
 function addCalendarMonth(from = new Date()) {
