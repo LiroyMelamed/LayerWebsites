@@ -14,7 +14,7 @@ import RequestLoadError from "../../../components/ui/RequestLoadError";
 import StatusNotice from "../../../components/ui/StatusNotice";
 import { useScreenSize } from "../../../providers/ScreenSizeProvider";
 import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
-import { ClientCasesScreenName, ClientDocumentsScreenName, ClientSignedDocumentsScreenName } from "../../../navigation/screenPaths";
+import { ClientCasesScreenName, ClientDocumentsScreenName } from "../../../navigation/screenPaths";
 import { clientPortalPath, formatPortalDate, hasPersonalSignature } from "../../../utils/clientPortalNavigation";
 import casesApi from "../../../api/casesApi";
 import clientPortalApi from "../../../api/clientPortalApi";
@@ -75,7 +75,7 @@ export default function ClientMainScreen() {
         .sort((left, right) => dateTimestamp(right.PersonalSignedAt) - dateTimestamp(left.PersonalSignedAt));
 
     const openDocuments = () => navigate(clientPortalPath(pathname, ClientDocumentsScreenName));
-    const openSigned = () => navigate(clientPortalPath(pathname, ClientSignedDocumentsScreenName));
+    const openSigned = () => navigate(clientPortalPath(pathname, ClientDocumentsScreenName, "?tab=signed"));
     const openCasesPage = () => navigate(clientPortalPath(pathname, ClientCasesScreenName));
     const openFile = file => navigate(clientPortalPath(pathname, ClientDocumentsScreenName, "?document=" + encodeURIComponent(file.PortalId)));
     const fileName = file => file.FileName || t("clientPortal.untitledDocument");
@@ -103,7 +103,6 @@ export default function ClientMainScreen() {
                 </header>
                 <nav className="lw-clientHome__quickAccess" aria-label={t("clientPortal.quickAccess")}>
                     <SecondaryButton style={BUTTON_STYLE} onPress={openDocuments}>{t("clientPortal.myDocuments")}</SecondaryButton>
-                    <SecondaryButton style={BUTTON_STYLE} onPress={openSigned}>{t("clientPortal.signedDocuments")}</SecondaryButton>
                     <SecondaryButton style={BUTTON_STYLE} onPress={openCasesPage}>{t("clientPortal.myCases")}</SecondaryButton>
                 </nav>
                 <div className="lw-clientHome__overview">
