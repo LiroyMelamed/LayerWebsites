@@ -1,16 +1,29 @@
-import { ClientStackName } from "../../../navigation/ClientStack";
 import {
     NotificationsScreenName,
     ProfileScreenName,
     SigningScreenName,
     ClientTicketScreenName,
+    ClientMainScreenName,
+    ClientCasesScreenName,
+    ClientDocumentsScreenName,
+    ClientSignedDocumentsScreenName,
 } from "../../../navigation/screenPaths";
 import TermsOfConditons from "../../termsAndConditions/TermsOfConditons";
 import { openExternalUrl } from "../../../utils/externalNavigation";
 import { getFirmPhone } from "../../../services/firmSettings";
+import { clientPortalPath } from '../../../utils/clientPortalNavigation';
 
 export const getClientNavBarData = (navigate, openPopup, closePopup, isFromApp = false, t) => {
     const NavBarLinks = [
+        ...[
+            ['clientHome', ClientMainScreenName, 'clientPortal.home'],
+            ['clientDocuments', ClientDocumentsScreenName, 'clientPortal.myDocuments'],
+            ['clientSignedDocuments', ClientSignedDocumentsScreenName, 'clientPortal.signedDocuments'],
+            ['clientCases', ClientCasesScreenName, 'clientPortal.caseStatus'],
+        ].map(([navKey, routeMatch, label]) => ({
+            navKey, routeMatch, buttonText: t(label), buttonScreen: null, icon: null,
+            onClick: () => navigate(clientPortalPath(window.location.pathname, routeMatch)),
+        })),
         // In the mobile app we already have Notifications/Profile, so hide them from the web menu.
         ...(!isFromApp
             ? [
@@ -20,7 +33,7 @@ export const getClientNavBarData = (navigate, openPopup, closePopup, isFromApp =
                     buttonText: t('nav.notifications'),
                     buttonScreen: null,
                     icon: null,
-                    onClick: () => { navigate(ClientStackName + NotificationsScreenName) }
+                    onClick: () => { navigate(clientPortalPath(window.location.pathname, NotificationsScreenName)) }
                 },
             ]
             : []),
@@ -30,7 +43,7 @@ export const getClientNavBarData = (navigate, openPopup, closePopup, isFromApp =
             buttonText: t('nav.signingFiles'),
             buttonScreen: null,
             icon: null,
-            onClick: () => { navigate(ClientStackName + SigningScreenName) }
+            onClick: () => { navigate(clientPortalPath(window.location.pathname, SigningScreenName)) }
         },
         {
             navKey: 'supportTicket',
@@ -38,7 +51,7 @@ export const getClientNavBarData = (navigate, openPopup, closePopup, isFromApp =
             buttonText: t('nav.supportTicket', { defaultValue: 'פנייה לתמיכה' }),
             buttonScreen: null,
             icon: null,
-            onClick: () => { navigate(ClientStackName + ClientTicketScreenName) }
+            onClick: () => { navigate(clientPortalPath(window.location.pathname, ClientTicketScreenName)) }
         },
         ...(!isFromApp
             ? [
@@ -48,7 +61,7 @@ export const getClientNavBarData = (navigate, openPopup, closePopup, isFromApp =
                     buttonText: t('nav.myProfile'),
                     buttonScreen: null,
                     icon: null,
-                    onClick: () => { navigate(ClientStackName + ProfileScreenName) },
+                    onClick: () => { navigate(clientPortalPath(window.location.pathname, ProfileScreenName)) },
                 },
             ]
             : []),

@@ -1,0 +1,67 @@
+@use '../../../styles/variables' as v;
+
+.lw-clientDocuments {
+    box-sizing: border-box;
+    inline-size: 100%; max-inline-size: 76rem; margin-inline: auto;
+    padding: 2rem clamp(1rem, 3vw, 2.5rem) 3rem; color: var(--lw-color-text, #2D3748);
+    h1 { margin: 0; font-size: 1.75rem; line-height: 1.35; }
+    h2 { font-size: 1.125rem; line-height: 1.5; }
+    p { line-height: 1.6; }
+    button { min-block-size: 2.75rem; }
+    button:focus-visible, input:focus-visible { outline: 2px solid var(--lw-color-primary, #2A4365); outline-offset: 3px; }
+    &__header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-block-end: 1.5rem; }
+    &__header p { margin-block: .5rem 0; color: #4A5568; }
+    &__tools { display: grid; grid-template-columns: minmax(0, 1fr) minmax(12rem, .8fr); align-items: end; gap: 1.5rem; margin-block-end: 1.5rem; }
+    &__tools .lw-segmentedSwitch { inline-size: 100%; }
+    &__tools .lw-simpleInput { min-block-size: 2.75rem; }
+    &__tools .lw-simpleInput__field { font-size: 16px; min-block-size: 2.5rem; box-sizing: border-box; }
+    &__notice { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .75rem 1rem; margin-block: 1rem; border: 1px solid #E2E8F0; border-radius: .5rem; background: #fff; }
+    &__resultCount { margin-block: 0 .75rem; color: #4A5568; font-size: .875rem; }
+    &__list { border: 1px solid #E2E8F0; border-radius: 1rem; background: #fff; overflow: hidden; }
+    &__row { display: flex; inline-size: 100%; align-items: center; text-align: start; gap: 1rem; padding: 1.25rem; font: inherit; color: inherit; border: 0; background: transparent; cursor: pointer; }
+    &__row + &__row { border-block-start: 1px solid #E2E8F0; }
+    &__row:hover { background: #F7FAFC; }
+    &__row > svg { flex-shrink: 0; color: #2A4365; }
+    &__rowText { flex: 1; min-inline-size: 0; }
+    &__rowText strong { display: block; font-weight: 600; overflow-wrap: anywhere; }
+    &__metadata { display: flex; flex-wrap: wrap; gap: .25rem 1rem; margin-block-start: .35rem; color: #4A5568; font-size: .875rem; overflow-wrap: anywhere; }
+    &__status { display: inline-block; flex-shrink: 0; background: #EDF2F7; color: #2A4365; border-radius: 1rem; padding: .25rem .65rem; font-size: .8125rem; font-weight: 500; line-height: 1.6; }
+    &__status.is-pending { background: #FFF3CD; color: #765A00; }
+    &__status.is-signed { background: #E6F4EA; color: #25633C; }
+    &__empty { padding: 3rem 1.5rem; text-align: center; }
+    &__empty > svg { color: #4A5568; }
+    &__loading { display: grid; gap: .65rem; padding: 1.5rem; }
+    &__arrow { transform: scaleX(1); }
+    [dir='ltr'] &__arrow { transform: scaleX(-1); }
+}
+.lw-clientDocumentPopup { max-inline-size: 38rem; }
+.lw-clientDocumentDetails {
+    min-inline-size: 0; inline-size: 100%; box-sizing: border-box; text-align: start; padding: 1rem .25rem .5rem;
+    h2 { font-size: 1.5rem; line-height: 1.5; margin: 0 0 .75rem; padding-inline-end: 1rem; overflow-wrap: anywhere; }
+    p { line-height: 1.65; }
+    dl { display: grid; gap: .9rem; margin-block: 1.5rem; }
+    dl > div { display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: 1rem; }
+    dt { color: #4A5568; } dd { margin: 0; overflow-wrap: anywhere; }
+    &__actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+    button { min-block-size: 2.75rem; height: auto; }
+}
+// The incumbent popup is RTL by default; this new content follows the user's locale.
+html[dir='ltr'] .lw-clientDocumentDetails { direction: ltr; }
+@media (max-width: 47.999rem) {
+    .lw-clientDocuments {
+        padding: 1.25rem 1rem 2rem;
+        &__header { flex-wrap: wrap; gap: .25rem; }
+        h1 { font-size: 1.5rem; }
+        &__tools { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+        &__row { gap: .75rem; flex-wrap: wrap; padding: 1rem; }
+        &__rowText { flex-basis: calc(100% - 4rem); }
+        &__row > &__status { margin-inline-start: 2.2rem; }
+        &__arrow { margin-inline-start: auto; }
+        &__notice { flex-wrap: wrap; }
+    }
+    .lw-clientDocumentDetails {
+        h2 { font-size: 1.25rem; }
+        dl > div { grid-template-columns: minmax(0, 1fr); gap: .2rem; }
+        &__actions > button { flex: 1 1 100%; }
+    }
+}

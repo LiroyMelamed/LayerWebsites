@@ -11,6 +11,7 @@ router.get("/presign-upload", authMiddleware, requireUploadPermission, filesCont
 router.get("/presign-read", authMiddleware, filesController.presignRead);
 
 // Stage files — any authenticated user can list/read (access checks inside controller)
+router.get("/client-files", authMiddleware, stageFilesController.getClientFiles);
 router.get("/stage-files/:caseId", authMiddleware, stageFilesController.getStageFiles);
 router.get("/stage-file-read/:fileId", authMiddleware, stageFilesController.readStageFile);
 
