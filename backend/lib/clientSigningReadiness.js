@@ -3,8 +3,10 @@ const { createAppError } = require('../utils/appError');
 
 function clientTenantId(req) {
     const tenantId = req.firmTenantId || null;
+    const scope = require('./tenant/databaseScope');
+    const validatedLegacyOffice = req.firmPermissionContextValidated === true && scope.enabled() && scope.current().mode === 'legacy';
     if ((req.tenant?.id && String(req.tenant.id) !== String(tenantId || '')) ||
-        (isMultiTenantMode() && !tenantId)) {
+        (isMultiTenantMode() && !tenantId && !validatedLegacyOffice)) {
         throw createAppError('FORBIDDEN', 403);
     }
     return tenantId;
