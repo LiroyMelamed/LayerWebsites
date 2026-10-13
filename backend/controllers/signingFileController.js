@@ -3361,93 +3361,18 @@ exports.uploadFileForSigning = async (req, res, next) => {
 };
 
 exports.getClientSigningFiles = async (req, res, next) => {
+    res.set('Cache-Control', 'private, no-store');
     try {
         const clientId = req.user?.UserId;
         if (!clientId) return fail(next, 'UNAUTHORIZED', 401);
         const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
         if (pagination === null) return;
 
-        const schemaSupport = await getSchemaSupport();
-
-        if (!schemaSupport.signaturespotsSignerUserId) {
-            // Legacy DB behavior: only primary client sees their files
-            const query =
-                `select
-                    sf.signingfileid      as "SigningFileId",
-                    sf.caseid             as "CaseId",
-                    sf.filename           as "FileName",
-                    sf.filekey            as "FileKey",
-                    sf.status             as "Status",
-                    sf.createdat          as "CreatedAt",
-                    sf.expiresat          as "ExpiresAt",
-                    sf.notes              as "Notes",
-                    sf.signedat           as "SignedAt",
-                    c.casename            as "CaseName",
-                    u.name                as "LawyerName",
-                    count(case when ss.isrequired = true and lower(coalesce(ss.fieldtype, 'signature')) != 'lawyerstamp' then ss.signaturespotid end) as "TotalSpots",
-                    coalesce(sum(case when ss.isrequired = true and ss.issigned = true and lower(coalesce(ss.fieldtype, 'signature')) != 'lawyerstamp' then 1 else 0 end),0) as "SignedSpots"
-                 from signingfiles sf
-                 join cases c  on c.caseid  = sf.caseid
-                 join users u  on u.userid  = sf.lawyerid
-                 left join signaturespots ss on ss.signingfileid = sf.signingfileid
-                 where sf.clientid = $1 AND sf.status<>'draft'
-                 group by sf.signingfileid, sf.caseid, sf.filename, sf.filekey,
-                          sf.status, sf.createdat, sf.expiresat, sf.notes, sf.signedat,
-                          c.casename, u.name
-                 order by sf.createdat desc` +
-                (pagination.enabled ? ` limit $2 offset $3` : ``);
-
-            const params = pagination.enabled
-                ? [clientId, pagination.limit, pagination.offset]
-                : [clientId];
-
-            const legacy = await pool.query(query, params);
-
-            return res.json({ files: legacy.rows });
-        }
-
-        const query =
-            `select 
-                sf.signingfileid      as "SigningFileId",
-                sf.caseid             as "CaseId",
-                sf.filename           as "FileName",
-                sf.filekey            as "FileKey",
-                sf.status             as "Status",
-                sf.createdat          as "CreatedAt",
-                sf.expiresat          as "ExpiresAt",
-                sf.notes              as "Notes",
-                sf.signedat           as "SignedAt",
-                c.casename            as "CaseName",
-                u.name                as "LawyerName",
-                count(case when ss.isrequired = true and lower(coalesce(ss.fieldtype, 'signature')) != 'lawyerstamp' then ss.signaturespotid end) as "TotalSpots",
-                coalesce(sum(case when ss.isrequired = true and ss.issigned = true and lower(coalesce(ss.fieldtype, 'signature')) != 'lawyerstamp' then 1 else 0 end),0) as "SignedSpots"
-             from signingfiles sf
-             left join cases c  on c.caseid  = sf.caseid
-             join users u  on u.userid  = sf.lawyerid
-             left join signaturespots ss
-                on ss.signingfileid = sf.signingfileid
-               and (ss.signeruserid = $1 or ss.signeruserid is null)
-             where sf.status<>'draft' AND (sf.clientid = $1
-                or exists (
-                    select 1
-                    from signaturespots ss2
-                    where ss2.signingfileid = sf.signingfileid
-                      and ss2.signeruserid = $1
-                ))
-             group by sf.signingfileid, sf.caseid, sf.filename, sf.filekey,
-                      sf.status, sf.createdat, sf.expiresat, sf.notes, sf.signedat,
-                      c.casename, u.name
-             order by sf.createdat desc` +
-            (pagination.enabled ? ` limit $2 offset $3` : ``);
-
-        const params = pagination.enabled
-            ? [clientId, pagination.limit, pagination.offset]
-            : [clientId];
-
-        const result = await pool.query(query, params);
-
-        return res.json({ files: result.rows });
+        const { listClientSigningFiles } = require('../lib/clientSigningReadiness');
+        const files = await listClientSigningFiles(pool, req, pagination);
+        return res.json({ files });
     } catch (err) {
+        if (err.errorCode === 'FORBIDDEN') return next(err);
         console.error("getClientSigningFiles error:", err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: "שגיאה בשליפת המסמכים של הלקוח" });
     }
@@ -5173,8 +5098,9 @@ exports.createPublicSigningLink = async (req, res, next) => {
         const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId, next });
         if (!enabledCheck.ok) return;
 
-        const signerUserId = parsePositiveIntStrict(req?.body?.signerUserId) ?? null;
         const requesterId = req.user?.UserId;
+        const signerUserId = req.clientSelfSigningLink === true
+            ? requesterId : (parsePositiveIntStrict(req?.body?.signerUserId) ?? null);
 
         const fileResult = await pool.query(
             `select signingfileid as "SigningFileId",
@@ -5195,7 +5121,7 @@ exports.createPublicSigningLink = async (req, res, next) => {
         }
 
         const file = fileResult.rows[0];
-        const isManager = canManageSigningFile({ file, requesterId, role: req.user?.Role, req });
+        const isManager = req.clientSelfSigningLink !== true && canManageSigningFile({ file, requesterId, role: req.user?.Role, req });
         const schemaSupport = await getSchemaSupport();
 
         let targetSignerUserId = signerUserId || file.ClientId;
@@ -5424,6 +5350,9 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
         }
 
         const { file, isLawyer } = authz;
+        // Legacy spots without an explicit signer belong only to the primary
+        // client, matching the ownership check used when accepting signatures.
+        const ownsLegacySpots = Number(file.ClientId) === Number(signerUserId);
 
         let spotsQuery = `select
                 signaturespotid as "SignatureSpotId",
@@ -5450,8 +5379,8 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
         // Other signers' unsigned spots are omitted so they cannot appear as canvases
         // or be targeted by "sign all" / next-spot navigation.
         if (schemaSupport.signaturespotsSignerUserId) {
-            spotsQuery += ` and (issigned = true or signeruserid = $2)`;
-            spotsParams.push(signerUserId);
+            spotsQuery += ` and (issigned = true or signeruserid = $2 or (signeruserid is null and $3::boolean))`;
+            spotsParams.push(signerUserId, ownsLegacySpots);
         }
         spotsQuery += ` order by pagenumber, y, x`;
 
@@ -5460,7 +5389,7 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
         const signatureSpots = await Promise.all(
             (spotsResult.rows || []).map(async (spot) => {
                 const canSign = schemaSupport.signaturespotsSignerUserId
-                    ? Number(spot?.SignerUserId) === Number(signerUserId)
+                    ? (spot?.SignerUserId == null ? ownsLegacySpots : Number(spot.SignerUserId) === Number(signerUserId))
                     : true;
                 const withCanSign = { ...spot, CanSign: canSign, IsMine: canSign };
 
@@ -5515,8 +5444,8 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
                     `select min(signerindex) as "myIndex"
                      from signaturespots
                      where signingfileid = $1
-                       and signeruserid = $2`,
-                    [signingFileId, signerUserId]
+                       and (signeruserid = $2 or (signeruserid is null and $3::boolean))`,
+                    [signingFileId, signerUserId, ownsLegacySpots]
                 );
                 const minIndex = lowestRes.rows[0]?.minIndex;
                 const myIndex = myIndexRes.rows[0]?.myIndex;
@@ -5544,8 +5473,8 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
                         )::int as "remaining"
                      from signaturespots
                      where signingfileid = $1
-                       and signeruserid = $2`,
-                    [signingFileId, signerUserId]
+                       and (signeruserid = $2 or (signeruserid is null and $3::boolean))`,
+                    [signingFileId, signerUserId, ownsLegacySpots]
                 );
                 const total = Number(doneRes.rows[0]?.total || 0);
                 const remaining = Number(doneRes.rows[0]?.remaining || 0);

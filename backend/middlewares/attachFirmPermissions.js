@@ -39,6 +39,7 @@ module.exports = async function attachFirmPermissions(req, res, next) {
                 return next(createAppError('FORBIDDEN', 403, getHebrewMessage('FORBIDDEN')));
             }
             req.firmTenantId = current.law_firm_tenant_id || null;
+            req.firmPermissionContextValidated = true;
             return next();
         }
         const result = await identityQuery(
