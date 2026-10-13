@@ -1,12 +1,10 @@
 import {
     NotificationsScreenName,
     ProfileScreenName,
-    SigningScreenName,
     ClientTicketScreenName,
     ClientMainScreenName,
     ClientCasesScreenName,
     ClientDocumentsScreenName,
-    ClientSignedDocumentsScreenName,
 } from "../../../navigation/screenPaths";
 import TermsOfConditons from "../../termsAndConditions/TermsOfConditons";
 import { openExternalUrl } from "../../../utils/externalNavigation";
@@ -18,7 +16,6 @@ export const getClientNavBarData = (navigate, openPopup, closePopup, isFromApp =
         ...[
             ['clientHome', ClientMainScreenName, 'clientPortal.home'],
             ['clientDocuments', ClientDocumentsScreenName, 'clientPortal.myDocuments'],
-            ['clientSignedDocuments', ClientSignedDocumentsScreenName, 'clientPortal.signedDocuments'],
             ['clientCases', ClientCasesScreenName, 'clientPortal.caseStatus'],
         ].map(([navKey, routeMatch, label]) => ({
             navKey, routeMatch, buttonText: t(label), buttonScreen: null, icon: null,
@@ -37,14 +34,6 @@ export const getClientNavBarData = (navigate, openPopup, closePopup, isFromApp =
                 },
             ]
             : []),
-        {
-            navKey: 'signingFiles',
-            routeMatch: SigningScreenName,
-            buttonText: t('nav.signingFiles'),
-            buttonScreen: null,
-            icon: null,
-            onClick: () => { navigate(clientPortalPath(window.location.pathname, SigningScreenName)) }
-        },
         {
             navKey: 'supportTicket',
             routeMatch: ClientTicketScreenName,

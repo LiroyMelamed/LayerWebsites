@@ -65,12 +65,14 @@ test('all shortcuts and individual documents retain the active tenant path, and 
     const quickAccess = screen.getByRole('navigation', { name: 'clientPortal.quickAccess' });
     fireEvent.click(within(quickAccess).getByRole('button', { name: 'clientPortal.myDocuments' }));
     expect(mockNavigate).toHaveBeenLastCalledWith('/melamedia/ClientStack/ClientDocumentsScreen');
-    fireEvent.click(within(quickAccess).getByRole('button', { name: 'clientPortal.signedDocuments' }));
-    expect(mockNavigate).toHaveBeenLastCalledWith('/melamedia/ClientStack/ClientSignedDocumentsScreen');
+    expect(within(quickAccess).getAllByRole('button')).toHaveLength(2);
+    expect(within(quickAccess).queryByRole('button', { name: 'clientPortal.signedDocuments' })).not.toBeInTheDocument();
     fireEvent.click(within(quickAccess).getByRole('button', { name: 'clientPortal.myCases' }));
     expect(mockNavigate).toHaveBeenLastCalledWith('/melamedia/ClientStack/ClientCasesScreen');
     fireEvent.click(await screen.findByRole('button', { name: 'clientPortal.reviewNamedDocument:Ready document' }));
     expect(mockNavigate).toHaveBeenLastCalledWith('/melamedia/ClientStack/ClientDocumentsScreen?document=signing%3Aready%20%2F%201');
+    fireEvent.click(screen.getByRole('button', { name: 'clientPortal.allSignedDocuments' }));
+    expect(mockNavigate).toHaveBeenLastCalledWith('/melamedia/ClientStack/ClientDocumentsScreen?tab=signed');
     fireEvent.click(screen.getByRole('button', { name: 'clientPortal.viewNamedDocument:My signed document' }));
     expect(mockNavigate).toHaveBeenLastCalledWith('/melamedia/ClientStack/ClientDocumentsScreen?document=signing%3Asigned');
     expect(screen.getByTestId('existing-mobile-toolbar')).toHaveTextContent('/melamedia/ClientStack/ClientMainScreen');
