@@ -22,7 +22,10 @@ export const filesApi = {
     deleteStageFile: async (fileId) => {
         return await apiUtils.delete(`files/stage-files/${fileId}`);
     },
-    readStageFile: async (fileId) => {
+    readStageFile: async (fileId, requestConfig) => {
+        if (requestConfig && typeof requestConfig === "object" && !Array.isArray(requestConfig)) {
+            return await apiUtils.get(`files/stage-file-read/${fileId}`, requestConfig);
+        }
         return await apiUtils.get(`files/stage-file-read/${fileId}`);
     },
 };
