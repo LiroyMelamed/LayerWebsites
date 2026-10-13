@@ -16,7 +16,7 @@ async function startSignup(req, res) {
         });
     } catch (e) {
         const code = e?.code || 'SIGNUP_FAILED';
-        const status = code.startsWith('LOGO_') ? (code === 'LOGO_STORAGE_UNAVAILABLE' ? 503 : 400) : code === 'SLUG_TAKEN' ? 409 : code === 'INVALID_SLUG' || code === 'MISSING_FIELDS' || code === 'INVALID_PACKAGE' || code === 'CONSENT_REQUIRED' || code === 'PRICE_CHANGED' || code === 'INVALID_IDEMPOTENCY_KEY' ? 400 : ['TAKBULL_NOT_CONFIGURED','SIGNUP_NOT_AVAILABLE'].includes(code) ? 503 : 500;
+        const status = code.startsWith('LOGO_') ? (code === 'LOGO_STORAGE_UNAVAILABLE' ? 503 : 400) : code === 'SLUG_TAKEN' ? 409 : code === 'INVALID_EMAIL' || code === 'INVALID_SLUG' || code === 'MISSING_FIELDS' || code === 'INVALID_PACKAGE' || code === 'CONSENT_REQUIRED' || code === 'PRICE_CHANGED' || code === 'INVALID_IDEMPOTENCY_KEY' ? 400 : ['TAKBULL_NOT_CONFIGURED','SIGNUP_NOT_AVAILABLE'].includes(code) ? 503 : 500;
         return res.status(status).json({ error: code, message: e?.message || 'Signup failed' });
     }
 }

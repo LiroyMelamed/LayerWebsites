@@ -66,6 +66,10 @@ test('paid signup and renewal with real PostgreSQL office policies', { skip: !pr
         return { version: 1, key: `signup-logos/${id}/${logo.sha256}.png`, url: `https://synthetic.invalid/${logo.sha256}.png`, sha256: logo.sha256 };
     };
     require('../utils/sendMessage').sendMessage = async () => { messages++; };
+    const welcome = require('../lib/tenant/signupWelcomeEmail');
+    const welcomeMessages=[];
+    const welcomeDispatcher=welcome.createWelcomeDispatcher({database:pool,deliver:async (message,id)=>{welcomeMessages.push({message,id});return {status:'sent'};}});
+    welcome.flushWelcome=id=>welcomeDispatcher.flush(id);
     const signup = require('../lib/tenant/signupService');
     const { quoteSignup, CONSENT_VERSION } = require('../lib/billing/signupQuote');
     const { createSignupRenewal } = require('../lib/billing/selfServiceRenewal');
@@ -78,6 +82,8 @@ test('paid signup and renewal with real PostgreSQL office policies', { skip: !pr
         expectedPriceIls: quoteSignup(selection).recurringAmountIls, logoDataUrl: 'data:image/png;base64,' + png.toString('base64') };
     let intent, office;
     await t.test('consent, final quote, mandatory logo and idempotent intent precede checkout', async () => {
+        await assert.rejects(signup.createSignupIntent({ ...payload, adminEmail: '' }), { code: 'INVALID_EMAIL' });
+        await assert.rejects(signup.createSignupIntent({ ...payload, adminEmail: 'one@example.com,two@example.com' }), { code: 'INVALID_EMAIL' });
         await assert.rejects(signup.createSignupIntent({ ...payload, billingConsent: false }), { code: 'CONSENT_REQUIRED' });
         await assert.rejects(signup.createSignupIntent({ ...payload, expectedPriceIls: 1 }), { code: 'PRICE_CHANGED' });
         await assert.rejects(signup.createSignupIntent({ ...payload, logoDataUrl: undefined }), { code: 'LOGO_REQUIRED' });
@@ -93,6 +99,8 @@ test('paid signup and renewal with real PostgreSQL office policies', { skip: !pr
         assert.equal((await signup.getSignupIntent(intent.id)).status, 'pending_payment');
         await assert.rejects(signup.completeSignupWithoutPayment(intent.id), { code: 'PAYMENT_REQUIRED' });
         assert.equal((await scope.withSystem(() => pool.query('SELECT id FROM law_firm_tenants WHERE slug=$1', [slug]))).rowCount, 0);
+        assert.equal(welcomeMessages.length,0);
+        assert.equal((await scope.withSystem(()=>pool.query('SELECT welcome_email_status FROM signup_intents WHERE id=$1',[id]))).rows[0].welcome_email_status,null);
     });
     await t.test('verified payment provisions once, encrypts card and grants three calendar months', async () => {
         for (const order of orders.values()) order.paid = true;
@@ -100,6 +108,12 @@ test('paid signup and renewal with real PostgreSQL office policies', { skip: !pr
         const completed = await signup.getSignupIntent(intent.id); assert.equal(completed.status, 'completed');
         office = (await scope.withSystem(() => pool.query('SELECT * FROM law_firm_tenants WHERE id=$1', [completed.tenantId]))).rows[0];
         assert.ok(office.owner_user_id); assert.equal(messages, 1);
+        assert.equal(welcomeMessages.length,1);
+        const mail=welcomeMessages[0].message;assert.equal(mail.toEmail,payload.adminEmail);assert.equal(mail.recurringAmountIls,532);
+        assert.equal(mail.loginUrl,`https://synthetic.invalid/${slug}/LoginStack/LoginScreen`);
+        assert.ok(!JSON.stringify(mail).includes('synthetic-card-token'));
+        assert.equal((await scope.withSystem(()=>pool.query('SELECT welcome_email_status FROM signup_intents WHERE id=$1',[id]))).rows[0].welcome_email_status,'sent');
+        await signup.syncSignup(id);await Promise.all([welcomeDispatcher.flush(id),welcomeDispatcher.flush(id)]);assert.equal(welcomeMessages.length,1);
         await runWithTenant(office, async () => {
             const account = (await pool.query('SELECT * FROM firm_billing')).rows[0];
             assert.equal(account.status, 'complimentary'); assert.equal(Number(account.price_monthly_ils), 532);
@@ -112,6 +126,23 @@ test('paid signup and renewal with real PostgreSQL office policies', { skip: !pr
         });
     });
     if (!office) return;
+    await t.test('durable welcome retry is single-dispatch and cannot roll back or expose a paid office',async()=>{
+        const setState=sql=>scope.withSystem(()=>pool.query(sql,[id]));
+        await setState("UPDATE signup_intents SET welcome_email_status='pending',welcome_email_next_at=now(),welcome_email_attempts=0 WHERE id=$1");
+        let deliveries=0;
+        const failed=welcome.createWelcomeDispatcher({database:pool,deliver:async()=>{deliveries++;return {status:'retry',code:'SMTP_REJECTED'};}});
+        await Promise.all([failed.flush(id),failed.flush(id),failed.flush(id)]);assert.equal(deliveries,1);
+        let state=(await setState('SELECT status,welcome_email_status FROM signup_intents WHERE id=$1')).rows[0];
+        assert.equal(state.status,'completed');assert.equal(state.welcome_email_status,'pending');
+        await setState('UPDATE signup_intents SET welcome_email_next_at=now() WHERE id=$1');
+        await welcomeDispatcher.flush(id);assert.equal(welcomeMessages.length,2);
+        await setState("UPDATE signup_intents SET welcome_email_status='sending',welcome_email_updated_at=now()-interval '6 minutes' WHERE id=$1");
+        await welcomeDispatcher.flush(id);assert.equal(welcomeMessages.length,2);
+        state=(await setState('SELECT status,welcome_email_status FROM signup_intents WHERE id=$1')).rows[0];assert.equal(state.welcome_email_status,'uncertain');assert.equal(state.status,'completed');
+        await welcomeDispatcher.flush(id);assert.equal(welcomeMessages.length,2);
+        const stranger={id:crypto.randomUUID()};assert.equal((await runWithTenant(stranger,()=>pool.query('SELECT welcome_email FROM signup_intents WHERE id=$1',[id]))).rowCount,0);
+        await setState("UPDATE signup_intents SET welcome_email_status='sent',welcome_email_error=null WHERE id=$1");
+    });
     let clock = new Date(), calls = 0;
     const renewal = mode => createSignupRenewal({ database: pool, now: () => clock, credentials: provider.getTakbullCredentialsFromEnv,
         charge: async input => { calls++; assert.equal(input.amount, 532); assert.equal(input.cardExternalToken, 'synthetic-card-token');

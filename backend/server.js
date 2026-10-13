@@ -65,6 +65,7 @@ const server = app.listen(PORT, HOST, async () => {
     startDailyAgendaScheduler();
     startHebcalHolidaysScheduler();
     initBillingRenewalScheduler();
+    require('./lib/tenant/signupWelcomeEmail').startWelcomeWorker();
 });
 
 // Hard timeouts at the Node server layer (useful behind Nginx).
