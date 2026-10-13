@@ -32,6 +32,13 @@ function toRelativePath(pathname) {
     return p.startsWith("/") ? p.slice(1) : p;
 }
 
+function SignedDocumentsRedirect() {
+    const location = useLocation();
+    const params = new URLSearchParams(location.search);
+    params.set("tab", "signed");
+    return <Navigate replace to={clientPortalPath(location.pathname, ClientDocumentsScreenName, `?${params}${location.hash}`)} />;
+}
+
 function ClientStack() {
     const location = useLocation();
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -46,7 +53,7 @@ function ClientStack() {
                     <Route path={toRelativePath(ClientMainScreenName)} element={<ClientMainScreen />} />
                     <Route path={toRelativePath(ClientCasesScreenName)} element={<ClientCasesScreen />} />
                     <Route path={toRelativePath(ClientDocumentsScreenName)} element={<ClientDocumentsScreen />} />
-                    <Route path={toRelativePath(ClientSignedDocumentsScreenName)} element={<ClientDocumentsScreen initialTab="signed" />} />
+                    <Route path={toRelativePath(ClientSignedDocumentsScreenName)} element={<SignedDocumentsRedirect />} />
                     <Route path={toRelativePath(NotificationsScreenName)} element={<NotificationsScreen />} />
                     <Route path={toRelativePath(SigningScreenName)} element={<SigningScreen />} />
                     <Route path={toRelativePath(ProfileScreenName)} element={<ProfileScreen />} />
