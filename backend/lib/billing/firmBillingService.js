@@ -398,10 +398,10 @@ async function getBillingSnapshot() {
     };
 }
 
-async function syncTenantSubscription(pkg) {
+async function syncTenantSubscription(pkg, database = pool) {
     const quotas = quotasForPackage(pkg);
     try {
-        await pool.query(
+        await database.query(
             `INSERT INTO tenant_subscriptions (tenant_id, plan_key, status, starts_at, updated_at, created_at)
              SELECT u.userid, $1, 'active', now(), now(), now()
              FROM users u
@@ -413,6 +413,7 @@ async function syncTenantSubscription(pkg) {
             [quotas.planKey, getCurrentTenantId()]
         );
     } catch (e) {
+        if (database !== pool) throw e;
         if (!isRelationMissingError(e)) {
             console.warn('[billing] sync tenant_subscriptions failed:', e?.message);
         }
@@ -1023,6 +1024,14 @@ async function chargeSavedCardForPackageUpgrade({
     skipEmail,
     upgradeOperation,
 } = {}) {
+    if (await hasSelfServiceAgreement()) {
+        const result = await require('./selfServiceUpgrade').chargeSelfServiceUpgrade({
+            tenantId: getCurrentTenantId(), target: upgradeOperation.targetPackage,
+            interval: normalizeBillingInterval(upgradeOperation.interval), amount: Number(amountOverride),
+            charge: chargeTakbullTokenFn,
+        });
+        return { ...result, snapshot: await getBillingSnapshot() };
+    }
     const creds = getTakbullCredentialsFromEnv();
     const snap = await getBillingSnapshot();
     const card = await getActiveCard();
@@ -1196,6 +1205,21 @@ async function savePackage({ platformId, resourceId, signingId, billingInterval,
         && evaluation.priceIncreased;
 
     async function persistPackageRow() {
+        if (await hasSelfServiceAgreement()) {
+            const client = await pool.connect();
+            try {
+                await client.query('BEGIN');
+                await client.query('SELECT id FROM firm_billing WHERE law_firm_tenant_id=$1 FOR UPDATE', [getCurrentTenantId()]);
+                await require('./selfServiceUpgrade').assertNoPendingPayment(client, getCurrentTenantId());
+                await client.query(`UPDATE firm_billing SET platform_id=$2,resource_id=$3,signing_id=$4,
+                    price_monthly_ils=$5,billing_interval=$6,updated_at=now() WHERE law_firm_tenant_id=$1`,
+                [getCurrentTenantId(), pkg.platformId, pkg.resourceId, pkg.signingId, pkg.total, interval]);
+                await syncTenantSubscription(pkg, client);
+                await client.query('COMMIT');
+            } catch (error) { await client.query('ROLLBACK'); throw error; }
+            finally { client.release(); }
+            return;
+        }
         await api.updateBilling({
             platform_id: pkg.platformId,
             resource_id: pkg.resourceId,
@@ -1240,6 +1264,9 @@ async function savePackage({ platformId, resourceId, signingId, billingInterval,
                 interval,
             },
         });
+        if (charged?.appliedAtomically) {
+            return { saved: true, charged: Boolean(charged.charged), snapshot: charged.snapshot, evaluation };
+        }
         if (charged?.ok === false || charged?.snapshot?.status === 'past_due') {
             const checkout = await api.createCheckout({
                 kind: interval === 'yearly' ? 'annual' : 'retry',
@@ -1354,7 +1381,7 @@ async function handleTakbullNotification({ uniqId, query } = {}) {
     }
 
     // New self-service renewal cycles settle only their durable scoped reservation.
-    if(intent?.signup_cycle_at)return {ok:true,paid:false,reason:'renewal_server_settlement'};
+    if(intent?.signup_cycle_at || intent?.package_snapshot?.selfServiceOperation === 'upgrade')return {ok:true,paid:false,reason:'scoped_server_settlement'};
     if(intent.law_firm_tenant_id && getCurrentTenantId()!==intent.law_firm_tenant_id){
         const {runWithTenant}=require('../tenant/tenantContext');
         return runWithTenant({id:intent.law_firm_tenant_id},()=>handleTakbullNotification({uniqId,query}));

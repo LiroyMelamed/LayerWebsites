@@ -23,6 +23,9 @@ test('paid signup and renewal with real PostgreSQL office policies', { skip: !pr
     const { decryptSecret } = require('../lib/billing/secrets');
     t.after(() => pool.end());
     await pool.ensureOfficeIsolation();
+    // The disposable isolation fixture clones schema, not catalogue seed rows.
+    await scope.withSystem(() => pool.query(`INSERT INTO subscription_plans(plan_key,name,documents_retention_days)
+        VALUES('BASIC','Basic',60),('PRO','Pro',180),('ENTERPRISE','Enterprise',365) ON CONFLICT(plan_key) DO NOTHING`));
     // Previous runs in this named disposable database are inert, never deleted.
     await scope.withSystem(() => pool.query(`UPDATE firm_billing SET auto_renew=false WHERE law_firm_tenant_id IN
         (SELECT id FROM law_firm_tenants WHERE slug LIKE 'qa-release-%' AND name='Synthetic release office')`));
@@ -31,6 +34,7 @@ test('paid signup and renewal with real PostgreSQL office policies', { skip: !pr
     provider.getTakbullCredentialsFromEnv = () => ({ apiKey: 'synthetic', apiSecret: 'synthetic', mode: 'test' });
     provider.createTakbullPaymentPage = async input => {
         assert.equal(input.amount, 1); assert.equal(input.currency, 'ILS'); assert.equal(input.saveToken, true);
+        if (input.orderReference?.startsWith('signup-')) assert.equal(input.returnMode, 'redirect');
         hostedCalls++;
         const uniqId = crypto.randomUUID(); orders.set(uniqId, { ...input, paid: false, transactionId: crypto.randomUUID() });
         return { uniqId, redirectUrl: 'https://synthetic.invalid/pay/' + uniqId };
@@ -50,7 +54,8 @@ test('paid signup and renewal with real PostgreSQL office policies', { skip: !pr
         if (url.pathname.endsWith('/GetTransaction')) {
             const id = url.searchParams.get('transactionInternalNumber');
             assert.ok([...orders.values()].some(o => o.transactionId === id && o.paid));
-            return { ok: true, json: async () => ({ transactionId: id, currency: 'ILS', amount: 1, status: 1, statusCode: 0,
+            const transaction = [...orders.values()].find(o => o.transactionId === id);
+            return { ok: true, json: async () => ({ transactionId: id, currency: 'ILS', amount: transaction.amount || 1, status: 1, statusCode: 0,
                 transactionType: 10, paymentMethod: 3, cardToken: 'synthetic-card-token', last4DigitsCardNumber: '1234' }) };
         }
         throw Error('UNEXPECTED_NETWORK_REQUEST');
@@ -207,6 +212,53 @@ test('paid signup and renewal with real PostgreSQL office policies', { skip: !pr
         await runWithTenant(office, async () => {
             assert.equal((await pool.query('SELECT userid FROM users')).rowCount, 2);
             assert.equal((await pool.query('SELECT id FROM firm_payment_methods WHERE is_active')).rowCount, 1);
+        });
+    });
+    await t.test('a lost upgrade response retains its reservation and cannot charge again', async () => {
+        const billing = require('../lib/billing/firmBillingService');
+        let upgradeCalls = 0;
+        billing.setChargeTakbullTokenForTests(async () => { upgradeCalls++; throw Error('SYNTHETIC_UPGRADE_TIMEOUT'); });
+        try {
+            await runWithTenant(office, async () => {
+                await pool.query("UPDATE firm_payment_intents SET status='cancelled' WHERE status='pending'");
+                await pool.query("UPDATE firm_billing SET status='active',auto_renew=true,grace_until=null,complimentary_until=null,renews_at=now()+interval '15 days'");
+                const selection = { platformId: 'site', resourceId: 'pro', signingId: 'none', billingInterval: 'monthly', usage: {} };
+                await assert.rejects(billing.savePackage(selection), /SYNTHETIC_UPGRADE_TIMEOUT/);
+                assert.equal((await pool.query("SELECT id FROM firm_payment_intents WHERE kind='upgrade' AND status='pending'")).rowCount, 1);
+                await assert.rejects(billing.savePackage(selection), { code: 'PAYMENT_RECONCILIATION_REQUIRED' });
+                await assert.rejects(billing.savePackage({ ...selection, resourceId: 'basic' }), { code: 'PAYMENT_RECONCILIATION_REQUIRED' });
+                assert.equal(upgradeCalls, 1);
+                assert.equal((await pool.query('SELECT resource_id FROM firm_billing')).rows[0].resource_id, 'basic');
+            });
+        } finally { billing.setChargeTakbullTokenForTests(); }
+    });
+    await t.test('declined upgrades preserve paid access; concurrent verified upgrades settle once', async () => {
+        const billing = require('../lib/billing/firmBillingService');
+        const selection = { platformId: 'site', resourceId: 'pro', signingId: 'none', billingInterval: 'monthly', usage: {} };
+        let upgrades = 0;
+        await runWithTenant(office, async () => {
+            await pool.query("UPDATE firm_payment_intents SET status='cancelled' WHERE kind='upgrade' AND status='pending'");
+            billing.setChargeTakbullTokenForTests(async () => { upgrades++; return { ok: false }; });
+            try {
+                const before = (await pool.query('SELECT * FROM firm_billing')).rows[0];
+                await assert.rejects(billing.savePackage(selection), { code: 'PAYMENT_DECLINED' });
+                const declined = (await pool.query('SELECT * FROM firm_billing')).rows[0];
+                assert.equal(declined.status, before.status); assert.equal(+declined.renews_at, +before.renews_at);
+                assert.equal(declined.resource_id, 'basic');
+                const callsBefore = upgrades;
+                billing.setChargeTakbullTokenForTests(async input => {
+                    upgrades++; const transactionId = crypto.randomUUID();
+                    orders.set(transactionId, { transactionId, amount: input.amount, paid: true });
+                    return { ok: true, transactionInternalNumber: transactionId };
+                });
+                const results = await Promise.allSettled([billing.savePackage(selection), billing.savePackage(selection), billing.savePackage(selection)]);
+                assert.ok(results.some(r => r.status === 'fulfilled' && r.value.charged), JSON.stringify(results.map(r => r.status === 'rejected' ? r.reason.message : r.value)));
+                assert.equal(upgrades, callsBefore + 1);
+                assert.equal((await pool.query("SELECT id FROM firm_payment_intents WHERE kind='upgrade' AND status='succeeded'")).rowCount, 1);
+                assert.equal((await pool.query('SELECT resource_id FROM firm_billing')).rows[0].resource_id, 'pro');
+                await billing.savePackage(selection); assert.equal(upgrades, callsBefore + 1);
+                await assert.rejects(billing.savePackage({ ...selection, resourceId: 'basic', usage: { storage: { bytesTotal: 10 ** 15 }, seats: { used: 10000 } } }), { code: 'PACKAGE_DOWNGRADE_BLOCKED' });
+            } finally { billing.setChargeTakbullTokenForTests(); }
         });
     });
 });
