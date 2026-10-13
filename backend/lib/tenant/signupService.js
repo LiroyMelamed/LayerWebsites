@@ -167,6 +167,7 @@ async function createSignupCheckout(intentId) {
     } catch(e) { await c.query('ROLLBACK'); throw e; } finally { c.release(); }
     // Durable reservation precedes provider contact. An unknown result must never trigger another charge.
     const page = await createTakbullPaymentPage({credentials:creds,orderReference,amount:1,currency:'ILS',
+        returnMode:'redirect',
         redirectAddress:signupReturnUrl(intentId),cancelReturnAddress:signupCancelUrl(intentId),ipnAddress:signupIpnUrl(),
         purpose:'MelaMedia — אימות כרטיס ופתיחת משרד',saveToken:true,customerFullName:intent.adminName,customerPhone:intent.adminPhone,customerEmail:intent.adminEmail});
     await pool.query('UPDATE firm_payment_intents SET takbull_uniq_id=$2,updated_at=now() WHERE id=$1',[paymentIntentId,page.uniqId]);

@@ -2,17 +2,18 @@
 
 // Center signup body vertically between logo (top) and action button (bottom)
 .lw-loginSimpleScreen__layout:has(.lw-signup__content) {
-    flex: 1;
+    flex: 0 0 auto;
+    height: auto;
     min-height: 100%;
 }
 
 .lw-loginSimpleScreen__main:has(.lw-signup__content) {
-    flex: 1;
+    flex: 1 0 auto;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    min-height: 0;
+    min-height: auto;
     padding-block: v.$space-2;
 }
 
