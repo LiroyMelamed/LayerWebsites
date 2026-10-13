@@ -28,6 +28,8 @@ export const ShortNavRedirectScreenName = "/n/:slug";
 
 export const ClientMainScreenName = "/ClientMainScreen";
 export const ClientCasesScreenName = "/ClientCasesScreen";
+export const ClientDocumentsScreenName = "/ClientDocumentsScreen";
+export const ClientSignedDocumentsScreenName = "/ClientSignedDocumentsScreen";
 export const SigningScreenName = "/SigningScreen";
 export const NotificationsScreenName = "/Notifications";
 export const ProfileScreenName = "/ProfileScreen";
