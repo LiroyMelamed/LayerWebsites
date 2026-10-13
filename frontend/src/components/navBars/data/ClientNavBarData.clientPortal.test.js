@@ -8,12 +8,12 @@ jest.mock('../../../services/firmSettings', () => ({ getFirmPhone: () => '155500
 const t = key => key;
 beforeEach(() => { jest.clearAllMocks(); window.history.replaceState({}, '', '/office/ClientStack/ClientMainScreen'); });
 
-test('adds portal destinations to the existing web menu while preserving previous destinations', () => {
+test('provides one documents entry in the web menu while retaining notifications and support', () => {
     const navigate = jest.fn();
     const { NavBarLinks } = getClientNavBarData(navigate, jest.fn(), jest.fn(), false, t);
     expect(NavBarLinks.map(item => item.navKey)).toEqual([
-        'clientHome', 'clientDocuments', 'clientSignedDocuments', 'clientCases',
-        'notifications', 'signingFiles', 'supportTicket', 'myProfile', 'terms', 'contact',
+        'clientHome', 'clientDocuments', 'clientCases',
+        'notifications', 'supportTicket', 'myProfile', 'terms', 'contact',
     ]);
     for (const item of NavBarLinks.filter(item => item.routeMatch)) {
         item.onClick();
@@ -21,10 +21,10 @@ test('adds portal destinations to the existing web menu while preserving previou
     }
 });
 
-test('native mode retains portal access and incumbent signing/support without duplicating native footer destinations', () => {
+test('native mode has the same unified documents entry without duplicating native footer destinations', () => {
     const { NavBarLinks } = getClientNavBarData(jest.fn(), jest.fn(), jest.fn(), true, t);
     expect(NavBarLinks.map(item => item.navKey)).toEqual([
-        'clientHome', 'clientDocuments', 'clientSignedDocuments', 'clientCases', 'signingFiles', 'supportTicket', 'terms',
+        'clientHome', 'clientDocuments', 'clientCases', 'supportTicket', 'terms',
     ]);
 });
 
