@@ -19,7 +19,7 @@ function createSignupRenewal({database=pool,charge=chargeTakbullToken,verify=ver
             WHERE law_firm_tenant_id=$1 AND billing_enabled AND renews_at<=$2
             AND (complimentary_until IS NULL OR complimentary_until<=$2)`,[tenantId,failedAt]);
     }
-    async function renew(tenantId) {
+    async function renew(tenantId, { retryFailed = false } = {}) {
         const c=await database.connect();let intent,account,card;
         try {
             await c.query('BEGIN');
@@ -29,8 +29,14 @@ function createSignupRenewal({database=pool,charge=chargeTakbullToken,verify=ver
             if(!account?.billing_enabled||account.auto_renew===false||!account.renews_at||new Date(account.renews_at)>now()||new Date(account.complimentary_until||0)>now()) {
                 await c.query('COMMIT');return {handled:true,skipped:true,reason:'not_due_or_cancelled'};
             }
-            const prior=(await c.query('SELECT status FROM firm_payment_intents WHERE law_firm_tenant_id=$1 AND signup_cycle_at=$2',[tenantId,account.renews_at])).rows[0];
-            if(prior){await c.query('COMMIT');return {handled:true,skipped:true,status:prior.status};}
+            const unresolved=(await c.query(`SELECT id FROM firm_payment_intents WHERE law_firm_tenant_id=$1
+                AND status='pending' AND kind<>'setup' AND signup_intent_id IS NULL LIMIT 1`,[tenantId])).rows[0];
+            if(unresolved){await c.query('COMMIT');return {handled:true,skipped:true,status:'pending'};}
+            const prior=(await c.query(`SELECT status FROM firm_payment_intents WHERE law_firm_tenant_id=$1 AND signup_cycle_at=$2
+                ORDER BY (status <> 'failed') DESC,created_at DESC LIMIT 1`,[tenantId,account.renews_at])).rows[0];
+            // Only an explicit owner retry can follow a definite decline. A pending
+            // or uncertain outcome remains reserved, including concurrent retries.
+            if(prior && !(retryFailed && prior.status==='failed')){await c.query('COMMIT');return {handled:true,skipped:true,status:prior.status};}
             card=(await c.query('SELECT token_encrypted FROM firm_payment_methods WHERE law_firm_tenant_id=$1 AND is_active',[tenantId])).rows[0];
             if(!card||!credentials())throw Error('SIGNUP_BILLING_NOT_CONFIGURED');
             const amount=renewalAmount(account,consent);

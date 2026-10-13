@@ -217,17 +217,17 @@ async function getActiveCard() {
     }
 }
 
-async function saveCardFromToken(tokenInfo) {
+async function saveCardFromToken(tokenInfo, database = pool) {
     if (!tokenInfo?.token) return null;
     const encrypted = encryptSecret(tokenInfo.token);
     const tenantId = getCurrentTenantId();
     if (tenantId) {
-        await pool.query(
+        await database.query(
             `UPDATE firm_payment_methods SET is_active = false, updated_at = now()
              WHERE is_active = true AND law_firm_tenant_id = $1`,
             [tenantId]
         );
-        const res = await pool.query(
+        const res = await database.query(
             `INSERT INTO firm_payment_methods (provider, token_encrypted, last4, exp_month, exp_year, card_brand, is_active, law_firm_tenant_id)
              VALUES ('takbull', $1, $2, $3, $4, $5, true, $6)
              RETURNING id, last4, exp_month, exp_year, card_brand`,
@@ -242,8 +242,8 @@ async function saveCardFromToken(tokenInfo) {
         );
         return res.rows[0];
     }
-    await pool.query(`UPDATE firm_payment_methods SET is_active = false, updated_at = now() WHERE is_active = true AND law_firm_tenant_id IS NULL`);
-    const res = await pool.query(
+    await database.query(`UPDATE firm_payment_methods SET is_active = false, updated_at = now() WHERE is_active = true AND law_firm_tenant_id IS NULL`);
+    const res = await database.query(
         `INSERT INTO firm_payment_methods (provider, token_encrypted, last4, exp_month, exp_year, card_brand, is_active)
          VALUES ('takbull', $1, $2, $3, $4, $5, true)
          RETURNING id, last4, exp_month, exp_year, card_brand`,
@@ -689,6 +689,13 @@ async function applyIntentPackageSnapshot(intent) {
     return true;
 }
 
+async function hasSelfServiceAgreement() {
+    const tenantId = getCurrentTenantId();
+    if (!tenantId) return false;
+    return (await pool.query(`SELECT 1 FROM signup_intents WHERE law_firm_tenant_id=$1 AND status='completed'
+        AND consent_version IN ('signup-1ils-3months-v1','signup-1ils-3months-v2') LIMIT 1`, [tenantId])).rowCount > 0;
+}
+
 async function settleSuccessfulPayment({ intent, tokenInfo, transactionId } = {}) {
     if (intent?.signup_intent_id) {
         if (intent?.id) {
@@ -706,6 +713,32 @@ async function settleSuccessfulPayment({ intent, tokenInfo, transactionId } = {}
         const { completeSignupFromPaymentIntent } = require('../tenant/signupService');
         const provisioned = await completeSignupFromPaymentIntent(intent.id, tokenInfo);
         return { signup: true, provisioned };
+    }
+
+    // A card-verification fee is never payment for an overdue subscription.
+    // Save the replacement card and receipt atomically, without changing access,
+    // grace, the agreed price, the renewal date or other unresolved payments.
+    if (intent?.kind === 'setup' && await hasSelfServiceAgreement()) {
+        if (Number(intent.amount_ils) !== 1 || !tokenInfo?.token || !encryptSecret(tokenInfo.token).startsWith('enc:v1:')) {
+            throw new Error('CARD_VERIFICATION_REQUIRED');
+        }
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            await client.query('SELECT id FROM firm_billing WHERE law_firm_tenant_id=$1 FOR UPDATE', [getCurrentTenantId()]);
+            const existing = (await client.query('SELECT status FROM firm_payment_intents WHERE id=$1 FOR UPDATE', [intent.id])).rows[0];
+            if (!existing) throw new Error('PAYMENT_NOT_FOUND');
+            if (existing.status !== 'succeeded') {
+                await saveCardFromToken(tokenInfo, client);
+                await client.query(`UPDATE firm_payment_intents SET status='succeeded',takbull_transaction_id=$2,
+                    settled_at=now(),updated_at=now(),error_message=null WHERE id=$1`, [intent.id, transactionId]);
+                await client.query(`INSERT INTO firm_payment_events(intent_id,event_type,payload)
+                    VALUES($1,'card_verified','{}'::jsonb)`, [intent.id]);
+            }
+            await client.query('COMMIT');
+        } catch (error) { await client.query('ROLLBACK'); throw error; }
+        finally { client.release(); }
+        return getBillingSnapshot();
     }
 
     if (intent?.id) {
@@ -812,7 +845,7 @@ async function createCheckout({ kind, customer, pendingPackage } = {}) {
         ? (interval === 'yearly' ? yearlyTotalIls(pricedPending.total) : pricedPending.total)
         : (isSetup
             ? SETUP_AMOUNT_ILS
-            : (interval === 'yearly' ? Number(snap.priceYearlyIls || 0) : Number(snap.package.total || 0)));
+            : (interval === 'yearly' ? Number(snap.priceYearlyIls || 0) : Number(snap.priceMonthlyIls ?? snap.package.total ?? 0)));
     if (!isSetup && amount <= 0) {
         const err = new Error('אין סכום לחיוב');
         err.code = 'NO_AMOUNT';
@@ -823,14 +856,28 @@ async function createCheckout({ kind, customer, pendingPackage } = {}) {
     const purpose = isSetup
         ? 'אימות כרטיס אשראי — מנוי מערכת'
         : (interval === 'yearly' ? 'מנוי שנתי — מערכת עורכי דין (10% הנחה)' : 'מנוי חודשי — מערכת עורכי דין');
-    const intent = await createIntent({
+    const checkoutIntent = {
         kind: intentKind,
         amountIls: amount,
         purpose,
         packageSnapshot: pendingSelection
             ? { ...pricedPending, billingInterval: interval }
             : { ...snap.package, billingInterval: interval },
-    });
+    };
+    let intent;
+    if (!isSetup && await hasSelfServiceAgreement()) {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            await client.query('SELECT id FROM firm_billing WHERE law_firm_tenant_id=$1 FOR UPDATE', [getCurrentTenantId()]);
+            const unresolved = await client.query(`SELECT id FROM firm_payment_intents WHERE law_firm_tenant_id=$1
+                AND status='pending' AND kind<>'setup' AND signup_intent_id IS NULL LIMIT 1`, [getCurrentTenantId()]);
+            if (unresolved.rowCount) throw Object.assign(new Error('תשלום קודם עדיין בבדיקה. אין לשלם שוב עד לבירור.'), { code: 'PAYMENT_RECONCILIATION_REQUIRED' });
+            intent = await createIntent(checkoutIntent, client);
+            await client.query('COMMIT');
+        } catch (error) { await client.query('ROLLBACK'); throw error; }
+        finally { client.release(); }
+    } else intent = await createIntent(checkoutIntent);
 
     const page = await createTakbullPaymentPage({
         credentials: creds,
@@ -864,7 +911,7 @@ async function createCheckout({ kind, customer, pendingPackage } = {}) {
 
 async function chargeSavedCard({ kind, amountOverride, skipEmail, upgradeOperation, automatic = false } = {}) {
     if (getCurrentTenantId() && !upgradeOperation?.targetPackage) {
-        const result=await require('./selfServiceRenewal').signupRenewal.renew(getCurrentTenantId());
+        const result=await require('./selfServiceRenewal').signupRenewal.renew(getCurrentTenantId(), { retryFailed: !automatic && kind === 'retry' });
         if(result.handled)return {ok:result.status==='succeeded',...result,snapshot:await getBillingSnapshot()};
     }
     if (upgradeOperation?.targetPackage) {
@@ -1311,6 +1358,14 @@ async function handleTakbullNotification({ uniqId, query } = {}) {
     if(intent.law_firm_tenant_id && getCurrentTenantId()!==intent.law_firm_tenant_id){
         const {runWithTenant}=require('../tenant/tenantContext');
         return runWithTenant({id:intent.law_firm_tenant_id},()=>handleTakbullNotification({uniqId,query}));
+    }
+
+    if (intent.kind === 'setup' && await hasSelfServiceAgreement()) {
+        if (!validated.ok || !validated.paid) return { ok: true, paid: false };
+        if (intent.takbull_uniq_id !== uniqId) throw new Error('SIGNUP_PAYMENT_IDENTITY_MISMATCH');
+        const verified = await require('../payments/verifySignupPayment').verifySignupPayment(creds, uniqId, intent.order_reference);
+        await settleSuccessfulPayment({ intent, tokenInfo: verified.tokenInfo, transactionId: verified.transactionId });
+        return { ok: true, paid: true, cardVerified: true };
     }
 
     const tokenInfo = validated.token
