@@ -681,7 +681,8 @@
       "long_in_stage": "{{count}} תיקים בשלב הנוכחי זמן ממושך",
       "completion_approaching": "{{count}} תיקים עם תאריך סיום משוער מתקרב",
       "rsvp_pending": "{{count}} הזמנות ממתינות לאישור",
-      "completion_passed": "{{count}} תיקים עם תאריך סיום משוער שחלף"
+      "completion_passed": "{{count}} תיקים עם תאריך סיום משוער שחלף",
+      "unassigned_case": "{{count}} תיקים ללא מנהל"
     },
     "groupReasons": {
       "signing_pending": "מסמכים הממתינים לחתימת לקוח — לחצו להרחבה ולמעבר לתיקים",

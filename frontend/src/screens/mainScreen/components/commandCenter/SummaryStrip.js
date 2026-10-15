@@ -73,11 +73,11 @@ export default function SummaryStrip({ summary, firmStats, todayCount, showSigni
                 <SimpleCard
                     key={chip.key}
                     className="lw-commandCenter__summaryChip"
-                    onPress={chip.onClick}
-                    role="button"
-                    tabIndex={0}
+                    onPress={isPerforming ? undefined : chip.onClick}
+                    role={isPerforming ? undefined : 'button'}
+                    tabIndex={isPerforming ? undefined : 0}
                     onKeyDown={(event) => {
-                        if (!event.repeat && (event.key === 'Enter' || event.key === ' ')) {
+                        if (!isPerforming && !event.repeat && (event.key === 'Enter' || event.key === ' ')) {
                             event.preventDefault();
                             chip.onClick();
                         }

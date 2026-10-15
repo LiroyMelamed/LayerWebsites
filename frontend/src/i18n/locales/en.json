@@ -1426,6 +1426,9 @@
       "rulesTitle": "How are points calculated?",
       "rules": "One point for updating a case stage, once per person per case per day, plus one for closing a case. Credit goes to the person who performed the action. The top five ranks are shown, with equal points sharing a rank. This measures recorded activity, not service quality or profitability.",
       "periodRules": "Days start at midnight, weeks on Sunday, and months on their first day, in Israel time. Opening and closure counts cover the whole firm in the selected period. Points start when the new activity log is enabled; earlier actions are not reconstructed."
+    },
+    "groups": {
+      "unassigned_case": "{{count}} cases without a manager"
     }
   },
   "firmStaffRoles": {
