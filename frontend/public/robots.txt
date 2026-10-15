@@ -1,0 +1,9 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Disallow: /AdminStack/
+Disallow: /ClientStack/
+Disallow: /LoginStack/
+Disallow: /PublicSignScreen
+Allow: /
+
+Sitemap: https://morlevy.mela-media.co.il/sitemap.xml

@@ -1,0 +1,44 @@
+.lw-signingSelect {
+  display: block;
+  min-inline-size: 0;
+  inline-size: 100%;
+
+  .lw-chooseButton { inline-size: 100%; }
+  .lw-textButtonWithTwoOptionalIcons {
+    inline-size: 100%;
+    min-block-size: 2.75rem;
+    block-size: auto !important;
+    padding: .625rem .875rem !important;
+    text-align: start;
+    font-size: inherit;
+  }
+  .lw-textButtonWithTwoOptionalIcons__inner { inline-size: 100%; justify-content: space-between; gap: .75rem; }
+  .lw-simpleText { font-size: inherit !important; text-align: start; white-space: normal; overflow-wrap: anywhere; }
+  [aria-invalid="true"] { outline: 2px solid #c53030; outline-offset: 2px; }
+}
+.lw-signingSelect__choices {
+  max-inline-size: calc(100vw - 1rem);
+  .lw-hoverContainer__option { min-block-size: 2.75rem; }
+  .lw-hoverContainer__optionText { white-space: normal; overflow-wrap: anywhere; }
+}
+
+// The incumbent case-stage arrows keep signer ordering compact.
+.lw-signingRoles {
+  gap: 0;
+  > .lw-templates__role { padding-block: 1.5rem; }
+  > .lw-templates__role + .lw-templates__role { border-block-start: 1px solid #e2e8f0; }
+  .lw-signingRoles__move {
+    min-inline-size: 2.75rem;
+    min-block-size: 2.75rem;
+    padding: .25rem;
+    background: none;
+    border: .0625rem solid #ccc;
+    border-radius: .1875rem;
+    color: inherit;
+    font-size: .75rem;
+    line-height: 1;
+    cursor: pointer;
+    &:hover:not(:disabled) { background: rgba(0, 0, 0, .05); border-color: #999; }
+    &:disabled { opacity: .4; cursor: default; }
+  }
+}
