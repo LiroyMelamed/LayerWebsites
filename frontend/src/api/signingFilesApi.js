@@ -19,7 +19,11 @@ const signingFilesApi = {
         return await ApiUtils.patch(`${base}/${signingFileId}/rename`, { fileName });
     },
 
-    getClientSigningFiles: async () => {
+    getClientSigningFiles: async (requestConfig) => {
+        // useAutoHttpRequest supplies an empty body array to incumbent callers.
+        if (requestConfig && typeof requestConfig === "object" && !Array.isArray(requestConfig)) {
+            return await ApiUtils.get(`${base}/client-files`, requestConfig);
+        }
         return await ApiUtils.get(`${base}/client-files`);
     },
 
@@ -34,6 +38,10 @@ const signingFilesApi = {
 
     createPublicSigningLink: async (signingFileId, signerUserId = null) => {
         return await ApiUtils.post(`${base}/${signingFileId}/public-link`, signerUserId ? { signerUserId } : {});
+    },
+
+    createClientPublicSigningLink: async (signingFileId) => {
+        return await ApiUtils.post(`${base}/${encodeURIComponent(signingFileId)}/client-public-link`, {}, { timeout: 15000 });
     },
 
     getSigningFileSigners: async (signingFileId) => {
@@ -191,7 +199,10 @@ const signingFilesApi = {
         return await ApiUtils.delete(`${base}/${signingFileId}`);
     },
 
-    downloadSignedFile: async (signingFileId) => {
+    downloadSignedFile: async (signingFileId, requestConfig) => {
+        if (requestConfig && typeof requestConfig === "object" && !Array.isArray(requestConfig)) {
+            return await ApiUtils.get(`${base}/${signingFileId}/download`, requestConfig);
+        }
         return await ApiUtils.get(`${base}/${signingFileId}/download`);
     },
 

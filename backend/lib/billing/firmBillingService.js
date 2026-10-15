@@ -26,6 +26,8 @@ const {
     validateTakbullNotification,
     chargeTakbullToken,
     getTakbullCredentialsFromEnv,
+    getTakbullMode,
+    resolveSetupAmountIls,
     extractTokenFromValidated,
 } = require('../payments/takbullClient');
 const { sendFailedPaymentEmails } = require('./billingEmails');
@@ -38,7 +40,7 @@ function setChargeTakbullTokenForTests(fn) {
 }
 
 const GRACE_MS = 72 * 60 * 60 * 1000;
-const SETUP_AMOUNT_ILS = 1;
+const SETUP_AMOUNT_ILS = resolveSetupAmountIls();
 const RETRY_GAP_MS = 12 * 60 * 60 * 1000;
 const UPGRADE_RECOVERY_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -67,6 +69,7 @@ function mapBillingRow(row) {
         billingInterval: normalizeBillingInterval(row.billing_interval),
         status: row.status,
         billingEnabled: row.billing_enabled !== false,
+        autoRenew: row.auto_renew !== false,
         complimentaryUntil: row.complimentary_until,
         renewsAt: row.renews_at,
         graceUntil: row.grace_until,
@@ -293,9 +296,10 @@ async function listPaymentHistory(limit = 25) {
             `SELECT id, kind, status, amount_ils, currency, purpose, error_message,
                     created_at, settled_at, takbull_transaction_id
              FROM firm_payment_intents
+             WHERE law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid
              ORDER BY created_at DESC
              LIMIT $1`,
-            [Math.min(Math.max(Number(limit) || 25, 1), 100)]
+            [Math.min(Math.max(Number(limit) || 25, 1), 100),getCurrentTenantId()]
         );
         return (res.rows || []).map((row) => ({
             id: row.id,
@@ -341,9 +345,21 @@ async function getBillingSnapshot() {
     const card = publicCard(await getActiveCard());
     const payments = await listPaymentHistory();
     const billingInterval = normalizeBillingInterval(row.billingInterval);
-    const priceYearlyIls = yearlyTotalIls(pkg.total);
-    const nextChargeIls = billingInterval === 'yearly' ? priceYearlyIls : Number(pkg.total || 0);
-    const upcomingPayment = row.renewsAt
+    const agreedMonthly = getCurrentTenantId() ? row.priceMonthlyIls : pkg.total;
+    const priceYearlyIls = yearlyTotalIls(agreedMonthly);
+    let nextChargeIls = billingInterval === 'yearly' ? priceYearlyIls : Number(agreedMonthly || 0);
+    let signupPriceIsFinal = false;
+    if (getCurrentTenantId()) {
+        const agreement = (await pool.query(
+            "SELECT consent_version,recurring_amount_ils FROM signup_intents WHERE law_firm_tenant_id=$1 AND status='completed' AND consent_version='signup-1ils-3months-v2'",
+            [getCurrentTenantId()]
+        )).rows[0];
+        if (agreement) {
+            nextChargeIls = require('./signupQuote').renewalAmount({ price_monthly_ils: agreedMonthly, billing_interval: billingInterval }, agreement);
+            signupPriceIsFinal = true;
+        }
+    }
+    const upcomingPayment = row.autoRenew !== false && row.renewsAt
         ? {
             id: 'upcoming',
             kind: 'upcoming',
@@ -371,10 +387,13 @@ async function getBillingSnapshot() {
         card,
         payments,
         upcomingPayment,
-        priceMonthlyIls: pkg.total,
+        priceMonthlyIls: agreedMonthly,
         priceYearlyIls,
         billingInterval,
         nextChargeIls,
+        signupPriceIsFinal,
+        setupCheckoutAmountIls: resolveSetupAmountIls(),
+        takbullMode: getTakbullMode(),
         payUrl: `${getFrontendBaseUrl()}/AdminStack/PlanUsage`,
     };
 }
@@ -386,12 +405,12 @@ async function syncTenantSubscription(pkg) {
             `INSERT INTO tenant_subscriptions (tenant_id, plan_key, status, starts_at, updated_at, created_at)
              SELECT u.userid, $1, 'active', now(), now(), now()
              FROM users u
-             WHERE u.role = 'Admin'
+             WHERE u.role = 'Admin' AND u.law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid
              ORDER BY u.userid
              LIMIT 1
              ON CONFLICT (tenant_id) DO UPDATE
              SET plan_key = EXCLUDED.plan_key, status = 'active', updated_at = now()`,
-            [quotas.planKey]
+            [quotas.planKey, getCurrentTenantId()]
         );
     } catch (e) {
         if (!isRelationMissingError(e)) {
@@ -429,10 +448,10 @@ async function createIntent({ kind, amountIls, purpose, packageSnapshot }, dbCli
     const q = dbClient?.query?.bind(dbClient) || pool.query.bind(pool);
     const res = await q(
         `INSERT INTO firm_payment_intents (
-            id, kind, status, amount_ils, currency, order_reference, purpose, package_snapshot
-         ) VALUES ($1, $2, 'pending', $3, 'ILS', $4, $5, $6::jsonb)
+            id, kind, status, amount_ils, currency, order_reference, purpose, package_snapshot, law_firm_tenant_id
+         ) VALUES ($1, $2, 'pending', $3, 'ILS', $4, $5, $6::jsonb, $7)
          RETURNING *`,
-        [id, kind, amountIls, orderReference, purpose || null, JSON.stringify(packageSnapshot || {})]
+        [id, kind, amountIls, orderReference, purpose || null, JSON.stringify(packageSnapshot || {}), getCurrentTenantId()]
     );
     return res.rows[0];
 }
@@ -708,8 +727,10 @@ async function settleSuccessfulPayment({ intent, tokenInfo, transactionId } = {}
         await pool.query(
             `UPDATE firm_payment_intents
              SET status = 'cancelled', updated_at = now()
-             WHERE status = 'pending' AND id <> $1`,
-            [intent.id]
+             WHERE status = 'pending' AND id <> $1
+               AND law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid
+               AND signup_intent_id IS NULL AND signup_cycle_at IS NULL`,
+            [intent.id, getCurrentTenantId()]
         );
     }
 
@@ -841,7 +862,11 @@ async function createCheckout({ kind, customer, pendingPackage } = {}) {
     };
 }
 
-async function chargeSavedCard({ kind, amountOverride, skipEmail, upgradeOperation } = {}) {
+async function chargeSavedCard({ kind, amountOverride, skipEmail, upgradeOperation, automatic = false } = {}) {
+    if (getCurrentTenantId() && !upgradeOperation?.targetPackage) {
+        const result=await require('./selfServiceRenewal').signupRenewal.renew(getCurrentTenantId());
+        if(result.handled)return {ok:result.status==='succeeded',...result,snapshot:await getBillingSnapshot()};
+    }
     if (upgradeOperation?.targetPackage) {
         return chargeSavedCardForPackageUpgrade({
             kind,
@@ -894,7 +919,7 @@ async function chargeSavedCard({ kind, amountOverride, skipEmail, upgradeOperati
         packageSnapshot: { ...snap.package, billingInterval: interval },
     });
 
-    const charged = await chargeTakbullTokenFn({
+    const dispatch = () => chargeTakbullTokenFn({
         credentials: creds,
         orderReference: intent.order_reference,
         amount,
@@ -905,6 +930,24 @@ async function chargeSavedCard({ kind, amountOverride, skipEmail, upgradeOperati
         cancelReturnAddress: cancelAddress(),
         purpose: interval === 'yearly' ? 'מנוי שנתי — מערכת עורכי דין (10% הנחה)' : 'מנוי חודשי — מערכת עורכי דין',
     });
+
+    let charged;
+    if (automatic) {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            const scope = billingScopeSql();
+            const current = (await client.query(`SELECT billing_enabled,auto_renew FROM firm_billing WHERE ${scope.clause} FOR UPDATE`, scope.param ? [scope.param] : [])).rows[0];
+            if (!current?.billing_enabled || current.auto_renew === false) {
+                await client.query("UPDATE firm_payment_intents SET status='cancelled',updated_at=now() WHERE id=$1", [intent.id]);
+                await client.query('COMMIT');
+                return { skipped: true, reason: 'renewal_cancelled' };
+            }
+            charged = await dispatch();
+            await client.query('COMMIT');
+        } catch (error) { await client.query('ROLLBACK'); throw error; }
+        finally { client.release(); }
+    } else charged = await dispatch();
 
     await pool.query(
         `UPDATE firm_payment_intents
@@ -1253,6 +1296,22 @@ async function handleTakbullNotification({ uniqId, query } = {}) {
     if (!intent && query?.order_reference) {
         intent = await findIntentByOrderReference(query.order_reference);
     }
+    if(!intent)return {ok:false,paid:false,reason:'unknown_order'};
+
+    if(intent?.signup_intent_id) {
+        if(!validated.ok||!validated.paid) return {ok:true,paid:false};
+        if(intent.takbull_uniq_id!==uniqId)throw new Error('SIGNUP_PAYMENT_IDENTITY_MISMATCH');
+        const verified=await require('../payments/verifySignupPayment').verifySignupPayment(creds,uniqId,intent.order_reference);
+        await settleSuccessfulPayment({intent,tokenInfo:verified.tokenInfo,transactionId:verified.transactionId});
+        return {ok:true,paid:true};
+    }
+
+    // New self-service renewal cycles settle only their durable scoped reservation.
+    if(intent?.signup_cycle_at)return {ok:true,paid:false,reason:'renewal_server_settlement'};
+    if(intent.law_firm_tenant_id && getCurrentTenantId()!==intent.law_firm_tenant_id){
+        const {runWithTenant}=require('../tenant/tenantContext');
+        return runWithTenant({id:intent.law_firm_tenant_id},()=>handleTakbullNotification({uniqId,query}));
+    }
 
     const tokenInfo = validated.token
         ? {
@@ -1265,10 +1324,15 @@ async function handleTakbullNotification({ uniqId, query } = {}) {
         : extractTokenFromValidated(validated.raw);
 
     if (validated.paid) {
+        const txId = validated.raw?.TransactionId
+            || validated.raw?.transactionInternalNumber
+            || validated.raw?.TransactionInternalNumber
+            || validated.raw?.transaction?.transactionInternalNumber
+            || null;
         await settleSuccessfulPayment({
             intent,
             tokenInfo,
-            transactionId: query?.transactionInternalNumber || null,
+            transactionId: txId,
         });
         return { ok: true, paid: true };
     }
@@ -1311,6 +1375,10 @@ async function handleTakbullCancel({ intentId } = {}) {
 }
 
 async function runBillingMaintenance({ now = new Date() } = {}) {
+    if(getCurrentTenantId()){
+        const result=await require('./selfServiceRenewal').signupRenewal.renew(getCurrentTenantId());
+        if(result.handled)return result;
+    }
     const row = await ensureBillingRow();
     if (!row) return { skipped: true, reason: 'no_table' };
 
@@ -1318,6 +1386,7 @@ async function runBillingMaintenance({ now = new Date() } = {}) {
     if (!flags.billingEnabled) {
         return { skipped: true, reason: 'billing_disabled' };
     }
+    if (row.autoRenew === false) return { skipped: true, reason: 'renewal_cancelled' };
 
     await expireGraceIfNeeded(row, now);
 
@@ -1327,6 +1396,7 @@ async function runBillingMaintenance({ now = new Date() } = {}) {
 
     const latest = await getBillingRow();
     const latestFlags = computeFlags(latest, now);
+    if (latest.autoRenew === false) return { skipped: true, reason: 'renewal_cancelled' };
 
     if (latest.status === 'suspended') {
         return { skipped: true, reason: 'suspended' };
@@ -1352,6 +1422,7 @@ async function runBillingMaintenance({ now = new Date() } = {}) {
 
     const yearly = normalizeBillingInterval(latest.billingInterval) === 'yearly';
     const result = await chargeSavedCard({
+        automatic: true,
         kind: shouldRetryPastDue ? 'retry' : (yearly ? 'annual' : 'renewal'),
         skipEmail: shouldRetryPastDue,
     });
@@ -1377,25 +1448,9 @@ async function cancelSubscription() {
         err.code = 'NO_BILLING';
         throw err;
     }
-    if (row.billingEnabled === false) {
-        return getBillingSnapshot();
-    }
-
-    await updateBilling({ billing_enabled: false });
-
-    const tenantId = getCurrentTenantId();
-    if (tenantId) {
-        await pool.query(
-            `UPDATE firm_payment_methods SET is_active = false, updated_at = now()
-             WHERE law_firm_tenant_id = $1 AND is_active = true`,
-            [tenantId]
-        );
-    } else {
-        await pool.query(
-            `UPDATE firm_payment_methods SET is_active = false, updated_at = now()
-             WHERE law_firm_tenant_id IS NULL AND is_active = true`
-        );
-    }
+    // This row update serializes with the final self-service renewal dispatch.
+    // Keep the paid period, saved card and data intact; cancelling is not free access.
+    await updateBilling({ auto_renew: false });
 
     return getBillingSnapshot();
 }

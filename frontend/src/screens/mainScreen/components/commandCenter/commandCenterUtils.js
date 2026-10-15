@@ -82,7 +82,6 @@ export async function navigateAttentionItem(navigate, item, modalHandlers = {}) 
         popPopup,
         closePopup,
         onEventSaved,
-        onEventDeleted,
         onDataChanged,
     } = modalHandlers;
 

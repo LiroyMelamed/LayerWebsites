@@ -1,3 +1,4 @@
+import { useFirmPermissions } from "../../../providers/FirmPermissionsProvider";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
@@ -35,6 +36,8 @@ export default function CaseMenuItem({
     alwaysExpanded = false,
 }) {
     const { t } = useTranslation();
+    const firmPerms = useFirmPermissions();
+    const canEdit = !isClient && Boolean(firmPerms?.canAction("cases", "edit"));
     const revertSnapshotRef = useRef(null);
     const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(
         casesApi.updateStageById,
@@ -58,12 +61,14 @@ export default function CaseMenuItem({
     }, [fullCase]);
 
     function persistStageUpdate(updated) {
+        if (!canEdit) return;
         revertSnapshotRef.current = fullCaseListener;
         setFullCaseListener(updated);
         setCase(fullCaseListener.CaseId, updated);
     }
 
     function updateStage() {
+        if (!canEdit) return;
         if (fullCaseListener.IsClosed) return;
         if (fullCaseListener.CurrentStage > fullCaseListener.Descriptions.length) return;
 
@@ -175,7 +180,7 @@ export default function CaseMenuItem({
                 fullCase={fullCaseListener}
                 updateStage={() => updateStage()}
                 isPerformingUpdateStage={isPerformingSetCase}
-                editCase={() => openPopup(<CaseFullView caseDetails={fullCaseListener} rePerformRequest={rePerformFunction} closePopUpFunction={closePopup} />)}
+                editCase={() => canEdit && openPopup(<CaseFullView caseDetails={fullCaseListener} rePerformRequest={rePerformFunction} closePopUpFunction={closePopup} />)}
                 isClient={isClient}
                 rePerformFunction={rePerformFunction}
             />

@@ -6,6 +6,16 @@ const { getHebrewMessage } = require('../utils/errors.he');
 const { userHasLegalData } = require('../utils/legalData');
 const { insertAuditEvent } = require('../utils/auditEvents');
 
+// Office roles manage ordinary dedicated-office accounts only. Platform identities
+// and hidden system accounts stay outside this capability, including password resets.
+function officeTargetSql(req, alias = 'users') {
+    if (req.firmPermissionMode !== 'role') return '';
+    const hidden = _getHiddenAdminIds();
+    return ` AND ${alias}.law_firm_tenant_id IS NULL
+        AND NOT EXISTS (SELECT 1 FROM platform_admins pa WHERE pa.user_id = ${alias}.userid AND pa.is_active = TRUE)
+        ${hidden.length ? `AND ${alias}.userid <> ALL(ARRAY[${hidden.join(',')}]::int[])` : ''}`;
+}
+
 /** Parse HIDDEN_ADMIN_USER_IDS env var into an array of numbers */
 function _getHiddenAdminIds() {
     const raw = String(process.env.HIDDEN_ADMIN_USER_IDS || '').trim();
@@ -13,16 +23,28 @@ function _getHiddenAdminIds() {
     return raw.split(',').map(s => Number(s.trim())).filter(n => Number.isFinite(n) && n > 0);
 }
 
+const ADMIN_USER_SELECT = `
+    SELECT u.userid, u.name, u.email, u.phonenumber, u.companyname, u.createdat,
+           u.firm_staff_role_id,
+           r.name AS firm_staff_role_name,
+           EXISTS (
+               SELECT 1 FROM platform_admins pa
+               WHERE pa.user_id = u.userid AND pa.is_active = TRUE
+           ) AS is_platform_admin
+    FROM users u
+    LEFT JOIN firm_staff_roles r ON r.id = u.firm_staff_role_id AND r.is_active = TRUE
+`;
+
 /**
  * Retrieves all users with the 'Admin' role (excluding hidden admins).
  */
 const getAdmins = async (req, res) => {
     try {
         const hidden = _getHiddenAdminIds();
-        let query = "SELECT userid, name, email, phonenumber, companyname, createdat FROM users WHERE role = 'Admin'";
+        let query = `${ADMIN_USER_SELECT} WHERE u.role = 'Admin'${officeTargetSql(req, 'u')}`;
         const params = [];
         if (hidden.length > 0) {
-            query += " AND userid <> ALL($1::int[])";
+            query += " AND u.userid <> ALL($1::int[])";
             params.push(hidden);
         }
         const result = await pool.query(query, params);
@@ -45,13 +67,13 @@ const getAdminByName = async (req, res) => {
     if (!name) {
         try {
             const hidden = _getHiddenAdminIds();
-            let query = "SELECT userid, name, email, phonenumber, companyname, createdat FROM users WHERE role = 'Admin'";
+            let query = `${ADMIN_USER_SELECT} WHERE u.role = 'Admin'${officeTargetSql(req, 'u')}`;
             const params = [];
             if (hidden.length > 0) {
-                query += " AND userid <> ALL($1::int[])";
+                query += " AND u.userid <> ALL($1::int[])";
                 params.push(hidden);
             }
-            query += " ORDER BY createdat DESC";
+            query += " ORDER BY u.createdat DESC";
             const result = await pool.query(query, params);
             return res.json(result.rows);
         } catch (error) {
@@ -62,13 +84,13 @@ const getAdminByName = async (req, res) => {
 
     try {
         const hidden = _getHiddenAdminIds();
-        let query = "SELECT userid, name, email, phonenumber, companyname, createdat FROM users WHERE role = 'Admin' AND name ILIKE $1";
+        let query = `${ADMIN_USER_SELECT} WHERE u.role = 'Admin' AND u.name ILIKE $1${officeTargetSql(req, 'u')}`;
         const params = [`%${name}%`];
         if (hidden.length > 0) {
-            query += " AND userid <> ALL($2::int[])";
+            query += " AND u.userid <> ALL($2::int[])";
             params.push(hidden);
         }
-        query += " ORDER BY createdat DESC";
+        query += " ORDER BY u.createdat DESC";
         const result = await pool.query(query, params);
 
         // Empty search is normal — return [] (do not 404).
@@ -133,7 +155,7 @@ const updateAdmin = async (req, res) => {
             query = `
                 UPDATE users
                 SET name = $1, email = $2, phonenumber = $3, passwordhash = $4
-                WHERE userid = $5 AND role = 'Admin'
+                WHERE userid = $5 AND role = 'Admin'${officeTargetSql(req)}
             `;
             // Using lowercase column names in the params array as well
             params = [name, email, phoneNumber, hashedPassword, adminUserId];
@@ -141,13 +163,14 @@ const updateAdmin = async (req, res) => {
             query = `
                 UPDATE users
                 SET name = $1, email = $2, phonenumber = $3
-                WHERE userid = $4 AND role = 'Admin'
+                WHERE userid = $4 AND role = 'Admin'${officeTargetSql(req)}
             `;
             // Using lowercase column names in the params array as well
             params = [name, email, phoneNumber, adminUserId];
         }
 
-        await pool.query(query, params); // Execute query with parameters
+        const result = await pool.query(query, params);
+        if (req.firmPermissionMode === 'role' && !result.rowCount) return res.status(403).json({ message: 'גישה אסורה' });
 
         res.status(200).json({ message: "המנהל עודכן בהצלחה" });
     } catch (error) {
@@ -166,7 +189,14 @@ const deleteAdmin = async (req, res, next) => {
     try {
         const client = await pool.connect();
         try {
-            await client.query('BEGIN');
+            await client.query(req.firmPermissionMode === 'role' ? 'BEGIN ISOLATION LEVEL SERIALIZABLE' : 'BEGIN');
+
+            // Ensure the target exists and is an Admin before cascading deletes.
+            const roleRes = await client.query(`SELECT role FROM users WHERE userid = $1${officeTargetSql(req)} FOR UPDATE`, [adminUserId]);
+            if (roleRes.rowCount === 0 || roleRes.rows[0]?.role !== 'Admin') {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ message: 'המנהל לא נמצא או כבר נמחק' });
+            }
 
             // Block deletion if the user has any legal/evidentiary data.
             // Must run BEFORE any DELETE/UPDATE query.
@@ -174,13 +204,6 @@ const deleteAdmin = async (req, res, next) => {
             if (hasLegalData) {
                 await client.query('ROLLBACK');
                 return next(createAppError('USER_HAS_LEGAL_DATA', 409, getHebrewMessage('USER_HAS_LEGAL_DATA')));
-            }
-
-            // Ensure the target exists and is an Admin before cascading deletes.
-            const roleRes = await client.query('SELECT role FROM users WHERE userid = $1', [adminUserId]);
-            if (roleRes.rowCount === 0 || roleRes.rows[0]?.role !== 'Admin') {
-                await client.query('ROLLBACK');
-                return res.status(404).json({ message: 'המנהל לא נמצא או כבר נמחק' });
             }
 
             // Mirror customer deletion cascade to satisfy FK constraints.
@@ -231,6 +254,7 @@ const deleteAdmin = async (req, res, next) => {
  */
 const addAdmin = async (req, res) => {
     const { name, email, phoneNumber, password } = req.body;
+    if (req.firmPermissionMode === 'role' && !req.firmStaffRoleId) return res.status(403).json({ message: 'גישה אסורה' });
     try {
         if (!password) {
             return res.status(422).json({ message: "סיסמה היא שדה חובה" });
@@ -238,12 +262,12 @@ const addAdmin = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const insertResult = await pool.query(
-            `
-            INSERT INTO users (name, email, phonenumber, passwordhash, role, createdat)
-            VALUES ($1, $2, $3, $4, $5, NOW())
+            req.firmPermissionMode === 'role' ? `
+            INSERT INTO users (name, email, phonenumber, passwordhash, role, createdat, firm_staff_role_id)
+            VALUES ($1, $2, $3, $4, $5, NOW(), $6)
             RETURNING userid
-            `,
-            [name, email, phoneNumber, hashedPassword, "Admin"]
+            ` : `INSERT INTO users (name, email, phonenumber, passwordhash, role, createdat) VALUES ($1,$2,$3,$4,$5,NOW()) RETURNING userid`,
+            req.firmPermissionMode === 'role' ? [name, email, phoneNumber, hashedPassword, "Admin", req.firmPermissionMode === 'role' ? req.firmStaffRoleId : null] : [name, email, phoneNumber, hashedPassword, 'Admin']
         );
         const newAdminId = insertResult.rows[0]?.userid;
 

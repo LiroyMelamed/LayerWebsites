@@ -1,0 +1,64 @@
+{
+  "complete": true,
+  "tenant": "ashrafessa",
+  "candidate": "bd9fb6383a00c6c29869e3d9620535bbfff99e96",
+  "product": "b6b31cd97e74d3eb8facbf95aadb360306c31b6d",
+  "qa": "7ce3a141bff23bcbedc7effe7b99b774256949d1",
+  "verifiedUtc": "2026-10-08T20:05:09.064Z",
+  "publicFiles": [
+    {
+      "url": "https://ashrafessa.mela-media.co.il/",
+      "path": "index.html",
+      "bytes": 8104,
+      "sha256": "a0b1177c325d14a94cbeff72771a809eacf9bbdc4f073bb3ba5e790932431276"
+    },
+    {
+      "url": "https://ashrafessa.mela-media.co.il/static/css/main.06af72a5.css",
+      "path": "static/css/main.06af72a5.css",
+      "bytes": 198216,
+      "sha256": "2061346f3957a12ef5afac102058e0fc51f48f3cddf98a1aad43b8be66e336f4"
+    },
+    {
+      "url": "https://ashrafessa.mela-media.co.il/static/js/main.677d7c33.js",
+      "path": "static/js/main.677d7c33.js",
+      "bytes": 1322464,
+      "sha256": "a511298576e4de79f1ff7fd13f15a79648c0de13c338c4ac3631868904e16134"
+    }
+  ],
+  "brandingAndAssociations": [
+    {
+      "path": "firm-logo.png",
+      "sha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b"
+    },
+    {
+      "path": "logo192.png",
+      "sha256": "55ee341bab892325c41af88e5713481fd7b56b32e47b56172fd98bea34354682"
+    },
+    {
+      "path": "logo512.png",
+      "sha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b"
+    },
+    {
+      "path": "manifest.json",
+      "sha256": "b8de8a18ad1d29a42658dbab96679ed992dd513e7b0b5069741c2cc283fe9d64"
+    },
+    {
+      "path": "favicon.ico",
+      "sha256": "7e35d911c2bcdd6d091cd716f51b630e17fde315196431d0964bac2969943ce4"
+    },
+    {
+      "path": ".well-known/assetlinks.json",
+      "sha256": "08b7a288147e6077fca8d97bcef84b035772fb83882d66f737d87192bd85ff57"
+    },
+    {
+      "path": ".well-known/apple-app-site-association",
+      "sha256": "1479cf5c8b843d26dcdc39829a5c971da1a3d2b3f377feea9d0d0c3bd924217e"
+    }
+  ],
+  "publicApiHealth": {
+    "ok": true
+  },
+  "backendProof": "ashrafessa-backend-readonly-proof03.json",
+  "frontendProof": "ashrafessa-frontend-live-proof03.json",
+  "noRealTestMessages": true
+}
