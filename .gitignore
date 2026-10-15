@@ -73,8 +73,7 @@ web_modules/
 .yarn-integrity
 
 # dotenv environment variable files
-# frontend/.env is tracked per-branch (public config only: API URL, app name)
-# backend/.env contains real secrets — keep ignored
+# Frontend and backend environment files are provisioned locally and never tracked.
 backend/.env
 .env.development.local
 .env.test.local
@@ -168,8 +167,6 @@ backend/scripts/.env.neon
 !/backend/logs/
 !/.vscode/launch.json
 !/backend/.vscode/launch.json
-!/backend/logs/security-audit-2026-09-14.log
-!/backend/logs/security-audit-2026-09-29.log
 !/docs/
 !/docs/features/
 !/docs/releases/
@@ -265,3 +262,6 @@ DerivedData/
 # Files with private operational/customer data or packaged runtime output.
 
 # END reviewed Git completeness
+
+# Generated runtime audit logs remain local, not source evidence.
+/backend/logs/security-audit-*.log
