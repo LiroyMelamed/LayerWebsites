@@ -1,0 +1,24 @@
+{"timestamp":"2026-10-03T20:50:23.948Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***4567","userId":99,"success":true}
+{"timestamp":"2026-10-03T20:50:24.225Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***0000","ip":"::ffff:127.0.0.1","success":false,"meta":{"error":"SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string"}}
+{"timestamp":"2026-10-03T20:50:24.315Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***1111","ip":"192.168.88.88","success":false,"meta":{"error":"SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string"}}
+{"timestamp":"2026-10-03T20:50:24.321Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***1111","ip":"192.168.88.88","success":false,"meta":{"error":"SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string"}}
+{"timestamp":"2026-10-03T22:39:01.575Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***4567","userId":99,"success":true}
+{"timestamp":"2026-10-03T22:39:01.753Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***0000","ip":"::ffff:127.0.0.1","success":false,"meta":{"error":"SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string"}}
+{"timestamp":"2026-10-03T22:39:01.819Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***1111","ip":"192.168.88.88","success":false,"meta":{"error":"SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string"}}
+{"timestamp":"2026-10-03T22:39:01.825Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***1111","ip":"192.168.88.88","success":false,"meta":{"error":"SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string"}}
+{"timestamp":"2026-10-03T22:42:11.057Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***4567","userId":99,"success":true}
+{"timestamp":"2026-10-03T22:42:11.264Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***0000","ip":"::ffff:127.0.0.1","success":false,"meta":{"error":"SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string"}}
+{"timestamp":"2026-10-03T22:42:11.327Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***1111","ip":"192.168.88.88","success":false,"meta":{"error":"SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string"}}
+{"timestamp":"2026-10-03T22:42:11.333Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***1111","ip":"192.168.88.88","success":false,"meta":{"error":"SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string"}}
+{"timestamp":"2026-10-03T23:03:45.533Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***4567","userId":99,"success":true}
+{"timestamp":"2026-10-03T23:03:46.059Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***0000","ip":"::ffff:127.0.0.1","success":false,"meta":{"error":"SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string"}}
+{"timestamp":"2026-10-03T23:03:46.153Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***1111","ip":"192.168.88.88","success":false,"meta":{"error":"SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string"}}
+{"timestamp":"2026-10-03T23:03:46.160Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***1111","ip":"192.168.88.88","success":false,"meta":{"error":"SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string"}}
+{"timestamp":"2026-10-03T23:04:53.839Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***4567","userId":99,"success":true}
+{"timestamp":"2026-10-03T23:04:54.278Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***0000","ip":"::ffff:127.0.0.1","success":false,"meta":{"error":"SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string"}}
+{"timestamp":"2026-10-03T23:04:54.388Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***1111","ip":"192.168.88.88","success":false,"meta":{"error":"SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string"}}
+{"timestamp":"2026-10-03T23:04:54.397Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***1111","ip":"192.168.88.88","success":false,"meta":{"error":"SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string"}}
+{"timestamp":"2026-10-03T23:57:54.315Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***4567","userId":99,"success":true}
+{"timestamp":"2026-10-03T23:57:54.805Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***0000","ip":"::ffff:127.0.0.1","success":false,"meta":{"error":"SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string"}}
+{"timestamp":"2026-10-03T23:57:54.928Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***1111","ip":"192.168.88.88","success":false,"meta":{"error":"SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string"}}
+{"timestamp":"2026-10-03T23:57:54.959Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***1111","ip":"192.168.88.88","success":false,"meta":{"error":"SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string"}}
