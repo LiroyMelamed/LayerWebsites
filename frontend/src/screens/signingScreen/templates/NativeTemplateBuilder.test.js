@@ -1,3 +1,4 @@
+import { changeField } from '../../../testUtils/changeField';
 import React from 'react';
 import { render, screen, fireEvent, waitFor, within, act } from '@testing-library/react';
 import { createInstance } from 'i18next';
@@ -76,9 +77,9 @@ test('enum choices stay exact and fields used in a PDF cannot be removed', async
     expect(within(screen.getByRole('group',{name:'Amount'})).getByRole('button',{name:'Remove data field'})).toBeEnabled();
     fireEvent.click(screen.getByRole('button',{name:'Add data field'}));
     const field=screen.getByRole('group',{name:'New data field'});
-    fireEvent.change(within(field).getByLabelText('Field name'),{target:{value:'Category'}});
-    fireEvent.change(within(field).getByLabelText('Information type'),{target:{value:'enum'}});
-    fireEvent.change(within(field).getByLabelText('Choices — one per line'),{target:{value:'א\nب\nC'}});
+    changeField(within(field).getByLabelText('Field name'),{target:{value:'Category'}});
+    changeField(within(field).getByLabelText('Information type'),{target:{value:'enum'}});
+    changeField(within(field).getByLabelText('Choices — one per line'),{target:{value:'א\nب\nC'}});
     fireEvent.click(screen.getByRole('button',{name:'Save draft'}));
     await screen.findByText(i18n.t('signingV2.authoring.saved'));
     expect(api.saveTemplateDraft.mock.calls[0][1].definition.dataKeys.at(-1).options).toEqual(['א','ب','C']);
@@ -119,10 +120,10 @@ test('saving freezes native edits so a success message cannot hide later unsaved
     render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={version()} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
     const name=screen.getByLabelText(i18n.t('signingV2.builder.name'));
     fireEvent.click(screen.getByRole('button',{name:'Save draft'}));
-    expect(name).toBeDisabled();fireEvent.change(name,{target:{value:'Uncommitted change'}});
+    expect(name).toBeDisabled();changeField(name,{target:{value:'Uncommitted change'}});
     expect(name).toHaveValue('Existing native template');
     await act(async()=>resolve());expect(name).toBeEnabled();
-    fireEvent.change(name,{target:{value:'Next edit'}});
+    changeField(name,{target:{value:'Next edit'}});
     expect(screen.queryByText(i18n.t('signingV2.authoring.saved'))).toBeNull();
 });
 
@@ -138,18 +139,18 @@ test.each(['he','ar','en'])('authors exact defaults and conditional document val
     render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={input} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
     const a=key=>i18n.t(`signingV2.authoring.${key}`),b=key=>i18n.t(`signingV2.builder.${key}`);
     const amount=within(screen.getByRole('group',{name:'Amount'}));
-    fireEvent.change(amount.getByLabelText(a('defaultValue')),{target:{value:'9007199254740994.000001'}});
+    changeField(amount.getByLabelText(a('defaultValue')),{target:{value:'9007199254740994.000001'}});
     const confirmed=within(screen.getByRole('group',{name:'Confirmed'}));
     fireEvent.click(confirmed.getByLabelText(a('useDefault')));
     expect(confirmed.getByLabelText(a('defaultValue'))).toHaveValue('false');
     expect(confirmed.getByLabelText(a('defaultValue'))).toHaveAttribute('dir',language==='en'?'ltr':'rtl');
     fireEvent.click(screen.getByRole('button',{name:b('next')}));
-    fireEvent.change(screen.getByLabelText(a('condition.field')),{target:{value:'amount'}});
-    fireEvent.change(screen.getByLabelText(a('condition.operator')),{target:{value:'in'}});
+    changeField(screen.getByLabelText(a('condition.field')),{target:{value:'amount'}});
+    changeField(screen.getByLabelText(a('condition.operator')),{target:{value:'in'}});
     const label=n=>i18n.t('signingV2.authoring.condition.numberedValue',{number:new Intl.NumberFormat({he:'he-IL',ar:'ar-IL',en:'en-GB'}[language]).format(n)});
-    fireEvent.change(screen.getByLabelText(label(1)),{target:{value:'9007199254740994.000001'}});
+    changeField(screen.getByLabelText(label(1)),{target:{value:'9007199254740994.000001'}});
     fireEvent.click(screen.getByRole('button',{name:a('condition.add')}));
-    fireEvent.change(screen.getByLabelText(label(2)),{target:{value:'0.00'}});
+    changeField(screen.getByLabelText(label(2)),{target:{value:'0.00'}});
     fireEvent.click(screen.getByRole('button',{name:a('saveDraft')}));
     await screen.findByText(a('saved'));
     const saved=api.saveTemplateDraft.mock.calls[0][1].definition;
@@ -168,7 +169,7 @@ test('removing a default is explicit; stale enum values and role conditions rema
     input.definition.roles[0].when={key:'identifier',operator:'present'};
     render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={input} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
     const category=within(screen.getByRole('group',{name:'Category'}));
-    fireEvent.change(category.getByLabelText('Choices — one per line'),{target:{value:'A'}});
+    changeField(category.getByLabelText('Choices — one per line'),{target:{value:'A'}});
     expect(category.getByRole('option',{name:'B (no longer a choice)'})).toBeInTheDocument();
     expect(category.getByLabelText('Default value')).toHaveValue('B');
     fireEvent.click(category.getByLabelText('Use a default value'));
@@ -184,12 +185,12 @@ test('conditional document supports false and explicit removal without retaining
     input.definition.dataKeys.push({key:'flag',label:'Flag',type:'boolean'});
     render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={input} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
     fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.builder.next')}));
-    fireEvent.change(screen.getByLabelText('Based on field'),{target:{value:'flag'}});
-    fireEvent.change(screen.getByLabelText('Include when'),{target:{value:'equals'}});
+    changeField(screen.getByLabelText('Based on field'),{target:{value:'flag'}});
+    changeField(screen.getByLabelText('Include when'),{target:{value:'equals'}});
     expect(screen.getByLabelText('Comparison value')).toHaveValue('false');
     fireEvent.click(screen.getByRole('button',{name:'Save draft'}));await screen.findByText(i18n.t('signingV2.authoring.saved'));
     expect(api.saveTemplateDraft.mock.calls[0][1].definition.documents[0].when).toEqual({key:'flag',operator:'equals',value:false});
-    fireEvent.change(screen.getByLabelText('Based on field'),{target:{value:''}});
+    changeField(screen.getByLabelText('Based on field'),{target:{value:''}});
     fireEvent.click(screen.getByRole('button',{name:'Save draft'}));await waitFor(()=>expect(api.saveTemplateDraft).toHaveBeenCalledTimes(2));
     expect(api.saveTemplateDraft.mock.calls[1][1].definition.documents[0].when).toBeNull();
 });
@@ -199,7 +200,7 @@ test.each(['he','ar','en'])('date defaults use the incumbent date control and re
     input.definition.dataKeys.push({key:'meeting',label:'Meeting',type:'date',defaultValue:'2028-02-01'});
     render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={input} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
     const group=within(screen.getByRole('group',{name:'Meeting'}));
-    fireEvent.change(group.getByRole('textbox',{name:i18n.t('calendar.dateSegmentDay')}),{target:{value:'29'}});
+    changeField(group.getByRole('textbox',{name:i18n.t('calendar.dateSegmentDay')}),{target:{value:'29'}});
     fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.authoring.saveDraft')}));
     await screen.findByText(i18n.t('signingV2.authoring.saved'));
     expect(api.saveTemplateDraft.mock.calls[0][1].definition.dataKeys[2].defaultValue).toBe('2028-02-29');
@@ -210,11 +211,11 @@ test.each(['he','ar','en'])('nested document rules survive draft recovery and pr
     const a=key=>i18n.t(`signingV2.authoring.condition.${key}`),b=key=>i18n.t(`signingV2.builder.${key}`);
     const view=render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={input} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
     fireEvent.click(screen.getByRole('button',{name:b('next')}));
-    fireEvent.change(screen.getByLabelText(a('field')),{target:{value:'amount'}});
-    fireEvent.change(screen.getByLabelText(a('operator')),{target:{value:'equals'}});
-    fireEvent.change(screen.getByLabelText(a('value')),{target:{value:'9007199254740993.120000'}});
+    changeField(screen.getByLabelText(a('field')),{target:{value:'amount'}});
+    changeField(screen.getByLabelText(a('operator')),{target:{value:'equals'}});
+    changeField(screen.getByLabelText(a('value')),{target:{value:'9007199254740993.120000'}});
     fireEvent.click(screen.getByRole('button',{name:a('addRule')}));
-    fireEvent.change(screen.getByLabelText(a('combine')),{target:{value:'any'}});
+    changeField(screen.getByLabelText(a('combine')),{target:{value:'any'}});
     fireEvent.click(screen.getByRole('button',{name:a('addGroup')}));
     fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.authoring.saveDraft')}));
     await screen.findByText(i18n.t('signingV2.authoring.saved'));
@@ -239,23 +240,23 @@ test('a conditional signer needs an explicit inactive field treatment, preserved
     // The detail node scopes the third role's conditional controls.
     // eslint-disable-next-line testing-library/no-node-access
     const role=within(screen.getAllByText('When this signer is required')[2].closest('details'));
-    fireEvent.change(role.getByLabelText('Based on field'),{target:{value:'amount'}});
-    fireEvent.change(role.getByLabelText('Include when'),{target:{value:'equals'}});
-    fireEvent.change(role.getByLabelText('Comparison value'),{target:{value:'1.00'}});
+    changeField(role.getByLabelText('Based on field'),{target:{value:'amount'}});
+    changeField(role.getByLabelText('Include when'),{target:{value:'equals'}});
+    changeField(role.getByLabelText('Comparison value'),{target:{value:'1.00'}});
     fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.builder.next')}));
     fireEvent.click(await screen.findByRole('button',{name:'Select last PDF field'}));
     fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.builder.selectedField')}));
     expect(screen.getByLabelText('When this signer is not included')).toHaveValue('');
-    fireEvent.change(screen.getByLabelText('When this signer is not included'),{target:{value:'exclude_document'}});
-    fireEvent.click(screen.getByRole('button',{name:i18n.t('common.close')}));
+    changeField(screen.getByLabelText('When this signer is not included'),{target:{value:'exclude_document'}});
+    fireEvent.click(within(screen.getByRole('dialog',{name:i18n.t('signingV2.builder.selectedField')})).getAllByRole('button',{name:i18n.t('common.close')}).at(-1));
     fireEvent.click(screen.getByRole('button',{name:'Save draft'}));await screen.findByText(i18n.t('signingV2.authoring.saved'));
     const saved=api.saveTemplateDraft.mock.calls[0][1].definition;
     expect(saved.roles[2].when).toEqual({key:'amount',operator:'equals',value:'1.00'});
     expect(saved.documents[0].fields[2]).toEqual({...input.definition.documents[0].fields[2],label:'',inactiveTreatment:'exclude_document'});
     expect(fromEditor(toEditor(saved),'en').documents[0].fields[2].inactiveTreatment).toBe('exclude_document');
     fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.builder.selectedField')}));
-    fireEvent.change(screen.getByLabelText('When this signer is not included'),{target:{value:''}});
-    fireEvent.click(screen.getByRole('button',{name:i18n.t('common.close')}));
+    changeField(screen.getByLabelText('When this signer is not included'),{target:{value:''}});
+    fireEvent.click(within(screen.getByRole('dialog',{name:i18n.t('signingV2.builder.selectedField')})).getAllByRole('button',{name:i18n.t('common.close')}).at(-1));
     fireEvent.click(screen.getByRole('button',{name:'Save draft'}));await waitFor(()=>expect(api.saveTemplateDraft).toHaveBeenCalledTimes(2));
     expect(api.saveTemplateDraft.mock.calls[1][1].definition.documents[0].fields[2].inactiveTreatment).toBeUndefined();
 });
@@ -266,10 +267,10 @@ test('adding an explicit person position preserves all original fields; a used p
     const maximum=screen.getAllByLabelText('Maximum people')[0];
     expect(within(maximum).getByRole('option',{name:'7'})).toBeDisabled();
     expect(within(maximum).getByRole('option',{name:'6'})).toBeEnabled();
-    fireEvent.change(maximum,{target:{value:'2'}});
+    changeField(maximum,{target:{value:'2'}});
     fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.builder.next')}));
     await screen.findByRole('button',{name:'Move first PDF field'});
-    fireEvent.change(screen.getByLabelText('Signature position for buyer'),{target:{value:'1'}});
+    changeField(screen.getByLabelText('Signature position for buyer'),{target:{value:'1'}});
     fireEvent.click(screen.getByTitle(i18n.t('signing.fieldSettings.addFieldForPage',{page:1})));
     fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.builder.types.signature')}));
     fireEvent.click(screen.getByRole('button',{name:'Save draft'}));
@@ -285,7 +286,7 @@ test('adding an explicit person position preserves all original fields; a used p
 test('raising a role maximum without authored positions blocks publication and names the missing person',async()=>{
     const i18n=await setup('en'),api=fakeApi();
     render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={version()} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
-    fireEvent.change(screen.getAllByLabelText('Maximum people')[0],{target:{value:'2'}});
+    changeField(screen.getAllByLabelText('Maximum people')[0],{target:{value:'2'}});
     fireEvent.click(screen.getByRole('button',{name:`3 ${i18n.t('signingV2.builder.review')}`}));
     expect(screen.getByRole('alert')).toHaveTextContent('Add a document field for buyer — person 2.');
     expect(screen.getByRole('button',{name:'Publish template'})).toBeDisabled();

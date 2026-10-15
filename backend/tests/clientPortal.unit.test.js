@@ -71,7 +71,7 @@ function stageHandler(query) {
     return module.exports.getClientFiles;
 }
 function response() {
-    return { statusCode: 200, body: null, status(n) { this.statusCode = n; return this; }, json(body) { this.body = body; return this; } };
+    return { statusCode: 200, body: null, set() { return this; }, status(n) { this.statusCode = n; return this; }, json(body) { this.body = body; return this; } };
 }
 
 test('attachment database failures return an error, never an empty success', async () => {
