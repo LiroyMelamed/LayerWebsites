@@ -1,0 +1,23 @@
+.lw-routeFallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 12rem;
+    width: 100%;
+    padding: 2rem;
+}
+
+.lw-routeFallback__spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 0.25rem solid rgba(0, 0, 0, 0.08);
+    border-top-color: #1a4d8f;
+    border-radius: 50%;
+    animation: lw-routeFallback-spin 0.75s linear infinite;
+}
+
+@keyframes lw-routeFallback-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
