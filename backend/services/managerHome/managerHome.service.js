@@ -1,6 +1,7 @@
 const pool = require('../../config/db');
 const C = require('./constants');
 const { fetchTeamActivity } = require('./teamActivity');
+const { buildBottleneckFacts } = require('./bottlenecks');
 const { personalCalendarSql } = require('../../lib/calendarVisibility');
 const { isPlatformAdmin } = require('../settingsService');
 const {
@@ -87,6 +88,8 @@ async function fetchOpenCasesWithActivity() {
         SELECT
             c.caseid,
             c.casename,
+            c.casetypeid,
+            COALESCE(c.casetypename, ct.casetypename, 'לא מוגדר') AS case_type,
             c.currentstage,
             c.casemanager,
             c.casemanagerid,
@@ -161,6 +164,12 @@ async function fetchSigningSummary() {
                   AND sf.expiresat < NOW() + ($1 || ' days')::interval
             )::int AS expiring,
             COUNT(*) FILTER (WHERE sf.status = 'rejected')::int AS rejected,
+            COUNT(*) FILTER (WHERE sf.status = 'pending' AND c.caseid IS NOT NULL
+                AND sf.createdat <= NOW() - ($2 || ' days')::interval)::int AS waiting_long_count,
+            COUNT(DISTINCT sf.caseid) FILTER (WHERE sf.status = 'pending' AND c.caseid IS NOT NULL
+                AND sf.createdat <= NOW() - ($2 || ' days')::interval)::int AS waiting_long_case_count,
+            FLOOR(EXTRACT(EPOCH FROM (NOW() - MIN(sf.createdat) FILTER (
+                WHERE sf.status = 'pending' AND c.caseid IS NOT NULL))) / 86400)::int AS oldest_pending_days,
             COUNT(*) FILTER (
                 WHERE sf.status = 'signed'
                   AND sf.signedat >= ${JERUSALEM_TODAY}::timestamptz AT TIME ZONE 'Asia/Jerusalem'
@@ -168,7 +177,7 @@ async function fetchSigningSummary() {
         FROM signingfiles sf
         LEFT JOIN cases c ON c.caseid = sf.caseid
         WHERE c.caseid IS NULL OR c.isclosed = false
-    `, [String(C.SIGNING_EXPIRING_DAYS)]);
+    `, [String(C.SIGNING_EXPIRING_DAYS), String(C.SIGNING_PENDING_WARNING_DAYS)]);
     return rows[0] || { pending: 0, expired: 0, expiring: 0, rejected: 0, signed_today: 0 };
 }
 
@@ -835,6 +844,7 @@ async function buildManagerHomePayload({ userId } = {}) {
         },
         summary,
         teamActivity,
+        bottlenecks: buildBottleneckFacts(caseRows, signingSummary),
         firmStats: {
             ...firmDailyStats,
             openCases: caseRows.length,
