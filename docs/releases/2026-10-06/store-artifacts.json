@@ -1,0 +1,92 @@
+{
+  "status": "BINARIES_VERIFIED_NOT_SUBMITTED",
+  "artifacts": [
+    {
+      "tenant": "melamedlaw",
+      "status": "PASS",
+      "bundleId": "com.melamedia.MelamedLaw",
+      "version": "1.0.11",
+      "build": "11",
+      "artifactSha256": "d4a2fe9a29fabef845019fcbe1be931c16b8017bf995d9d80e20778d9765435a",
+      "strictDeepCodeSignature": true,
+      "appStoreDistributionProfile": true,
+      "debugEntitlement": false,
+      "profileExpiryUtc": "2027-09-15T13:02:05Z",
+      "platform": "ios",
+      "easBuildId": "8780dbbf-3ee0-46f2-9de8-4c240a6ac698",
+      "sourceCommit": "5a1d9aed9424fb8b358634f6f48411dc00c432aa"
+    },
+    {
+      "tenant": "morlevi",
+      "status": "PASS",
+      "bundleId": "com.melamedia.MorLevy",
+      "version": "1.0.5",
+      "build": "22",
+      "artifactSha256": "8fb5fe223cc3b97daf59be677df75d5b16c49ae3e8e3b618d42e042bd0f9da24",
+      "strictDeepCodeSignature": true,
+      "appStoreDistributionProfile": true,
+      "debugEntitlement": false,
+      "profileExpiryUtc": "2027-09-15T13:02:05Z",
+      "platform": "ios",
+      "easBuildId": "f33ddc57-f66f-46ad-88a0-57dcccbab79c",
+      "sourceCommit": "46eefb27df5223da9e035c4d7e8024150fd3d7c5"
+    },
+    {
+      "tenant": "ashrafessa",
+      "status": "PASS",
+      "bundleId": "com.melamedia.AshrafEssa",
+      "version": "1.0.8",
+      "build": "17",
+      "artifactSha256": "0a22c4dc649d2d45d40fe85222bd9156d0169082544cbd1b0f14b97f84d9c606",
+      "strictDeepCodeSignature": true,
+      "appStoreDistributionProfile": true,
+      "debugEntitlement": false,
+      "profileExpiryUtc": "2027-09-15T13:02:05Z",
+      "platform": "ios",
+      "easBuildId": "751d69a3-00dd-4285-a920-c3f68d1ad4db",
+      "sourceCommit": "463571bd6644f2906ac44ba8756e3923f94cbb0b"
+    },
+    {
+      "tenant": "melamedlaw",
+      "status": "PASS",
+      "package": "com.melamedia.melamedlaw",
+      "version": "1.0.11",
+      "build": 28,
+      "artifactSha256": "676b3e3a70d45ec124379c1da69bc6993d07fdca0e2ef0d986e028dd47a8bb67",
+      "jarSignatureVerified": true,
+      "uploadCertificateUnchangedFromV12": true,
+      "bundletoolValidation": true,
+      "platform": "android",
+      "easBuildId": "14cf6d04-ebdf-4836-9e73-d1dd9c99e542",
+      "sourceCommit": "cf4ef24db1ffd514cd24a83353feb150e29f83f2"
+    },
+    {
+      "tenant": "morlevi",
+      "status": "PASS",
+      "package": "com.melamedia.morlevy",
+      "version": "1.0.5",
+      "build": 12,
+      "artifactSha256": "2a4a8251a9cbcde860053849e992b1960db4420a4d652e30a2ca83aaeb66810e",
+      "jarSignatureVerified": true,
+      "uploadCertificateUnchangedFromV12": true,
+      "bundletoolValidation": true,
+      "platform": "android",
+      "easBuildId": "aae8bde4-7e20-433b-a1ab-e645c1eb888d",
+      "sourceCommit": "a970e4930a7cbf9608ed1624d47ef8e1113ea3f3"
+    },
+    {
+      "tenant": "ashrafessa",
+      "status": "PASS",
+      "package": "com.melamedia.ashrafessa",
+      "version": "1.0.8",
+      "build": 13,
+      "artifactSha256": "075dcec2681334717cd8786c86d3b33dd014444ea8baaaa419002b71418ed597",
+      "jarSignatureVerified": true,
+      "uploadCertificateUnchangedFromV12": true,
+      "bundletoolValidation": true,
+      "platform": "android",
+      "easBuildId": "f30d2bc4-3065-4f7f-aeca-322b9dd52197",
+      "sourceCommit": "9f069720c9b1c3856b88a1df63ce93419b0efaa8"
+    }
+  ]
+}

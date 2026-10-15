@@ -1,0 +1,31 @@
+@use '../../../styles/mixins' as m;
+@use '../../../styles/variables' as v;
+
+.lw-adminMenuItem {
+    flex-direction: column;
+    min-inline-size: 0;
+}
+
+.lw-adminMenuItem__row {
+    @include m.row(0, nowrap, center);
+    width: 100%;
+}
+
+.lw-adminMenuItem__cell {
+    flex: 1;
+}
+
+@media (max-width: v.$bp-md) {
+    .lw-adminMenuItem__row {
+        flex-wrap: nowrap;
+        align-items: center;
+        inline-size: max-content;
+        inline-size: 100%;
+    }
+
+    .lw-adminMenuItem__cell {}
+
+    .lw-adminMenuItem__cell--email {
+        display: none;
+    }
+}

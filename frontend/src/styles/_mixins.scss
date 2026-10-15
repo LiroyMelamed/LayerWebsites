@@ -1,0 +1,46 @@
+@use 'variables' as v;
+
+@function rem($px) {
+  @if (unitless($px)) {
+    @return ($px / 16) * 1rem;
+  }
+
+  @return (strip-unit($px) / 16) * 1rem;
+}
+
+// Responsive sizing helper
+// Usage: @include fluid-size(width, 160, 55vw, 320);
+// min/max are unitless numbers (÷16 → rem); preferred can be any CSS length (vw/vh/rem/calc()).
+@mixin fluid-size($property, $minPx, $preferred, $maxPx) {
+  #{$property}: clamp(rem($minPx), #{$preferred}, rem($maxPx));
+}
+
+@mixin rtl {
+  [dir='rtl'] & {
+    @content;
+  }
+}
+
+@mixin ltr {
+  [dir='ltr'] & {
+    @content;
+  }
+}
+
+// Simple media query helper
+@mixin mq-min($px) {
+  @media (min-width: rem($px)) {
+    @content;
+  }
+}
+
+// Phase F: standard responsive row layout for filters/search
+@mixin row($gap: v.$space-3, $wrap: wrap, $align: center, $justify: flex-start) {
+  display: flex;
+  flex-direction: row;
+  align-items: $align;
+  justify-content: $justify;
+  flex-wrap: $wrap;
+  gap: $gap;
+  min-inline-size: 0;
+}
