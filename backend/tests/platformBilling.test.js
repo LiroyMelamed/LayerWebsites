@@ -35,10 +35,10 @@ test('missing payment values are rejected rather than silently fabricated', () =
 
 function routes(service) {
     const handlers = new Map();
-    const router = { get: (p, fn) => handlers.set(p, fn), post: () => {} };
+    const router = { use: () => {}, get: (p, fn) => handlers.set(p, fn), post: () => {} };
     const filename = path.join(__dirname, '../routes/platformRoutes.js');
     vm.runInNewContext(fs.readFileSync(filename, 'utf8'), {
-        module: { exports: {} }, process: { env: { CENTRAL_SERVICE_KEY: 'qa-key' } },
+        module: { exports: {} }, process: { env: { CENTRAL_SERVICE_KEY: 'synthetic-service-key-at-least-32-characters' } },
         require: name => {
             if (name === 'express') return { Router: () => router };
             if (name.endsWith('/firmBillingService')) return service;
@@ -48,7 +48,7 @@ function routes(service) {
     }, { filename });
     return async (route, authorized = true) => {
         const res = { statusCode: 200, status(n) { this.statusCode = n; return this; }, json(body) { this.body = body; } };
-        await handlers.get(route)({ headers: { authorization: authorized ? 'Bearer qa-key' : '' }, query: {} }, res);
+        await handlers.get(route)({ headers: { authorization: authorized ? 'Bearer synthetic-service-key-at-least-32-characters' : '' }, query: {} }, res);
         return res;
     };
 }

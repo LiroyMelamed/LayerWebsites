@@ -114,7 +114,10 @@ test.each(['he', 'ar', 'en'])('workspace list, details and actions use platform 
     expect(screen.getByText(`${t('documents', { count: 3, formattedCount: number(3) })} · ${t('version', { version: number(12) })}`)).toBeVisible();
     expect(screen.getByText(new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(created)))).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: t('archive') }));
-    expect(confirm).toHaveBeenCalledWith(t('archiveConfirm', { name: template.name }));
+    const archiveDialog = await screen.findByRole('dialog', { name: t('archive') });
+    expect(archiveDialog).toHaveTextContent(template.name);
+    expect(confirm).not.toHaveBeenCalled();
+    fireEvent.click(within(archiveDialog).getByRole('button', { name: i18n.t('common.cancel') }));
     expect(api.archive).not.toHaveBeenCalled();
     confirm.mockRestore();
     fireEvent.click(screen.getByRole('button', { name: t('batchDetails') }));

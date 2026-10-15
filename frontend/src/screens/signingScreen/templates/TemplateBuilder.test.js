@@ -1,3 +1,4 @@
+import { changeField } from '../../../testUtils/changeField';
 import React from 'react';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { createInstance } from 'i18next';
@@ -59,7 +60,7 @@ test.each(['he', 'en', 'ar'])('incumbent + adds the chosen field for the selecte
     expect(within(toolbar).getByRole('button', { name: 'Client' })).toHaveAttribute('aria-pressed', 'false');
     fireEvent.click(screen.getByRole('button', { name: 'Visible page 2' }));
     fireEvent.click(screen.getByTitle(i18n.t('signing.fieldSettings.addFieldForPage', { page: 2 })));
-    fireEvent.click(screen.getByRole('button', { name: t('types.checkbox') }));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signing.fields.checkbox') }));
     expect(screen.queryByText(i18n.t('signing.fieldSettings.addFieldTitle'))).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: t('next') }));
     fireEvent.click(screen.getByRole('button', { name: t('save') }));
