@@ -1,0 +1,672 @@
+const pool = require("../config/db"); // pg pool
+const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
+const { formatPhoneNumber, isValidIsraeliPhone } = require("../utils/phoneUtils");
+const { sendMessage } = require("../utils/sendMessage");
+const { sendTransactionalCustomHtmlEmail } = require("../utils/smooveEmailCampaignService");
+const { isLocked, recordFailure, recordSuccess } = require("../utils/otpBruteForce");
+const { logSecurityEvent, extractIp } = require("../utils/securityAuditLogger");
+const { isMultiTenantMode } = require("../lib/tenant/tenantContext");
+const { getTenantBySlug } = require("../lib/tenant/tenantService");
+const { isPlatformAdmin: isPlatformAdminUser } = require("../services/settingsService");
+require("dotenv").config();
+
+/** Login flag: DB platform_admins (+ env fallback), with dev all-Admins when unset. */
+async function resolveLoginPlatformAdminFlag(userid, role) {
+    if (String(role || "").trim() !== "Admin") return false;
+    if (await isPlatformAdminUser(userid)) return true;
+    const envList = String(process.env.PLATFORM_ADMIN_USER_IDS || "").trim();
+    if (!isMultiTenantMode() && !envList && String(process.env.NODE_ENV || "").toLowerCase() !== "production") {
+        return true;
+    }
+    return false;
+}
+
+if (!process.env.JWT_SECRET) {
+    throw new Error("FATAL: JWT_SECRET env variable is not set. Server cannot start.");
+}
+const SECRET_KEY = process.env.JWT_SECRET;
+
+const ACCESS_TOKEN_TTL = String(process.env.ACCESS_TOKEN_TTL || "15m");
+const ACCESS_TOKEN_TTL_ADMIN = String(process.env.ACCESS_TOKEN_TTL_ADMIN || "8h");
+
+const REFRESH_TOKEN_TTL_DAYS = Number(process.env.REFRESH_TOKEN_TTL_DAYS || 90);
+const REFRESH_TOKEN_PEPPER = String(process.env.REFRESH_TOKEN_PEPPER || "");
+
+const ANDROID_SMS_RETRIEVER_HASH = String(process.env.ANDROID_SMS_RETRIEVER_HASH || "").trim();
+const WEBSITE_DOMAIN_FALLBACK = String(process.env.WEBSITE_DOMAIN || "").trim();
+
+// Demo phones: skip real SMS, use fixed OTP "123456"
+const DEMO_OTP_PHONES = new Set(
+    (process.env.DEMO_OTP_PHONES || "").split(",").map(p => p.trim()).filter(Boolean)
+);
+const DEMO_OTP_CODE = "123456";
+
+// Hash OTP before storing in DB (ISO 27001 A.10 — never store secrets in plaintext)
+const OTP_PEPPER = String(process.env.SIGNING_OTP_PEPPER || "");
+function hashOtp(otp) {
+    return crypto.createHmac("sha256", OTP_PEPPER).update(String(otp)).digest("hex");
+}
+
+function getClientPlatform(req) {
+    const raw = req?.headers?.["x-client-platform"];
+    return String(raw || "").trim().toLowerCase();
+}
+
+/**
+ * Android SMS Retriever app-hash, as reported by the client for ITS OWN build.
+ * The mobile app computes this at runtime (react-native-otp-verify getHash) and
+ * sends it in the `x-android-sms-hash` header — so it always matches the running
+ * build's signing certificate, unlike a statically-configured env hash.
+ *
+ * The value is appended verbatim into the outgoing SMS body, so validate strictly
+ * (exactly 11 base64 chars) to prevent SMS-body injection via a forged header.
+ */
+function getAndroidSmsHash(req) {
+    const raw = String(req?.headers?.["x-android-sms-hash"] || "").trim();
+    return /^[A-Za-z0-9+/]{11}$/.test(raw) ? raw : "";
+}
+
+function getBearerToken(req) {
+    const auth = String(req?.headers?.authorization || req?.headers?.Authorization || "").trim();
+    if (!auth) return "";
+    const m = auth.match(/^Bearer\s+(.+)$/i);
+    return m ? String(m[1] || "").trim() : "";
+}
+
+function base64UrlFromBuffer(buffer) {
+    return buffer
+        .toString("base64")
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/g, "");
+}
+
+function generateRefreshToken() {
+    // 48 bytes -> 64 chars-ish base64url. High entropy, URL-safe.
+    return base64UrlFromBuffer(crypto.randomBytes(48));
+}
+
+function hashRefreshToken(rawToken) {
+    const token = String(rawToken || "").trim();
+    // Pepper is optional; token is already high entropy.
+    return crypto.createHash("sha256").update(token).update(REFRESH_TOKEN_PEPPER).digest("hex");
+}
+
+function computeRefreshTokenExpiryDate() {
+    const days = Number.isFinite(REFRESH_TOKEN_TTL_DAYS) && REFRESH_TOKEN_TTL_DAYS > 0 ? REFRESH_TOKEN_TTL_DAYS : 90;
+    return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+}
+
+function signAccessToken({ userid, role, phonenumber }) {
+    // Admins get a longer-lived access token (ISO 27001 A.9.4 — session limits remain
+    // enforced via refresh-token rotation and audit logging).
+    const ttl = (role === 'Admin' || role === 'Lawyer') ? ACCESS_TOKEN_TTL_ADMIN : ACCESS_TOKEN_TTL;
+    return jwt.sign({ userid, phonenumber, role }, SECRET_KEY, { expiresIn: ttl });
+}
+
+async function createRefreshTokenRow({ client, userid, userAgent, ipAddress }) {
+    const refreshToken = generateRefreshToken();
+    const tokenHash = hashRefreshToken(refreshToken);
+    const expiresAt = computeRefreshTokenExpiryDate();
+
+    await client.query(
+        `
+        INSERT INTO refresh_tokens (userid, token_hash, expires_at, user_agent, ip_address)
+        VALUES ($1, $2, $3, $4, $5)
+        `,
+        [userid, tokenHash, expiresAt, userAgent || null, ipAddress || null]
+    );
+
+    return { refreshToken, tokenHash, expiresAt };
+}
+
+function buildOtpSmsBody(otp, options = {}) {
+    const otpStr = String(otp || "").trim();
+    const baseHebrew = `קוד האימות שלך הוא ${otpStr}`;
+
+    const platform = String(options?.platform || "").toLowerCase();
+    const androidHash = String(options?.androidHash || "").trim();
+
+    if (platform === "android" && androidHash) {
+        return `<#> ${baseHebrew}\n${androidHash}`.trimEnd();
+    }
+
+    if (platform === "web") {
+        return `${baseHebrew}\n\n@${WEBSITE_DOMAIN_FALLBACK} #${otpStr}`.trimEnd();
+    }
+
+    return baseHebrew.trimEnd();
+}
+
+function buildOtpSmsBodyForRequest(req, otp) {
+    const platform = getClientPlatform(req);
+
+    // Prefer the hash the Android client reports for its own build (always matches the
+    // running build's signing cert) over the statically-configured env hash, which is a
+    // frequent source of SMS-Retriever mismatches across debug/EAS/release keystores.
+    // A valid app hash alone also identifies Android, as a belt-and-braces fallback.
+    const appHash = getAndroidSmsHash(req);
+    const androidHash = appHash || ANDROID_SMS_RETRIEVER_HASH;
+    if (androidHash && (platform === "android" || appHash)) {
+        return buildOtpSmsBody(otp, { platform: "android", androidHash });
+    }
+
+    if (platform === "web") {
+        return buildOtpSmsBody(otp, { platform: "web", webDomain: WEBSITE_DOMAIN_FALLBACK });
+    }
+
+    return buildOtpSmsBody(otp);
+}
+
+const requestOtp = async (req, res) => {
+    let { phoneNumber, email, tenantSlug } = req.body;
+    const emailNorm = String(email || "").trim().toLowerCase();
+    const useEmail = !phoneNumber && !!emailNorm;
+    let tenantId = req.tenant?.id || null;
+
+    if (isMultiTenantMode() && !tenantId && tenantSlug) {
+        const tenant = await getTenantBySlug(tenantSlug);
+        if (!tenant) {
+            return res.status(404).json({ message: "משרד לא נמצא" });
+        }
+        if (!tenant.isActive) {
+            return res.status(403).json({ message: "משרד מושבת" });
+        }
+        tenantId = tenant.id;
+    }
+
+    if (isMultiTenantMode() && !tenantId) {
+        return res.status(400).json({ message: "נדרש מזהה משרד (tenantSlug)" });
+    }
+
+    if (!phoneNumber && !emailNorm) {
+        return res.status(400).json({ message: "נא להזין מספר טלפון או דוא״ל תקין" });
+    }
+
+    try {
+        if (useEmail) {
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
+                return res.status(400).json({ message: "נא להזין כתובת דוא״ל תקינה" });
+            }
+
+            const otp = crypto.randomInt(100000, 999999).toString();
+            const expiry = new Date(Date.now() + 5 * 60 * 1000);
+
+            const userResult = tenantId
+                ? await pool.query(
+                    `SELECT userid, name FROM users WHERE LOWER(email) = $1 AND law_firm_tenant_id = $2`,
+                    [emailNorm, tenantId]
+                )
+                : await pool.query(
+                    `SELECT userid, name FROM users WHERE LOWER(email) = $1`,
+                    [emailNorm]
+                );
+            if (userResult.rows.length === 0) {
+                return res.status(404).json({ message: "משתמש אינו קיים" });
+            }
+            const userId = userResult.rows[0].userid;
+            const userName = userResult.rows[0].name || "";
+
+            await pool.query(
+                `DELETE FROM otps WHERE LOWER(email) = $1`,
+                [emailNorm]
+            );
+            await pool.query(
+                `INSERT INTO otps (email, phonenumber, otp, expiry, userid)
+                 VALUES ($1, NULL, $2, $3, $4)`,
+                [emailNorm, hashOtp(otp), expiry, userId]
+            );
+
+            try {
+                await sendTransactionalCustomHtmlEmail({
+                    toEmail: emailNorm,
+                    subject: "קוד כניסה למערכת",
+                    htmlBody: `<p>שלום ${userName || ""},</p><p>קוד האימות שלך: <strong>${otp}</strong></p><p>הקוד תקף ל-5 דקות.</p>`,
+                    logLabel: "login-email-otp",
+                });
+            } catch (e) {
+                await pool.query(`DELETE FROM otps WHERE LOWER(email) = $1`, [emailNorm]);
+                console.warn("Email OTP send failed:", e?.message);
+                return res.status(503).json({ message: "שליחת הקוד לדוא״ל נכשלה. נסו שוב בעוד רגע" });
+            }
+
+            return res.status(200).json({ message: "קוד נשלח לדוא״ל", otpSent: true, channel: "email" });
+        }
+
+        if (!phoneNumber) {
+            return res.status(400).json({ message: "נא להזין מספר פלאפון תקין" });
+        }
+
+        let formatedPhoneNumber = formatPhoneNumber(phoneNumber);
+
+        const isDemo = DEMO_OTP_PHONES.has(phoneNumber);
+        if (!isDemo && !formatedPhoneNumber) {
+            return res.status(400).json({ message: "נא להזין מספר פלאפון תקין" });
+        }
+
+        const otp = isDemo ? DEMO_OTP_CODE : crypto.randomInt(100000, 999999).toString();
+
+        const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+        const userResult = tenantId
+            ? await pool.query(
+                `SELECT userid FROM users WHERE phonenumber = $1 AND law_firm_tenant_id = $2`,
+                [phoneNumber, tenantId]
+            )
+            : await pool.query(
+                `SELECT userid FROM users WHERE phonenumber = $1`,
+                [phoneNumber]
+            );
+        if (userResult.rows.length === 0) {
+            console.log("משתמש אינו קיים");
+            return res.status(404).json({ message: "משתמש אינו קיים" });
+        }
+        const userId = userResult.rows[0].userid;
+
+        await pool.query(`DELETE FROM otps WHERE phonenumber = $1`, [phoneNumber]);
+        const insertOtp = await pool.query(
+            `
+            INSERT INTO otps (phonenumber, otp, expiry, userid)
+            VALUES ($1, $2, $3, $4)
+            RETURNING id
+            `,
+            [phoneNumber, hashOtp(otp), expiry, userId]
+        );
+        const otpRowId = insertOtp.rows[0]?.id;
+
+        if (!isDemo) {
+            let sent;
+            try {
+                sent = await sendMessage(
+                    buildOtpSmsBodyForRequest(req, otp),
+                    formatedPhoneNumber,
+                    { fast: true }
+                );
+            } catch (e) {
+                if (otpRowId != null) {
+                    await pool.query(`DELETE FROM otps WHERE id = $1`, [otpRowId]);
+                }
+                console.warn("SMS send failed:", e?.message);
+                return res.status(503).json({ message: "שליחת הקוד נכשלה. נסו שוב בעוד רגע" });
+            }
+            if (!sent?.ok) {
+                if (otpRowId != null) {
+                    await pool.query(`DELETE FROM otps WHERE id = $1`, [otpRowId]);
+                }
+                console.warn("SMS send failed:", sent?.error || 'provider_rejected');
+                return res.status(503).json({ message: "שליחת הקוד נכשלה. נסו שוב בעוד רגע" });
+            }
+        }
+
+        return res.status(200).json({ message: "קוד נשלח בהצלחה", otpSent: true, channel: "phone" });
+    } catch (error) {
+        console.error("שגיאה בשליחת הקוד:", error);
+        logSecurityEvent({ type: 'OTP_REQUEST_ERROR', phone: phoneNumber, email: emailNorm, ip: extractIp(req), success: false });
+        return res.status(500).json({ message: "שגיאה בשליחת הקוד" });
+    }
+};
+
+const verifyOtp = async (req, res) => {
+    if (isMultiTenantMode() && !req.tenant?.id) return res.status(400).json({ error: 'TENANT_REQUIRED' });
+    let { phoneNumber, email, otp, tenantSlug } = req.body;
+    const emailNorm = String(email || "").trim().toLowerCase();
+    const useEmail = !phoneNumber && !!emailNorm;
+    const lockKey = useEmail ? emailNorm : phoneNumber;
+    let tenantId = req.tenant?.id || null;
+
+    if (isMultiTenantMode() && !tenantId && tenantSlug) {
+        const tenant = await getTenantBySlug(tenantSlug);
+        if (!tenant) {
+            return res.status(404).json({ message: "משרד לא נמצא" });
+        }
+        tenantId = tenant.id;
+    }
+
+    // ── Brute-force lockout check (ISO 27001 A.9.4.2) ──
+    const lockStatus = isLocked(lockKey);
+    if (lockStatus.locked) {
+        logSecurityEvent({
+            type: 'OTP_VERIFY_BLOCKED_LOCKOUT',
+            phone: phoneNumber,
+            ip: extractIp(req),
+            userAgent: req.headers?.['user-agent'],
+            success: false,
+            meta: { retryAfterMs: lockStatus.retryAfterMs },
+        });
+        const retryMinutes = Math.ceil((lockStatus.retryAfterMs || 0) / 60000);
+        return res.status(429).json({
+            message: `יותר מדי ניסיונות. נסה שוב בעוד ${retryMinutes} דקות`,
+        });
+    }
+
+    try {
+        const otpHash = hashOtp(otp);
+        const result = useEmail
+            ? await pool.query(
+                tenantId
+                    ? `SELECT U.userid, U.role, U.phonenumber, U.email
+                       FROM otps O
+                       JOIN users U ON O.userid = U.userid
+                       WHERE LOWER(O.email) = $1 AND O.otp = $2 AND O.expiry > NOW()
+                         AND U.law_firm_tenant_id = $3`
+                    : `SELECT U.userid, U.role, U.phonenumber, U.email
+                       FROM otps O
+                       JOIN users U ON O.userid = U.userid
+                       WHERE LOWER(O.email) = $1 AND O.otp = $2 AND O.expiry > NOW()`,
+                tenantId ? [emailNorm, otpHash, tenantId] : [emailNorm, otpHash]
+            )
+            : await pool.query(
+                tenantId
+                    ? `SELECT U.userid, U.role, U.phonenumber, U.email
+                       FROM otps O
+                       JOIN users U ON O.userid = U.userid
+                       WHERE O.phonenumber = $1 AND O.otp = $2 AND O.expiry > NOW()
+                         AND U.law_firm_tenant_id = $3`
+                    : `SELECT U.userid, U.role, U.phonenumber, U.email
+                       FROM otps O
+                       JOIN users U ON O.userid = U.userid
+                       WHERE O.phonenumber = $1 AND O.otp = $2 AND O.expiry > NOW()`,
+                tenantId ? [phoneNumber, otpHash, tenantId] : [phoneNumber, otpHash]
+            );
+
+        if (result.rows.length === 0) {
+            recordFailure(lockKey);
+            logSecurityEvent({
+                type: 'OTP_VERIFY_FAIL',
+                phone: phoneNumber,
+                email: emailNorm,
+                ip: extractIp(req),
+                userAgent: req.headers?.['user-agent'],
+                success: false,
+            });
+            return res.status(401).json({ message: "קוד לא תקין" });
+        }
+
+        recordSuccess(lockKey);
+        const { userid, role, phonenumber } = result.rows[0];
+        const token = signAccessToken({ userid, role, phonenumber });
+
+        logSecurityEvent({
+            type: 'OTP_VERIFY_SUCCESS',
+            phone: phoneNumber,
+            email: emailNorm,
+            userId: userid,
+            ip: extractIp(req),
+            userAgent: req.headers?.['user-agent'],
+            success: true,
+        });
+
+        // Invalidate the OTP after successful verification to prevent replay
+        try {
+            if (useEmail) {
+                await pool.query(
+                    `DELETE FROM otps WHERE LOWER(email) = $1 AND otp = $2`,
+                    [emailNorm, otpHash]
+                );
+            } else {
+                await pool.query(
+                    `DELETE FROM otps WHERE phonenumber = $1 AND otp = $2`,
+                    [phoneNumber, otpHash]
+                );
+            }
+        } catch (delErr) {
+            console.warn('Warning: failed to delete OTP after verification', delErr?.message);
+        }
+
+        // Issue refresh token (for long-lived sessions / biometrics). If DB migration isn't applied yet,
+        // fall back gracefully to avoid taking login down during rollout.
+        let refreshToken = null;
+        try {
+            const client = await pool.connect();
+            try {
+                const userAgent = String(req?.headers?.['user-agent'] || "").slice(0, 400) || null;
+                const ipAddress = String(req?.ip || "").slice(0, 200) || null;
+                const row = await createRefreshTokenRow({ client, userid, userAgent, ipAddress });
+                refreshToken = row.refreshToken;
+            } finally {
+                client.release();
+            }
+        } catch (rtErr) {
+            // 42P01 = undefined_table (migration not applied yet)
+            if (rtErr?.code === '42P01') {
+                console.warn('refresh_tokens table missing; skipping refresh token issuance');
+            } else {
+                console.warn('failed to issue refresh token:', rtErr?.message);
+            }
+        }
+
+        const isPlatformAdmin = await resolveLoginPlatformAdminFlag(userid, role);
+
+        return res.status(200).json({ message: "קוד אומת בהצלחה", token, role, refreshToken, isPlatformAdmin });
+    } catch (error) {
+        console.error("שגיאה בתהליך האימות:", error);
+        return res.status(500).json({ message: "שגיאה בתהליך האימות" });
+    }
+};
+
+const refreshToken = async (req, res) => {
+    const rawRefreshToken = String(req?.body?.refreshToken || "").trim();
+    if (!rawRefreshToken) {
+        return res.status(400).json({ message: 'חסר אסימון רענון' });
+    }
+
+    const tokenHash = hashRefreshToken(rawRefreshToken);
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        const found = await client.query(
+            `
+            SELECT rt.refresh_token_id, rt.userid, rt.expires_at, rt.revoked_at,
+                   u.role, u.phonenumber
+            FROM refresh_tokens rt
+            JOIN users u ON u.userid = rt.userid
+            WHERE rt.token_hash = $1
+            LIMIT 1
+            `,
+            [tokenHash]
+        );
+
+        if (found.rows.length === 0) {
+            await client.query('ROLLBACK');
+            logSecurityEvent({ type: 'TOKEN_REFRESH_FAIL', ip: extractIp(req), userAgent: req.headers?.['user-agent'], success: false, meta: { reason: 'invalid_token' } });
+            return res.status(401).json({ message: 'אסימון רענון לא תקין' });
+        }
+
+        const row = found.rows[0];
+
+        if (row.revoked_at) {
+            await client.query('ROLLBACK');
+            logSecurityEvent({ type: 'TOKEN_REFRESH_FAIL', userId: row.userid, ip: extractIp(req), success: false, meta: { reason: 'revoked' } });
+            return res.status(401).json({ message: 'אסימון הרענון בוטל' });
+        }
+
+        if (row.expires_at && new Date(row.expires_at).getTime() <= Date.now()) {
+            await client.query('ROLLBACK');
+            logSecurityEvent({ type: 'TOKEN_REFRESH_FAIL', userId: row.userid, ip: extractIp(req), success: false, meta: { reason: 'expired' } });
+            return res.status(401).json({ message: 'אסימון הרענון פג תוקף' });
+        }
+
+        // Rotate refresh token on each refresh.
+        const userAgent = String(req?.headers?.['user-agent'] || "").slice(0, 400) || null;
+        const ipAddress = String(req?.ip || "").slice(0, 200) || null;
+        const newTokenRow = await createRefreshTokenRow({ client, userid: row.userid, userAgent, ipAddress });
+
+        await client.query(
+            `
+            UPDATE refresh_tokens
+            SET revoked_at = NOW(), replaced_by_token_hash = $2
+            WHERE refresh_token_id = $1
+            `,
+            [row.refresh_token_id, newTokenRow.tokenHash]
+        );
+
+        await client.query('COMMIT');
+
+        const token = signAccessToken({ userid: row.userid, role: row.role, phonenumber: row.phonenumber });
+
+        const isPlatformAdmin = await resolveLoginPlatformAdminFlag(row.userid, row.role);
+
+        return res.status(200).json({ token, role: row.role, refreshToken: newTokenRow.refreshToken, isPlatformAdmin });
+    } catch (error) {
+        try {
+            await client.query('ROLLBACK');
+        } catch {
+            // ignore
+        }
+        logSecurityEvent({ type: 'TOKEN_REFRESH_ERROR', ip: extractIp(req), success: false });
+
+        if (error?.code === '42P01') {
+            return res.status(501).json({ message: 'אסימוני רענון אינם זמינים' });
+        }
+
+        console.error('refreshToken error:', error);
+        return res.status(500).json({ message: 'שגיאה בחידוש אסימון' });
+    } finally {
+        client.release();
+    }
+};
+
+const logout = async (req, res) => {
+    const rawRefreshToken = String(req?.body?.refreshToken || "").trim();
+
+    // Option A: revoke the provided refresh token.
+    if (rawRefreshToken) {
+        const tokenHash = hashRefreshToken(rawRefreshToken);
+        try {
+            await pool.query(
+                `
+                UPDATE refresh_tokens
+                SET revoked_at = NOW()
+                WHERE token_hash = $1 AND revoked_at IS NULL
+                `,
+                [tokenHash]
+            );
+            return res.status(200).json({ ok: true });
+        } catch (error) {
+            if (error?.code === '42P01') {
+                return res.status(501).json({ message: 'אסימוני רענון אינם זמינים' });
+            }
+            console.error('logout error:', error);
+            return res.status(500).json({ message: 'שגיאה בהתנתקות' });
+        }
+    }
+
+    // Option B: if caller has an access token, revoke all refresh tokens for that user.
+    const bearer = getBearerToken(req);
+    if (bearer) {
+        try {
+            const decoded = jwt.verify(bearer, SECRET_KEY, { algorithms: ['HS256'] });
+            const userid = decoded?.userid;
+            if (!userid) {
+                return res.status(401).json({ message: 'אסימון גישה לא תקין' });
+            }
+
+            await pool.query(
+                `
+                UPDATE refresh_tokens
+                SET revoked_at = NOW()
+                WHERE userid = $1 AND revoked_at IS NULL
+                `,
+                [userid]
+            );
+            return res.status(200).json({ ok: true });
+        } catch (error) {
+            if (error?.code === '42P01') {
+                return res.status(501).json({ message: 'אסימוני רענון אינם זמינים' });
+            }
+            return res.status(401).json({ message: 'אסימון גישה לא תקין' });
+        }
+    }
+
+    return res.status(400).json({ message: 'נדרש לספק אסימון רענון או כותרת Authorization' });
+};
+
+const register = async (req, res) => {
+    if (isMultiTenantMode() && !req.tenant?.id) return res.status(400).json({ error: 'TENANT_REQUIRED' });
+    try {
+        let { name, phoneNumber } = req.body || {};
+
+        if (!name || !phoneNumber) {
+            return res.status(400).json({ message: "נא להזין שם ומספר פלאפון" });
+        }
+
+        let formatedPhoneNumber = formatPhoneNumber(phoneNumber);
+        if (!formatedPhoneNumber) {
+            return res.status(400).json({ message: "נא להזין מספר פלאפון תקין" });
+        }
+
+        const exists = await pool.query(
+            `SELECT userid FROM users WHERE phonenumber = $1`,
+            [phoneNumber]
+        );
+        if (exists.rows.length > 0) {
+            return res.status(409).json({ message: "משתמש עם המספר הזה כבר קיים" });
+        }
+
+        await pool.query(
+            `
+      INSERT INTO users (name, email, phonenumber, passwordhash, role, companyname, createdat)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `,
+            [name, null, phoneNumber, null, "User", null, new Date()]
+        );
+
+        const otp = crypto.randomInt(100000, 999999).toString();
+        const expiry = new Date(Date.now() + 5 * 60 * 1000);
+
+        const ures = await pool.query(
+            `SELECT userid FROM users WHERE phonenumber = $1`,
+            [phoneNumber]
+        );
+        const userId = ures.rows[0]?.userid;
+
+        await pool.query(`DELETE FROM otps WHERE phonenumber = $1`, [phoneNumber]);
+        const insertOtp = await pool.query(
+            `
+            INSERT INTO otps (phonenumber, otp, expiry, userid)
+            VALUES ($1, $2, $3, $4)
+            RETURNING id
+            `,
+            [phoneNumber, hashOtp(otp), expiry, userId]
+        );
+        const otpRowId = insertOtp.rows[0]?.id;
+
+        let sent;
+        try {
+            sent = await sendMessage(
+                buildOtpSmsBodyForRequest(req, otp),
+                formatedPhoneNumber,
+                { fast: true }
+            );
+        } catch (e) {
+            if (otpRowId != null) {
+                await pool.query(`DELETE FROM otps WHERE id = $1`, [otpRowId]);
+            }
+            console.warn("כשל בשליחת SMS לאחר הרשמה:", e?.message);
+            return res.status(503).json({ message: "שליחת הקוד נכשלה. נסו שוב בעוד רגע" });
+        }
+        if (!sent?.ok) {
+            if (otpRowId != null) {
+                await pool.query(`DELETE FROM otps WHERE id = $1`, [otpRowId]);
+            }
+            console.warn("כשל בשליחת SMS לאחר הרשמה:", sent?.error || 'provider_rejected');
+            return res.status(503).json({ message: "שליחת הקוד נכשלה. נסו שוב בעוד רגע" });
+        }
+
+        return res.status(201).json({ otpSent: true });
+    } catch (error) {
+        console.error("שגיאה בהרשמה:", error);
+        return res.status(500).json({ message: "אירעה שגיאה בהרשמה" });
+    }
+};
+
+module.exports = {
+    requestOtp,
+    verifyOtp,
+    refreshToken,
+    logout,
+    register,
+};

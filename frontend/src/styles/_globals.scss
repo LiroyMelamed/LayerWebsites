@@ -1,0 +1,197 @@
+@use 'variables' as v;
+@use 'mixins' as m;
+
+html {
+  font-size: 1rem; // baseline: 1rem = 1rem
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100svh;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+  height: auto;
+}
+
+body {
+  font-size: v.$font-size-base;
+  line-height: v.$line-height-base;
+  font-family: var(--lw-font-stack);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  direction: inherit;
+  unicode-bidi: plaintext;
+}
+
+
+/* Hide native scrollbars globally (keep scroll behavior). */
+html,
+body {
+  -ms-overflow-style: none;
+  /* IE/Edge legacy */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+  /* Chrome/Safari/Edge */
+}
+
+/* Also hide scrollbars for scrollable containers. */
+*::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Follow the platform language unless a field supplies its own direction. */
+input:not([dir]),
+textarea:not([dir]),
+select:not([dir]) {
+  direction: inherit;
+  text-align: start;
+}
+
+/* Phase F+: accessibility quick win — visible keyboard focus */
+:where(a,
+  button,
+  input,
+  select,
+  textarea,
+  summary,
+  [role='button'],
+  [tabindex]:not([tabindex='-1'])):focus-visible {
+  outline: 0.125rem solid var(--lw-color-primary);
+  outline-offset: 0.125rem;
+}
+
+/* Shared utility: hide content on small screens (RTL-safe). */
+.lw-hideOnMobile {
+  @media (max-width: v.$bp-md) {
+    display: none !important;
+  }
+}
+
+/* Phase F: standard row layout (RTL-safe via gap + logical sizing) */
+.lw-row {
+  --lw-row-gap: #{v.$space-3};
+  @include m.row(var(--lw-row-gap));
+}
+
+.lw-row__grow {
+  flex: 1 1 var(--lw-row-grow-basis, 20rem);
+  min-inline-size: var(--lw-row-grow-min, 14rem);
+}
+
+.lw-row__control {
+  flex: 0 0 auto;
+  min-inline-size: var(--lw-row-control-min, 8.5rem);
+}
+
+/* Utilities: overflow-safe flex/text (RTL-safe) */
+.lw-min0 {
+  min-inline-size: 0;
+}
+
+.lw-textEllipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-inline-size: 0;
+}
+
+/* When inside the native app WebView, lock the body so only inner
+   ScrollViews scroll — prevents the navbar from scrolling off-screen. */
+body.lw-fromApp {
+  height: 100svh;
+  overflow: hidden;
+}
+
+/* Bottom padding lives on the scroll view so content clears the native
+   bottom-nav center button (~2.8125rem above the bar). */
+body.lw-fromApp .lw-simpleScrollView {
+  // padding-bottom: 5rem;
+}
+
+/* Prevent browser pull-to-refresh/overscroll bounce where needed (e.g., signing flows) */
+html.lw-noPullRefresh,
+html.lw-noPullRefresh body {
+  overscroll-behavior-y: contain;
+}
+
+@media (max-width: v.$bp-narrow) {
+
+  .lw-row__grow,
+  .lw-row__control {
+    flex-basis: 100%;
+    min-inline-size: 100%;
+  }
+}
+
+/* Pull-to-refresh indicator (minimal, touch-focused) */
+.lw-pullRefresh {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.lw-pullRefresh__panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: v.$space-2;
+  padding: v.$space-2 v.$space-4;
+  color: var(--lw-color-text);
+  background: var(--lw-color-secondary);
+  border-bottom: 0.0625rem solid var(--lw-color-disabled);
+}
+
+.lw-pullRefresh__text {
+  font-size: 0.95rem;
+}
+
+.lw-pullRefresh__spinner {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 62.4375rem;
+  border: 0.125rem solid var(--lw-color-disabled);
+  border-top-color: var(--lw-color-primary);
+  animation: lw-spin 0.75s linear infinite;
+}
+
+@keyframes lw-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}

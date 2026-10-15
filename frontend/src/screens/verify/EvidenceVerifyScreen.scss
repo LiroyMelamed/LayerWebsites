@@ -1,0 +1,63 @@
+.lw-evidenceVerify {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+    direction: rtl;
+
+    &__card {
+        width: 100%;
+        max-width: 37.5rem;
+        background: rgba(255, 255, 255, 0.92);
+        border-radius: 1rem;
+        padding: 2rem 1.75rem;
+        box-shadow: 0 0.25rem 1.5rem rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-direction: column;
+        gap: 1.125rem;
+    }
+
+    &__title {
+        text-align: center;
+    }
+
+    &__subtitle {
+        text-align: center;
+        color: #4a5568;
+    }
+
+    &__idBox {
+        padding: 0.875rem 1rem;
+        border-radius: 0.625rem;
+        background: rgba(27, 58, 87, 0.06);
+        border: 0.0625rem solid rgba(27, 58, 87, 0.12);
+        text-align: center;
+    }
+
+    &__idValue {
+        font-family: monospace;
+        font-weight: 600;
+        letter-spacing: 0.0313rem;
+    }
+
+    &__instructions {
+        color: #4a5568;
+        line-height: 1.5;
+    }
+
+    &__actions {
+        display: flex;
+        gap: 0.625rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    &__privacy {
+        font-size: 0.75rem;
+        color: #718096;
+        text-align: center;
+        line-height: 1.4;
+    }
+}
