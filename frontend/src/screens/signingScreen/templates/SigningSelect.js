@@ -32,11 +32,11 @@ const SigningSelect = forwardRef(({ children, value, defaultValue, onChange, id,
     const items = options.some(item => item.value === current) ? options : [{ value: current, label: '', disabled: true }, ...options];
     return <span className={`lw-signingSelect ${className}`.trim()} dir={dir}>
         <ChooseButton items={items} showAll={false} defaultValue={current} controlledValue={current} controlRef={setControl}
-            props={{ ...props, id: controlId, name, dir, disabled, type: 'button', role: 'combobox',
+            props={{ ...props, id: controlId, name, dir, disabled, value: current, type: 'button', role: 'combobox',
                 'aria-haspopup': 'listbox', 'aria-controls': listId }}
             dropdownProps={{ id: listId, role: 'listbox', ariaLabelledBy: controlId, dir,
                 keyboardNavigation: true, withinDialog: true, className: 'lw-signingSelect__choices',
-                getOptionProps: item => ({ role: 'option', disabled: item.disabled, 'aria-selected': item.value === current }) }}
+                getOptionProps: item => ({ role: 'option', value: item.value, disabled: item.disabled, 'aria-selected': item.value === current }) }}
             OnPressChoiceFunction={next => {
                 if (next === current || disabled || control.current?.matches(':disabled') || options.find(item => item.value === next)?.disabled) return;
                 if (value === undefined) setLocalValue(next);

@@ -108,7 +108,7 @@ test('unknown actions are stripped', () => {
 
 test('new signing approvals are explicit and never inherited from v3 manage/upload or role names', () => {
     const old = normalizeRolePermissions({ version:3, areas:{signing:{visible:true,actions:['view','manage','upload']}} });
-    assert.equal(old.version,5);
+    assert.equal(old.version,getCatalogForApi().version);
     assert.equal(hasAreaAction(old,'signing','authority_manage'),false);
     assert.equal(hasAreaAction(old,'signing','package_approve'),false);
     const explicit=normalizeRolePermissions({areas:{signing:{visible:true,actions:['view','authority_manage','package_approve']}}});
