@@ -1,0 +1,40 @@
+✔ source cache shares only immutable verified source bytes and never mutable personal data (1.166083ms)
+✖ real Chromium text shaping/overflow and PDF geometry across Hebrew, Arabic, English and rotated crop boxes (2071.92275ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2221.293167
+
+✖ failing tests:
+
+test at tests/signingV2.renderer.test.js:23:1
+✖ real Chromium text shaping/overflow and PDF geometry across Hebrew, Arabic, English and rotated crop boxes (2071.92275ms)
+  Error [AppError]: TEXT_OVERFLOW
+      at createAppError (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/signing-templates-20261006/backend/utils/appError.js:17:12)
+      at fail (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/signing-templates-20261006/backend/lib/signingV2/errors.js:4:11)
+      at Object.render (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/signing-templates-20261006/backend/lib/signingV2/dataRenderer.js:111:54)
+      at async TestContext.<anonymous> (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/signing-templates-20261006/backend/tests/signingV2.renderer.test.js:39:22)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errorCode: 'TEXT_OVERFLOW',
+    httpStatus: 422,
+    heMessage: 'TEXT_OVERFLOW',
+    meta: undefined,
+    extras: {
+      messageKey: 'signingV2.errors.TEXT_OVERFLOW',
+      fieldErrors: [
+        [Object], [Object],
+        [Object], [Object],
+        [Object], [Object],
+        [Object], [Object],
+        [Object], [Object],
+        [Object], [Object]
+      ],
+      retryable: false
+    },
+    legacyAliases: undefined
+  }

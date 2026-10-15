@@ -1,0 +1,117 @@
+{
+  "status": "PASS_ON_RESTORED_BACKUPS",
+  "liveDatabasesModified": false,
+  "customerServicesUnchanged": true,
+  "allDisposableDatabasesRemoved": true,
+  "currentMigrations": [
+    "2026-10-03_00_firm_staff_roles.sql",
+    "2026-10-04_00_firm_staff_roles_unique_nulls_not_distinct.sql",
+    "2026-10-05_00_firm_staff_roles_reassign_orphan_users.sql",
+    "2026-10-06_00_cases_tenant_scope.sql"
+  ],
+  "idmPrerequisite": "2026-09-08_01_law_firm_multi_tenant.sql",
+  "idmAdditionalGrants": "idm-required-grants-v15.sql",
+  "rowIntegrity": [
+    {
+      "tenant": "melamedlaw",
+      "status": "PASS",
+      "databaseBackupSha256": "243fa0f6aa6119aaae50bcb0c69f728345e2d53e7857992cbdb877df914ba7b9",
+      "existingTables": 52,
+      "existingRowsUnchanged": true,
+      "assignedRoleSemanticsUnchanged": true,
+      "secondPassIdempotent": true,
+      "uniqueRolesTreatNullTenantAsOneBucket": true,
+      "caseTenantColumnPresent": true
+    },
+    {
+      "tenant": "morlevi",
+      "status": "PASS",
+      "databaseBackupSha256": "83d14129438de6b8a70636afc06793ca96a6e41dd30d3fca2f715644c094de87",
+      "existingTables": 52,
+      "existingRowsUnchanged": true,
+      "assignedRoleSemanticsUnchanged": true,
+      "secondPassIdempotent": true,
+      "uniqueRolesTreatNullTenantAsOneBucket": true,
+      "caseTenantColumnPresent": true
+    },
+    {
+      "tenant": "ashrafessa",
+      "status": "PASS",
+      "databaseBackupSha256": "154fe14d9be82d2207aa7a6f97e90a5c40b07a72cf01484821b7cf70249a1e4d",
+      "existingTables": 52,
+      "existingRowsUnchanged": true,
+      "assignedRoleSemanticsUnchanged": true,
+      "secondPassIdempotent": true,
+      "uniqueRolesTreatNullTenantAsOneBucket": true,
+      "caseTenantColumnPresent": true
+    },
+    {
+      "tenant": "idm",
+      "status": "PASS",
+      "databaseBackupSha256": "47592824efd6b483ebf373ad3d870eab996bc86907b0dd3ec274eca85516cdc0",
+      "existingTables": 49,
+      "existingRowsUnchanged": true,
+      "assignedRoleSemanticsUnchanged": true,
+      "secondPassIdempotent": true,
+      "uniqueRolesTreatNullTenantAsOneBucket": true,
+      "caseTenantColumnPresent": true
+    }
+  ],
+  "applicationPrivileges": [
+    {
+      "tenant": "melamedlaw",
+      "status": "PASS",
+      "originalAclPreservedInRestore": true,
+      "appRoleQueriesPassed": true,
+      "requiredGrantStatements": 0,
+      "requiredGrantsSha256": "ec6ce7aac6db9b5249adde346aa9902197cccd35eec6d136f1a06ce873427741",
+      "tables": [
+        "firm_staff_roles"
+      ],
+      "sequences": []
+    },
+    {
+      "tenant": "morlevi",
+      "status": "PASS",
+      "originalAclPreservedInRestore": true,
+      "appRoleQueriesPassed": true,
+      "requiredGrantStatements": 0,
+      "requiredGrantsSha256": "ec6ce7aac6db9b5249adde346aa9902197cccd35eec6d136f1a06ce873427741",
+      "tables": [
+        "firm_staff_roles"
+      ],
+      "sequences": []
+    },
+    {
+      "tenant": "ashrafessa",
+      "status": "PASS",
+      "originalAclPreservedInRestore": true,
+      "appRoleQueriesPassed": true,
+      "requiredGrantStatements": 0,
+      "requiredGrantsSha256": "ec6ce7aac6db9b5249adde346aa9902197cccd35eec6d136f1a06ce873427741",
+      "tables": [
+        "firm_staff_roles"
+      ],
+      "sequences": []
+    },
+    {
+      "tenant": "idm",
+      "status": "PASS",
+      "originalAclPreservedInRestore": true,
+      "appRoleQueriesPassed": true,
+      "requiredGrantStatements": 16,
+      "requiredGrantsSha256": "be6f77653ec43da648fa6480e383d99f65648ff9d918f7c30b861a345af4d3c8",
+      "tables": [
+        "firm_staff_roles",
+        "law_firm_tenants",
+        "signup_intents",
+        "global_platform_masters"
+      ],
+      "sequences": [
+        "firm_billing_id_seq",
+        "global_platform_masters_id_seq"
+      ]
+    }
+  ],
+  "deploymentWarning": "Do not bootstrap schema_migrations by marking every current file applied. Apply the explicit reviewed sequence and record only actual verified executions."
+}
