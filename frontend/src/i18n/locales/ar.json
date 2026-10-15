@@ -1,4 +1,11 @@
 {
+  "support": {
+    "events": {
+      "created": "تم فتح الطلب",
+      "statusChanged": "تم تحديث حالة الطلب",
+      "updated": "تم تحديث الطلب"
+    }
+  },
   "common": {
     "loading": "جارٍ التحميل…",
     "language": "اللغة",

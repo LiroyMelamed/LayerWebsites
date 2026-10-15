@@ -503,6 +503,11 @@
     "support": "Support"
   },
   "support": {
+    "events": {
+      "created": "Ticket opened",
+      "statusChanged": "Ticket status updated",
+      "updated": "Ticket updated"
+    },
     "eyebrow": "{{firm}} · Support",
     "title": "Support tickets",
     "subtitle": "Open a ticket and track status with the MelaMedia team.",
