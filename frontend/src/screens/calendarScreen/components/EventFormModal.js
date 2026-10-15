@@ -1,0 +1,3193 @@
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
+import SimpleInput from "../../../components/simpleComponents/SimpleInput";
+import BlockDateInput from "../../../components/simpleComponents/BlockDateInput";
+import SimpleTextArea from "../../../components/simpleComponents/SimpleTextArea";
+import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
+import SimpleButton from "../../../components/simpleComponents/SimpleButton";
+import SearchInput from "../../../components/specializedComponents/containers/SearchInput";
+import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
+import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
+import { Text12, Text14, Text24, TextBold14 } from "../../../components/specializedComponents/text/AllTextKindFile";
+import calendarApi from "../../../api/calendarApi";
+import platformSettingsApi from "../../../api/platformSettingsApi";
+import remindersApi from "../../../api/remindersApi";
+import { buildReminderBodyPreview } from "../../../functions/reminders/buildReminderBodyPreview";
+import { getFirmName } from "../../../services/firmSettings";
+import ChooseButton from "../../../components/styledComponents/buttons/ChooseButton";
+import {
+    parseAllowedOptionsFromSettings,
+    parseAllowedChannelsFromSettings,
+    presetsForAllowedMinutes,
+    channelsForEventType,
+    normalizeSelectedOffsets,
+    normalizeSelectedChannels,
+    normalizeChannelsForEventType,
+    parseStoredChannels,
+    parseOffsetsList,
+    hasAnyReminderChannel,
+    defaultReminderOffsets,
+    defaultReminderChannels,
+    defaultReminderTargets,
+    parseReminderTargets,
+} from "../utils/eventReminders";
+import { customersApi } from "../../../api/customersApi";
+import { adminApi } from "../../../api/adminApi";
+import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
+import CaseFullView from "../../../components/styledComponents/cases/CaseFullView";
+import { EVENT_COLOR_PRESETS, getEventTypeDefaultColor, isStockEventColor } from "../utils/lawyerColors";
+import CalendarSmsTemplateEditor from "./CalendarSmsTemplateEditor";
+import { InviteIconButton } from "./CalendarInviteActionIcons";
+import IsraeliPhoneNumberValidation from "../../../functions/validation/IsraeliPhoneNumberValidation";
+import emailValidation from "../../../functions/validation/EmailValidation";
+import { toast, toastError, toastSuccess, toastWarning } from "../../../components/ui/toast";
+import { parseDatetimeLocal, toDatetimeLocal, toLocalYmdFromInput, jerusalemParts, zonedJerusalemInstant } from "../../../functions/date/datetimeLocal";
+import { meetingTypeLabelHe } from "../../../functions/calendar/meetingTypeLabelHe";
+import { supportsCalendarInviteSms } from "../../../functions/calendar/reminderKindLabelHe";
+import {
+    pickCalendarSmsPair,
+    upgradeLegacyCalendarSmsTemplate,
+    usesHearingSmsTemplates,
+} from "../../../functions/calendar/calendarSmsTemplates";
+import {
+    formatDisplayDateTime,
+    toNativeDateValue,
+    normalizeTemplateDateFields,
+} from "../../../functions/date/formatDateForInput";
+import "./EventFormModal.scss";
+import "../CalendarInviteScreen.scss";
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const NAVY = "#2A4365";
+const AMBER_TEXT = "#744210";
+const DEFAULT_ALLOWED_MINUTES = [15, 30, 60, 120, 1440, 2880, 10080];
+
+const DEFAULT_CLIENT_REMINDER_SMS =
+    "שלום {{recipientName}},\n"
+    + "זוהי תזכורת ל{{meetingTypeLabel}} שנקבעה עבורך ב{{firmName}}\n"
+    + "בתאריך {{date}} בשעה {{time}}.\n"
+    + "כתובתנו הינה {{address}}\n"
+    + "להוראות הגעה בוויז {{wazeUrl}}\n"
+    + "לבירור או שינוי נא להתקשר ל {{firmPhone}}\n"
+    + "מידע נוסף ניתן למצוא באתר שלנו\n"
+    + "{{websiteUrl}}";
+
+const DEFAULT_INVITE_SMS =
+    "שלום {{recipientName}}, נקבעה לך {{meetingTypeLabel}}, בתאריך {{date}} בשעה {{time}},\n"
+    + "כתובתנו היא {{address}}. בברכה, {{firmName}},\n"
+    + "לאישור הגעה, אנא לחץ/י על הקישור {{rsvpUrl}}\n"
+    + "להוראות הגעה בוויז: {{wazeUrl}}\n"
+    + "לבירור או שינוי נא להתקשר ל {{firmPhone}}";
+
+const INTAKE_EXISTING = "existing";
+const INTAKE_LEAD = "lead";
+
+const EVENT_TYPE_APPT = "appointment";
+const EVENT_TYPE_LEAVE = "leave";
+const EVENT_TYPE_HEARING = "hearing";
+const EVENT_TYPE_REMINDER = "reminder";
+const EVENT_TYPE_HOLIDAY = "holiday";
+
+function resolveFormColor(event, eventType) {
+    const type = eventType || event?.eventType || EVENT_TYPE_APPT;
+    const typeDefault = getEventTypeDefaultColor(type);
+    if (isStockEventColor(event?.color, type)) return typeDefault;
+    return String(event.color).trim().toUpperCase();
+}
+
+const INTERNAL_SCOPED_EVENT_TYPES = [
+    EVENT_TYPE_LEAVE,
+    EVENT_TYPE_REMINDER,
+    EVENT_TYPE_HOLIDAY,
+];
+
+function isInternalScopedEventType(type) {
+    return INTERNAL_SCOPED_EVENT_TYPES.includes(type);
+}
+
+function isReminderCapableEventType(type) {
+    return type === EVENT_TYPE_APPT || type === EVENT_TYPE_HEARING || type === EVENT_TYPE_REMINDER;
+}
+
+function customerDisplayName(item) {
+    return String(item?.Name ?? item?.name ?? "").trim();
+}
+
+function customerUserId(item) {
+    return item?.UserId ?? item?.userid ?? item?.id ?? null;
+}
+
+function customerPhone(item) {
+    return String(item?.PhoneNumber ?? item?.phonenumber ?? item?.Phone ?? item?.phone ?? "").trim();
+}
+
+function customerEmail(item) {
+    return String(item?.Email ?? item?.email ?? "").trim();
+}
+
+function clientChipLabel(client) {
+    const name = String(client?.name || "").trim();
+    const phone = String(client?.phone || "").trim();
+    if (name && phone) return `${name} · ${phone}`;
+    return name || phone || "";
+}
+
+/** Search result label for Admin / Lawyer / PlatformAdmin pickers. */
+function staffPickerLabel(item) {
+    const name = String(item?.name || item?.Name || "").trim();
+    const role = String(item?.role || "").trim();
+    const roleHe = role === "Lawyer"
+        ? "עו״ד"
+        : role === "PlatformAdmin"
+            ? "מנהל מערכת"
+            : role === "Admin"
+                ? "מנהל"
+                : "";
+    return roleHe ? `${name} · ${roleHe}` : name;
+}
+
+/** Format deferred-until for quiet-window toasts (Asia/Jerusalem clock). */
+function formatQuietDeferralTime(isoOrDate) {
+    if (!isoOrDate) return "";
+    const d = isoOrDate instanceof Date ? isoOrDate : new Date(isoOrDate);
+    if (Number.isNaN(d.getTime())) return "";
+    try {
+        return new Intl.DateTimeFormat("he-IL", {
+            timeZone: "Asia/Jerusalem",
+            weekday: "short",
+            day: "numeric",
+            month: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+        }).format(d);
+    } catch {
+        return "";
+    }
+}
+
+function quietDeferralToast(t, kind, result) {
+    const reason = result?.deferredReason || "";
+    const time = formatQuietDeferralTime(result?.deferredUntil);
+    if (kind === "invite") {
+        if (reason === "shabbat") {
+            return t("calendar.inviteDeferredShabbat", { time: time || "מוצאי שבת" });
+        }
+        if (reason === "night") {
+            return t("calendar.inviteDeferredNight", { time: time || "07:00" });
+        }
+        return t("calendar.inviteResendDeferred");
+    }
+    if (reason === "shabbat") {
+        return t("calendar.immediateReminderDeferredShabbat", { time: time || "מוצאי שבת" });
+    }
+    if (reason === "night") {
+        return t("calendar.immediateReminderDeferredNight", { time: time || "07:00" });
+    }
+    return t("calendar.immediateReminderDeferred");
+}
+
+function _initialClients(event) {
+    if (Array.isArray(event?.clients) && event.clients.length) {
+        return event.clients
+            .map((c) => ({
+                userId: c.userId ?? c.user_id ?? null,
+                name: c.name || c.clientName || "",
+                phone: c.phone || c.PhoneNumber || c.phonenumber || "",
+                email: c.email || c.Email || "",
+                inviteStatus: c.inviteStatus || c.invite_status || event?.inviteStatus || "none",
+            }))
+            .filter((c) => c.userId != null);
+    }
+    if (event?.clientUserId) {
+        return [{
+            userId: event.clientUserId,
+            name: event.clientName || event.clientDisplayName || "",
+            phone: event.clientPhone || "",
+            email: event.clientEmail || event.leadEmail || "",
+            inviteStatus: event.inviteStatus || "none",
+        }];
+    }
+    return [];
+}
+
+function _clientRsvpLabel(status, t) {
+    if (status === "accepted") return t("calendar.clientRsvpAccepted");
+    if (status === "declined") return t("calendar.clientRsvpDeclined");
+    if (status === "pending") return t("calendar.clientRsvpPending");
+    return "";
+}
+
+function _endTimeFromStart(startLocal, { isReminder = false } = {}) {
+    const startDt = parseDatetimeLocal(startLocal);
+    if (!startDt) return "";
+    const minutes = isReminder ? 15 : 30;
+    return toDatetimeLocal(new Date(startDt.getTime() + minutes * 60 * 1000).toISOString());
+}
+
+function RsvpCheckIcon() {
+    return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    );
+}
+
+function RsvpResendIcon() {
+    return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M1 4v6h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    );
+}
+
+function _resolveSplitReminderOffsets(event, isEdit, isCreateCapable) {
+    const legacy = parseOffsetsList(event?.reminderOffsets);
+    const lawyerRaw = event?.lawyerReminderOffsets ?? event?.lawyer_reminder_offsets;
+    const clientRaw = event?.clientReminderOffsets ?? event?.client_reminder_offsets;
+    const hasSplit = lawyerRaw != null || clientRaw != null;
+
+    if (isEdit) {
+        return {
+            lawyerReminderOffsets: hasSplit
+                ? parseOffsetsList(lawyerRaw ?? legacy)
+                : legacy,
+            clientReminderOffsets: hasSplit
+                ? parseOffsetsList(clientRaw ?? legacy)
+                : legacy,
+        };
+    }
+
+    if (isCreateCapable || isReminderCapableEventType(event?.eventType)) {
+        const defaults = defaultReminderOffsets(DEFAULT_ALLOWED_MINUTES);
+        return {
+            lawyerReminderOffsets: defaults,
+            clientReminderOffsets: defaults,
+        };
+    }
+
+    return {
+        lawyerReminderOffsets: parseOffsetsList(lawyerRaw ?? legacy),
+        clientReminderOffsets: parseOffsetsList(clientRaw ?? legacy),
+    };
+}
+
+// Placeholders auto-filled by the backend / system — never asked from the user.
+const REMINDER_AUTO_FILLED = new Set(["client_name", "firm_name", "subject"]);
+
+const REMINDER_VAR_LABELS = {
+    date: "תאריך",
+    body: "תוכן ההודעה",
+    case_title: "שם התיק",
+    document_name: "שם המסמך",
+    amount: "סכום",
+    content_1: "תוכן 1",
+    content_2: "תוכן 2",
+    content_3: "תוכן 3",
+};
+
+/** Extract [[placeholder]] names from a reminder template's subject + body. */
+function _extractReminderPlaceholders(template) {
+    if (!template) return [];
+    const raw = `${template.subject || ""} ${template.bodyHtml || template.body || ""}`;
+    const matches = raw.match(/\[\[([^\]]+)\]\]/g) || [];
+    const keys = [...new Set(matches.map((m) => m.slice(2, -2)))];
+    return keys.filter((k) => !REMINDER_AUTO_FILLED.has(k));
+}
+
+function isLeaveOrHolidayEventType(type) {
+    return type === EVENT_TYPE_LEAVE || type === EVENT_TYPE_HOLIDAY;
+}
+
+const EVENT_TYPE_OPTIONS = [
+    { value: EVENT_TYPE_APPT, labelKey: "calendar.eventTypeAppointmentSingular" },
+    { value: EVENT_TYPE_LEAVE, labelKey: "calendar.eventTypeLeaveSingular" },
+    { value: EVENT_TYPE_HEARING, labelKey: "calendar.type_hearing" },
+    { value: EVENT_TYPE_REMINDER, labelKey: "calendar.type_reminder" },
+    { value: EVENT_TYPE_HOLIDAY, labelKey: "calendar.eventTypeHolidaySingular" },
+];
+
+const MEETING_TYPE_OPTIONS = [
+    { value: "frontal", labelKey: "calendar.meetingTypeFrontal" },
+    { value: "zoom", labelKey: "calendar.meetingTypeZoom" },
+    { value: "phone", labelKey: "calendar.meetingTypePhone" },
+    { value: "other", labelKey: "calendar.meetingTypeOther" },
+];
+
+function _initialLeadParticipants(event) {
+    const fromJson = Array.isArray(event?.leadParticipants) ? event.leadParticipants : [];
+    if (fromJson.length) {
+        return fromJson.map((p) => ({
+            name: p?.name || "",
+            phone: p?.phone || "",
+            email: p?.email || "",
+        }));
+    }
+    if (event?.leadName || event?.leadPhone || event?.leadEmail) {
+        return [{
+            name: event.leadName || "",
+            phone: event.leadPhone || "",
+            email: event.leadEmail || "",
+        }];
+    }
+    return [];
+}
+
+function _shallowEqualConflictKey(a, b) {
+    return a?.start === b?.start
+        && a?.end === b?.end
+        && a?.lawyers === b?.lawyers
+        && a?.exclude === b?.exclude;
+}
+
+function _currentUserIdFromToken() {
+    try {
+        const token = localStorage.getItem("token");
+        if (!token) return null;
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const id = payload?.userid ?? payload?.UserId;
+        return id != null ? Number(id) : null;
+    } catch {
+        return null;
+    }
+}
+
+/** Creator tagged other lawyers but not themselves — visible in firm view only. */
+function _creatorScheduledForOthersOnly(saved, currentUserId) {
+    if (!currentUserId || !saved) return false;
+    const eventType = saved.eventType || saved.event_type;
+    if (isInternalScopedEventType(eventType)) return false;
+    const ownerId = saved.ownerId ?? saved.owner_id;
+    if (Number(ownerId) !== Number(currentUserId)) return false;
+
+    const managerIds = new Set();
+    (saved.managers || []).forEach((m) => {
+        if (m?.userId != null) managerIds.add(Number(m.userId));
+    });
+    if (saved.managerUserId != null) managerIds.add(Number(saved.managerUserId));
+    if (!managerIds.size) return false;
+    return !managerIds.has(Number(currentUserId));
+}
+
+function _initialManagers(event) {
+    if (Array.isArray(event?.managers) && event.managers.length) {
+        return event.managers.map((m) => ({
+            userId: m.userId,
+            name: m.name || "",
+        }));
+    }
+    if (event?.managerUserId) {
+        return [{ userId: event.managerUserId, name: event?.managerName || "" }];
+    }
+    return [];
+}
+
+/** Create-mode default: pre-select the logged-in staff member for meetings/hearings. */
+function _defaultManagersForForm(event) {
+    const fromEvent = _initialManagers(event);
+    if (fromEvent.length) return fromEvent;
+    const type = event?.eventType || EVENT_TYPE_APPT;
+    if (type !== EVENT_TYPE_APPT && type !== EVENT_TYPE_HEARING) return [];
+    const uid = _currentUserIdFromToken();
+    if (!uid) return [];
+    return [{ userId: uid, name: "" }];
+}
+
+/** Decide initial intake mode for a given event. Lead data wins; otherwise existing. */
+function _initialIntakeMode(event) {
+    if (!event) return INTAKE_EXISTING;
+    const clients = _initialClients(event);
+    if (clients.length || event.clientUserId) return INTAKE_EXISTING;
+    if (event.leadName || event.leadPhone || event.leadEmail) return INTAKE_LEAD;
+    return INTAKE_EXISTING;
+}
+
+/** Build fresh form state from an event prop (create prefill or edit row). */
+function _formStateFromEvent(event) {
+    const isEdit = event?.id != null;
+    const isCreateCapable =
+        !isEdit &&
+        (event?.eventType === EVENT_TYPE_APPT ||
+            event?.eventType === EVENT_TYPE_HEARING ||
+            !event?.eventType);
+    const clients = _initialClients(event);
+    const splitReminders = _resolveSplitReminderOffsets(event, isEdit, isCreateCapable);
+
+    return {
+        eventType: event?.eventType || EVENT_TYPE_APPT,
+        title: event?.title || "",
+        description: event?.description || "",
+        location: event?.location || "",
+        startTime: toDatetimeLocal(event?.startTime) || "",
+        endTime: toDatetimeLocal(event?.endTime) || "",
+        allDay: event?.allDay || false,
+        color: resolveFormColor(event, event?.eventType || EVENT_TYPE_APPT),
+        clients,
+        clientSearch: "",
+        clientName: clients[0]?.name || event?.clientName || "",
+        clientUserId: clients[0]?.userId || event?.clientUserId || null,
+        managerName: event?.managerName || "",
+        managerUserId: event?.managerUserId || null,
+        caseId: event?.caseId || null,
+        caseName: event?.caseName || "",
+        intakeMode: _initialIntakeMode(event),
+        leadName: event?.leadName || "",
+        leadPhone: event?.leadPhone || "",
+        leadEmail: event?.leadEmail || "",
+        leadParticipants: _initialLeadParticipants(event),
+        leadCaseName: event?.leadCaseName || "",
+        lawyerReminderOffsets: splitReminders.lawyerReminderOffsets,
+        clientReminderOffsets: splitReminders.clientReminderOffsets,
+        reminderChannels: isEdit
+            ? parseStoredChannels(event?.reminderChannels)
+            : (isCreateCapable || isReminderCapableEventType(event?.eventType)
+                ? defaultReminderChannels()
+                : parseStoredChannels(event?.reminderChannels)),
+        reminderTargets: isEdit
+            ? parseReminderTargets(event?.reminderTargets)
+            : (event?.eventType === EVENT_TYPE_REMINDER
+                ? { client: false, managers: true }
+                : defaultReminderTargets()),
+        inviteStatus: event?.inviteStatus || "none",
+    };
+}
+
+/** Props:
+ *  - event      : existing event object (edit mode) OR a slot prefill (create mode).
+ *                 Edit mode is detected by event?.id != null.
+ *  - onUpdated  : (savedEventRow) => void — refresh calendar without closing modal
+ *  - onSaved    : (savedEventRow) → void
+ *  - onDeleted  : (deletedEventId) → void
+ *  - onClose    : () → void
+ */
+export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, onClose, onDuplicatePrefill }) {
+    const { t } = useTranslation();
+    const isEdit = event?.id != null;
+
+    // ─── Core form state ──────────────────────────────────────────────────
+    const [eventType, setEventType] = useState(event?.eventType || EVENT_TYPE_APPT);
+    const [title, setTitle] = useState(event?.title || "");
+    const [description, setDescription] = useState(event?.description || "");
+    const [location, setLocation] = useState(event?.location || "");
+    const [meetingType, setMeetingType] = useState(event?.meetingType || event?.meeting_type || "");
+    const [startTime, setStartTime] = useState(toDatetimeLocal(event?.startTime) || "");
+    const [endTime, setEndTime] = useState(toDatetimeLocal(event?.endTime) || "");
+    const [allDay, setAllDay] = useState(event?.allDay || false);
+    const [recurring, setRecurring] = useState(false);
+    const [recurrenceFreq, setRecurrenceFreq] = useState("weekly");
+    const [recurrenceUntil, setRecurrenceUntil] = useState("");
+    const [color, setColor] = useState(() => resolveFormColor(event, event?.eventType || EVENT_TYPE_APPT));
+    const colorTouchedRef = useRef(!isStockEventColor(event?.color, event?.eventType || EVENT_TYPE_APPT));
+    const endTimeTouchedRef = useRef(Boolean(isEdit && event?.endTime));
+    const [colorCollision, setColorCollision] = useState(false);
+
+    // Existing-client / manager fields
+    const [clients, setClients] = useState(() => _initialClients(event));
+    const [clientSearch, setClientSearch] = useState("");
+    // Reminder-type search field + linked user (single recipient for email reminders)
+    const [clientName, setClientName] = useState(
+        () => _initialClients(event)[0]?.name || event?.clientName || ""
+    );
+    const [clientUserId, setClientUserId] = useState(
+        () => _initialClients(event)[0]?.userId || event?.clientUserId || null
+    );
+    const [managers, setManagers] = useState(() => _initialManagers(event));
+    const [managerSearch, setManagerSearch] = useState("");
+    const [caseId, setCaseId] = useState(event?.caseId || null);
+    const [caseName, setCaseName] = useState(event?.caseName || "");
+
+    // Lead-mode fields
+    const [intakeMode, setIntakeMode] = useState(_initialIntakeMode(event));
+    const [leadName, setLeadName] = useState(event?.leadName || "");
+    const [leadPhone, setLeadPhone] = useState(event?.leadPhone || "");
+    const [leadEmail, setLeadEmail] = useState(event?.leadEmail || "");
+    const [leadParticipants, setLeadParticipants] = useState(() => _initialLeadParticipants(event));
+    const [draftLeadName, setDraftLeadName] = useState("");
+    const [draftLeadPhone, setDraftLeadPhone] = useState("");
+    const [draftLeadEmail, setDraftLeadEmail] = useState("");
+    const [draftLeadPhoneError, setDraftLeadPhoneError] = useState(null);
+    const [draftLeadEmailError, setDraftLeadEmailError] = useState(null);
+
+    // Async lifecycle state
+    const notifyError = (msg) => {
+        const text = typeof msg === "function"
+            ? String(msg("") || "").trim()
+            : String(msg || "").trim();
+        const finalText = text || "שגיאה";
+        toastError(finalText);
+    };
+    const notifySuccess = (msg) => {
+        const text = String(msg || "").trim();
+        if (!text) return;
+        toastSuccess(text);
+    };
+    const notifyWarning = (msg) => {
+        const text = String(msg || "").trim();
+        if (!text) return;
+        toastWarning(text);
+    };
+    const clearNotices = () => { };
+    const [saving, setSaving] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [cancelling, setCancelling] = useState(false);
+    const [duplicating, setDuplicating] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState(false);
+    const [confirmCancel, setConfirmCancel] = useState(false);
+    const [eventStatus, setEventStatus] = useState(event?.eventStatus || "scheduled");
+    const isCancelled = eventStatus === "cancelled";
+    const [converting, setConverting] = useState(false);
+    const [linkingCase, setLinkingCase] = useState(false);
+    const [optionalConvertCaseName, setOptionalConvertCaseName] = useState(event?.leadCaseName || "");
+    const [lawyerReminderOffsets, setLawyerReminderOffsets] = useState(() => {
+        const s = _formStateFromEvent(event);
+        return s.lawyerReminderOffsets;
+    });
+    const [clientReminderOffsets, setClientReminderOffsets] = useState(() => {
+        const s = _formStateFromEvent(event);
+        return s.clientReminderOffsets;
+    });
+    const [reminderChannels, setReminderChannels] = useState(() => {
+        const s = _formStateFromEvent(event);
+        return s.reminderChannels;
+    });
+    const [reminderTargets, setReminderTargets] = useState(() => {
+        const s = _formStateFromEvent(event);
+        return s.reminderTargets;
+    });
+    const [clientReminderSms, setClientReminderSms] = useState(
+        () => upgradeLegacyCalendarSmsTemplate(
+            String(event?.clientReminderSms || "").trim() || DEFAULT_CLIENT_REMINDER_SMS
+        )
+    );
+    const [inviteSms, setInviteSms] = useState(
+        () => upgradeLegacyCalendarSmsTemplate(
+            String(event?.inviteSms || "").trim() || DEFAULT_INVITE_SMS
+        )
+    );
+    const smsCustomizedRef = useRef(
+        !!(String(event?.clientReminderSms || "").trim() || String(event?.inviteSms || "").trim())
+    );
+    const [smsFirmPhone, setSmsFirmPhone] = useState("");
+    const [smsFirmWazeUrl, setSmsFirmWazeUrl] = useState("");
+    const [smsFirmMapsUrl, setSmsFirmMapsUrl] = useState("");
+    const [smsOfficeAddress, setSmsOfficeAddress] = useState("");
+    const [allowedReminderMinutes, setAllowedReminderMinutes] = useState(DEFAULT_ALLOWED_MINUTES);
+    const [allowedReminderChannelKeys, setAllowedReminderChannelKeys] = useState(["push", "sms", "email"]);
+    const [caseFormDraft, setCaseFormDraft] = useState(null);
+    const linkedClientLabelRef = useRef(
+        _initialClients(event)[0]?.name || event?.clientName || ""
+    );
+
+    // ─── Reminder-event fields (event_type === 'reminder') ────────────────
+    const [reminderClientName, setReminderClientName] = useState("");
+    const [reminderToEmail, setReminderToEmail] = useState("");
+    const [reminderToEmailError, setReminderToEmailError] = useState(null);
+    /** Client search/name/email stay behind "הוסף לקוח" until opened (or editing with a client). */
+    const [showClientAttachPanel, setShowClientAttachPanel] = useState(() => (
+        _initialClients(event).length > 0
+        || !!(event?.clientName || event?.clientUserId)
+    ));
+    /** Lead form stays behind "הוסף לקוח פוטנציאלי" until opened (or editing with leads). */
+    const [showLeadAttachPanel, setShowLeadAttachPanel] = useState(() => {
+        const leads = _initialLeadParticipants(event);
+        return leads.length > 0
+            || !!(event?.leadName || event?.leadPhone || event?.leadEmail);
+    });
+    const [reminderSubject, setReminderSubject] = useState("");
+    const [reminderTemplateKey, setReminderTemplateKey] = useState("GENERAL");
+    const [reminderTemplateData, setReminderTemplateData] = useState({});
+    const [reminderTemplates, setReminderTemplates] = useState([]);
+    const [loadingReminderTemplates, setLoadingReminderTemplates] = useState(false);
+
+    // Conflict-check state
+    const [conflictState, setConflictState] = useState({
+        loading: false,
+        hasConflict: false,
+        hasLeaveConflict: false,
+    });
+    const lastConflictKeyRef = useRef(null);
+    const eventTypeRef = useRef(eventType);
+    eventTypeRef.current = eventType;
+
+    // Cases-for-client state
+    const [clientCases, setClientCases] = useState([]);
+    const [loadingClientCases, setLoadingClientCases] = useState(false);
+
+    // ─── Search hooks (existing client + manager) ─────────────────────────
+    const {
+        result: customers,
+        isPerforming: isSearchingCustomers,
+        performRequest: searchCustomers,
+    } = useAutoHttpRequest(customersApi.getCustomersByName, {
+        // Empty search returns [] (200). Only toast on real server/network failures.
+        onFailure: (err) => {
+            const status = err?.status || err?.response?.status;
+            if (status === 404) return;
+            notifyError("שגיאה בחיפוש לקוחות");
+        },
+    });
+
+    const {
+        result: admins,
+        isPerforming: isSearchingAdmins,
+        performRequest: searchAdmins,
+    } = useAutoHttpRequest(adminApi.getStaffByName, { onFailure: () => { } });
+
+    useEffect(() => {
+        if (isEdit) return;
+        searchAdmins("");
+    }, [isEdit, searchAdmins]);
+
+    // ─── Effect: reset entire form when a different event is opened in the popup ─
+    const eventIdentity = event?.id ?? `${event?.startTime || ""}|${event?.endTime || ""}|new`;
+
+    useEffect(() => {
+        if (isEdit) return;
+        const uid = _currentUserIdFromToken();
+        if (!uid || !Array.isArray(admins) || !admins.length) return;
+        setManagers((prev) => {
+            const idx = prev.findIndex((m) => Number(m.userId) === uid);
+            if (idx === -1 || prev[idx].name) return prev;
+            const me = admins.find((a) => Number(a.userid ?? a.UserId ?? a.id) === uid);
+            const name = me?.name ?? me?.Name ?? "";
+            if (!name) return prev;
+            const next = prev.slice();
+            next[idx] = { ...next[idx], name };
+            return next;
+        });
+    }, [isEdit, admins]);
+
+    useEffect(() => {
+        const s = _formStateFromEvent(event);
+        setEventType(s.eventType);
+        setTitle(s.title);
+        setDescription(s.description);
+        setLocation(s.location);
+        setStartTime(s.startTime);
+        setEndTime(s.endTime);
+        endTimeTouchedRef.current = Boolean(isEdit && s.endTime);
+        setAllDay(s.allDay);
+        setColor(s.color);
+        colorTouchedRef.current = !isStockEventColor(event?.color, s.eventType);
+        setClients(s.clients);
+        setClientSearch("");
+        setClientName(s.clientName);
+        setClientUserId(s.clientUserId);
+        setManagers(isEdit ? _initialManagers(event) : _defaultManagersForForm(event));
+        setManagerSearch("");
+        setCaseId(s.caseId);
+        setCaseName(s.caseName);
+        setIntakeMode(s.intakeMode);
+        setLeadName(s.leadName);
+        setLeadPhone(s.leadPhone);
+        setLeadEmail(s.leadEmail);
+        setLeadParticipants(s.leadParticipants || _initialLeadParticipants(event));
+        setDraftLeadName("");
+        setDraftLeadPhone("");
+        setDraftLeadEmail("");
+        setDraftLeadPhoneError(null);
+        setDraftLeadEmailError(null);
+        setOptionalConvertCaseName(s.leadCaseName || "");
+        setLawyerReminderOffsets(s.lawyerReminderOffsets);
+        setClientReminderOffsets(s.clientReminderOffsets);
+        setReminderChannels(s.reminderChannels);
+        setReminderTargets(s.reminderTargets);
+        setClientReminderSms(upgradeLegacyCalendarSmsTemplate(
+            String(event?.clientReminderSms || "").trim() || DEFAULT_CLIENT_REMINDER_SMS
+        ));
+        setInviteSms(upgradeLegacyCalendarSmsTemplate(
+            String(event?.inviteSms || "").trim() || DEFAULT_INVITE_SMS
+        ));
+        smsCustomizedRef.current = !!(
+            String(event?.clientReminderSms || "").trim()
+            || String(event?.inviteSms || "").trim()
+        );
+        linkedClientLabelRef.current = s.clients[0]?.name || s.clientName || "";
+        setCaseFormDraft(null);
+        setClientCases([]);
+        clearNotices();
+        setConfirmDelete(false);
+        setDuplicating(false);
+        lastConflictKeyRef.current = null;
+        // Reset reminder-event fields; the dedicated load-reminder effect prefills them on edit.
+        setReminderClientName(event?.clientName || event?.leadName || "");
+        setReminderToEmail(event?.leadEmail || "");
+        setReminderToEmailError(null);
+        setShowClientAttachPanel(
+            s.clients.length > 0
+            || !!(event?.clientName || event?.clientUserId)
+        );
+        const nextLeads = s.leadParticipants || _initialLeadParticipants(event);
+        setShowLeadAttachPanel(
+            nextLeads.length > 0
+            || !!(s.leadName || s.leadPhone || s.leadEmail)
+        );
+        setReminderSubject("");
+        setReminderTemplateKey("GENERAL");
+        setReminderTemplateData({});
+    }, [eventIdentity, event]);
+
+    // ─── Effect: load reminder email templates once ───────────────────────
+    useEffect(() => {
+        let cancelled = false;
+        setLoadingReminderTemplates(true);
+        (async () => {
+            try {
+                const res = await remindersApi.getTemplates();
+                const list = res?.data?.templates || res?.templates || [];
+                if (!cancelled) setReminderTemplates(Array.isArray(list) ? list : []);
+            } catch {
+                if (!cancelled) setReminderTemplates([]);
+            } finally {
+                if (!cancelled) setLoadingReminderTemplates(false);
+            }
+        })();
+        return () => { cancelled = true; };
+    }, []);
+
+    // ─── Effect: prefill reminder fields when editing a linked reminder event ─
+    useEffect(() => {
+        const linkedId = event?.linkedReminderId;
+        if (!linkedId) return undefined;
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await remindersApi.getReminder(linkedId);
+                const reminder = res?.data?.reminder || res?.reminder;
+                if (!reminder || cancelled) return;
+                setReminderClientName(reminder.client_name || "");
+                setReminderToEmail(reminder.to_email || "");
+                if (reminder.client_name || reminder.to_email) {
+                    setReminderTargets((prev) => ({ ...prev, client: true }));
+                    setShowClientAttachPanel(true);
+                }
+                setReminderSubject(reminder.subject || "");
+                setReminderTemplateKey(reminder.template_key || "GENERAL");
+                const loadedTemplateData = reminder.template_data && typeof reminder.template_data === "object"
+                    ? reminder.template_data
+                    : {};
+                setReminderTemplateData({
+                    ...loadedTemplateData,
+                    ...(loadedTemplateData.date
+                        ? { date: toNativeDateValue(loadedTemplateData.date) }
+                        : {}),
+                });
+            } catch {
+                /* keep defaults if the reminder no longer exists */
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [event?.linkedReminderId]);
+
+    // ─── Effect: when toggling all-day ON, snap once to day boundaries ─────
+    const prevAllDayRef = useRef(allDay);
+    useEffect(() => {
+        if (allDay && !prevAllDayRef.current) {
+            if (startTime) setStartTime(`${startTime.slice(0, 10)}T00:00`);
+            const day = (endTime || startTime || "").slice(0, 10) || startTime.slice(0, 10);
+            if (day) setEndTime(`${day}T23:59`);
+        }
+        prevAllDayRef.current = allDay;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [allDay]);
+
+    useEffect(() => {
+        if (meetingType === "phone") {
+            setLocation("");
+        }
+    }, [meetingType]);
+
+    // Intake sections are independent — do not wipe the other side on toggle.
+    // (Legacy intakeMode still used for draft restore; both sections can be open.)
+
+    // ─── Effect: clear client/case/lead when switching to internal-scoped types ─
+    useEffect(() => {
+        if (!isInternalScopedEventType(eventType)) return;
+        // Reminder type keeps its own client link fields — only leave/holiday wipe them.
+        if (isLeaveOrHolidayEventType(eventType)) {
+            setIntakeMode(INTAKE_EXISTING);
+            setClients([]);
+            setClientSearch("");
+            setClientName("");
+            setClientUserId(null);
+            setCaseId(null);
+            setCaseName("");
+            setLeadName("");
+            setLeadPhone("");
+            setLeadEmail("");
+            setLeadParticipants([]);
+            setDraftLeadName("");
+            setDraftLeadPhone("");
+            setDraftLeadEmail("");
+            setShowLeadAttachPanel(false);
+            setLawyerReminderOffsets([]);
+            setClientReminderOffsets([]);
+            setReminderChannels({ push: false, sms: false, email: false });
+            return;
+        }
+        // reminder (תזכורת): keep managers for "את מי לתזכר" — do not wipe staff.
+    }, [eventType]);
+
+    // ─── Effect: all-day default for leave only; clear when switching to meetings ─
+    const prevEventTypeForAllDayRef = useRef(eventType);
+    useEffect(() => {
+        const prevType = prevEventTypeForAllDayRef.current;
+        prevEventTypeForAllDayRef.current = eventType;
+        if (prevType === eventType) return;
+
+        if (eventType === EVENT_TYPE_LEAVE) {
+            setAllDay(true);
+        } else if (
+            (prevType === EVENT_TYPE_LEAVE || prevType === EVENT_TYPE_HOLIDAY)
+            && !isLeaveOrHolidayEventType(eventType)
+        ) {
+            setAllDay(false);
+        }
+    }, [eventType]);
+
+    // ─── Effect: apply yellow defaults when switching into a remindable type on create ─
+    const prevEventTypeRef = useRef(eventType);
+    useEffect(() => {
+        const prevType = prevEventTypeRef.current;
+        prevEventTypeRef.current = eventType;
+        if (isEdit) return;
+        if (prevType === eventType) return;
+        // Follow platform type-default color unless the lawyer picked a custom swatch.
+        if (!colorTouchedRef.current) {
+            setColor(getEventTypeDefaultColor(eventType));
+        }
+        // Switch SMS defaults by event type / court-date template (unless customized).
+        if (!smsCustomizedRef.current) {
+            const tpl = (typeof window !== "undefined" && window.__CALENDAR_SMS_TEMPLATES__) || {};
+            const picked = pickCalendarSmsPair(tpl, eventType, reminderTemplateKey);
+            if (picked.clientReminder) setClientReminderSms(picked.clientReminder);
+            if (picked.invite) setInviteSms(picked.invite);
+        }
+        if (!isReminderCapableEventType(eventType)) return;
+        if (eventType === EVENT_TYPE_REMINDER) {
+            setReminderTargets({ client: false, managers: true });
+            if (!clients.length && !reminderClientName.trim() && !reminderToEmail.trim()) {
+                setShowClientAttachPanel(false);
+            }
+        }
+        // Coming from leave/holiday (or empty offsets): seed yellow defaults.
+        setLawyerReminderOffsets((prev) => (
+            prev?.length
+                ? normalizeSelectedOffsets(prev, allowedReminderMinutes)
+                : defaultReminderOffsets(allowedReminderMinutes)
+        ));
+        setClientReminderOffsets((prev) => (
+            prev?.length
+                ? normalizeSelectedOffsets(prev, allowedReminderMinutes)
+                : defaultReminderOffsets(allowedReminderMinutes)
+        ));
+        setReminderChannels((prev) => normalizeChannelsForEventType(
+            eventType,
+            hasAnyReminderChannel(prev) ? prev : defaultReminderChannels(allowedReminderChannelKeys),
+            allowedReminderChannelKeys,
+        ));
+    }, [eventType, isEdit, allowedReminderMinutes, allowedReminderChannelKeys, reminderTemplateKey]);
+
+    // Re-apply hearing vs appointment SMS when email template switches to/from court date.
+    useEffect(() => {
+        if (smsCustomizedRef.current) return;
+        const tpl = (typeof window !== "undefined" && window.__CALENDAR_SMS_TEMPLATES__) || {};
+        const picked = pickCalendarSmsPair(tpl, eventType, reminderTemplateKey);
+        if (picked.clientReminder) setClientReminderSms(picked.clientReminder);
+        if (picked.invite) setInviteSms(picked.invite);
+    }, [reminderTemplateKey, eventType]);
+
+    // ─── Effect: load firm reminder options from platform settings ─────────
+    // Channel allowlist comes from calendar.CALENDAR_REMINDER_CHANNELS only.
+    // CALENDAR_REMINDER is a per-action lawyer choice, so it is not gated by
+    // notification_channel_config (and is hidden from ערוצי התראות).
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await platformSettingsApi.getAll();
+                const cal = res?.data?.settings?.calendar || res?.settings?.calendar || {};
+                const branding = res?.data?.settings?.branding || res?.settings?.branding || {};
+                const firm = res?.data?.settings?.firm || res?.settings?.firm || {};
+                const templates = res?.data?.settings?.templates || res?.settings?.templates || {};
+                const contact = res?.data?.settings?.contact || res?.settings?.contact || {};
+                if (cancelled) return;
+                setSmsFirmPhone(String(contact?.WHATSAPP_PHONE?.effectiveValue || "").trim());
+                setSmsFirmWazeUrl(String(cal?.FIRM_WAZE_URL?.effectiveValue || "").trim());
+                setSmsFirmMapsUrl(String(cal?.FIRM_MAPS_URL?.effectiveValue || "").trim());
+                const allowed = parseAllowedOptionsFromSettings(cal);
+                setAllowedReminderMinutes(allowed);
+                const calChannelKeys = parseAllowedChannelsFromSettings(cal);
+                if (calChannelKeys) setAllowedReminderChannelKeys(calChannelKeys);
+                const office = String(
+                    branding?.FIRM_OFFICE_ADDRESS?.effectiveValue ||
+                    firm?.FIRM_OFFICE_ADDRESS?.effectiveValue ||
+                    cal?.FIRM_OFFICE_ADDRESS?.effectiveValue ||
+                    ""
+                ).trim();
+                setSmsOfficeAddress(office);
+                // Prefill location for new events only — Waze/Maps links go to the client message, not admin UI.
+                if (office && !isEdit) {
+                    setLocation((prev) => (prev && String(prev).trim() ? prev : office));
+                }
+                const platformClientSms = upgradeLegacyCalendarSmsTemplate(
+                    String(templates?.CALENDAR_CLIENT_REMINDER_SMS?.effectiveValue || "").trim()
+                );
+                const platformClientSmsHearing = upgradeLegacyCalendarSmsTemplate(
+                    String(templates?.CALENDAR_CLIENT_REMINDER_SMS_HEARING?.effectiveValue || "").trim()
+                );
+                const platformInviteSms = upgradeLegacyCalendarSmsTemplate(
+                    String(templates?.CALENDAR_INVITE_SMS?.effectiveValue || "").trim()
+                );
+                const platformInviteSmsHearing = upgradeLegacyCalendarSmsTemplate(
+                    String(templates?.CALENDAR_INVITE_SMS_HEARING?.effectiveValue || "").trim()
+                );
+                window.__CALENDAR_SMS_TEMPLATES__ = {
+                    appointmentReminder: platformClientSms,
+                    hearingReminder: platformClientSmsHearing || platformClientSms,
+                    appointmentInvite: platformInviteSms,
+                    hearingInvite: platformInviteSmsHearing || platformInviteSms,
+                };
+                if (!smsCustomizedRef.current) {
+                    const picked = pickCalendarSmsPair(
+                        window.__CALENDAR_SMS_TEMPLATES__,
+                        eventTypeRef.current,
+                        reminderTemplateKey
+                    );
+                    if (picked.clientReminder) setClientReminderSms(picked.clientReminder);
+                    if (picked.invite) setInviteSms(picked.invite);
+                }
+                try {
+                    const rawColors = cal?.CALENDAR_EVENT_TYPE_COLORS?.effectiveValue;
+                    const parsedColors = typeof rawColors === "string" ? JSON.parse(rawColors) : rawColors;
+                    if (parsedColors && typeof parsedColors === "object") {
+                        window.__CALENDAR_TYPE_COLORS__ = parsedColors;
+                    }
+                } catch { /* ignore */ }
+                // On create, apply platform type-default color once settings are known.
+                if (!isEdit && !colorTouchedRef.current) {
+                    setColor(getEventTypeDefaultColor(eventTypeRef.current));
+                }
+                // On create, re-apply defaults against the firm allowlist once settings load.
+                if (!isEdit) {
+                    setLawyerReminderOffsets((prev) => (prev?.length ? normalizeSelectedOffsets(prev, allowed) : defaultReminderOffsets(allowed)));
+                    setClientReminderOffsets((prev) => (prev?.length ? normalizeSelectedOffsets(prev, allowed) : defaultReminderOffsets(allowed)));
+                    setReminderChannels((prev) => normalizeChannelsForEventType(
+                        eventTypeRef.current,
+                        hasAnyReminderChannel(prev) ? prev : defaultReminderChannels(calChannelKeys),
+                        calChannelKeys || ["push", "sms", "email"],
+                    ));
+                }
+            } catch { /* keep defaults */ }
+        })();
+        return () => { cancelled = true; };
+    }, [isEdit]);
+
+    const smsPreviewValues = useMemo(() => {
+        const start = startTime ? new Date(startTime) : null;
+        const validStart = start && !Number.isNaN(start.getTime()) ? start : null;
+        const mt = String(meetingType || "").trim().toLowerCase();
+        // phone → no place; zoom → link only (no office fallback); else physical + office OK
+        const placeMode = mt === "phone" ? "none" : (mt === "zoom" ? "link" : "place");
+        const rawLoc = (location || "").trim();
+        const addr = placeMode === "none"
+            ? ""
+            : placeMode === "link"
+                ? rawLoc
+                : (rawLoc || smsOfficeAddress);
+        const isRemote = placeMode !== "place"
+            || /\bzoom\.us\b|\bmeet\.google\.com\b|\bteams\.(microsoft|live)\.com\b/i.test(addr);
+        const locationLabel = placeMode === "none"
+            ? ""
+            : (mt === "zoom" || /\bzoom\.us\b/i.test(addr)
+                ? "קישור לזום"
+                : (isRemote ? "קישור לפגישה" : "מיקום"));
+        const reminderTplLabel = reminderTemplates.find((tpl) => tpl.key === reminderTemplateKey)?.label || "";
+        const smsLabelEventType = usesHearingSmsTemplates(eventType)
+            ? EVENT_TYPE_HEARING
+            : eventType;
+        const meetingTypeLabel = meetingTypeLabelHe(
+            mt,
+            smsLabelEventType,
+            (title || "").trim(),
+            reminderTemplateKey,
+            reminderSubject.trim(),
+            reminderTplLabel,
+        );
+        const useFirmLinks = placeMode === "place"
+            && (!rawLoc || (smsOfficeAddress && addr === smsOfficeAddress));
+        const primaryClientName = (clients[0]?.name || clientName || leadName || "").trim();
+        const allClientNames = (Array.isArray(clients) ? clients : [])
+            .map((c) => String(c?.name || "").trim())
+            .filter(Boolean);
+        if (!allClientNames.length && primaryClientName) allClientNames.push(primaryClientName);
+        const clientsNames = allClientNames.length <= 1
+            ? (allClientNames[0] || "")
+            : allClientNames.length === 2
+                ? `${allClientNames[0]} ו-${allClientNames[1]}`
+                : `${allClientNames.slice(0, -1).join(", ")} ו-${allClientNames[allClientNames.length - 1]}`;
+        const previewAddress = placeMode === "link" && addr
+            && !/^https?:\/\//i.test(addr) && /^[\w.-]+\.[a-z]{2,}/i.test(addr)
+            ? `https://${addr}`
+            : addr;
+        return {
+            recipientName: primaryClientName,
+            clientsNames,
+            firmName: getFirmName() || "",
+            date: validStart
+                ? validStart.toLocaleDateString("he-IL", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    timeZone: "Asia/Jerusalem",
+                })
+                : "",
+            time: validStart
+                ? validStart.toLocaleTimeString("he-IL", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                    timeZone: "Asia/Jerusalem",
+                })
+                : "",
+            address: previewAddress,
+            wazeUrl: (placeMode === "place" && useFirmLinks && smsFirmWazeUrl) ? smsFirmWazeUrl : "",
+            mapsUrl: (placeMode === "place" && useFirmLinks && smsFirmMapsUrl) ? smsFirmMapsUrl : "",
+            rsvpUrl: "",
+            firmPhone: smsFirmPhone,
+            websiteUrl: typeof window !== "undefined" ? window.location.origin : "",
+            lawyerName: (managers?.[0]?.name || "").trim(),
+            title: (title || "").trim(),
+            meetingType: mt,
+            meetingTypeLabel,
+            isRemoteMeeting: isRemote,
+            locationLabel,
+            placeMode,
+        };
+    }, [clients, clientName, leadName, startTime, location, meetingType, eventType, reminderTemplateKey, reminderSubject, reminderTemplates, smsFirmPhone, smsFirmWazeUrl, smsFirmMapsUrl, smsOfficeAddress, managers, title]);
+
+    const smsTemplateDefaults = useMemo(() => {
+        const tpl = (typeof window !== "undefined" && window.__CALENDAR_SMS_TEMPLATES__) || {};
+        const picked = pickCalendarSmsPair(tpl, eventType, reminderTemplateKey);
+        return {
+            clientReminder: picked.clientReminder || DEFAULT_CLIENT_REMINDER_SMS,
+            invite: picked.invite || DEFAULT_INVITE_SMS,
+        };
+    }, [eventType, reminderTemplateKey]);
+
+    const reminderPresets = presetsForAllowedMinutes(allowedReminderMinutes);
+    const reminderChannelOptions = useMemo(
+        () => channelsForEventType(eventType, allowedReminderChannelKeys),
+        [eventType, allowedReminderChannelKeys]
+    );
+    // Reminder timing + "למי לשלוח" for appointment, hearing, AND general reminder.
+    const showReminderPicker = isReminderCapableEventType(eventType);
+    const isReminderEventType = eventType === EVENT_TYPE_REMINDER;
+    const isLeaveEventType = eventType === EVENT_TYPE_LEAVE;
+    // Meeting attendees for appointments/hearings; leave picks who is away.
+    // Reminder uses its own "את מי לתזכר" block; holiday has no person.
+    const showManagersField = !isInternalScopedEventType(eventType) || isLeaveEventType;
+    const hasClientRecipient = clients.length > 0
+        || leadParticipants.some((p) => p.name?.trim() || p.phone?.trim() || p.email?.trim())
+        || !!(leadName.trim() || leadPhone.trim() || leadEmail.trim())
+        || !!(draftLeadName.trim() || draftLeadPhone.trim() || draftLeadEmail.trim())
+        || (isReminderEventType && !!(reminderClientName.trim() || reminderToEmail.trim()));
+    const hasManagerRecipients = managers.length > 0;
+    /** "למי לשלוח" chips only matter when both audiences exist. */
+    const showAudienceTargetChips = hasClientRecipient && hasManagerRecipients;
+    const anyReminderOffsets = lawyerReminderOffsets.length > 0
+        || (hasClientRecipient && clientReminderOffsets.length > 0);
+    const reminderTemplateItems = useMemo(
+        () => reminderTemplates.map((tpl) => ({ value: tpl.key, label: tpl.label })),
+        [reminderTemplates]
+    );
+    const currentReminderTemplate = useMemo(
+        () => reminderTemplates.find((tpl) => tpl.key === reminderTemplateKey),
+        [reminderTemplates, reminderTemplateKey]
+    );
+    const reminderExtraVars = useMemo(
+        () => _extractReminderPlaceholders(currentReminderTemplate),
+        [currentReminderTemplate]
+    );
+    const reminderBodyPreview = useMemo(() => {
+        if (!isReminderEventType || !currentReminderTemplate) return "";
+        return buildReminderBodyPreview(currentReminderTemplate, {
+            ...normalizeTemplateDateFields(reminderTemplateData),
+            client_name: reminderClientName.trim() || undefined,
+            subject: reminderSubject.trim() || undefined,
+            firm_name: getFirmName() || undefined,
+        });
+    }, [
+        isReminderEventType,
+        currentReminderTemplate,
+        reminderTemplateData,
+        reminderClientName,
+        reminderSubject,
+    ]);
+
+    useEffect(() => {
+        if (allDay || !startTime || endTimeTouchedRef.current) return;
+        const nextEnd = _endTimeFromStart(startTime, { isReminder: isReminderEventType });
+        if (nextEnd && nextEnd !== endTime) setEndTime(nextEnd);
+    }, [allDay, isReminderEventType, startTime, endTime]);
+
+    const handleReminderTemplateChange = (value) => {
+        if (!value) return;
+        setReminderTemplateKey(value);
+        setReminderTemplateData({});
+    };
+
+    const handleReminderVarChange = (key, value) => {
+        setReminderTemplateData((prev) => ({ ...prev, [key]: value }));
+    };
+
+    const toggleLawyerReminderOffset = (minutes) => {
+        setLawyerReminderOffsets((prev) => {
+            const set = new Set(prev);
+            if (set.has(minutes)) set.delete(minutes);
+            else set.add(minutes);
+            return normalizeSelectedOffsets([...set], allowedReminderMinutes);
+        });
+    };
+
+    const toggleClientReminderOffset = (minutes) => {
+        if (!hasClientRecipient) return;
+        setClientReminderOffsets((prev) => {
+            const set = new Set(prev);
+            if (set.has(minutes)) set.delete(minutes);
+            else set.add(minutes);
+            return normalizeSelectedOffsets([...set], allowedReminderMinutes);
+        });
+    };
+
+    const toggleReminderChannel = (key) => {
+        setReminderChannels((prev) => {
+            const next = { ...prev, [key]: !prev[key] };
+            return normalizeChannelsForEventType(eventType, next, allowedReminderChannelKeys);
+        });
+    };
+
+    const toggleReminderTarget = (key) => {
+        setReminderTargets((prev) => ({ ...prev, [key]: !prev[key] }));
+    };
+
+    // ─── Effect: live conflict check (debounced) ──────────────────────────
+    useEffect(() => {
+        if (isInternalScopedEventType(eventType)) {
+            setConflictState({ loading: false, hasConflict: false, hasLeaveConflict: false });
+            return undefined;
+        }
+        if (!startTime || !endTime) {
+            setConflictState({ loading: false, hasConflict: false, hasLeaveConflict: false });
+            return undefined;
+        }
+        const startISO = (() => { try { return new Date(startTime).toISOString(); } catch { return null; } })();
+        const endISO = (() => { try { return new Date(endTime).toISOString(); } catch { return null; } })();
+        if (!startISO || !endISO) return undefined;
+        if (new Date(endTime) <= new Date(startTime)) {
+            setConflictState({ loading: false, hasConflict: false, hasLeaveConflict: false });
+            return undefined;
+        }
+
+        const lawyerIds = managers.map((m) => m.userId).filter(Boolean);
+        const key = {
+            start: startISO,
+            end: endISO,
+            lawyers: lawyerIds.join(",") || "self",
+            exclude: isEdit ? event.id : null,
+        };
+        if (_shallowEqualConflictKey(lastConflictKeyRef.current, key)) return undefined;
+        lastConflictKeyRef.current = key;
+
+        let cancelled = false;
+        setConflictState((prev) => ({ ...prev, loading: true }));
+
+        const handle = setTimeout(async () => {
+            if (isInternalScopedEventType(eventTypeRef.current)) {
+                return;
+            }
+            try {
+                const res = await calendarApi.checkConflict({
+                    start_time: startISO,
+                    end_time: endISO,
+                    lawyer_ids: lawyerIds.length ? lawyerIds : undefined,
+                    exclude_event_id: isEdit ? event.id : undefined,
+                });
+                if (cancelled) return;
+                const data = res?.data || {};
+                setConflictState({
+                    loading: false,
+                    hasConflict: !!data.hasConflict,
+                    hasLeaveConflict: !!data.hasLeaveConflict,
+                });
+                const picked = String(color || "").trim().toUpperCase();
+                const collidingColor = Array.isArray(data.conflicts)
+                    && data.conflicts.some((c) => {
+                        const hex = String(c.color || "").trim().toUpperCase();
+                        return hex && picked && hex === picked;
+                    });
+                setColorCollision(!!collidingColor);
+            } catch {
+                if (!cancelled) {
+                    setConflictState({ loading: false, hasConflict: false, hasLeaveConflict: false });
+                }
+            }
+        }, 400);
+
+        return () => { cancelled = true; clearTimeout(handle); };
+    }, [startTime, endTime, managers, eventType, isEdit, event?.id, color]);
+
+    // ─── Effect: load active cases for the linked client ──────────────────
+    const loadClientCases = useCallback(async (cuid) => {
+        if (!cuid) { setClientCases([]); return; }
+        setLoadingClientCases(true);
+        try {
+            const res = await calendarApi.getClientCases(cuid);
+            const list = res?.data?.cases || res?.data || [];
+            setClientCases(Array.isArray(list) ? list : []);
+        } catch {
+            setClientCases([]);
+        } finally {
+            setLoadingClientCases(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        const primaryId = clients[0]?.userId || clientUserId;
+        if (primaryId) loadClientCases(primaryId);
+        else setClientCases([]);
+    }, [clients, clientUserId, loadClientCases]);
+
+    // ─── Validation ───────────────────────────────────────────────────────
+    const validate = () => {
+        if (!title.trim() && !isInternalScopedEventType(eventType)) {
+            notifyError("חובה להזין כותרת לאירוע");
+            return false;
+        }
+        if (!startTime) { notifyError("חובה להזין שעת התחלה"); return false; }
+        if (isReminderEventType) {
+            // General reminders may be created without a linked client.
+            if (reminderToEmail.trim()) {
+                const emailErr = emailValidation(reminderToEmail.trim());
+                if (emailErr) {
+                    setReminderToEmailError(emailErr);
+                    notifyError(emailErr);
+                    return false;
+                }
+            }
+            if (!endTime) { notifyError("חובה להזין שעת סיום"); return false; }
+            const startDt = parseDatetimeLocal(startTime);
+            const endDt = parseDatetimeLocal(endTime);
+            if (!startDt || !endDt || endDt <= startDt) {
+                notifyError("שעת הסיום חייבת להיות אחרי שעת ההתחלה");
+                return false;
+            }
+        } else {
+            if (!endTime) { notifyError("חובה להזין שעת סיום"); return false; }
+            const startDt = parseDatetimeLocal(startTime);
+            const endDt = parseDatetimeLocal(endTime);
+            if (!startDt || !endDt || endDt <= startDt) {
+                notifyError("שעת הסיום חייבת להיות אחרי שעת ההתחלה");
+                return false;
+            }
+        }
+        if (eventType === EVENT_TYPE_APPT || eventType === EVENT_TYPE_HEARING) {
+            const pendingDraft = (draftLeadName.trim() || draftLeadPhone.trim() || draftLeadEmail.trim())
+                ? [{ name: draftLeadName.trim(), phone: draftLeadPhone.trim(), email: draftLeadEmail.trim() }]
+                : [];
+            const allLeads = [
+                ...leadParticipants,
+                ...pendingDraft,
+            ];
+            if (allLeads.length || leadName.trim() || leadPhone.trim() || leadEmail.trim()) {
+                const primaryLead = allLeads[0] || {
+                    name: leadName,
+                    phone: leadPhone,
+                    email: leadEmail,
+                };
+                for (const lead of allLeads.length ? allLeads : [primaryLead]) {
+                    if (!lead.name?.trim() && !lead.phone?.trim() && !lead.email?.trim()) continue;
+                    if (lead.phone?.trim()) {
+                        const phoneErr = IsraeliPhoneNumberValidation(lead.phone.trim());
+                        if (phoneErr) {
+                            notifyError(phoneErr);
+                            setDraftLeadPhoneError(phoneErr);
+                            return false;
+                        }
+                    }
+                    if (lead.email?.trim()) {
+                        const emailErr = emailValidation(lead.email.trim());
+                        if (emailErr) {
+                            notifyError(emailErr);
+                            setDraftLeadEmailError(emailErr);
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        const lawyerOff = normalizeSelectedOffsets(lawyerReminderOffsets, allowedReminderMinutes);
+        const clientOff = hasClientRecipient
+            ? normalizeSelectedOffsets(clientReminderOffsets, allowedReminderMinutes)
+            : [];
+        if (showReminderPicker && (lawyerOff.length > 0 || clientOff.length > 0) && !hasAnyReminderChannel(reminderChannels)) {
+            notifyError(t("calendar.eventRemindersChannelRequired"));
+            return false;
+        }
+        clearNotices();
+        return true;
+    };
+
+    // ─── Save (create / update) ───────────────────────────────────────────
+    const handleSave = async () => {
+        if (!validate()) return;
+        setSaving(true);
+        clearNotices();
+        try {
+            const isClientScoped = eventType === EVENT_TYPE_APPT || eventType === EVENT_TYPE_HEARING;
+            const forceAllDay = eventType === EVENT_TYPE_LEAVE || eventType === EVENT_TYPE_HOLIDAY;
+            const primaryManager = managers[0] || null;
+            const reminderTitleFallback = isReminderEventType
+                ? (reminderSubject.trim()
+                    || currentReminderTemplate?.label
+                    || t("calendar.type_reminder"))
+                : null;
+            // Reminder events are zero-duration in concept, but we give the calendar
+            // a 15-minute slot so listEvents window queries (tstzrange '[)') match.
+            const toLocalYmd = (val) => toLocalYmdFromInput(val);
+            let startIso;
+            let endIso;
+            if (forceAllDay || allDay) {
+                const startYmd = toLocalYmd(startTime);
+                let endYmd = toLocalYmd(endTime) || startYmd;
+                try {
+                    const endLocal = parseDatetimeLocal(endTime);
+                    const endParts = endLocal ? jerusalemParts(endLocal) : null;
+                    if (endParts
+                        && endParts.hour === 0
+                        && endParts.minute === 0
+                        && endYmd > startYmd) {
+                        const [ey, em, ed] = endYmd.split("-").map(Number);
+                        const prev = new Date(zonedJerusalemInstant(ey, em, ed, 12, 0, 0).getTime() - 24 * 60 * 60 * 1000);
+                        endYmd = toLocalYmdFromInput(prev) || endYmd;
+                    }
+                } catch { /* ignore */ }
+                if (endYmd < startYmd) endYmd = startYmd;
+                const [sy, sm, sd] = startYmd.split("-").map(Number);
+                const [ey, em, ed] = endYmd.split("-").map(Number);
+                startIso = zonedJerusalemInstant(sy, sm, sd, 0, 0, 0).toISOString();
+                endIso = zonedJerusalemInstant(ey, em, ed, 23, 59, 0).toISOString();
+            } else if (isReminderEventType) {
+                startIso = parseDatetimeLocal(startTime)?.toISOString();
+                endIso = parseDatetimeLocal(endTime)?.toISOString();
+            } else {
+                startIso = parseDatetimeLocal(startTime)?.toISOString();
+                endIso = parseDatetimeLocal(endTime)?.toISOString();
+            }
+            const primaryClient = clients[0] || null;
+            const clientUserIds = clients.map((c) => c.userId).filter(Boolean);
+            const lawyerOff = showReminderPicker
+                ? normalizeSelectedOffsets(lawyerReminderOffsets, allowedReminderMinutes)
+                : [];
+            const clientOff = showReminderPicker && hasClientRecipient
+                ? normalizeSelectedOffsets(clientReminderOffsets, allowedReminderMinutes)
+                : [];
+            const unionOffsets = [...new Set([...lawyerOff, ...clientOff])]
+                .sort((a, b) => b - a);
+            const nextReminderTargets = (() => {
+                if (!showReminderPicker) return { client: false, managers: false };
+                if (isReminderEventType) {
+                    // Explicit chips when both; otherwise whoever was added.
+                    if (showAudienceTargetChips) {
+                        return {
+                            client: !!reminderTargets.client,
+                            managers: !!reminderTargets.managers,
+                        };
+                    }
+                    return {
+                        client: hasClientRecipient,
+                        managers: hasManagerRecipients || !hasClientRecipient,
+                    };
+                }
+                if (showAudienceTargetChips) {
+                    return {
+                        client: !!reminderTargets.client,
+                        managers: !!reminderTargets.managers,
+                    };
+                }
+                if (hasClientRecipient) return { client: true, managers: false };
+                return { client: false, managers: true };
+            })();
+            const payload = {
+                title: title.trim() || reminderTitleFallback || (eventType === EVENT_TYPE_LEAVE
+                    ? t("calendar.leaveLabel")
+                    : eventType === EVENT_TYPE_REMINDER
+                        ? t("calendar.type_reminder")
+                        : eventType === EVENT_TYPE_HOLIDAY
+                            ? t("calendar.holidayLabel")
+                            : ""),
+                description: description || null,
+                location: isLeaveOrHolidayEventType(eventType) || meetingType === "phone"
+                    ? null
+                    : (location || null),
+                meeting_type: isLeaveOrHolidayEventType(eventType) ? null : (meetingType || null),
+                event_type: eventType,
+                // Persist null when using the platform type default so admin color
+                // changes keep applying until the lawyer picks a custom swatch.
+                color: (() => {
+                    const picked = String(color || "").trim().toUpperCase();
+                    const typeDefault = getEventTypeDefaultColor(eventType).toUpperCase();
+                    if (!colorTouchedRef.current || !picked || picked === typeDefault) return null;
+                    if (isStockEventColor(picked, eventType)) return null;
+                    return picked;
+                })(),
+                start_time: startIso,
+                end_time: endIso,
+                all_day: forceAllDay ? true : allDay,
+                manager_user_id: primaryManager?.userId || null,
+                manager_name: managers.length
+                    ? managers.map((m) => m.name).filter(Boolean).join(", ")
+                    : null,
+                manager_user_ids: managers.map((m) => m.userId).filter(Boolean),
+                reminder_offsets: unionOffsets,
+                lawyer_reminder_offsets: lawyerOff,
+                client_reminder_offsets: clientOff,
+                reminder_channels: showReminderPicker
+                    ? normalizeChannelsForEventType(eventType, reminderChannels, allowedReminderChannelKeys)
+                    : { push: false, sms: false, email: false },
+                reminder_targets: nextReminderTargets,
+                client_reminder_sms: showReminderPicker ? clientReminderSms : null,
+                invite_sms: showReminderPicker && supportsCalendarInviteSms(eventType) ? inviteSms : null,
+            };
+
+            if (!isEdit && recurring && recurrenceUntil && !isReminderEventType && !isInternalScopedEventType(eventType)) {
+                payload.recurrence = {
+                    enabled: true,
+                    frequency: recurrenceFreq || "weekly",
+                    until: recurrenceUntil,
+                };
+            }
+
+            if (isReminderEventType) {
+                Object.assign(payload, {
+                    reminder_to_email: reminderToEmail.trim(),
+                    reminder_client_name: reminderClientName.trim(),
+                    reminder_template_key: reminderTemplateKey || "GENERAL",
+                    reminder_template_data: normalizeTemplateDateFields(reminderTemplateData),
+                    reminder_subject: reminderSubject.trim() || null,
+                });
+            }
+
+            if (isClientScoped) {
+                const pendingDraft = (draftLeadName.trim() || draftLeadPhone.trim() || draftLeadEmail.trim())
+                    ? [{ name: draftLeadName.trim(), phone: draftLeadPhone.trim(), email: draftLeadEmail.trim() }]
+                    : [];
+                const allLeads = [
+                    ...leadParticipants,
+                    ...pendingDraft,
+                ].filter((p) => p.name || p.phone || p.email);
+                const primaryLead = allLeads[0] || null;
+                Object.assign(payload, {
+                    client_user_id: primaryClient?.userId || null,
+                    client_user_ids: clientUserIds,
+                    client_name: primaryClient?.name || null,
+                    case_id: caseId,
+                    lead_name: primaryLead?.name?.trim() || null,
+                    lead_phone: primaryLead?.phone?.trim() || null,
+                    lead_email: primaryLead?.email?.trim() || null,
+                    lead_participants: allLeads,
+                    lead_case_name: optionalConvertCaseName.trim() || null,
+                });
+            } else if (isReminderEventType) {
+                // Registered clients → client_* (+ junction). Unregistered recipient → lead_*
+                // Scheduled email remains 1:1 with the primary name/email fields;
+                // push/SMS/email calendar reminders go to every linked client.
+                const linkedIds = clientUserIds.length
+                    ? clientUserIds
+                    : (clientUserId ? [clientUserId] : []);
+                const linkedClientId = linkedIds[0] || null;
+                Object.assign(payload, {
+                    client_user_id: linkedClientId,
+                    client_user_ids: linkedIds,
+                    client_name: linkedClientId
+                        ? (reminderClientName.trim() || primaryClient?.name || null)
+                        : null,
+                    case_id: null,
+                    lead_name: linkedClientId
+                        ? null
+                        : (reminderClientName.trim() || null),
+                    lead_phone: null,
+                    lead_email: linkedClientId
+                        ? null
+                        : (reminderToEmail.trim() || null),
+                    lead_case_name: null,
+                    lead_participants: [],
+                });
+            } else {
+                Object.assign(payload, {
+                    client_user_id: null,
+                    client_user_ids: [],
+                    client_name: null,
+                    case_id: null,
+                    lead_name: null,
+                    lead_phone: null,
+                    lead_email: null,
+                    lead_case_name: null,
+                    lead_participants: [],
+                });
+            }
+
+            const res = isEdit
+                ? await calendarApi.updateEvent(event.id, payload)
+                : await calendarApi.createEvent(payload);
+
+            if (res?.success && res?.data?.event) {
+                const saved = res.data.event;
+                const firmOnlyNotice = _creatorScheduledForOthersOnly(
+                    saved,
+                    _currentUserIdFromToken()
+                );
+                const reminderSyncWarning = res?.data?.reminderSyncWarning || null;
+                const inviteSendResult = res?.data?.inviteSendResult || null;
+                const immediateReminderResult = res?.data?.immediateReminderResult || null;
+
+                if (reminderSyncWarning) notifyWarning(reminderSyncWarning);
+                if (inviteSendResult?.deferred) {
+                    notifyWarning(quietDeferralToast(t, "invite", inviteSendResult));
+                } else if (inviteSendResult?.error) {
+                    notifyError(inviteSendResult.error);
+                } else if (inviteSendResult && (inviteSendResult.sentSms || inviteSendResult.sentEmail)) {
+                    toastSuccess(t("calendar.inviteSentSuccess", "ההזמנה נשלחה ללקוחות"));
+                } else if (inviteSendResult && Array.isArray(inviteSendResult.recipients) && inviteSendResult.recipients.length && !inviteSendResult.sentSms && !inviteSendResult.sentEmail) {
+                    notifyError(t("calendar.inviteSendFailed", "שליחת ההזמנה נכשלה — בדקו מספר טלפון/אימייל"));
+                }
+
+                if (immediateReminderResult?.deferred) {
+                    notifyWarning(quietDeferralToast(t, "immediate", immediateReminderResult));
+                } else if (immediateReminderResult?.errors?.length) {
+                    notifyError(immediateReminderResult.errors[0]);
+                } else if (immediateReminderResult?.sent > 0) {
+                    toastSuccess(t("calendar.immediateReminderSent", "תזכורת מיידית נשלחה"));
+                }
+
+                const seriesCount = Number(res?.data?.seriesCount || 0);
+                if (seriesCount > 1) {
+                    toastSuccess(t("calendar.recurrenceCreated", { count: seriesCount }));
+                }
+
+                onSaved(saved, { firmOnlyNotice, reminderSyncWarning });
+            } else {
+                notifyError(res?.data?.message || res?.message || "שגיאה. נסה שוב.");
+            }
+        } catch (err) {
+            notifyError(err?.response?.data?.message || "שגיאה. נסה שוב.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    // ─── Delete ───────────────────────────────────────────────────────────
+    const handleDelete = async () => {
+        if (!confirmDelete) { setConfirmDelete(true); return; }
+        setDeleting(true);
+        try {
+            const res = await calendarApi.deleteEvent(event.id);
+            if (res?.success) {
+                onDeleted(event.id);
+            } else {
+                notifyError(res?.data?.message || res?.message || "שגיאה במחיקה.");
+                setDeleting(false);
+                setConfirmDelete(false);
+            }
+        } catch (err) {
+            notifyError(err?.response?.data?.message || "שגיאה במחיקה.");
+            setDeleting(false);
+            setConfirmDelete(false);
+        }
+    };
+
+    const handleCancelMeeting = async () => {
+        if (!confirmCancel) { setConfirmCancel(true); return; }
+        setCancelling(true);
+        try {
+            const res = await calendarApi.cancelEvent(event.id);
+            const payload = res?.data ?? res;
+            if (payload?.ok) {
+                const saved = payload.event;
+                if (saved?.eventStatus) setEventStatus(saved.eventStatus);
+                toastSuccess(t("calendar.meetingCancelled"));
+                if (typeof onUpdated === "function" && saved) onUpdated(saved);
+                setConfirmCancel(false);
+            } else {
+                notifyError(payload?.message || "שגיאה בביטול הפגישה.");
+                setConfirmCancel(false);
+            }
+        } catch (err) {
+            notifyError(err?.response?.data?.message || "שגיאה בביטול הפגישה.");
+            setConfirmCancel(false);
+        } finally {
+            setCancelling(false);
+        }
+    };
+
+    // ─── Lead → Client + Case conversion ──────────────────────────────────
+    const applyConvertResult = useCallback((ev, newClient, {
+        savedLeadName,
+        savedLeadPhone,
+        savedLeadEmail,
+        suggestedCaseName,
+        alreadyConverted = false,
+    }) => {
+        const clientId = newClient?.id || ev.clientUserId || null;
+        const clientDisplayName = newClient?.name || savedLeadName || ev.clientName || "";
+
+        setIntakeMode(INTAKE_EXISTING);
+        setLeadName("");
+        setLeadPhone("");
+        setLeadEmail("");
+        setLeadParticipants([]);
+        setDraftLeadName("");
+        setDraftLeadPhone("");
+        setDraftLeadEmail("");
+        setDraftLeadPhoneError(null);
+        setDraftLeadEmailError(null);
+        setShowLeadAttachPanel(false);
+        setClients((prev) => {
+            const fromEvent = Array.isArray(ev?.clients)
+                ? ev.clients.map((c) => ({
+                    userId: c.userId || c.UserId,
+                    name: c.name || c.Name || "",
+                    phone: c.phone || c.PhoneNumber || "",
+                })).filter((c) => c.userId)
+                : prev;
+            const merged = [...fromEvent];
+            if (clientId && !merged.some((c) => c.userId === clientId)) {
+                merged.push({
+                    userId: clientId,
+                    name: clientDisplayName,
+                    phone: newClient?.phone || savedLeadPhone || "",
+                });
+            }
+            return merged.length ? merged : (clientId ? [{
+                userId: clientId,
+                name: clientDisplayName,
+                phone: newClient?.phone || savedLeadPhone || "",
+            }] : []);
+        });
+        setClientSearch("");
+        setClientUserId(ev.clientUserId || clientId);
+        setClientName(ev.clientName || clientDisplayName);
+        linkedClientLabelRef.current = ev.clientName || clientDisplayName;
+        setCaseId(ev.caseId || null);
+        setCaseName(ev.caseName || "");
+        setOptionalConvertCaseName("");
+        notifySuccess(alreadyConverted
+            ? t("calendar.convertLeadAlreadyDone")
+            : t("calendar.convertLeadSuccess"));
+        onUpdated?.(ev);
+
+        if (ev.caseId) return;
+
+        setCaseFormDraft({
+            CaseName: suggestedCaseName || `תיק — ${clientDisplayName}`,
+            CustomerName: clientDisplayName,
+            CustomerMail: newClient.email || savedLeadEmail || "",
+            PhoneNumber: newClient.phone || savedLeadPhone || "",
+            UserId: clientId,
+            Users: clientId ? [{
+                UserId: clientId,
+                Name: clientDisplayName,
+                Email: newClient.email || savedLeadEmail || "",
+                PhoneNumber: newClient.phone || savedLeadPhone || "",
+            }] : [],
+            CaseManager: managers[0]?.name || "",
+            CaseManagerId: managers[0]?.userId || "",
+        });
+    }, [managers, onUpdated, t]);
+
+    const handleOpenCaseForm = () => {
+        const clientId = clients[0]?.userId || clientUserId || event?.clientUserId || null;
+        if (!clientId) return;
+        const clientDisplayName = clients[0]?.name || clientName || event?.clientName || "";
+        const suggestedCaseName = optionalConvertCaseName.trim() || event?.leadCaseName || "";
+        setCaseFormDraft({
+            CaseName: suggestedCaseName || `תיק — ${clientDisplayName}`,
+            CustomerName: clientDisplayName,
+            CustomerMail: leadEmail || "",
+            PhoneNumber: clients[0]?.phone || leadPhone || "",
+            UserId: clientId,
+            Users: [{
+                UserId: clientId,
+                Name: clientDisplayName,
+                Email: leadEmail || "",
+                PhoneNumber: clients[0]?.phone || leadPhone || "",
+            }],
+            CaseManager: managers[0]?.name || "",
+            CaseManagerId: managers[0]?.userId || "",
+        });
+    };
+
+    const handleConvertLead = async () => {
+        if (!isEdit) return;
+        setConverting(true);
+        clearNotices();
+        const savedLeadName = leadName;
+        const savedLeadPhone = leadPhone;
+        const savedLeadEmail = leadEmail;
+        const suggestedCaseName = optionalConvertCaseName.trim();
+        try {
+            const res = await calendarApi.convertLead({ eventId: event.id });
+            if (res?.success && res?.data?.event) {
+                applyConvertResult(res.data.event, res.data.client || {}, {
+                    savedLeadName,
+                    savedLeadPhone,
+                    savedLeadEmail,
+                    suggestedCaseName,
+                    alreadyConverted: !!res.data.alreadyConverted,
+                });
+            } else {
+                const code = res?.data?.code;
+                if (code === "PHONE_ALREADY_EXISTS") {
+                    notifyError(res?.data?.message || t("calendar.convertLeadPhoneExists"));
+                } else {
+                    notifyError(res?.data?.message || res?.message || t("calendar.convertLeadError"));
+                }
+            }
+        } catch (err) {
+            notifyError(err?.response?.data?.message || t("calendar.convertLeadError"));
+        } finally {
+            setConverting(false);
+        }
+    };
+
+    // ─── Link / unlink case on existing event ─────────────────────────────
+    const handleLinkCase = async (newCaseId) => {
+        if (!isEdit) {
+            // Create-mode: just update local state; the case will be persisted on save.
+            setCaseId(newCaseId);
+            const hit = clientCases.find((c) =>
+                String(c?.id ?? c?.CaseId ?? c?.caseid) === String(newCaseId)
+            );
+            setCaseName(hit?.name || hit?.CaseName || hit?.casename || "");
+            return;
+        }
+        setLinkingCase(true);
+        clearNotices();
+        try {
+            const res = await calendarApi.linkCase(event.id, newCaseId);
+            if (res?.success && res?.data?.event) {
+                const ev = res.data.event;
+                setCaseId(ev.caseId || null);
+                setCaseName(ev.caseName || "");
+                notifySuccess(newCaseId ? t("calendar.linkCaseSuccess") : t("calendar.unlinkCaseSuccess"));
+                onUpdated?.(ev);
+            } else {
+                notifyError(res?.data?.message || res?.message || t("calendar.linkCaseError"));
+            }
+        } catch (err) {
+            notifyError(err?.response?.data?.message || t("calendar.linkCaseError"));
+        } finally {
+            setLinkingCase(false);
+        }
+    };
+
+    // ─── Search-input handlers ────────────────────────────────────────────
+    const handleCustomerSelected = (selectedCustomerName, resultItem) => {
+        const selectedUser = resultItem || (Array.isArray(customers)
+            ? customers.find((u) => customerDisplayName(u) === String(selectedCustomerName ?? "").trim())
+            : null);
+        if (!selectedUser) return;
+        const displayName = customerDisplayName(selectedUser) || String(selectedCustomerName ?? "").trim();
+        const uid = customerUserId(selectedUser);
+        if (uid == null) return;
+        const phone = customerPhone(selectedUser);
+        const email = customerEmail(selectedUser);
+        setClients((prev) => {
+            if (prev.some((c) => Number(c.userId) === Number(uid))) return prev;
+            const next = [...prev, { userId: uid, name: displayName, phone, email }];
+            if (prev.length === 0) {
+                setCaseId(null);
+                setCaseName("");
+                linkedClientLabelRef.current = displayName;
+            }
+            return next;
+        });
+        setShowClientAttachPanel(true);
+        setClientSearch("");
+        searchCustomers("");
+    };
+
+    const handleRemoveClient = (userId) => {
+        setClients((prev) => {
+            const next = prev.filter((c) => Number(c.userId) !== Number(userId));
+            if (!next.length) {
+                setCaseId(null);
+                setCaseName("");
+                linkedClientLabelRef.current = "";
+                setClientUserId(null);
+                setReminderClientName("");
+                setReminderToEmail("");
+                setReminderToEmailError(null);
+                setShowClientAttachPanel(false);
+            } else {
+                linkedClientLabelRef.current = next[0]?.name || "";
+                setClientUserId(next[0]?.userId || null);
+                setReminderClientName(next[0]?.name || "");
+                if (next[0]?.email) setReminderToEmail(next[0].email);
+            }
+            return next;
+        });
+    };
+
+    /** Append client to תזכורת (multi-select). Primary fills name/email for the linked email reminder. */
+    const handleReminderClientSelected = (_selectedName, resultItem) => {
+        const selectedUser = resultItem || null;
+        if (!selectedUser) return;
+        const displayName = customerDisplayName(selectedUser);
+        const uid = customerUserId(selectedUser);
+        if (uid == null) return;
+        const phone = customerPhone(selectedUser);
+        const email = customerEmail(selectedUser);
+        setClients((prev) => {
+            if (prev.some((c) => Number(c.userId) === Number(uid))) return prev;
+            const next = [...prev, { userId: uid, name: displayName, phone, email }];
+            if (prev.length === 0) {
+                setClientUserId(uid);
+                setReminderClientName(displayName);
+                if (email) setReminderToEmail(email);
+                linkedClientLabelRef.current = displayName;
+            }
+            return next;
+        });
+        setShowClientAttachPanel(true);
+        setReminderTargets((prev) => ({ ...prev, client: true }));
+        setClientName("");
+        searchCustomers("");
+    };
+
+    const handleOpenClientAttachPanel = () => {
+        setShowClientAttachPanel(true);
+    };
+
+    const handleClearClientAttachPanel = () => {
+        setClients([]);
+        setClientUserId(null);
+        setClientName("");
+        setClientSearch("");
+        setReminderClientName("");
+        setReminderToEmail("");
+        setReminderToEmailError(null);
+        setShowClientAttachPanel(false);
+        linkedClientLabelRef.current = "";
+        searchCustomers("");
+    };
+
+    const handleOpenLeadAttachPanel = () => {
+        setShowLeadAttachPanel(true);
+    };
+
+    const handleClearLeadAttachPanel = () => {
+        setLeadParticipants([]);
+        setLeadName("");
+        setLeadPhone("");
+        setLeadEmail("");
+        setDraftLeadName("");
+        setDraftLeadPhone("");
+        setDraftLeadEmail("");
+        setDraftLeadPhoneError(null);
+        setDraftLeadEmailError(null);
+        setOptionalConvertCaseName("");
+        setShowLeadAttachPanel(false);
+    };
+
+    const handleClientSearch = useCallback((name) => {
+        setClientSearch(name);
+        searchCustomers(String(name ?? "").trim());
+    }, [searchCustomers]);
+
+    const handleManagerSelected = (selectedManagerName, resultItem) => {
+        const selectedAdmin = resultItem || (Array.isArray(admins)
+            ? admins.find((a) => a.name?.trim() === selectedManagerName?.trim())
+            : null);
+        if (!selectedAdmin?.userid) return;
+        setManagers((prev) => {
+            if (prev.some((m) => m.userId === selectedAdmin.userid)) return prev;
+            return [...prev, {
+                userId: selectedAdmin.userid,
+                name: selectedAdmin.name || selectedManagerName || "",
+            }];
+        });
+        setReminderTargets((prev) => ({ ...prev, managers: true }));
+        setManagerSearch("");
+        searchAdmins("");
+    };
+
+    const handleRemoveManager = (userId) => {
+        setManagers((prev) => prev.filter((m) => m.userId !== userId));
+    };
+
+    const [markingRsvpUserId, setMarkingRsvpUserId] = useState(null);
+
+    const handleResendInvite = async () => {
+        if (!isEdit || !event?.id) return;
+        clearNotices();
+        try {
+            const res = await calendarApi.resendInvite(event.id);
+            if (!res?.success) {
+                notifyError(
+                    res?.data?.message
+                    || res?.message
+                    || t("calendar.inviteResendFailed")
+                );
+                return;
+            }
+            const data = res.data || {};
+            if (data.deferred) {
+                notifySuccess(quietDeferralToast(t, "invite", data));
+            } else {
+                notifySuccess(t("calendar.inviteResendSuccess"));
+            }
+            if (data.event) onUpdated?.(data.event);
+        } catch (e) {
+            notifyError(
+                e?.response?.data?.message
+                || t("calendar.inviteResendFailed")
+            );
+        }
+    };
+
+    const handleStaffMarkRsvp = async (clientUserId) => {
+        if (!isEdit || !event?.id || !clientUserId || clientUserId === "legacy") return;
+        setMarkingRsvpUserId(clientUserId);
+        clearNotices();
+        try {
+            const res = await calendarApi.staffSetClientRsvp(event.id, {
+                clientUserId,
+                status: "accepted",
+            });
+            const data = res?.data || res;
+            if (!data?.ok) {
+                notifyError(data?.message || t("calendar.staffRsvpFailed"));
+                return;
+            }
+            notifySuccess(t("calendar.staffRsvpSuccess"));
+            setClients((prev) => prev.map((c) => (
+                Number(c.userId) === Number(clientUserId)
+                    ? { ...c, inviteStatus: "accepted" }
+                    : c
+            )));
+            try {
+                const refreshed = await calendarApi.getEvent(event.id);
+                const saved = refreshed?.data?.event || refreshed?.data;
+                if (saved) onUpdated?.(saved);
+            } catch {
+                /* best-effort refresh */
+            }
+        } catch (e) {
+            notifyError(e?.response?.data?.message || t("calendar.staffRsvpFailed"));
+        } finally {
+            setMarkingRsvpUserId(null);
+        }
+    };
+
+    const renderClientRsvpSection = () => {
+        const hasInvite = clients.some((c) => c.inviteStatus && c.inviteStatus !== "none")
+            || (event?.inviteStatus && event.inviteStatus !== "none");
+        if (!isEdit || !hasInvite) return null;
+
+        const rsvpClients = clients.length
+            ? clients
+            : [{
+                userId: event?.clientUserId || "legacy",
+                name: event?.clientName || event?.clientDisplayName || "לקוח",
+                inviteStatus: event?.inviteStatus,
+            }];
+
+        return (
+            <SimpleContainer className="lw-eventFormModal__inviteStatus lw-eventFormModal__inviteStatus--breakdown">
+                <TextBold14 color={NAVY}>{t("calendar.clientRsvpBreakdown")}</TextBold14>
+                <SimpleContainer className="lw-eventFormModal__rsvpList">
+                    {rsvpClients.map((c) => {
+                        const st = c.inviteStatus || "pending";
+                        const label = _clientRsvpLabel(st, t);
+                        if (!label) return null;
+                        const canMark = st === "pending" && c.userId && c.userId !== "legacy";
+                        const canResend = st === "pending" || st === "declined";
+                        return (
+                            <SimpleContainer key={c.userId} className={`lw-eventFormModal__rsvpRow is-${st}`}>
+                                <Text14 className="lw-eventFormModal__rsvpLabel">
+                                    <strong>{c.name || "לקוח"}:</strong> {label}
+                                </Text14>
+                                {(canMark || canResend) && (
+                                    <SimpleContainer className="lw-eventFormModal__rsvpActions">
+                                        {canMark && (
+                                            <InviteIconButton
+                                                label={t("calendar.staffMarkAcceptedPhone")}
+                                                onPress={() => handleStaffMarkRsvp(c.userId)}
+                                                disabled={!!markingRsvpUserId}
+                                                className="lw-eventFormModal__rsvpIconBtn"
+                                            >
+                                                {markingRsvpUserId === c.userId ? (
+                                                    <span className="lw-eventFormModal__rsvpSpinner" aria-hidden="true" />
+                                                ) : (
+                                                    <RsvpCheckIcon />
+                                                )}
+                                            </InviteIconButton>
+                                        )}
+                                        {canResend && (
+                                            <InviteIconButton
+                                                label={t("calendar.inviteResend")}
+                                                onPress={handleResendInvite}
+                                                disabled={!!markingRsvpUserId}
+                                                className="lw-eventFormModal__rsvpIconBtn"
+                                            >
+                                                <RsvpResendIcon />
+                                            </InviteIconButton>
+                                        )}
+                                    </SimpleContainer>
+                                )}
+                            </SimpleContainer>
+                        );
+                    })}
+                </SimpleContainer>
+            </SimpleContainer>
+        );
+    };
+
+    const handleDuplicate = () => {
+        if (!isEdit) return;
+        const copyTitle = `${title.trim() || event?.title || ""}`.trim();
+        const draft = {
+            eventType,
+            title: copyTitle ? `${copyTitle} (עותק)` : t("calendar.duplicateEvent"),
+            description,
+            location,
+            meetingType,
+            startTime: parseDatetimeLocal(startTime)?.toISOString() || event?.startTime,
+            endTime: parseDatetimeLocal(endTime)?.toISOString() || event?.endTime,
+            allDay,
+            color,
+            clients: clients.map((c) => ({ ...c, inviteStatus: "none" })),
+            clientName,
+            clientUserId,
+            managers,
+            managerUserId: managers[0]?.userId || null,
+            managerName: managers.map((m) => m.name).filter(Boolean).join(", "),
+            caseId,
+            caseName,
+            intakeMode,
+            leadName: leadParticipants[0]?.name || leadName,
+            leadPhone: leadParticipants[0]?.phone || leadPhone,
+            leadEmail: leadParticipants[0]?.email || leadEmail,
+            leadParticipants,
+            leadCaseName: optionalConvertCaseName,
+            lawyerReminderOffsets,
+            clientReminderOffsets,
+            reminderChannels,
+            reminderTargets,
+            clientReminderSms,
+            inviteSms,
+            inviteStatus: "none",
+        };
+        onDuplicatePrefill?.(draft);
+    };
+
+    // ─── Derived flags ────────────────────────────────────────────────────
+    const isInternalScopedType = isInternalScopedEventType(eventType);
+    const showIntakeToggle = !isInternalScopedType;
+    const showLeadFields = showIntakeToggle;
+    const showExistingClientFields = showIntakeToggle;
+    const linkedClientId = clients[0]?.userId || clientUserId || event?.clientUserId || null;
+    const linkedCaseId = caseId || event?.caseId || null;
+    const hasLeadDataPersisted = isEdit
+        && (
+            leadParticipants.some((p) => p.name || p.phone || p.email)
+            || !!(leadName || leadPhone || leadEmail)
+            || !!(event?.leadName || event?.leadPhone || event?.leadEmail)
+        );
+    const showConvertCta = hasLeadDataPersisted && !converting;
+    const showOpenCaseCta = isEdit && !!linkedClientId && !linkedCaseId && !showConvertCta && !caseFormDraft;
+    const showCaseLinker = showExistingClientFields && !!linkedClientId;
+    const showConflictBanner = !isInternalScopedType && (conflictState.hasConflict || conflictState.hasLeaveConflict);
+
+    const modalRootRef = useRef(null);
+    const leadNameInputRef = useRef(null);
+    const leadPhoneInputRef = useRef(null);
+    const leadEmailInputRef = useRef(null);
+    const prevPopupHeightRef = useRef(null);
+    const sizeMorphCleanupRef = useRef(null);
+
+    /** Keep Tab inside the lead fields instead of jumping to chips/toggles behind them. */
+    const focusLeadField = useCallback((ref) => {
+        const el = ref?.current;
+        if (el && typeof el.focus === "function") el.focus();
+    }, []);
+
+    const handleLeadFieldTab = useCallback((e, { next, prev }) => {
+        if (e.key !== "Tab") return;
+        if (e.shiftKey) {
+            if (!prev) return;
+            e.preventDefault();
+            focusLeadField(prev);
+            return;
+        }
+        if (!next) return;
+        e.preventDefault();
+        focusLeadField(next);
+    }, [focusLeadField]);
+    // Compact (חופשה/חג) ↔ full form is the size jump users notice.
+    const layoutMode = caseFormDraft
+        ? "case"
+        : (isInternalScopedType ? "compact" : "full");
+    const useDateOnlyInputs = allDay || isLeaveOrHolidayEventType(eventType);
+    const showLocationField = !isLeaveOrHolidayEventType(eventType)
+        && meetingType !== "phone";
+
+    // Smoothly morph the outer SimplePopUp card height when form density changes.
+    useLayoutEffect(() => {
+        const root = modalRootRef.current;
+        if (!root) return undefined;
+        const popup = root.closest(".lw-simplePopUp__container");
+        if (!popup) return undefined;
+
+        if (typeof sizeMorphCleanupRef.current === "function") {
+            sizeMorphCleanupRef.current();
+            sizeMorphCleanupRef.current = null;
+        }
+
+        popup.style.height = "";
+        const nextH = Math.round(popup.getBoundingClientRect().height);
+        const prevH = prevPopupHeightRef.current;
+
+        if (prevH != null && Math.abs(prevH - nextH) > 2) {
+            popup.classList.add("lw-simplePopUp__container--sizeMorph");
+            popup.style.overflow = "hidden";
+            popup.style.height = `${prevH}px`;
+            // Force reflow, then ease to the new natural height.
+            void popup.offsetHeight;
+            popup.style.height = `${nextH}px`;
+
+            let finished = false;
+            let safety = 0;
+            const finish = (e) => {
+                if (finished) return;
+                if (e && e.propertyName && e.propertyName !== "height") return;
+                finished = true;
+                window.clearTimeout(safety);
+                popup.style.height = "";
+                popup.style.overflow = "";
+                popup.classList.remove("lw-simplePopUp__container--sizeMorph");
+                popup.removeEventListener("transitionend", finish);
+                sizeMorphCleanupRef.current = null;
+            };
+            safety = window.setTimeout(() => finish({ propertyName: "height" }), 420);
+            popup.addEventListener("transitionend", finish);
+            sizeMorphCleanupRef.current = () => finish({ propertyName: "height" });
+        }
+
+        prevPopupHeightRef.current = nextH;
+        return () => {
+            if (typeof sizeMorphCleanupRef.current === "function") {
+                sizeMorphCleanupRef.current();
+                sizeMorphCleanupRef.current = null;
+            }
+        };
+    }, [layoutMode, eventType, showConflictBanner, showLeadFields, showExistingClientFields, showManagersField, isReminderEventType]);
+
+    if (caseFormDraft) {
+        return (
+            <SimpleContainer ref={modalRootRef} className="lw-eventFormModal lw-eventFormModal--caseForm">
+                <SimpleContainer className="lw-eventFormModal__header">
+                    <Text24>{t("calendar.createCaseFromLead")}</Text24>
+                </SimpleContainer>
+                <SimpleScrollView className="lw-eventFormModal__caseFormScroll">
+                    <CaseFullView
+                        initialDraft={caseFormDraft}
+                        closePopUpFunction={() => setCaseFormDraft(null)}
+                        onFailureFunction={(err) => notifyError(err?.data?.message || err?.message || t("calendar.linkCaseError"))}
+                        onCaseCreated={async (createdCaseId) => {
+                            const linkRes = await calendarApi.linkCase(event.id, createdCaseId);
+                            if (!linkRes?.success || !linkRes?.data?.event) {
+                                throw new Error(linkRes?.data?.message || linkRes?.message || t("calendar.linkCaseError"));
+                            }
+                            const linked = linkRes.data.event;
+                            setCaseId(linked.caseId || createdCaseId);
+                            setCaseName(linked.caseName || "");
+                            notifySuccess(t("calendar.linkCaseSuccess"));
+                            onUpdated?.(linked);
+                        }}
+                    />
+                </SimpleScrollView>
+            </SimpleContainer>
+        );
+    }
+
+    return (
+        <SimpleContainer
+            ref={modalRootRef}
+            className={`lw-eventFormModal lw-eventFormModal--${layoutMode}`}
+        >
+            <SimpleScrollView>
+
+                {/* ─── Header ─── */}
+                <SimpleContainer className="lw-eventFormModal__header">
+                    <Text24>{isEdit ? t("calendar.editEvent") : t("calendar.addEvent")}</Text24>
+                    {isCancelled && (
+                        <Text12 className="lw-eventFormModal__cancelledBanner" color="#C05621">
+                            {t("calendar.meetingCancelled")}
+                        </Text12>
+                    )}
+                    {isEdit && (event?.createdByName || event?.ownerName || event?.updatedByName) && (
+                        <SimpleContainer className="lw-eventFormModal__auditTrail">
+                            <Text12 color="#718096">
+                                {t("calendar.createdByLabel")}: {event?.createdByName || event?.ownerName || "—"}
+                                {event?.createdAt ? ` · ${formatDisplayDateTime(event.createdAt)}` : ""}
+                            </Text12>
+                            <Text12 color="#718096">
+                                {t("calendar.updatedByLabel")}: {event?.updatedByName || event?.createdByName || event?.ownerName || "—"}
+                                {event?.updatedAt ? ` · ${formatDisplayDateTime(event.updatedAt)}` : ""}
+                            </Text12>
+                        </SimpleContainer>
+                    )}
+                </SimpleContainer>
+
+                {/* ─── Conflict banner (top, non-blocking) ─── */}
+                {showConflictBanner && (
+                    <SimpleContainer
+                        className="lw-eventFormModal__conflictBanner"
+                        role="alert"
+                        aria-live="polite"
+                    >
+                        <SimpleContainer className="lw-eventFormModal__conflictBannerIcon" aria-hidden="true">⚠️</SimpleContainer>
+                        <SimpleContainer className="lw-eventFormModal__conflictBannerBody">
+                            <TextBold14 color={AMBER_TEXT}>{t("calendar.conflictWarningTitle")}</TextBold14>
+                            <Text14 color={AMBER_TEXT}>
+                                {t("calendar.conflictWarningBody")}
+                                {conflictState.hasLeaveConflict && (
+                                    <span className="lw-eventFormModal__conflictBannerHint">
+                                        {" "}{t("calendar.leaveConflictHint")}
+                                    </span>
+                                )}
+                            </Text14>
+                        </SimpleContainer>
+                    </SimpleContainer>
+                )}
+
+                <SimpleContainer className="lw-eventFormModal__body lw-eventFormModal__body--layoutTween">
+
+                    {/* ─── Event-type segmented (appointment / leave / hearing / reminder) ─── */}
+                    <div className="lw-eventFormModal__field">
+                        <Text14 color={NAVY}>{t("calendar.filterByEventType")}</Text14>
+                        <div className="lw-eventFormModal__segmented lw-eventFormModal__segmented--penta" role="group">
+                            {EVENT_TYPE_OPTIONS.map(({ value, labelKey }) => (
+                                <SimpleButton
+                                    key={value}
+                                    className={`lw-eventFormModal__segmentedBtn ${eventType === value ? "is-active" : ""}`}
+                                    onPress={() => setEventType(value)}
+                                    aria-pressed={eventType === value}
+                                    tabIndex={-1}
+                                >
+                                    {t(labelKey)}
+                                </SimpleButton>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* ─── Title ─── */}
+                    <SimpleInput
+                        title={t("calendar.eventTitle") + (isInternalScopedType ? "" : " *")}
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        timeToWaitInMilli={0}
+                    />
+
+                    {/* ─── Time fields ─── */}
+                    <BlockDateInput
+                        title={(isReminderEventType
+                            ? t("reminders.add.scheduledFor")
+                            : t("calendar.startTime")) + " *"}
+                        mode={useDateOnlyInputs ? "date" : "datetime-local"}
+                        value={useDateOnlyInputs
+                            ? toLocalYmdFromInput(startTime)
+                            : startTime}
+                        onChange={(e) => {
+                            const raw = e.target.value;
+                            if (useDateOnlyInputs) {
+                                const nextStart = raw ? `${raw}T00:00` : "";
+                                setStartTime(nextStart);
+                                if (!endTimeTouchedRef.current && nextStart) {
+                                    setEndTime(raw ? `${raw}T23:59` : "");
+                                }
+                            } else {
+                                setStartTime(raw);
+                                if (!endTimeTouchedRef.current && raw) {
+                                    setEndTime(_endTimeFromStart(raw, { isReminder: isReminderEventType }));
+                                }
+                            }
+                        }}
+                        timeToWaitInMilli={0}
+                    />
+                    <BlockDateInput
+                        title={(isReminderEventType
+                            ? t("calendar.endTime")
+                            : t("calendar.endTime")) + " *"}
+                        mode={useDateOnlyInputs ? "date" : "datetime-local"}
+                        value={useDateOnlyInputs
+                            ? toLocalYmdFromInput(endTime || startTime)
+                            : endTime}
+                        onChange={(e) => {
+                            endTimeTouchedRef.current = true;
+                            const raw = e.target.value;
+                            if (useDateOnlyInputs) {
+                                setEndTime(raw ? `${raw}T23:59` : "");
+                            } else {
+                                setEndTime(raw);
+                            }
+                        }}
+                        timeToWaitInMilli={0}
+                    />
+
+                    <SimpleContainer className="lw-eventFormModal__allDay">
+                        <input
+                            type="checkbox"
+                            id="allDay"
+                            checked={allDay}
+                            onChange={(e) => setAllDay(e.target.checked)}
+                        />
+                        <label htmlFor="allDay">
+                            <Text14>{t("calendar.allDay")}</Text14>
+                        </label>
+                        {conflictState.loading && (
+                            <Text12 color="#718096" className="lw-eventFormModal__conflictLoading">
+                                {t("calendar.checkingConflict")}
+                            </Text12>
+                        )}
+                    </SimpleContainer>
+
+                    {!isEdit && !isReminderEventType && !isInternalScopedType && (
+                        <SimpleContainer className="lw-eventFormModal__recurrence">
+                            <SimpleContainer className="lw-eventFormModal__allDay">
+                                <input
+                                    type="checkbox"
+                                    id="recurring"
+                                    checked={recurring}
+                                    onChange={(e) => setRecurring(e.target.checked)}
+                                />
+                                <label htmlFor="recurring">
+                                    <Text14>{t("calendar.recurringMeeting")}</Text14>
+                                </label>
+                            </SimpleContainer>
+                            {recurring && (
+                                <SimpleContainer className="lw-eventFormModal__recurrenceFields">
+                                    <div className="lw-eventFormModal__field">
+                                        <Text14 color={NAVY}>{t("calendar.recurrenceFrequency")}</Text14>
+                                        <div className="lw-eventFormModal__segmented" role="group">
+                                            {[
+                                                { value: "daily", labelKey: "calendar.recurrenceDaily" },
+                                                { value: "weekly", labelKey: "calendar.recurrenceWeekly" },
+                                                { value: "monthly", labelKey: "calendar.recurrenceMonthly" },
+                                            ].map(({ value, labelKey }) => (
+                                                <SimpleButton
+                                                    key={value}
+                                                    className={`lw-eventFormModal__segmentedBtn ${recurrenceFreq === value ? "is-active" : ""}`}
+                                                    onPress={() => setRecurrenceFreq(value)}
+                                                    aria-pressed={recurrenceFreq === value}
+                                                    tabIndex={-1}
+                                                >
+                                                    {t(labelKey)}
+                                                </SimpleButton>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <BlockDateInput
+                                        title={t("calendar.recurrenceUntil")}
+                                        mode="date"
+                                        value={recurrenceUntil}
+                                        onChange={(e) => setRecurrenceUntil(e.target.value)}
+                                        timeToWaitInMilli={0}
+                                    />
+                                    <Text12 color="#718096">{t("calendar.recurrenceHint")}</Text12>
+                                </SimpleContainer>
+                            )}
+                        </SimpleContainer>
+                    )}
+
+                    {!isReminderEventType && !isLeaveOrHolidayEventType(eventType) && (
+                        <>
+                            <div className="lw-eventFormModal__field">
+                                <Text14 color={NAVY}>{t("calendar.meetingType")}</Text14>
+                                <div className="lw-eventFormModal__segmented lw-eventFormModal__segmented--quad" role="group">
+                                    {MEETING_TYPE_OPTIONS.map(({ value, labelKey }) => (
+                                        <SimpleButton
+                                            key={value}
+                                            className={`lw-eventFormModal__segmentedBtn ${meetingType === value ? "is-active" : ""}`}
+                                            onPress={() => setMeetingType(value)}
+                                            aria-pressed={meetingType === value}
+                                            tabIndex={-1}
+                                        >
+                                            {t(labelKey)}
+                                        </SimpleButton>
+                                    ))}
+                                </div>
+                            </div>
+                            {showLocationField && (
+                                <SimpleInput
+                                    title={meetingType === "zoom" ? t("calendar.zoomLink") : t("calendar.location")}
+                                    value={location}
+                                    onChange={(e) => setLocation(e.target.value)}
+                                    timeToWaitInMilli={0}
+                                />
+                            )}
+                        </>
+                    )}
+
+                    {isReminderEventType && (
+                        <SimpleContainer className="lw-eventFormModal__reminderEmail">
+                            <TextBold14 color={NAVY}>{t("reminders.add.title")}</TextBold14>
+                            <Text12 color="#718096">{t("calendar.eventRemindersHintReminderType")}</Text12>
+
+                            {showAudienceTargetChips && (
+                                <SimpleContainer className="lw-eventFormModal__reminderChannels">
+                                    <TextBold14 color={NAVY}>{t("calendar.reminderTargetsLabel")}</TextBold14>
+                                    <Text12 color="#718096">{t("calendar.reminderTargetsHint")}</Text12>
+                                    <SimpleContainer className="lw-eventFormModal__reminderChips">
+                                        <SimpleButton
+                                            className={`lw-eventFormModal__reminderChip ${reminderTargets.managers ? "is-active" : ""}`}
+                                            onPress={() => toggleReminderTarget("managers")}
+                                            aria-pressed={!!reminderTargets.managers}
+                                            tabIndex={-1}
+                                        >
+                                            <Text14>{t("calendar.reminderTargetManagers")}</Text14>
+                                        </SimpleButton>
+                                        <SimpleButton
+                                            className={`lw-eventFormModal__reminderChip ${reminderTargets.client ? "is-active" : ""}`}
+                                            onPress={() => toggleReminderTarget("client")}
+                                            aria-pressed={!!reminderTargets.client}
+                                            tabIndex={-1}
+                                        >
+                                            <Text14>{t("calendar.reminderTargetClient")}</Text14>
+                                        </SimpleButton>
+                                    </SimpleContainer>
+                                </SimpleContainer>
+                            )}
+
+                            <SearchInput
+                                title={t("calendar.remindWho")}
+                                value={managerSearch}
+                                onSearch={(name) => {
+                                    setManagerSearch(name);
+                                    searchAdmins(name);
+                                }}
+                                isPerforming={isSearchingAdmins}
+                                queryResult={admins}
+                                getButtonTextFunction={staffPickerLabel}
+                                buttonPressFunction={handleManagerSelected}
+                                clearOnSelect
+                            />
+                            {managers.length > 0 && (
+                                <SimpleContainer className="lw-eventFormModal__managerChips">
+                                    {managers.map((m) => (
+                                        <span key={m.userId} className="lw-eventFormModal__managerChip">
+                                            {m.name}
+                                            <button
+                                                type="button"
+                                                className="lw-eventFormModal__chipRemove"
+                                                tabIndex={-1}
+                                                onClick={() => handleRemoveManager(m.userId)}
+                                                aria-label={t("calendar.removeManager")}
+                                            >
+                                                &times;
+                                            </button>
+                                        </span>
+                                    ))}
+                                </SimpleContainer>
+                            )}
+                            <Text12 color="#718096">{t("calendar.remindWhoHint")}</Text12>
+
+                            {!showClientAttachPanel ? (
+                                <SecondaryButton onPress={handleOpenClientAttachPanel}>
+                                    {t("calendar.addClient")}
+                                </SecondaryButton>
+                            ) : (
+                                <SimpleContainer className="lw-eventFormModal__reminderClientPanel">
+                                    <SearchInput
+                                        title={t("calendar.addClient")}
+                                        value={clientName}
+                                        onSearch={(name) => {
+                                            setClientName(name);
+                                            searchCustomers(name);
+                                        }}
+                                        isPerforming={isSearchingCustomers}
+                                        queryResult={customers}
+                                        getButtonTextFunction={(item) => {
+                                            const name = customerDisplayName(item);
+                                            const phone = customerPhone(item);
+                                            return phone ? `${name} · ${phone}` : name;
+                                        }}
+                                        buttonPressFunction={handleReminderClientSelected}
+                                        clearOnSelect
+                                    />
+                                    {clients.length > 0 && (
+                                        <SimpleContainer className="lw-eventFormModal__managerChips lw-eventFormModal__clientChips">
+                                            {clients.map((c) => (
+                                                <span key={c.userId} className="lw-eventFormModal__managerChip">
+                                                    {clientChipLabel(c)}
+                                                    <button
+                                                        type="button"
+                                                        className="lw-eventFormModal__chipRemove"
+                                                        tabIndex={-1}
+                                                        onClick={() => handleRemoveClient(c.userId)}
+                                                        aria-label={t("calendar.removeClient")}
+                                                    >
+                                                        &times;
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </SimpleContainer>
+                                    )}
+                                    <Text12 color="#718096">{t("calendar.clientsHintReminder")}</Text12>
+
+                                    <SimpleContainer className="lw-eventFormModal__reminderEmailRow">
+                                        <SimpleInput
+                                            title={t("reminders.add.clientName")}
+                                            value={reminderClientName}
+                                            onChange={(e) => setReminderClientName(e.target.value)}
+                                            timeToWaitInMilli={0}
+                                        />
+                                        <SimpleInput
+                                            title={t("reminders.add.email")}
+                                            type="email"
+                                            value={reminderToEmail}
+                                            error={reminderToEmailError}
+                                            onChange={(e) => {
+                                                const next = e.target.value;
+                                                setReminderToEmail(next);
+                                                setReminderToEmailError(
+                                                    next.trim() ? emailValidation(next.trim()) : null
+                                                );
+                                            }}
+                                            timeToWaitInMilli={0}
+                                        />
+                                    </SimpleContainer>
+                                    <SecondaryButton onPress={handleClearClientAttachPanel}>
+                                        {t("calendar.removeReminderClient")}
+                                    </SecondaryButton>
+                                </SimpleContainer>
+                            )}
+
+                            <SimpleContainer className="lw-eventFormModal__reminderEmailRow">
+                                <SimpleContainer className="lw-eventFormModal__reminderTemplate">
+                                    {loadingReminderTemplates ? (
+                                        <Text12 color="#718096">{t("calendar.loadingCases")}</Text12>
+                                    ) : (
+                                        <ChooseButton
+                                            buttonText={
+                                                currentReminderTemplate?.label
+                                                || t("reminders.add.template")
+                                            }
+                                            items={reminderTemplateItems}
+                                            OnPressChoiceFunction={handleReminderTemplateChange}
+                                            showAll={false}
+                                        />
+                                    )}
+                                </SimpleContainer>
+                                {reminderTemplateKey === "GENERAL" && (
+                                    <SimpleInput
+                                        title={t("reminders.add.subject")}
+                                        value={reminderSubject}
+                                        onChange={(e) => setReminderSubject(e.target.value)}
+                                        timeToWaitInMilli={0}
+                                    />
+                                )}
+                            </SimpleContainer>
+
+                            <SimpleContainer className="lw-eventFormModal__reminderEmailVars">
+                                {reminderExtraVars.filter((v) => v !== "body").map((key) => (
+                                    <SimpleInput
+                                        key={key}
+                                        title={REMINDER_VAR_LABELS[key] || key}
+                                        type={key === "date" ? "date" : "text"}
+                                        value={
+                                            key === "date"
+                                                ? toNativeDateValue(reminderTemplateData[key])
+                                                : (reminderTemplateData[key] || "")
+                                        }
+                                        onChange={(e) => handleReminderVarChange(key, e.target.value)}
+                                        timeToWaitInMilli={0}
+                                    />
+                                ))}
+                            </SimpleContainer>
+                            {reminderExtraVars.includes("body") && (
+                                <SimpleTextArea
+                                    title={REMINDER_VAR_LABELS.body}
+                                    value={reminderTemplateData.body || ""}
+                                    onChange={(val) => handleReminderVarChange("body", val)}
+                                    rows={3}
+                                />
+                            )}
+
+                            {reminderBodyPreview && (
+                                <SimpleContainer className="lw-eventFormModal__bodyPreview">
+                                    <Text14 className="lw-eventFormModal__bodyPreviewLabel">
+                                        {t("reminders.import.bodyPreviewLabel")}
+                                    </Text14>
+                                    <Text14 className="lw-eventFormModal__bodyPreviewText">
+                                        {reminderBodyPreview}
+                                    </Text14>
+                                </SimpleContainer>
+                            )}
+                        </SimpleContainer>
+                    )}
+
+                    {showReminderPicker && (
+                        <SimpleContainer className="lw-eventFormModal__reminders">
+                            <TextBold14 color={NAVY}>{t("calendar.eventRemindersTitle")}</TextBold14>
+                            <Text12 color="#718096">{t("calendar.eventRemindersHint")}</Text12>
+
+                            <SimpleContainer className="lw-eventFormModal__reminderGroup">
+                                <TextBold14 color={NAVY}>{t("calendar.lawyerRemindersLabel")}</TextBold14>
+                                <SimpleContainer className="lw-eventFormModal__reminderChips">
+                                    {reminderPresets.map(({ minutes, labelKey }) => {
+                                        const active = lawyerReminderOffsets.includes(minutes);
+                                        return (
+                                            <SimpleButton
+                                                key={`lawyer-${minutes}`}
+                                                className={`lw-eventFormModal__reminderChip ${active ? "is-active" : ""}`}
+                                                onPress={() => toggleLawyerReminderOffset(minutes)}
+                                                aria-pressed={active}
+                                                tabIndex={-1}
+                                            >
+                                                <Text14>{t(labelKey)}</Text14>
+                                            </SimpleButton>
+                                        );
+                                    })}
+                                </SimpleContainer>
+                                {lawyerReminderOffsets.length === 0 && (
+                                    <Text12 color="#718096">{t("calendar.eventRemindersNone")}</Text12>
+                                )}
+                            </SimpleContainer>
+
+                            {hasClientRecipient && (
+                                <SimpleContainer className="lw-eventFormModal__reminderGroup">
+                                    <TextBold14 color={NAVY}>{t("calendar.clientRemindersLabel")}</TextBold14>
+                                    <SimpleContainer className="lw-eventFormModal__reminderChips">
+                                        {reminderPresets.map(({ minutes, labelKey }) => {
+                                            const active = clientReminderOffsets.includes(minutes);
+                                            return (
+                                                <SimpleButton
+                                                    key={`client-${minutes}`}
+                                                    className={`lw-eventFormModal__reminderChip ${active ? "is-active" : ""}`}
+                                                    onPress={() => toggleClientReminderOffset(minutes)}
+                                                    aria-pressed={active}
+                                                    tabIndex={-1}
+                                                >
+                                                    <Text14>{t(labelKey)}</Text14>
+                                                </SimpleButton>
+                                            );
+                                        })}
+                                    </SimpleContainer>
+                                    {clientReminderOffsets.length === 0 && (
+                                        <Text12 color="#718096">{t("calendar.eventRemindersNone")}</Text12>
+                                    )}
+                                </SimpleContainer>
+                            )}
+
+                            {anyReminderOffsets && (
+                                <SimpleContainer className="lw-eventFormModal__reminderChannels">
+                                    <TextBold14 color={NAVY}>{t("calendar.eventRemindersChannelsTitle")}</TextBold14>
+                                    <SimpleContainer className="lw-eventFormModal__reminderChips">
+                                        {reminderChannelOptions.map(({ key, labelKey }) => {
+                                            const active = !!reminderChannels[key];
+                                            return (
+                                                <SimpleButton
+                                                    key={key}
+                                                    className={`lw-eventFormModal__reminderChip ${active ? "is-active" : ""}`}
+                                                    onPress={() => toggleReminderChannel(key)}
+                                                    aria-pressed={active}
+                                                    tabIndex={-1}
+                                                >
+                                                    <Text14>{t(labelKey)}</Text14>
+                                                </SimpleButton>
+                                            );
+                                        })}
+                                    </SimpleContainer>
+                                </SimpleContainer>
+                            )}
+                            <SimpleContainer className="lw-eventFormModal__reminderChannels">
+                                {!isReminderEventType && showAudienceTargetChips && (
+                                    <>
+                                        <TextBold14 color={NAVY}>{t("calendar.reminderTargetsLabel")}</TextBold14>
+                                        <Text12 color="#718096">{t("calendar.reminderTargetsHint")}</Text12>
+                                        <SimpleContainer className="lw-eventFormModal__reminderChips">
+                                            <SimpleButton
+                                                className={`lw-eventFormModal__reminderChip ${reminderTargets.client ? "is-active" : ""}`}
+                                                onPress={() => toggleReminderTarget("client")}
+                                                aria-pressed={!!reminderTargets.client}
+                                                tabIndex={-1}
+                                            >
+                                                <Text14>{t("calendar.reminderTargetClient")}</Text14>
+                                            </SimpleButton>
+                                            <SimpleButton
+                                                className={`lw-eventFormModal__reminderChip ${reminderTargets.managers ? "is-active" : ""}`}
+                                                onPress={() => toggleReminderTarget("managers")}
+                                                aria-pressed={!!reminderTargets.managers}
+                                                tabIndex={-1}
+                                            >
+                                                <Text14>{t("calendar.reminderTargetManagers")}</Text14>
+                                            </SimpleButton>
+                                        </SimpleContainer>
+                                    </>
+                                )}
+                            </SimpleContainer>
+                            {reminderTargets.client && hasClientRecipient && (
+                                <SimpleContainer className="lw-eventFormModal__smsTemplates">
+                                    <Text12 color="#718096">
+                                        {t("calendar.inviteRemindersIndependentHint")}
+                                    </Text12>
+                                    <CalendarSmsTemplateEditor
+                                        title={t("calendar.clientReminderSmsLabel")}
+                                        hint={t("calendar.clientReminderSmsHint")}
+                                        value={clientReminderSms}
+                                        onChange={(next) => {
+                                            smsCustomizedRef.current = true;
+                                            setClientReminderSms(next);
+                                        }}
+                                        previewValues={smsPreviewValues}
+                                        previewRecipients={
+                                            clients.length
+                                                ? clients
+                                                : (leadName.trim() || leadPhone.trim()
+                                                    ? [{ name: leadName.trim(), phone: leadPhone.trim() }]
+                                                    : null)
+                                        }
+                                        excludeVars={["rsvpUrl"]}
+                                        defaultValue={smsTemplateDefaults.clientReminder}
+                                    />
+                                    {supportsCalendarInviteSms(eventType) && (
+                                    <CalendarSmsTemplateEditor
+                                        title={t("calendar.inviteSmsLabel")}
+                                        hint={t("calendar.inviteSmsHint")}
+                                        value={inviteSms}
+                                        onChange={(next) => {
+                                            smsCustomizedRef.current = true;
+                                            setInviteSms(next);
+                                        }}
+                                        previewValues={smsPreviewValues}
+                                        previewRecipients={
+                                            clients.length
+                                                ? clients
+                                                : (leadName.trim() || leadPhone.trim()
+                                                    ? [{ name: leadName.trim(), phone: leadPhone.trim() }]
+                                                    : null)
+                                        }
+                                        defaultValue={smsTemplateDefaults.invite}
+                                    />
+                                    )}
+                                </SimpleContainer>
+                            )}
+                        </SimpleContainer>
+                    )}
+
+                    {/* ─── Managers: meeting attendees, or who is on leave ─── */}
+                    {showManagersField && (
+                    <SimpleContainer className="lw-eventFormModal__managersCol">
+                        {isEdit && !isLeaveEventType && renderClientRsvpSection()}
+                        <SearchInput
+                            title={isLeaveEventType ? t("calendar.leaveWho") : t("calendar.manager")}
+                            value={managerSearch}
+                            onSearch={(name) => {
+                                setManagerSearch(name);
+                                searchAdmins(name);
+                            }}
+                            isPerforming={isSearchingAdmins}
+                            queryResult={admins}
+                            getButtonTextFunction={staffPickerLabel}
+                            buttonPressFunction={handleManagerSelected}
+                            clearOnSelect
+                        />
+                        {isLeaveEventType && (
+                            <Text12 color="#718096">{t("calendar.leaveWhoHint")}</Text12>
+                        )}
+                        {managers.length > 0 && (
+                            <SimpleContainer className="lw-eventFormModal__managerChips">
+                                {managers.map((m) => (
+                                    <span key={m.userId} className="lw-eventFormModal__managerChip">
+                                        {m.name}
+                                        <button
+                                            type="button"
+                                            className="lw-eventFormModal__chipRemove"
+                                            tabIndex={-1}
+                                            onClick={() => handleRemoveManager(m.userId)}
+                                            aria-label={t("calendar.removeManager")}
+                                        >
+                                            &times;
+                                        </button>
+                                    </span>
+                                ))}
+                            </SimpleContainer>
+                        )}
+                    </SimpleContainer>
+                    )}
+
+                    {/* Invite status for reminder-type edits (managers block hidden) */}
+                    {!showManagersField && renderClientRsvpSection()}
+
+                    {/* ─── Clients + leads (appointment / hearing) ─── */}
+                    {showIntakeToggle && (
+                        <div className="lw-eventFormModal__field">
+                            <Text14 color={NAVY}>{t("calendar.participantsSection", { defaultValue: "משתתפים בפגישה" })}</Text14>
+                            <Text12 color="#718096">
+                                {t("calendar.participantsHint", {
+                                    defaultValue: "ניתן לשייך לקוחות רשומים ולקוחות פוטנציאליים באותה פגישה",
+                                })}
+                            </Text12>
+                        </div>
+                    )}
+
+                    {/* ─── Existing-client fields ─── */}
+                    {showExistingClientFields && (
+                        <>
+                            {!showClientAttachPanel && clients.length === 0 ? (
+                                <SecondaryButton onPress={handleOpenClientAttachPanel}>
+                                    {t("calendar.addClient")}
+                                </SecondaryButton>
+                            ) : (
+                                <>
+                                    <SearchInput
+                                        title={t("calendar.addClient")}
+                                        value={clientSearch}
+                                        onSearch={handleClientSearch}
+                                        isPerforming={isSearchingCustomers}
+                                        queryResult={customers}
+                                        getButtonTextFunction={(item) => {
+                                            const name = customerDisplayName(item);
+                                            const phone = customerPhone(item);
+                                            return phone ? `${name} · ${phone}` : name;
+                                        }}
+                                        buttonPressFunction={handleCustomerSelected}
+                                        clearOnSelect
+                                    />
+                                    {clients.length > 0 && (
+                                        <SimpleContainer className="lw-eventFormModal__managerChips lw-eventFormModal__clientChips">
+                                            {clients.map((c) => {
+                                                const st = c.inviteStatus || "none";
+                                                const rsvp = _clientRsvpLabel(st, t);
+                                                return (
+                                                    <span key={c.userId} className={`lw-eventFormModal__managerChip ${st !== "none" ? `is-rsvp-${st}` : ""}`}>
+                                                        {clientChipLabel(c)}
+                                                        {rsvp ? <em className="lw-eventFormModal__chipRsvp"> · {rsvp}</em> : null}
+                                                        <button
+                                                            type="button"
+                                                            className="lw-eventFormModal__chipRemove"
+                                                            tabIndex={-1}
+                                                            onClick={() => handleRemoveClient(c.userId)}
+                                                            aria-label={t("calendar.removeClient")}
+                                                        >
+                                                            &times;
+                                                        </button>
+                                                    </span>
+                                                );
+                                            })}
+                                        </SimpleContainer>
+                                    )}
+                                    <Text12 color="#718096">{t("calendar.clientsHint")}</Text12>
+                                    {clients.length === 0 && (
+                                        <SecondaryButton onPress={handleClearClientAttachPanel}>
+                                            {t("calendar.removeReminderClient")}
+                                        </SecondaryButton>
+                                    )}
+                                </>
+                            )}
+
+                            {/* Linked-case display + grid ─── */}
+                            {showCaseLinker && (
+                                <SimpleContainer className="lw-eventFormModal__caseLinker">
+                                    <SimpleContainer className="lw-eventFormModal__caseLinkerHeader">
+                                        <TextBold14 color={NAVY}>{t("calendar.linkedCaseTitle")}</TextBold14>
+                                        {caseName ? (
+                                            <SimpleContainer className="lw-eventFormModal__caseLinkerCurrent">
+                                                <Text14 color={NAVY}>{caseName}</Text14>
+                                                {isEdit && (
+                                                    <SimpleButton
+                                                        className="lw-eventFormModal__unlinkBtn"
+                                                        onPress={() => handleLinkCase(null)}
+                                                        disabled={linkingCase}
+                                                    >
+                                                        {t("calendar.unlinkCase")} ✕
+                                                    </SimpleButton>
+                                                )}
+                                            </SimpleContainer>
+                                        ) : (
+                                            <Text12 color="#718096">{t("calendar.noLinkedCase")}</Text12>
+                                        )}
+                                    </SimpleContainer>
+
+                                    <Text12 color="#4C6690">{t("calendar.linkCaseTitle")}</Text12>
+                                    {loadingClientCases ? (
+                                        <Text12 color="#718096">{t("calendar.loadingCases")}</Text12>
+                                    ) : clientCases.length === 0 ? (
+                                        <Text12 color="#718096">{t("calendar.noActiveCases")}</Text12>
+                                    ) : (
+                                        <SimpleContainer className="lw-eventFormModal__caseGrid">
+                                            {clientCases.map((c) => {
+                                                const cid = c?.id ?? c?.CaseId ?? c?.caseid;
+                                                const cname = c?.name ?? c?.CaseName ?? c?.casename ?? `#${cid}`;
+                                                const stage = c?.stage ?? c?.Stage ?? "";
+                                                const isActive = String(caseId) === String(cid);
+                                                return (
+                                                    <SimpleButton
+                                                        key={cid}
+                                                        className={`lw-eventFormModal__caseChip ${isActive ? "is-active" : ""}`}
+                                                        onPress={() => handleLinkCase(cid)}
+                                                        disabled={linkingCase}
+                                                        aria-pressed={isActive}
+                                                    >
+                                                        <span className="lw-eventFormModal__caseChipName">{cname}</span>
+                                                        {stage ? (
+                                                            <span className="lw-eventFormModal__caseChipStage">{String(stage)}</span>
+                                                        ) : null}
+                                                    </SimpleButton>
+                                                );
+                                            })}
+                                        </SimpleContainer>
+                                    )}
+                                    {linkingCase && (
+                                        <Text12 color="#718096">{t("calendar.linkingCase")}</Text12>
+                                    )}
+                                </SimpleContainer>
+                            )}
+                        </>
+                    )}
+
+                    {/* ─── Lead fields ─── */}
+                    {showLeadFields && (
+                        !showLeadAttachPanel && leadParticipants.length === 0 ? (
+                            <SecondaryButton onPress={handleOpenLeadAttachPanel}>
+                                {t("calendar.addLeadParticipant")}
+                            </SecondaryButton>
+                        ) : (
+                            <SimpleContainer className="lw-eventFormModal__leadBox">
+                                <TextBold14 color={NAVY}>{t("calendar.intakeNewLead")}</TextBold14>
+                                <Text12 color="#718096">{t("calendar.leadHint")}</Text12>
+                                {leadParticipants.length > 0 && (
+                                    <SimpleContainer className="lw-eventFormModal__managerChips lw-eventFormModal__clientChips">
+                                        {leadParticipants.map((p, idx) => (
+                                            <span key={`lead-${idx}-${p.phone || p.email || p.name}`} className="lw-eventFormModal__managerChip">
+                                                {[p.name, p.phone, p.email].filter(Boolean).join(" · ")}
+                                                <button
+                                                    type="button"
+                                                    className="lw-eventFormModal__chipRemove"
+                                                    tabIndex={-1}
+                                                    onClick={() => setLeadParticipants((prev) => {
+                                                        const next = prev.filter((_, i) => i !== idx);
+                                                        if (!next.length) {
+                                                            setLeadName("");
+                                                            setLeadPhone("");
+                                                            setLeadEmail("");
+                                                        } else {
+                                                            setLeadName(next[0].name || "");
+                                                            setLeadPhone(next[0].phone || "");
+                                                            setLeadEmail(next[0].email || "");
+                                                        }
+                                                        return next;
+                                                    })}
+                                                    aria-label={t("calendar.removeLead")}
+                                                >
+                                                    &times;
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </SimpleContainer>
+                                )}
+                                <SimpleInput
+                                    title={t("calendar.leadName")}
+                                    value={draftLeadName}
+                                    onChange={(e) => setDraftLeadName(e.target.value)}
+                                    timeToWaitInMilli={0}
+                                />
+                                <SimpleInput
+                                    title={t("calendar.leadPhone")}
+                                    type="text"
+                                    inputMode="tel"
+                                    autoComplete="off"
+                                    value={draftLeadPhone}
+                                    error={draftLeadPhoneError}
+                                    onChange={(e) => {
+                                        const next = e.target.value;
+                                        setDraftLeadPhone(next);
+                                        setDraftLeadPhoneError(
+                                            next.trim() ? IsraeliPhoneNumberValidation(next.trim()) : null
+                                        );
+                                    }}
+                                    timeToWaitInMilli={0}
+                                />
+                                <SimpleInput
+                                    title={t("calendar.leadEmail")}
+                                    type="email"
+                                    autoComplete="off"
+                                    value={draftLeadEmail}
+                                    error={draftLeadEmailError}
+                                    onChange={(e) => {
+                                        const next = e.target.value;
+                                        setDraftLeadEmail(next);
+                                        setDraftLeadEmailError(
+                                            next.trim() ? emailValidation(next.trim()) : null
+                                        );
+                                    }}
+                                    timeToWaitInMilli={0}
+                                />
+                                <SecondaryButton
+                                    onPress={() => {
+                                        const next = {
+                                            name: draftLeadName.trim(),
+                                            phone: draftLeadPhone.trim(),
+                                            email: draftLeadEmail.trim(),
+                                        };
+                                        if (!next.name && !next.phone && !next.email) return;
+                                        const phoneErr = next.phone
+                                            ? IsraeliPhoneNumberValidation(next.phone)
+                                            : null;
+                                        const emailErr = next.email
+                                            ? emailValidation(next.email)
+                                            : null;
+                                        setDraftLeadPhoneError(phoneErr);
+                                        setDraftLeadEmailError(emailErr);
+                                        if (phoneErr || emailErr) {
+                                            if (phoneErr) notifyError(phoneErr);
+                                            else if (emailErr) notifyError(emailErr);
+                                            return;
+                                        }
+                                        setLeadParticipants((prev) => [...prev, next]);
+                                        setLeadName(next.name);
+                                        setLeadPhone(next.phone);
+                                        setLeadEmail(next.email);
+                                        setDraftLeadName("");
+                                        setDraftLeadPhone("");
+                                        setDraftLeadEmail("");
+                                        setDraftLeadPhoneError(null);
+                                        setDraftLeadEmailError(null);
+                                    }}
+                                >
+                                    {t("calendar.addLeadParticipant")}
+                                </SecondaryButton>
+                                <SimpleInput
+                                    title={t("calendar.convertLeadOptionalCaseName")}
+                                    value={optionalConvertCaseName}
+                                    onChange={(e) => setOptionalConvertCaseName(e.target.value)}
+                                    timeToWaitInMilli={0}
+                                />
+                                {leadParticipants.length === 0
+                                    && !draftLeadName.trim()
+                                    && !draftLeadPhone.trim()
+                                    && !draftLeadEmail.trim()
+                                    && !optionalConvertCaseName.trim() && (
+                                    <SecondaryButton onPress={handleClearLeadAttachPanel}>
+                                        {t("calendar.removeLeadPanel", { defaultValue: "ביטול הוספת ליד" })}
+                                    </SecondaryButton>
+                                )}
+                            </SimpleContainer>
+                        )
+                    )}
+
+                    {/* ─── Convert-lead CTA (edit mode + has lead data) ─── */}
+                    {showConvertCta && (
+                        <SimpleContainer className="lw-eventFormModal__convertBox">
+                            <PrimaryButton
+                                onPress={handleConvertLead}
+                                isPerforming={converting}
+                                className="lw-eventFormModal__convertBtn"
+                            >
+                                {converting ? t("calendar.convertingLead") : t("calendar.convertLeadCta")}
+                            </PrimaryButton>
+                        </SimpleContainer>
+                    )}
+
+                    {showOpenCaseCta && (
+                        <SimpleContainer className="lw-eventFormModal__convertBox">
+                            <PrimaryButton
+                                onPress={handleOpenCaseForm}
+                                className="lw-eventFormModal__convertBtn"
+                            >
+                                {t("calendar.openCaseFormCta")}
+                            </PrimaryButton>
+                        </SimpleContainer>
+                    )}
+
+                    {/* ─── Color row (preset swatches only) — not for leave/holiday ─── */}
+                    {!isLeaveOrHolidayEventType(eventType) && (
+                    <SimpleContainer className="lw-eventFormModal__colorRow">
+                        <Text14>{t("calendar.eventColor")}</Text14>
+                        <SimpleContainer className="lw-eventFormModal__colorSwatches">
+                            {EVENT_COLOR_PRESETS.map((hex) => (
+                                <button
+                                    key={hex}
+                                    type="button"
+                                    className={`lw-eventFormModal__colorSwatch ${String(color).toUpperCase() === hex.toUpperCase() ? "is-active" : ""}`}
+                                    style={{ backgroundColor: hex }}
+                                    tabIndex={-1}
+                                    onClick={() => {
+                                        colorTouchedRef.current = true;
+                                        setColor(hex);
+                                    }}
+                                    aria-label={hex}
+                                    title={hex}
+                                />
+                            ))}
+                        </SimpleContainer>
+                        {colorCollision && (
+                            <Text12 className="lw-eventFormModal__colorCollision" color="#C05621">
+                                {t("calendar.colorCollisionWarning")}
+                            </Text12>
+                        )}
+                    </SimpleContainer>
+                    )}
+
+                    <SimpleTextArea
+                        title={t("calendar.description")}
+                        value={description}
+                        onChange={(val) => setDescription(val)}
+                        rows={3}
+                    />
+                </SimpleContainer>
+
+                {/* ─── Footer actions ─── */}
+                <SimpleContainer className="lw-eventFormModal__actions">
+                    <PrimaryButton onPress={handleSave} isPerforming={saving}>
+                        {t("calendar.save")}
+                    </PrimaryButton>
+                    <SecondaryButton onPress={onClose}>
+                        {t("calendar.cancel")}
+                    </SecondaryButton>
+                    {isEdit && (
+                        <SecondaryButton
+                            onPress={handleDuplicate}
+                        >
+                            {t("calendar.duplicateEvent")}
+                        </SecondaryButton>
+                    )}
+                    {isEdit && isReminderCapableEventType(eventType) && !isCancelled && (
+                        <SecondaryButton
+                            onPress={handleCancelMeeting}
+                            isPerforming={cancelling}
+                            style={{ color: "#C05621", borderColor: "#C05621" }}
+                        >
+                            {confirmCancel ? t("calendar.cancelMeetingConfirm") : t("calendar.cancelMeeting")}
+                        </SecondaryButton>
+                    )}
+                    {isEdit && (
+                        <SecondaryButton
+                            onPress={handleDelete}
+                            isPerforming={deleting}
+                            style={{ color: "#E53E3E", borderColor: "#E53E3E" }}
+                        >
+                            {confirmDelete ? t("calendar.deleteConfirm") : t("calendar.deleteEvent")}
+                        </SecondaryButton>
+                    )}
+                </SimpleContainer>
+            </SimpleScrollView>
+        </SimpleContainer>
+    );
+}
