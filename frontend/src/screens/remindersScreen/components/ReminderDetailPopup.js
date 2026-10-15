@@ -1,0 +1,199 @@
+import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
+import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
+import SimpleInput from "../../../components/simpleComponents/SimpleInput";
+import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
+import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
+import { Text20, Text14, Text12 } from "../../../components/specializedComponents/text/AllTextKindFile";
+import useHttpRequest from "../../../hooks/useHttpRequest";
+import remindersApi from "../../../api/remindersApi";
+
+import { formatDateTimeForInput, parseDateTimeInput, toNativeDateTimeValue } from "../../../functions/date/formatDateForInput";
+import { parseDatetimeLocal } from "../../../functions/date/datetimeLocal";
+import "./ReminderDetailPopup.scss";
+
+function wallToIso(wallValue) {
+    if (!wallValue) return undefined;
+    const wall = parseDateTimeInput(wallValue) || wallValue;
+    const d = parseDatetimeLocal(wall);
+    return d ? d.toISOString() : undefined;
+}
+
+function DetailRow({ label, children }) {
+    return (
+        <SimpleContainer className="lw-reminderDetail__row">
+            <Text12 className="lw-reminderDetail__label">{label}</Text12>
+            <SimpleContainer className="lw-reminderDetail__value">{children}</SimpleContainer>
+        </SimpleContainer>
+    );
+}
+
+export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCancel, onDelete, onUpdated, resolveTemplateLabel }) {
+    const { t } = useTranslation();
+    const isPending = reminder?.status === "PENDING";
+    const isSigningReminder = reminder?.source === "signing" || String(reminder?.id || "").startsWith("sfr-");
+
+    const [editing, setEditing] = useState(false);
+    const [editData, setEditData] = useState({
+        client_name: reminder?.client_name || "",
+        to_email: reminder?.to_email || "",
+        subject: reminder?.subject || "",
+        scheduled_for: toNativeDateTimeValue(reminder?.scheduled_for),
+    });
+    const [displayData, setDisplayData] = useState({
+        client_name: reminder?.client_name || "",
+        to_email: reminder?.to_email || "",
+        subject: reminder?.subject || "",
+        scheduled_for: reminder?.scheduled_for || "",
+    });
+
+    const { isPerforming: isSaving, performRequest: saveReminder } = useHttpRequest(
+        (id, fields) => remindersApi.updateReminder(id, fields),
+        () => {
+            setDisplayData({
+                client_name: editData.client_name,
+                to_email: editData.to_email,
+                subject: editData.subject,
+                scheduled_for: wallToIso(editData.scheduled_for) || displayData.scheduled_for,
+            });
+            setEditing(false);
+            onUpdated?.();
+        },
+        () => { }
+    );
+
+    const handleSave = () => {
+        const payload = isSigningReminder
+            ? {
+                scheduled_for: wallToIso(editData.scheduled_for),
+            }
+            : {
+                client_name: editData.client_name,
+                to_email: editData.to_email,
+                subject: editData.subject,
+                scheduled_for: wallToIso(editData.scheduled_for),
+            };
+        saveReminder(reminder.id, payload);
+    };
+
+    if (!reminder) return null;
+
+    const statusKey = (reminder.status || "").toLowerCase();
+
+    return (
+        <SimpleContainer className="lw-reminderDetail">
+            <Text20 className="lw-reminderDetail__title">{t("reminders.detail.title")}</Text20>
+
+            <SimpleContainer className="lw-reminderDetail__card">
+                <DetailRow label={t("reminders.col.clientName")}>
+                    {editing && !isSigningReminder ? (
+                        <SimpleInput
+                            value={editData.client_name}
+                            onChange={(e) => setEditData((prev) => ({ ...prev, client_name: e.target.value }))}
+                            className="lw-reminderDetail__editInput"
+                        />
+                    ) : (
+                        <Text14>{displayData.client_name || "—"}</Text14>
+                    )}
+                </DetailRow>
+
+                <DetailRow label={t("reminders.col.email")}>
+                    {editing && !isSigningReminder ? (
+                        <SimpleInput
+                            type="email"
+                            value={editData.to_email}
+                            onChange={(e) => setEditData((prev) => ({ ...prev, to_email: e.target.value }))}
+                            className="lw-reminderDetail__editInput"
+                        />
+                    ) : (
+                        <Text14>{displayData.to_email || "—"}</Text14>
+                    )}
+                </DetailRow>
+
+                <DetailRow label={t("reminders.col.template")}>
+                    <Text14>{resolveTemplateLabel ? resolveTemplateLabel(reminder.template_key) : (t(`reminders.col.templateKeys.${reminder.template_key}`, { defaultValue: reminder.template_key }) || "—")}</Text14>
+                </DetailRow>
+
+                <DetailRow label={t("reminders.col.scheduledFor")}>
+                    {editing ? (
+                        <SimpleInput
+                            type="datetime-local"
+                            value={editData.scheduled_for}
+                            onChange={(e) => setEditData((prev) => ({ ...prev, scheduled_for: e.target.value }))}
+                            className="lw-reminderDetail__editInput"
+                        />
+                    ) : (
+                        <Text14>{formatDateTimeForInput(displayData.scheduled_for) || "—"}</Text14>
+                    )}
+                </DetailRow>
+
+                <DetailRow label={t("reminders.col.status")}>
+                    <SimpleContainer className={`lw-reminderDetail__badge lw-reminderDetail__badge--${statusKey}`}>
+                        <Text12>{t(`reminders.status.${statusKey}`)}</Text12>
+                    </SimpleContainer>
+                </DetailRow>
+
+                <DetailRow label={t("reminders.col.sentAt")}>
+                    <Text14>{reminder.sent_at ? formatDateTimeForInput(reminder.sent_at) : "—"}</Text14>
+                </DetailRow>
+
+                {(editing || displayData.subject) && (
+                    <DetailRow label={t("reminders.detail.subject")}>
+                        {editing && !isSigningReminder ? (
+                            <SimpleInput
+                                value={editData.subject}
+                                onChange={(e) => setEditData((prev) => ({ ...prev, subject: e.target.value }))}
+                                className="lw-reminderDetail__editInput"
+                            />
+                        ) : (
+                            <Text14>{displayData.subject}</Text14>
+                        )}
+                    </DetailRow>
+                )}
+
+                {reminder.error && (
+                    <DetailRow label={t("reminders.detail.error")}>
+                        <Text14 className="lw-reminderDetail__errorText">{reminder.error}</Text14>
+                    </DetailRow>
+                )}
+            </SimpleContainer>
+
+            <SimpleContainer className="lw-reminderDetail__actions">
+                {editing ? (
+                    <>
+                        <PrimaryButton onPress={handleSave} isPerforming={isSaving}>
+                            {isSaving ? t("reminders.detail.saving") : t("reminders.detail.save")}
+                        </PrimaryButton>
+                        <SecondaryButton onPress={() => setEditing(false)}>
+                            {t("common.cancel")}
+                        </SecondaryButton>
+                    </>
+                ) : (
+                    <>
+                        {isPending && (
+                            <PrimaryButton onPress={() => setEditing(true)}>
+                                {t("reminders.detail.edit")}
+                            </PrimaryButton>
+                        )}
+                        {isPending && onCancel && (
+                            <PrimaryButton onPress={() => { onCancel(reminder.id); closePopUpFunction?.(); }}>
+                                {t("reminders.cancel")}
+                            </PrimaryButton>
+                        )}
+                        {onDelete && (
+                            <PrimaryButton
+                                className="lw-reminderDetail__deleteBtn"
+                                onPress={() => { onDelete(reminder.id); closePopUpFunction?.(); }}
+                            >
+                                {t("reminders.deleteReminder")}
+                            </PrimaryButton>
+                        )}
+                        <SecondaryButton onPress={closePopUpFunction}>
+                            {t("common.close")}
+                        </SecondaryButton>
+                    </>
+                )}
+            </SimpleContainer>
+        </SimpleContainer>
+    );
+}

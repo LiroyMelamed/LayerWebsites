@@ -1,0 +1,156 @@
+.lw-signup {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background: linear-gradient(160deg, #0f172a 0%, #1e293b 45%, #0f766e 100%);
+}
+
+.lw-signup__card {
+  width: min(520px, 100%);
+  background: #fff;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.lw-signup__header h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.5rem;
+}
+
+.lw-signup__header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.lw-signup__steps {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.lw-signup__steps span {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #e2e8f0;
+  color: #475569;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.lw-signup__steps span.active {
+  background: #0d9488;
+  color: #fff;
+}
+
+.lw-signup label {
+  display: block;
+  margin: 0.75rem 0 0.35rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.lw-signup input,
+.lw-signup select {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+  font-size: 1rem;
+}
+
+.lw-signup__slug {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  direction: ltr;
+}
+
+.lw-signup__slug span {
+  color: #64748b;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.lw-signup__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.lw-signup__tags button {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+}
+
+.lw-signup__tags button.selected {
+  border-color: #0d9488;
+  background: #ccfbf1;
+}
+
+.lw-signup__price {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.lw-signup__price span {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.lw-signup__summary {
+  margin: 0;
+  padding-right: 1.2rem;
+  color: #334155;
+}
+
+.lw-signup__error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.lw-signup__footer {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.lw-signup__footer button {
+  border: none;
+  border-radius: 10px;
+  padding: 0.7rem 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lw-signup__footer .primary {
+  background: #0d9488;
+  color: #fff;
+}
+
+.lw-signup__footer .secondary {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.lw-signup__footer button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

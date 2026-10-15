@@ -1,0 +1,24 @@
+.lw-showDataCard {
+  flex: 1 1 40%;
+  min-inline-size: 0;
+  flex-direction: column;
+}
+
+.lw-showDataCard__number {
+  margin-top: 0.5rem;
+}
+
+.lw-showDataCard__comparisonRow {
+  align-items: center;
+  flex-direction: row;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.lw-showDataCard__arrow {
+  transform: rotate(0deg);
+}
+
+.lw-showDataCard__arrow.is-up {
+  transform: rotate(180deg);
+}
