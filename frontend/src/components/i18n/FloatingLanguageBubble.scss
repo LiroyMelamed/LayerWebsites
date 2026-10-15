@@ -1,0 +1,43 @@
+.lw-floatingLanguageBubble {
+    position: fixed;
+    bottom: 1rem;
+    left: 1rem;
+    right: auto;
+    z-index: 99999;
+}
+
+.lw-floatingLanguageBubble__button {
+    background: var(--lw-color-white);
+    border: 0.0625rem solid var(--lw-color-border, rgba(0, 0, 0, 0.12));
+    color: var(--lw-color-text);
+    padding: 0.5rem 0.75rem;
+    border-radius: 624.9375rem;
+    cursor: pointer;
+    font: inherit;
+}
+
+.lw-floatingLanguageBubble__menu {
+    position: fixed;
+    min-width: 10rem;
+    background: var(--lw-color-white);
+    border: 0.0625rem solid rgba(0, 0, 0, 0.12);
+    border-radius: 0.4rem;
+    overflow: hidden;
+    z-index: 20002;
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.15);
+}
+
+.lw-floatingLanguageBubble__menu>button {
+    width: 100%;
+    text-align: start;
+    padding: 0.55rem 0.75rem;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    font: inherit;
+    color: var(--lw-color-text);
+}
+
+.lw-floatingLanguageBubble__menu>button:hover {
+    background: rgba(0, 0, 0, 0.06);
+}

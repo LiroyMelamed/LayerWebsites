@@ -1,0 +1,59 @@
+@use '../../../styles/mixins' as m;
+@use '../../../styles/variables' as v;
+
+.lw-adminsCard {
+    flex-direction: column;
+    min-inline-size: 0;
+}
+
+.lw-adminsCard--loading {
+    flex-direction: column;
+}
+
+.lw-adminsCard__headerRow {
+    @include m.row(v.$space-2, nowrap, center);
+    min-inline-size: 0;
+    overflow: hidden;
+}
+
+.lw-adminsCard__headerCell {
+    flex: 1;
+    text-align: start;
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lw-adminsCard__item {
+    min-inline-size: 0;
+    padding: 0;
+}
+
+.lw-adminsCard__empty {
+    width: 100%;
+}
+
+.lw-adminsCard__emptyImage {
+    height: 9.75rem;
+}
+
+@media (max-width: v.$bp-md) {
+    .lw-adminsCard {
+        max-inline-size: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .lw-adminsCard__headerRow {
+        flex-wrap: nowrap;
+        align-items: center;
+        inline-size: max-content;
+        min-inline-size: 100%;
+    }
+
+    .lw-adminsCard__headerCell--email {
+        display: none;
+    }
+}
