@@ -1,0 +1,13 @@
+# Include inside API server { } block (443) on 37.60.230.148.
+# Does NOT define location / — each vhost keeps its existing proxy_pass block.
+# Apply via scripts/apply-nginx-perf-all-tenants.sh
+
+gzip on;
+gzip_vary on;
+gzip_proxied any;
+gzip_comp_level 5;
+gzip_min_length 1024;
+gzip_types application/json text/plain text/javascript application/javascript;
+
+proxy_http_version 1.1;
+proxy_set_header Connection "";
