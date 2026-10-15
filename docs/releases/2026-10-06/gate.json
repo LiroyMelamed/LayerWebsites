@@ -1,0 +1,133 @@
+{
+  "status": "APPROVED_FOR_STAGED_DEPLOYMENT",
+  "approvedUtc": "2026-10-06T08:55:58.931664+00:00",
+  "scope": "Four customer Web/API deployments, monitor update, and submission of six verified app binaries; external store approval remains separate",
+  "authorization": "Owner explicitly requested deployment to all customers after readiness checks, followed by evidence preservation, commit/push and production tagging",
+  "evidenceVersion": 14,
+  "androidQaBuild": 14,
+  "iosQaBuild": 23,
+  "androidQaUi": "PASS",
+  "iosQaUi": "PASS",
+  "allSixSignedStoreArtifacts": "PASS",
+  "allFourMigrationRehearsals": "PASS",
+  "webCandidates": {
+    "melamedlaw": "9ef26b4884d8eef1d800af8418f6a041af9d92f4",
+    "morlevi": "334a75ecaff8521db4304b21c98907ecca2a1eea",
+    "ashrafessa": "38113d4ddea0a2b7254da84a57d727e50660cef4",
+    "idm": "44dd9741f262e527ba3e00078e5f262ca48a8665"
+  },
+  "frontendArchiveSha256": {
+    "melamedlaw": "ab2ed3ceed827d5a9fb2c9ce7fb4b1047adc4100e03b88eca0e4372bd946716b",
+    "morlevi": "38e8a865f0a99833f471c993d7ff0b29bc50b4e98b71879f83213d2b1d7bb77d",
+    "ashrafessa": "2a7ca4dfafd6b2555659d15ffee346bf4f50b9defe5a9eef8f2cc0b8dd4af813",
+    "idm": "f8123828c35080743fde645cd838c1e5efb7d191d8456cef7e7b80d10352566e"
+  },
+  "storeArtifacts": [
+    {
+      "tenant": "melamedlaw",
+      "status": "PASS",
+      "bundleId": "com.melamedia.MelamedLaw",
+      "version": "1.0.11",
+      "build": "11",
+      "artifactSha256": "d4a2fe9a29fabef845019fcbe1be931c16b8017bf995d9d80e20778d9765435a",
+      "strictDeepCodeSignature": true,
+      "appStoreDistributionProfile": true,
+      "debugEntitlement": false,
+      "profileExpiryUtc": "2027-09-15T13:02:05Z",
+      "platform": "ios",
+      "easBuildId": "8780dbbf-3ee0-46f2-9de8-4c240a6ac698",
+      "sourceCommit": "5a1d9aed9424fb8b358634f6f48411dc00c432aa"
+    },
+    {
+      "tenant": "morlevi",
+      "status": "PASS",
+      "bundleId": "com.melamedia.MorLevy",
+      "version": "1.0.5",
+      "build": "22",
+      "artifactSha256": "8fb5fe223cc3b97daf59be677df75d5b16c49ae3e8e3b618d42e042bd0f9da24",
+      "strictDeepCodeSignature": true,
+      "appStoreDistributionProfile": true,
+      "debugEntitlement": false,
+      "profileExpiryUtc": "2027-09-15T13:02:05Z",
+      "platform": "ios",
+      "easBuildId": "f33ddc57-f66f-46ad-88a0-57dcccbab79c",
+      "sourceCommit": "46eefb27df5223da9e035c4d7e8024150fd3d7c5"
+    },
+    {
+      "tenant": "ashrafessa",
+      "status": "PASS",
+      "bundleId": "com.melamedia.AshrafEssa",
+      "version": "1.0.8",
+      "build": "17",
+      "artifactSha256": "0a22c4dc649d2d45d40fe85222bd9156d0169082544cbd1b0f14b97f84d9c606",
+      "strictDeepCodeSignature": true,
+      "appStoreDistributionProfile": true,
+      "debugEntitlement": false,
+      "profileExpiryUtc": "2027-09-15T13:02:05Z",
+      "platform": "ios",
+      "easBuildId": "751d69a3-00dd-4285-a920-c3f68d1ad4db",
+      "sourceCommit": "463571bd6644f2906ac44ba8756e3923f94cbb0b"
+    },
+    {
+      "tenant": "melamedlaw",
+      "status": "PASS",
+      "package": "com.melamedia.melamedlaw",
+      "version": "1.0.11",
+      "build": 28,
+      "artifactSha256": "676b3e3a70d45ec124379c1da69bc6993d07fdca0e2ef0d986e028dd47a8bb67",
+      "jarSignatureVerified": true,
+      "uploadCertificateUnchangedFromV12": true,
+      "bundletoolValidation": true,
+      "platform": "android",
+      "easBuildId": "14cf6d04-ebdf-4836-9e73-d1dd9c99e542",
+      "sourceCommit": "cf4ef24db1ffd514cd24a83353feb150e29f83f2"
+    },
+    {
+      "tenant": "morlevi",
+      "status": "PASS",
+      "package": "com.melamedia.morlevy",
+      "version": "1.0.5",
+      "build": 12,
+      "artifactSha256": "2a4a8251a9cbcde860053849e992b1960db4420a4d652e30a2ca83aaeb66810e",
+      "jarSignatureVerified": true,
+      "uploadCertificateUnchangedFromV12": true,
+      "bundletoolValidation": true,
+      "platform": "android",
+      "easBuildId": "aae8bde4-7e20-433b-a1ab-e645c1eb888d",
+      "sourceCommit": "a970e4930a7cbf9608ed1624d47ef8e1113ea3f3"
+    },
+    {
+      "tenant": "ashrafessa",
+      "status": "PASS",
+      "package": "com.melamedia.ashrafessa",
+      "version": "1.0.8",
+      "build": 13,
+      "artifactSha256": "075dcec2681334717cd8786c86d3b33dd014444ea8baaaa419002b71418ed597",
+      "jarSignatureVerified": true,
+      "uploadCertificateUnchangedFromV12": true,
+      "bundletoolValidation": true,
+      "platform": "android",
+      "easBuildId": "f30d2bc4-3065-4f7f-aeca-322b9dd52197",
+      "sourceCommit": "9f069720c9b1c3856b88a1df63ce93419b0efaa8"
+    }
+  ],
+  "monitorSourceCommit": "1c33d2e5f2b10c6d80a7440a77ddfa0fb5dc4498",
+  "deploymentSafety": [
+    "one customer at a time",
+    "fresh database/source/env backup",
+    "reviewed live customizations preserved",
+    "explicit rehearsed migrations and IDM grants",
+    "target service restart only",
+    "post-deploy health/auth smoke",
+    "rollback on failure"
+  ],
+  "retainedLimitations": [
+    "Native and frontend npm audit retain build-tool advisories; runtime backend and monitor audit are clean. This is not an audit-zero claim for every dependency.",
+    "Third-party react-native-view-shot module lint opt-in errors are retained; Android app release build and app lint pass.",
+    "Legacy biometric key migration has focused code tests, but no claim of a physical-device upgrade test with a preexisting customer key.",
+    "Screenshots/measurements are bound to recorded QA binaries and synthetic fixtures; store artifact signatures and exact source provenance were checked separately.",
+    "Only the previously authorized single real SMS was delivered; other QA delivery providers remained noop/mocked."
+  ],
+  "customerDeploymentsAtApproval": 0,
+  "storeSubmissionsAtApproval": 0
+}

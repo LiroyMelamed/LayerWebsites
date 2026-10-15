@@ -1,0 +1,40 @@
+{
+  "status": "BUILD_TOOL_ADVISORIES_RETAINED",
+  "checkedUtc": "2026-10-06T08:59:02.827667+00:00",
+  "githubAlerts": "github-alerts-v14.json",
+  "assessment": "All four open GitHub alerts target frontend/package-lock.json, including critical proxy-addr. Frontend deployment publishes static files only to existing hosting; no Node development server is deployed. No application source imports these packages. Backend compression/proxy-addr are patched and backend production audit is zero. Prior source-map audit excluded audited packages from its recorded build; exact final builds have source maps disabled, so no fresh source-map proof is claimed. Build-tool advisories remain unresolved; no audit-zero claim.",
+  "dependencyPaths": [
+    {
+      "package": "proxy-addr",
+      "version": "2.0.7",
+      "directDependents": [
+        "node_modules/express"
+      ]
+    },
+    {
+      "package": "compression",
+      "version": "1.8.1",
+      "directDependents": [
+        "node_modules/webpack-dev-server"
+      ]
+    },
+    {
+      "package": "source-map-js",
+      "version": "1.2.1",
+      "directDependents": [
+        "node_modules/postcss",
+        "node_modules/sass",
+        "node_modules/source-map-loader"
+      ]
+    },
+    {
+      "package": "braces",
+      "version": "3.0.3",
+      "directDependents": [
+        "node_modules/chokidar",
+        "node_modules/micromatch"
+      ]
+    }
+  ],
+  "priorBundleAudit": "outputs/readiness-v4-dependency-evidence/bundle-module-audit.json"
+}

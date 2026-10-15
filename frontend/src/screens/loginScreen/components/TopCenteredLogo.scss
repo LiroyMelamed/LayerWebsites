@@ -1,0 +1,56 @@
+@use '../../../styles/mixins' as m;
+
+.lw-topCenteredLogo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    position: relative;
+}
+
+.lw-topCenteredLogo__cornerLogo {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.lw-topCenteredLogo__logoImage {
+    @include m.fluid-size(width, 48, 12vw, 72);
+    @include m.fluid-size(height, 48, 12vw, 72);
+}
+
+.lw-topCenteredLogo--signup {
+    .lw-topCenteredLogo__logoImage {
+        width: auto !important;
+        height: auto !important;
+        max-height: 5.5rem;
+    }
+
+    .lw-topCenteredLogo__title {
+        margin-top: 1.5rem !important;
+    }
+}
+
+.lw-topCenteredLogo__title {
+    margin-top: 5rem !important;
+    text-align: center !important;
+    width: 100%;
+    align-self: center !important;
+}
+
+.lw-topCenteredLogo__titleText {
+    text-align: center !important;
+    width: 100%;
+}
+
+.lw-topCenteredLogo__isoBadgeWrap {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
+.lw-topCenteredLogo__isoBadge {
+    width: 4rem;
+    height: auto;
+    opacity: 0.8;
+}
