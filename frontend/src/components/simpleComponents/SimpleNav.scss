@@ -1,0 +1,44 @@
+@use '../../styles/variables' as v;
+
+.lw-simpleNav {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+.lw-simpleNav__inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.lw-simpleNav__inner.is-mobile {
+  margin-top: 3.75rem; // 3.75rem
+}
+
+.lw-simpleNav__logo {
+  width: 12.5rem; // 12.5rem
+  align-self: center;
+  margin: 3.125rem 0; // 3.125rem 0
+}
+
+.lw-simpleNav__list {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.lw-simpleNav__navItem {
+  width: 100%;
+  justify-content: flex-end;
+}
+
+/* LTR support (English) */
+[dir="ltr"] .lw-simpleNav__list {
+  align-items: flex-start;
+}
+
+[dir="ltr"] .lw-simpleNav__navItem {
+  justify-content: flex-start;
+}

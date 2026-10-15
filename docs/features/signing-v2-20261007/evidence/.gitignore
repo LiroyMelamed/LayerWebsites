@@ -1,0 +1,2 @@
+# Synthetic, sanitized QA logs in this directory are part of the review evidence.
+!*.log
