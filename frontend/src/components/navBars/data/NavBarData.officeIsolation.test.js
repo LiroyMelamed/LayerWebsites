@@ -10,6 +10,8 @@ test('business owner can reach billing without receiving global administration',
  expect(owner).toContain('officeIntegrations');expect(links(null)).not.toContain('officeIntegrations');
  expect(links(null)).not.toContain('planUsage');
  localStorage.setItem('isPlatformAdmin','true');expect(links(null)).toContain('platformSettings');
+ expect(links(null)).not.toContain('officeIntegrations');
+ expect(links({permissionMode:'platform_admin'})).not.toContain('officeIntegrations');
 });
 test('role-based office owner alone sees integrations regardless of staff page settings',()=>{
  expect(links({permissionMode:'role',scope:{isOfficeOwner:true},canPage:()=>false,canAction:()=>false})).toContain('officeIntegrations');

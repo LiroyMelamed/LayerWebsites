@@ -26,7 +26,11 @@ The code handles the default Cloud API `FINISH` event. Configure this signup flo
 
 ## Deployment preparation
 
-1. Follow the repository rollout: main → Melamedia QA → client tenants. This branch has not been deployed.
+Platform admins open integrations inside Platform Settings; the old standalone URL redirects to its integrations tab. Office owners retain their scoped standalone page. New cases start at stage 1. Both create and edit accept optional `CourtCaseNumber`; the normal case reads/search return it. Omission preserves the current reference for older clients, while an explicit empty string clears it. A duplicate within the office returns 409 and rolls back the case transaction. References can be saved while the court connection is disabled. Synthetic updates attach only to demo cases or the dedicated QA environment.
+
+Apply `2026-10-15_00_case_court_reference.sql` after the initial integration migration and before this case-form update. It selects a stable primary reference for each existing case, preserves additional aliases, and enforces one primary reference per case.
+
+1. Follow the repository rollout: main → Melamedia QA → client tenants. The integration demo is deployed on Melamedia QA only; client rollout requires separate authorization.
 2. Apply `backend/migrations/2026-10-14_00_office_integrations.sql` before loading the backend code. Requires PostgreSQL 15+ and the pre-existing tenant/case schema. The new-case transaction uses the new outbox table. Use the schema maintenance role, never the restricted application role.
 3. Shared databases: the migration installs FORCE RLS and reference/owner guards when the isolation functions exist; the normal isolation installer also classifies the five new tables. Grant the existing non-owner runtime role SELECT/INSERT/UPDATE/DELETE on these five tables. Verify isolation startup checks pass. Do not run migration/installer against unreviewed real data to test this feature.
 4. Add the variables from `backend/config/officeIntegrations.env.example` to the backend's secret environment. Generate a random 32-byte encryption key as 64 hex characters. Back it up securely; no plaintext token or PIN is exposed by the API.
