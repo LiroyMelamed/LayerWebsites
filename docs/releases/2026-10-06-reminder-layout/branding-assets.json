@@ -1,0 +1,130 @@
+[
+  {
+    "tenant": "melamedlaw",
+    "status": "PASS",
+    "tenantBrandAssetsMatch": [
+      {
+        "path": "firm-logo.png",
+        "sha256": "1fa5005cdee840cfc3efebcfef300507b5b467536c6cc6fc1e0ef6505ba52db1"
+      },
+      {
+        "path": "manifest.json",
+        "sha256": "7bc073853901651f74a20c4b47cbe5c207b1dea3536311b0baff8b0a8dd746f1"
+      },
+      {
+        "path": "logo192.png",
+        "sha256": "57c64f9486a9ecd4837eac4855cf79c780ea698b5d286a14164cb79aeb85fe71"
+      },
+      {
+        "path": "logo512.png",
+        "sha256": "1fa5005cdee840cfc3efebcfef300507b5b467536c6cc6fc1e0ef6505ba52db1"
+      },
+      {
+        "path": "favicon.ico",
+        "sha256": "04093669c1c03dae2c062a66a3dd5c7b83726d3c5cc2bbca196571c13b2f763c"
+      },
+      {
+        "path": ".well-known/assetlinks.json",
+        "sha256": "8dd1174757afe081c042ecc05af82a2d9309cce863498158ca96765be19d748f"
+      },
+      {
+        "path": ".well-known/apple-app-site-association",
+        "sha256": "d2a40a96997065ac714fe5254af824f00063f6e4b96fb19122bbdde6c5031693"
+      }
+    ]
+  },
+  {
+    "tenant": "morlevy",
+    "status": "PASS",
+    "tenantBrandAssetsMatch": [
+      {
+        "path": "firm-logo.png",
+        "sha256": "df1a1a097e081dcae854f1d9798985f31b0a94375c3b6dfa41aa9c172b6d3888"
+      },
+      {
+        "path": "manifest.json",
+        "sha256": "7859688dd9ab9c3464e12735a2fd2b57367794cb52e02991e3d8396c627aad30"
+      },
+      {
+        "path": "logo192.png",
+        "sha256": "ab5434f9efbb315eb1fda80982959675366f314ab59d98fc72964355c8c14fcb"
+      },
+      {
+        "path": "logo512.png",
+        "sha256": "dd63a85b6e9997ac65c645442b371efaeafb1b0c244905dbd51c9d3e48b6d177"
+      },
+      {
+        "path": "favicon.ico",
+        "sha256": "1235cc7128c44375efccddde4f88d4bb8282bc39c4fd1e9f2b0deea14a832c10"
+      },
+      {
+        "path": ".well-known/assetlinks.json",
+        "sha256": "27b0fb377ab283c2e6ab0b64abb4edd45e5e4d0647c9d78a07e43093f072ed88"
+      },
+      {
+        "path": ".well-known/apple-app-site-association",
+        "sha256": "0cc6c72c18f978dff35563e29ee2c90960c1e33d8523b163dffa72e5c85bde46"
+      }
+    ]
+  },
+  {
+    "tenant": "ashrafessa",
+    "status": "PASS",
+    "tenantBrandAssetsMatch": [
+      {
+        "path": "firm-logo.png",
+        "sha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b"
+      },
+      {
+        "path": "manifest.json",
+        "sha256": "b8de8a18ad1d29a42658dbab96679ed992dd513e7b0b5069741c2cc283fe9d64"
+      },
+      {
+        "path": "logo192.png",
+        "sha256": "55ee341bab892325c41af88e5713481fd7b56b32e47b56172fd98bea34354682"
+      },
+      {
+        "path": "logo512.png",
+        "sha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b"
+      },
+      {
+        "path": "favicon.ico",
+        "sha256": "7e35d911c2bcdd6d091cd716f51b630e17fde315196431d0964bac2969943ce4"
+      },
+      {
+        "path": ".well-known/assetlinks.json",
+        "sha256": "08b7a288147e6077fca8d97bcef84b035772fb83882d66f737d87192bd85ff57"
+      },
+      {
+        "path": ".well-known/apple-app-site-association",
+        "sha256": "1479cf5c8b843d26dcdc39829a5c971da1a3d2b3f377feea9d0d0c3bd924217e"
+      }
+    ]
+  },
+  {
+    "tenant": "idm",
+    "status": "PASS",
+    "tenantBrandAssetsMatch": [
+      {
+        "path": "firm-logo.png",
+        "sha256": "808748756abf4482fccd7af896989ab7ae66ee3ea440784ecd63ec4416f125fd"
+      },
+      {
+        "path": "manifest.json",
+        "sha256": "69acb23ba720415a428ef04ccd686281643bbdfff2235fcd85bbcbf30001ffaa"
+      },
+      {
+        "path": "logo192.png",
+        "sha256": "0ddee67f7e4dc520d2a4e7e95ad39bc7587fd166b397d05dfba2b3aea4174943"
+      },
+      {
+        "path": "logo512.png",
+        "sha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5"
+      },
+      {
+        "path": "favicon.ico",
+        "sha256": "0863a016428a855ca5da0bd21d0d1dc92de07a05235bc1f0bf8e428e725197ea"
+      }
+    ]
+  }
+]

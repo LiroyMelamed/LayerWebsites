@@ -1,0 +1,219 @@
+- progressbar
+- generic: מתבצעת טעינה של Google Play Console
+- banner:
+  - link "הלוגו של Google Play Console":
+    - /url: /console/u/0/developers/6928795478873529952/app-list
+    - button "הלוגו של Google Play Console"
+  - button "התראות שלא נקראו פתיחת מרכז ההתראות":
+    - img: notifications_unread
+    - generic: התראות שלא נקראו
+  - button "MelamedLaw":
+    - generic: MelamedLaw
+  - button "החלפת חשבון פיתוח":
+    - img "החלפת חשבון פיתוח"
+- navigation:
+  - link "כל האפליקציות":
+    - /url: /console/u/0/developers/6928795478873529952/app-list
+    - img: keyboard_backspace
+    - generic: כל האפליקציות
+  - list:
+    - listitem "מרכז שליטה":
+      - button "מרכז שליטה":
+        - img: dashboard
+        - generic: מרכז שליטה
+    - listitem "סטטיסטיקה":
+      - button "סטטיסטיקה":
+        - img: bar_chart
+        - generic: סטטיסטיקה
+    - listitem "סיכום השינויים לפרסום":
+      - button "סיכום השינויים לפרסום":
+        - img: overview
+        - generic: סיכום השינויים לפרסום
+    - listitem "מוגן על ידי Play":
+      - button "מוגן על ידי Play":
+        - img: shield
+        - generic: מוגן על ידי Play
+    - listitem "בדיקה ופרסום":
+      - button "בדיקה ופרסום":
+        - img: rocket_launch
+        - generic: בדיקה ופרסום
+    - listitem "מעקב ושיפור":
+      - button "מעקב ושיפור":
+        - img: vital_signs
+        - generic: מעקב ושיפור
+    - listitem "הגדלת מספר המשתמשים":
+      - button "הגדלת מספר המשתמשים":
+        - img: finance_mode
+        - generic: הגדלת מספר המשתמשים
+    - listitem "ייצור הכנסות עם Play":
+      - button "ייצור הכנסות עם Play":
+        - img: sell
+        - generic: ייצור הכנסות עם Play
+- heading "MelamedLaw" [level=1]
+- list:
+  - text: com.melamedia.melamedlaw
+  - button "הסבר קצר על \"com.melamedia.melamedlaw\" שנרשם ב-Android Developer Console":
+    - img: check_circle
+  - link "הצגה ב-Play":
+    - /url: https://play.google.com/store/apps/details?id=com.melamedia.melamedlaw
+- img: overview
+- generic: סיכום השינויים לפרסום
+- generic: אין לך שינויים שלא פורסמו
+- link "מעבר לדף 'סיכום השינויים לפרסום'":
+  - /url: /console/u/0/developers/6928795478873529952/app/4974126654521529369/publishing
+  - img: arrow_right_alt
+- img: rocket_launch
+- heading "בדיקה ופרסום" [level=3]
+- link "מעבר לדף הסקירה הכללית בנושא בדיקה ופרסום":
+  - /url: /console/u/0/developers/6928795478873529952/app/4974126654521529369/test-and-release
+  - img: arrow_right_alt
+- list:
+  - generic "הגרסה העדכנית לסביבת הייצור":
+    - button "הגרסה העדכנית לסביבת הייצור"
+  - text: •
+  - img: schedule
+  - 'generic "תאריך הפרסום: לפני 8 דקות"':
+    - button "לפני 8 דקות"
+  - text: •
+  - img: data_usage
+  - 'generic "השקה: 100%"':
+    - button "100%"
+  - text: •
+  - img: devices
+  - 'generic "גורמי צורה: טלפונים וטאבלטים, ועוד 2"':
+    - button "טלפונים וטאבלטים, ועוד 2"
+- list:
+  - listitem "שיעור הקריסות - null":
+    - button "הסבר קצר על שיעור הקריסות": שיעור הקריסות
+    - link "שיעור הקריסות - null, הצגת פרטי הגרסה":
+      - /url: /console/u/0/developers/6928795478873529952/app/4974126654521529369/tracks/4698159065253896185?tab=releaseDashboard
+      - generic: שיעור הקריסות
+      - generic: "-"
+  - listitem "התקנות - null":
+    - button "הסבר קצר על התקנות": התקנות
+    - link "התקנות - null, מעבר לדף הסיכום של הגרסה":
+      - /url: /console/u/0/developers/6928795478873529952/app/4974126654521529369/tracks/4698159065253896185/releases/11/details
+      - generic: התקנות
+      - generic: "-"
+  - listitem "בסיס ההתקנות - null":
+    - button "הסבר קצר על בסיס ההתקנות": בסיס ההתקנות
+    - link "בסיס ההתקנות - null, מעבר לדף הסיכום של הגרסה":
+      - /url: /console/u/0/developers/6928795478873529952/app/4974126654521529369/tracks/4698159065253896185/releases/11/details
+      - generic: בסיס ההתקנות
+      - generic: "-"
+- generic: הנתונים עדיין לא זמינים. הם יהיו מוכנים בקרוב.
+- button "פתיחת ההתראה העדכון לאפליקציה פורסם. המשתמשים אמורים לראות את השינויים באופן מיידי, אבל לפעמים זה לוקח קצת יותר זמן.":
+  - img: notifications
+  - generic: העדכון לאפליקציה פורסם. המשתמשים אמורים לראות את השינויים באופן מיידי, אבל לפעמים זה לוקח קצת יותר זמן.
+  - img: read_more
+- img: vital_signs
+- heading "מעקב ושיפור" [level=3]
+- link "מעבר לדף סקירה הכללית בנושא מעקב ושיפור":
+  - /url: /console/u/0/developers/6928795478873529952/app/4974126654521529369/monitor
+  - img: arrow_right_alt
+- list:
+  - img: calendar_today
+  - generic "‫28 הימים האחרונים, בהשוואה ל-28 הימים הקודמים"
+- list:
+  - listitem "שיעור הקריסות - null":
+    - button "הסבר קצר על שיעור הקריסות": שיעור הקריסות
+    - link "שיעור הקריסות - null, מעבר אל 'תפקוד האפליקציה'":
+      - /url: /console/u/0/developers/6928795478873529952/app/4974126654521529369/vitals/metrics/overview
+      - generic: שיעור הקריסות
+      - generic: "-"
+  - listitem "שיעור מקרי ה-ANR - null":
+    - button "הסבר קצר על שיעור מקרי ה-ANR": שיעור מקרי ה-ANR
+    - link "שיעור מקרי ה-ANR - null, מעבר אל 'תפקוד האפליקציה'":
+      - /url: /console/u/0/developers/6928795478873529952/app/4974126654521529369/vitals/metrics/overview
+      - generic: שיעור מקרי ה-ANR
+      - generic: "-"
+  - listitem "דירוג ממוצע - null":
+    - button "הסבר קצר על דירוג ממוצע": דירוג ממוצע
+    - link "דירוג ממוצע - null, מעבר לדף הדירוגים":
+      - /url: /console/u/0/developers/6928795478873529952/app/4974126654521529369/user-feedback/ratings
+      - generic: דירוג ממוצע
+      - generic: "-"
+- img: finance_mode
+- heading "הגדלת מספר המשתמשים" [level=3]
+- link "מעבר לדף \"סקירה כללית על הצמיחה\"":
+  - /url: /console/u/0/developers/6928795478873529952/app/4974126654521529369/grow-overview
+  - img: arrow_right_alt
+- list:
+  - img: calendar_today
+  - generic "‫28 הימים האחרונים, בהשוואה ל-28 הימים הקודמים"
+- list:
+  - listitem "משתמשים שצורפו דרך המכשיר - null":
+    - button "הסבר קצר על משתמשים שצורפו דרך המכשיר": משתמשים שצורפו דרך המכשיר
+    - link "משתמשים שצורפו דרך המכשיר - null, מעבר לדף \"סקירה כללית על הצמיחה\"":
+      - /url: /console/u/0/developers/6928795478873529952/app/4974126654521529369/grow-overview
+      - generic: משתמשים שצורפו דרך המכשיר
+      - generic: "-"
+  - listitem "פתיחות ראשונות במכשיר - null":
+    - button "הסבר קצר על פתיחות ראשונות במכשיר": פתיחות ראשונות במכשיר
+    - link "פתיחות ראשונות במכשיר - null, מעבר לדף \"סקירה כללית על הצמיחה\"":
+      - /url: /console/u/0/developers/6928795478873529952/app/4974126654521529369/grow-overview
+      - generic: פתיחות ראשונות במכשיר
+      - generic: "-"
+  - listitem "מכשירים פעילים בחודש 5 ‫‎-17% דלתא":
+    - button "הסבר קצר על מכשירים פעילים בחודש": מכשירים פעילים בחודש
+    - link "מכשירים פעילים בחודש 5 ‫‎-17% דלתא, מעבר לדף \"סקירה כללית על הצמיחה\"":
+      - /url: /console/u/0/developers/6928795478873529952/app/4974126654521529369/grow-overview
+      - generic: מכשירים פעילים בחודש
+      - generic: "5"
+      - img: arrow_left_alt
+      - generic: ‎-17%
+- img: sell
+- heading "ייצור הכנסות עם Play" [level=3]
+- paragraph: אפשר לייצר הכנסות ממוצרים בתוך האפליקציה, ממינויים ועוד
+- link "ליצירת קמפיין":
+  - /url: https://play.google.com/console/about/guides/play-commerce
+  - generic: ליצירת קמפיין
+  - img: arrow_right_alt
+- heading "פעילות שיווקית" [level=3]
+- button "מידע נוסף על \"פעילות שיווקית\"":
+  - img: help
+- button "יתחילו בקרוב (0)" [disabled] [expanded]:
+  - img: event_upcoming
+  - generic: יתחילו בקרוב (0)
+- button "פעילים (0)":
+  - img: youtube_live
+  - generic: פעילים (0)
+- img: event_upcoming
+- paragraph: אין פעילות שיווקית קרובה.
+- paragraph
+- text: כדי לעזור ליותר אנשים לגלות את האפליקציה ולעודד אותם להשתמש בה, אפשר לעבור לדף
+- link "הגדלת מספר המשתמשים":
+  - /url: /console/u/0/developers/6928795478873529952/app/4974126654521529369/grow-overview
+- text: . כדי לקדם את המק"טים של המוצרים ולהגדיל את ההכנסות, אפשר לעבור לקטע
+- link "מונטיזציה באמצעות Play":
+  - /url: /console/u/0/developers/6928795478873529952/app/4974126654521529369/monetize
+- text: .
+- heading "כלים חדשים שיעזרו לך להאיץ את הצמיחה העסקית" [level=3]
+- generic: תכונות חדשות ומתקדמות עוזרות לייעל את האימות של קישורי עומק לאפליקציה, להאיץ את התאמת האפליקציה לשוק המקומי ולהגביר את החשיפה
+- link "לקריאת הפוסט בבלוג על הכלים החדשים ב-Play Console":
+  - /url: https://android-developers.googleblog.com/2025/10/new-tools-and-programs-to-accelerate.html?utm_source=play_console_app_dashboard
+  - generic: קריאת הפוסט בבלוג
+- heading "סורקים ומורידים את אפליקציית Play Console לנייד" [level=3]
+- generic: אפשר להשתמש באפליקציה החדשה שלנו כדי לעקוב אחרי המדדים, לבדוק הזמנות ולהגיב לביקורות מכל מקום
+- link "להורדה של אפליקציית Play Console לנייד":
+  - /url: https://play.google.com/console/mobile-app-redirect
+  - generic: להורדת האפליקציה
+- img: bar_chart
+- heading "מעקב אחר מגמות של מדדי KPI" [level=3]
+- generic: דרושים לך עוד מדדים? אפשר להוסיף מדדי KPI כאן כדי להתאים אישית את מרכז הבקרה
+- button "בחירת מדדי KPI":
+  - generic: בחירת מדדי KPI
+  - img: arrow_right_alt
+- link "עדכוני מוצרים":
+  - /url: https://play.google.com/console/about/whats-new/
+- link "לוח הבקרה של סטטוס שירותי Play":
+  - /url: https://status.play.google.com/
+- link "עזרה":
+  - /url: /console/u/0/developers/6928795478873529952/help-and-support?app=4974126654521529369
+- generic: ‎© 2026 Google
+- link "פרטיות":
+  - /url: https://www.google.com/policies/privacy/
+- link "הסכם הפצה למפתחים":
+  - /url: https://play.google.com/about/developer-distribution-agreement.html
+- link "תנאים והגבלות":
+  - /url: https://play.google.com/about/console/terms-of-service/
