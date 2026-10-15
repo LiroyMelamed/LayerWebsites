@@ -1,0 +1,31 @@
+{
+  "complete": true,
+  "tenant": "idm",
+  "candidate": "3e0ec71e8b6533c2bcbbed3347fac8a65719ccab",
+  "product": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+  "qa": "6a570cc3fddd349ecdef8352b4a267ca49f09596",
+  "verifiedUtc": "2026-10-09T19:09:52.754Z",
+  "files": [
+    {
+      "path": "index.html",
+      "url": "https://idm.mela-media.co.il/",
+      "bytes": 6515,
+      "sha256": "ee12991f6bcc646111804fa7394346f9ff66d4fe55a068d3d310326d78d829a6"
+    },
+    {
+      "path": "static/css/main.f3c22b58.css",
+      "url": "https://idm.mela-media.co.il/static/css/main.f3c22b58.css",
+      "bytes": 210796,
+      "sha256": "6d2e111aeecef00942fd50f1c99452e7d425077dc64d26a29b68587bd30e703f"
+    },
+    {
+      "path": "static/js/main.354dc844.js",
+      "url": "https://idm.mela-media.co.il/static/js/main.354dc844.js",
+      "bytes": 1409840,
+      "sha256": "fedfb8d21a1f01eb231fd370d27716a14855b90e81c1995f983c282fb3014993"
+    }
+  ],
+  "apiHealthy": true,
+  "frontendOnly": false,
+  "noMigrationOrTestMessage": true
+}

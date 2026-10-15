@@ -1,0 +1,5 @@
+Use case: precise-object-edit. Edit only the supplied DESKTOP weekly calendar concept; preserve the wide canvas, all controls, typography, colours, synthetic manager portraits, day columns and event layout.
+Two precise corrections:
+1. Replace the all-day leave strip text 'חופשה · נועה' with 'חופשה · רות'. This absent employee is not assigned to any meeting; no accidental meeting/leave conflict. Extend that pale strip across Monday12,Tuesday13,Wednesday14, ending atWednesday14 left boundary. Keep the adjacent gold all-day training row unchanged.
+2. In the bottom selected-event detail strip REMOVE the stray text 'דס'. Clean line must read exactly '09:00 · דנה לוי' with the time as standalone LTR and Hebrew text naturally RTL. Preserve all other event text and two separate09:00 meetings.
+No other redesign or added controls. Same professional lightblue/navy identity. All Hebrew complete and correctly spaced.

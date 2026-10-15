@@ -1,0 +1,10 @@
+{
+  "complete": true,
+  "tenant": "idm",
+  "candidate": "3e0ec71e8b6533c2bcbbed3347fac8a65719ccab",
+  "files": 313,
+  "indexSha256": "ee12991f6bcc646111804fa7394346f9ff66d4fe55a068d3d310326d78d829a6",
+  "atomicIndexLast": true,
+  "oldAssetsRetained": true,
+  "at": "2026-10-09T19:09:48.328Z"
+}

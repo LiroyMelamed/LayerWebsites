@@ -1,0 +1,4 @@
+Use case: text-localization. Edit ONLY the supplied phone weekly calendar screenshot. Keep every layout, palette, face, avatar, Hebrew title, appointment card, date ribbon, button, logo and geometry unchanged. Correct the mixed-direction numeric time strings; do not redesign.
+Replace the header's date range with exact Hebrew '11 עד 17 באוקטובר 2026'.
+Replace numeric time ranges INSIDE the cards with durations in Hebrew words: lease meeting '45 דקות', client call '45 דקות', preliminary hearing '45 דקות', consultation '30 דקות', follow-up '30 דקות'. Keep separate timeline START times09:00,11:00,10:00,14:30. Never show a reversed numeric start/end interval. The two09:00 cards still start at the same time and have different managers.
+Keep all existing day/week controls and HebrewRTL alignment; ensure ample spaces around Hebrew and any numbers. This is a precise bidi/text correction only, same portrait canvas and quality.

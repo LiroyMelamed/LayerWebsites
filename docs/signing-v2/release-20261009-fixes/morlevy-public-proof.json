@@ -1,0 +1,31 @@
+{
+  "complete": true,
+  "tenant": "morlevy",
+  "candidate": "dfcac2b1b22d3bd08857a33e3adb0cd11fd039a3",
+  "product": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+  "qa": "6a570cc3fddd349ecdef8352b4a267ca49f09596",
+  "verifiedUtc": "2026-10-09T19:04:30.853Z",
+  "files": [
+    {
+      "path": "index.html",
+      "url": "https://morlevy.mela-media.co.il/",
+      "bytes": 7954,
+      "sha256": "076fa7567997f7d5382601721ff12c89112783cb96a1cfb5e90a9994a8639492"
+    },
+    {
+      "path": "static/css/main.f3c22b58.css",
+      "url": "https://morlevy.mela-media.co.il/static/css/main.f3c22b58.css",
+      "bytes": 210796,
+      "sha256": "6d2e111aeecef00942fd50f1c99452e7d425077dc64d26a29b68587bd30e703f"
+    },
+    {
+      "path": "static/js/main.5dad4968.js",
+      "url": "https://morlevy.mela-media.co.il/static/js/main.5dad4968.js",
+      "bytes": 1425299,
+      "sha256": "1f3ad11ef1e7cb32cde228c2a488d2d4970c47cfe6e17022fc609ba22ea6b907"
+    }
+  ],
+  "apiHealthy": true,
+  "frontendOnly": false,
+  "noMigrationOrTestMessage": true
+}

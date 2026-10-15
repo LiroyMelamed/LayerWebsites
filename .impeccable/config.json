@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "backend/utils/smooveEmailCampaignService.js"
+        ],
+        "createdAt": "2026-10-07T09:51:25.570Z",
+        "reason": "False positive: this line is a regex that removes an empty logo image from email HTML, not an image in the interface."
+      }
+    ]
+  }
+}

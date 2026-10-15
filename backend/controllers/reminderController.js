@@ -1,0 +1,979 @@
+/**
+ * Reminder controller — handles:
+ *   GET  /api/reminders/templates   – list available email templates
+ *   POST /api/reminders/import      – import reminders from Excel/CSV
+ *   GET  /api/reminders             – list reminders (with filters)
+ *   PUT  /api/reminders/:id/cancel  – cancel a PENDING reminder
+ */
+
+const { getLawFirmNameHe } = require('../lib/firmBranding');
+const { parseExcelBuffer } = require('../utils/parseExcel');
+const pool = require('../config/db');
+const { getAllTemplates } = require('../tasks/emailReminders/templates');
+const reminderCalendarSync = require('../lib/reminderCalendarSync');
+const { canViewCalendar, calendarReminderSql, decorateCalendarReminder } = require('../lib/calendarReminderListing');
+
+function _resolveCreatedBy(req) {
+    return req.user?.UserId ?? req.user?.userid ?? null;
+}
+
+// ─── Templates ───────────────────────────────────────────────────────
+
+// Human-readable placeholder replacements for preview (resolved per request)
+const _defaultPlaceholderMap = {
+    'client_name': '"שם הלקוח"',
+    'firm_name': 'שם המשרד',
+    'date': '"תאריך"',
+    'subject': '"נושא"',
+    'body': '"תוכן ההודעה"',
+    'case_title': '"שם התיק"',
+    'document_name': '"שם המסמך"',
+    'amount': '"סכום"',
+    'content_1': '"תוכן 1"',
+    'content_2': '"תוכן 2"',
+    'content_3': '"תוכן 3"',
+};
+
+function _humanizeBody(raw, placeholderMap = _defaultPlaceholderMap) {
+    let text = (raw || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    text = text.replace(/\[\[([^\]]+)\]\]/g, (_m, key) => placeholderMap[key] || `"${key}"`);
+    return text.slice(0, 200);
+}
+
+const getTemplates = async (req, res, next) => {
+    try {
+        const firmName = await getLawFirmNameHe();
+        const placeholderMap = {
+            ..._defaultPlaceholderMap,
+            firm_name: firmName || _defaultPlaceholderMap.firm_name,
+        };
+        const templates = getAllTemplates();
+
+        // Load DB-stored templates (overrides + custom)
+        let dbRows = [];
+        try {
+            const { rows } = await pool.query(
+                'SELECT id, template_key, label, description, subject_template, body_html FROM reminder_templates ORDER BY created_at'
+            );
+            dbRows = rows;
+        } catch (_) { /* table may not exist yet */ }
+
+        const dbByKey = new Map(dbRows.map(r => [r.template_key, r]));
+
+        // Build list: built-in templates (with DB overrides merged)
+        const list = Object.values(templates).map(t => {
+            const dbOverride = dbByKey.get(t.key);
+            if (dbOverride) {
+                return {
+                    key: t.key,
+                    label: dbOverride.label || t.label,
+                    labelEn: t.labelEn || t.label,
+                    description: dbOverride.description || t.description || '',
+                    subject: dbOverride.subject_template || t.subject,
+                    bodyPreview: _humanizeBody(dbOverride.body_html || t.body, placeholderMap),
+                    bodyHtml: dbOverride.body_html || t.body,
+                    isBuiltin: true,
+                    id: dbOverride.id,
+                };
+            }
+            return {
+                key: t.key,
+                label: t.label,
+                labelEn: t.labelEn || t.label,
+                description: t.description || '',
+                subject: t.subject,
+                bodyPreview: _humanizeBody(t.body, placeholderMap),
+                bodyHtml: t.body,
+                isBuiltin: true,
+            };
+        });
+
+        // Add purely custom templates (keys not matching any built-in)
+        for (const row of dbRows) {
+            if (!templates[row.template_key]) {
+                list.push({
+                    key: row.template_key,
+                    label: row.label,
+                    description: row.description || '',
+                    subject: row.subject_template,
+                    bodyPreview: _humanizeBody(row.body_html, placeholderMap),
+                    bodyHtml: row.body_html,
+                    isBuiltin: false,
+                    id: row.id,
+                });
+            }
+        }
+
+        return res.json({ ok: true, templates: list });
+    } catch (e) {
+        return next(e);
+    }
+};
+
+// ─── Import from Excel ───────────────────────────────────────────────
+
+/**
+ * Expected columns:
+ *   ClientName / שם לקוח    (required)
+ *   Email / אימייל          (required)
+ *   Date / תאריך            (required – the scheduled_for date)
+ *   Subject / נושא          (optional – custom subject override)
+ *   Notes / הערות           (optional – merged into template_data)
+ *
+ * Body params (multipart):
+ *   file         – the uploaded Excel/CSV
+ *   templateKey  – which template to use (default GENERAL)
+ *   sendHour     – hour of day to send (default 9)
+ */
+const importReminders = async (req, res, next) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ ok: false, error: 'לא הועלה קובץ.' });
+        }
+
+        const templateKey = req.body.templateKey || 'GENERAL';
+        const sendHour = Number.parseInt(req.body.sendHour || '9', 10);
+        const sendMinute = Number.parseInt(req.body.sendMinute || '0', 10);
+        const createdBy = _resolveCreatedBy(req);
+
+        // Parse workbook
+        const { sheetName, rows } = await parseExcelBuffer(req.file.buffer);
+        if (!sheetName) {
+            return res.status(400).json({ ok: false, error: 'קובץ ריק.' });
+        }
+        if (rows.length === 0) {
+            return res.status(400).json({ ok: false, error: 'לא נמצאו שורות נתונים.' });
+        }
+
+        // Column name mappings (Hebrew + English variants)
+        const colMap = {
+            clientName: ['clientname', 'שם לקוח', 'שם', 'name', 'client_name', 'client'],
+            email: ['email', 'אימייל', 'דוא"ל', 'mail', 'to_email', 'דואל'],
+            date: ['date', 'תאריך', 'תאריך שליחה', 'scheduled_for', 'scheduledfor', 'send_date', 'senddate'],
+            subject: ['subject', 'נושא'],
+            notes: ['notes', 'הערות', 'note'],
+            body: ['body', 'תוכן', 'content'],
+            case_title: ['case_title', 'שם תיק', 'casetitle'],
+            document_name: ['document_name', 'שם מסמך', 'documentname', 'document'],
+            amount: ['amount', 'סכום', 'sum'],
+            content_1: ['content_1', 'תוכן 1', 'content1'],
+            content_2: ['content_2', 'תוכן 2', 'content2'],
+            content_3: ['content_3', 'תוכן 3', 'content3'],
+            time: ['time', 'שעת שליחה', 'send_time', 'sendtime', 'שעה'],
+            content_date: ['content_date', 'תאריך לתוכן', 'תאריך', 'event_date', 'eventdate', 'deadline', 'מועד'],
+        };
+
+        function findCol(row, aliases) {
+            for (const alias of aliases) {
+                for (const key of Object.keys(row)) {
+                    if (key.trim().toLowerCase() === alias.toLowerCase()) {
+                        return row[key];
+                    }
+                }
+            }
+            return undefined;
+        }
+
+        // Try to match client names to existing users
+        let existingUsers = [];
+        try {
+            const { rows: users } = await pool.query(
+                'SELECT userid, name, email FROM users'
+            );
+            existingUsers = users;
+        } catch (_) { /* ignore */ }
+
+        const userByEmail = {};
+        const userByName = {};
+        for (const u of existingUsers) {
+            if (u.email) userByEmail[u.email.toLowerCase().trim()] = u;
+            if (u.name) userByName[u.name.toLowerCase().trim()] = u;
+        }
+
+        const details = [];
+        let created = 0;
+        let skippedCount = 0;
+        let failedCount = 0;
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const rowNum = i + 2; // Excel row (1-indexed header + data)
+
+            const clientName = String(findCol(row, colMap.clientName) || '').trim();
+            const email = String(findCol(row, colMap.email) || '').trim();
+            const rawDate = findCol(row, colMap.date);
+            const subject = String(findCol(row, colMap.subject) || '').trim() || null;
+            const notes = String(findCol(row, colMap.notes) || '').trim() || null;
+            const body = String(findCol(row, colMap.body) || '').trim() || null;
+            const caseTitle = String(findCol(row, colMap.case_title) || '').trim() || null;
+            const documentName = String(findCol(row, colMap.document_name) || '').trim() || null;
+            const amount = String(findCol(row, colMap.amount) || '').trim() || null;
+            const content1 = String(findCol(row, colMap.content_1) || '').trim() || null;
+            const content2 = String(findCol(row, colMap.content_2) || '').trim() || null;
+            const content3 = String(findCol(row, colMap.content_3) || '').trim() || null;
+            const rawContentDate = findCol(row, colMap.content_date);
+            const rawTimeVal = findCol(row, colMap.time);
+
+            // Validate required fields
+            if (!clientName) {
+                details.push({ row: rowNum, clientName: clientName || '—', status: 'failed', reason: 'חסר שם לקוח' });
+                failedCount++;
+                continue;
+            }
+            if (!email) {
+                details.push({ row: rowNum, clientName, status: 'failed', reason: 'חסר אימייל' });
+                failedCount++;
+                continue;
+            }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                details.push({ row: rowNum, clientName, status: 'failed', reason: `אימייל לא תקין: ${email}` });
+                failedCount++;
+                continue;
+            }
+
+            // Parse date (supports dd/mm/yy, dd/mm/yyyy, yyyy-mm-dd, and JS-parseable formats)
+            let scheduledFor;
+            if (rawDate instanceof Date) {
+                scheduledFor = rawDate;
+            } else {
+                const dateStr = String(rawDate).trim();
+                const ddmmMatch = dateStr.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+                if (ddmmMatch) {
+                    const day = Number(ddmmMatch[1]);
+                    const month = Number(ddmmMatch[2]) - 1;
+                    let year = Number(ddmmMatch[3]);
+                    if (year < 100) year += 2000;
+                    scheduledFor = new Date(year, month, day);
+                } else {
+                    scheduledFor = new Date(dateStr);
+                }
+                if (isNaN(scheduledFor.getTime())) {
+                    details.push({ row: rowNum, clientName, status: 'failed', reason: `תאריך לא תקין: ${rawDate}` });
+                    failedCount++;
+                    continue;
+                }
+            }
+
+            // Set scheduled time: per-row time takes precedence, then global sendHour/sendMinute
+            let rowHour = sendHour;
+            let rowMinute = sendMinute;
+            if (rawTimeVal != null && rawTimeVal !== '') {
+                if (rawTimeVal instanceof Date) {
+                    // Excel stores time-only cells as Date objects (epoch 1899-12-30) in UTC
+                    rowHour = rawTimeVal.getUTCHours();
+                    rowMinute = rawTimeVal.getUTCMinutes();
+                } else if (typeof rawTimeVal === 'number' && rawTimeVal >= 0 && rawTimeVal < 1) {
+                    // Fractional day (e.g. 0.791666 = 19:00)
+                    const totalMinutes = Math.round(rawTimeVal * 24 * 60);
+                    rowHour = Math.floor(totalMinutes / 60);
+                    rowMinute = totalMinutes % 60;
+                } else {
+                    const timeStr = String(rawTimeVal).trim();
+                    const timeParts = timeStr.match(/^(\d{1,2}):(\d{2})$/);
+                    if (timeParts) {
+                        rowHour = Number(timeParts[1]);
+                        rowMinute = Number(timeParts[2]);
+                    }
+                }
+            }
+            scheduledFor.setHours(rowHour, rowMinute, 0, 0);
+
+            // Skip if date is in the past
+            if (scheduledFor < new Date()) {
+                details.push({ row: rowNum, clientName, status: 'skipped', reason: 'התאריך עבר' });
+                skippedCount++;
+                continue;
+            }
+
+            // Match to existing user (by email, then name)
+            const matchedUser =
+                userByEmail[email.toLowerCase()] ||
+                userByName[clientName.toLowerCase()] ||
+                null;
+
+            const templateData = {};
+            templateData.client_name = clientName;
+
+            // Content date (for [[date]] in template body) — separate from sending date
+            let contentDate = null;
+            if (rawContentDate != null && rawContentDate !== '') {
+                if (rawContentDate instanceof Date) {
+                    contentDate = rawContentDate;
+                } else {
+                    const cdStr = String(rawContentDate).trim();
+                    const cdMatch = cdStr.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
+                    if (cdMatch) {
+                        let y = Number(cdMatch[3]); if (y < 100) y += 2000;
+                        contentDate = new Date(y, Number(cdMatch[2]) - 1, Number(cdMatch[1]));
+                    } else {
+                        const parsed = new Date(cdStr);
+                        if (!isNaN(parsed.getTime())) contentDate = parsed;
+                    }
+                }
+            }
+            templateData.date = contentDate
+                ? contentDate.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Jerusalem' })
+                : scheduledFor.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Jerusalem' });
+            if (notes) templateData.notes = notes;
+            if (subject) templateData.subject = subject;
+            if (body) templateData.body = body;
+            if (caseTitle) templateData.case_title = caseTitle;
+            if (documentName) templateData.document_name = documentName;
+            if (amount) templateData.amount = amount;
+            if (content1) templateData.content_1 = content1;
+            if (content2) templateData.content_2 = content2;
+            if (content3) templateData.content_3 = content3;
+
+            try {
+                const { rows: insertedRows } = await pool.query(
+                    `INSERT INTO scheduled_email_reminders
+                        (user_id, client_name, to_email, subject, template_key, template_data, scheduled_for, created_by)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                     RETURNING *`,
+                    [
+                        matchedUser?.userid || null,
+                        clientName,
+                        email,
+                        subject,
+                        templateKey,
+                        JSON.stringify(templateData),
+                        scheduledFor.toISOString(),
+                        createdBy,
+                    ],
+                );
+                const insertedReminder = insertedRows[0];
+                try {
+                    const calendarEventId = await reminderCalendarSync.createCalendarEventForReminder(insertedReminder);
+                    if (calendarEventId) {
+                        await pool.query(
+                            'UPDATE scheduled_email_reminders SET calendar_event_id = $1 WHERE id = $2',
+                            [calendarEventId, insertedReminder.id]
+                        );
+                    }
+                } catch (syncErr) {
+                    console.error('[reminderController] importReminders calendar sync failed:', syncErr.message);
+                }
+                details.push({ row: rowNum, clientName, email, date: scheduledFor.toISOString(), status: 'created' });
+                created++;
+            } catch (err) {
+                details.push({ row: rowNum, clientName, status: 'failed', reason: err.message });
+                failedCount++;
+            }
+        }
+
+        return res.json({
+            ok: true,
+            created,
+            skipped: skippedCount,
+            failed: failedCount,
+            total: rows.length,
+            details,
+        });
+    } catch (e) {
+        return next(e);
+    }
+};
+
+function parseSigningReminderId(rawId) {
+    const s = String(rawId || '');
+    const m = /^sfr-(\d+)$/i.exec(s);
+    if (!m) return null;
+    const n = Number.parseInt(m[1], 10);
+    return Number.isFinite(n) ? n : null;
+}
+
+// ─── List reminders ──────────────────────────────────────────────────
+// Includes scheduled_email_reminders + signing_file_reminders (auto sign-remind).
+
+const listReminders = async (req, res, next) => {
+    try {
+        const { status } = req.query;
+        const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+        const limit = Math.min(100, Math.max(1, Number.parseInt(req.query.limit, 10) || 50));
+        const offset = (Math.max(1, Number(page)) - 1) * Number(limit);
+        const params = [];
+        let idx = 1;
+        let statusFilter = '';
+        if (status) {
+            statusFilter = ` AND status = $${idx++}`;
+            params.push(String(status).toUpperCase());
+        }
+
+        const combinedSql = `
+            SELECT * FROM (
+                SELECT
+                    id::text AS id,
+                    user_id,
+                    client_name,
+                    to_email,
+                    subject,
+                    template_key,
+                    scheduled_for,
+                    status,
+                    error,
+                    created_at,
+                    sent_at,
+                    cancelled_at,
+                    calendar_event_id,
+                    'email'::text AS source,
+                    NULL::text AS audience, NULL::jsonb AS channels, NULL::timestamptz AS event_start_time
+                FROM scheduled_email_reminders
+                WHERE 1=1
+
+                UNION ALL
+
+                SELECT
+                    ('sfr-' || sfr.id)::text AS id,
+                    sfr.signer_user_id AS user_id,
+                    COALESCE(NULLIF(TRIM(u.name), ''), u.email, u.phonenumber, ('#' || sfr.signer_user_id::text)) AS client_name,
+                    COALESCE(u.email, u.phonenumber, '') AS to_email,
+                    COALESCE(sf.filename, 'Signing reminder') AS subject,
+                    'SIGN_REMINDER'::text AS template_key,
+                    sfr.scheduled_for,
+                    sfr.status,
+                    sfr.error,
+                    sfr.created_at,
+                    sfr.sent_at,
+                    sfr.cancelled_at,
+                    NULL::integer AS calendar_event_id,
+                    'signing'::text AS source,
+                    NULL::text AS audience, NULL::jsonb AS channels, NULL::timestamptz AS event_start_time
+                FROM signing_file_reminders sfr
+                LEFT JOIN users u ON u.userid = sfr.signer_user_id
+                LEFT JOIN signingfiles sf ON sf.signingfileid = sfr.signing_file_id
+                WHERE 1=1
+                ${canViewCalendar(req) ? `UNION ALL SELECT * FROM (${calendarReminderSql}) cal` : ''}
+            ) combined WHERE 1=1 ${statusFilter}
+        `;
+
+        const countQ = `SELECT COUNT(*)::int AS count FROM (${combinedSql}) c`;
+        const dataQ = `${combinedSql}
+                       ORDER BY scheduled_for DESC, id ASC
+                       LIMIT $${idx++} OFFSET $${idx++}`;
+        const dataParams = [...params, Number(limit), offset];
+
+        const [{ rows: countRows }, { rows: reminders }] = await Promise.all([
+            pool.query(countQ, params),
+            pool.query(dataQ, dataParams),
+        ]);
+
+        return res.json({
+            ok: true,
+            total: Number(countRows?.[0]?.count || 0),
+            page: Number(page),
+            limit: Number(limit),
+            reminders: reminders.map(decorateCalendarReminder),
+        });
+    } catch (e) {
+        return next(e);
+    }
+};
+
+// ─── Get a single reminder ──────────────────────────────────────────
+
+const getReminderById = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        if (String(id).startsWith('cal-')) {
+            if (!canViewCalendar(req)) return res.status(403).json({ ok: false, error: 'Forbidden' });
+            const { rows } = await pool.query(`SELECT * FROM (${calendarReminderSql}) cal WHERE id = $1`, [id]);
+            if (!rows.length) return res.status(404).json({ ok: false, error: 'Reminder not found.' });
+            return res.json({ ok: true, reminder: decorateCalendarReminder(rows[0]) });
+        }
+        const signingId = parseSigningReminderId(id);
+        if (signingId != null) {
+            const { rows } = await pool.query(
+                `SELECT
+                    ('sfr-' || sfr.id)::text AS id,
+                    sfr.signer_user_id AS user_id,
+                    COALESCE(NULLIF(TRIM(u.name), ''), u.email, u.phonenumber, ('#' || sfr.signer_user_id::text)) AS client_name,
+                    COALESCE(u.email, u.phonenumber, '') AS to_email,
+                    COALESCE(sf.filename, 'Signing reminder') AS subject,
+                    'SIGN_REMINDER'::text AS template_key,
+                    '{}'::jsonb AS template_data,
+                    sfr.scheduled_for,
+                    sfr.status,
+                    sfr.error,
+                    sfr.created_at,
+                    sfr.sent_at,
+                    sfr.cancelled_at,
+                    NULL::integer AS created_by,
+                    NULL::integer AS calendar_event_id,
+                    'signing'::text AS source
+                 FROM signing_file_reminders sfr
+                 LEFT JOIN users u ON u.userid = sfr.signer_user_id
+                 LEFT JOIN signingfiles sf ON sf.signingfileid = sfr.signing_file_id
+                 WHERE sfr.id = $1
+                 LIMIT 1`,
+                [signingId]
+            );
+            if (!rows.length) {
+                return res.status(404).json({ ok: false, error: 'Reminder not found.' });
+            }
+            return res.json({ ok: true, reminder: rows[0] });
+        }
+
+        const reminderId = parseInt(id, 10);
+        if (!Number.isFinite(reminderId)) {
+            return res.status(400).json({ ok: false, error: 'Invalid reminder id.' });
+        }
+        const { rows } = await pool.query(
+            `SELECT id::text AS id, user_id, client_name, to_email, subject, template_key, template_data,
+                    scheduled_for, status, error, created_at, sent_at, cancelled_at,
+                    created_by, calendar_event_id, 'email'::text AS source
+               FROM scheduled_email_reminders
+              WHERE id = $1
+              LIMIT 1`,
+            [reminderId]
+        );
+        if (!rows.length) {
+            return res.status(404).json({ ok: false, error: 'Reminder not found.' });
+        }
+        return res.json({ ok: true, reminder: rows[0] });
+    } catch (e) {
+        return next(e);
+    }
+};
+
+// ─── Cancel a reminder ───────────────────────────────────────────────
+
+const cancelReminder = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        if (String(id).startsWith('cal-')) {
+            return res.status(409).json({ ok: false, errorCode: 'CALENDAR_MANAGED_REMINDER', message: 'יש לעדכן או לבטל תזכורת זו דרך האירוע ביומן.' });
+        }
+        const signingId = parseSigningReminderId(id);
+        if (signingId != null) {
+            const { rowCount } = await pool.query(
+                `UPDATE signing_file_reminders
+                 SET status = 'CANCELLED', cancelled_at = NOW(), auto_managed = FALSE
+                 WHERE id = $1 AND status = 'PENDING'`,
+                [signingId],
+            );
+            if (rowCount === 0) {
+                return res.status(404).json({ ok: false, error: 'Reminder not found or already processed.' });
+            }
+            return res.json({ ok: true });
+        }
+
+        const { rowCount } = await pool.query(
+            `UPDATE scheduled_email_reminders
+             SET status = 'CANCELLED', cancelled_at = NOW()
+             WHERE id = $1 AND status = 'PENDING'`,
+            [id],
+        );
+        if (rowCount === 0) {
+            return res.status(404).json({ ok: false, error: 'Reminder not found or already processed.' });
+        }
+        try {
+            await reminderCalendarSync.unlinkAndDeleteCalendarEventForReminder(id);
+        } catch (syncErr) {
+            console.error('[reminderController] cancelReminder calendar unlink failed:', syncErr.message);
+        }
+        return res.json({ ok: true });
+    } catch (e) {
+        return next(e);
+    }
+};
+
+// ─── Permanently delete a reminder ─────────────────────────────────
+
+const deleteReminder = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        if (String(id).startsWith('cal-')) {
+            return res.status(409).json({ ok: false, errorCode: 'CALENDAR_MANAGED_REMINDER', message: 'יש לעדכן או לבטל תזכורת זו דרך האירוע ביומן.' });
+        }
+        const signingId = parseSigningReminderId(id);
+        if (signingId != null) {
+            const { rowCount } = await pool.query(
+                `DELETE FROM signing_file_reminders WHERE id = $1`,
+                [signingId],
+            );
+            if (rowCount === 0) {
+                return res.status(404).json({ ok: false, error: 'Reminder not found.' });
+            }
+            return res.json({ ok: true });
+        }
+
+        // Drop the linked calendar event first; the FK is calendar → reminder with
+        // ON DELETE CASCADE, so deleting the reminder alone leaves an orphan event.
+        try {
+            await reminderCalendarSync.unlinkAndDeleteCalendarEventForReminder(id);
+        } catch (syncErr) {
+            console.error('[reminderController] deleteReminder calendar unlink failed:', syncErr.message);
+        }
+        const { rowCount } = await pool.query(
+            `DELETE FROM scheduled_email_reminders WHERE id = $1`,
+            [id],
+        );
+        if (rowCount === 0) {
+            return res.status(404).json({ ok: false, error: 'Reminder not found.' });
+        }
+        return res.json({ ok: true });
+    } catch (e) {
+        return next(e);
+    }
+};
+
+// ─── Update a PENDING reminder ──────────────────────────────────────
+
+const updateReminder = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { client_name, to_email, subject, scheduled_for } = req.body;
+
+        if (String(id).startsWith('cal-')) {
+            return res.status(409).json({ ok: false, errorCode: 'CALENDAR_MANAGED_REMINDER', message: 'יש לעדכן או לבטל תזכורת זו דרך האירוע ביומן.' });
+        }
+        const signingId = parseSigningReminderId(id);
+        if (signingId != null) {
+            if (scheduled_for === undefined) {
+                return res.status(400).json({ ok: false, error: 'Only scheduled_for can be updated for signing reminders.' });
+            }
+            const { rowCount, rows } = await pool.query(
+                `UPDATE signing_file_reminders sfr
+                 SET scheduled_for = $1,
+                     auto_managed = FALSE
+                 WHERE sfr.id = $2 AND sfr.status = 'PENDING'
+                 RETURNING
+                    ('sfr-' || sfr.id)::text AS id,
+                    sfr.signer_user_id AS user_id,
+                    sfr.scheduled_for,
+                    sfr.status,
+                    sfr.error,
+                    sfr.created_at,
+                    sfr.sent_at,
+                    sfr.cancelled_at,
+                    'SIGN_REMINDER'::text AS template_key,
+                    'signing'::text AS source`,
+                [scheduled_for, signingId],
+            );
+            if (rowCount === 0) {
+                return res.status(404).json({ ok: false, error: 'Reminder not found or not in PENDING status.' });
+            }
+            return res.json({ ok: true, reminder: rows[0] });
+        }
+
+        // Build dynamic SET clause from supplied fields
+        const fields = [];
+        const values = [];
+        let idx = 1;
+
+        if (client_name !== undefined) { fields.push(`client_name = $${idx++}`); values.push(client_name); }
+        if (to_email !== undefined) {
+            fields.push(`to_email = $${idx++}`);
+            values.push(to_email);
+            fields.push(`user_id = (SELECT userid FROM users WHERE LOWER(email) = LOWER($${idx - 1}) LIMIT 1)`);
+        }
+        if (subject !== undefined) { fields.push(`subject = $${idx++}`); values.push(subject); }
+        if (scheduled_for !== undefined) { fields.push(`scheduled_for = $${idx++}`); values.push(scheduled_for); }
+
+        if (fields.length === 0) {
+            return res.status(400).json({ ok: false, error: 'No fields to update.' });
+        }
+
+        values.push(id);
+        const { rowCount, rows } = await pool.query(
+            `UPDATE scheduled_email_reminders
+             SET ${fields.join(', ')}
+             WHERE id = $${idx} AND status = 'PENDING'
+             RETURNING *`,
+            values,
+        );
+
+        if (rowCount === 0) {
+            return res.status(404).json({ ok: false, error: 'Reminder not found or not in PENDING status.' });
+        }
+
+        let reminder = rows[0];
+
+        try {
+            if (!reminder.calendar_event_id && reminder.created_by) {
+                const calendarEventId = await reminderCalendarSync.createCalendarEventForReminder(reminder);
+                if (calendarEventId) {
+                    const { rows: relinked } = await pool.query(
+                        'UPDATE scheduled_email_reminders SET calendar_event_id = $1 WHERE id = $2 RETURNING *',
+                        [calendarEventId, reminder.id]
+                    );
+                    if (relinked[0]) reminder = relinked[0];
+                }
+            } else {
+                await reminderCalendarSync.updateCalendarEventForReminder(reminder);
+            }
+        } catch (syncErr) {
+            console.error('[reminderController] updateReminder calendar sync failed:', syncErr.message);
+        }
+
+        return res.json({ ok: true, reminder });
+    } catch (e) {
+        return next(e);
+    }
+};
+
+// ─── Custom reminder template CRUD ──────────────────────────────────
+
+const listCustomTemplates = async (req, res, next) => {
+    try {
+        const { rows } = await pool.query(
+            'SELECT id, template_key, label, description, subject_template, body_html, created_at, updated_at FROM reminder_templates ORDER BY created_at DESC'
+        );
+        return res.json({ ok: true, templates: rows });
+    } catch (e) { return next(e); }
+};
+
+const createCustomTemplate = async (req, res, next) => {
+    try {
+        const { label, description } = req.body;
+        const subjectTemplate = req.body.subjectTemplate || req.body.subject_template;
+        const bodyHtml = req.body.bodyHtml || req.body.body_html;
+        const templateKey = req.body.template_key || req.body.templateKey;
+        if (!label || !String(label).trim()) {
+            return res.status(400).json({ ok: false, error: 'Label is required' });
+        }
+        const key = templateKey || ('CUSTOM_' + Date.now());
+
+        // Upsert: if a record with this key already exists, update it
+        const { rows } = await pool.query(
+            `INSERT INTO reminder_templates (template_key, label, description, subject_template, body_html, created_by)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             ON CONFLICT (template_key) DO UPDATE SET
+                label = EXCLUDED.label,
+                description = EXCLUDED.description,
+                subject_template = EXCLUDED.subject_template,
+                body_html = EXCLUDED.body_html,
+                updated_at = NOW()
+             RETURNING *`,
+            [
+                key,
+                label.trim(),
+                (description || '').trim(),
+                subjectTemplate || 'תזכורת: [[subject]]',
+                bodyHtml || 'שלום [[client_name]],<br><br>[[body]]<br><br>בברכה,<br>[[firm_name]]',
+                req.user?.UserId || null,
+            ]
+        );
+        return res.status(201).json({ ok: true, template: rows[0] });
+    } catch (e) { return next(e); }
+};
+
+const updateCustomTemplate = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { label, description } = req.body;
+        const subjectTemplate = req.body.subjectTemplate || req.body.subject_template;
+        const bodyHtml = req.body.bodyHtml || req.body.body_html;
+        const { rows, rowCount } = await pool.query(
+            `UPDATE reminder_templates SET
+                label = COALESCE($2, label),
+                description = COALESCE($3, description),
+                subject_template = COALESCE($4, subject_template),
+                body_html = COALESCE($5, body_html),
+                updated_at = NOW()
+             WHERE id = $1 RETURNING *`,
+            [id, label, description, subjectTemplate, bodyHtml]
+        );
+        if (rowCount === 0) return res.status(404).json({ ok: false, error: 'Template not found' });
+        return res.json({ ok: true, template: rows[0] });
+    } catch (e) { return next(e); }
+};
+
+const deleteCustomTemplate = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { rowCount } = await pool.query('DELETE FROM reminder_templates WHERE id = $1', [id]);
+        if (rowCount === 0) return res.status(404).json({ ok: false, error: 'Template not found' });
+        return res.json({ ok: true });
+    } catch (e) { return next(e); }
+};
+
+// ─── Download example Excel for a template ──────────────────────────
+
+// ─── Create a single reminder ────────────────────────────────────────
+
+const createSingleReminder = async (req, res, next) => {
+    try {
+        const { client_name, to_email, subject, templateKey, scheduled_for, template_data } = req.body;
+        const createdBy = _resolveCreatedBy(req);
+
+        if (!client_name || !String(client_name).trim()) {
+            return res.status(400).json({ ok: false, error: 'חסר שם לקוח' });
+        }
+        if (!to_email || !String(to_email).trim()) {
+            return res.status(400).json({ ok: false, error: 'חסר אימייל' });
+        }
+        if (!scheduled_for) {
+            return res.status(400).json({ ok: false, error: 'חסר תאריך שליחה' });
+        }
+
+        const scheduledDate = new Date(scheduled_for);
+        if (isNaN(scheduledDate.getTime())) {
+            return res.status(400).json({ ok: false, error: 'תאריך לא תקין' });
+        }
+
+        // Match to existing user
+        let userId = null;
+        try {
+            const { rows } = await pool.query(
+                `SELECT userid FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1`,
+                [to_email.trim()]
+            );
+            if (rows.length) userId = rows[0].userid;
+        } catch (_) { /* ignore */ }
+
+        const tplData = template_data || {};
+        if (subject) tplData.subject = subject;
+
+        const { rows } = await pool.query(
+            `INSERT INTO scheduled_email_reminders
+                (user_id, client_name, to_email, subject, template_key, template_data, scheduled_for, created_by)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             RETURNING *`,
+            [
+                userId,
+                String(client_name).trim(),
+                String(to_email).trim(),
+                subject || null,
+                templateKey || 'GENERAL',
+                JSON.stringify(tplData),
+                scheduledDate.toISOString(),
+                createdBy,
+            ]
+        );
+        let reminder = rows[0];
+
+        let calendarSyncWarning = null;
+        try {
+            const calendarEventId = await reminderCalendarSync.createCalendarEventForReminder(reminder);
+            if (calendarEventId) {
+                const { rows: relinked } = await pool.query(
+                    'UPDATE scheduled_email_reminders SET calendar_event_id = $1 WHERE id = $2 RETURNING *',
+                    [calendarEventId, reminder.id]
+                );
+                if (relinked[0]) reminder = relinked[0];
+            }
+        } catch (syncErr) {
+            console.error('[reminderController] createSingleReminder calendar sync failed:', syncErr.message);
+            calendarSyncWarning = 'התזכורת נשמרה אך לא נוצר אירוע יומן מקושר.';
+        }
+
+        return res.status(201).json({
+            ok: true,
+            reminder,
+            ...(calendarSyncWarning ? { calendarSyncWarning } : {}),
+        });
+    } catch (e) {
+        return next(e);
+    }
+};
+
+
+// Map from placeholder name → Hebrew column header
+const _varToHeader = {
+    client_name: 'שם לקוח',
+    firm_name: 'שם המשרד',
+    date: 'תאריך לתוכן',
+    subject: 'נושא',
+    body: 'תוכן',
+    case_title: 'שם תיק',
+    document_name: 'שם מסמך',
+    amount: 'סכום',
+    content_1: 'תוכן 1',
+    content_2: 'תוכן 2',
+    content_3: 'תוכן 3',
+};
+
+// Extract [[placeholder]] names from template text
+function _extractPlaceholders(text) {
+    const matches = (text || '').matchAll(/\[\[([^\]]+)\]\]/g);
+    const vars = new Set();
+    for (const m of matches) vars.add(m[1]);
+    return vars;
+}
+
+const downloadTemplateExcel = async (req, res, next) => {
+    try {
+        const { key } = req.params;
+
+        // Resolve template — DB override takes priority, then built-in, then pure custom
+        const builtIn = getAllTemplates();
+        let templateLabel = key;
+        let subjectTpl = '';
+        let bodyHtml = '';
+
+        // Always check DB first (may be a built-in override or a custom template)
+        try {
+            const { rows } = await pool.query(
+                'SELECT label, subject_template, body_html FROM reminder_templates WHERE template_key = $1',
+                [key]
+            );
+            if (rows[0]) {
+                templateLabel = rows[0].label;
+                subjectTpl = rows[0].subject_template || '';
+                bodyHtml = rows[0].body_html || '';
+            }
+        } catch (_) { /* table may not exist */ }
+
+        // Fall back to built-in if no DB record found
+        if (!subjectTpl && !bodyHtml && builtIn[key]) {
+            templateLabel = builtIn[key].label;
+            subjectTpl = builtIn[key].subject || '';
+            bodyHtml = builtIn[key].body || '';
+        }
+
+        // Extract placeholders used in the template
+        const usedVars = _extractPlaceholders(subjectTpl + ' ' + bodyHtml);
+
+        // Always include these base columns first; email + date are always required
+        const headers = ['שם לקוח', 'אימייל', 'תאריך שליחה', 'שעת שליחה'];
+        const exampleValues = { 'שם לקוח': 'ישראל ישראלי', 'אימייל': 'israel@example.com', 'תאריך שליחה': '01/04/26', 'שעת שליחה': '09:00' };
+        const exampleValues2 = { 'שם לקוח': 'שרה כהן', 'אימייל': 'sara@example.com', 'תאריך שליחה': '15/04/26', 'שעת שליחה': '14:30' };
+
+        // Remove vars that are auto-filled or already in base columns
+        usedVars.delete('client_name');
+        usedVars.delete('firm_name');
+        usedVars.delete('time');
+
+        // Add columns for each used placeholder
+        const varExamples = {
+            date: ['01/05/26', '20/05/26'],
+            subject: ['נושא לדוגמה', ''],
+            body: ['תוכן ההודעה', ''],
+            case_title: ['תיק לדוגמה', ''],
+            document_name: ['מסמך לדוגמה', ''],
+            amount: ['5,000 ₪', ''],
+            content_1: ['טקסט חופשי 1', ''],
+            content_2: ['טקסט חופשי 2', ''],
+            content_3: ['טקסט חופשי 3', ''],
+        };
+
+        for (const v of usedVars) {
+            const header = _varToHeader[v] || v;
+            if (!headers.includes(header)) {
+                headers.push(header);
+                const examples = varExamples[v] || ['', ''];
+                exampleValues[header] = examples[0];
+                exampleValues2[header] = examples[1];
+            }
+        }
+
+        const ExcelJS = require('exceljs');
+        const wb = new ExcelJS.Workbook();
+        const ws = wb.addWorksheet(templateLabel.slice(0, 31));
+        ws.columns = headers.map(h => ({ header: h, key: h, width: 20 }));
+        ws.addRow(headers.map(h => exampleValues[h] || ''));
+        ws.addRow(headers.map(h => exampleValues2[h] || ''));
+
+        const buf = await wb.xlsx.writeBuffer();
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="reminder-example-${key}.xlsx"`);
+        return res.send(Buffer.from(buf));
+    } catch (e) { return next(e); }
+};
+
+module.exports = {
+    getTemplates, importReminders, listReminders, cancelReminder, deleteReminder, updateReminder,
+    listCustomTemplates, createCustomTemplate, updateCustomTemplate, deleteCustomTemplate,
+    downloadTemplateExcel, createSingleReminder, getReminderById,
+};
