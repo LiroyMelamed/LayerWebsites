@@ -53,6 +53,10 @@ test('only platform admin configures recipients; owner connects own office; staf
     for (const who of ['staff', 'client']) await request(app).get('/integrations').set('x-test-identity', who).expect(403);
     await request(app).get(`/integrations?officeId=${B}`).set('x-test-identity', 'owner').expect(403);
     await request(app).put('/integrations/whatsapp').set('x-test-identity', 'owner').send({ enabled: true }).expect(403);
+    await request(app).put('/integrations/court').set('x-test-identity', 'owner').send({ enabled: true, syncTime: '08:00' }).expect(403);
+    await request(app).get('/integrations/settings').set('x-test-identity', 'owner').expect(200);
+    await request(app).put(`/integrations/court?officeId=${B}`).set('x-test-identity', 'platform').send({ enabled: true, syncTime: '09:30' }).expect(200);
+    assert.equal(calls.find(c => c.name === 'saveCourt').args[0], B);
     await request(app).post('/integrations/whatsapp/signup').set('x-test-identity', 'owner').expect(200);
     const signup = calls.find(c => c.name === 'startSignup');
     assert.deepEqual(signup.args, [A, 2]); assert.deepEqual(signup.scope, { mode: 'office', tenantId: A });

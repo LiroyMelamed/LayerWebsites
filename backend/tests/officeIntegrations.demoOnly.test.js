@@ -26,14 +26,14 @@ test('QA demo-only prevents every Meta request even with live credentials and fl
 });
 
 function runtime(env) {
-    const calls = [], intervals = [];
+    const calls = [], courtCalls = [], intervals = [];
     const context = { module: { exports: {} }, process: { env }, console,
         setInterval: callback => { intervals.push(callback); return { unref() {} }; }, clearInterval() {},
         require: name => {
-            if (name.endsWith('/db')) return {};
+            if (name.endsWith('/db')) return { query: async () => ({ rows: [{ law_firm_tenant_id: null }] }) };
             if (name.endsWith('/databaseScope')) return { withLegacyOffice: fn => fn() };
             if (name.endsWith('/tenantContext')) return { isMultiTenantMode: () => false };
-            if (name === './service') return { createIntegrationService: () => ({}) };
+            if (name === './service') return { createIntegrationService: () => ({ syncCourt: async (...args) => courtCalls.push(args) }) };
             if (name === './metaProvider') return { createMetaProvider: () => ({}) };
             if (name === './worker') return { createGroupWorker: () => ({ processOffice: async (...args) => calls.push(args) }) };
             if (name.endsWith('/backgroundJobsEnabled')) return require('../lib/backgroundJobsEnabled');
@@ -41,7 +41,7 @@ function runtime(env) {
         },
     };
     vm.runInNewContext(fs.readFileSync(require.resolve('../services/integrations/runtime'), 'utf8'), context);
-    return { runtime: context.module.exports, calls, intervals };
+    return { runtime: context.module.exports, calls, courtCalls, intervals };
 }
 
 test('QA starts only the demo worker while ordinary background jobs remain disabled', async () => {
@@ -63,4 +63,16 @@ test('demo worker flag alone cannot enable a live worker or override disabled ba
     ]) {
         const fixture = runtime(env); fixture.runtime.start(); assert.equal(fixture.intervals.length, 0);
     }
+});
+
+test('daily court demo worker runs independently without starting message delivery', async () => {
+    const fixture = runtime({ BACKGROUND_JOBS_ENABLED: 'false', COURT_DEMO_SYNC_WORKER_ENABLED: 'true' });
+    fixture.runtime.start(); fixture.runtime.start();
+    assert.equal(fixture.intervals.length, 1);
+    await fixture.intervals[0]();
+    assert.equal(fixture.calls.length, 0);
+    assert.equal(fixture.courtCalls.length, 1);
+    assert.equal(fixture.courtCalls[0][0], null);
+    assert.ok(fixture.courtCalls[0][1].scheduledAt);
+    fixture.runtime.stop();
 });

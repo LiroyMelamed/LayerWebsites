@@ -9,7 +9,7 @@ async function request(method, path = '', officeId, body) {
 }
 export const officeIntegrationsApi = {
     offices: () => request('get', '/offices'),
-    snapshot: id => request('get', '', id),
+    snapshot: id => request('get', '/settings', id),
     saveCourt: (id, body) => request('put', '/court', id, body),
     seedDemo: id => request('post', '/court/demo-cases', id),
     linkCourt: (id, body) => request('put', '/court/mapping', id, body),

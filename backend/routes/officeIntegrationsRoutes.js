@@ -51,9 +51,10 @@ router.use((req, _res, next) => {
         runOffice(tenantId, next);
     })().catch(next);
 });
-const policy = (req, _res, next) => req.integrationPolicyAdmin ? next() : next(createAppError('FORBIDDEN', 403, 'רק מנהל הפלטפורמה רשאי לשנות את יצירת הקבוצות ורשימת המוזמנים'));
+const policy = (req, _res, next) => req.integrationPolicyAdmin ? next() : next(createAppError('FORBIDDEN', 403, 'רק מנהל הפלטפורמה רשאי לשנות את הגדרות הסנכרון והאוטומציה'));
 router.get('/', wrap(async (req, res) => res.json({ ...await service.snapshot(req.integrationOfficeId), canConfigurePolicy: req.integrationPolicyAdmin })));
-router.put('/court', wrap(async (req, res) => { await service.saveCourt(req.integrationOfficeId, req.body); res.json({ ok: true }); }));
+router.get('/settings', wrap(async (req, res) => res.json({ ...await service.settingsSnapshot(req.integrationOfficeId), canConfigurePolicy: req.integrationPolicyAdmin })));
+router.put('/court', policy, wrap(async (req, res) => { await service.saveCourt(req.integrationOfficeId, req.body); res.json({ ok: true }); }));
 router.post('/court/demo-cases', wrap(async (req, res) => res.json({ caseIds: await service.seedDemo(req.integrationOfficeId) })));
 router.put('/court/mapping', wrap(async (req, res) => { await service.linkCourt(req.integrationOfficeId, req.body); res.json({ ok: true }); }));
 router.post('/court/sync', wrap(async (req, res) => { await service.syncCourt(req.integrationOfficeId); res.json({ ok: true }); }));
