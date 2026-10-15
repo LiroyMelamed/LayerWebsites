@@ -1,0 +1,72 @@
+✔ batch reminders group documents, respect existing toggle and offset, claim once and preserve uncertain outcomes (1195.9755ms)
+{"event":"auth_missing_token","method":"GET","path":"/api/signing-templates/846dc56d-f4c7-422e-ae15-59ee28d157b2"}
+[signing] publicSignFileBatch ok {
+  signingFileId: 51,
+  count: 1,
+  remaining: 1,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 6 }
+}
+[signing] publicSignFileBatch ok {
+  signingFileId: 52,
+  count: 1,
+  remaining: 1,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 6 }
+}
+[signing] publicSignFileBatch ok {
+  signingFileId: 51,
+  count: 1,
+  remaining: 0,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 6 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=90 for file 51
+[signingFinalize] done { signingFileId: 51, ms: 179 }
+[signing] publicSignFileBatch ok {
+  signingFileId: 52,
+  count: 1,
+  remaining: 0,
+  timings: { uploadMs: 0, dbMs: 3, totalMs: 15 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=91 for file 52
+[signingFinalize] done { signingFileId: 52, ms: 26 }
+[signing] publicSignFileBatch ok {
+  signingFileId: 53,
+  count: 1,
+  remaining: 0,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 12 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=90 for file 53
+[signingFinalize] done { signingFileId: 53, ms: 29 }
+[signing] publicSignFileBatch ok {
+  signingFileId: 54,
+  count: 1,
+  remaining: 0,
+  timings: { uploadMs: 0, dbMs: 3, totalMs: 28 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=90 for file 54
+[signingFinalize] done { signingFileId: 54, ms: 38 }
+✔ templates, immutable bulk dispatch and manifest-bound shared OTP use the released signing engine (2597.033ms)
+[signing] publicSignFileBatch ok {
+  signingFileId: 55,
+  count: 1,
+  remaining: 1,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 28 }
+}
+[signing] publicSignFileBatch ok {
+  signingFileId: 56,
+  count: 1,
+  remaining: 1,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 31 }
+}
+✔ batch turn notifications, mixed OTP, uncertain delivery and new-route permission boundaries (1396.2425ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5692.408333

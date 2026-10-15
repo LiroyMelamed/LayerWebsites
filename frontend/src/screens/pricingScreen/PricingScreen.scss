@@ -1,0 +1,64 @@
+@use '../../styles/variables' as v;
+
+.lw-pricingScreen__scroll {
+    padding: v.$space-4;
+    overflow-x: hidden;
+}
+
+.lw-pricingScreen__title {
+    margin: 0 0 v.$space-2 0;
+}
+
+.lw-pricingScreen__subtitle {
+    opacity: 0.9;
+    margin: 0 0 v.$space-4 0;
+}
+
+.lw-pricingScreen__bullets {
+    margin: 0;
+    padding-inline-start: v.$space-4;
+}
+
+.lw-pricingScreen__bullets li {
+    margin: v.$space-2 0;
+}
+
+.lw-pricingScreen__sectionTitle {
+    margin: v.$space-5 0 v.$space-3 0;
+}
+
+
+.lw-pricingScreen__floatingContact {
+    position: fixed;
+    inset-inline-end: v.$space-4;
+    inset-block-end: v.$space-4;
+    z-index: 50;
+}
+
+.lw-pricingScreen__contactPopup {
+    flex-direction: column;
+    gap: v.$space-3;
+    margin: 0;
+}
+
+.lw-pricingScreen__contactActions {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: v.$space-2;
+}
+
+.lw-pricingScreen__calculatorCard {
+    margin-top: v.$space-4;
+}
+
+.lw-pricingScreen__calculatorSubtitle {
+    opacity: 0.9;
+}
+
+.lw-pricingScreen__divider {
+    height: 0.0625rem;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.08);
+    margin: v.$space-3 0;
+}

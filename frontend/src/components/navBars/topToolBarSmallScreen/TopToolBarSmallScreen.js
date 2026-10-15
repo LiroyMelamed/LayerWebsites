@@ -1,0 +1,146 @@
+import { useFirmPermissions } from "../../../providers/FirmPermissionsProvider";
+import React, { useState } from "react";
+import SimpleContainer from "../../simpleComponents/SimpleContainer";
+import { images } from "../../../assets/images/images";
+import SimpleButton from "../../simpleComponents/SimpleButton";
+import SideBarMenuItem from "../navBarItems/SideBarMenuItem";
+import { useLocation, useNavigate } from "react-router-dom";
+import { usePopup } from "../../../providers/PopUpProvider";
+import { getNavBarData } from "../data/NavBarData";
+import ImageButton from "../../specializedComponents/buttons/ImageButton";
+import SimpleScrollView from "../../simpleComponents/SimpleScrollView";
+import { useFromApp } from "../../../providers/FromAppProvider";
+import PrimaryButton from "../../styledComponents/buttons/PrimaryButton";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from '../../i18n/LanguageSwitcher';
+import ComplianceBadges from '../../compliance/ComplianceBadges';
+
+import './TopToolBarSmallScreen.scss';
+
+const Logo = images.Logos.FullLogoOriginal;
+
+export default function TopToolBarSmallScreen({ chosenIndex = -1, chosenNavKey, LogoNavigate, GetNavBarData = getNavBarData, isClient = false }) {
+    const { isFromApp } = useFromApp();
+    const { t } = useTranslation();
+
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const { openPopup, closePopup } = usePopup();
+
+    const firmPerms = useFirmPermissions();
+    const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup, isFromApp, t, isClient ? null : firmPerms);
+
+    const routeMatchesPath = (item, pathname) => {
+        if (!item.routeMatch) return false;
+        const matches = Array.isArray(item.routeMatch) ? item.routeMatch : [item.routeMatch];
+        return matches.some((route) => pathname.includes(route));
+    };
+
+    // The open page wins. A screen that forgot to pass chosenNavKey still highlights.
+    const pathMatch = NavBarLinks.reduce((best, item) => {
+        if (!routeMatchesPath(item, location.pathname)) return best;
+        const routes = Array.isArray(item.routeMatch) ? item.routeMatch : [item.routeMatch];
+        const length = Math.max(...routes.filter((route) => location.pathname.includes(route)).map((route) => route.length));
+        if (!best || length > best.length) return { item, length };
+        return best;
+    }, null);
+
+    const isActiveItem = (item, index) => {
+        if (pathMatch) return pathMatch.item === item;
+        if (chosenNavKey && item.navKey) return item.navKey === chosenNavKey;
+        return chosenIndex >= 0 && index === chosenIndex;
+    };
+
+    const toggleDrawer = () => {
+        setIsDrawerOpen((open) => !open);
+    };
+
+    return (
+        <>
+            <SimpleContainer className="lw-topToolBarSmallScreen">
+                <ImageButton
+                    src={Logo}
+                    className="lw-topToolBarSmallScreen__logoButton"
+                    onPress={() => { navigate(LogoNavigate) }}
+                />
+                <SimpleButton onPress={toggleDrawer} className="lw-topToolBarSmallScreen__menuButton">
+                    <SimpleContainer
+                        className={[
+                            'lw-topToolBarSmallScreen__icon',
+                            isDrawerOpen ? 'lw-topToolBarSmallScreen__icon--open' : null,
+                        ].filter(Boolean).join(' ')}
+                    >
+                        {!isDrawerOpen ? "☰" : "X"}
+                    </SimpleContainer>
+                </SimpleButton>
+            </SimpleContainer >
+
+            {/* Backdrop overlay */}
+            <div
+                className={[
+                    'lw-topToolBarSmallScreen__backdrop',
+                    isDrawerOpen ? 'lw-topToolBarSmallScreen__backdrop--open' : null,
+                ].filter(Boolean).join(' ')}
+                onClick={toggleDrawer}
+            />
+
+            <SimpleContainer
+                className={[
+                    'lw-topToolBarSmallScreen__sidebar',
+                    isDrawerOpen ? 'lw-topToolBarSmallScreen__sidebar--open' : null,
+                ].filter(Boolean).join(' ')}
+            >
+                <SimpleScrollView className="lw-topToolBarSmallScreen__scroll">
+                    <SimpleContainer className="lw-topToolBarSmallScreen__sidebarContent">
+                        {NavBarLinks.map((item, index) => (
+                            <SimpleContainer
+                                key={item.navKey || item.buttonText}
+                                className="lw-topToolBarSmallScreen__menuItem"
+                                style={{ transitionDelay: isDrawerOpen ? `${index * 40}ms` : '0ms' }}
+                            >
+                                <SideBarMenuItem
+                                    buttonText={item.buttonText}
+                                    iconSource={item.icon}
+                                    size={24}
+                                    isPressed={isActiveItem(item, index)}
+                                    onPressFunction={() => {
+                                        item.onClick();
+                                        toggleDrawer();
+                                    }}
+                                    buttonIndex={index}
+                                />
+                            </SimpleContainer>
+                        ))}
+                    </SimpleContainer>
+                </SimpleScrollView>
+
+                <SimpleContainer className="lw-topToolBarSmallScreen__languageWrap">
+                    <LanguageSwitcher />
+                </SimpleContainer>
+                <SimpleContainer className="lw-topToolBarSmallScreen__isoBadgeWrap">
+                    <ComplianceBadges size="small" layout="row" showLabels={false} />
+                </SimpleContainer>
+                {!isFromApp && (
+                    <SimpleContainer className="lw-topToolBarSmallScreen__logout">
+                        <PrimaryButton
+                            className="lw-topToolBarSmallScreen__logoutButton"
+                            onPress={() => {
+                                localStorage.removeItem("token");
+                                localStorage.removeItem("refreshToken");
+                                localStorage.removeItem("role");
+                                localStorage.removeItem("isPlatformAdmin");
+                                window.dispatchEvent(new Event("lw-auth-changed"));
+                                navigate('/');
+                            }}
+                        >
+                            {t('common.logout')}
+                        </PrimaryButton>
+                    </SimpleContainer>
+                )}
+            </SimpleContainer>
+        </>
+    );
+}

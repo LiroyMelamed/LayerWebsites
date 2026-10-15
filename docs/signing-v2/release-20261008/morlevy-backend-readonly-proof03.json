@@ -1,0 +1,22 @@
+{
+  "verifiedUtc": "2026-10-08T20:03:34.652Z",
+  "tenant": "morlevy",
+  "candidate": "a16cb2e0267d0c5eb98f7d3951a7d37d8aecbe5f",
+  "tree": "d469c1cb600232d6cf218a8866151d9ed9e370f2",
+  "sourceFilesVerified": 1346,
+  "exactSeventeenMigrations": true,
+  "newFortyFiveTableGrants": true,
+  "legacyGrantsPreserved": true,
+  "allOtherEnvironmentFieldsPreserved": true,
+  "provider": "notifications",
+  "featureAndWorkerEnabled": true,
+  "pm2NamedOnly": {
+    "name": "morlevy-api",
+    "status": "online",
+    "pid": 2061116
+  },
+  "health": {
+    "ok": true
+  },
+  "noTestMessagesOrFixtures": true
+}
