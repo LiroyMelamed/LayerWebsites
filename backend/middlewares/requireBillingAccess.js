@@ -25,6 +25,9 @@ function isExemptPath(req) {
 
 async function requireBillingAccess(req, res, next) {
     if (isExemptPath(req)) return next();
+    // Headerless authenticated requests get their office from the verified DB identity later.
+    const scope = require('../lib/tenant/databaseScope');
+    if (scope.enabled() && scope.current().mode === 'none') return next();
 
     try {
         const { getBillingSnapshot } = require('../lib/billing/firmBillingService');

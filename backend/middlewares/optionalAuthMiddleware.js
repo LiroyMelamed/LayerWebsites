@@ -25,6 +25,13 @@ module.exports = function optionalAuthMiddleware(req, _res, next) {
                 PhoneNumber: decoded.phoneNumber,
             };
             return attachFirmPermissions(req, _res, (error) => {
+                if (error && req.publicOfficeResolved) {
+                    // The public link remains authoritative when another office is logged in.
+                    delete req.user;
+                    req.firmPermissionMode = 'legacy';
+                    req.isPlatformAdminUser = false;
+                    return next();
+                }
                 if (error) return next(error);
                 applyLegacyOfficeRole(req);
                 return next();

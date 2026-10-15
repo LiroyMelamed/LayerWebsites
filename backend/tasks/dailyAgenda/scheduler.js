@@ -221,7 +221,7 @@ async function processDailyAgendaDigest() {
 
 function startDailyAgendaScheduler() {
     cron.schedule('*/5 * * * *', () => {
-        processDailyAgendaDigest().catch((err) => {
+        require('../../lib/tenant/officeJobs').forEachOffice(processDailyAgendaDigest).catch((err) => {
             console.error('[daily-agenda] tick failed:', err.message);
         });
     });

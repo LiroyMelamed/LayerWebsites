@@ -73,7 +73,7 @@ web_modules/
 .yarn-integrity
 
 # dotenv environment variable files
-# backend/.env contains real secrets — keep ignored
+# Frontend and backend environment files are provisioned locally and never tracked.
 backend/.env
 .env.development.local
 .env.test.local
@@ -160,16 +160,6 @@ Thumbs.db
 backend/data/
 backend/scripts/.env.neon
 
-# Environment files stay local; commit reviewed templates only.
-.env
-.env.*
-!**/.env.example
-!**/.env.*.example
-!**/.env.sample
-!**/.env.*.sample
-!**/.env.template
-!**/.env.*.template
-
 # Reviewed source, design documents and evidence must remain versioned.
 !/.vscode/
 !/backend/
@@ -177,6 +167,48 @@ backend/scripts/.env.neon
 !/backend/logs/
 !/.vscode/launch.json
 !/backend/.vscode/launch.json
+!/docs/
+!/docs/features/
+!/docs/releases/
+!/docs/features/signing-templates-2026-10-07/
+!/docs/releases/2026-10-06-reminder-layout/
+!/docs/features/signing-templates-2026-10-07/logs/
+!/docs/features/signing-templates-2026-10-07/logs/backend-first.log
+!/docs/features/signing-templates-2026-10-07/logs/backend-focused-final-1.log
+!/docs/features/signing-templates-2026-10-07/logs/backend-focused-final-2.log
+!/docs/features/signing-templates-2026-10-07/logs/backend-fourth.log
+!/docs/features/signing-templates-2026-10-07/logs/backend-full-signing-first.log
+!/docs/features/signing-templates-2026-10-07/logs/backend-install.log
+!/docs/features/signing-templates-2026-10-07/logs/backend-integration-final-3.log
+!/docs/features/signing-templates-2026-10-07/logs/backend-package-first.log
+!/docs/features/signing-templates-2026-10-07/logs/backend-recovery-first.log
+!/docs/features/signing-templates-2026-10-07/logs/backend-second.log
+!/docs/features/signing-templates-2026-10-07/logs/backend-third.log
+!/docs/features/signing-templates-2026-10-07/logs/batch-reminders-first.log
+!/docs/features/signing-templates-2026-10-07/logs/excel-archive-limits.log
+!/docs/features/signing-templates-2026-10-07/logs/frontend-build-fifth.log
+!/docs/features/signing-templates-2026-10-07/logs/frontend-build-final.log
+!/docs/features/signing-templates-2026-10-07/logs/frontend-build-first.log
+!/docs/features/signing-templates-2026-10-07/logs/frontend-build-fourth.log
+!/docs/features/signing-templates-2026-10-07/logs/frontend-build-second.log
+!/docs/features/signing-templates-2026-10-07/logs/frontend-build-third.log
+!/docs/features/signing-templates-2026-10-07/logs/frontend-install.log
+!/docs/features/signing-templates-2026-10-07/logs/migration-app-role.log
+!/docs/features/signing-templates-2026-10-07/logs/migration-second.log
+!/docs/features/signing-templates-2026-10-07/logs/native-package-link-check.log
+!/docs/features/signing-templates-2026-10-07/logs/pdf-viewer-tests-final.log
+!/docs/features/signing-templates-2026-10-07/logs/pdf-viewer-tests.log
+!/docs/features/signing-templates-2026-10-07/logs/reproducible-focused-tests.log
+!/docs/features/signing-templates-2026-10-07/logs/schema-restore.log
+!/docs/features/signing-templates-2026-10-07/logs/server-second.log
+!/docs/features/signing-templates-2026-10-07/logs/server-third.log
+!/docs/features/signing-templates-2026-10-07/logs/server.log
+!/docs/features/signing-templates-2026-10-07/logs/typed-fields-integration-final.log
+!/docs/releases/2026-10-06-reminder-layout/ashrafessa-build.log
+!/docs/releases/2026-10-06-reminder-layout/idm-build.log
+!/docs/releases/2026-10-06-reminder-layout/melamedia-build.log
+!/docs/releases/2026-10-06-reminder-layout/melamedlaw-build.log
+!/docs/releases/2026-10-06-reminder-layout/morlevy-build.log
 # BEGIN reviewed Git completeness — 2026-10-15
 # Runtime environment values and credentials stay on this computer.
 .env

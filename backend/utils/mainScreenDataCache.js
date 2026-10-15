@@ -7,7 +7,7 @@ const MAIN_SCREEN_TTL_MS = 15 * 1000;
 
 async function getMainScreenDataCached({ loader, ttlMs = MAIN_SCREEN_TTL_MS }) {
     if (typeof loader !== 'function') throw new Error('getMainScreenDataCached: loader is required');
-    return cache.getOrSet('mainScreenData:admin', { ttlMs }, loader);
+    return cache.getOrSet('mainScreenData:' + require('../lib/tenant/databaseScope').cacheKey() + ':admin', { ttlMs }, loader);
 }
 
 function invalidateMainScreenDataCache() {

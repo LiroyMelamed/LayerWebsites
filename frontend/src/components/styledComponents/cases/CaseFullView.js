@@ -31,9 +31,11 @@ function _buildInitialCaseData(caseDetails, initialDraft) {
     return {
         CaseId: source.CaseId || '',
         CaseName: source.CaseName || '',
+        CourtCaseNumber: source.CourtCaseNumber || '',
+        CaseTypeId: source.CaseTypeId || '',
         CaseTypeName: source.CaseTypeName || '',
         CompanyName: source.CompanyName || '',
-        CurrentStage: source.CurrentStage || '',
+        CurrentStage: source.CurrentStage || 1,
         CustomerMail: source.CustomerMail || '',
         CustomerName: source.CustomerName || '',
         Descriptions: source.Descriptions || [{ Stage: 1, Text: '', Timestamp: '', New: false }],
@@ -62,13 +64,14 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
     const canCreateCases = canAction('cases', 'create');
     const canEditCases = canAction('cases', 'edit');
     const canDeleteCases = canAction('cases', 'delete');
-    const isEditingExisting = !!caseDetails?.CaseId;
-    const canSaveCase = isEditingExisting ? canEditCases : canCreateCases;
-    const caseFormReadOnly = isEditingExisting && !canEditCases;
     const [caseHasBeenChosen, setCaseHasBeenChosen] = useState(false)
     const [hasSubmitted, setHasSubmitted] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({});
+    const [saveError, setSaveError] = useState('');
     const [caseData, setCaseData] = useState(() => _buildInitialCaseData(caseDetails, initialDraft));
+    const isEditingExisting = !!caseDetails?.CaseId || (caseHasBeenChosen && !!caseData.CaseId);
+    const canSaveCase = isEditingExisting ? canEditCases : canCreateCases;
+    const caseFormReadOnly = isEditingExisting && !canEditCases;
     const [signingOpen, setSigningOpen] = useState(false);
     const signingAvailable = useSigningV2Available();
 
@@ -135,6 +138,11 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
 
             const caseManager = String(data?.CaseManagerId || '').trim();
             if (!caseManager) errors.CaseManager = t('errors.required');
+
+            const courtNumber = String(data?.CourtCaseNumber || '').normalize('NFKC').replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, '').replace(/[‐‑‒–—−]/g, '-').trim();
+            if (courtNumber && (!/^\d{1,7}-(0[1-9]|1[0-2])-\d{2}$/.test(courtNumber) || Number(courtNumber.split('-')[0]) === 0)) {
+                errors.CourtCaseNumber = t('cases.invalidCourtCaseNumber');
+            }
 
             return errors;
         };
@@ -237,7 +245,10 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
                 }
             })();
         },
-        onFailureFunction
+        (error) => {
+            setSaveError(error?.data?.message || error?.response?.data?.message || error?.message || t('cases.saveFailed'));
+            onFailureFunction?.(error);
+        }
     );
 
     const { isPerforming: isDeleting, performRequest: deleteCase } = useHttpRequest(
@@ -298,6 +309,7 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
     };
 
     const handleSaveCase = () => {
+        setSaveError('');
         setHasSubmitted(true);
         const errors = validateCaseData(caseData);
         setFieldErrors(errors);
@@ -308,6 +320,7 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
     };
 
     const handleUpdateCase = () => {
+        setSaveError('');
         setHasSubmitted(true);
         const errors = validateCaseData(caseData);
         setFieldErrors(errors);
@@ -411,9 +424,11 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
             setCaseData({
                 CaseId: caseDetails.CaseId || '',
                 CaseName: caseDetails.CaseName || '',
+                CourtCaseNumber: caseDetails.CourtCaseNumber || '',
+                CaseTypeId: caseDetails.CaseTypeId || '',
                 CaseTypeName: caseDetails.CaseTypeName || '',
                 CompanyName: caseDetails.CompanyName || '',
-                CurrentStage: caseDetails.CurrentStage || '',
+                CurrentStage: caseDetails.CurrentStage || 1,
                 CustomerMail: caseDetails.CustomerMail || '',
                 CustomerName: caseDetails.CustomerName || '',
                 Descriptions: caseDetails.Descriptions || [{ Stage: 1, Text: '', Timestamp: '', New: false }],
@@ -435,6 +450,7 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
     return (
         <>
         <SimpleContainer className={`lw-caseFullView${caseFormReadOnly ? ' lw-caseFullView--readOnly' : ''}`}>
+            {saveError && <p role="alert">{saveError}</p>}
             <SimpleScrollView>
                 <SimpleContainer className="lw-caseFullView__row">
                     {isEditingExisting ?
@@ -541,6 +557,18 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
                     />
                 </SimpleContainer>
 
+                <SimpleContainer className="lw-caseFullView__row">
+                    <SimpleInput
+                        className="lw-caseFullView__field"
+                        title={t('cases.courtCaseNumber')}
+                        value={caseData.CourtCaseNumber}
+                        error={fieldErrors?.CourtCaseNumber}
+                        onChange={(e) => handleInputChange('CourtCaseNumber', e.target.value)}
+                        timeToWaitInMilli={0}
+                        dir="ltr"
+                        placeholder="12345-01-26"
+                    />
+                </SimpleContainer>
                 <SimpleContainer className="lw-caseFullView__row">
                     <SimpleInput
                         className="lw-caseFullView__field"

@@ -21,14 +21,19 @@ jest.mock('../../../components/ui/showAppToast', () => ({ toastFromApiError: jes
 jest.mock('../../../providers/ScreenSizeProvider', () => ({ useScreenSize: () => ({ isSmallScreen: mockIsSmallScreen }) }));
 jest.mock('../../../components/navBars/data/ClientNavBarData', () => ({ getClientNavBarData: jest.fn() }));
 jest.mock('../../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen', () => ({ LogoNavigate }) => <div data-testid="existing-mobile-toolbar">{LogoNavigate}</div>);
-jest.mock('./components/OpenCasesCard', () => ({ openCases, isPerforming }) => <div data-testid="existing-open-cases">{isPerforming ? 'loading open cases' : openCases.map(item => item.CaseName).join(', ')}</div>);
-jest.mock('./components/ClosedCasesCard', () => ({ closedCases, isPerforming }) => <div data-testid="existing-closed-cases">{isPerforming ? 'loading closed cases' : closedCases.map(item => item.CaseName).join(', ')}</div>);
 
 const readyFile = { PortalId: 'signing:ready / 1', FileName: 'Ready document', PersonalStatus: 'pending', CanSignNow: true, CaseName: 'My open case' };
 const waitingFile = { PortalId: 'package:waiting', FileName: 'Waiting document', PersonalStatus: 'waiting', CanSignNow: false };
 const signedFile = { PortalId: 'signing:signed', FileName: 'My signed document', Status: 'pending', PersonalStatus: 'signed', PersonalSignedAt: '2026-10-12T10:00:00Z', CanSignNow: false };
 const caseResponse = { status: 200, data: [{ CaseId: 1, CaseName: 'My open case', IsClosed: false }, { CaseId: 2, CaseName: 'My closed case', IsClosed: true }] };
 const fileResponse = (files = [], errors = []) => ({ status: 200, data: { files, errors } });
+
+function expectLoadedCaseSummary() {
+    const summary = screen.getByRole('complementary', { name: 'clientPortal.caseSummaryTitle' });
+    expect(within(summary).getByText('cases.openCases')).toBeInTheDocument();
+    expect(within(summary).getByText('cases.closedCases')).toBeInTheDocument();
+    expect(within(summary).getAllByText('1')).toHaveLength(2);
+}
 
 beforeEach(() => {
     jest.clearAllMocks();
@@ -53,8 +58,9 @@ test('only confirmed personal readiness becomes an action and personal signature
     expect(within(actions).getByText('clientPortal.statusUnavailable')).toBeInTheDocument();
     const signed = screen.getByRole('region', { name: 'clientPortal.recentSigned' });
     expect(within(signed).getByText('My signed document')).toBeInTheDocument();
-    expect(screen.getByTestId('existing-open-cases')).toHaveTextContent('My open case');
-    expect(screen.getByTestId('existing-closed-cases')).toHaveTextContent('My closed case');
+    expectLoadedCaseSummary();
+    expect(screen.queryByRole('heading', { name: 'clientPortal.myCases' })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'clientPortal.allCases' })).toHaveLength(1);
 });
 
 test('all shortcuts and individual documents retain the active tenant path, and mobile uses the existing toolbar', async () => {
@@ -65,9 +71,10 @@ test('all shortcuts and individual documents retain the active tenant path, and 
     const quickAccess = screen.getByRole('navigation', { name: 'clientPortal.quickAccess' });
     fireEvent.click(within(quickAccess).getByRole('button', { name: 'clientPortal.myDocuments' }));
     expect(mockNavigate).toHaveBeenLastCalledWith('/melamedia/ClientStack/ClientDocumentsScreen');
-    expect(within(quickAccess).getAllByRole('button')).toHaveLength(2);
+    expect(within(quickAccess).getAllByRole('button')).toHaveLength(1);
     expect(within(quickAccess).queryByRole('button', { name: 'clientPortal.signedDocuments' })).not.toBeInTheDocument();
-    fireEvent.click(within(quickAccess).getByRole('button', { name: 'clientPortal.myCases' }));
+    expect(within(quickAccess).queryByRole('button', { name: 'clientPortal.myCases' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'clientPortal.allCases' }));
     expect(mockNavigate).toHaveBeenLastCalledWith('/melamedia/ClientStack/ClientCasesScreen');
     fireEvent.click(await screen.findByRole('button', { name: 'clientPortal.reviewNamedDocument:Ready document' }));
     expect(mockNavigate).toHaveBeenLastCalledWith('/melamedia/ClientStack/ClientDocumentsScreen?document=signing%3Aready%20%2F%201');
@@ -82,7 +89,7 @@ test('a document request failure leaves cases available and retries documents wi
     clientPortalApi.getSigningDocuments.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce(fileResponse([readyFile]));
     render(<ClientMainScreen />);
     expect(await screen.findByRole('alert')).toHaveTextContent('errors.loadFailed');
-    expect(screen.getByTestId('existing-open-cases')).toHaveTextContent('My open case');
+    expectLoadedCaseSummary();
     expect(screen.queryByText('clientPortal.noActionsTitle')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
     expect(await screen.findByText('Ready document')).toBeInTheDocument();
@@ -96,9 +103,9 @@ test('a case failure leaves signing documents available and retries only cases',
     render(<ClientMainScreen />);
     expect(await screen.findByRole('alert')).toHaveTextContent('errors.loadFailed');
     expect(screen.getByText('Ready document')).toBeInTheDocument();
-    expect(screen.queryByTestId('existing-open-cases')).not.toBeInTheDocument();
+    expect(screen.queryByText('cases.openCases')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
-    await waitFor(() => expect(screen.getByTestId('existing-open-cases')).toHaveTextContent('My open case'));
+    await waitFor(expectLoadedCaseSummary);
     expect(casesApi.getAllCases).toHaveBeenCalledTimes(2);
     expect(clientPortalApi.getSigningDocuments).toHaveBeenCalledTimes(1);
 });
@@ -121,7 +128,7 @@ test('loading documents never appears as an empty result while cases can finish 
     render(<ClientMainScreen />);
     expect(screen.getByRole('status', { name: 'clientPortal.loadingDocuments' })).toBeInTheDocument();
     expect(screen.queryByText('clientPortal.noActionsTitle')).not.toBeInTheDocument();
-    await waitFor(() => expect(screen.getByTestId('existing-open-cases')).toHaveTextContent('My open case'));
+    await waitFor(expectLoadedCaseSummary);
     await act(async () => resolveDocuments(fileResponse()));
     expect(screen.getByText('clientPortal.noActionsTitle')).toBeInTheDocument();
     expect(screen.getByText('clientPortal.noSignedDocuments')).toBeInTheDocument();

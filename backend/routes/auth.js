@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+router.use(require('../middlewares/resolveTenant'));
 const authController = require("../controllers/authController");
 const { createRateLimitMiddleware, getClientIp } = require("../utils/rateLimiter");
 
@@ -25,9 +26,9 @@ router.post("/RequestOtp", otpLimiter, authController.requestOtp);
 
 router.post("/VerifyOtp", verifyLimiter, authController.verifyOtp);
 
-router.post("/Refresh", authController.refreshToken);
+router.post("/Refresh", require('../middlewares/publicOfficeScope').refresh, authController.refreshToken);
 
-router.post("/Logout", authController.logout);
+router.post("/Logout", require('../middlewares/publicOfficeScope').logout, authController.logout);
 
 router.post("/Register", authController.register);
 

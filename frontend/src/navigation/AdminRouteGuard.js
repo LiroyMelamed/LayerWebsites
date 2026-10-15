@@ -21,7 +21,7 @@ const PLATFORM_ADMIN_ROUTE_KEYS = new Set([
 export default function AdminRouteGuard({ children }) {
     const { t } = useTranslation();
     const location = useLocation();
-    const { permissionMode, canPage, loaded, pages, refresh, error } = useFirmPermissions() || {};
+    const { permissionMode, canPage, loaded, pages, refresh, error, scope } = useFirmPermissions() || {};
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     const isPlatformAdmin = localStorage.getItem("isPlatformAdmin") === "true";
 
@@ -52,6 +52,9 @@ export default function AdminRouteGuard({ children }) {
     }
 
     const navKey = navKeyForPathname(location.pathname);
+    if (navKey === 'officeIntegrations') {
+        return scope?.isOfficeOwner ? children : <Navigate to={`${AdminStackName}${NoPermissionsScreenName}`} replace />;
+    }
     const landing = firstAllowedStaffPath(pages);
     const noPermissionsPath = `${AdminStackName}${NoPermissionsScreenName}`;
 

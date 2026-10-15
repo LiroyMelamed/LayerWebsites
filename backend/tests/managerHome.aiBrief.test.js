@@ -15,6 +15,7 @@ const {
     __testReset,
 } = require('../services/managerHome/aiBrief.service');
 const { buildOperationalInsights } = require('../services/managerHome/operationalInsights');
+const { buildBottleneckFacts } = require('../services/managerHome/bottlenecks');
 
 const samplePayload = {
     greeting: { managerName: 'Danny Cohen' },
@@ -468,4 +469,80 @@ test('generateAiMorningBrief cache key rotates hourly even when facts are unchan
         else process.env.CHATBOT_LLM_API_KEY = prevKey;
         __testReset();
     }
+});
+
+
+test('business adviser receives aggregate periods without team identities and rejects invented financial figures', () => {
+    const facts = buildFactsSnapshot({ ...samplePayload, teamActivity: { periods: {
+        week: { casesOpened: 18, casesClosed: 9, leaders: [{managerName: 'Private leaderboard name'}] }
+    } } });
+    assert.deepEqual(facts.businessPerformance, { week: {casesOpened: 18, casesClosed: 9} });
+    assert.equal(JSON.stringify(facts).includes('Private leaderboard name'), false);
+    assert.equal(validateLinesAgainstFacts(['השבוע נפתחו 18 תיקים ונסגרו 9 תיקים'], facts), true);
+    assert.equal(validateLinesAgainstFacts(['השבוע נפתחו 18 תיקים', 'הכנסות המשרד הן 99999 שקלים'], facts), false);
+    assert.equal(validateLinesAgainstFacts(['הרווח בתיק הוא 18 ₪'], facts), false);
+    assert.equal(validateRecommendationsAgainstFacts(['יש לטפל ב-999 תיקים'], facts), false);
+    assert.equal(validateLinesAgainstFacts(['חתימה שפגה היא סיכון קריטי ודורשת טיפול מיידי'], facts), false);
+});
+
+test('adviser prompt sends aggregate business facts rather than personal alerts or calendar contents', async () => {
+    const previousKey = process.env.CHATBOT_LLM_API_KEY;
+    process.env.CHATBOT_LLM_API_KEY = 'test-key';
+    __testReset();
+    try {
+        let input;
+        await generateAiMorningBrief({ userId: 88, payload: samplePayload,
+            getSettingFn: async () => true, isPlatformAdminFn: async () => true,
+            callLlmFn: async messages => {
+                input = JSON.parse(messages.find(m => m.role === 'user').content);
+                return JSON.stringify({lines:['4 חתימות ממתינות עשויות להצדיק בדיקת חיכוך בתהליך השירות.'],recommendations:[]});
+            },
+        });
+        assert.deepEqual(Object.keys(input).sort(), ['periods','portfolio','signing']);
+        assert.equal(JSON.stringify(input).includes('Danny Cohen'), false);
+        assert.equal(JSON.stringify(input).includes('Case Alpha'), false);
+        assert.equal(input.signing.expiredLinks, 2);
+    } finally {
+        if (previousKey === undefined) delete process.env.CHATBOT_LLM_API_KEY;
+        else process.env.CHATBOT_LLM_API_KEY = previousKey;
+        __testReset();
+    }
+});
+
+test('measured bottleneck replaces generic or fabricated model advice and survives provider failure', async () => {
+    const previousKey = process.env.CHATBOT_LLM_API_KEY;
+    process.env.CHATBOT_LLM_API_KEY = 'test-key';
+    const bottlenecks = buildBottleneckFacts([{caseid: 1, casetypeid: 4, case_type: 'בדיקה סינתטית',
+        currentstage: 3, casemanagerid: 9, days_since_meaningful_activity: 110, days_in_current_stage: 120}]);
+    try {
+        for (const fails of [false, true]) {
+            __testReset();
+            const result = await generateAiMorningBrief({userId: 88, payload: {...samplePayload, bottlenecks},
+                getSettingFn: async () => true, isPlatformAdminFn: async () => false,
+                callLlmFn: async messages => {
+                    const input = JSON.parse(messages.find(m => m.role === 'user').content);
+                    assert.equal(input.bottlenecks.findings[0].oldestDays, 110);
+                    assert.equal(JSON.stringify(input).includes('Danny Cohen'), false);
+                    if (fails) throw new Error('synthetic provider failure');
+                    return JSON.stringify({lines:['999 תיקים תקועים בגלל בית המשפט'],
+                        recommendations:['לבצע בדיקה של תהליך סגירת התיקים ולמדוד זמן כדי לזהות צווארי בקבוק.']});
+                }});
+            assert.equal(result.source, 'analysis');
+            assert.match(result.lines[0], /בשלב 3/);
+            assert.match(result.lines[0], /110 ימים/);
+            assert.match(result.recommendations[0], /1 התיקים/);
+            assert.doesNotMatch(JSON.stringify(result), /999|בגלל בית המשפט|כדי לזהות צווארי בקבוק/);
+        }
+    } finally {
+        if (previousKey === undefined) delete process.env.CHATBOT_LLM_API_KEY;
+        else process.env.CHATBOT_LLM_API_KEY = previousKey;
+        __testReset();
+    }
+});
+
+test('bottleneck evidence participates in the brief cache fingerprint', () => {
+    const makeFacts = age => buildFactsSnapshot({...samplePayload, bottlenecks: buildBottleneckFacts([
+        {caseid:1, casemanagerid:2, currentstage:1, days_since_meaningful_activity:age}
+    ])}, {now:new Date('2026-10-15T10:00:00Z')});
+    assert.notEqual(factsFingerprint(makeFacts(100)), factsFingerprint(makeFacts(105)));
 });

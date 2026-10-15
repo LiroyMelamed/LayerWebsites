@@ -10,10 +10,13 @@ async function resolveTenantMiddleware(req, res, next) {
         return next();
     }
 
-    const fromHeader = normalizeSlug(req.headers['x-tenant-slug']);
-    const fromBody = normalizeSlug(req.body?.tenantSlug);
-    const fromQuery = normalizeSlug(req.query?.tenantSlug);
-    const slug = fromHeader || fromBody || fromQuery;
+    const aliases = [req.headers['x-tenant-slug'], req.body?.tenantSlug, req.query?.tenantSlug]
+        .filter(value => value !== undefined && value !== null && value !== '');
+    if (aliases.some(value => typeof value !== 'string' || !/^[a-z0-9][a-z0-9-]{0,47}$/i.test(value.trim())) ||
+        new Set(aliases.map(normalizeSlug)).size > 1) {
+        return res.status(400).json({ error: 'INVALID_TENANT_CONTEXT' });
+    }
+    const slug = normalizeSlug(aliases[0]);
 
     if (!slug) {
         return next();

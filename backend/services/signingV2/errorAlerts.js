@@ -13,7 +13,7 @@ function requestErrorReporter(pool, area) {
         if (status >= 500 || error?.errorCode === 'OTP_DELIVERY_FAILED') {
             try {
                 const phase = `${area}:${req.method}:${req.route?.path || 'request'}`.slice(0, 160);
-                const source = `request:${Math.floor(Date.now() / 300000)}:${createHash('sha256').update(phase).digest('hex')}`;
+                const source = `request:${require('../../lib/tenant/databaseScope').cacheKey()}:${Math.floor(Date.now() / 300000)}:${createHash('sha256').update(phase).digest('hex')}`;
                 await pool.query(`INSERT INTO signing_error_alerts(source_key,phase,error_code,severity)
                     VALUES($1,$2,$3,'request') ON CONFLICT
                     ((COALESCE(owner_context_id,'00000000-0000-0000-0000-000000000000'::uuid)),source_key,phase,error_code,severity)
@@ -66,7 +66,9 @@ function createErrorAlerts({ pool, sendEmail, origin, locale = 'he', contextIds 
 
     async function prepare() {
         return transaction(pool, async db => {
-            const recipients = (await db.query(`SELECT DISTINCT ON (lower(trim(u.email))) u.userid,lower(trim(u.email)) AS email
+            const recipients = require('../../lib/tenant/databaseScope').enabled() && require('../../lib/tenant/databaseScope').current().mode==='office'
+                ? (await require('../settingsService').getPlatformAdmins()).filter(row=>row.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email)).map(row=>({userid:row.user_id,email:row.email.trim().toLowerCase()}))
+                : (await db.query(`SELECT DISTINCT ON (lower(trim(u.email))) u.userid,lower(trim(u.email)) AS email
                 FROM platform_admins a JOIN users u ON u.userid=a.user_id
                 WHERE a.is_active=TRUE AND u.email ~ '^[^[:space:]@]+@[^[:space:]@]+\\.[^[:space:]@]+$'
                 ORDER BY lower(trim(u.email)),u.userid`)).rows;
@@ -89,7 +91,9 @@ function createErrorAlerts({ pool, sendEmail, origin, locale = 'he', contextIds 
 
     async function deliver(row) {
         // Removal from platform administrators takes effect even after the alert was queued.
-        const current = (await pool.query(`SELECT lower(trim(u.email)) AS email FROM platform_admins a JOIN users u ON u.userid=a.user_id
+        const current = require('../../lib/tenant/databaseScope').enabled() && require('../../lib/tenant/databaseScope').current().mode==='office'
+            ? (await require('../settingsService').getPlatformAdmins()).map(row=>({userid:row.user_id,email:row.email?.trim().toLowerCase()})).find(candidate=>Number(candidate.userid)===Number(row.recipient_user_id))
+            : (await pool.query(`SELECT lower(trim(u.email)) AS email FROM platform_admins a JOIN users u ON u.userid=a.user_id
             WHERE a.user_id=$1 AND a.is_active=TRUE`, [row.recipient_user_id])).rows[0];
         if (!current || current.email !== row.recipient_email) {
             await pool.query("UPDATE signing_error_emails SET state='cancelled',lease_until=NULL WHERE id=$1 AND claim_token=$2", [row.id, row.claim_token]);
@@ -125,7 +129,7 @@ function createErrorAlerts({ pool, sendEmail, origin, locale = 'he', contextIds 
         return rows.length;
     }
     function tick() {
-        if (!inFlight) inFlight = flush().catch(() => { log.error('[signing-v2] platform error email worker failed'); return 0; }).finally(() => { inFlight = null; });
+        if (!inFlight) inFlight = require('../../lib/tenant/officeJobs').forEachOffice(flush).then(result=>Array.isArray(result)?result.reduce((total,row)=>total+Number(row||0),0):result).catch(() => { log.error('[signing-v2] platform error email worker failed'); return 0; }).finally(() => { inFlight = null; });
         return inFlight;
     }
     return { prepare, flush, tick, start() { if (!timer) { timer = setInterval(tick, 10000); timer.unref?.(); } },
