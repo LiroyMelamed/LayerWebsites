@@ -1,0 +1,49 @@
+import React from "react";
+import GenericButton from "./GenericButton";
+import { colors } from "../../../constant/colors";
+
+const backgroundColor = {
+    normal: colors.transparent,
+    pressed: colors.secondaryHighlighted,
+    disabled: colors.transparent
+}
+
+const contentColor = {
+    normal: colors.primaryHighlighted,
+    pressed: colors.primaryHighlighted,
+    disabled: colors.disabledHighlighted,
+}
+
+export default function TertiaryButton({ children, size, rightIcon, leftIcon, innerTextColor, isPerforming, ...props }) {
+    const buttonStyle = {
+        ...style,
+        ...props.style,
+    }
+
+    return (
+        <GenericButton
+            {...props}
+
+            size={size}
+            style={buttonStyle}
+            rightIcon={rightIcon}
+            leftIcon={leftIcon}
+
+            backgroundColor={backgroundColor.normal}
+            pressedBackgroundColor={backgroundColor.pressed}
+            disabledBackgroundColor={backgroundColor.disabled}
+
+            contentColor={innerTextColor || contentColor.normal}
+            pressedContentColor={contentColor.pressed}
+            disabledContentColor={contentColor.disabled}
+            isPerforming={isPerforming}
+        >
+            {children}
+        </GenericButton>
+    );
+}
+
+const style = {
+    boxShadow: `0 0 0 0 rgba(42, 67, 101, 0.12)`,
+    marginBottom: 4,
+}

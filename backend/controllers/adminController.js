@@ -1,0 +1,342 @@
+const pool = require("../config/db"); // Direct import of the pg pool
+const bcrypt = require("bcrypt");
+const { requireInt } = require("../utils/paramValidation");
+const { createAppError } = require('../utils/appError');
+const { getHebrewMessage } = require('../utils/errors.he');
+const { userHasLegalData } = require('../utils/legalData');
+const { insertAuditEvent } = require('../utils/auditEvents');
+
+// Office roles manage ordinary dedicated-office accounts only. Platform identities
+// and hidden system accounts stay outside this capability, including password resets.
+function officeTargetSql(req, alias = 'users') {
+    if (req.firmPermissionMode !== 'role') return '';
+    const hidden = _getHiddenAdminIds();
+    return ` AND ${alias}.law_firm_tenant_id IS NULL
+        AND NOT EXISTS (SELECT 1 FROM platform_admins pa WHERE pa.user_id = ${alias}.userid AND pa.is_active = TRUE)
+        ${hidden.length ? `AND ${alias}.userid <> ALL(ARRAY[${hidden.join(',')}]::int[])` : ''}`;
+}
+
+/** Parse HIDDEN_ADMIN_USER_IDS env var into an array of numbers */
+function _getHiddenAdminIds() {
+    const raw = String(process.env.HIDDEN_ADMIN_USER_IDS || '').trim();
+    if (!raw) return [];
+    return raw.split(',').map(s => Number(s.trim())).filter(n => Number.isFinite(n) && n > 0);
+}
+
+const ADMIN_USER_SELECT = `
+    SELECT u.userid, u.name, u.email, u.phonenumber, u.companyname, u.createdat,
+           u.firm_staff_role_id,
+           r.name AS firm_staff_role_name,
+           EXISTS (
+               SELECT 1 FROM platform_admins pa
+               WHERE pa.user_id = u.userid AND pa.is_active = TRUE
+           ) AS is_platform_admin
+    FROM users u
+    LEFT JOIN firm_staff_roles r ON r.id = u.firm_staff_role_id AND r.is_active = TRUE
+`;
+
+/**
+ * Retrieves all users with the 'Admin' role (excluding hidden admins).
+ */
+const getAdmins = async (req, res) => {
+    try {
+        const hidden = _getHiddenAdminIds();
+        let query = `${ADMIN_USER_SELECT} WHERE u.role = 'Admin'${officeTargetSql(req, 'u')}`;
+        const params = [];
+        if (hidden.length > 0) {
+            query += " AND u.userid <> ALL($1::int[])";
+            params.push(hidden);
+        }
+        const result = await pool.query(query, params);
+        res.json(result.rows);
+    } catch (error) {
+        console.error("Error retrieving Admins:", error);
+        res.status(500).json({ message: "שגיאה בשליפת מנהלים" });
+    }
+};
+
+/**
+ * Retrieves an admin by a partial name search (case-insensitive).
+ */
+const getAdminByName = async (req, res) => {
+    // Note: The query parameter is already lowercase
+    const rawName = req?.query?.name;
+    const name = typeof rawName === 'string' ? rawName.trim() : '';
+
+    // If empty query: return a default list so dropdowns can preload.
+    if (!name) {
+        try {
+            const hidden = _getHiddenAdminIds();
+            let query = `${ADMIN_USER_SELECT} WHERE u.role = 'Admin'${officeTargetSql(req, 'u')}`;
+            const params = [];
+            if (hidden.length > 0) {
+                query += " AND u.userid <> ALL($1::int[])";
+                params.push(hidden);
+            }
+            query += " ORDER BY u.createdat DESC";
+            const result = await pool.query(query, params);
+            return res.json(result.rows);
+        } catch (error) {
+            console.error("Error retrieving admins:", error);
+            return res.status(500).json({ message: "שגיאה בשליפת מנהלים" });
+        }
+    }
+
+    try {
+        const hidden = _getHiddenAdminIds();
+        let query = `${ADMIN_USER_SELECT} WHERE u.role = 'Admin' AND u.name ILIKE $1${officeTargetSql(req, 'u')}`;
+        const params = [`%${name}%`];
+        if (hidden.length > 0) {
+            query += " AND u.userid <> ALL($2::int[])";
+            params.push(hidden);
+        }
+        query += " ORDER BY u.createdat DESC";
+        const result = await pool.query(query, params);
+
+        // Empty search is normal — return [] (do not 404).
+        res.json(result.rows);
+    } catch (error) {
+        console.error("Error retrieving admin:", error);
+        res.status(500).json({ message: "שגיאה בשליפת מנהל לפי שם" });
+    }
+};
+
+/** Firm staff for calendar / case assignment: Admin, Lawyer, PlatformAdmin. */
+const STAFF_ROLES = Object.freeze(['Admin', 'Lawyer', 'PlatformAdmin']);
+
+/**
+ * Partial name search across firm staff roles (not Admin-only).
+ * Used by calendar "מי בפגישה / את מי לתזכר / מי בחופשה".
+ */
+const getStaffByName = async (req, res) => {
+    const rawName = req?.query?.name;
+    const name = typeof rawName === 'string' ? rawName.trim() : '';
+
+    try {
+        const hidden = _getHiddenAdminIds();
+        const params = [STAFF_ROLES];
+        let query = `
+            SELECT userid, name, email, phonenumber, companyname, role, createdat
+            FROM users
+            WHERE role = ANY($1::text[])
+        `;
+        if (hidden.length > 0) {
+            params.push(hidden);
+            query += ` AND userid <> ALL($${params.length}::int[])`;
+        }
+        if (name) {
+            params.push(`%${name}%`);
+            query += ` AND name ILIKE $${params.length}`;
+        }
+        query += ' ORDER BY createdat DESC';
+        const result = await pool.query(query, params);
+        return res.json(result.rows);
+    } catch (error) {
+        console.error('Error retrieving staff by name:', error);
+        return res.status(500).json({ message: 'שגיאה בשליפת אנשי צוות' });
+    }
+};
+
+/**
+ * Updates an admin's details.
+ */
+const updateAdmin = async (req, res) => {
+    const adminUserId = requireInt(req, res, { source: 'params', name: 'adminId' });
+    if (adminUserId === null) return;
+    const { name, email, phoneNumber, password } = req.body;
+
+    try {
+        let query;
+        let params;
+
+        // Update password only if it's provided
+        if (password) {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            query = `
+                UPDATE users
+                SET name = $1, email = $2, phonenumber = $3, passwordhash = $4
+                WHERE userid = $5 AND role = 'Admin'${officeTargetSql(req)}
+            `;
+            // Using lowercase column names in the params array as well
+            params = [name, email, phoneNumber, hashedPassword, adminUserId];
+        } else {
+            query = `
+                UPDATE users
+                SET name = $1, email = $2, phonenumber = $3
+                WHERE userid = $4 AND role = 'Admin'${officeTargetSql(req)}
+            `;
+            // Using lowercase column names in the params array as well
+            params = [name, email, phoneNumber, adminUserId];
+        }
+
+        const result = await pool.query(query, params);
+        if (req.firmPermissionMode === 'role' && !result.rowCount) return res.status(403).json({ message: 'גישה אסורה' });
+
+        res.status(200).json({ message: "המנהל עודכן בהצלחה" });
+    } catch (error) {
+        console.error("Error updating admin:", error);
+        res.status(500).json({ message: "שגיאה בעדכון מנהל" });
+    }
+};
+
+/**
+ * Deletes an admin.
+ */
+const deleteAdmin = async (req, res, next) => {
+    const adminUserId = requireInt(req, res, { source: 'params', name: 'adminId' });
+    if (adminUserId === null) return;
+
+    try {
+        const client = await pool.connect();
+        try {
+            await client.query(req.firmPermissionMode === 'role' ? 'BEGIN ISOLATION LEVEL SERIALIZABLE' : 'BEGIN');
+
+            // Ensure the target exists and is an Admin before cascading deletes.
+            const roleRes = await client.query(`SELECT role FROM users WHERE userid = $1${officeTargetSql(req)} FOR UPDATE`, [adminUserId]);
+            if (roleRes.rowCount === 0 || roleRes.rows[0]?.role !== 'Admin') {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ message: 'המנהל לא נמצא או כבר נמחק' });
+            }
+
+            // Block deletion if the user has any legal/evidentiary data.
+            // Must run BEFORE any DELETE/UPDATE query.
+            const hasLegalData = await userHasLegalData(client, adminUserId);
+            if (hasLegalData) {
+                await client.query('ROLLBACK');
+                return next(createAppError('USER_HAS_LEGAL_DATA', 409, getHebrewMessage('USER_HAS_LEGAL_DATA')));
+            }
+
+            // Mirror customer deletion cascade to satisfy FK constraints.
+            await client.query('DELETE FROM userdevices WHERE userid = $1', [adminUserId]);
+            await client.query('DELETE FROM otps WHERE userid = $1', [adminUserId]);
+            await client.query('DELETE FROM usernotifications WHERE userid = $1', [adminUserId]);
+
+            // Signing: signingfiles has FKs to users (lawyerid/clientid) without ON DELETE CASCADE.
+            // Delete related signingfiles first so deleting the admin user succeeds.
+            await client.query('DELETE FROM signingfiles WHERE lawyerid = $1 OR clientid = $1', [adminUserId]);
+
+            // Cases (defensive): if an admin ever owns cases, remove them too.
+            await client.query(
+                `
+                DELETE FROM casedescriptions
+                WHERE caseid IN (SELECT caseid FROM cases WHERE userid = $1)
+                `,
+                [adminUserId]
+            );
+            await client.query('DELETE FROM cases WHERE userid = $1', [adminUserId]);
+
+            const result = await client.query(
+                `DELETE FROM users WHERE userid = $1 AND role = 'Admin'`,
+                [adminUserId]
+            );
+
+            await client.query('COMMIT');
+
+            if (result.rowCount === 0) {
+                return res.status(404).json({ message: 'המנהל לא נמצא או כבר נמחק' });
+            }
+
+            return res.status(200).json({ message: 'המנהל נמחק בהצלחה' });
+        } catch (innerError) {
+            await client.query('ROLLBACK');
+            throw innerError;
+        } finally {
+            client.release();
+        }
+    } catch (error) {
+        console.error("Error deleting admin:", error);
+        res.status(500).json({ message: "שגיאה במחיקת מנהל" });
+    }
+};
+
+/**
+ * Adds a new admin.
+ */
+const addAdmin = async (req, res) => {
+    const { name, email, phoneNumber, password } = req.body;
+    if (req.firmPermissionMode === 'role' && !req.firmStaffRoleId) return res.status(403).json({ message: 'גישה אסורה' });
+    try {
+        if (!password) {
+            return res.status(422).json({ message: "סיסמה היא שדה חובה" });
+        }
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const insertResult = await pool.query(
+            req.firmPermissionMode === 'role' ? `
+            INSERT INTO users (name, email, phonenumber, passwordhash, role, createdat, firm_staff_role_id)
+            VALUES ($1, $2, $3, $4, $5, NOW(), $6)
+            RETURNING userid
+            ` : `INSERT INTO users (name, email, phonenumber, passwordhash, role, createdat) VALUES ($1,$2,$3,$4,$5,NOW()) RETURNING userid`,
+            req.firmPermissionMode === 'role' ? [name, email, phoneNumber, hashedPassword, "Admin", req.firmPermissionMode === 'role' ? req.firmStaffRoleId : null] : [name, email, phoneNumber, hashedPassword, 'Admin']
+        );
+        const newAdminId = insertResult.rows[0]?.userid;
+
+        try {
+            await insertAuditEvent({
+                req,
+                eventType: 'ADMIN_CREATED',
+                actorUserId: req.user?.UserId ?? null,
+                actorType: 'Admin',
+                success: true,
+                metadata: { newAdminId, newAdminName: name },
+            });
+        } catch (auditErr) {
+            console.error('[addAdmin] Audit log failed (non-fatal):', auditErr?.message);
+        }
+
+        res.status(201).json({ message: "המנהל נוסף בהצלחה" });
+    } catch (error) {
+        console.error("Error adding admin:", error);
+        res.status(500).json({ message: "שגיאה בהוספת מנהל" });
+    }
+};
+
+// Platform-owned plan assignment (tenant = lawyer userId).
+// Tenants cannot change retention; only platform admins can assign plans.
+const setTenantPlan = async (req, res) => {
+    const tenantId = requireInt(req, res, { source: 'params', name: 'tenantId' });
+    if (tenantId === null) return;
+
+    const planKeyRaw = req?.body?.plan_key ?? req?.body?.planKey;
+    const planKey = String(planKeyRaw || '').trim().toUpperCase();
+    if (!planKey) {
+        return res.status(422).json({ message: 'שדה plan_key הוא חובה' });
+    }
+
+    try {
+        const planRes = await pool.query(
+            'SELECT plan_key FROM subscription_plans WHERE plan_key = $1 LIMIT 1',
+            [planKey]
+        );
+        if (planRes.rowCount === 0) {
+            return res.status(404).json({ message: 'מפתח תוכנית לא מוכר' });
+        }
+
+        await pool.query(
+            `INSERT INTO tenant_subscriptions(tenant_id, plan_key, status, starts_at, ends_at, updated_at)
+             VALUES ($1, $2, 'active', now(), NULL, now())
+             ON CONFLICT (tenant_id) DO UPDATE
+             SET plan_key = EXCLUDED.plan_key,
+                 status = 'active',
+                 ends_at = NULL,
+                 starts_at = COALESCE(tenant_subscriptions.starts_at, now()),
+                 updated_at = now()`,
+            [tenantId, planKey]
+        );
+
+        return res.status(200).json({ tenantId, plan_key: planKey, status: 'active' });
+    } catch (error) {
+        console.error('Error setting tenant plan:', error);
+        return res.status(500).json({ message: 'שגיאה בהגדרת תוכנית הדייר' });
+    }
+};
+
+module.exports = {
+    getAdmins,
+    getAdminByName,
+    getStaffByName,
+    updateAdmin,
+    deleteAdmin,
+    addAdmin,
+    setTenantPlan,
+};

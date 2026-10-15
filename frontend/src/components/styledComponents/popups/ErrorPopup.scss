@@ -1,0 +1,20 @@
+@use '../../../styles/mixins' as m;
+@use '../../../styles/variables' as v;
+
+.lw-errorPopup {
+    flex-direction: column;
+    inline-size: 100%;
+}
+
+.lw-errorPopup__separator {
+    --lw-separator-margin-block: 1.25rem; /* 1.25rem */
+}
+
+.lw-errorPopup__message {
+    margin-block: 1.25rem; /* 1.25rem */
+}
+
+.lw-errorPopup__actions {
+    @include m.row(v.$space-2);
+    align-self: flex-start;
+}
