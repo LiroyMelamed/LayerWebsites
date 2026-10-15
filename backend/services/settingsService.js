@@ -1,0 +1,451 @@
+/**
+ * Settings service — reads from platform_settings table with in-memory cache,
+ * falls back to process.env when no DB override exists.
+ *
+ * Usage:
+ *   const { getSetting, getAllSettings, upsertSetting } = require('./settingsService');
+ *   const phone = await getSetting('messaging', 'SMOOVE_SENDER_PHONE', '0559199044');
+ */
+
+const pool = require('../config/db');
+const dbScope = require('../lib/tenant/databaseScope');
+const { isMultiTenantMode } = require('../lib/tenant/tenantContext');
+
+// ── Cache ───────────────────────────────────────────────────────────
+const CACHE_TTL_MS = 60_000; // 1 minute
+const caches = new Map();
+function scopeCache() {
+    const key = dbScope.cacheKey();
+    if (!caches.has(key)) {
+        if (caches.size >= 1000) caches.delete(caches.keys().next().value);
+        caches.set(key, { values: new Map(), loadedAt: 0 });
+    }
+    return caches.get(key);
+}
+
+function _isCacheFresh() {
+    return scopeCache().loadedAt > 0 && Date.now() - scopeCache().loadedAt < CACHE_TTL_MS;
+}
+
+/** Warm the full cache in one query (called lazily on first read). */
+async function _warmCache() {
+    const cache = scopeCache();
+    try {
+        const { rows } = await pool.query(
+            `SELECT category, setting_key, setting_value, value_type FROM platform_settings`
+        );
+        const fresh = new Map();
+        for (const r of rows) {
+            fresh.set(`${r.category}:${r.setting_key}`, {
+                value: r.setting_value,
+                type: r.value_type,
+            });
+        }
+        cache.values = fresh;
+        cache.loadedAt = Date.now();
+    } catch (err) {
+        // If the table doesn't exist yet (pre-migration), silently fall back to env
+        if (err?.code === '42P01') {
+            cache.loadedAt = Date.now(); // Prevent repeated failing queries
+            return;
+        }
+        console.warn('[settingsService] cache warm failed:', err?.message);
+    }
+}
+
+function _castValue(raw, valueType) {
+    if (raw === null || raw === undefined) return null;
+    switch (valueType) {
+        case 'number': {
+            const n = Number(raw);
+            return Number.isFinite(n) ? n : null;
+        }
+        case 'boolean':
+            return raw === 'true' || raw === '1' || raw === true;
+        case 'json':
+            try { return JSON.parse(raw); }
+            catch { return null; }
+        default:
+            return String(raw);
+    }
+}
+
+/** Return updatedBy only when the user exists (avoids FK violations in dev/cross-tenant). */
+async function _resolveUpdatedBy(updatedBy) {
+    if (updatedBy == null || updatedBy === '') return null;
+    const id = Number.parseInt(String(updatedBy), 10);
+    if (!Number.isFinite(id) || id <= 0) return null;
+    try {
+        const { rows } = await pool.query(
+            'SELECT 1 FROM users WHERE userid = $1 LIMIT 1',
+            [id]
+        );
+        return rows.length > 0 ? id : null;
+    } catch (err) {
+        if (err?.code === '42P01') return null;
+        throw err;
+    }
+}
+
+// ── Public API ──────────────────────────────────────────────────────
+
+/**
+ * Get a single setting. DB value wins over env var.
+ * @param {string} category  - e.g. 'messaging', 'signing', 'firm'
+ * @param {string} key       - e.g. 'SMOOVE_SENDER_PHONE'
+ * @param {*}      fallback  - default if neither DB nor env has a value
+ */
+async function getSetting(category, key, fallback = undefined) {
+    if (!_isCacheFresh()) await _warmCache();
+
+    const cached = scopeCache().values.get(`${category}:${key}`);
+    if (cached && cached.value !== null && cached.value !== undefined && cached.value !== '') {
+        return _castValue(cached.value, cached.type);
+    }
+
+    // Fallback to env
+    const envVal = process.env[key];
+    if (envVal !== undefined && envVal !== '') return envVal;
+
+    return fallback;
+}
+
+/**
+ * Get ALL settings grouped by category.
+ * Returns: { messaging: { SMOOVE_SENDER_PHONE: { value, label, description }, ... }, ... }
+ */
+async function getAllSettings() {
+    try {
+        const { rows } = await pool.query(
+            `SELECT id, category, setting_key, setting_value, value_type, label, description, updated_at
+             FROM platform_settings
+             ORDER BY category, id`
+        );
+
+        const grouped = {};
+        for (const row of rows) {
+            if (!grouped[row.category]) grouped[row.category] = {};
+            grouped[row.category][row.setting_key] = {
+                id: row.id,
+                value: row.setting_value,
+                valueType: row.value_type,
+                label: row.label,
+                description: row.description,
+                updatedAt: row.updated_at,
+                // Also provide current effective value (DB || env)
+                effectiveValue: (row.setting_value !== null && row.setting_value !== '')
+                    ? _castValue(row.setting_value, row.value_type)
+                    : (process.env[row.setting_key] || null),
+            };
+        }
+        return grouped;
+    } catch (err) {
+        if (err?.code === '42P01') return {}; // table doesn't exist yet
+        throw err;
+    }
+}
+
+/**
+ * Create or update a single setting.
+ */
+async function upsertSetting(category, key, value, { valueType, label, description, updatedBy } = {}) {
+    const safeUpdatedBy = await _resolveUpdatedBy(updatedBy);
+    const result = await pool.query(
+        `INSERT INTO platform_settings (category, setting_key, setting_value, value_type, label, description, updated_by, updated_at)
+         VALUES ($1, $2, $3, COALESCE($4, 'string'), $5, $6, $7, NOW())
+         ON CONFLICT (${dbScope.enabled() ? 'law_firm_tenant_id, ' : ''}category, setting_key)
+         DO UPDATE SET
+             setting_value = EXCLUDED.setting_value,
+             value_type    = COALESCE(EXCLUDED.value_type, platform_settings.value_type),
+             label         = COALESCE(EXCLUDED.label, platform_settings.label),
+             description   = COALESCE(EXCLUDED.description, platform_settings.description),
+             updated_by    = EXCLUDED.updated_by,
+             updated_at    = NOW()
+         RETURNING *`,
+        [category, key, value === undefined ? null : String(value), valueType || null, label || null, description || null, safeUpdatedBy]
+    );
+
+    // Invalidate cache
+    invalidateCache();
+
+    return result.rows[0];
+}
+
+/**
+ * Bulk upsert settings (used by the admin UI "save all" action).
+ * @param {Array<{ category, key, value }>} settings
+ * @param {number} updatedBy - userId
+ */
+async function bulkUpsert(settings, updatedBy) {
+    const safeUpdatedBy = await _resolveUpdatedBy(updatedBy);
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const results = [];
+        for (const s of settings) {
+            const r = await client.query(
+                `INSERT INTO platform_settings (category, setting_key, setting_value, updated_by, updated_at)
+                 VALUES ($1, $2, $3, $4, NOW())
+                 ON CONFLICT (${dbScope.enabled() ? 'law_firm_tenant_id, ' : ''}category, setting_key)
+                 DO UPDATE SET
+                     setting_value = EXCLUDED.setting_value,
+                     updated_by    = EXCLUDED.updated_by,
+                     updated_at    = NOW()
+                 RETURNING *`,
+                [s.category, s.key, s.value === undefined ? null : String(s.value), safeUpdatedBy]
+            );
+            results.push(r.rows[0]);
+        }
+        await client.query('COMMIT');
+        invalidateCache();
+        return results;
+    } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+    } finally {
+        client.release();
+    }
+}
+
+/** Force cache refresh on next read. */
+function invalidateCache() {
+    caches.delete(dbScope.cacheKey());
+}
+
+// ── Notification channel config ─────────────────────────────────────
+
+async function getNotificationChannels() {
+    try {
+        const { rows } = await pool.query(
+            `SELECT id, notification_type, label, push_enabled, email_enabled, sms_enabled,
+                    COALESCE(admin_cc, FALSE) AS admin_cc,
+                    COALESCE(manager_cc, TRUE) AS manager_cc,
+                    updated_at
+             FROM notification_channel_config
+             ORDER BY notification_type`
+        );
+        return rows;
+    } catch (err) {
+        if (err?.code === '42P01') return [];
+        throw err;
+    }
+}
+
+/**
+ * Check whether platform admin should be CC'd for a given notification type.
+ */
+async function isAdminCcEnabled(notificationType) {
+    try {
+        const { rows } = await pool.query(
+            `SELECT admin_cc FROM notification_channel_config WHERE notification_type = $1`,
+            [notificationType]
+        );
+        return rows.length > 0 && rows[0].admin_cc === true;
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Get channel config (push/email/sms/admin_cc flags) for a specific notification type.
+ * Returns { push_enabled, email_enabled, sms_enabled, admin_cc } or defaults (all true) if not found.
+ */
+async function getChannelConfig(notificationType) {
+    const defaults = { push_enabled: true, email_enabled: true, sms_enabled: true, admin_cc: false, manager_cc: true };
+    try {
+        const { rows } = await pool.query(
+            `SELECT push_enabled, email_enabled, sms_enabled,
+                    COALESCE(admin_cc, FALSE) AS admin_cc,
+                    COALESCE(manager_cc, TRUE) AS manager_cc
+             FROM notification_channel_config WHERE notification_type = $1`,
+            [notificationType]
+        );
+        return rows.length > 0 ? rows[0] : defaults;
+    } catch {
+        return defaults;
+    }
+}
+
+async function updateNotificationChannel(notificationType, { pushEnabled, emailEnabled, smsEnabled, adminCc, managerCc, updatedBy }) {
+    const { rows } = await pool.query(
+        `UPDATE notification_channel_config
+         SET push_enabled  = COALESCE($2, push_enabled),
+             email_enabled = COALESCE($3, email_enabled),
+             sms_enabled   = COALESCE($4, sms_enabled),
+             admin_cc      = COALESCE($5, admin_cc),
+             manager_cc    = COALESCE($6, manager_cc),
+             updated_by    = $7,
+             updated_at    = NOW()
+         WHERE notification_type = $1
+         RETURNING *`,
+        [notificationType, pushEnabled, emailEnabled, smsEnabled, adminCc, managerCc, updatedBy]
+    );
+    return rows[0] || null;
+}
+
+// ── Platform admins ─────────────────────────────────────────────────
+
+async function getPlatformAdmins() {
+    if (dbScope.enabled() && dbScope.current().mode === 'office') {
+        const tenant = require('../lib/tenant/tenantContext').getCurrentTenant();
+        const ownerId = tenant?.ownerUserId || (await require('../lib/tenant/tenantService').getTenantById(dbScope.current().tenantId))?.ownerUserId;
+        return (await pool.query(`SELECT userid AS user_id, name AS user_name, email, phonenumber AS phone, role
+            FROM users WHERE userid=$1 AND role='Admin'`,[ownerId])).rows;
+    }
+    try {
+        const { rows } = await pool.query(
+            `SELECT pa.id, pa.user_id, pa.is_active, pa.added_at,
+                    u.name AS user_name, u.email, u.phonenumber AS phone, u.role
+             FROM platform_admins pa
+             JOIN users u ON u.userid = pa.user_id
+             WHERE pa.is_active = TRUE
+             ORDER BY pa.added_at`
+        );
+        return rows;
+    } catch (err) {
+        if (err?.code === '42P01') return [];
+        throw err;
+    }
+}
+
+/**
+ * Seed platform_admins from PLATFORM_ADMIN_USER_IDS env var.
+ * Only inserts users that don't already exist (active or inactive) in the table.
+ */
+async function seedPlatformAdminsFromEnv() {
+    const raw = String(process.env.PLATFORM_ADMIN_USER_IDS || '').trim();
+    if (!raw) return 0;
+
+    const ids = raw.split(',').map(s => Number(String(s).trim())).filter(n => Number.isFinite(n) && n > 0);
+    if (ids.length === 0) return 0;
+
+    let seeded = 0;
+    for (const userId of ids) {
+        try {
+            await pool.query(
+                `INSERT INTO platform_admins (user_id, added_by, added_at, is_active)
+                 VALUES ($1, NULL, NOW(), TRUE)
+                 ON CONFLICT (user_id) DO NOTHING`,
+                [userId]
+            );
+            seeded++;
+        } catch (err) {
+            console.warn(`[settingsService] seedPlatformAdminsFromEnv: failed for userId=${userId}:`, err?.message);
+        }
+    }
+    return seeded;
+}
+
+async function addPlatformAdmin(userId, addedBy) {
+    // Also ensure the user is an Admin role
+    await pool.query(`UPDATE users SET role = 'Admin' WHERE userid = $1 AND role != 'Admin'`, [userId]);
+
+    const { rows } = await pool.query(
+        `INSERT INTO platform_admins (user_id, added_by, added_at, is_active)
+         VALUES ($1, $2, NOW(), TRUE)
+         ON CONFLICT (user_id) DO UPDATE SET is_active = TRUE, added_by = EXCLUDED.added_by, added_at = NOW()
+         RETURNING *`,
+        [userId, addedBy]
+    );
+    return rows[0];
+}
+
+async function removePlatformAdmin(userId) {
+    const { rows } = await pool.query(
+        `UPDATE platform_admins SET is_active = FALSE WHERE user_id = $1 RETURNING *`,
+        [userId]
+    );
+    return rows[0] || null;
+}
+
+/**
+ * Check if a user is a platform admin (DB-based).
+ * Falls back to the env var allowlist for backward compatibility.
+ */
+async function isPlatformAdmin(userId) {
+    if (isMultiTenantMode()) {
+        // Ignore old, incorrectly seeded platform_admins rows and env allowlists for office users.
+        const { rows } = await dbScope.withSystem(() => pool.query(
+            `SELECT 1 FROM users u JOIN platform_admins pa ON pa.user_id=u.userid
+             WHERE u.userid=$1 AND u.law_firm_tenant_id IS NULL AND u.role='Admin' AND pa.is_active=TRUE`, [userId]));
+        return rows.length > 0;
+    }
+    try {
+        const { rows } = await pool.query(
+            `SELECT 1 FROM platform_admins WHERE user_id = $1 AND is_active = TRUE`,
+            [userId]
+        );
+        if (rows.length > 0) return true;
+    } catch (err) {
+        // Table might not exist yet (pre-migration)
+        if (err?.code !== '42P01') console.warn('[settingsService] isPlatformAdmin check failed:', err?.message);
+    }
+
+    // Fallback: env-based allowlist
+    const envList = String(process.env.PLATFORM_ADMIN_USER_IDS || '').trim();
+    if (!envList) return false;
+    const ids = envList.split(',').map(s => Number(String(s).trim())).filter(n => Number.isFinite(n) && n > 0);
+    return ids.includes(Number(userId));
+}
+
+// ── Email Templates (DB-stored, admin-editable) ─────────────────────
+
+/**
+ * Get all email templates from the email_templates table.
+ */
+async function getAllEmailTemplates() {
+    const { rows } = await pool.query(
+        `SELECT template_key, label, subject_template, html_body, available_vars, updated_at
+         FROM email_templates ORDER BY template_key`
+    );
+    return rows;
+}
+
+/**
+ * Get a single email template by key.
+ */
+async function getEmailTemplate(templateKey) {
+    const { rows } = await pool.query(
+        `SELECT template_key, label, subject_template, html_body, available_vars, updated_at
+         FROM email_templates WHERE template_key = $1`,
+        [templateKey]
+    );
+    return rows[0] || null;
+}
+
+/**
+ * Update an email template (subject + html_body).
+ */
+async function updateEmailTemplate(templateKey, { subjectTemplate, htmlBody }, updatedBy) {
+    const { rows } = await pool.query(
+        `UPDATE email_templates
+         SET subject_template = COALESCE($2, subject_template),
+             html_body = COALESCE($3, html_body),
+             updated_at = NOW(),
+             updated_by = $4
+         WHERE template_key = $1
+         RETURNING template_key, label, subject_template, html_body, available_vars, updated_at`,
+        [templateKey, subjectTemplate, htmlBody, updatedBy || null]
+    );
+    return rows[0] || null;
+}
+
+module.exports = {
+    getSetting,
+    getAllSettings,
+    upsertSetting,
+    bulkUpsert,
+    invalidateCache,
+    getNotificationChannels,
+    getChannelConfig,
+    isAdminCcEnabled,
+    updateNotificationChannel,
+    getPlatformAdmins,
+    seedPlatformAdminsFromEnv,
+    addPlatformAdmin,
+    removePlatformAdmin,
+    isPlatformAdmin,
+    getAllEmailTemplates,
+    getEmailTemplate,
+    updateEmailTemplate,
+};

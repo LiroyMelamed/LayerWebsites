@@ -1,0 +1,110 @@
+.admin-support {
+  padding: 1.5rem;
+  max-width: 960px;
+}
+
+.admin-support__back {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.admin-support__header h1 {
+  margin: 0.25rem 0;
+}
+
+.admin-support__eyebrow {
+  font-size: 0.75rem;
+  opacity: 0.6;
+  margin: 0;
+}
+
+.admin-support__muted {
+  opacity: 0.65;
+  font-size: 0.9rem;
+}
+
+.admin-support__error {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(220, 80, 80, 0.4);
+  background: rgba(220, 80, 80, 0.1);
+}
+
+.admin-support__form,
+.admin-support__grid section {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.admin-support__form input,
+.admin-support__form textarea,
+.admin-support__grid textarea {
+  display: block;
+  width: 100%;
+  margin: 0.5rem 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.2);
+  color: inherit;
+}
+
+.admin-support__grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .admin-support__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.admin-support__grid ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.admin-support__grid li button {
+  width: 100%;
+  text-align: start;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.admin-support__grid li button.is-active {
+  border-color: rgba(100, 140, 255, 0.5);
+  background: rgba(100, 140, 255, 0.12);
+}
+
+.admin-support__grid li button span {
+  display: block;
+  font-size: 0.75rem;
+  opacity: 0.65;
+  margin-top: 0.25rem;
+}
+
+.admin-support__comment {
+  margin-top: 0.75rem;
+  padding: 0.5rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.admin-support__timeline {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  padding-inline-start: 1rem;
+}
