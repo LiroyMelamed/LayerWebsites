@@ -23,6 +23,9 @@ source "$ROOT/scripts/lib/deploy-ssh-retry.sh"
 DRY_RUN=false
 BACKEND=true
 FRONTEND=true
+# Freeze reviewed tenant SHAs before invoking any remote operation.
+# Format: {"melamedlaw":"<40hex>","morlevy":"<40hex>",...}
+CANDIDATE_PLAN="${SIGNING_RELEASE_PLAN:-}"
 
 for arg in "$@"; do
   case "$arg" in
@@ -53,17 +56,24 @@ echo "# Deploy all tenants — backend=$BACKEND frontend=$FRONTEND dry_run=$DRY_
 echo "# Started: $(date -Iseconds)"
 
 if $BACKEND; then
+  if [[ ! -f "$CANDIDATE_PLAN" ]]; then
+    echo "Set SIGNING_RELEASE_PLAN to the reviewed tenant-to-commit JSON before deployment." >&2
+    exit 1
+  fi
+  for tenant in melamedlaw morlevy ashrafessa melamedia idm; do
+    candidate=$(node -e 'const p=require(require("path").resolve(process.argv[1])); const s=p[process.argv[2]]; if(!/^[a-f0-9]{40}$/.test(s||""))process.exit(1); process.stdout.write(s)' "$CANDIDATE_PLAN" "$tenant")
+    node "$ROOT/scripts/check-signing-release.cjs" "$candidate"
+  done
   echo ""
   echo "== Backends (37.60.230.148) =="
   # MelamedLaw first — production client data; billing .env already tuned on server.
-  run ./scripts/deploy-tenant-backend.sh melamedlaw
-  run ./scripts/deploy-tenant-backend.sh morlevy
-  run ./scripts/deploy-tenant-backend.sh ashrafessa
-  run ./scripts/deploy-tenant-backend.sh melamedia
-  run ./scripts/deploy-tenant-backend.sh idm
+  run ./scripts/deploy-tenant-backend.sh melamedlaw "$(node -e 'const p=require(require("path").resolve(process.argv[1])); process.stdout.write(p[process.argv[2]])' "$CANDIDATE_PLAN" melamedlaw)"
+  run ./scripts/deploy-tenant-backend.sh morlevy "$(node -e 'const p=require(require("path").resolve(process.argv[1])); process.stdout.write(p[process.argv[2]])' "$CANDIDATE_PLAN" morlevy)"
+  run ./scripts/deploy-tenant-backend.sh ashrafessa "$(node -e 'const p=require(require("path").resolve(process.argv[1])); process.stdout.write(p[process.argv[2]])' "$CANDIDATE_PLAN" ashrafessa)"
+  run ./scripts/deploy-tenant-backend.sh melamedia "$(node -e 'const p=require(require("path").resolve(process.argv[1])); process.stdout.write(p[process.argv[2]])' "$CANDIDATE_PLAN" melamedia)"
+  run ./scripts/deploy-tenant-backend.sh idm "$(node -e 'const p=require(require("path").resolve(process.argv[1])); process.stdout.write(p[process.argv[2]])' "$CANDIDATE_PLAN" idm)"
   echo ""
-  echo "== Backend overlay (local → all tenants, same code + migrations) =="
-  run ./scripts/sync-local-backend-all-tenants.sh
+  echo "# Each backend retains its exact tenant commit; no local source overlay."
 fi
 
 if $FRONTEND; then
@@ -92,6 +102,7 @@ fi
 echo ""
 echo "# Done: $(date -Iseconds)"
 
+if $DRY_RUN; then exit 0; fi
 # shellcheck source=../../scripts/deploy-notify.sh
 source "$ROOT/../scripts/deploy-notify.sh"
 DEPLOY_ROOT="$ROOT" notify_central_deploy layerwebsites "all-tenants backend=${BACKEND} frontend=${FRONTEND}"

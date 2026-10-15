@@ -1,0 +1,386 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-12T01:44:45.504023+00:00",
+  "title": "Design System: LayerWebsites Calendar",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Primary",
+        "tonalRamp": [
+          "oklch(15% 0.06631 256.38)",
+          "oklch(26% 0.06631 256.38)",
+          "oklch(38% 0.06631 256.38)",
+          "oklch(49% 0.06631 256.38)",
+          "oklch(61% 0.06631 256.38)",
+          "oklch(72% 0.06631 256.38)",
+          "oklch(84% 0.06631 256.38)",
+          "oklch(95% 0.06631 256.38)"
+        ]
+      },
+      "primary-highlighted": {
+        "role": "primary",
+        "displayName": "Primary Highlighted",
+        "tonalRamp": [
+          "oklch(15% 0.07718 257.10)",
+          "oklch(26% 0.07718 257.10)",
+          "oklch(38% 0.07718 257.10)",
+          "oklch(49% 0.07718 257.10)",
+          "oklch(61% 0.07718 257.10)",
+          "oklch(72% 0.07718 257.10)",
+          "oklch(84% 0.07718 257.10)",
+          "oklch(95% 0.07718 257.10)"
+        ]
+      },
+      "sidebar-selected": {
+        "role": "primary",
+        "displayName": "Sidebar Selected",
+        "tonalRamp": [
+          "oklch(15% 0.07414 259.74)",
+          "oklch(26% 0.07414 259.74)",
+          "oklch(38% 0.07414 259.74)",
+          "oklch(49% 0.07414 259.74)",
+          "oklch(61% 0.07414 259.74)",
+          "oklch(72% 0.07414 259.74)",
+          "oklch(84% 0.07414 259.74)",
+          "oklch(95% 0.07414 259.74)"
+        ]
+      },
+      "white": {
+        "role": "neutral",
+        "displayName": "White",
+        "tonalRamp": [
+          "oklch(15% 0.00000 89.88)",
+          "oklch(26% 0.00000 89.88)",
+          "oklch(38% 0.00000 89.88)",
+          "oklch(49% 0.00000 89.88)",
+          "oklch(61% 0.00000 89.88)",
+          "oklch(72% 0.00000 89.88)",
+          "oklch(84% 0.00000 89.88)",
+          "oklch(95% 0.00000 89.88)"
+        ]
+      },
+      "secondary-highlighted": {
+        "role": "neutral",
+        "displayName": "Secondary Highlighted",
+        "tonalRamp": [
+          "oklch(15% 0.00859 247.92)",
+          "oklch(26% 0.00859 247.92)",
+          "oklch(38% 0.00859 247.92)",
+          "oklch(49% 0.00859 247.92)",
+          "oklch(61% 0.00859 247.92)",
+          "oklch(72% 0.00859 247.92)",
+          "oklch(84% 0.00859 247.92)",
+          "oklch(95% 0.00859 247.92)"
+        ]
+      },
+      "disabled": {
+        "role": "neutral",
+        "displayName": "Disabled",
+        "tonalRamp": [
+          "oklch(15% 0.01262 255.51)",
+          "oklch(26% 0.01262 255.51)",
+          "oklch(38% 0.01262 255.51)",
+          "oklch(49% 0.01262 255.51)",
+          "oklch(61% 0.01262 255.51)",
+          "oklch(72% 0.01262 255.51)",
+          "oklch(84% 0.01262 255.51)",
+          "oklch(95% 0.01262 255.51)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Text",
+        "tonalRamp": [
+          "oklch(15% 0.03308 260.91)",
+          "oklch(26% 0.03308 260.91)",
+          "oklch(38% 0.03308 260.91)",
+          "oklch(49% 0.03308 260.91)",
+          "oklch(61% 0.03308 260.91)",
+          "oklch(72% 0.03308 260.91)",
+          "oklch(84% 0.03308 260.91)",
+          "oklch(95% 0.03308 260.91)"
+        ]
+      },
+      "winter": {
+        "role": "neutral",
+        "displayName": "Winter",
+        "tonalRamp": [
+          "oklch(15% 0.03808 257.87)",
+          "oklch(26% 0.03808 257.87)",
+          "oklch(38% 0.03808 257.87)",
+          "oklch(49% 0.03808 257.87)",
+          "oklch(61% 0.03808 257.87)",
+          "oklch(72% 0.03808 257.87)",
+          "oklch(84% 0.03808 257.87)",
+          "oklch(95% 0.03808 257.87)"
+        ]
+      },
+      "field-border": {
+        "role": "neutral",
+        "displayName": "Field Border",
+        "tonalRamp": [
+          "oklch(15% 0.01871 250.61)",
+          "oklch(26% 0.01871 250.61)",
+          "oklch(38% 0.01871 250.61)",
+          "oklch(49% 0.01871 250.61)",
+          "oklch(61% 0.01871 250.61)",
+          "oklch(72% 0.01871 250.61)",
+          "oklch(84% 0.01871 250.61)",
+          "oklch(95% 0.01871 250.61)"
+        ]
+      },
+      "accepted-bg": {
+        "role": "secondary",
+        "displayName": "Accepted Bg",
+        "tonalRamp": [
+          "oklch(15% 0.02135 154.14)",
+          "oklch(26% 0.02135 154.14)",
+          "oklch(38% 0.02135 154.14)",
+          "oklch(49% 0.02135 154.14)",
+          "oklch(61% 0.02135 154.14)",
+          "oklch(72% 0.02135 154.14)",
+          "oklch(84% 0.02135 154.14)",
+          "oklch(95% 0.02135 154.14)"
+        ]
+      },
+      "accepted-text": {
+        "role": "secondary",
+        "displayName": "Accepted Text",
+        "tonalRamp": [
+          "oklch(15% 0.08232 160.17)",
+          "oklch(26% 0.08232 160.17)",
+          "oklch(38% 0.08232 160.17)",
+          "oklch(49% 0.08232 160.17)",
+          "oklch(61% 0.08232 160.17)",
+          "oklch(72% 0.08232 160.17)",
+          "oklch(84% 0.08232 160.17)",
+          "oklch(95% 0.08232 160.17)"
+        ]
+      },
+      "warning-bg": {
+        "role": "secondary",
+        "displayName": "Warning Bg",
+        "tonalRamp": [
+          "oklch(15% 0.01422 84.58)",
+          "oklch(26% 0.01422 84.58)",
+          "oklch(38% 0.01422 84.58)",
+          "oklch(49% 0.01422 84.58)",
+          "oklch(61% 0.01422 84.58)",
+          "oklch(72% 0.01422 84.58)",
+          "oklch(84% 0.01422 84.58)",
+          "oklch(95% 0.01422 84.58)"
+        ]
+      },
+      "warning-text": {
+        "role": "secondary",
+        "displayName": "Warning Text",
+        "tonalRamp": [
+          "oklch(15% 0.09197 59.95)",
+          "oklch(26% 0.09197 59.95)",
+          "oklch(38% 0.09197 59.95)",
+          "oklch(49% 0.09197 59.95)",
+          "oklch(61% 0.09197 59.95)",
+          "oklch(72% 0.09197 59.95)",
+          "oklch(84% 0.09197 59.95)",
+          "oklch(95% 0.09197 59.95)"
+        ]
+      },
+      "declined-bg": {
+        "role": "secondary",
+        "displayName": "Declined Bg",
+        "tonalRamp": [
+          "oklch(15% 0.01075 17.34)",
+          "oklch(26% 0.01075 17.34)",
+          "oklch(38% 0.01075 17.34)",
+          "oklch(49% 0.01075 17.34)",
+          "oklch(61% 0.01075 17.34)",
+          "oklch(72% 0.01075 17.34)",
+          "oklch(84% 0.01075 17.34)",
+          "oklch(95% 0.01075 17.34)"
+        ]
+      },
+      "dark-red": {
+        "role": "secondary",
+        "displayName": "Dark Red",
+        "tonalRamp": [
+          "oklch(15% 0.14703 24.94)",
+          "oklch(26% 0.14703 24.94)",
+          "oklch(38% 0.14703 24.94)",
+          "oklch(49% 0.14703 24.94)",
+          "oklch(61% 0.14703 24.94)",
+          "oklch(72% 0.14703 24.94)",
+          "oklch(84% 0.14703 24.94)",
+          "oklch(95% 0.14703 24.94)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Platform Headline",
+        "purpose": "Screen and personal-sync titles."
+      },
+      "title": {
+        "displayName": "Agenda Title",
+        "purpose": "Daily meeting and agenda headings."
+      },
+      "detail": {
+        "displayName": "Appointment Detail",
+        "purpose": "Owners, clients and time-group labels."
+      }
+    },
+    "shadows": [
+      {
+        "name": "daily-meeting",
+        "value": "0 2px 4px rgb(0 0 0 / 6%)",
+        "purpose": "Daily meeting card separation."
+      },
+      {
+        "name": "shared-card",
+        "value": "0 0.25rem 0.375rem -0.0625rem rgba(0, 0, 0, 0.1), 0 0.125rem 0.25rem -0.0625rem rgba(0, 0, 0, 0.06)",
+        "purpose": "Inherited platform card elevation."
+      },
+      {
+        "name": "shared-button",
+        "value": "0 0.125rem 0.25rem rgba(0,0,0,0.1)",
+        "purpose": "Inherited outlined action elevation."
+      }
+    ],
+    "motion": [
+      {
+        "name": "modal-body-entry",
+        "value": "320ms cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Opacity and vertical entrance; removed with reduced motion."
+      },
+      {
+        "name": "calendar-chip-transition",
+        "value": "120ms ease",
+        "purpose": "Background, border and content-color state changes."
+      },
+      {
+        "name": "view-option-transition",
+        "value": "180ms ease",
+        "purpose": "Shared segmented navigation color/elevation transitions."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "phone-max",
+        "value": "767px"
+      },
+      {
+        "name": "sidebar-stack-max",
+        "value": "1279px"
+      },
+      {
+        "name": "form-quad-two-columns-max",
+        "value": "32.5rem"
+      },
+      {
+        "name": "form-actions-stack-max",
+        "value": "40rem"
+      },
+      {
+        "name": "home-buckets-stack-max",
+        "value": "48rem"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Secondary Action",
+      "kind": "button",
+      "description": "Shared outlined small action with the calendar tool minimum height.",
+      "html": "<button class=\"ds-secondary\">Today</button>",
+      "css": ".ds-secondary{font-family:var(--lw-font-stack,\"Heebo\",sans-serif);padding:.4rem .5rem;min-height:44px;border:1px solid var(--lw-color-primary-highlighted);border-radius:8px;background:var(--lw-color-white);color:var(--lw-color-primary-highlighted);font-size:12px;font-weight:500;box-shadow:0 2px 4px rgba(0,0,0,.1);cursor:pointer;transition:transform 80ms ease}.ds-secondary:active{background:var(--lw-color-secondary-highlighted);transform:scale(.98)}.ds-secondary:focus-visible{outline:2px solid var(--lw-color-primary);outline-offset:2px;}",
+      "refersTo": "button-secondary"
+    },
+    {
+      "name": "Date Arrow",
+      "kind": "button",
+      "description": "Transparent period-navigation action.",
+      "html": "<button class=\"ds-arrow\" aria-label=\"Next period\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"m9 18 6-6-6-6\"/></svg></button>",
+      "css": ".ds-arrow{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border:0;border-radius:8px;background:transparent;color:var(--lw-color-primary);cursor:pointer}.ds-arrow:hover{background:var(--lw-color-secondary-highlighted)}.ds-arrow:focus-visible{outline:2px solid var(--lw-color-primary);outline-offset:2px;}",
+      "refersTo": "button-icon"
+    },
+    {
+      "name": "View Navigation",
+      "kind": "nav",
+      "description": "Shared segmented choices with the calendar option height.",
+      "html": "<nav class=\"ds-track\" aria-label=\"Calendar view\"><button class=\"ds-option ds-active\" aria-pressed=\"true\">Day</button><button class=\"ds-option\">Week</button><button class=\"ds-option\">Month</button></nav>",
+      "css": ".ds-track{display:inline-flex;gap:3px;padding:3px;background:var(--lw-color-secondary-highlighted);border:1px solid #e0e0e0;border-radius:999rem;box-shadow:inset 0 1px 2px rgba(0,0,0,.04)}.ds-option{font-family:var(--lw-font-stack,\"Heebo\",sans-serif);flex:1;min-height:44px;padding:7px 16px;border:0;border-radius:999rem;background:transparent;color:#4a5568;font-size:14px;font-weight:600;cursor:pointer;transition:background-color .18s ease,color .18s ease}.ds-option:hover:not(.ds-active){background:rgba(42,67,101,.06);color:var(--lw-color-primary)}.ds-active{background:var(--lw-color-primary);color:var(--lw-color-white);box-shadow:0 1px 3px rgba(0,0,0,.18)}.ds-option:focus-visible{outline:2px solid var(--lw-color-primary);outline-offset:2px;}"
+    },
+    {
+      "name": "Owner Filter",
+      "kind": "chip",
+      "description": "Manager name and initials in the existing rectangular filter pattern.",
+      "html": "<button class=\"ds-manager\"><span class=\"ds-avatar\">AL</span>Assigned manager</button>",
+      "css": ".ds-manager{font-family:var(--lw-font-stack,\"Heebo\",sans-serif);display:flex;align-items:center;gap:8px;min-height:44px;padding:6px 12px;border:1px solid var(--lw-color-disabled);border-radius:8px;background:var(--lw-color-white);color:var(--lw-color-text);font-size:14px;cursor:pointer}.ds-avatar{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border:1px solid var(--lw-color-disabled);border-radius:50%;background:var(--lw-color-secondary-highlighted);color:var(--lw-color-primary);font-size:11px;font-weight:600}.ds-manager:focus-visible{outline:2px solid var(--lw-color-primary);outline-offset:2px;}.ds-manager[aria-pressed=true]{background:var(--lw-color-primary);color:var(--lw-color-white)}",
+      "refersTo": "manager-filter"
+    },
+    {
+      "name": "Calendar Search",
+      "kind": "input",
+      "description": "Shared floating-label field with space reserved for the search icon.",
+      "html": "<label class=\"ds-search\"><span>Search</span><input aria-label=\"Search\"/><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg></label>",
+      "css": ".ds-search{font-family:var(--lw-font-stack,\"Heebo\",sans-serif);position:relative;display:flex;align-items:center;height:32px;margin-top:8px;border:1px solid var(--lw-color-secondary-highlighted);border-radius:12px;background:var(--lw-color-white)}.ds-search input{font-family:var(--lw-font-stack,\"Heebo\",sans-serif);width:100%;min-width:0;padding:8px 16px;padding-inline-end:44px;border:0;outline:0;background:transparent;color:var(--lw-color-text);font-size:16px}.ds-search>span{position:absolute;inset-inline-start:8px;top:50%;transform:translateY(-50%);padding:2px 4px;color:var(--lw-color-primary-highlighted);opacity:.6;pointer-events:none}.ds-search>svg{position:absolute;inset-inline-end:16px;top:50%;transform:translateY(-50%);color:var(--lw-color-primary);pointer-events:none}.ds-search:focus-within{border-color:var(--lw-color-primary-highlighted)}.ds-search:focus-within>span{transform:translateY(-110%) scale(.7);background:var(--lw-color-white);opacity:1}"
+    },
+    {
+      "name": "Daily Meeting",
+      "kind": "card",
+      "description": "Clickable daily meeting with wrapping content and small ambient elevation.",
+      "html": "<button class=\"ds-meeting\"><strong>Client appointment</strong><span class=\"ds-people\">Assigned manager</span><span class=\"ds-meta\">09:00 – 10:00 · Office</span></button>",
+      "css": ".ds-meeting{font-family:var(--lw-font-stack,\"Heebo\",sans-serif);display:flex;flex-direction:column;gap:3px;width:100%;min-height:44px;padding:16px;text-align:start;border:1px solid var(--lw-color-disabled);border-inline-start-color:var(--lw-color-primary);border-radius:8px;background:var(--lw-color-white);color:var(--lw-color-text);box-shadow:0 2px 4px rgb(0 0 0 / 6%);cursor:pointer}.ds-meeting strong{font-size:16px;font-weight:600;line-height:1.5;overflow-wrap:anywhere}.ds-people{font-size:13px;line-height:1.5;color:var(--lw-color-primary)}.ds-meta{font-size:12px;line-height:1.5;color:var(--lw-color-winter)}.ds-meeting:hover{background:var(--lw-color-secondary-highlighted)}.ds-meeting:focus-visible{outline:2px solid var(--lw-color-primary);outline-offset:3px}",
+      "refersTo": "meeting"
+    },
+    {
+      "name": "Accepted Response",
+      "kind": "chip",
+      "description": "Translated textual state with a subdued semantic fill.",
+      "html": "<span class=\"ds-rsvp\">Accepted</span>",
+      "css": ".ds-rsvp{font-family:var(--lw-font-stack,\"Heebo\",sans-serif);display:inline-flex;align-items:center;gap:4px;padding:3px 6px;border-radius:4px;background:#f0fff4;color:#276749;font-size:11px;line-height:1.5;overflow-wrap:anywhere}",
+      "refersTo": "status-accepted"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Legal Office Daybook",
+    "overview": "This is a scoped record of the implemented calendar, including its compact home widget. It inherits the platform's navy palette, Heebo typography, shared controls and tenant identity. The name describes the existing operational character; it introduces no replacement brand.\n\nThe day surface uses an airy time rail and appointment cards. Week and month preserve planning density while keeping a path to the selected day's details. Owner portraits or initials tie appointments to the responsible team members. This record describes source behavior, cross-checked against the final desktop-day, mobile-week and mobile-month captures under `outputs/calendar-release-20261012/browser-final-v3` in the parent workspace. The capture set also includes desktop-week, desktop-month and mobile-day; this document does not certify browser, Figma or native approval. Figma and native verification remain pending normal Mac unlock.",
+    "keyCharacteristics": [
+      "Familiar navy selection on white and cool gray surfaces.",
+      "Readable daily cards with compact planning alternatives.",
+      "Owner portraits or initials, translated labels and directional layout.",
+      "Shared platform buttons, fields, segmented navigation and popups."
+    ],
+    "rules": [
+      {
+        "name": "The Selection Continuity Rule",
+        "body": "Selected controls use navy with white content across owner filters, the day ribbon and mobile month selection.",
+        "section": "colors"
+      },
+      {
+        "name": "The Detail Recovery Rule",
+        "body": "Compact representations keep a route to the day's agenda or event modal, where the full event title is available. The event modal's full-title block wraps anywhere and is not line-clamped.",
+        "section": "typography"
+      },
+      {
+        "name": "The Stable Planning Surface Rule",
+        "body": "Calendar and filter containers stay fixed on hover; compact meeting rows carry no independent elevation.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do inherit the platform's navy, Heebo, shared components and tenant identity.",
+      "Do preserve calendar logic, permissions, translated text and existing editing/sync workflows.",
+      "Do retain owner identity and provide a detailed path from compact planning representations.",
+      "Do keep keyboard focus, directional layout and reduced-motion behavior visible in new calendar surfaces.",
+      "Do use unboxed compact rows inside week day containers and rounded navy selected dates on phones."
+    ],
+    "donts": [
+      "Don't turn this calendar record into a replacement platform identity or a root-level design policy.",
+      "Don't promote compact-grid clipping, tiny labels or avatar suppression into general rules for detail views.",
+      "Don't replace shared navigation and form primitives with unrelated visual components.",
+      "Don't use status color as the only available description of response, cancellation or conflict.",
+      "Don't claim browser, Figma or native validation from this design record."
+    ]
+  }
+}

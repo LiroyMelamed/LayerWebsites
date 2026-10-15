@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { customersApi } from "../../api/customersApi";
 import { images } from "../../assets/images/images";
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
@@ -6,7 +6,6 @@ import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
 import FilterSearchInput from "../../components/specializedComponents/containers/FilterSearchInput";
-import DefaultState from "../../components/styledComponents/defaultState/DefaultState";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import { AdminStackName } from "../../navigation/AdminStack";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
@@ -18,6 +17,7 @@ import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButt
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
 import { usePopup } from "../../providers/PopUpProvider";
 import { useTranslation } from "react-i18next";
+import { useFirmPermissions } from "../../providers/FirmPermissionsProvider";
 
 
 import "./AllClientsScreen.scss";
@@ -26,16 +26,18 @@ export const AllClientsScreenName = "/AllClientsScreen";
 
 export default function AllClientsScreen() {
     const { t } = useTranslation();
+    const { canAction } = useFirmPermissions() || { canAction: () => true };
+    const canEditClients = canAction("clients", "edit");
+    const canDeleteClients = canAction("clients", "delete");
     const { isSmallScreen } = useScreenSize();
     const [selectedName, setSelectedName] = useState(null);
     const [selectedCompany, setSelectedCompany] = useState(null);
     const [selectedPhone, setSelectedPhone] = useState(null);
-    const [filteredClients, setFilteredClients] = useState(null);
 
     const { result: rawCustomers, isPerforming, performRequest: reperformAfterSave } = useAutoHttpRequest(customersApi.getAllCustomers);
     const { openPopup, closePopup } = usePopup();
 
-    const allCustomers = (rawCustomers || []).map(c => ({
+    const allCustomers = useMemo(() => (rawCustomers || []).map(c => ({
         userid: c.UserId ?? c.userid,
         name: c.Name ?? c.name,
         email: c.Email ?? c.email,
@@ -45,52 +47,31 @@ export default function AllClientsScreen() {
         dateofbirth: c.DateOfBirth ?? c.dateofbirth,
         profilepicurl: c.ProfilePicUrl ?? c.profilepicurl,
         role: c.Role ?? c.role,
-    }));
+    })), [rawCustomers]);
 
-    const applyFilters = (nameFilter, companyFilter, phoneFilter) => {
+    const displayList = useMemo(() => {
         let filtered = allCustomers;
 
-        if (nameFilter) {
-            const q = nameFilter.toLowerCase();
+        if (selectedName) {
+            const q = selectedName.toLowerCase();
             filtered = filtered.filter(c => c.name && c.name.toLowerCase().includes(q));
         }
 
-        if (companyFilter) {
-            const q = companyFilter.toLowerCase();
+        if (selectedCompany) {
+            const q = selectedCompany.toLowerCase();
             filtered = filtered.filter(c => c.companyname && c.companyname.toLowerCase().includes(q));
         }
 
-        if (phoneFilter) {
-            filtered = filtered.filter(c => c.phonenumber && c.phonenumber.includes(phoneFilter));
+        if (selectedPhone) {
+            filtered = filtered.filter(c => c.phonenumber && c.phonenumber.includes(selectedPhone));
         }
 
-        if (!nameFilter && !companyFilter && !phoneFilter) {
-            setFilteredClients(null);
-        } else {
-            setFilteredClients(filtered);
-        }
-    };
-
-    const handleFilterByName = (name) => {
-        setSelectedName(name);
-        applyFilters(name, selectedCompany, selectedPhone);
-    };
-
-    const handleFilterByCompany = (company) => {
-        setSelectedCompany(company);
-        applyFilters(selectedName, company, selectedPhone);
-    };
-
-    const handleFilterByPhone = (phone) => {
-        setSelectedPhone(phone);
-        applyFilters(selectedName, selectedCompany, phone);
-    };
+        return filtered;
+    }, [allCustomers, selectedName, selectedCompany, selectedPhone]);
 
     const customerNames = [...new Set((allCustomers || []).map(c => c.name).filter(Boolean))].sort();
     const companyNames = [...new Set((allCustomers || []).map(c => c.companyname).filter(Boolean))].sort();
     const phoneNumbers = [...new Set((allCustomers || []).map(c => c.phonenumber).filter(Boolean))].sort();
-
-    const displayList = filteredClients || allCustomers;
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
@@ -102,7 +83,7 @@ export default function AllClientsScreen() {
                         items={customerNames}
                         placeholder={t('cases.customerName')}
                         titleFontSize={20}
-                        onSelect={handleFilterByName}
+                        onSelect={setSelectedName}
                         className="lw-allClientsScreen__search"
                     />
 
@@ -110,7 +91,7 @@ export default function AllClientsScreen() {
                         items={companyNames}
                         placeholder={t('customers.companyName')}
                         titleFontSize={20}
-                        onSelect={handleFilterByCompany}
+                        onSelect={setSelectedCompany}
                         className="lw-allClientsScreen__search"
                     />
 
@@ -118,27 +99,22 @@ export default function AllClientsScreen() {
                         items={phoneNumbers}
                         placeholder={t('customers.customerPhone')}
                         titleFontSize={20}
-                        onSelect={handleFilterByPhone}
+                        onSelect={setSelectedPhone}
                         className="lw-allClientsScreen__search"
                     />
                 </SimpleContainer>
 
-                {(!isPerforming && (!displayList || displayList.length === 0)) ? (
-                    <DefaultState
-                        content={t("customers.emptyList")}
-                        imageClassName="lw-defaultState__image--h156"
-                        imageSrc={images.Defaults.SearchingClient}
-                    />
-                ) : (
-                    <ClientsCard
-                        customerList={displayList}
-                        rePerformRequest={reperformAfterSave}
-                        isPerforming={isPerforming}
-                        hideButtons
-                    />
-                )}
+                <ClientsCard
+                    customerList={displayList}
+                    rePerformRequest={reperformAfterSave}
+                    isPerforming={isPerforming}
+                    hideButtons={!canEditClients && !canDeleteClients}
+                    allowEdit={canEditClients}
+                    allowDelete={canDeleteClients}
+                />
             </SimpleScrollView>
 
+            {canEditClients && (
             <SimpleContainer className="lw-allClientsScreen__footer">
                 <PrimaryButton
                     onPress={() => openPopup(<ClientPopup closePopUpFunction={closePopup} rePerformRequest={reperformAfterSave} />)}
@@ -152,6 +128,7 @@ export default function AllClientsScreen() {
                     {t("clientImport.button")}
                 </SecondaryButton>
             </SimpleContainer>
+            )}
         </SimpleScreen>
     );
 }

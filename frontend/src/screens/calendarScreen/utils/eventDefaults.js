@@ -90,8 +90,8 @@ export function buildNewEventPrefill(selectInfo, { workingSchedule, workingHours
         if (end <= start) {
             end = addJerusalemHours(start, 1);
         }
-        const dayCap = applyTimeToDate(start, hoursEnd);
-        if (end > dayCap) end = dayCap;
+        // An explicit slot selection may be outside working hours or cross
+        // midnight. Working hours guide defaults, never reverse its time range.
         return {
             startTime: toDatetimeLocal(start),
             endTime: toDatetimeLocal(end),

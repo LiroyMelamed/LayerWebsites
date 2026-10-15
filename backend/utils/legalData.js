@@ -33,6 +33,35 @@ async function userHasLegalData(db, userId) {
     return Boolean(row.has_audit_events || row.has_signing_files || row.has_cases || row.has_signatures);
 }
 
+async function caseHasLegalData(db, caseId) {
+    const cid = Number(caseId);
+    if (!Number.isInteger(cid) || cid <= 0) return false;
+
+    const calendarCaseLinkSupported = await hasColumn(db, { table: 'calendar_events', column: 'case_id' });
+
+    const res = await db.query(
+        `select
+            exists (select 1 from stage_files where caseid = $1) as has_stage_files,
+            exists (select 1 from signingfiles where caseid = $1) as has_signing_files,
+            exists (select 1 from casedescriptions where caseid = $1) as has_descriptions,
+            exists (select 1 from case_users where caseid = $1) as has_case_users,
+            ${calendarCaseLinkSupported
+            ? 'exists (select 1 from calendar_events where case_id = $1) as has_calendar'
+            : 'false as has_calendar'
+        }`,
+        [cid]
+    );
+
+    const row = res.rows?.[0] || {};
+    return Boolean(
+        row.has_stage_files
+            || row.has_signing_files
+            || row.has_descriptions
+            || row.has_case_users
+            || row.has_calendar
+    );
+}
+
 async function clientHasLegalData(db, clientUserId) {
     const uid = Number(clientUserId);
     if (!Number.isInteger(uid) || uid <= 0) return false;
@@ -58,4 +87,5 @@ async function clientHasLegalData(db, clientUserId) {
 module.exports = {
     userHasLegalData,
     clientHasLegalData,
+    caseHasLegalData,
 };

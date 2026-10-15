@@ -12,7 +12,7 @@ let timer = null;
 
 async function _run(reason) {
     try {
-        const result = await syncHolidaysFromHebcal();
+        const result = await require('../../lib/tenant/databaseScope').withSystem(syncHolidaysFromHebcal);
         console.log(`[hebcal-holidays] ${reason}: upserted=${result.upserted} years=${result.years.join(',')}`);
     } catch (err) {
         console.warn(`[hebcal-holidays] ${reason} failed:`, err?.message || err);

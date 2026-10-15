@@ -1,3 +1,4 @@
+import { getTenantLogoUrl } from '../../lib/tenantBranding';
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { usePopup } from "../../providers/PopUpProvider";
@@ -13,6 +14,7 @@ import { useFromApp } from "../../providers/FromAppProvider";
 import GenericButton from "../styledComponents/buttons/GenericButton";
 import { colors } from "../../constant/colors";
 import { useTranslation } from 'react-i18next';
+import { useFirmPermissions } from '../../providers/FirmPermissionsProvider';
 import LanguageSwitcher from '../i18n/LanguageSwitcher';
 import ComplianceBadges from '../compliance/ComplianceBadges';
 import PoweredByMela from '../PoweredByMela';
@@ -27,7 +29,16 @@ export default function TopAndRightNavBar({ children, LogoNavigate, GetNavBarDat
   const { openPopup, closePopup } = usePopup();
   const { isFromApp } = useFromApp();
   const { t } = useTranslation();
-  const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup, isFromApp, t);
+  const firmPerms = useFirmPermissions();
+  const permCtx = firmPerms
+    ? {
+        permissionMode: firmPerms.permissionMode,
+        canPage: firmPerms.canPage,
+        canAction: firmPerms.canAction,
+        scope: firmPerms.scope,
+      }
+    : null;
+  const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup, isFromApp, t, permCtx);
 
   /** Check if a nav item matches the current URL pathname */
   function isActiveItem(item) {
@@ -42,7 +53,7 @@ export default function TopAndRightNavBar({ children, LogoNavigate, GetNavBarDat
         <SimpleContainer className="lw-topAndRightNavBar__sidebar">
           <SimpleContainer className="lw-topAndRightNavBar__logoRow">
             <ImageButton
-              src={Logo}
+              src={getTenantLogoUrl() || Logo}
               className="lw-topAndRightNavBar__logoBtn"
               onPress={() => {
                 navigate(LogoNavigate);
@@ -86,6 +97,10 @@ export default function TopAndRightNavBar({ children, LogoNavigate, GetNavBarDat
                 disabledContentColor={colors.disabledHighlighted}
                 onPress={() => {
                   localStorage.removeItem("token");
+                                localStorage.removeItem("refreshToken");
+                                localStorage.removeItem("role");
+                                localStorage.removeItem("isPlatformAdmin");
+                                window.dispatchEvent(new Event("lw-auth-changed"));
                   navigate('/');
                 }}
               >

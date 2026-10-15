@@ -11,7 +11,7 @@ import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import SimpleLoader from "../../simpleComponents/SimpleLoader";
 import BlockDateInput from "../../simpleComponents/BlockDateInput";
 import { toNativeDateValue } from "../../../functions/date/formatDateForInput";
-import { Text12, Text14 } from "../../specializedComponents/text/AllTextKindFile";
+import { Text14 } from "../../specializedComponents/text/AllTextKindFile";
 
 import PrimaryButton from "../../styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../styledComponents/buttons/SecondaryButton";
@@ -23,6 +23,7 @@ import "./signFiles.scss";
 import { showAppToast } from "../../ui/showAppToast";
 import "../../../screens/signingScreen/PublicSigningScreen.scss";
 import { measuredPageWidth, spotSpaceScale } from "../../../utils/signingSpotGeometry";
+import { personalStampPdf } from './personalStampPdf';
 
 /** Breathing room above a spot when scrolling it into view, in CSS pixels. */
 const SCROLL_TO_SPOT_MARGIN_PX = 120;
@@ -51,9 +52,10 @@ function uuidv4() {
     }
 }
 
-const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal" }) => {
+const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal", filesApi = signingFilesApi, loadPublicPdf = null, nextDocument = null, documentGroup = null, multiDocumentAction = null, deferOtpUntilConsent = false, documentIssueActions = null, signingContext = null, completionMarkNotice = null }) => {
     const { t } = useTranslation();
     const canvasRef = useRef(null);
+    const initializedCanvasRef = useRef(null);
     const pdfScrollRef = useRef(null);
     const lastPointRef = useRef(null);
 
@@ -61,6 +63,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const [fileDetails, setFileDetails] = useState(null);
     const [pdfFile, setPdfFile] = useState(null);
     const [pdfReady, setPdfReady] = useState(false);
+    const [pdfError, setPdfError] = useState(false);
+    const [activeDocumentId, setActiveDocumentId] = useState(documentGroup?.documents?.[0]?.id || null);
+    const activeDocumentIdRef = useRef(activeDocumentId);
+    const pdfLoadVersionRef = useRef(0);
     const [currentSpot, setCurrentSpot] = useState(null);
     const [saving, setSaving] = useState(false);
     const [isDrawing, setIsDrawing] = useState(false);
@@ -90,7 +96,6 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const signingSessionId = signingSessionIdRef.current;
 
     const [consentAccepted, setConsentAccepted] = useState(false);
-    const [showConsentUi, setShowConsentUi] = useState(true);
     const [otpRequested, setOtpRequested] = useState(false);
     const [otpCode, setOtpCode] = useState("");
     const [otpVerified, setOtpVerified] = useState(false);
@@ -122,7 +127,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         const t0 = String(type || 'signature').toLowerCase();
         if (t0 === 'initials') return 'initials';
         if (t0 === 'signature') return 'signature';
-        if (t0 === 'clientstamp') return 'clientStamp';
+        if (t0 === 'clientstamp' || t0 === 'lawyerstamp') return 'clientStamp';
         return 'field';
     };
 
@@ -130,7 +135,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const getActiveSpotForMode = (details, current) => {
         const canAct = (spot) => {
-            if (!spot || spot.IsSigned) return false;
+            if (!spot || spot.IsSigned || isFixedLawyerStamp(spot)) return false;
             const flag = spot?.CanSign ?? spot?.canSign;
             if (typeof flag === 'boolean') return flag;
             if (!isPublic) return true;
@@ -140,7 +145,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             return Number(spotSignerId) === Number(myId);
         };
         if (canAct(current)) return current;
-        const allSpots = (details?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
+        const allSpots = (details?.signatureSpots || []).filter((s) => !isFixedLawyerStamp(s));
         const unsignedRequired = getUnsignedRequiredSpots(allSpots);
         if (unsignedRequired.length > 0) return unsignedRequired[0];
         return null;
@@ -159,13 +164,6 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const otpEnabled = Boolean(fileDetails?.file?.OtpEnabled);
     const otpRequired = otpEnabled && Boolean(fileDetails?.file?.RequireOtp) && !alreadyComplete;
 
-    const consentStorageKey = useMemo(() => {
-        const keyPart = isPublic
-            ? `public:${String(publicToken || "")}`
-            : `file:${String(signingFileId || "")}`;
-        return `lw_signing_consent_accepted:${keyPart}`;
-    }, [isPublic, publicToken, signingFileId]);
-
     const fieldValuesStorageKey = useMemo(() => {
         const keyPart = isPublic
             ? `public:${String(publicToken || "")}`
@@ -175,7 +173,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     // Production policy: rely on DB persistence for legal correctness.
     // Cache is DEV-only as a guardrail during rollout.
-    const FIELD_VALUES_CACHE_ENABLED = process.env.NODE_ENV !== 'production';
+    const FIELD_VALUES_CACHE_ENABLED = process.env.NODE_ENV !== 'production' && !fileDetails?.file?.DisableFieldValueCache;
     const FIELD_VALUES_CACHE_TTL_MS = 15 * 60 * 1000;
 
     const readFieldValuesCache = () => {
@@ -207,7 +205,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     };
 
     const mergeFieldValuesFromCache = (details) => {
-        if (!FIELD_VALUES_CACHE_ENABLED) return details;
+        if (!FIELD_VALUES_CACHE_ENABLED || details?.file?.DisableFieldValueCache) return details;
         const cache = readFieldValuesCache();
         const spots = details?.signatureSpots;
         if (!Array.isArray(spots) || !spots.length) return details;
@@ -232,40 +230,6 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         return { ...details, signatureSpots: merged };
     };
 
-    useEffect(() => {
-        let cancelled = false;
-        (async () => {
-            try {
-                const res = await ApiUtils.get("platform-settings/public");
-                const raw = res?.data?.SHOW_PUBLIC_SIGNING_CONSENT;
-                const enabled = !(raw === false || raw === "false" || raw === "0" || raw === 0);
-                if (cancelled) return;
-                setShowConsentUi(enabled);
-                if (!enabled) setConsentAccepted(true);
-            } catch {
-                // Default: keep consent UI visible.
-            }
-        })();
-        return () => { cancelled = true; };
-    }, []);
-
-    useEffect(() => {
-        if (!showConsentUi) {
-            setConsentAccepted(true);
-            return;
-        }
-        try {
-            const persisted = localStorage.getItem(consentStorageKey) === "true";
-            setConsentAccepted(persisted);
-        } catch {
-            // ignore (private mode / blocked storage)
-        }
-    }, [consentStorageKey, showConsentUi]);
-
-    useEffect(() => {
-        if (!showConsentUi) setConsentAccepted(true);
-    }, [showConsentUi]);
-
     const effectiveSigningFileId = useMemo(() => {
         return fileDetails?.file?.SigningFileId || signingFileId;
     }, [fileDetails, signingFileId]);
@@ -278,8 +242,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         if (raw === true || raw === false || raw === 'true' || raw === 'false') {
             return raw === true || raw === 'true';
         }
-        const type = getSpotType(spot);
-        if (type === 'lawyerstamp') return false;
+        if (isFixedLawyerStamp(spot)) return false;
         // Default fillable fields to required (matches lawyer create defaults).
         return true;
     };
@@ -310,7 +273,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         }
     };
     const sanitizeFieldValue = (type, value) => {
-        const raw = value == null ? '' : String(value);
+        const raw = (value == null ? '' : String(value)).replace(/[٠-٩]/g, digit => String(digit.charCodeAt(0) - 0x660)).replace(/[۰-۹]/g, digit => String(digit.charCodeAt(0) - 0x6f0));
         if (type === 'phone') {
             const trimmed = raw.trim();
             if (trimmed.startsWith('+')) {
@@ -329,13 +292,17 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
             return emailOk ? { ok: true } : { ok: false, message: t('errors.invalidEmail') };
         }
-        if (type === 'phone' || type === 'number' || type === 'idnumber') {
+        if (type === 'phone') {
+            return /^\+?[0-9]{7,15}$/.test(value) ? { ok: true } : { ok: false, message: t('errors.invalidPhone') };
+        }
+        if (type === 'number' || type === 'idnumber') {
             const digitsOnly = /^[0-9]+$/.test(value);
             return digitsOnly ? { ok: true } : { ok: false, message: t('errors.numbersOnly') };
         }
         return { ok: true };
     };
     const getSpotType = (spot) => String(spot?.FieldType ?? spot?.fieldType ?? spot?.type ?? 'signature').toLowerCase();
+    const isFixedLawyerStamp = (spot) => getSpotType(spot) === 'lawyerstamp' && spot?.InteractiveLawyerStamp !== true;
     const getFieldTypeKey = (type) => {
         switch (type) {
             case 'idnumber':
@@ -382,17 +349,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         return list.filter((s) => !isSpotRequired(s) && !isSpotSigned(s) && isMyActionableSpot(s));
     };
 
-    const focusNextUnsignedSpot = () => {
-        const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
-        const unsignedRequired = getUnsignedRequiredSpots(allSpots);
-        const target = (!currentSpot || currentSpot.IsSigned) ? (unsignedRequired[0] || null) : currentSpot;
-        if (target) {
-            setCurrentSpot(target);
-            scrollToSpot(target);
-            setHasStartedNextFlow(true);
-        }
-        return target;
-    };
+    
 
     const findScrollableAncestor = (el) => {
         let cur = el;
@@ -405,6 +362,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const scrollToSpot = (spot, attempt = 0) => {
         if (!spot) return;
+        // Each PDF retains its original page numbers and geometry. Never scroll
+        // to a same-numbered page belonging to a different document.
+        if (documentGroup && spot.DocumentId !== activeDocumentIdRef.current) return;
         const pageNum = Number(getSpotPage(spot) || 1);
         const hintedContainer = pdfScrollRef.current;
 
@@ -447,7 +407,18 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     };
 
     const loadPdfFromFileKey = async (fileIdForPdf) => {
+        const version = ++pdfLoadVersionRef.current;
+        setPdfError(false);
         try {
+            if (documentGroup) {
+                const blob = await documentGroup.loadPdf(activeDocumentIdRef.current);
+                if (version === pdfLoadVersionRef.current) setPdfFile(blob);
+                return;
+            }
+            if (isPublic && loadPublicPdf) {
+                setPdfFile(await loadPublicPdf());
+                return;
+            }
             const baseUrl = ApiUtils?.defaults?.baseURL || "";
             const token = localStorage.getItem("token");
             const url = isPublic
@@ -470,52 +441,51 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             setPdfFile(blob);
         } catch (err) {
             console.error("Failed to load PDF", err);
-            setPdfFile(null);
+            if (version === pdfLoadVersionRef.current) {
+                setPdfFile(null);
+                setPdfError(true);
+                setPdfReady(true);
+            }
         }
     };
 
-    const refreshSavedSignature = async () => {
-        try {
-            const res = isPublic
-                ? await signingFilesApi.getPublicSavedSignature(publicToken)
-                : await signingFilesApi.getSavedSignature();
-            unwrapApi(res);
-            const data = res?.data;
-            setSavedSignature({
-                loading: false,
-                exists: Boolean(data?.exists),
-                url: data?.url || null,
-            });
-        } catch (err) {
-            console.warn("Failed to refresh saved signature", err);
-            setSavedSignature({ loading: false, exists: false, url: null });
-        }
+    
+
+    
+
+    const showGroupDocument = async (documentId) => {
+        if (!documentGroup || documentId === activeDocumentIdRef.current) return;
+        activeDocumentIdRef.current = documentId;
+        setActiveDocumentId(documentId);
+        setPdfReady(false);
+        setPdfFile(null);
+        setViewedPage(1);
+        await loadPdfFromFileKey();
     };
 
-    const refreshSavedStamp = async () => {
-        try {
-            const res = isPublic
-                ? await signingFilesApi.getPublicSavedStamp(publicToken)
-                : await signingFilesApi.getSavedStamp();
-            unwrapApi(res);
-            const data = res?.data;
-            setSavedStamp({
-                loading: false,
-                exists: Boolean(data?.exists),
-                url: data?.url || null,
-            });
-        } catch (err) {
-            console.warn("Failed to refresh saved stamp", err);
-            setSavedStamp({ loading: false, exists: false, url: null });
+    // Advancing a required field across PDFs uses the same signing controls,
+    // with only one original PDF mounted/downloaded at a time.
+    useEffect(() => {
+        if (!documentGroup || !currentSpot?.DocumentId) return;
+        if (currentSpot.DocumentId !== activeDocumentIdRef.current) {
+            showGroupDocument(currentSpot.DocumentId);
+        } else if (pdfReady) {
+            scrollToSpot(currentSpot);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentSpot, activeDocumentId, pdfReady]);
+
+    const openDocumentGroup = () => {
+        if (consentAccepted && !window.confirm(t('signingV2.public.group.changeScope'))) return;
+        multiDocumentAction?.onPress();
     };
 
     const refreshSavedItems = async () => {
         try {
             setSavedItemsLoading(true);
             const res = isPublic
-                ? await signingFilesApi.listPublicSavedItems(publicToken)
-                : await signingFilesApi.listSavedItems();
+                ? await filesApi.listPublicSavedItems(publicToken)
+                : await filesApi.listSavedItems();
             unwrapApi(res);
             const data = res?.data || {};
             setSavedSignatures(data.signatures || []);
@@ -545,8 +515,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const deleteSavedItem = async (type, index) => {
         try {
             const res = isPublic
-                ? await signingFilesApi.deletePublicSavedItem(publicToken, type, index)
-                : await signingFilesApi.deleteSavedItem(type, index);
+                ? await filesApi.deletePublicSavedItem(publicToken, type, index)
+                : await filesApi.deleteSavedItem(type, index);
             unwrapApi(res);
             showAppToast({ type: "success", text: t("signing.canvas.deleteSavedSuccess") });
             await refreshSavedItems();
@@ -564,19 +534,16 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 setPdfReady(false);
                 setPdfFile(null);
 
-                // Restore consent from localStorage; OTP state is per session.
-                try {
-                    const persisted = localStorage.getItem(consentStorageKey) === "true";
-                    setConsentAccepted(persisted);
-                } catch { setConsentAccepted(false); }
+                // Consent belongs to this signing session, never to a cached flag.
+                setConsentAccepted(false);
                 setOtpRequested(false);
                 setOtpCode("");
                 setOtpVerified(false);
                 otpAutoSentRef.current = false;
 
                 const res = isPublic
-                    ? await signingFilesApi.getPublicSigningFileDetails(publicToken)
-                    : await signingFilesApi.getSigningFileDetails(signingFileId);
+                    ? await filesApi.getPublicSigningFileDetails(publicToken)
+                    : await filesApi.getSigningFileDetails(signingFileId);
                 unwrapApi(res);
                 const data = res?.data;
                 if (!isMounted) return;
@@ -609,6 +576,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         load();
         return () => {
             isMounted = false;
+            pdfLoadVersionRef.current += 1;
             if (canvasClearSpinTimerRef.current) {
                 clearTimeout(canvasClearSpinTimerRef.current);
                 canvasClearSpinTimerRef.current = null;
@@ -620,6 +588,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     // Public/signing link: auto-open the first required signature spot once the PDF is ready.
     useEffect(() => {
         if (!isScreen || !pdfReady || !fileDetails || autoOpenedFirstSpotRef.current) return;
+        if (fileDetails?.signingOrder === 'sequential' && fileDetails?.isMyTurn === false) return;
 
         const fileStatus = String(fileDetails?.file?.Status || fileDetails?.file?.status || "").toLowerCase();
         const locked = fileDetails?.readOnly === true
@@ -630,7 +599,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             || showCompletion;
         if (locked) return;
 
-        const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
+        const allSpots = (fileDetails?.signatureSpots || []).filter((s) => !isFixedLawyerStamp(s));
         const unsignedRequired = getUnsignedRequiredSpots(allSpots);
         const remainingSigs = unsignedRequired.filter((s) => isSignatureLike(getSpotType(s))).length;
         // Signatures already done: completion overlay offers continue-to-fields. Don't auto-open a field pad.
@@ -649,12 +618,16 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     // Celebrate when signatures are done (even if data fields remain).
     useEffect(() => {
         if (!fileDetails || loading || showCompletion) return;
-        const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
+        const allSpots = (fileDetails?.signatureSpots || []).filter((s) => !isFixedLawyerStamp(s));
         const unsignedRequired = getUnsignedRequiredSpots(allSpots);
         const remainingSigs = unsignedRequired.filter((s) => isSignatureLike(getSpotType(s))).length;
         if (remainingSigs > 0) return;
 
         if (unsignedRequired.length > 0) {
+            // A form containing only data fields has no completed signature
+            // phase to celebrate before those fields have been submitted.
+            if (!allSpots.some((spot) => isSignatureLike(getSpotType(spot))
+                && isSpotRequired(spot) && isMyActionableSpot(spot))) return;
             if (holdSignatureCompleteOverlayRef.current) {
                 setShowCompletion(true);
                 setShowSpotPopup(false);
@@ -735,6 +708,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     useEffect(() => {
         if (currentSpot && canvasRef.current) {
             const canvas = canvasRef.current;
+            const previous = initializedCanvasRef.current;
+            if (previous?.canvas === canvas && previous.spot === currentSpot && previous.phase === stampSignPhase) return;
+            initializedCanvasRef.current = { canvas, spot: currentSpot, phase: stampSignPhase };
             canvas.width = 400;
             canvas.height = 180;
             const ctx = canvas.getContext("2d");
@@ -749,7 +725,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             setHasUserDrawn(false);
             lastPointRef.current = null;
         }
-    }, [currentSpot, stampSignPhase]);
+    }, [currentSpot, stampSignPhase, t]);
 
     useEffect(() => {
         if (!currentSpot) return;
@@ -1058,8 +1034,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const fetchSavedItemDataUrl = async (savedItem) => {
         if (!savedItem || savedItem.type == null || savedItem.index == null) return null;
         const res = isPublic
-            ? await signingFilesApi.getPublicSavedItemDataUrl(publicToken, savedItem.type, savedItem.index)
-            : await signingFilesApi.getSavedItemDataUrl(savedItem.type, savedItem.index);
+            ? await filesApi.getPublicSavedItemDataUrl(publicToken, savedItem.type, savedItem.index)
+            : await filesApi.getSavedItemDataUrl(savedItem.type, savedItem.index);
         unwrapApi(res);
         const rawDataUrl = res?.data?.dataUrl;
         if (!rawDataUrl) return null;
@@ -1068,21 +1044,27 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const saveSignatureAsDefault = async (dataUrl) => {
         if (!dataUrl) return;
-        if (isPublic) {
-            await signingFilesApi.savePublicSavedSignature(publicToken, dataUrl);
-        } else {
-            await signingFilesApi.saveSavedSignature(dataUrl);
+        try {
+            if (isPublic) {
+                await filesApi.savePublicSavedSignature(publicToken, dataUrl);
+            } else {
+                await filesApi.saveSavedSignature(dataUrl);
+            }
+            await refreshSavedItems();
+        } catch (err) {
+            // The document signature may already be accepted. Optional library
+            // storage must not turn that success into a failed signing attempt.
+            console.warn("Failed to save signature as default", err);
         }
-        await refreshSavedItems();
     };
 
     const saveStampAsDefault = async (dataUrl) => {
         if (!dataUrl) return;
         try {
             if (isPublic) {
-                await signingFilesApi.savePublicSavedStamp(publicToken, dataUrl);
+                await filesApi.savePublicSavedStamp(publicToken, dataUrl);
             } else {
-                await signingFilesApi.saveSavedStamp(dataUrl);
+                await filesApi.saveSavedStamp(dataUrl);
             }
             await refreshSavedItems();
         } catch (err) {
@@ -1091,11 +1073,13 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     };
 
     const signCurrentSpotWithImage = async (dataUrl, spotOverride = null) => {
+        if (pdfError) return false;
         const spot = spotOverride || currentSpot;
         if (!spot || spot.IsSigned) return false;
 
         const spotType = getSpotType(spot);
-        if (!isSignatureLike(spotType) && spotType !== 'clientstamp') return false;
+        if (!isSignatureLike(spotType) && spotType !== 'clientstamp'
+            && !(spotType === 'lawyerstamp' && !isFixedLawyerStamp(spot))) return false;
 
         const requireOtp = otpRequired;
         const consentVersion = String(fileDetails?.file?.SigningPolicyVersion || "2026-01-11");
@@ -1112,7 +1096,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         const config = { headers: { "x-signing-session-id": signingSessionId } };
 
         if (isPublic) {
-            const res = await signingFilesApi.publicSignFile(
+            const res = await filesApi.publicSignFile(
                 publicToken,
                 {
                     signatureSpotId: spot.SignatureSpotId,
@@ -1125,7 +1109,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             );
             unwrapApi(res);
         } else {
-            const res = await signingFilesApi.signFile(
+            const res = await filesApi.signFile(
                 effectiveSigningFileId,
                 {
                     signatureSpotId: spot.SignatureSpotId,
@@ -1143,6 +1127,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     };
 
     const signCurrentSpotWithValue = async (value, spotOverride = null) => {
+        if (pdfError) return false;
         const spot = spotOverride || currentSpot;
         if (!spot || spot.IsSigned) return false;
 
@@ -1170,7 +1155,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         const config = { headers: { "x-signing-session-id": signingSessionId } };
 
         if (isPublic) {
-            const res = await signingFilesApi.publicSignFile(
+            const res = await filesApi.publicSignFile(
                 publicToken,
                 {
                     signatureSpotId: spot.SignatureSpotId,
@@ -1183,7 +1168,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             );
             unwrapApi(res);
         } else {
-            const res = await signingFilesApi.signFile(
+            const res = await filesApi.signFile(
                 effectiveSigningFileId,
                 {
                     signatureSpotId: spot.SignatureSpotId,
@@ -1207,7 +1192,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             const remainingSigs = unsignedRequired.filter((s) => isSignatureLike(getSpotType(s))).length;
             const remainingFields = unsignedRequired.length - remainingSigs;
             // All signatures done, data fields still open: celebrate, then let them continue.
-            if (remainingSigs === 0) {
+            if (remainingSigs === 0 && spots.some((spot) => isSignatureLike(getSpotType(spot))
+                && isSpotRequired(spot) && isMyActionableSpot(spot))) {
                 if (!signaturesCelebratedRef.current) {
                     signaturesCelebratedRef.current = true;
                     holdSignatureCompleteOverlayRef.current = true;
@@ -1318,8 +1304,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         }
 
         const res = isPublic
-            ? await signingFilesApi.getPublicSigningFileDetails(publicToken)
-            : await signingFilesApi.getSigningFileDetails(effectiveSigningFileId);
+            ? await filesApi.getPublicSigningFileDetails(publicToken)
+            : await filesApi.getSigningFileDetails(effectiveSigningFileId);
         unwrapApi(res);
         const data = res?.data;
         const mergedData = mergeFieldValuesFromCache(data);
@@ -1329,7 +1315,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         // Reconcile with server (quiet if we already advanced optimistically).
         advanceAfterSpotsChange(spots, { quiet: Boolean(optimisticSpotIds) });
         clearCanvas();
-        if (effectiveSigningFileId) {
+        if (effectiveSigningFileId && !documentGroup) {
             try {
                 await loadPdfFromFileKey(effectiveSigningFileId);
             } catch (pdfErr) {
@@ -1581,7 +1567,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const handleClientStampFileSelected = (file) => {
         if (!file) return;
         setClientStampFile(file);
-        const url = URL.createObjectURL(file);
+        const url = currentSpot?.InteractiveLawyerStamp && file.type === 'application/pdf' ? null : URL.createObjectURL(file);
         setClientStampPreview(url);
     };
 
@@ -1600,7 +1586,12 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             const isPdf = clientStampFile.type === 'application/pdf';
             let dataUrl;
             if (isPdf) {
-                dataUrl = await fileToDataUrl(clientStampFile);
+                if (currentSpot?.InteractiveLawyerStamp) {
+                    const { pdfjs } = await import('../../../utils/pdfjsConfig');
+                    dataUrl = await normalizeStampDataUrl(await personalStampPdf(clientStampFile, pdfjs));
+                } else {
+                    dataUrl = await fileToDataUrl(clientStampFile);
+                }
             } else {
                 const rawDataUrl = await fileToDataUrl(clientStampFile);
                 dataUrl = await normalizeStampDataUrl(rawDataUrl);
@@ -1616,7 +1607,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             setHasUserDrawn(false);
         } catch (err) {
             console.error("Failed to process client stamp", err);
-            showAppToast({ type: "error", text: t("signing.canvas.clientStampUploadError") });
+            showAppToast({ type: "error", text: t(err?.message === 'STAMP_PDF_ONE_PAGE'
+                ? 'signing.canvas.personalStampOnePage' : "signing.canvas.clientStampUploadError") });
         } finally {
             setSaving(false);
         }
@@ -1681,7 +1673,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const applySavedSignatureForNext = async (savedItem = null) => {
         try {
-            const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
+            const allSpots = (fileDetails?.signatureSpots || []).filter((s) => !isFixedLawyerStamp(s));
             const unsigned = getUnsignedRequiredSpots(allSpots).filter((s) => getSpotType(s) === 'signature');
             const target = (!currentSpot || currentSpot.IsSigned) ? (unsigned[0] || null) : currentSpot;
             if (!target) return;
@@ -1704,8 +1696,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 dataUrl = await fetchSavedItemDataUrl(savedItem);
             } else if (savedSignature?.exists) {
                 const sigRes = isPublic
-                    ? await signingFilesApi.getPublicSavedSignatureDataUrl(publicToken)
-                    : await signingFilesApi.getSavedSignatureDataUrl();
+                    ? await filesApi.getPublicSavedSignatureDataUrl(publicToken)
+                    : await filesApi.getSavedSignatureDataUrl();
                 unwrapApi(sigRes);
                 const rawDataUrl = sigRes?.data?.dataUrl;
                 dataUrl = await normalizeSignatureDataUrl(rawDataUrl);
@@ -1738,7 +1730,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const applySavedStampForNext = async (savedItem = null) => {
         try {
-            const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
+            const allSpots = (fileDetails?.signatureSpots || []).filter((s) => !isFixedLawyerStamp(s));
             const unsigned = getUnsignedRequiredSpots(allSpots).filter((s) => getSpotType(s) === 'signature');
             const target = (!currentSpot || currentSpot.IsSigned) ? (unsigned[0] || null) : currentSpot;
             if (!target) return;
@@ -1756,8 +1748,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 dataUrl = await fetchSavedItemDataUrl(savedItem);
             } else if (savedStamp?.exists) {
                 const stampRes = isPublic
-                    ? await signingFilesApi.getPublicSavedStampDataUrl(publicToken)
-                    : await signingFilesApi.getSavedStampDataUrl();
+                    ? await filesApi.getPublicSavedStampDataUrl(publicToken)
+                    : await filesApi.getSavedStampDataUrl();
                 unwrapApi(stampRes);
                 const rawDataUrl = stampRes?.data?.dataUrl;
                 dataUrl = await normalizeStampDataUrl(rawDataUrl);
@@ -1789,6 +1781,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     };
 
     const signAllRemainingSpots = async (savedItem = null) => {
+        if (pdfError) return false;
         try {
             if (!consentAccepted) {
                 showAppToast({ type: "warning", text: t("signing.canvas.consentRequired") });
@@ -1798,7 +1791,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 showAppToast({ type: "warning", text: t("signing.canvas.otpRequired") });
                 return false;
             }
-            const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
+            const allSpots = (fileDetails?.signatureSpots || []).filter((s) => !isFixedLawyerStamp(s));
             const unsignedRequired = getUnsignedRequiredSpots(allSpots);
             // Sign-all applies one drawn/saved signature to every remaining
             // signature-like spot this signer can act on (signature + initials).
@@ -1821,8 +1814,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 }
             } else if (savedSignature?.exists) {
                 const sigRes = isPublic
-                    ? await signingFilesApi.getPublicSavedSignatureDataUrl(publicToken)
-                    : await signingFilesApi.getSavedSignatureDataUrl();
+                    ? await filesApi.getPublicSavedSignatureDataUrl(publicToken)
+                    : await filesApi.getSavedSignatureDataUrl();
                 unwrapApi(sigRes);
                 const rawDataUrl = sigRes?.data?.dataUrl;
                 dataUrl = await normalizeSignatureDataUrl(rawDataUrl);
@@ -1853,8 +1846,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                     consentVersion,
                 };
                 const res = isPublic
-                    ? await signingFilesApi.publicSignFileBatch(publicToken, body, config)
-                    : await signingFilesApi.signFileBatch(fileDetails.file.SigningFileId, body, config);
+                    ? await filesApi.publicSignFileBatch(publicToken, body, config)
+                    : await filesApi.signFileBatch(fileDetails.file.SigningFileId, body, config);
                 unwrapApi(res);
             }
 
@@ -1891,8 +1884,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             otpRequestInFlightRef.current = true;
             setOtpBusy(true);
             const res = isPublic
-                ? await signingFilesApi.publicRequestSigningOtp(publicToken, signingSessionId)
-                : await signingFilesApi.requestSigningOtp(effectiveSigningFileId, signingSessionId);
+                ? await filesApi.publicRequestSigningOtp(publicToken, signingSessionId)
+                : await filesApi.requestSigningOtp(effectiveSigningFileId, signingSessionId);
             unwrapApi(res);
             const skipped = Boolean(res?.skipped || res?.data?.skipped);
             const reused = Boolean(res?.reused || res?.data?.reused);
@@ -1933,10 +1926,11 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     // Send the first OTP once the document is ready (never for completed/read-only views).
     useEffect(() => {
         if (!fileDetails || !otpRequired || otpVerified || otpAutoSentRef.current || alreadyComplete) return;
+        if (deferOtpUntilConsent && !consentAccepted) return;
         otpAutoSentRef.current = true;
         requestOtp({ silent: false });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [fileDetails, otpRequired, otpVerified, alreadyComplete]);
+    }, [fileDetails, otpRequired, otpVerified, alreadyComplete, deferOtpUntilConsent, consentAccepted]);
 
     const verifyOtp = async () => {
         try {
@@ -1949,8 +1943,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
             setOtpBusy(true);
             const res = isPublic
-                ? await signingFilesApi.publicVerifySigningOtp(publicToken, otp, signingSessionId)
-                : await signingFilesApi.verifySigningOtp(effectiveSigningFileId, otp, signingSessionId);
+                ? await filesApi.publicVerifySigningOtp(publicToken, otp, signingSessionId)
+                : await filesApi.verifySigningOtp(effectiveSigningFileId, otp, signingSessionId);
             unwrapApi(res);
             const verifiedOk = res?.data?.verified === true || res?.verified === true;
             if (!verifiedOk) {
@@ -1999,15 +1993,16 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     }, [otpCode, otpRequired, otpVerified, otpBusy, saving]);
 
     const rejectFile = async () => {
+        if (documentIssueActions) return documentIssueActions.request("decline", activeDocumentId);
         const reason = prompt(t("signing.canvas.rejectReasonPrompt"));
         if (reason === null) return;
         try {
             setSaving(true);
             if (isPublic) {
-                const res = await signingFilesApi.publicRejectSigning(publicToken, { rejectionReason: reason, signingSessionId });
+                const res = await filesApi.publicRejectSigning(publicToken, { rejectionReason: reason, signingSessionId });
                 unwrapApi(res);
             } else {
-                const res = await signingFilesApi.rejectSigning(effectiveSigningFileId, { rejectionReason: reason, signingSessionId });
+                const res = await filesApi.rejectSigning(effectiveSigningFileId, { rejectionReason: reason, signingSessionId });
                 unwrapApi(res);
             }
             showAppToast({ type: "success", text: t("signing.canvas.documentRejected") });
@@ -2073,39 +2068,17 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         );
     }
 
-    // Sequential signing: show waiting message if not this signer's turn
-    if (fileDetails?.signingOrder === 'sequential' && fileDetails?.isMyTurn === false) {
-        return (
-            <div className="lw-signing-scope">
-                <div className={isScreen ? "lw-signing-screen" : "lw-signing-modal"} onClick={isScreen ? undefined : onClose}>
-                    <div
-                        className={isScreen ? "lw-signing-modalContent lw-signing-screenContent" : "lw-signing-modalContent"}
-                        onClick={isScreen ? undefined : (e) => e.stopPropagation()}
-                    >
-                        <div className="lw-signing-modalHeader">
-                            <h3>{t("signing.canvas.waitingForPreviousSigners")}</h3>
-                            <TertiaryButton className="lw-signing-closeButton" size={buttonSizes.SMALL} onPress={onClose}>
-                                {t("common.close")}
-                            </TertiaryButton>
-                        </div>
-                        <div className="lw-signing-modalBody" style={{ padding: '2rem', textAlign: 'center' }}>
-                            <Text14>{t("signing.canvas.waitingForPreviousSignersDesc")}</Text14>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
+    const waitingForOthers = fileDetails?.signingOrder === 'sequential' && fileDetails?.isMyTurn === false;
     const allSpots = fileDetails.signatureSpots || [];
-    // LawyerStamp spots are pre-signed by the lawyer — hide them from the client view entirely.
+    // Legacy LawyerStamp is already applied by the sender; only explicitly interactive package stamps are fillable.
     // Multi-signer: show everyone's signed spots (so later signers see prior signatures),
     // but only show unsigned spots the current user can actually sign.
     const spots = allSpots.filter((s) => {
-        if (getSpotType(s) === 'lawyerstamp') return false;
+        if (isFixedLawyerStamp(s)) return false;
         if (s?.IsSigned) return true;
         return isMyActionableSpot(s);
     });
+    const visibleSpots = documentGroup ? spots.filter(spot => spot.DocumentId === activeDocumentId) : spots;
     const fileStatus = String(fileDetails?.file?.Status || fileDetails?.file?.status || "").toLowerCase();
     const unsignedRequiredSpotsRaw = getUnsignedRequiredSpots(spots);
     const unsignedOptionalSpotsRaw = getUnsignedOptionalSpots(spots);
@@ -2226,6 +2199,28 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const remainingFieldsForComplete = remainingFieldSpots > 0
         ? remainingFieldSpots
         : optionalRemainingCount;
+    const renderWaitingOverlay = () => {
+        if (!waitingForOthers || showCompletion) return null;
+        return (
+            <div className="lw-signing-completeOverlay" role="dialog" aria-modal="true">
+                <div className="lw-signing-completeCard">
+                    <h2 className="lw-signing-completeTitle">{t("signing.canvas.waitingForPreviousSigners")}</h2>
+                    <p className="lw-signing-completeSubtitle">{t("signing.canvas.waitingForPreviousSignersDesc")}</p>
+                    {(nextDocument || onClose) && (
+                        <div className="lw-signing-completeActions">
+                            {nextDocument && (
+                                <PrimaryButton onPress={nextDocument.onPress}>
+                                    {nextDocument.label || t("signing.canvas.nextDocument")}
+                                </PrimaryButton>
+                            )}
+                            <SecondaryButton onPress={onClose}>{t("common.close")}</SecondaryButton>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
     const renderCompletionOverlay = () => {
         if (!showCompletion) return null;
         const hasMoreFields = remainingFieldsForComplete > 0;
@@ -2242,7 +2237,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                     <p className="lw-signing-completeSubtitle">
                         {hasMoreFields
                             ? t("signing.canvas.signingCompleteFieldsRemainSubtitle", { count: remainingFieldsForComplete })
-                            : t("signing.canvas.signingCompleteSubtitle")}
+                            : (documentGroup?.completionText || t("signing.canvas.signingCompleteSubtitle"))}
                     </p>
                     <div className="lw-signing-completeActions">
                         {hasMoreFields && (
@@ -2250,7 +2245,12 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 {t("signing.canvas.signingCompleteContinueFields")}
                             </PrimaryButton>
                         )}
-                        {hasMoreFields ? (
+                        {!hasMoreFields && nextDocument && (
+                            <PrimaryButton onPress={nextDocument.onPress}>
+                                {nextDocument.label || t("signing.canvas.nextDocument")}
+                            </PrimaryButton>
+                        )}
+                        {hasMoreFields || nextDocument ? (
                             <SecondaryButton onPress={onClose}>
                                 {t("signing.canvas.signingCompleteClose")}
                             </SecondaryButton>
@@ -2286,7 +2286,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     // ─── Shared signing UI (used in side panel for modal, popup for screen) ───
     const renderConsentAndOtp = () => (
         <>
-            {!consentAccepted && showConsentUi && (
+            {completionMarkNotice && <p className="lw-signing-inlineHint">{completionMarkNotice}</p>}
+            {!consentAccepted && (
                 <div className="lw-signing-legalBox">
                     <label className="lw-signing-legalRow">
                         <input
@@ -2296,13 +2297,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 const next = Boolean(e.target.checked);
                                 if (!next) return;
                                 setConsentAccepted(true);
-                                try {
-                                    localStorage.setItem(consentStorageKey, "true");
-                                } catch { /* ignore */ }
                             }}
                             disabled={saving}
                         />
-                        <span>{t("signing.canvas.consentText")}</span>
+                        <span>{documentGroup?.consentText || t("signing.canvas.consentText")}</span>
                     </label>
                 </div>
             )}
@@ -2325,7 +2323,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                             value={otpCode}
                             ref={otpInputRef}
                             onChange={(e) => {
-                                const digits = String(e.target.value || "").replace(/\D/g, "").slice(0, 6);
+                                const digits = String(e.target.value || '').replace(/[\u0660-\u0669\u06F0-\u06F9]/g, digit => String(digit.charCodeAt(0) & 0xF)).replace(/\D/g, '').slice(0, 6);
                                 // Editing clears the failed-code lock so a corrected code can auto-submit.
                                 if (digits !== otpLastFailedRef.current) {
                                     otpLastFailedRef.current = "";
@@ -2465,7 +2463,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                     onPress={async () => { await signAllRemainingSpots(selectedSavedItem); }}
                                     disabled={saving}
                                 >
-                                    {t("signing.canvas.signAll")}
+                                    {documentGroup?.signAllLabel || t("signing.canvas.signAll")}
                                 </SecondaryButton>
                             )}
                         </div>
@@ -2478,12 +2476,12 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 <div className="lw-signing-canvasSection">
                     <div className="lw-signing-fieldInput">
                         <div className="lw-signing-fieldLabel" style={{ fontSize: '0.8rem', opacity: 0.7 }}>
-                            {t("signing.fieldSettings.clientStampUploadHint")}
+                            {t(currentSpotType === 'lawyerstamp' ? 'signing.canvas.personalStampUploadHint' : "signing.fieldSettings.clientStampUploadHint")}
                         </div>
                         {clientStampPreview && (
                             <img
                                 src={clientStampPreview}
-                                alt={t("signing.fields.clientStamp")}
+                                alt={t(currentSpotType === 'lawyerstamp' ? "signing.fields.lawyerStamp" : "signing.fields.clientStamp")}
                                 className="lw-signing-savedSigPreview"
                                 style={{ maxHeight: 120, objectFit: 'contain', margin: '0.5rem 0' }}
                             />
@@ -2571,7 +2569,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             {currentSpot && !currentSpot.IsSigned && currentSignMode === 'clientStamp' && !stampSignPhase && signatureMode === 'savedStamp' && savedStamp.exists && (
                 <div className="lw-signing-canvasSection">
                     <div className="lw-signing-savedSigBox">
-                        <div className="lw-signing-fieldLabel">{t("signing.fieldSettings.clientStampTitle")}</div>
+                        <div className="lw-signing-fieldLabel">{t(currentSpotType === 'lawyerstamp' ? "signing.fields.lawyerStamp" : "signing.fieldSettings.clientStampTitle")}</div>
                         <div className="lw-signing-savedSigPreviewWrap">
                             {savedStamp.url ? (
                                 <img
@@ -2586,7 +2584,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         <div className="lw-signing-actionsRow">
                             <PrimaryButton
                                 size={buttonSizes.SMALL}
-                                onPress={applySavedStampForNext}
+                                onPress={() => applySavedStampForNext()}
                                 disabled={saving || !savedStamp.exists}
                             >
                                 {saving ? t("signing.canvas.saving") : t("signing.canvas.nextStep")}
@@ -2600,14 +2598,14 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             {currentSpot && !currentSpot.IsSigned && currentSignMode === 'clientStamp' && !stampSignPhase && signatureMode !== 'savedStamp' && (
                 <div className="lw-signing-canvasSection">
                     <div className="lw-signing-fieldInput">
-                        <div className="lw-signing-fieldLabel">{t("signing.fieldSettings.clientStampTitle")}</div>
+                        <div className="lw-signing-fieldLabel">{t(currentSpotType === 'lawyerstamp' ? "signing.fields.lawyerStamp" : "signing.fieldSettings.clientStampTitle")}</div>
                         <div className="lw-signing-fieldLabel" style={{ fontSize: '0.8rem', opacity: 0.7 }}>
-                            {t("signing.fieldSettings.clientStampUploadHint")}
+                            {t(currentSpotType === 'lawyerstamp' ? 'signing.canvas.personalStampUploadHint' : "signing.fieldSettings.clientStampUploadHint")}
                         </div>
                         {clientStampPreview && (
                             <img
                                 src={clientStampPreview}
-                                alt={t("signing.fields.clientStamp")}
+                                alt={t(currentSpotType === 'lawyerstamp' ? "signing.fields.lawyerStamp" : "signing.fields.clientStamp")}
                                 className="lw-signing-savedSigPreview"
                                 style={{ maxHeight: 120, objectFit: 'contain', margin: '0.5rem 0' }}
                             />
@@ -2733,25 +2731,25 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         </button>
                     </div>
                     <div className="lw-signing-actionsRow lw-signing-actionsRow--sign">
-                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { await signOnly(); }} disabled={saving}>
+                        {!documentGroup && <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { await signOnly(); }} disabled={saving}>
                             {saving
                                 ? t("signing.canvas.saving")
                                 : (currentSignMode === 'initials'
                                     ? t("signing.canvas.saveInitials")
                                     : t("signing.canvas.signOnly"))}
-                        </PrimaryButton>
+                        </PrimaryButton>}
                         {!isPublic && currentSignMode === 'signature' && (
                             <SecondaryButton size={buttonSizes.MEDIUM} onPress={async () => { await saveSignature(); }} disabled={saving}>
                                 {saving ? t("signing.canvas.saving") : t("signing.canvas.saveSignature")}
                             </SecondaryButton>
                         )}
-                        {currentSignMode === 'signature' && remainingSignatureSpots >= 1 && (
+                        {(documentGroup || currentSignMode === 'signature') && remainingSignatureSpots >= 1 && (
                             <SecondaryButton
                                 size={buttonSizes.MEDIUM}
                                 onPress={async () => { await signAllRemainingSpots(); }}
                                 disabled={saving}
                             >
-                                {t("signing.canvas.signAll")}
+                                {documentGroup?.signAllLabel || t("signing.canvas.signAll")}
                             </SecondaryButton>
                         )}
                     </div>
@@ -2792,7 +2790,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const renderSpotPopup = () => {
         // Never keep the pad open over the finish / optional overlays.
-        if (!showSpotPopup || !currentSpot || showCompletion || showOptionalRemaining || isDocumentLocked) {
+        if (!showSpotPopup || !currentSpot || showCompletion || showOptionalRemaining || isDocumentLocked || pdfError
+            || (documentGroup && (!pdfReady || pdfError || currentSpot.DocumentId !== activeDocumentId))) {
             return null;
         }
         const spotType = getSpotType(currentSpot);
@@ -2813,6 +2812,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         </TertiaryButton>
                     </div>
                     <div className="lw-signing-popupBody">
+                        {documentGroup && <p className="lw-signing-inlineHint">{documentGroup.documents.find(item => item.id === activeDocumentId)?.name}</p>}
+                        {multiDocumentAction && <SecondaryButton onPress={openDocumentGroup} disabled={saving}>{multiDocumentAction.label}</SecondaryButton>}
                         {!isDocumentLocked && renderConsentAndOtp()}
                         {!isDocumentLocked && renderSigningControls()}
                     </div>
@@ -2841,7 +2842,27 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 <div className="lw-signing-screen">
                     <div className="lw-signing-modalContent lw-signing-screenContent">
                         <SimpleContainer className="lw-signing-screenBody">
+                            {!!signingContext?.byDocument?.[activeDocumentId || signingContext.documentId]?.length && <div className="lw-signingTaskIssue__notice" dir={signingContext.direction}>
+                                {signingContext.byDocument[activeDocumentId || signingContext.documentId].map(text => <p key={text}>{text}</p>)}
+                            </div>}
+                            {documentGroup && (
+                                <label className="lw-signing-documentPicker">
+                                    <span>{t('signingV2.public.group.document', { count: documentGroup.documents.length })}</span>
+                                    <select value={activeDocumentId || ''} disabled={saving} onChange={event => {
+                                        setShowSpotPopup(false);
+                                        setCurrentSpot(null);
+                                        showGroupDocument(event.target.value);
+                                    }}>
+                                        {documentGroup.documents.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+                                    </select>
+                                </label>
+                            )}
+                            {documentIssueActions?.resolutions?.[activeDocumentId || documentIssueActions.documentId] && <div className="lw-signingTaskIssue__notice" role="status" dir={documentIssueActions.direction}>
+                                <strong>{t('signingV2.issue.resolution')}</strong>
+                                <p className="lw-signingTaskIssue__note">{documentIssueActions.resolutions[activeDocumentId || documentIssueActions.documentId]}</p>
+                            </div>}
                             <div className="lw-signing-floatingBar">
+                                {multiDocumentAction && <SecondaryButton size={buttonSizes.SMALL} onPress={openDocumentGroup} disabled={saving}>{multiDocumentAction.label}</SecondaryButton>}
                                 <div className="lw-signing-progressHint">
                                     {remainingHintText}
                                 </div>
@@ -2854,7 +2875,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                         {nextSpotButtonLabel}
                                     </PrimaryButton>
                                 )}
-                                {!allSpotsSignedByUser && (
+                                {!isDocumentLocked && !allSpotsSignedByUser && (
                                     <TertiaryButton
                                         size={buttonSizes.SMALL}
                                         onPress={rejectFile}
@@ -2865,27 +2886,35 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                         {t("signing.canvas.rejectDocument")}
                                     </TertiaryButton>
                                 )}
+                                {documentIssueActions && !isDocumentLocked && !allSpotsSignedByUser && <SecondaryButton size={buttonSizes.SMALL}
+                                    onPress={() => documentIssueActions.request('clarify', activeDocumentId)} disabled={saving}>
+                                    {t('signingV2.issue.clarifyButton')}</SecondaryButton>}
                                 <SecondaryButton size={buttonSizes.SMALL} onPress={onClose} disabled={saving}>
                                     {t("common.close")}
                                 </SecondaryButton>
                             </div>
 
                             <SimpleContainer className="lw-signing-pdfContainer" ref={pdfScrollRef}>
-                                {pdfFile && fileDetails.file?.FileKey ? (
+                                {pdfFile && (fileDetails.file?.FileKey || loadPublicPdf) ? (
                                     <PdfViewer
                                         pdfFile={pdfFile}
-                                        spots={spots}
+                                        spots={visibleSpots}
                                         signers={[{ UserId: fileDetails.file.ClientId, Name: t("signing.canvas.you") }]}
-                                        onSelectSpot={handleSpotSelect}
+                                        onSelectSpot={index => handleSpotSelect(spots.indexOf(visibleSpots[index]))}
                                         onUpdateSpot={undefined}
                                         onRemoveSpot={undefined}
                                         onAddSpotForPage={undefined}
                                         showAddSpotButtons={false}
                                         selectedSpotId={currentSpot?.SignatureSpotId || currentSpot?.signatureSpotId || null}
                                         onPageChange={setViewedPage}
-                                        onDocumentReady={() => setPdfReady(true)}
+                                        onDocumentReady={success => { setPdfReady(true); setPdfError(success === false); }}
                                         suppressLoadingUI
                                     />
+                                ) : pdfError ? (
+                                    <div className="lw-signing-pdfLoading lw-signing-pdfLoadError" role="alert">
+                                        <Text14>{t('signing.pdf.loadError')}</Text14>
+                                        <SecondaryButton onPress={() => { setPdfReady(false); loadPdfFromFileKey(effectiveSigningFileId); }}>{t('common.retry')}</SecondaryButton>
+                                    </div>
                                 ) : null}
                             </SimpleContainer>
 
@@ -2926,6 +2955,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                     </div>
                 )}
 
+                {renderWaitingOverlay()}
                 {renderCompletionOverlay()}
             </div>
         );
@@ -2942,7 +2972,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
                     <SimpleContainer className="lw-signing-modalBody">
                         <SimpleContainer className="lw-signing-pdfContainer" ref={pdfScrollRef}>
-                            {pdfFile && fileDetails.file?.FileKey ? (
+                            {pdfFile && (fileDetails.file?.FileKey || loadPublicPdf) ? (
                                 <PdfViewer
                                     pdfFile={pdfFile}
                                     spots={spots}
@@ -2954,6 +2984,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                     showAddSpotButtons={false}
                                     selectedSpotId={currentSpot?.SignatureSpotId || currentSpot?.signatureSpotId || null}
                                     onPageChange={setViewedPage}
+                                    onDocumentReady={success => { setPdfReady(true); setPdfError(success === false); }}
                                 />
                             ) : (
                                 <SimpleContainer className="lw-signing-pdfLoading">
@@ -3049,6 +3080,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                     </SimpleContainer>
 
                     <SimpleContainer className="lw-signing-modalFooter">
+                                {documentIssueActions && !isDocumentLocked && !allSpotsSignedByUser && <SecondaryButton size={buttonSizes.SMALL}
+                                    onPress={() => documentIssueActions.request('clarify', activeDocumentId)} disabled={saving}>
+                                    {t('signingV2.issue.clarifyButton')}</SecondaryButton>}
+
                         {!isDocumentLocked && !allSpotsSignedByUser && (
                             <TertiaryButton
                                 size={buttonSizes.SMALL}
@@ -3097,6 +3132,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 </div>
             )}
 
+            {renderWaitingOverlay()}
             {renderCompletionOverlay()}
         </div>
     );

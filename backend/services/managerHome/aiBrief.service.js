@@ -136,7 +136,10 @@ async function defaultBriefLlmCall(messages) {
 async function isAiBriefEnabled({ getSettingFn } = {}) {
     const getSetting = getSettingFn || require('../settingsService').getSetting;
     const flag = await getSetting('managerHome', 'MANAGER_HOME_AI_INSIGHTS_ENABLED', false);
-    return Boolean(flag) && hasBriefLlmCredentials();
+    // Legacy rows and environment fallbacks may contain the string "false".
+    const enabled = flag === true || flag === 1
+        || ['true', '1'].includes(String(flag ?? '').trim().toLowerCase());
+    return enabled && hasBriefLlmCredentials();
 }
 
 async function resolveIncludeManagerWorkload(userId, isPlatformAdminFn) {
@@ -232,6 +235,10 @@ function buildFactsSnapshot(payload, { now = new Date(), includeManagerWorkload 
         contextNow,
         managerName: payload?.greeting?.managerName || null,
         insights,
+        businessPerformance: Object.fromEntries(['today', 'week', 'month'].flatMap(period => {
+            const value = payload?.teamActivity?.periods?.[period];
+            return value ? [[period, { casesOpened: value.casesOpened, casesClosed: value.casesClosed }]] : [];
+        })),
         summary: {
             urgentCount: summary.urgentCount || 0,
             needsAttentionCount: summary.needsAttentionCount || 0,
@@ -293,50 +300,39 @@ function filterManagerWorkloadBriefContent(lines, managerNames = []) {
     });
 }
 
-function buildPrompt(facts, { includeManagerWorkload = true } = {}) {
-    const workloadRules = includeManagerWorkload
-        ? [
-            'השתמש ב-insights לזיהוי סיכונים (signingPressure, workloadHotspots, inactivityBurden, focusAreas).',
-            'לגבי עומס מנהלים: השתמש בשדה attentionSummaryHe — הסבר שמתוך X תיקים פתוחים, Y מסומנים כדורשים טיפול.',
-        ]
-        : [
-            'השתמש ב-insights לזיהוי סיכונים (signingPressure, inactivityBurden, focusAreas) — ללא workloadHotspots.',
-            'אל תציין עומס של עורכי דין אחרים, אל תשווה בין מנהלים, ואל תמליץ על חלוקת תיקים מחדש.',
-            'התמקד בחתימות, תיקים, פגישות ותור התשומת לב — לא בניהול עומס צוות.',
-        ];
-
+function buildPrompt(facts) {
+    // Advice needs aggregate operating facts, not names, alert severity or calendar contents.
+    const businessFacts = {
+        periods: facts.businessPerformance,
+        portfolio: {
+            openCases: facts.insights?.inactivityBurden?.openCases,
+            unassignedCases: facts.summary?.unassignedCases,
+            inactiveCases: facts.summary?.noActivityCases,
+        },
+        signing: {
+            pending: facts.summary?.signingPending,
+            expiredLinks: facts.summary?.signingExpired,
+            expiringLinks: facts.summary?.signingExpiring,
+            declined: facts.summary?.signingRejected,
+        },
+    };
     return [
-        {
-            role: 'system',
-            content: [
-                'אתה אנalist תפעולי למשרד עורכי דין.',
-                'קיבלת JSON עם נתונים תפעוליים בלבד מהמערכת, כולל שדה insights עם ניתוח מובנה.',
-                'כתוב 4-6 משפטים קצרים בעברית לסיכום תפעולי למנהל/ת המשרד.',
-                'בנוסף, הוסף recommendations: 2-3 פעולות מומלצות קצרות בצורת פקודה (למשל "טפלו ב-X חתימות שפג תוקפן").',
-                'חובה: השתמש רק בנתונים שסופקו. אל תמציא מספרים, שמות תיקים, מועדים או מסקנות.',
-                ...workloadRules,
-                'לגבי תור תשומת לב: summary.attentionQueueCount הוא מספר הפריטים שמוצג בכרטיס "פריטים לטיפול" בלוח הבקרה.',
-                'summary.noActivityCases הוא תת-קבוצה בתוך התור — תיקים ללא פעילות משמעותית, לא סכום נפרד.',
-                'כשאתה מציין תיקים ללא פעילות, ציין במפורש שמדובר מתוך attentionQueueCount (למשל: "מתוך 275 פריטים שדורשים טיפול, 133 הם תיקים ללא פעילות").',
-                'אל תציג את noActivityCases כאילו הוא מחליף את attentionQueueCount — אלו מדדים שונים.',
-                'אל תשתמש במונחים "יחס תשומת לב", "attention ratio" או "attentionRatio" — ניסוח לא מובן למשתמש.',
-                'שדה contextNow מציין את השעה הנוכחית בישראל — התייחס אליו לקביעת מה קרוב, מה עבר, ומה רלוונטי עכשיו.',
-                'לפגישות: השתמש רק ב-today.upcomingEvents ו-upcomingClientMeetings לפגישות תפעוליות. אל תציין פגישות מ-today.pastCount כאילו הן עדיין מתוכננות.',
-                'אל תציין חופשות, חגים, או אירועי יומן פנימיים (leave/holiday/reminder) כפגישות — הם לא מופיעים בנתונים התפעוליים.',
-                'אל תמציא פגישות עתידיות שלא מופיעות ב-upcomingEvents או upcomingClientMeetings.',
-                'אם contextNow.period הוא evening או night — אל תדבר על פגישות שכבר עברו היום; התמקד בחתימות, תיקים, ועומס מנהלים.',
-                'אל תפתח בברכה, אל תכתוב "בוקר טוב", "ערב טוב", "לילה טוב" ואל תפנה בשם.',
-                'התחל ישר בתוכן התפעולי (מה דורש תשומת לב עכשיו).',
-                'אם אין נושאים דחופים — ציין זאת בקצרה.',
-                'טון: מקצועי, רגוע, ממוקד פעולה.',
-                'כתוב בעברית בלבד. ב-topAttention השתמש ב-signalLabel — אל תעתיק signalType באנגלית (למשל RSVP).',
-                'החזר JSON בלבד בפורמט: {"lines":["משפט 1","משפט 2"],"recommendations":["פעולה 1","פעולה 2"]}',
-            ].join('\n'),
-        },
-        {
-            role: 'user',
-            content: JSON.stringify(facts, null, 2),
-        },
+        { role: 'system', content: [
+            'אתה יועץ עסקי למשרד עורכי דין. המטרה היא החלטה עסקית קטנה ושימושית, לא רשימת התראות או הוראות עבודה.',
+            'בחר 2-3 תובנות מהנתונים המצורפים. לכל תובנה מבנה: נתון קונקרטי, ואז משמעות עסקית אפשרית שמנוסחת בזהירות.',
+            'אם קיימים נתוני month או week, הקדש את התובנה הראשונה ליחס בין תיקים שנפתחו ונסגרו בתקופה אחת. month מתחילת החודש, week מיום ראשון, today מחצות בישראל; כולן עד עכשיו.',
+            'היחס בין פתיחות וסגירות עשוי להצדיק בדיקת קיבולת או תכנון עבודה. הוא אינו הוכחה לצמיחה, ליעילות, לגיוס לקוחות או לרווחיות; מורכבות התיקים ומשך הטיפול אינם ידועים.',
+            'חתימה ממתינה יכולה להעיד על חיכוך בתהליך השירות, אך לא מוכיחה עיכוב בטיפול. expiredLinks הוא תוקף קישור חתימה טכני — אינו מועד משפטי או סיכון קריטי. אין צורך להתריע עליו שוב.',
+            'תיקים ללא מנהל יכולים להצדיק בירור אחריות. אין די נתונים כדי להמליץ לגייס עובדים או להגדיל כוח אדם.',
+            'אין נתוני הכנסות, הוצאות, שכר טרחה, רווחים, זמני טיפול או השוואה לתקופה קודמת. אסור להמציא סכומים, אחוזי צמיחה, מגמות, תחזיות או קביעות על עומס אישי.',
+            'כל מסקנה מעבר למספרים היא אפשרות לבדיקה: השתמש בניסוחים כגון עשוי, כדאי לבחון, שווה לבדוק. שמור על ניסוח טבעי וקצר.',
+            'כתוב 1-2 המלצות בשדה recommendations: ניסוי קטן או בדיקה ניהולית, ומה למדוד כדי לבדוק שיפור. הצע; אל תפקוד.',
+            'אל תכתוב סיכון קריטי, טיפול מיידי, בהקדם האפשרי, טפלו, יש לטפל, נדרש או דחוף. אין נזיפות, סיסמאות, השוואות בין עובדים או ייעוץ משפטי.',
+            'אל תמציא נתונים, גם במילים. השתמש בספרות כדי שהמספרים יהיו ניתנים לבדיקה. אל תחשב מספרים נגזרים שלא סופקו.',
+            'אם חסרים נתונים להסקה, אמור זאת בקצרה בתוך התובנה הרלוונטית. אל תמלא מקום בתובנות כלליות.',
+            'עברית בלבד, ללא ברכה וללא שמות. החזר JSON בלבד: {"lines":["נתון ומשמעות אפשרית"],"recommendations":["צעד מוצע ואופן מדידה"]}.',
+        ].join('\n') },
+        { role: 'user', content: JSON.stringify(businessFacts, null, 2) },
     ];
 }
 
@@ -427,6 +423,7 @@ function collectFactNumbers(facts) {
         facts.summary?.signingExpired,
         facts.summary?.signingExpiring,
         facts.summary?.signingPending,
+        facts.summary?.signingRejected,
         facts.today?.count,
         facts.today?.potentialClientCount,
         facts.today?.upcomingCount,
@@ -438,8 +435,17 @@ function collectFactNumbers(facts) {
         facts.insights?.dayMomentum?.casesOpenedToday,
         facts.insights?.dayMomentum?.casesClosedToday,
         facts.insights?.urgentBreakdown?.total,
+        facts.insights?.inactivityBurden?.ratioPercent,
+        facts.insights?.inactivityBurden?.openCases,
+        facts.insights?.signingPressure?.totalRisk,
+        ...Object.values(facts.insights?.urgentBreakdown?.bySignalType || {}),
+        ...(facts.insights?.focusAreas || []).map(item => item.count),
+        ...(facts.insights?.workloadHotspots || []).map(item => item.attentionRatio),
+        ...(facts.topAttention || []).map(item => item.reasonParams?.days),
+        ...Object.values(facts.businessPerformance || {}).flatMap(period => [period.casesOpened, period.casesClosed]),
+        ...(facts.workload || []).flatMap(item => [item.activeCases, item.needsAttention, item.urgentCases]),
     ]
-        .filter((n) => n != null && Number(n) > 0)
+        .filter((n) => n != null && Number(n) >= 0)
         .map(String);
 }
 
@@ -457,7 +463,12 @@ function collectFactNames(facts) {
 }
 
 function lineMatchesFacts(line, facts) {
+    if (/סיכון קריטי|טיפול מיידי|בהקדם האפשרי|גיוס כוח אדם/.test(line)) return false;
     const numbers = collectFactNumbers(facts);
+    // A topic keyword alone must not allow fabricated figures through.
+    const mentionedNumbers = String(line).match(/\d+(?:[.,]\d+)*/g) || [];
+    if (mentionedNumbers.some(number => !numbers.includes(number.replace(/,/g, '')))) return false;
+    if (/[₪$€]|\d\s*(?:שקל|ש״ח|דולר)/.test(line)) return false;
     const { caseNames, managerNames } = collectFactNames(facts);
 
     if (numbers.some((n) => line.includes(n))) return true;
@@ -485,7 +496,7 @@ function lineMatchesFacts(line, facts) {
 
 function validateLinesAgainstFacts(lines, facts) {
     if (!Array.isArray(lines) || lines.length === 0) return false;
-    return lines.some((line) => lineMatchesFacts(line, facts));
+    return lines.every((line) => lineMatchesFacts(line, facts));
 }
 
 function validateRecommendationsAgainstFacts(recommendations, facts) {
@@ -514,7 +525,7 @@ async function generateAiMorningBrief({
     const fingerprint = factsFingerprint(facts);
     const timeBucket = aiBriefTimeBucket(facts.contextNow);
     const scope = includeManagerWorkload ? 'full' : 'firm';
-    const cacheKey = `managerHomeAiBrief:${userId || 'admin'}:${scope}:${fingerprint}:${timeBucket}`;
+    const cacheKey = `managerHomeAiBrief:business-v2:${require('../../lib/tenant/databaseScope').cacheKey()}:${userId || 'admin'}:${scope}:${fingerprint}:${timeBucket}`;
 
     const cached = cache.get(cacheKey);
     if (cached !== undefined) return cached;

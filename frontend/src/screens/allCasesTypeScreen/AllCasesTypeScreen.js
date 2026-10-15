@@ -17,6 +17,7 @@ import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import AllCasesTypeCard from "./components/AllCasesTypeCard";
 import { useTranslation } from "react-i18next";
+import { useFirmPermissions } from "../../providers/FirmPermissionsProvider";
 
 
 import "./AllCasesTypeScreen.scss";
@@ -25,6 +26,8 @@ export const AllCasesTypeScreenName = "/AllCasesType";
 
 export default function AllCasesTypeScreen() {
     const { t } = useTranslation();
+    const { canAction } = useFirmPermissions() || { canAction: () => true };
+    const canManageCaseTypes = canAction("caseTypes", "manage");
     const { openPopup, closePopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
     const [selectedStageCount, setSelectedStageCount] = useState(null);
@@ -109,6 +112,7 @@ export default function AllCasesTypeScreen() {
                 />
             </SimpleScrollView>
 
+            {canManageCaseTypes && (
             <SimpleContainer className="lw-allCasesTypeScreen__footer">
                 <PrimaryButton
                     onPress={() =>
@@ -125,6 +129,7 @@ export default function AllCasesTypeScreen() {
                     {t('cases.addCaseType')}
                 </PrimaryButton>
             </SimpleContainer>
+            )}
         </SimpleScreen>
     );
 }

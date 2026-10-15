@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import { getTenantLogoUrl } from '../../../lib/tenantBranding';
+import { useFirmPermissions } from "../../../providers/FirmPermissionsProvider";
+import React, { useState, useRef, useId } from "react";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { images } from "../../../assets/images/images";
 import SimpleButton from "../../simpleComponents/SimpleButton";
 import SideBarMenuItem from "../navBarItems/SideBarMenuItem";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { usePopup } from "../../../providers/PopUpProvider";
 import { getNavBarData } from "../data/NavBarData";
 import ImageButton from "../../specializedComponents/buttons/ImageButton";
@@ -23,32 +25,53 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, chosenNavKey, 
     const { t } = useTranslation();
 
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const menuButtonRef = useRef(null);
+    const drawerId = useId();
 
     const navigate = useNavigate();
+    const location = useLocation();
 
     const { openPopup, closePopup } = usePopup();
 
-    const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup, isFromApp, t);
+    const firmPerms = useFirmPermissions();
+    const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup, isFromApp, t, isClient ? null : firmPerms);
 
-    // Determine which nav item is active — prefer navKey, fall back to chosenIndex
+    const routeMatchesPath = (item, pathname) => {
+        if (!item.routeMatch) return false;
+        const matches = Array.isArray(item.routeMatch) ? item.routeMatch : [item.routeMatch];
+        return matches.some((route) => pathname.includes(route));
+    };
+
+    // The open page wins. A screen that forgot to pass chosenNavKey still highlights.
+    const pathMatch = NavBarLinks.reduce((best, item) => {
+        if (!routeMatchesPath(item, location.pathname)) return best;
+        const routes = Array.isArray(item.routeMatch) ? item.routeMatch : [item.routeMatch];
+        const length = Math.max(...routes.filter((route) => location.pathname.includes(route)).map((route) => route.length));
+        if (!best || length > best.length) return { item, length };
+        return best;
+    }, null);
+
     const isActiveItem = (item, index) => {
+        if (pathMatch) return pathMatch.item === item;
         if (chosenNavKey && item.navKey) return item.navKey === chosenNavKey;
         return chosenIndex >= 0 && index === chosenIndex;
     };
 
     const toggleDrawer = () => {
-        setIsDrawerOpen(!isDrawerOpen);
+        setIsDrawerOpen((open) => !open);
     };
 
     return (
         <>
             <SimpleContainer className="lw-topToolBarSmallScreen">
                 <ImageButton
-                    src={Logo}
+                    src={getTenantLogoUrl() || Logo}
+                    aria-label="מעבר למסך הבית"
+                    alt=""
                     className="lw-topToolBarSmallScreen__logoButton"
                     onPress={() => { navigate(LogoNavigate) }}
                 />
-                <SimpleButton onPress={toggleDrawer} className="lw-topToolBarSmallScreen__menuButton">
+                <SimpleButton onPress={toggleDrawer} ref={menuButtonRef} aria-label={isDrawerOpen ? 'סגירת תפריט' : 'פתיחת תפריט'} aria-expanded={isDrawerOpen} aria-controls={drawerId} className="lw-topToolBarSmallScreen__menuButton">
                     <SimpleContainer
                         className={[
                             'lw-topToolBarSmallScreen__icon',
@@ -70,6 +93,17 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, chosenNavKey, 
             />
 
             <SimpleContainer
+                id={drawerId}
+                role="navigation"
+                aria-label="ניווט ראשי"
+                aria-hidden={!isDrawerOpen}
+                inert={!isDrawerOpen ? '' : undefined}
+                onKeyDown={(event) => {
+                    if (event.key === 'Escape') {
+                        setIsDrawerOpen(false);
+                        menuButtonRef.current?.focus();
+                    }
+                }}
                 className={[
                     'lw-topToolBarSmallScreen__sidebar',
                     isDrawerOpen ? 'lw-topToolBarSmallScreen__sidebar--open' : null,
@@ -111,6 +145,10 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, chosenNavKey, 
                             className="lw-topToolBarSmallScreen__logoutButton"
                             onPress={() => {
                                 localStorage.removeItem("token");
+                                localStorage.removeItem("refreshToken");
+                                localStorage.removeItem("role");
+                                localStorage.removeItem("isPlatformAdmin");
+                                window.dispatchEvent(new Event("lw-auth-changed"));
                                 navigate('/');
                             }}
                         >

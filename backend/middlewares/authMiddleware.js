@@ -3,25 +3,21 @@ require("dotenv").config();
 const { consume } = require("../utils/rateLimiter");
 const { createAppError } = require('../utils/appError');
 const { getHebrewMessage } = require('../utils/errors.he');
+const attachFirmPermissions = require('./attachFirmPermissions');
+const { applyLegacyOfficeRole } = require('../lib/officeRole');
+const { runWithTenant } = require('../lib/tenant/tenantContext');
+const { requireBillingAccess } = require('./requireBillingAccess');
+const dbScope = require('../lib/tenant/databaseScope');
+const { getTenantById } = require('../lib/tenant/tenantService');
 
-// JWT secret — MUST be set in production; fail fast if missing.
 const SECRET_KEY = process.env.JWT_SECRET;
 if (!SECRET_KEY) {
     throw new Error('FATAL: JWT_SECRET environment variable is not set. Refusing to start.');
 }
 
-/**
- * Express middleware to authenticate a user via a JWT from the request header.
- * If authentication is successful, the user's data is attached to the request object.
- * @param {object} req - The Express request object.
- * @param {object} res - The Express response object.
- * @param {function} next - The next middleware function.
- */
-const authMiddleware = (req, res, next) => {
-    // Extract the token from the "Authorization" header
+function verifyJwt(req, res, next) {
     const token = req.headers.authorization?.split(" ")[1];
 
-    // If no token is provided, return a 401 Unauthorized response
     if (!token) {
         console.warn(
             JSON.stringify({
@@ -35,17 +31,14 @@ const authMiddleware = (req, res, next) => {
     }
 
     try {
-        // Verify and decode the JWT using the secret key
         const decoded = jwt.verify(token, SECRET_KEY, { algorithms: ['HS256'] });
 
-        // Attach the decoded user data to the request object for use in subsequent middleware and route handlers
         req.user = {
             UserId: decoded.userid,
             Role: decoded.role,
             PhoneNumber: decoded.phoneNumber
         };
 
-        // Backend Phase: anti-flood (per-user)
         const windowMs = Number.parseInt(process.env.RATE_LIMIT_USER_WINDOW_MS || String(5 * 60 * 1000), 10);
         const max = Number.parseInt(process.env.RATE_LIMIT_USER_MAX || '600', 10);
 
@@ -64,15 +57,6 @@ const authMiddleware = (req, res, next) => {
             res.setHeader('X-RateLimit-Reset', String(Math.ceil(rl.resetMs / 1000)));
             res.setHeader('Retry-After', String(retryAfterSeconds));
 
-            console.warn(
-                JSON.stringify({
-                    event: 'rate_limit_block',
-                    limiter: 'user',
-                    method: req.method,
-                    path: req.originalUrl || req.url,
-                })
-            );
-
             return next(
                 createAppError(
                     'RATE_LIMITED',
@@ -85,10 +69,8 @@ const authMiddleware = (req, res, next) => {
             );
         }
 
-        // Pass control to the next handler in the middleware chain
-        next();
+        return next();
     } catch (error) {
-        // If token verification fails (e.g., invalid or expired token), return a 401 Unauthorized response
         console.warn(
             JSON.stringify({
                 event: 'auth_invalid_token',
@@ -99,6 +81,40 @@ const authMiddleware = (req, res, next) => {
 
         return next(createAppError('UNAUTHORIZED', 401, getHebrewMessage('UNAUTHORIZED')));
     }
+}
+
+/** JWT verification + DB-backed firm permissions (role users only). */
+const authMiddleware = (req, res, next) => {
+    verifyJwt(req, res, (jwtErr) => {
+        if (jwtErr) {
+            if (jwtErr?.__firmPermissionBlocked) return next(jwtErr);
+            return next(jwtErr);
+        }
+        attachFirmPermissions(req, res, async (permErr) => {
+            if (permErr) return next(permErr);
+            applyLegacyOfficeRole(req);
+            if (dbScope.enabled()) {
+                try {
+                    if (!req.firmTenantId) return dbScope.withLegacyOffice(() => requireBillingAccess(req, res, next));
+                    const tenant = await getTenantById(req.firmTenantId);
+                    if (!tenant?.isActive) return next(createAppError('FORBIDDEN', 403, getHebrewMessage('FORBIDDEN')));
+                    req.tenant = tenant;
+                    req.tenantSlug = tenant.slug;
+                    req.isOfficeOwner = Number(tenant.ownerUserId) === Number(req.user.UserId) && req.user.Role === 'Admin';
+                    return runWithTenant(tenant, () => requireBillingAccess(req, res, next));
+                } catch (error) { return next(error); }
+            }
+            // The current DB identity is authoritative even when no tenant header
+            // was sent. A header cannot bypass the owning firm's billing gate.
+            if (req.firmTenantId && String(req.tenant?.id || '') !== String(req.firmTenantId)) {
+                return runWithTenant({ id: req.firmTenantId }, () => requireBillingAccess(req, res, next));
+            }
+            return next();
+        });
+    });
 };
+
+authMiddleware.verifyJwt = verifyJwt;
+authMiddleware.attachFirmPermissions = attachFirmPermissions;
 
 module.exports = authMiddleware;

@@ -79,8 +79,8 @@
   </script>
 
 
-  <!-- Soft-open: WhatsApp/in-app browsers skip Universal Links, so /s/* must try the app scheme.
-       Never send signing traffic to the App Store. -->
+  <!-- Public signing must work without an installed app. The OS may handle
+       verified Universal/App Links; the page must not force a custom scheme. -->
   <script>
     (function () {
       var path = window.location.pathname || '';
@@ -119,17 +119,10 @@
         } catch (e) { }
       }
 
-      // Public signing: try app scheme first on mobile, then continue in the browser (1A).
+      // An unsupported app scheme can interrupt SMS links in mobile browsers.
+      // Keep public signing in this browser, including its token and query string.
       var isSigningPath = path.indexOf('/PublicSign') === 0 || path.indexOf('/s/') === 0;
-      if (isSigningPath) {
-        var signingTarget = APP_SCHEME + ':/' + path + search;
-        var signingTargetAlt = APP_SCHEME_ALT + ':/' + path + search;
-        tryScheme(signingTarget);
-        setTimeout(function () {
-          if (!document.hidden) tryScheme(signingTargetAlt);
-        }, 400);
-        return;
-      }
+      if (isSigningPath) return;
 
       // Other public/client flows stay in the browser — no soft-open to the native app.
       var publicPaths = [

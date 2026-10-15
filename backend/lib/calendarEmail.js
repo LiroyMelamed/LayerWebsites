@@ -242,7 +242,8 @@ async function composeCalendarEmail(templateKey, ev, opts = {}) {
     const subject = replaceCalendarPlaceholders(
         dbTemplate.subject_template || defaultSubject,
         fields
-    ).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() || defaultSubject;
+    ).replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&amp;/g, '&')
+        .replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() || defaultSubject;
 
     let htmlBody = replaceCalendarPlaceholders(dbTemplate.html_body, fields);
     htmlBody = polishCalendarEmailHtml(htmlBody, {

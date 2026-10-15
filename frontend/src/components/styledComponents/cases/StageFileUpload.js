@@ -1,3 +1,4 @@
+import { useFirmPermissions } from "../../../providers/FirmPermissionsProvider";
 import React, { useState, useRef, useCallback } from "react";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import SimpleButton from "../../simpleComponents/SimpleButton";
@@ -14,6 +15,8 @@ import "./StageFileUpload.scss";
 
 export default function StageFileUpload({ caseId, stage, isClient, stageFiles = [], onFilesChanged }) {
     const { t } = useTranslation();
+    const firmPerms = useFirmPermissions();
+    const canEdit = !isClient && Boolean(firmPerms?.canAction("cases", "edit"));
     const { openPopup, closePopup } = usePopup();
     const fileInputRef = useRef(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -25,7 +28,7 @@ export default function StageFileUpload({ caseId, stage, isClient, stageFiles = 
 
     const handleFileSelected = useCallback(async (event) => {
         const file = event?.target?.files?.[0];
-        if (!file || !caseId || !stage) return;
+        if (!canEdit || !file || !caseId || !stage) return;
 
         setIsUploading(true);
         try {
@@ -56,7 +59,7 @@ export default function StageFileUpload({ caseId, stage, isClient, stageFiles = 
             // Reset input so the same file can be re-selected
             if (fileInputRef.current) fileInputRef.current.value = "";
         }
-    }, [caseId, stage, onFilesChanged]);
+    }, [canEdit, caseId, stage, onFilesChanged]);
 
     const performDelete = useCallback(async (fileId) => {
         setIsDeletingId(fileId);
@@ -122,7 +125,7 @@ export default function StageFileUpload({ caseId, stage, isClient, stageFiles = 
 
     const files = Array.isArray(stageFiles) ? stageFiles.filter(f => f.stage === stage) : [];
 
-    if (files.length === 0 && isClient) return null;
+    if (files.length === 0 && !canEdit) return null;
 
     return (
         <SimpleContainer className="lw-stageFileUpload">
@@ -138,7 +141,7 @@ export default function StageFileUpload({ caseId, stage, isClient, stageFiles = 
                                     📎 {f.file_name}
                                 </Text12>
                             </SimpleButton>
-                            {!isClient && (
+                            {canEdit && (
                                 <SimpleButton
                                     className="lw-stageFileUpload__deleteBtn"
                                     onPress={() => handleDelete(f.id)}
@@ -155,7 +158,7 @@ export default function StageFileUpload({ caseId, stage, isClient, stageFiles = 
                 </SimpleContainer>
             )}
 
-            {!isClient && (
+            {canEdit && (
                 <SimpleContainer className="lw-stageFileUpload__uploadRow">
                     <input
                         ref={fileInputRef}

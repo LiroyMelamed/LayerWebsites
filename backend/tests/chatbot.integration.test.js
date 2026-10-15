@@ -1,3 +1,4 @@
+process.env.AI_CHATBOT_ENABLED = 'true';
 /**
  * Integration tests for AI Chatbot feature.
  *

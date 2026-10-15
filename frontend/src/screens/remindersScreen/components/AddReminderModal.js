@@ -2,7 +2,6 @@ import React, { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import remindersApi from "../../../api/remindersApi";
 import {
-    formatDateTimeForInput,
     parseDateTimeInput,
     toNativeDateValue,
     normalizeTemplateDateFields,
@@ -13,11 +12,11 @@ import SimpleInput from "../../../components/simpleComponents/SimpleInput";
 import SimpleTextArea from "../../../components/simpleComponents/SimpleTextArea";
 import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
 import Skeleton from "../../../components/simpleComponents/Skeleton";
-import SimpleCard from "../../../components/simpleComponents/SimpleCard";
+
 import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
 import ChooseButton from "../../../components/styledComponents/buttons/ChooseButton";
-import { Text24, Text14, TextBold14 } from "../../../components/specializedComponents/text/AllTextKindFile";
+import { Text24, Text14 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import { toastError, toastSuccess } from "../../../components/ui/toast";
 import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
 import useHttpRequest from "../../../hooks/useHttpRequest";

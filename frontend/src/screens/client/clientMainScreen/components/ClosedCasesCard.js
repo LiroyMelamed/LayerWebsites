@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { images } from "../../../../assets/images/images";
 import SimpleCard from "../../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../../components/simpleComponents/SimpleContainer";
@@ -11,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 
 import './ClosedCasesCard.scss';
 
-export default function ClosedCasesCard({ closedCases, reperformAfterSave, style: _style, className, isPerforming }) {
+export default function ClosedCasesCard({ closedCases, reperformAfterSave, style: _style, className, isPerforming, initialOpenCaseId }) {
     const { t } = useTranslation();
 
     if (isPerforming) {
@@ -49,12 +50,12 @@ export default function ClosedCasesCard({ closedCases, reperformAfterSave, style
 
             <SimpleContainer className="lw-closedCasesCard__list">
                 {closedCases.map((item, index) => (
-                    <>
+                    <Fragment key={item.CaseId}>
                         {index !== 0 && <Separator />}
 
                         <CaseMenuItem
-                            key={`case${index}`}
                             fullCase={item}
+                            defaultOpen={initialOpenCaseId != null && String(item.CaseId) === String(initialOpenCaseId)}
                             rightTitle={item.CaseName}
 
                             leftPreFirstLine={t('cases.caseType')}
@@ -69,7 +70,7 @@ export default function ClosedCasesCard({ closedCases, reperformAfterSave, style
                             openData={getOpenDataClient(closedCases, index, t)}
                             isClient={true}
                         />
-                    </>
+                    </Fragment>
 
                 ))}
             </SimpleContainer>

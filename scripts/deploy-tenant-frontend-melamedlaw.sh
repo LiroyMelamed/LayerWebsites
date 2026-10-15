@@ -6,6 +6,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 FTP_ENV="$ROOT/frontend/.env.ftp.local"
+node "$ROOT/scripts/check-signing-release.cjs"
 
 if [[ ! -f "$FTP_ENV" ]]; then
   echo "Missing $FTP_ENV" >&2

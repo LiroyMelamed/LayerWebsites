@@ -3,7 +3,7 @@ import "../../../../utils/pdfjsConfig";
 import { Document, Page } from "react-pdf";
 import SimpleContainer from "../../../simpleComponents/SimpleContainer";
 import SimpleLoader from "../../../simpleComponents/SimpleLoader";
-import SecondaryButton from "../../../styledComponents/buttons/SecondaryButton";
+import StatusNotice from "../../../ui/StatusNotice";
 import SignatureSpotsLayer from "../signatureSpots/SignatureSpotsLayer";
 import { useTranslation } from "react-i18next";
 import { SPOT_BASE_WIDTH, spotSpaceScale } from "../../../../utils/signingSpotGeometry";
@@ -208,7 +208,7 @@ export default function PdfViewer({
 
     const handleDocumentError = (err) => {
         console.error("PdfViewer Document load error:", err);
-        if (typeof onDocumentReady === "function") onDocumentReady();
+        if (typeof onDocumentReady === "function") onDocumentReady(false);
     };
 
     const retryDocument = () => {
@@ -338,12 +338,9 @@ export default function PdfViewer({
                         )
                 }
                 error={
-                    <div className="lw-signing-pdfLoading lw-signing-pdfLoadError" role="alert">
-                        <span>{t("signing.pdf.loadError")}</span>
-                        <SecondaryButton onPress={retryDocument}>
-                            {t("common.retry")}
-                        </SecondaryButton>
-                    </div>
+                    <StatusNotice embedded onAction={retryDocument} actionLabel={t("common.retry")}>
+                        <p>{t("signing.pdf.loadError")}</p>
+                    </StatusNotice>
                 }
                 onLoadSuccess={(pdf) => {
                     setNumPages(pdf.numPages || 0);
@@ -351,7 +348,7 @@ export default function PdfViewer({
                     requestAnimationFrame(() => {
                         requestAnimationFrame(measureContainerWidth);
                     });
-                    if (typeof onDocumentReady === "function") onDocumentReady();
+                    if (typeof onDocumentReady === "function") onDocumentReady(true);
                 }}
                 onLoadError={handleDocumentError}
                 onSourceError={handleDocumentError}
