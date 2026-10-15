@@ -16,7 +16,7 @@ const allowlistSet = parseAllowlist();
 
 module.exports = async function requirePlatformAdmin(req, _res, next) {
     const userId = Number(req.user?.UserId);
-    const role = req.user?.Role;
+    const role = req.user?.ProfessionalRole || req.user?.Role;
 
     if (!Number.isFinite(userId) || userId <= 0) {
         return next(createAppError('UNAUTHORIZED', 401, getHebrewMessage('AUTH_REQUIRED')));

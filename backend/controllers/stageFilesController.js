@@ -1,9 +1,39 @@
 const pool = require("../config/db");
+const { assertCaseRecordAccess } = require("../lib/firmPermissions/caseAccess");
 const { requireInt } = require("../utils/paramValidation");
 const { GetObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { r2, BUCKET } = require("../utils/r2");
 const { invalidateOperationalDashboardCaches } = require("../utils/operationalDashboardCache");
+
+/** GET /api/Files/client-files — metadata for this client's linked cases. */
+exports.getClientFiles = async (req, res) => {
+    res.set('Cache-Control', 'private, no-store');
+    if (!req.user?.UserId) return res.status(401).json({ errorCode: 'UNAUTHORIZED' });
+    if (!['User', 'Client'].includes(req.user.Role) || req.firmPermissionMode === 'role' ||
+        req.firmPermissionMode === 'platform_admin') {
+        return res.status(403).json({ errorCode: 'FORBIDDEN' });
+    }
+    try {
+        const { clientTenantId } = require('../lib/clientSigningReadiness');
+        const tenantId = clientTenantId(req);
+        const result = await pool.query(
+            `SELECT sf.id, sf.caseid, sf.stage, sf.file_name, sf.file_ext,
+                    sf.file_mime, sf.file_size, sf.created_at, c.casename AS "CaseName"
+             FROM stage_files sf
+             JOIN cases c ON c.caseid = sf.caseid
+             WHERE EXISTS (SELECT 1 FROM case_users cu WHERE cu.caseid = c.caseid AND cu.userid = $1)
+               AND (to_jsonb(c)->>'law_firm_tenant_id') IS NOT DISTINCT FROM $2::text
+             ORDER BY sf.created_at DESC, sf.id DESC`,
+            [req.user.UserId, tenantId],
+        );
+        return res.json(result.rows);
+    } catch (err) {
+        if (err.errorCode === 'FORBIDDEN') return res.status(403).json({ errorCode: 'FORBIDDEN' });
+        console.error('getClientFiles error:', err);
+        return res.status(500).json({ message: 'שגיאה בשליפת קבצי הלקוח', errorCode: 'INTERNAL_ERROR' });
+    }
+};
 
 /**
  * GET /api/Files/stage-files/:caseId
@@ -16,18 +46,12 @@ exports.getStageFiles = async (req, res) => {
     if (caseId === null) return;
 
     try {
-        const userId = req.user.UserId;
-        const role = req.user.Role;
-
-        // For non-admin users, verify they are linked to this case
-        if (role !== "Admin") {
-            const link = await pool.query(
-                "SELECT 1 FROM case_users WHERE caseid = $1 AND userid = $2 LIMIT 1",
-                [caseId, userId]
-            );
-            if (link.rowCount === 0) {
-                return res.status(403).json({ message: "אין הרשאה" });
-            }
+        const accessErr = await assertCaseRecordAccess(req, caseId, 'view');
+        if (accessErr) {
+            return res.status(accessErr.httpStatus || 403).json({
+                message: accessErr.message,
+                errorCode: accessErr.errorCode,
+            });
         }
 
         const result = await pool.query(
@@ -68,7 +92,14 @@ exports.addStageFile = async (req, res) => {
     try {
         const userId = req.user.UserId;
 
-        // Verify case exists
+        const addAccessErr = await assertCaseRecordAccess(req, caseId, 'edit');
+        if (addAccessErr) {
+            return res.status(addAccessErr.httpStatus || 403).json({
+                message: addAccessErr.message,
+                errorCode: addAccessErr.errorCode,
+            });
+        }
+
         const caseRes = await pool.query("SELECT caseid FROM cases WHERE caseid = $1", [caseId]);
         if (caseRes.rowCount === 0) {
             return res.status(404).json({ message: "תיק לא נמצא" });
@@ -99,13 +130,26 @@ exports.deleteStageFile = async (req, res) => {
     if (fileId === null) return;
 
     try {
+        const fileRow = await pool.query(
+            "SELECT caseid FROM stage_files WHERE id = $1",
+            [fileId]
+        );
+        if (fileRow.rowCount === 0) {
+            return res.status(404).json({ message: "קובץ שלב לא נמצא" });
+        }
+        const delCaseId = fileRow.rows[0].caseid;
+        const delAccessErr = await assertCaseRecordAccess(req, delCaseId, 'edit');
+        if (delAccessErr) {
+            return res.status(delAccessErr.httpStatus || 403).json({
+                message: delAccessErr.message,
+                errorCode: delAccessErr.errorCode,
+            });
+        }
+
         const result = await pool.query(
             "DELETE FROM stage_files WHERE id = $1 RETURNING id",
             [fileId]
         );
-        if (result.rowCount === 0) {
-            return res.status(404).json({ message: "קובץ שלב לא נמצא" });
-        }
         invalidateOperationalDashboardCaches();
         return res.json({ message: "נמחק", id: fileId });
     } catch (err) {
@@ -124,9 +168,6 @@ exports.readStageFile = async (req, res) => {
     if (fileId === null) return;
 
     try {
-        const userId = req.user.UserId;
-        const role = req.user.Role;
-
         const fileRes = await pool.query(
             "SELECT sf.file_key, sf.file_name, sf.caseid FROM stage_files sf WHERE sf.id = $1",
             [fileId]
@@ -137,15 +178,12 @@ exports.readStageFile = async (req, res) => {
 
         const { file_key, file_name, caseid } = fileRes.rows[0];
 
-        // For non-admin users, verify case access
-        if (role !== "Admin") {
-            const link = await pool.query(
-                "SELECT 1 FROM case_users WHERE caseid = $1 AND userid = $2 LIMIT 1",
-                [caseid, userId]
-            );
-            if (link.rowCount === 0) {
-                return res.status(403).json({ message: "אין הרשאה" });
-            }
+        const readAccessErr = await assertCaseRecordAccess(req, caseid, 'view');
+        if (readAccessErr) {
+            return res.status(readAccessErr.httpStatus || 403).json({
+                message: readAccessErr.message,
+                errorCode: readAccessErr.errorCode,
+            });
         }
 
         const cmd = new GetObjectCommand({

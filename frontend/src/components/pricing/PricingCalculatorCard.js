@@ -21,7 +21,7 @@ import "./PricingCalculatorCard.scss";
 function formatMoney(amount) {
     const n = Number(amount);
     const safe = Number.isFinite(n) ? n : 0;
-    return `${safe} ${PRICING_CONFIG.currency}`;
+    return `${safe.toLocaleString("he-IL", { useGrouping: true, maximumFractionDigits: 2 })} ${PRICING_CONFIG.currency}`;
 }
 
 // Single source of truth for the resource storage label (matches DB storage_mb_quota).
@@ -121,13 +121,16 @@ export default function PricingCalculatorCard({
     const [signingId, setSigningId] = useState(value?.signingId || defaults.signingId);
     const [billingInterval, setBillingInterval] = useState(value?.billingInterval || defaults.billingInterval || "monthly");
 
+    const controlledPlatformId = value?.platformId;
+    const controlledResourceId = value?.resourceId;
+    const controlledSigningId = value?.signingId;
+    const controlledBillingInterval = value?.billingInterval;
     useEffect(() => {
-        if (!value) return;
-        if (value.platformId) setPlatformId(value.platformId);
-        if (value.resourceId) setResourceId(value.resourceId);
-        if (value.signingId) setSigningId(value.signingId);
-        if (value.billingInterval) setBillingInterval(value.billingInterval);
-    }, [value?.platformId, value?.resourceId, value?.signingId, value?.billingInterval]);
+        if (controlledPlatformId) setPlatformId(controlledPlatformId);
+        if (controlledResourceId) setResourceId(controlledResourceId);
+        if (controlledSigningId) setSigningId(controlledSigningId);
+        if (controlledBillingInterval) setBillingInterval(controlledBillingInterval);
+    }, [controlledPlatformId, controlledResourceId, controlledSigningId, controlledBillingInterval]);
 
     const emit = (next) => {
         onChange?.(next);

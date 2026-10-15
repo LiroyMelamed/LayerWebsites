@@ -1,3 +1,7 @@
+import ClientSigningFlow from '../../signingScreen/templates/ClientSigningFlow';
+import { useSigningV2Available } from '../../signingScreen/templates/SigningPackagesHub';
+import { useFirmPermissions } from '../../../providers/FirmPermissionsProvider';
+import TertiaryButton from '../../../components/styledComponents/buttons/TertiaryButton';
 import { forwardRef } from "react";
 import { images } from "../../../assets/images/images";
 import SimpleCard from "../../../components/simpleComponents/SimpleCard";
@@ -18,9 +22,12 @@ import ListPageTitle from "../../../components/specializedComponents/text/ListPa
 import "./ClientsCard.scss";
 import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
 
-const ClientsCard = forwardRef(({ rePerformRequest, customerList, style: _style, isPerforming, hideButtons }, ref) => {
+const ClientsCard = forwardRef(({ rePerformRequest, customerList, style: _style, isPerforming, hideButtons, allowEdit = true, allowDelete: _allowDelete = true }, ref) => {
     const { openPopup, closePopup } = usePopup();
     const { t } = useTranslation();
+    const { canAction } = useFirmPermissions() || { canAction: () => false };
+    const signingAvailable = useSigningV2Available();
+    const canSend = signingAvailable && canAction('clients', 'view') && canAction('signing', 'upload');
 
     if (isPerforming) {
         return (
@@ -97,7 +104,13 @@ const ClientsCard = forwardRef(({ rePerformRequest, customerList, style: _style,
                             clientPhone={customer.phonenumber}
                             closePopUpFunction={closePopup}
                             rePerformRequest={rePerformRequest}
+                            allowEdit={allowEdit}
                         />
+                        {canSend && (customer.UserId || customer.userid) && <TertiaryButton className="lw-clientsCard__signing"
+                            aria-label={t('signingV2.compose.clientContext.sendNamed', { name: customer.name })}
+                            onPress={() => openPopup(<ClientSigningFlow clientId={customer.UserId || customer.userid} onBack={closePopup} />)}>
+                            {t('signingV2.compose.clientContext.send')}
+                        </TertiaryButton>}
                     </SimpleContainer>
 
                 ))}

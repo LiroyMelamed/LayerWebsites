@@ -5,6 +5,7 @@ const { verifyAndConsumeCentralHandoff } = require('../utils/centralHandoff');
 const { isMultiTenantMode } = require('../lib/tenant/tenantContext');
 const { listTenantsWithStats } = require('../lib/tenant/tenantService');
 const firmBilling = require('../lib/billing/firmBillingService');
+const platformBilling = require('../lib/billing/platformBilling');
 
 const router = express.Router();
 
@@ -290,19 +291,9 @@ router.get('/billing/summary', async (req, res) => {
   if (!requireCentralService(req, res)) return;
   try {
     const snap = await firmBilling.getBillingSnapshot();
-    sendJson(res, null, {
-      mrrCents: Math.round(Number(snap?.package?.total || 0) * 100),
-      billingStatus: snap?.status || 'unknown',
-      plan: snap?.package ? `${snap.package.platformId}/${snap.package.resourceId}` : 'manual',
-      complimentaryUntil: snap?.complimentaryUntil || null,
-    });
-  } catch (err) {
-    sendJson(res, 200, {
-      mrrCents: 0,
-      billingStatus: 'none',
-      plan: 'manual/off-platform',
-      error: err?.message,
-    });
+    sendJson(res, null, platformBilling.summary(snap));
+  } catch {
+    sendJson(res, 503, { error: 'BILLING_UNAVAILABLE' });
   }
 });
 
@@ -311,9 +302,9 @@ router.get('/billing/payments', async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 25, 100);
     const payments = await firmBilling.listPaymentHistory(limit);
-    sendJson(res, null, { payments });
-  } catch (err) {
-    sendJson(res, 200, { payments: [], error: err?.message });
+    sendJson(res, null, { payments: platformBilling.payments(payments) });
+  } catch {
+    sendJson(res, 503, { error: 'BILLING_UNAVAILABLE' });
   }
 });
 
