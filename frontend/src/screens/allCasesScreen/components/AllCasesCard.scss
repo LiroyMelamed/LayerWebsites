@@ -1,0 +1,16 @@
+@use '../../../styles/variables' as v;
+
+.lw-allCasesCard {
+    flex-direction: column;
+}
+
+.lw-allCasesCard__list {
+    flex-direction: column;
+    // gap: v.$space-4;
+    margin-top: v.$space-4;
+}
+
+.lw-allCasesCard__item {
+    flex-direction: column;
+    min-inline-size: 0;
+}
