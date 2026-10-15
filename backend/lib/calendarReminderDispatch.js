@@ -1,0 +1,149 @@
+/**
+ * Multi-channel dispatch for calendar event reminders.
+ */
+
+const pool = require('../config/db');
+const sendAndStoreNotification = require('../utils/sendAndStoreNotification');
+const { sendMessage } = require('../utils/sendMessage');
+const { sendTransactionalCustomHtmlEmail } = require('../utils/smooveEmailCampaignService');
+const { formatPhoneNumber } = require('../utils/phoneUtils');
+const { parseStoredChannels } = require('./calendarEventReminders');
+const { composeCalendarEmail } = require('./calendarEmail');
+
+const NOTIFICATION_TYPE = 'CALENDAR_REMINDER';
+
+async function _getUserContact(userId) {
+    if (!userId) return null;
+    const { rows } = await pool.query(
+        `SELECT userid, name, email, phonenumber FROM users WHERE userid = $1`,
+        [userId]
+    );
+    if (!rows.length) return null;
+    const r = rows[0];
+    return {
+        userId: r.userid,
+        name: r.name || '',
+        email: String(r.email || '').trim(),
+        phone: String(r.phonenumber || '').trim(),
+    };
+}
+
+/**
+ * Send a reminder to one recipient on the channels the lawyer picked on
+ * the event itself. The platform notification_channel_config gate is
+ * intentionally bypassed: when the lawyer makes an explicit per-event
+ * channel choice, that choice wins (otherwise an admin toggle could
+ * silently swallow notifications the lawyer expected to send).
+ */
+async function dispatchCalendarReminder({
+    userId = null,
+    email = null,
+    phone = null,
+    eventChannels,
+    eventType = null,
+    recipientRole = null,
+    title,
+    body,
+    payload = {},
+    emailHtml = null,
+    emailSubject = null,
+    emailTemplateKey = null,
+    emailEvent = null,
+    emailOpts = null,
+}) {
+    const selected = parseStoredChannels(eventChannels);
+    // General "תזכורת" events: push OK. Appointments/hearings: lawyers may use push;
+    // clients stay on SMS/email unless push was explicitly chosen and they have a userId.
+    if (eventType && eventType !== 'reminder' && recipientRole === 'client') {
+        // Prefer SMS/email for clients on meetings; keep push only if user has app token path.
+        // Do not force-off — channel choice wins when userId present.
+    }
+    // Previously push was forced off for all non-reminder types, which blocked
+    // lawyer notifications on events without a client.
+
+    let resolvedEmail = String(email || '').trim();
+    let resolvedPhone = String(phone || '').trim();
+
+    if (userId && (!resolvedEmail || !resolvedPhone)) {
+        const contact = await _getUserContact(userId);
+        if (contact) {
+            if (!resolvedEmail) resolvedEmail = contact.email;
+            if (!resolvedPhone) resolvedPhone = contact.phone;
+        }
+    }
+
+    const wantPush = selected.push && userId;
+    const wantSms = selected.sms && resolvedPhone;
+    const wantEmail = selected.email && resolvedEmail;
+
+    const tasks = [];
+
+    if (wantPush) {
+        tasks.push(
+            sendAndStoreNotification(userId, title, body, payload).catch((err) => {
+                console.error(`[calendar-reminders] push failed userId=${userId}:`, err.message);
+                throw err;
+            })
+        );
+    } else if (userId && title && body && (wantSms || wantEmail)) {
+        tasks.push(
+            sendAndStoreNotification(userId, title, body, payload, { sendPush: false }).catch(() => { })
+        );
+    }
+
+    if (wantSms) {
+        tasks.push(
+            (async () => {
+                const formatted = formatPhoneNumber(resolvedPhone);
+                if (!formatted) throw new Error('invalid_phone');
+                await sendMessage(body, formatted);
+            })()
+        );
+    }
+
+    if (wantEmail) {
+        tasks.push(
+            (async () => {
+                let subject = emailSubject || title;
+                let htmlBody = emailHtml;
+                if (!htmlBody && emailTemplateKey && emailEvent) {
+                    const contact = userId ? await _getUserContact(userId) : null;
+                    const composed = await composeCalendarEmail(emailTemplateKey, emailEvent, {
+                        recipientName: emailOpts?.recipientName || contact?.name || '',
+                        clientsNames: emailOpts?.clientsNames,
+                        whenLabel: emailOpts?.whenLabel,
+                        bodyText: emailOpts?.bodyText || body,
+                    });
+                    subject = composed.subject || subject;
+                    htmlBody = composed.htmlBody;
+                }
+                if (!htmlBody) {
+                    htmlBody = `<div dir="rtl" style="font-family:Arial,sans-serif">${String(body || '').replace(/\n/g, '<br>')}</div>`;
+                }
+                const r = await sendTransactionalCustomHtmlEmail({
+                    toEmail: resolvedEmail,
+                    subject,
+                    htmlBody,
+                    logLabel: emailTemplateKey || 'CALENDAR_REMINDER',
+                });
+                if (!r?.ok) throw new Error(r?.errorCode || 'email_failed');
+            })()
+        );
+    }
+
+    if (!tasks.length) return { sent: false, reason: 'no_channels_or_contact' };
+
+    const results = await Promise.allSettled(tasks);
+    const anySent = results.some((r) => r.status === 'fulfilled');
+    if (!anySent) {
+        const firstErr = results.find((r) => r.status === 'rejected');
+        console.error('[calendar-reminders] all channels failed:', firstErr?.reason?.message || firstErr?.reason);
+        return { sent: false, reason: 'all_channels_failed' };
+    }
+    return { sent: true, channels: { push: wantPush, sms: wantSms, email: wantEmail } };
+}
+
+module.exports = {
+    NOTIFICATION_TYPE,
+    dispatchCalendarReminder,
+};

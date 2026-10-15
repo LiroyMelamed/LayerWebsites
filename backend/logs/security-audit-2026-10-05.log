@@ -1,0 +1,14 @@
+{"timestamp":"2026-10-05T21:16:01.072Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***4567","userId":99,"success":true}
+{"timestamp":"2026-10-05T21:16:01.104Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***4567","userId":99,"success":true}
+{"timestamp":"2026-10-05T21:17:08.528Z","level":"INFO","type":"CHATBOT_OTP_REQUEST","phone":"***7755","ip":"::ffff:127.0.0.1","success":true}
+{"timestamp":"2026-10-05T21:17:08.534Z","level":"INFO","type":"CHATBOT_OTP_REQUEST","phone":"***7755","ip":"::ffff:127.0.0.1","success":true}
+{"timestamp":"2026-10-05T21:17:08.537Z","level":"WARN","type":"CHATBOT_OTP_VERIFY_FAIL","phone":"***7755","ip":"::ffff:127.0.0.1","success":false}
+{"timestamp":"2026-10-05T21:17:08.538Z","level":"WARN","type":"CHATBOT_OTP_VERIFY_FAIL","phone":"***7755","ip":"::ffff:127.0.0.1","success":false}
+{"timestamp":"2026-10-05T21:17:08.541Z","level":"INFO","type":"CHATBOT_OTP_VERIFY_SUCCESS","phone":"***7755","userId":252,"ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":3}}
+{"timestamp":"2026-10-05T21:17:08.543Z","level":"WARN","type":"CHATBOT_OTP_VERIFY_FAIL","phone":"***7755","ip":"::ffff:127.0.0.1","success":false}
+{"timestamp":"2026-10-05T21:17:08.547Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***7755","ip":"::ffff:127.0.0.1","success":false}
+{"timestamp":"2026-10-05T21:17:08.552Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***7755","ip":"::ffff:127.0.0.1","success":false}
+{"timestamp":"2026-10-05T21:17:08.560Z","level":"INFO","type":"CHATBOT_OTP_REQUEST","phone":"***7755","ip":"::ffff:127.0.0.1","success":true}
+{"timestamp":"2026-10-05T21:17:08.565Z","level":"INFO","type":"CHATBOT_OTP_REQUEST","phone":"***7755","ip":"::ffff:127.0.0.1","success":true}
+{"timestamp":"2026-10-05T21:17:08.566Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***7755","ip":"::ffff:127.0.0.1","success":false}
+{"timestamp":"2026-10-05T21:17:08.569Z","level":"INFO","type":"CHATBOT_OTP_VERIFY_SUCCESS","phone":"***7755","userId":252,"ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":4}}

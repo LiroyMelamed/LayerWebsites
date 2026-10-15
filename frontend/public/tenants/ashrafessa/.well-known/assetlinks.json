@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.melamedia.ashrafessa",
+      "sha256_cert_fingerprints": [
+        "E9:C8:35:10:AC:3C:D5:CA:06:A8:ED:41:6C:DA:E2:48:F0:F4:4B:C4:FB:8C:C0:BE:D8:9B:3A:BC:27:74:9B:76"
+      ]
+    }
+  }
+]
