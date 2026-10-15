@@ -1,6 +1,6 @@
 import { getTenantLogoUrl } from '../../../lib/tenantBranding';
 import { useFirmPermissions } from "../../../providers/FirmPermissionsProvider";
-import React, { useState } from "react";
+import React, { useState, useRef, useId } from "react";
 import { useBillingLock } from "../../../providers/BillingLockProvider";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { images } from "../../../assets/images/images";
@@ -26,6 +26,8 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, chosenNavKey, 
     const { t } = useTranslation();
 
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const menuButtonRef = useRef(null);
+    const drawerId = useId();
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -66,10 +68,12 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, chosenNavKey, 
             <SimpleContainer className="lw-topToolBarSmallScreen">
                 <ImageButton
                     src={getTenantLogoUrl() || Logo}
+                    aria-label="מעבר למסך הבית"
+                    alt=""
                     className="lw-topToolBarSmallScreen__logoButton"
                     onPress={() => { navigate(LogoNavigate) }}
                 />
-                <SimpleButton onPress={toggleDrawer} className="lw-topToolBarSmallScreen__menuButton">
+                <SimpleButton onPress={toggleDrawer} ref={menuButtonRef} aria-label={isDrawerOpen ? 'סגירת תפריט' : 'פתיחת תפריט'} aria-expanded={isDrawerOpen} aria-controls={drawerId} className="lw-topToolBarSmallScreen__menuButton">
                     <SimpleContainer
                         className={[
                             'lw-topToolBarSmallScreen__icon',
@@ -91,6 +95,17 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, chosenNavKey, 
             />
 
             <SimpleContainer
+                id={drawerId}
+                role="navigation"
+                aria-label="ניווט ראשי"
+                aria-hidden={!isDrawerOpen}
+                inert={!isDrawerOpen ? '' : undefined}
+                onKeyDown={(event) => {
+                    if (event.key === 'Escape') {
+                        setIsDrawerOpen(false);
+                        menuButtonRef.current?.focus();
+                    }
+                }}
                 className={[
                     'lw-topToolBarSmallScreen__sidebar',
                     isDrawerOpen ? 'lw-topToolBarSmallScreen__sidebar--open' : null,

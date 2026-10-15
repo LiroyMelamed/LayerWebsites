@@ -107,6 +107,9 @@ export default function CaseMenuItem({
             <SimpleContainer className="lw-caseMenuItem__header" onPress={() => setIsOpen(!isOpen)}>
                 <ImageButton
                     src={icons.Button.DownArrow}
+                    aria-label={`${isOpen ? 'סגירת פרטי התיק' : 'פתיחת פרטי התיק'}: ${rightTitle || fullCase.CaseName || ''}`}
+                    aria-expanded={isOpen}
+                    alt=""
                     className={
                         "lw-caseMenuItem__toggle" + (isOpen ? " is-open" : "")
                     }
