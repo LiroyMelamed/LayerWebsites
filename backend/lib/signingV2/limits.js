@@ -1,0 +1,20 @@
+// Submission budgets are server-side admission rules, independent of the UI.
+module.exports = Object.freeze({
+    packages: 200,
+    documentsPerPackage: 10,
+    totalDocuments: 2000,
+    participationsPerPackage: 8,
+    fieldsPerDocument: 150,
+    dataKeys: 150,
+    stages: 8,
+    sourceBytesPerDocument: 20 * 1024 * 1024,
+    sourcePagesPerDocument: 500,
+    uniqueSourceBytes: 200 * 1024 * 1024,
+    snapshotBytes: 8 * 1024 * 1024,
+    outputPages: 50000,
+    outputBytes: 2 * 1024 * 1024 * 1024,
+    manifestTasks: 200,
+    selectionSeconds: 600,
+    sessionSeconds: 1800,
+    grantSeconds: 7 * 24 * 3600,
+});

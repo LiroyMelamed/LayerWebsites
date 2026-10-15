@@ -1,0 +1,84 @@
+@use '../../styles/variables' as v;
+@use '../../styles/mixins' as m;
+
+.lw-simpleTable {
+  --lw-simpleTable-cellMin: 7.5rem;
+  --lw-simpleTable-cellPaddingBlock: #{v.$space-2};
+  --lw-simpleTable-cellPaddingInline: #{v.$space-3};
+  --lw-simpleTable-rowGap: 0;
+
+  max-width: 100%;
+  min-width: 0;
+  max-height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-direction: column;
+}
+
+@media (max-width: v.$bp-md) {
+  .lw-simpleTable {
+    --lw-simpleTable-cellMin: 5rem;
+    --lw-simpleTable-cellPaddingInline: #{v.$space-2};
+  }
+}
+
+.lw-simpleTable__titleRow {
+  @include m.row(v.$space-2);
+  width: 100%;
+  min-width: 100%;
+  width: max-content;
+  border-block-end: 0.0625rem solid var(--lw-color-disabled);
+}
+
+.lw-simpleTable__row {
+  @include m.row(var(--lw-simpleTable-rowGap));
+  width: 100%;
+  min-width: 100%;
+  width: max-content;
+  border-block-end: 0.0625rem solid var(--lw-color-secondary-highlighted);
+  background-color: var(--lw-color-transparent);
+}
+
+.lw-simpleTable__row:hover {
+  background-color: var(--lw-color-secondary-highlighted);
+}
+
+.lw-simpleTable__row:focus-within {
+  outline: 0.125rem solid var(--lw-color-primary);
+  outline-offset: -0.125rem;
+}
+
+.lw-simpleTable__cell {
+  flex: 1;
+  padding-block: var(--lw-simpleTable-cellPaddingBlock);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: start;
+  font-variant-numeric: tabular-nums;
+}
+
+.lw-simpleTable__cell--header {
+  font-weight: 600;
+}
+
+.lw-simpleTable__cellText {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.lw-simpleTable__body {
+  display: flex;
+  flex-direction: column;
+}
+
+.lw-simpleTable__state {
+  padding: v.$space-6;
+}
+
+.lw-simpleTable__noData {
+  text-align: center;
+  color: var(--lw-color-winter);
+}

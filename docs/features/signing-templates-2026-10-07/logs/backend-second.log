@@ -1,0 +1,17 @@
+/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/signing-templates-qa/isolate.cjs:13
+const OriginalPool=pg.Pool;pg.Pool=class extends OriginalPool { constructor(opts) { assert.equal(opts.host,'127.0.0.1');assert.equal(String(opts.port),'55442');assert.equal(opts.database,'legal_e2e_qa');super(opts); } };
+                                                 ^
+
+TypeError: Class extends value undefined is not a constructor or null
+    at Object.<anonymous> (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/signing-templates-qa/isolate.cjs:13:50)
+    at Module._compile (node:internal/modules/cjs/loader:1812:14)
+    at Object..js (node:internal/modules/cjs/loader:1943:10)
+    at Module.load (node:internal/modules/cjs/loader:1533:32)
+    at Module._load (node:internal/modules/cjs/loader:1335:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.require (node:internal/modules/cjs/loader:1556:12)
+    at node:internal/modules/cjs/loader:2104:12
+    at loadPreloadModules (node:internal/process/pre_execution:698:5)
+    at initializeModuleLoaders (node:internal/process/pre_execution:238:5)
+
+Node.js v24.14.0
