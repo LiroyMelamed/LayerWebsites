@@ -1,0 +1,26 @@
+.lw-doughnutChart {
+  position: relative;
+}
+
+.lw-doughnutChart__centerText {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+
+  text-align: center;
+  flex-direction: column;
+  pointer-events: none;
+  max-width: 90%;
+}
+
+.lw-doughnutChart__mainText {
+  display: flex;
+  justify-content: center;
+}
+
+.lw-doughnutChart__subText {
+  color: var(--lw-color-text);
+  text-align: center;
+}
