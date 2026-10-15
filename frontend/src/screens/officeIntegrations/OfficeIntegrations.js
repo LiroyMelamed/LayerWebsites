@@ -8,6 +8,7 @@ export default function OfficeIntegrations({ embedded = false }) {
     const { t } = useTranslation();
     const tr = key => t(`officeIntegrations.${key}`);
     const [offices, setOffices] = useState([]), [officeId, setOfficeId] = useState('');
+    const [context, setContext] = useState(null);
     const [data, setData] = useState(null), [busy, setBusy] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState('');
     const [court, setCourt] = useState({ enabled: false, label: '', dailySyncEnabled: true, syncTime: '08:00' });
     const [whatsapp, setWhatsapp] = useState({ enabled: false, mode: 'demo', recipients: '', includeCaseManager: false, templateName: '', templateLanguage: 'he', templateParameters: '' });
@@ -27,7 +28,7 @@ export default function OfficeIntegrations({ embedded = false }) {
     }, []);
     useEffect(() => {
         let mounted = true;
-        api.offices().then(result => { if (mounted) { setOffices(result.offices); setOfficeId(result.offices[0]?.id || ''); } }).catch(e => { if (mounted) setError(e.message); }).finally(() => { if (mounted) setOfficesLoaded(true); });
+        api.offices().then(result => { if (mounted) { setContext(result.context || null); setOffices(result.offices); setOfficeId(result.offices[0]?.id || ''); } }).catch(e => { if (mounted) setError(e.message); }).finally(() => { if (mounted) setOfficesLoaded(true); });
         return () => { mounted = false; generation.current += 1; cancelSignup.current?.(); };
     }, []);
     useEffect(() => {
@@ -73,6 +74,11 @@ export default function OfficeIntegrations({ embedded = false }) {
     const formatSyncDate = value => value ? new Date(value).toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }) : tr('notScheduled');
     return <section className={`office-integrations ${embedded ? 'oi-embedded' : ''}`} dir="rtl">
         <header><h1>{tr('title')}</h1><p>{tr('intro')}</p></header>
+        {context && <div className="oi-context" aria-label={tr('projectContext')}>
+            <dl><div><dt>{tr('organization')}</dt><dd><bdi>{context.organization.name}</bdi></dd></div>
+                <div><dt>{tr('project')}</dt><dd><bdi>{context.project.name}</bdi> · {tr('legalProduct')}</dd></div></dl>
+            {context.demoOnly && <span className="oi-badge">{tr('testEnvironment')}</span>}
+        </div>}
         <label className="oi-office">{tr('office')}<select aria-label={tr('office')} value={officeId} onChange={e => setOfficeId(e.target.value)} disabled={busy}>
             <option value="" disabled>{tr('selectOffice')}</option>{offices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
         </select></label>

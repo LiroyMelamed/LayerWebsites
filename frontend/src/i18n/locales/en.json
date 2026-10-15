@@ -3016,6 +3016,11 @@
     "signedEarlierStage": "You signed an earlier stage of this document. Another signature may be needed later."
   },
   "officeIntegrations": {
+    "organization": "Company",
+    "project": "Project",
+    "projectContext": "Company and project",
+    "legalProduct": "Legal practice management",
+    "testEnvironment": "Test environment",
     "dailySync": "Synchronize automatically once a day",
     "syncTime": "Daily synchronization time",
     "syncTimeHelp": "Israel time, including daylight saving changes. Each office has its own schedule.",
@@ -3024,14 +3029,14 @@
     "courtAdminPolicy": "The platform administrator controls synchronization and its schedule.",
     "schedulerUnavailable": "Settings are saved, but the synchronization service is not enabled in this environment.",
     "connectionSetup": "Set up WhatsApp connection",
-    "platformResponsibilityTitle": "One-time MelaMedia setup",
-    "platformResponsibility": "The platform administrator configures the Meta app that lets offices connect their accounts. This setup is shared across offices.",
+    "platformResponsibilityTitle": "MelamedLaw app under MelaMedia",
+    "platformResponsibility": "MelaMedia manages the Meta app for the MelamedLaw project. Its offices connect through this app, each with its own WhatsApp account, phone number and authorization.",
     "officeResponsibilityTitle": "Connect the office account",
     "officeResponsibility": "Once the platform is ready, the office authorizes its WhatsApp Business account and phone number in Meta. Each office has a separate connection and does not need its own Meta app.",
     "configured": "Configured",
     "notConfigured": "Not configured",
     "setupRequirements": {
-      "app": "MelaMedia app credentials",
+      "app": "MelamedLaw app credentials",
       "signup": "Office onboarding flow",
       "encryption": "Secure connection storage",
       "webhook": "Connection updates from Meta"
@@ -3041,7 +3046,7 @@
     "demoConnectionNotice": "This test environment uses simulated data. You can save settings, but real account connections and message delivery are blocked here.",
     "title": "Office connections",
     "intro": "Separate court and WhatsApp connections for each office.",
-    "office": "Office",
+    "office": "Customer / office",
     "selectOffice": "Select an office",
     "loading": "Loading connections…",
     "noOffice": "No office is available.",

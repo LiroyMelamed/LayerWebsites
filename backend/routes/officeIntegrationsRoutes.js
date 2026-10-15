@@ -8,6 +8,7 @@ const scope = require('../lib/tenant/databaseScope');
 const pool = require('../config/db');
 const { service, worker, runOffice } = require('../services/integrations/runtime');
 const { positiveId } = require('../services/integrations/validation');
+const productIdentity = require('../config/productIdentity');
 const router = express.Router();
 const wrap = fn => (req, res, next) => Promise.resolve(fn(req, res)).catch(next);
 router.use(auth);
@@ -31,16 +32,21 @@ router.use((req, res, next) => {
     requirePlatformAdmin(req, res, err => { if (err) return next(err); req.integrationPolicyAdmin = true; next(); });
 });
 router.get('/offices', wrap(async (req, res) => {
-    if (req.firmTenantId) return res.json({ offices: [{ id: req.firmTenantId, name: req.tenant?.name || 'המשרד שלי' }], canConfigurePolicy: false });
-    if (!isMultiTenantMode()) return res.json({ offices: [{ id: 'dedicated', name: 'המשרד הנוכחי' }], canConfigurePolicy: true });
+    const context = { ...productIdentity, demoOnly: process.env.WHATSAPP_DEMO_ONLY === 'true' };
+    if (req.firmTenantId) return res.json({ context, offices: [{ id: req.firmTenantId, name: req.tenant?.name || 'המשרד שלי' }], canConfigurePolicy: false });
+    if (!isMultiTenantMode()) {
+        const name = await require('../services/settingsService').getSetting('firm', 'LAW_FIRM_NAME', process.env.FIRM_DISPLAY_NAME || 'המשרד הנוכחי');
+        return res.json({ context, offices: [{ id: 'dedicated', name }], canConfigurePolicy: true });
+    }
     const rows = await scope.withSystem(() => pool.query('SELECT id,name FROM law_firm_tenants WHERE is_active=true ORDER BY name'));
-    res.json({ offices: rows.rows, canConfigurePolicy: true });
+    res.json({ context, offices: rows.rows, canConfigurePolicy: true });
 }));
 // Scope middleware must call next inside AsyncLocalStorage's callback.
 router.use((req, _res, next) => {
     (async () => {
         let tenantId = req.firmTenantId || null;
         if (tenantId && req.query.officeId && req.query.officeId !== tenantId) throw createAppError('FORBIDDEN', 403, 'אין הרשאה למשרד המבוקש');
+        if (!tenantId && !isMultiTenantMode() && req.query.officeId && req.query.officeId !== 'dedicated') throw createAppError('OFFICE_NOT_FOUND', 404, 'המשרד לא נמצא בסביבה זו');
         if (!tenantId && isMultiTenantMode()) {
             if (!req.integrationPolicyAdmin || !/^[a-f0-9-]{36}$/i.test(String(req.query.officeId || ''))) throw createAppError('OFFICE_REQUIRED', 400, 'יש לבחור משרד');
             const tenant = await scope.withSystem(() => pool.query('SELECT id FROM law_firm_tenants WHERE id=$1 AND is_active=true', [req.query.officeId]));

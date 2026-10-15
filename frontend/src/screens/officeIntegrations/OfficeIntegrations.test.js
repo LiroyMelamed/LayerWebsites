@@ -62,6 +62,18 @@ test('setup button explains platform and office responsibilities without launchi
     expect(screen.queryByRole('button', { name: 'disconnect' })).not.toBeInTheDocument();
     expect(api.startSignup).not.toHaveBeenCalled();
 });
+test('project and same-named offices remain distinct when switching saved connections', async () => {
+    api.offices.mockResolvedValue({ context: { organization: { key: 'melamedia', name: 'MelaMedia' }, project: { key: 'melamedlaw', name: 'MelamedLaw' }, demoOnly: true }, offices: [{ id: 'A', name: 'MelamedLaw' }, { id: 'B', name: 'MelamedLaw' }] });
+    render(<OfficeIntegrations />); await screen.findByDisplayValue('Court A');
+    expect(screen.getByLabelText('projectContext')).toHaveTextContent('MelaMedia');
+    expect(screen.getByLabelText('projectContext')).toHaveTextContent('MelamedLaw');
+    expect(screen.getByText('testEnvironment')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('office'), { target: { value: 'B' } });
+    await screen.findByDisplayValue('Court B');
+    fireEvent.click(screen.getByRole('button', { name: 'saveWhatsapp' }));
+    await waitFor(() => expect(api.saveWhatsapp).toHaveBeenCalledWith('B', expect.objectContaining({ recipients: ['+972502222222'] })));
+});
+
 test('late response from previous office cannot replace current office data', async () => {
     let resolveA;
     api.snapshot.mockImplementation(id => id === 'A' ? new Promise(resolve => { resolveA = resolve; }) : Promise.resolve(state(id)));

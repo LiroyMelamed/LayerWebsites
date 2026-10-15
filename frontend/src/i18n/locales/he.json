@@ -3605,6 +3605,11 @@
     "signedEarlierStage": "חתמת בשלב קודם של המסמך. ייתכן שנדרשת חתימה נוספת בהמשך התהליך."
   },
   "officeIntegrations": {
+    "organization": "חברה",
+    "project": "פרויקט",
+    "projectContext": "החברה והפרויקט",
+    "legalProduct": "המערכת המשפטית",
+    "testEnvironment": "סביבת בדיקות",
     "dailySync": "סנכרון אוטומטי פעם ביום",
     "syncTime": "שעת הסנכרון היומי",
     "syncTimeHelp": "לפי שעון ישראל, כולל מעבר לשעון קיץ וחורף. השעה נשמרת בנפרד לכל משרד.",
@@ -3613,14 +3618,14 @@
     "courtAdminPolicy": "מנהל הפלטפורמה קובע את הפעלת הסנכרון ואת השעה.",
     "schedulerUnavailable": "ההגדרות נשמרו, אך שירות הסנכרון עדיין לא הופעל בסביבה זו.",
     "connectionSetup": "הגדרת חיבור WhatsApp",
-    "platformResponsibilityTitle": "הכנה חד־פעמית של MelaMedia",
-    "platformResponsibility": "מנהל הפלטפורמה מכין את אפליקציית Meta שמאפשרת למשרדים לחבר את החשבונות שלהם. הגדרה זו משותפת לכל המשרדים.",
+    "platformResponsibilityTitle": "אפליקציית MelamedLaw תחת MelaMedia",
+    "platformResponsibility": "MelaMedia מנהלת את אפליקציית Meta של הפרויקט MelamedLaw. משרדי הפרויקט מתחברים דרכה, וכל משרד שומר על חשבון WhatsApp, מספר והרשאות משלו.",
     "officeResponsibilityTitle": "חיבור החשבון של המשרד",
     "officeResponsibility": "לאחר הכנת הפלטפורמה, המשרד מאשר בחלון Meta את חשבון WhatsApp Business ואת המספר שלו. לכל משרד נשמר חיבור נפרד; אין צורך באפליקציית Meta נפרדת לכל משרד.",
     "configured": "הוגדר",
     "notConfigured": "טרם הוגדר",
     "setupRequirements": {
-      "app": "פרטי אפליקציית MelaMedia",
+      "app": "פרטי אפליקציית MelamedLaw",
       "signup": "אשף חיבור המשרדים",
       "encryption": "שמירה מאובטחת של הרשאות החיבור",
       "webhook": "קבלת עדכוני החיבור מ־Meta"
@@ -3630,7 +3635,7 @@
     "demoConnectionNotice": "סביבת הבדיקות פועלת במצב דמה. אפשר לשמור את ההגדרות, אך חיבור חשבון אמיתי ושליחת הודעות חסומים כאן.",
     "title": "חיבורים למשרד",
     "intro": "נט המשפט ו־WhatsApp, עם חיבור נפרד והגדרות לכל משרד.",
-    "office": "משרד",
+    "office": "לקוח / משרד",
     "selectOffice": "בחירת משרד",
     "loading": "טוען את החיבורים…",
     "noOffice": "אין משרד זמין לבחירה.",

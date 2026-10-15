@@ -1,11 +1,29 @@
 # Office connections: Net HaMishpat demo and official WhatsApp
 
-Implemented on `codex/office-integrations`, based on `main`. No real court case, WhatsApp account, message delivery, or deployment was used in local validation.
+Implemented on `codex/office-integrations`, based on `main`, and deployed to Melamedia QA. Validation uses synthetic court data and fake WhatsApp providers; QA blocks real account onboarding and message delivery.
+
+## Company, product and customer identity
+
+Confirmed by the owner on 2026-10-15:
+
+| Company | Project key / name | Product | Example customer |
+| --- | --- | --- | --- |
+| MelaMedia | `melamedlaw` / MelamedLaw | Legal practice management | MelamedLaw (a separate office identity) |
+| MelaMedia | `makeappointment` / MakeAppointment | Appointment booking | FitBase |
+| MelaMedia | `melamotion` / MelaMotion | Studio management | Each subscribing studio |
+
+This repository implements the **MelamedLaw project**. Its product identity does not come from tenant branding. The existing production client/branch/database named MelamedLaw is one customer of that project; the Melamedia deployment remains its separate QA environment. FitBase is a MakeAppointment customer, not a legal-project tenant. Existing Meta apps, including the live FitBase app, are not renamed, moved or retired by this change.
+
+MelaMedia owns the Meta business portfolio (2123754728517069). Each independent project uses its own Meta app. The **MelamedLaw** app was created on 2026-10-15 with ID **1132509735911115** and contact email **liroy@mela-media.co.il**; it remains unpublished. Customers authorize their own WhatsApp accounts and numbers through the project's app. No separate developer app is required per customer. Creating the project app does not connect any office or authorize real delivery. Meta currently requires business verification, app review and access verification before external customer onboarding.
+
+The settings screen displays company and project separately from the selected customer/office. Office grants, signup sessions, defaults, managers, court schedules and case jobs use immutable office UUIDs in shared deployments, or the isolated database in dedicated deployments; display names never select an office. A dedicated deployment rejects selectors for another office rather than silently applying them to its own database. Tests cover offices named MelamedLaw, distinct credentials/defaults, cross-office signup rejection and disconnecting only the selected office.
+
+This is not a new cross-project management console. Before live onboarding across the existing dedicated customer databases, the project needs one authenticated webhook routing service/connection registry, or a reviewed shared deployment. The current webhook handler routes office assets inside one deployment only. Never overwrite the project's callback per customer or merge customer databases to work around routing. The existing QA remains dedicated and uses no real customer credentials.
 
 ## User flow
 
 - Platform settings → **חיבורים למשרד**. Platform admins select the office. An office owner also has a direct navigation entry and can connect or disconnect only their own office.
-- Court: enable and save the demo connection, create two demonstration cases, and sync three synthetic updates. Two match automatically; one waits for a mapping. Repeated syncs do not duplicate events. Only `integration_demo=true` cases can be mapped. The case view shows imported demo updates to authorized staff.
+- Court: save the demo connection and its daily synchronization time. Court numbers are entered on the case create/edit form. The synthetic feed matches those references; repeated syncs do not duplicate events. The case view shows imported demo updates to authorized staff. Test seeding and manual synchronization endpoints remain available for controlled QA, not on the connection settings screen.
 - WhatsApp: the owner opens the official Meta Embedded Signup window, chooses the business and number, and grants access. The server exchanges the one-use code, validates app permissions and asset ownership, registers the number if necessary, subscribes to the WABA, and encrypts the grant per office. No customer copy/paste of access tokens is needed.
 - The platform administrator saves the default invitee numbers, optionally checks **הזמן אוטומטית גם את מנהל התיק**, and enables/disables automatic groups. The manager is resolved from `cases.casemanagerid` and their own office's `users.phonenumber` when the case is created. Numbers are normalized and deduplicated. With the manager enabled, up to six fixed invitees can be saved; otherwise up to seven. Manager-only invitations are supported.
 - New cases enqueue one group request transactionally. A worker creates the group; the signed Meta creation webhook attaches its invitation link to the exact case. Each recipient receives the configured group invitation template. The person chooses whether to join; adding people without their acceptance is unsupported.
