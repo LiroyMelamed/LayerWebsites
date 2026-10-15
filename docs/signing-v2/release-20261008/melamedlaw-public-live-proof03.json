@@ -1,0 +1,64 @@
+{
+  "complete": true,
+  "tenant": "melamedlaw",
+  "candidate": "3e454de8cb4ff9fc6552080c03488e7790a51c57",
+  "product": "b6b31cd97e74d3eb8facbf95aadb360306c31b6d",
+  "qa": "7ce3a141bff23bcbedc7effe7b99b774256949d1",
+  "verifiedUtc": "2026-10-08T20:02:36.889Z",
+  "publicFiles": [
+    {
+      "url": "https://client.melamedlaw.co.il/",
+      "path": "index.html",
+      "bytes": 9052,
+      "sha256": "8bbe19967d78fbd529e125f57f58eb01a2870fa301470843f59f7ace5b32f9d1"
+    },
+    {
+      "url": "https://client.melamedlaw.co.il/static/css/main.7e1e0416.css",
+      "path": "static/css/main.7e1e0416.css",
+      "bytes": 198388,
+      "sha256": "676b208dbf23dc37747fc9a76908bf1a276b5beefc6567d72e1be323ed6f0769"
+    },
+    {
+      "url": "https://client.melamedlaw.co.il/static/js/main.89bc5f8b.js",
+      "path": "static/js/main.89bc5f8b.js",
+      "bytes": 1338752,
+      "sha256": "0b957b8f7eabd03a9e82f0c727425fac2467aa974dc74ef1278808eb6914e27a"
+    }
+  ],
+  "brandingAndAssociations": [
+    {
+      "path": "firm-logo.png",
+      "sha256": "1fa5005cdee840cfc3efebcfef300507b5b467536c6cc6fc1e0ef6505ba52db1"
+    },
+    {
+      "path": "logo192.png",
+      "sha256": "57c64f9486a9ecd4837eac4855cf79c780ea698b5d286a14164cb79aeb85fe71"
+    },
+    {
+      "path": "logo512.png",
+      "sha256": "1fa5005cdee840cfc3efebcfef300507b5b467536c6cc6fc1e0ef6505ba52db1"
+    },
+    {
+      "path": "manifest.json",
+      "sha256": "7bc073853901651f74a20c4b47cbe5c207b1dea3536311b0baff8b0a8dd746f1"
+    },
+    {
+      "path": "favicon.ico",
+      "sha256": "04093669c1c03dae2c062a66a3dd5c7b83726d3c5cc2bbca196571c13b2f763c"
+    },
+    {
+      "path": ".well-known/assetlinks.json",
+      "sha256": "8dd1174757afe081c042ecc05af82a2d9309cce863498158ca96765be19d748f"
+    },
+    {
+      "path": ".well-known/apple-app-site-association",
+      "sha256": "d2a40a96997065ac714fe5254af824f00063f6e4b96fb19122bbdde6c5031693"
+    }
+  ],
+  "publicApiHealth": {
+    "ok": true
+  },
+  "backendProof": "melamedlaw-backend-readonly-proof03.json",
+  "frontendProof": "melamedlaw-frontend-live-proof03.json",
+  "noRealTestMessages": true
+}

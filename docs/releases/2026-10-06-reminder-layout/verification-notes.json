@@ -1,0 +1,9 @@
+{
+  "correctedBeforeCustomerDeployment": [
+    "Initial MelamedLaw worktree merge returned stash failed; clean status verified, retry with command-scoped merge.autoStash=false succeeded without changing global config.",
+    "Generated FTPS backup helper had a duplicate semicolon; py_compile caught it before execution; fixed and all helpers compiled.",
+    "One generic urllib user agent received Cloudflare403; approved verification user agent succeeded on root/index/reminder route.",
+    "Existing QA browser tab initially reused old document; unique release URL loaded and verified exact new entry scripts. Unqueried public routes also returned new entry."
+  ],
+  "productionFailures": []
+}

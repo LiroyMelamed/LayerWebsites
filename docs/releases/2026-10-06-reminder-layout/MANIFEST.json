@@ -1,0 +1,254 @@
+{
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "531a4ed6eb046098dac0f007503d629485f4f6dafbba33083eb37e818b3399b5",
+      "bytes": 3929
+    },
+    {
+      "path": "STATUS.json",
+      "sha256": "5636a385796543fb44aa40518faa35fa1bd33f710ee9cde22f25bc6fca053be2",
+      "bytes": 2839
+    },
+    {
+      "path": "ashrafessa-artifact.json",
+      "sha256": "73ea3a47d47352d524511e11936d983f68a19a2dc18ad7626f9b4a5e205b4191",
+      "bytes": 559
+    },
+    {
+      "path": "ashrafessa-build.log",
+      "sha256": "e4c75f819b29cf166060d5fb57053f5e84f531cb5c24a3c9e1cea7f13b000322",
+      "bytes": 21357
+    },
+    {
+      "path": "ashrafessa-deploy.json",
+      "sha256": "a03f8eb9ba590fda8beb6b0b33426773757fc90211a86b2c7435da265b71be59",
+      "bytes": 679
+    },
+    {
+      "path": "ashrafessa-files.json",
+      "sha256": "cb6ac2941241a8528606656dc71a2e010d53a70ddc3f21d81f3d9468b57b231d",
+      "bytes": 37346
+    },
+    {
+      "path": "branding-assets.json",
+      "sha256": "c26f209d77bf1f128fb68eb3081f9f6eae1af462cdb84569ff9c76352f85adf6",
+      "bytes": 3980
+    },
+    {
+      "path": "branding-checks-part1.json",
+      "sha256": "c3ecf4d6d85778b52d910d82ac668fd612b733971d9258343b5895e069b60293",
+      "bytes": 676
+    },
+    {
+      "path": "branding-checks-part2.json",
+      "sha256": "c3d7237752827cf3137f7e01f61b1c61faa5512d7738c2566cff785d557897c4",
+      "bytes": 699
+    },
+    {
+      "path": "candidates.json",
+      "sha256": "7ff1f429f43841187e25a1c7008068d6766861c53b45ab223d235f314a93a0d0",
+      "bytes": 957
+    },
+    {
+      "path": "desktop-list-geometry.json",
+      "sha256": "78cbdaf98102b7d870651d6ad337496152b1dc9255fdb20025727b5996a6d956",
+      "bytes": 577
+    },
+    {
+      "path": "idm-artifact.json",
+      "sha256": "456505182c418367b1a5cab555ec54a0236e59aa98a3a1af8bf7f851e3ef933e",
+      "bytes": 531
+    },
+    {
+      "path": "idm-build.log",
+      "sha256": "871126c52e82498a21bf7ace9f9c4d82abcaefe6d7025f5bf2955daeb35a5fac",
+      "bytes": 21322
+    },
+    {
+      "path": "idm-deploy.json",
+      "sha256": "563db8b56e48865744bb2734bfdc2b9a6662c58942f9d4dd6cc487a1412b45de",
+      "bytes": 666
+    },
+    {
+      "path": "idm-files.json",
+      "sha256": "a54650326434b721347cacf7a55228ad9fb6a75a4c3ce64fd2c771117759ccd0",
+      "bytes": 36735
+    },
+    {
+      "path": "melamedia-artifact.json",
+      "sha256": "60936e71c20e9f44f7e9583fb16874a3470ec2f33a8e681b2b16ddca8b4fa048",
+      "bytes": 548
+    },
+    {
+      "path": "melamedia-build.log",
+      "sha256": "4b182028d49d77afe72589e0c6458e2884e6b2550ef7924bd78cfabf196bde3b",
+      "bytes": 21352
+    },
+    {
+      "path": "melamedia-deploy.json",
+      "sha256": "260c5ceb27f67c04063fda4d99d8adb3216d1c767b8dea7d89ea55d6d0ed93c8",
+      "bytes": 677
+    },
+    {
+      "path": "melamedia-files.json",
+      "sha256": "8dc56045f00a5efad6330f1bd36c48907b364fd79e0d28d2877b58d2e6e098f1",
+      "bytes": 37495
+    },
+    {
+      "path": "melamedlaw-artifact.json",
+      "sha256": "2046d9e926f4ad078c5871a1feace51ca5bdcdf289732a9bc4971c4064d3272b",
+      "bytes": 559
+    },
+    {
+      "path": "melamedlaw-backup.json",
+      "sha256": "446af2164e81e054221558025564c156ae832b8fe88b8ed398d45328299c4c63",
+      "bytes": 35787
+    },
+    {
+      "path": "melamedlaw-build.log",
+      "sha256": "3d68bfb7df9d99ae927935ecbbddf4b6d6fb9126e8d4e4b7416816accb7b5c43",
+      "bytes": 21357
+    },
+    {
+      "path": "melamedlaw-deploy.json",
+      "sha256": "3796b310e609dac545445b819936b816c02b1174c177a4e6336cf11c7c4cb7cd",
+      "bytes": 451
+    },
+    {
+      "path": "melamedlaw-files.json",
+      "sha256": "32b55e808d66cfb03ea2ac5450c005143a18ffc3fe8b11fb7549ffa7d1c974f8",
+      "bytes": 37004
+    },
+    {
+      "path": "morlevy-artifact.json",
+      "sha256": "f69d62a104d2fec64b3db6e16019788439fb9a243d018c4bcb55ae735585ccaf",
+      "bytes": 547
+    },
+    {
+      "path": "morlevy-build.log",
+      "sha256": "b70c96b1bd464ace966ca3d7586d06cacd43d59459737559ffa1bf4da04eb4fb",
+      "bytes": 21342
+    },
+    {
+      "path": "morlevy-deploy.json",
+      "sha256": "e50e04a0c9273625d172d85b475b64897bb9fae3d9632ae15c9b486bf4fad2c5",
+      "bytes": 674
+    },
+    {
+      "path": "morlevy-files.json",
+      "sha256": "bae533f15c6c0c95163f48793c1233e6c2adb2af0d7e9f58aeb1c827dcd0419d",
+      "bytes": 37007
+    },
+    {
+      "path": "popup-desktop.png",
+      "sha256": "7f7efd5157f793ea6f58a2d976147447ff1ec2541c57ca6a446f27db3c99cbbc",
+      "bytes": 33892
+    },
+    {
+      "path": "popup-mobile.png",
+      "sha256": "01eb4be80200f4e48501411d9d727ac36f494d84e8729c31d3d738f09bae224a",
+      "bytes": 28535
+    },
+    {
+      "path": "production-tag.json",
+      "sha256": "05beff4f6a88d7cb374ddbdb6b280dc195dd831e1e88ed2f1b3c0fd13f7cdb89",
+      "bytes": 378
+    },
+    {
+      "path": "public-ashrafessa.json",
+      "sha256": "94c1516be7ea2ad8eaf2d39ab36fd4478993ad496e69d93108b4833e6e7e0a80",
+      "bytes": 1865
+    },
+    {
+      "path": "public-idm.json",
+      "sha256": "02d1c2e2254b22e85d1d85e9e877c31792f13b6498c59f39d2dcf346c4c49bf5",
+      "bytes": 1858
+    },
+    {
+      "path": "public-melamedia.json",
+      "sha256": "237a372c7a8ef23deacf6e1ce54d225d40e8ebda4c236b3b51748a885a107fc7",
+      "bytes": 1864
+    },
+    {
+      "path": "public-melamedlaw.json",
+      "sha256": "0b6b85c6039debf99b44b7b74853a523b4170a2b4c689926a5f7aad17b65f5c8",
+      "bytes": 1865
+    },
+    {
+      "path": "public-morlevy.json",
+      "sha256": "c092e38545a5b353118e97bee2968cc42bef0935e193ad2fdb1e9d6edb81eaaa",
+      "bytes": 1862
+    },
+    {
+      "path": "qa-gate.json",
+      "sha256": "e47526324919603c7d65d04fa28c08c9ba5e7facc6752f8a28b5965e318e9d02",
+      "bytes": 1152
+    },
+    {
+      "path": "qa-live-popup.png",
+      "sha256": "62b557125cd5c067f211af9b301b8ed927560ae83f02fed056fbb03521a43a8d",
+      "bytes": 37268
+    },
+    {
+      "path": "recipients-desktop.png",
+      "sha256": "d6f44e708dd4c3f17305b5282737614c4262b56c2b3ab55b88e5074bd0cf2deb",
+      "bytes": 40485
+    },
+    {
+      "path": "recipients-mobile.png",
+      "sha256": "703bea9b660eaa97be12f5338e4d3ba4888288ffccc69d1edf0e012810800cb8",
+      "bytes": 20589
+    },
+    {
+      "path": "ui-harness/.gitignore",
+      "sha256": "fe56da5f27d174b011ca65d2c1c9be83ca19ce1428e1594f8ed3ca037e8814ed",
+      "bytes": 7
+    },
+    {
+      "path": "ui-harness/README.md",
+      "sha256": "a0f1e30e78fa47256d575d7488056eb025535de58fff1d874279c66a52cb6224",
+      "bytes": 1359
+    },
+    {
+      "path": "ui-harness/build.cjs",
+      "sha256": "e5cde4fdfcb3cc7f4ee55ec335db070e06f2aed6c93f091b70f467666b78b793",
+      "bytes": 1844
+    },
+    {
+      "path": "ui-harness/entry.jsx",
+      "sha256": "d47ef02b19e118759753f3e4ab32e28f7e3d85811d2b85546535e3ed5d25d933",
+      "bytes": 3433
+    },
+    {
+      "path": "ui-harness/mobile-list.html",
+      "sha256": "2b16389e93e91d9b541a2f98817c283a87d18fc754c5986d6bfa68de36bc4071",
+      "bytes": 266
+    },
+    {
+      "path": "ui-harness/mobile.html",
+      "sha256": "de83cc92e89eb8420cffae7b2050690e9232d3dc230921234f610a1ef7a68f4d",
+      "bytes": 283
+    },
+    {
+      "path": "ui-harness/mock-api.js",
+      "sha256": "54e77b1ff44530fa91f2e7625141876337212e81f932453184f03d9ae0d54c45",
+      "bytes": 87
+    },
+    {
+      "path": "ui-harness/mock-case.js",
+      "sha256": "a704a4aef730d6657b035a03f66ecad4bf8d5563f0cbb0d4d8d5327da4a59b5f",
+      "bytes": 55
+    },
+    {
+      "path": "ui-harness/mock-http.js",
+      "sha256": "487e4c2be67d0da516811e75a9ab801f3f7d7a78c007125af1c5b1866ad3c970",
+      "bytes": 140
+    },
+    {
+      "path": "verification-notes.json",
+      "sha256": "a2e9ec52d3cacbbe0bbd6eccc78a705ae88138a0a4256d93a5874b00f0cef340",
+      "bytes": 696
+    }
+  ]
+}
