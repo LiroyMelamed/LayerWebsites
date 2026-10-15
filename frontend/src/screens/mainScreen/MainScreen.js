@@ -152,7 +152,7 @@ export default function MainScreen() {
 
     const aiBrief = aiInsightsEnabled
         && aiBriefResponse?.enabled
-        && aiBriefResponse?.source === 'ai'
+        && ['ai', 'analysis'].includes(aiBriefResponse?.source)
         && Array.isArray(aiBriefResponse?.lines)
         && aiBriefResponse.lines.length > 0
         ? aiBriefResponse
