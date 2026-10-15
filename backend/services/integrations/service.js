@@ -2,6 +2,7 @@
 const crypto = require('node:crypto');
 const { fail, courtNumber, phones, positiveId } = require('./validation');
 const secrets = require('./secrets');
+const { courtSchedule, scheduleNext, TIME_ZONE } = require('./courtSchedule');
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const DEMO_UPDATES = [
     { source: 'demo-decision-1', number: '90001-10-26', title: 'החלטת דמה', body: 'זהו עדכון סינתטי לבדיקת שיוך. אין לו משמעות משפטית.', date: '2026-10-14T09:00:00Z' },
@@ -28,13 +29,25 @@ function createIntegrationService({ pool, provider, env = process.env }) {
     function publicConnection(c) {
         if (!c) return null;
         return { id: c.id, enabled: c.enabled, status: c.status, settings: c.settings, displayPhone: c.display_phone,
-            connected: Boolean(c.secret_ciphertext), tokenExpiresAt: c.token_expires_at, lastCheckedAt: c.last_checked_at, lastSyncedAt: c.last_synced_at };
+            connected: Boolean(c.secret_ciphertext), tokenExpiresAt: c.token_expires_at, lastCheckedAt: c.last_checked_at, lastSyncedAt: c.last_synced_at,
+            nextSyncAt: c.next_sync_at, syncTimeZone: TIME_ZONE };
     }
     function signupConfig() {
         const demoOnly = env.WHATSAPP_DEMO_ONLY === 'true';
-        const ready = !demoOnly && Boolean(env.WHATSAPP_META_APP_ID && env.WHATSAPP_META_APP_SECRET && env.WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID && /^[a-f0-9]{64}$/i.test(env.INTEGRATIONS_ENCRYPTION_KEY || '') && env.WHATSAPP_WEBHOOK_VERIFY_TOKEN);
+        const requirements = { app: Boolean(env.WHATSAPP_META_APP_ID && env.WHATSAPP_META_APP_SECRET),
+            signup: Boolean(env.WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID), encryption: /^[a-f0-9]{64}$/i.test(env.INTEGRATIONS_ENCRYPTION_KEY || ''),
+            webhook: Boolean(env.WHATSAPP_WEBHOOK_VERIFY_TOKEN) };
+        const configurationReady = Object.values(requirements).every(Boolean);
+        const ready = !demoOnly && configurationReady;
         return { ready, appId: ready ? env.WHATSAPP_META_APP_ID : null, configId: ready ? env.WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID : null,
-            version: env.WHATSAPP_GRAPH_VERSION || 'v25.0', liveEnabled: !demoOnly && env.WHATSAPP_LIVE_ENABLED === 'true' };
+            version: env.WHATSAPP_GRAPH_VERSION || 'v25.0', liveEnabled: !demoOnly && env.WHATSAPP_LIVE_ENABLED === 'true',
+            demoOnly, configurationReady, requirements };
+    }
+    async function settingsSnapshot(tenantId) {
+        const result = await pool.query('SELECT * FROM office_integrations WHERE law_firm_tenant_id IS NOT DISTINCT FROM $1', [office(tenantId)]);
+        return { court: publicConnection(result.rows.find(c => c.provider === 'court_demo')),
+            whatsapp: publicConnection(result.rows.find(c => c.provider === 'whatsapp')), signup: signupConfig(),
+            courtSchedulerRunning: env.COURT_DEMO_SYNC_WORKER_ENABLED === 'true' };
     }
     async function snapshot(tenantId) {
         office(tenantId);
@@ -48,13 +61,18 @@ function createIntegrationService({ pool, provider, env = process.env }) {
         return { court: publicConnection(connections.rows.find(c => c.provider === 'court_demo')), whatsapp: publicConnection(connections.rows.find(c => c.provider === 'whatsapp')),
             links: links.rows, updates: updates.rows, groups: groups.rows, demoCases: cases.rows, signup: signupConfig() };
     }
-    async function saveCourt(tenantId, input) {
+    async function saveCourt(tenantId, input, now = new Date()) {
         if (typeof input.enabled !== 'boolean') fail('INVALID_SETTINGS', 'יש לבחור אם הסנכרון פעיל');
         const label = String(input.label || '').trim();
         if (label.length > 120) fail('INVALID_SETTINGS', 'שם החיבור ארוך מדי');
         await tx(async db => {
             const c = await ensure(db, tenantId, 'court_demo');
-            await db.query(`UPDATE office_integrations SET enabled=$2,status=$3,settings=$4,updated_at=now() WHERE id=$1`, [c.id, input.enabled, input.enabled ? 'demo' : 'disconnected', { label, mode: 'demo' }]);
+            const settings = { label, mode: 'demo', ...courtSchedule(input, c.settings) };
+            await db.query(`UPDATE office_integrations SET enabled=$2,status=$3,settings=$4,updated_at=now() WHERE id=$1`, [c.id, input.enabled, input.enabled ? 'demo' : 'disconnected', settings]);
+            // Unrelated label edits must not postpone an overdue import.
+            if (c.enabled !== input.enabled || c.settings.syncTime !== settings.syncTime || c.settings.dailySyncEnabled !== settings.dailySyncEnabled || !c.next_sync_at) {
+                await scheduleNext(db, c.id, input.enabled, settings, now);
+            }
         });
     }
     async function seedDemo(tenantId) {
@@ -87,15 +105,23 @@ function createIntegrationService({ pool, provider, env = process.env }) {
             await db.query('UPDATE court_updates SET case_id=$3 WHERE law_firm_tenant_id IS NOT DISTINCT FROM $1 AND court_number=$2', [tenantId, number, caseId]);
         });
     }
-    async function syncCourt(tenantId) {
+    async function syncCourt(tenantId, { scheduledAt } = {}) {
         return tx(async db => {
             const c = await ensure(db, tenantId, 'court_demo');
+            if (scheduledAt) {
+                if (!c.enabled || c.settings.dailySyncEnabled !== true || !c.next_sync_at || new Date(c.next_sync_at) > scheduledAt) return { synced: false };
+                const today = await db.query("SELECT 1 FROM office_integrations WHERE id=$1 AND last_scheduled_sync_date >= ($2::timestamptz AT TIME ZONE 'Asia/Jerusalem')::date", [c.id, scheduledAt]);
+                if (today.rows.length) return { synced: false };
+                await db.query("UPDATE office_integrations SET last_scheduled_sync_date=($2::timestamptz AT TIME ZONE 'Asia/Jerusalem')::date WHERE id=$1", [c.id, scheduledAt]);
+            }
             if (!c.enabled) fail('COURT_DISABLED', 'חיבור הדמה כבוי', 409);
             for (const event of DEMO_UPDATES) await db.query(`INSERT INTO court_updates(law_firm_tenant_id,source_id,court_number,title,body,occurred_at,case_id)
                 VALUES($1,$2,$3,$4,$5,$6,(SELECT l.case_id FROM court_case_links l JOIN cases c ON c.caseid=l.case_id
                     WHERE l.law_firm_tenant_id IS NOT DISTINCT FROM $1 AND c.law_firm_tenant_id IS NOT DISTINCT FROM $1 AND l.court_number=$3 AND (c.integration_demo OR $7)))
                 ON CONFLICT(law_firm_tenant_id,source_id) DO NOTHING`, [tenantId, event.source, event.number, event.title, event.body, event.date, env.WHATSAPP_DEMO_ONLY === 'true']);
-            await db.query('UPDATE office_integrations SET last_synced_at=now(),updated_at=now() WHERE id=$1', [c.id]);
+            await db.query('UPDATE office_integrations SET last_synced_at=$2,updated_at=now() WHERE id=$1', [c.id, scheduledAt || new Date()]);
+            if (scheduledAt) await scheduleNext(db, c.id, true, c.settings, scheduledAt);
+            return { synced: true };
         });
     }
     async function saveWhatsapp(tenantId, input) {
@@ -205,7 +231,7 @@ function createIntegrationService({ pool, provider, env = process.env }) {
     async function previewGroup(tenantId, caseId) {
         return tx(db => enqueueCase(db, positiveId(caseId), tenantId, true));
     }
-    return { snapshot, saveCourt, seedDemo, linkCourt, syncCourt, saveWhatsapp, startSignup, completeSignup, checkWhatsapp, disconnectWhatsapp, enqueueCase, previewGroup,
+    return { snapshot, settingsSnapshot, saveCourt, seedDemo, linkCourt, syncCourt, saveWhatsapp, startSignup, completeSignup, checkWhatsapp, disconnectWhatsapp, enqueueCase, previewGroup,
         tx, connection, token, binding, signupConfig, pool, env, provider };
 }
 module.exports = { createIntegrationService, DEMO_UPDATES };

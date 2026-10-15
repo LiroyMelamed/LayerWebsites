@@ -20,6 +20,7 @@ async function fixture(t) {
         INSERT INTO law_firm_tenants(id,name) VALUES('${A}','Office A'),('${B}','Office B');`);
     await db.exec(fs.readFileSync(path.join(__dirname, '../migrations/2026-10-14_00_office_integrations.sql'), 'utf8'));
     await db.exec(fs.readFileSync(path.join(__dirname, '../migrations/2026-10-15_00_case_court_reference.sql'), 'utf8'));
+    await db.exec(fs.readFileSync(path.join(__dirname, '../migrations/2026-10-15_01_court_daily_sync.sql'), 'utf8'));
     // PGlite has one connection. Serialize leases like a pg pool with max=1.
     let tail = Promise.resolve();
     const lease = async () => { const prior = tail; let release; tail = new Promise(r => { release = r; }); await prior; return release; };
@@ -41,6 +42,53 @@ async function fixture(t) {
     return { db, pool, service, worker, provider, calls };
 }
 const policy = { enabled: true, mode: 'demo', recipients: ['0501234567'], templateName: '', templateLanguage: 'he' };
+
+test('daily court schedule runs once across concurrent ticks and restart, in the selected office only', async t => {
+    const { service, pool, provider } = await fixture(t);
+    const start = new Date('2026-10-15T04:00:00Z'), due = new Date('2026-10-15T05:00:00Z');
+    await service.saveCourt(A, { enabled: true, label: 'Daily', dailySyncEnabled: true, syncTime: '08:00' }, start);
+    await service.saveCourt(B, { enabled: true, label: 'Other', dailySyncEnabled: true, syncTime: '09:00' }, start);
+    assert.equal(new Date((await service.settingsSnapshot(A)).court.nextSyncAt).toISOString(), due.toISOString());
+    assert.equal((await service.syncCourt(A, { scheduledAt: new Date('2026-10-15T04:59:59Z') })).synced, false);
+    const restarted = createIntegrationService({ pool, provider, env });
+    const results = await Promise.all([service.syncCourt(A, { scheduledAt: due }), restarted.syncCourt(A, { scheduledAt: due })]);
+    assert.equal(results.filter(r => r.synced).length, 1);
+    assert.equal((await service.snapshot(A)).updates.length, 3);
+    assert.equal((await service.snapshot(B)).updates.length, 0);
+    assert.equal(new Date((await restarted.settingsSnapshot(A)).court.nextSyncAt).toISOString(), '2026-10-16T05:00:00.000Z');
+    await restarted.saveCourt(A, { enabled: true, syncTime: '20:00' }, new Date('2026-10-15T06:00:00Z'));
+    assert.equal(new Date((await service.settingsSnapshot(A)).court.nextSyncAt).toISOString(), '2026-10-16T17:00:00.000Z');
+    assert.equal((await service.syncCourt(A, { scheduledAt: new Date('2026-10-15T18:00:00Z') })).synced, false);
+    assert.equal((await service.syncCourt(A, { scheduledAt: new Date('2026-10-18T19:00:00Z') })).synced, true, 'Restart catches up once instead of replaying missed days');
+    assert.equal((await service.snapshot(A)).updates.length, 3, 'Imports remain idempotent');
+});
+
+test('court schedule respects Israel DST, disabling, invalid input and settings-only response', async t => {
+    const { service } = await fixture(t);
+    await service.saveCourt(A, { enabled: true, syncTime: '08:00' }, new Date('2026-10-24T06:00:00Z'));
+    assert.equal(new Date((await service.settingsSnapshot(A)).court.nextSyncAt).toISOString(), '2026-10-25T06:00:00.000Z');
+    await service.saveCourt(B, { enabled: true, syncTime: '08:00' }, new Date('2026-03-26T07:00:00Z'));
+    assert.equal(new Date((await service.settingsSnapshot(B)).court.nextSyncAt).toISOString(), '2026-03-27T05:00:00.000Z');
+    for (const invalid of ['25:00', '08:60', '8:00', '', 'UTC', '08:00:00']) await assert.rejects(service.saveCourt(A, { enabled: true, syncTime: invalid }), { errorCode: 'INVALID_SYNC_SCHEDULE' });
+    await assert.rejects(service.saveCourt(A, { enabled: true, dailySyncEnabled: 'yes' }), { errorCode: 'INVALID_SYNC_SCHEDULE' });
+    await service.saveCourt(A, { enabled: true, dailySyncEnabled: false });
+    assert.equal((await service.settingsSnapshot(A)).court.nextSyncAt, null);
+    assert.equal((await service.syncCourt(A, { scheduledAt: new Date('2027-01-01T00:00:00Z') })).synced, false);
+    await service.saveCourt(B, { enabled: false });
+    assert.equal((await service.settingsSnapshot(B)).court.nextSyncAt, null);
+    const settings = await service.settingsSnapshot(A);
+    for (const key of ['links', 'updates', 'groups', 'demoCases']) assert.equal(key in settings, false);
+    assert.equal(JSON.stringify(settings).includes('app-secret'), false);
+});
+
+test('daily schedule migration is rerunnable and never postpones a pending import', async t => {
+    const { service, db } = await fixture(t);
+    await service.saveCourt(A, { enabled: true, syncTime: '08:00' }, new Date('2026-10-15T04:00:00Z'));
+    const before = (await service.settingsSnapshot(A)).court.nextSyncAt;
+    await service.saveCourt(A, { enabled: true, label: 'Renamed' }, new Date('2026-10-15T07:00:00Z'));
+    await db.exec(fs.readFileSync(path.join(__dirname, '../migrations/2026-10-15_01_court_daily_sync.sql'), 'utf8'));
+    assert.equal(String((await service.settingsSnapshot(A)).court.nextSyncAt), String(before));
+});
 test('case court reference is optional, office-scoped, editable and never steals another case number', async t => {
     const { service, pool } = await fixture(t);
     const create = async office => (await pool.query("INSERT INTO cases(law_firm_tenant_id,casename) VALUES($1,'Synthetic') RETURNING caseid", [office])).rows[0].caseid;

@@ -9,9 +9,9 @@ export default function OfficeIntegrations({ embedded = false }) {
     const tr = key => t(`officeIntegrations.${key}`);
     const [offices, setOffices] = useState([]), [officeId, setOfficeId] = useState('');
     const [data, setData] = useState(null), [busy, setBusy] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState('');
-    const [court, setCourt] = useState({ enabled: false, label: '' });
+    const [court, setCourt] = useState({ enabled: false, label: '', dailySyncEnabled: true, syncTime: '08:00' });
     const [whatsapp, setWhatsapp] = useState({ enabled: false, mode: 'demo', recipients: '', includeCaseManager: false, templateName: '', templateLanguage: 'he', templateParameters: '' });
-    const [caseId, setCaseId] = useState(''), [number, setNumber] = useState('90003-10-26');
+    const [setupOpen, setSetupOpen] = useState(false);
     const [signup, setSignup] = useState(null);
     const [officesLoaded, setOfficesLoaded] = useState(false);
     const signupReady = data?.signup.ready, signupAppId = data?.signup.appId, signupVersion = data?.signup.version;
@@ -20,10 +20,10 @@ export default function OfficeIntegrations({ embedded = false }) {
         const value = await api.snapshot(id);
         if (generation.current !== expected) return;
         setData(value);
-        setCourt({ enabled: value.court?.enabled || false, label: value.court?.settings?.label || '' });
+        setCourt({ enabled: value.court?.enabled || false, label: value.court?.settings?.label || '',
+            dailySyncEnabled: value.court?.settings?.dailySyncEnabled ?? true, syncTime: value.court?.settings?.syncTime || '08:00' });
         const settings = value.whatsapp?.settings || {};
         setWhatsapp({ enabled: value.whatsapp?.enabled || false, mode: settings.mode || 'demo', recipients: (settings.recipients || []).join('\n'), includeCaseManager: settings.includeCaseManager === true, templateName: settings.templateName || '', templateLanguage: settings.templateLanguage || 'he', templateParameters: (settings.templateParameters || []).join('\n') });
-        setCaseId(prev => value.demoCases.some(c => String(c.caseid) === prev) ? prev : String(value.demoCases[0]?.caseid || ''));
     }, []);
     useEffect(() => {
         let mounted = true;
@@ -32,7 +32,7 @@ export default function OfficeIntegrations({ embedded = false }) {
     }, []);
     useEffect(() => {
         const current = ++generation.current;
-        cancelSignup.current?.(); setSignup(null); setData(null); setError(''); setNotice(''); setBusy(false);
+        cancelSignup.current?.(); setSignup(null); setData(null); setError(''); setNotice(''); setBusy(false); setSetupOpen(false);
         if (officeId) load(officeId, current).catch(e => { if (current === generation.current) setError(e.message); });
     }, [officeId, load]);
     // Preload the nonce + SDK so the customer opens Meta directly on their click.
@@ -70,6 +70,7 @@ export default function OfficeIntegrations({ embedded = false }) {
         });
     }
     const button = (label, onClick, disabled = false, primary = false) => <button type="button" className={primary ? 'oi-primary' : ''} disabled={busy || disabled} onClick={onClick}>{tr(label)}</button>;
+    const formatSyncDate = value => value ? new Date(value).toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }) : tr('notScheduled');
     return <section className={`office-integrations ${embedded ? 'oi-embedded' : ''}`} dir="rtl">
         <header><h1>{tr('title')}</h1><p>{tr('intro')}</p></header>
         <label className="oi-office">{tr('office')}<select aria-label={tr('office')} value={officeId} onChange={e => setOfficeId(e.target.value)} disabled={busy}>
@@ -80,26 +81,38 @@ export default function OfficeIntegrations({ embedded = false }) {
             <div className="oi-grid">
                 <section className="oi-card"><div className="oi-card-heading"><h2>{tr('courtTitle')}</h2><span className="oi-badge">{tr('demo')}</span></div>
                     <p>{tr('courtHelp')}</p>
-                    <label>{tr('connectionName')}<input value={court.label} maxLength={120} onChange={e => setCourt({ ...court, label: e.target.value })} /></label>
-                    <label className="oi-toggle"><input type="checkbox" checked={court.enabled} onChange={e => setCourt({ ...court, enabled: e.target.checked })} />{tr('enableCourt')}</label>
-                    <div className="oi-actions">{button('saveCourt', () => action(() => api.saveCourt(officeId, court)), false, true)}
-                        {button('seedDemo', () => action(() => api.seedDemo(officeId)), !data.court?.enabled)}
-                        {button('syncDemo', () => action(() => api.syncCourt(officeId)), !data.court?.enabled)}</div>
-                    <p className="oi-muted">{tr('lastSync')}: {data.court?.lastSyncedAt ? new Date(data.court.lastSyncedAt).toLocaleString('he-IL') : tr('never')}</p>
-                    <h3>{tr('mapping')}</h3>
-                    <label>{tr('demoCase')}<select value={caseId} onChange={e => setCaseId(e.target.value)}><option value="">{tr('selectCase')}</option>{data.demoCases.map(c => <option key={c.caseid} value={c.caseid}>{c.casename} (#{c.caseid})</option>)}</select></label>
-                    <label>{tr('courtNumber')}<input dir="ltr" value={number} maxLength={13} onChange={e => setNumber(e.target.value)} /></label>
-                    {button('saveMapping', () => action(() => api.linkCourt(officeId, { caseId: Number(caseId), courtNumber: number })), !caseId || !data.court?.enabled)}
-                    <ul className="oi-mappings">{data.links.map(l => <li key={l.id}><bdi>{l.court_number}</bdi> — {l.casename}</li>)}</ul>
+                    <fieldset disabled={busy || !data.canConfigurePolicy} className="oi-connection-fields">
+                        <label>{tr('connectionName')}<input value={court.label} maxLength={120} onChange={e => setCourt({ ...court, label: e.target.value })} /></label>
+                        <label className="oi-toggle"><input type="checkbox" checked={court.enabled} onChange={e => setCourt({ ...court, enabled: e.target.checked })} />{tr('enableCourt')}</label>
+                        <label className="oi-toggle"><input type="checkbox" checked={court.dailySyncEnabled} onChange={e => setCourt({ ...court, dailySyncEnabled: e.target.checked })} />{tr('dailySync')}</label>
+                        <label>{tr('syncTime')}<input type="time" dir="ltr" value={court.syncTime} required disabled={!court.dailySyncEnabled} onChange={e => setCourt({ ...court, syncTime: e.target.value })} /></label>
+                        <p className="oi-muted">{tr('syncTimeHelp')}</p>
+                        {data.canConfigurePolicy && <div className="oi-actions">{button('saveCourt', () => action(() => api.saveCourt(officeId, court)), !/^([01]\d|2[0-3]):[0-5]\d$/.test(court.syncTime), true)}</div>}
+                    </fieldset>
+                    {!data.canConfigurePolicy && <p className="oi-muted">{tr('courtAdminPolicy')}</p>}
+                    <p className="oi-muted">{tr('lastSync')}: {data.court?.lastSyncedAt ? formatSyncDate(data.court.lastSyncedAt) : tr('never')}</p>
+                    <p className="oi-muted">{tr('nextSync')}: {formatSyncDate(data.court?.nextSyncAt)}</p>
+                    {data.court?.enabled && data.court?.settings?.dailySyncEnabled && !data.courtSchedulerRunning && <p className="oi-note">{tr('schedulerUnavailable')}</p>}
                 </section>
                 <section className="oi-card"><div className="oi-card-heading"><h2>WhatsApp Business</h2><span className="oi-badge">{tr('official')}</span></div>
                     <p>{tr('whatsappHelp')}</p>
                     <ol className="oi-steps"><li>{tr('stepConnect')}</li><li>{tr('stepEligibility')}</li><li>{tr('stepInvites')}</li></ol>
                     <p><strong>{tr('status')}: {t(`officeIntegrations.statuses.${data.whatsapp?.status || 'disconnected'}`)}</strong>{data.whatsapp?.displayPhone && <bdi className="oi-phone">{data.whatsapp.displayPhone}</bdi>}</p>
-                    {!data.signup.ready && <p className="oi-note">{tr('platformSetup')}</p>}
-                    <div className="oi-actions">{button(signup ? 'connect' : 'prepareConnection', connect, !data.signup.ready, true)}
-                        {button('checkConnection', () => action(() => api.checkWhatsapp(officeId)), !data.whatsapp?.connected)}
-                        {button('disconnect', () => action(() => api.disconnect(officeId)), !data.whatsapp?.connected)}</div>
+                    {!data.signup.ready && <p className="oi-note">{tr(data.signup.demoOnly ? 'demoConnectionNotice' : 'platformSetup')}</p>}
+                    <div className="oi-actions">{data.signup.ready ? button(signup ? 'connect' : 'prepareConnection', connect, false, true)
+                        : button('connectionSetup', () => setSetupOpen(!setupOpen), false, true)}
+                        {data.whatsapp?.connected && <>{button('checkConnection', () => action(() => api.checkWhatsapp(officeId)), data.signup.demoOnly)}
+                        {button('disconnect', () => action(() => api.disconnect(officeId)))}</>}</div>
+                    {setupOpen && <section className="oi-setup" aria-label={tr('connectionSetup')}>
+                        <h3>{tr('platformResponsibilityTitle')}</h3><p>{tr('platformResponsibility')}</p>
+                        {data.canConfigurePolicy && <>
+                            <ul className="oi-steps">{Object.entries(data.signup.requirements || {}).map(([key, configured]) => <li key={key}>{tr(`setupRequirements.${key}`)}: <strong>{tr(configured ? 'configured' : 'notConfigured')}</strong></li>)}</ul>
+                            <a href="https://developers.facebook.com/apps/" target="_blank" rel="noreferrer">{tr('openMetaSetup')}</a>
+                        </>}
+                        <h3>{tr('officeResponsibilityTitle')}</h3><p>{tr('officeResponsibility')}</p>
+                        {data.signup.demoOnly && <p className="oi-note">{tr('demoConnectionNotice')}</p>}
+                        <div className="oi-actions">{button('refreshSetup', () => action(async () => {}))}</div>
+                    </section>}
                     <p className="oi-note">{tr('eligibility')}</p>
                     {data.whatsapp?.connected && <p className="oi-muted">{tr('paymentHelp')} <a href="https://business.facebook.com/wa/manage/home/" target="_blank" rel="noreferrer">{tr('manageMeta')}</a></p>}
                     {!data.canConfigurePolicy && <p>{tr('adminPolicy')}</p>}
@@ -118,19 +131,11 @@ export default function OfficeIntegrations({ embedded = false }) {
                             <p className="oi-muted">{tr('templateHelp')} <a href="https://business.facebook.com/wa/manage/template-library" target="_blank" rel="noreferrer">{tr('templateLibrary')}</a></p>
                             {!data.signup.liveEnabled && <p className="oi-note">{tr('liveNotEnabled')}</p>}
                         </>}
-                        <div className="oi-actions">{button('saveWhatsapp', () => action(() => api.saveWhatsapp(officeId, { ...whatsapp, recipients: whatsapp.recipients.split(/[\n,;]/).map(s => s.trim()).filter(Boolean), templateParameters: whatsapp.templateParameters.split('\n').filter(Boolean) })), false, true)}
-                        {button('testGroup', () => action(() => api.previewGroup(officeId, caseId)), !caseId || !data.whatsapp?.enabled || data.whatsapp?.settings.mode !== 'demo')}</div>
+                        <div className="oi-actions">{button('saveWhatsapp', () => action(() => api.saveWhatsapp(officeId, { ...whatsapp, recipients: whatsapp.recipients.split(/[\n,;]/).map(s => s.trim()).filter(Boolean), templateParameters: whatsapp.templateParameters.split('\n').filter(Boolean) })), false, true)}</div>
+                        <p className="oi-muted">{tr('disableHelp')}</p>
                     </fieldset>}
                 </section>
             </div>
-            <section className="oi-card"><h2>{tr('courtUpdates')}</h2><p>{tr('updatesHelp')}</p>
-                {!data.updates.length ? <p>{tr('noUpdates')}</p> : <div className="oi-table"><table><thead><tr><th>{tr('update')}</th><th>{tr('courtNumber')}</th><th>{tr('mapping')}</th></tr></thead><tbody>{data.updates.map(e => <tr key={e.id}><td><span className="oi-badge">{tr('demo')}</span> {e.title}<p>{e.body}</p></td><td><bdi>{e.court_number}</bdi></td><td>{e.case_id ? `${tr('case')} #${e.case_id}` : tr('pendingMapping')}</td></tr>)}</tbody></table></div>}
-            </section>
-            <section className="oi-card"><div className="oi-card-heading"><h2>{tr('groupActivity')}</h2>{button('refresh', () => action(async () => {}))}</div>
-                {!data.groups.length ? <p>{tr('noGroups')}</p> : <div className="oi-table"><table><thead><tr><th>{tr('case')}</th><th>{tr('mode')}</th><th>{tr('status')}</th><th>{tr('invitations')}</th></tr></thead><tbody>{data.groups.map(g => <tr key={g.id}><td>#{g.case_id}</td><td>{tr(g.mode === 'demo' ? 'demo' : 'liveMode')}</td><td>{t(`officeIntegrations.statuses.${g.status}`)}{g.invite_link && <p><a href={g.invite_link} target="_blank" rel="noreferrer">{tr('groupLink')}</a></p>}</td><td>{g.recipients.map(r => <div key={r.phone}><bdi>{r.phone}</bdi> — {t(`officeIntegrations.statuses.${r.status}`)}</div>)}</td></tr>)}</tbody></table></div>}
-                {data.groups.filter(g => ['MANAGER_PHONE_MISSING', 'MANAGER_PHONE_INVALID', 'GROUP_CAPACITY'].includes(g.error_code)).map(g => <p className="oi-note" key={g.id}>{tr('case')} #{g.case_id}: {tr(g.error_code === 'GROUP_CAPACITY' ? 'capacityIssue' : 'managerPhoneIssue')}</p>)}
-                <p className="oi-muted">{tr('disableHelp')}</p>
-            </section>
         </>}
     </section>;
 }

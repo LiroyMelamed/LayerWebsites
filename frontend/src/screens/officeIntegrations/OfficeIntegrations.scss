@@ -18,6 +18,8 @@
   .oi-notice { color: #215c41; background: #eaf7f0; padding: 14px; border-radius: 8px; }
   fieldset { border: 0; border-top: 1px solid #e4ebef; padding: 18px 0 0; margin-top: 20px; }
   legend { font-weight: 600; padding-inline-end: 12px; } .oi-phone { display: block; margin-top: 8px; }
+  .oi-connection-fields { border: 0; padding: 0; margin: 0; }
+  .oi-setup { background: #f4f8fb; border: 1px solid #dbe4e9; border-radius: 10px; padding: 16px; }
   .oi-steps, .oi-mappings { padding-inline-start: 22px; line-height: 1.8; }
   .oi-table { overflow-x: auto; } table { border-collapse: collapse; width: 100%; font-size: 14px; } th, td { text-align: start; padding: 13px; border-bottom: 1px solid #e3e9ef; vertical-align: top; } td p { margin: 6px 0; }
   a { color: #245976; text-underline-offset: 3px; } &.oi-embedded { padding: 0; }

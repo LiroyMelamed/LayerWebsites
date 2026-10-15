@@ -28,7 +28,7 @@ test('platform admin saves recipient policy for selected office, keeps live acti
     await waitFor(() => expect(screen.getByRole('button', { name: 'saveWhatsapp' })).toBeEnabled());
     fireEvent.change(screen.getByLabelText('mode'), { target: { value: 'live' } });
     expect(screen.getByLabelText('autoCreate')).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'prepareConnection' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'connectionSetup' })).toBeEnabled();
     expect(api.startSignup).not.toHaveBeenCalled();
 });
 test('office owner sees connection flow without platform recipient/template controls', async () => {
@@ -37,7 +37,30 @@ test('office owner sees connection flow without platform recipient/template cont
     expect(screen.getByText('adminPolicy')).toBeInTheDocument();
     expect(screen.queryByLabelText('recipients')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'saveWhatsapp' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'prepareConnection' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'connectionSetup' })).toBeInTheDocument();
+    expect(screen.getByLabelText('syncTime')).toBeDisabled();
+});
+
+test('settings page has no operational tables and saves the selected office daily schedule', async () => {
+    api.saveCourt.mockResolvedValue({ ok: true });
+    render(<OfficeIntegrations />); await screen.findByDisplayValue('Court A');
+    for (const name of ['mapping', 'courtUpdates', 'groupActivity', 'seedDemo', 'syncDemo', 'testGroup']) expect(screen.queryByText(name)).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('office'), { target: { value: 'B' } }); await screen.findByDisplayValue('Court B');
+    fireEvent.change(screen.getByLabelText('syncTime'), { target: { value: '09:30' } });
+    fireEvent.click(screen.getByRole('button', { name: 'saveCourt' }));
+    await waitFor(() => expect(api.saveCourt).toHaveBeenCalledWith('B', expect.objectContaining({ enabled: true, dailySyncEnabled: true, syncTime: '09:30' })));
+});
+
+test('setup button explains platform and office responsibilities without launching Meta in demo mode', async () => {
+    api.snapshot.mockResolvedValue({ ...state('A'), signup: { ready: false, demoOnly: true, requirements: { app: false, signup: false, encryption: false, webhook: false } } });
+    render(<OfficeIntegrations />); await screen.findByDisplayValue('Court A');
+    fireEvent.click(screen.getByRole('button', { name: 'connectionSetup' }));
+    expect(screen.getByText('platformResponsibility')).toBeInTheDocument();
+    expect(screen.getByText('officeResponsibility')).toBeInTheDocument();
+    expect(screen.getAllByText('notConfigured')).toHaveLength(4);
+    expect(screen.queryByRole('button', { name: 'checkConnection' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'disconnect' })).not.toBeInTheDocument();
+    expect(api.startSignup).not.toHaveBeenCalled();
 });
 test('late response from previous office cannot replace current office data', async () => {
     let resolveA;
