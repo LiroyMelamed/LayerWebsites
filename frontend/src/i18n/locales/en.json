@@ -1405,6 +1405,8 @@
       "refresh": "Refresh",
       "insightsTitle": "Your firm’s business adviser",
       "insightsSubtitle": "What the data suggests, and where to focus",
+      "workloadSubtitle": "Case distribution and progress across the firm",
+      "signingSubtitle": "Documents, signatures and follow-up in one place",
       "insightsUnavailable": "No grounded insights are available right now. Your firm’s data and activity are still shown here. Try refreshing later."
     },
     "team": {

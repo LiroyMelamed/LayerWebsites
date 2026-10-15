@@ -222,6 +222,10 @@ export default function MainScreen() {
                         </SimpleButton>
                     </header>
 
+                    {calendarEnabled ? <section id="manager-home-today" className="lw-businessHome__calendar">
+                        <CalendarWidget events={calendarEvents} isPerforming={isLoadingCalendar} onEventPress={handleCalendarEventPress} />
+                    </section> : null}
+
                     {dashboardEnabled ? (
                         <>
                             <SummaryStrip
@@ -257,11 +261,7 @@ export default function MainScreen() {
                                 onDataChanged={handleRefresh}
                             />
 
-                            {calendarEnabled ? <section id="manager-home-today" className="lw-businessHome__calendar">
-                                <CalendarWidget events={calendarEvents} isPerforming={isLoadingCalendar} onEventPress={handleCalendarEventPress} />
-                            </section> : null}
-
-                            <SimpleContainer className="lw-commandCenter__grid">
+                            <SimpleContainer className={`lw-commandCenter__grid${signingDashboardEnabled ? '' : ' lw-commandCenter__grid--single'}`}>
                                 <CaseOperationsPanel
                                     managerWorkload={managerHome?.managerWorkload || []}
                                     unassignedCases={managerHome?.unassignedCases}
@@ -293,7 +293,6 @@ export default function MainScreen() {
                             <Text14>לוח הבקרה זמין — אין הרשאת צפייה בתיקים לתצוגת נתונים מלאה.</Text14>
                         </SimpleContainer>
                     ) : null}
-                    {!dashboardEnabled && calendarEnabled ? <CalendarWidget events={calendarEvents} isPerforming={isLoadingCalendar} onEventPress={handleCalendarEventPress} /> : null}
                 </SimpleContainer>
             </SimpleScrollView>
         </SimpleScreen>
