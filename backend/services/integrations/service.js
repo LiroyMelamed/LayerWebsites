@@ -35,14 +35,16 @@ function createIntegrationService({ pool, provider, env = process.env }) {
     }
     function signupConfig() {
         const demoOnly = env.WHATSAPP_DEMO_ONLY === 'true';
+        const approvalPending = env.WHATSAPP_META_APPROVAL_PENDING === 'true';
         const requirements = { app: Boolean(env.WHATSAPP_META_APP_ID && env.WHATSAPP_META_APP_SECRET),
             signup: Boolean(env.WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID), encryption: /^[a-f0-9]{64}$/i.test(env.INTEGRATIONS_ENCRYPTION_KEY || ''),
             webhook: Boolean(env.WHATSAPP_WEBHOOK_VERIFY_TOKEN) };
         const configurationReady = Object.values(requirements).every(Boolean);
-        const ready = !demoOnly && configurationReady;
+        const ready = !demoOnly && configurationReady && !approvalPending;
         return { ready, appId: ready ? env.WHATSAPP_META_APP_ID : null, configId: ready ? env.WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID : null,
             version: env.WHATSAPP_GRAPH_VERSION || 'v26.0', liveEnabled: deliveryAllowed(env),
             flow: env.WHATSAPP_SIGNUP_FLOW === 'business_app' ? 'business_app' : 'cloud', connectionOnly: env.WHATSAPP_CONNECT_ONLY === 'true',
+            approvalPending, pricing: env.WHATSAPP_PRICING_PREVIEW === 'true' ? require('../../config/whatsappPricing') : null,
             demoOnly, configurationReady, requirements };
     }
     async function settingsSnapshot(tenantId) {

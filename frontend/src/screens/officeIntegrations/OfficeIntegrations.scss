@@ -22,6 +22,15 @@
   legend { font-weight: 600; padding-inline-end: 12px; } .oi-phone { display: block; margin-top: 8px; }
   .oi-connection-fields { border: 0; padding: 0; margin: 0; }
   .oi-setup { background: #f4f8fb; border: 1px solid #dbe4e9; border-radius: 10px; padding: 16px; }
+  .oi-pricing { margin: 18px 0; padding: 18px; background: #f4f8fb; border: 1px solid #dbe4e9; border-radius: 12px; }
+  .oi-pricing h3 { margin: 0; }
+  .oi-price { display: flex; align-items: baseline; gap: 8px; margin: 14px 0 4px; flex-wrap: wrap; }
+  .oi-price bdi { font-size: 32px; font-weight: 700; color: #214e70; }
+  .oi-price span { font-size: 14px; }
+  .oi-pricing dl { margin: 12px 0; }
+  .oi-pricing dl > div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid #dbe4e9; }
+  .oi-pricing dd { margin: 0; font-weight: 600; }
+  .oi-pricing-notice { margin-bottom: 0; color: #215c41; font-size: 13px; font-weight: 600; }
   .oi-steps, .oi-mappings { padding-inline-start: 22px; line-height: 1.8; }
   .oi-table { overflow-x: auto; } table { border-collapse: collapse; width: 100%; font-size: 14px; } th, td { text-align: start; padding: 13px; border-bottom: 1px solid #e3e9ef; vertical-align: top; } td p { margin: 6px 0; }
   a { color: #245976; text-underline-offset: 3px; } &.oi-embedded { padding: 0; }

@@ -14,6 +14,16 @@ Connecting is separate from group eligibility. Coexistence accounts cannot enabl
 
 Official references: [Business app onboarding](https://developers.facebook.com/documentation/business-messaging/whatsapp/embedded-signup/onboarding-business-app-users), [Embedded Signup implementation](https://developers.facebook.com/documentation/business-messaging/whatsapp/embedded-signup/implementation).
 
+An actual launch from QA reached Meta's message that **MelaMedia cannot onboard customers at this time**. Keep `WHATSAPP_META_APPROVAL_PENDING=true` until the business/application prerequisites are approved and retested. The visible QR button explains that it is waiting for Meta; the backend rejects new signup sessions rather than launching a known-blocked flow repeatedly.
+
+### Proposed add-on price (QA display only)
+
+The owner delegated pricing calculation and then confirmed that MelaMedia is an exempt business and does not charge VAT. The proposal is **ILS 99 per office per month, no VAT added**, one office number, **ILS 0 setup**, with Meta's usage costs separate and paid directly to Meta. This adds to the existing subscription. `WHATSAPP_PRICING_PREVIEW=true` exposes the proposal from `backend/config/whatsappPricing.js`; it does not create a subscription, collect payment, or activate a paid service. No customer has been charged.
+
+Planning assumptions, not measured costs: ILS 8 infrastructure/monitoring allocation per office/month + 10 minutes support at ILS 120/hour (ILS 20) + 45 minutes initial assistance amortized over six months (ILS 15/month) = ILS 43/month. At ILS 99, the estimated contribution is ILS 56/month before acquisition costs, broader overhead and taxes. Zero setup reduces friction; review actual support use and churn before commercial rollout. Meta charges are excluded so messaging volume does not erode this estimated margin.
+
+Meta's [official pricing page](https://whatsappbusiness.com/products/platform-pricing/) describes prices varying by recipient market and message category. The UI links there and does not hardcode per-message prices or promise free/unlimited messages. Full billing and contract acceptance remain outside this display-only QA change.
+
 ## Company, product and customer identity
 
 Confirmed by the owner on 2026-10-15:

@@ -106,3 +106,14 @@ test('connection-only QA offers the actual QR button and keeps automation in sim
     fireEvent.click(screen.getByRole('button', { name: 'connectQr' }));
     expect(launchWhatsAppSignup).toHaveBeenCalledTimes(1);
 });
+test('Meta approval blocker keeps a visible QR button, shows the no-charge price preview and does not launch signup', async () => {
+    api.snapshot.mockResolvedValue(state({ signup: { ready: false, approvalPending: true, flow: 'business_app', connectionOnly: true,
+        liveEnabled: false, demoOnly: false, pricing: { monthlyAmount: 99, setupAmount: 0, vatMode: 'exempt', currency: 'ILS', billingActive: false } } }));
+    render(<OfficeIntegrations />); await screen.findByDisplayValue('My office court');
+    expect(screen.getByRole('button', { name: 'connectQr' })).toBeDisabled();
+    expect(screen.getByText('metaApprovalPending')).toBeInTheDocument();
+    expect(screen.getByText('pricingNoCharge')).toBeInTheDocument();
+    expect(screen.getByText('pricingTaxExempt')).toBeInTheDocument();
+    expect(screen.queryByText('platformSetup')).not.toBeInTheDocument();
+    expect(api.startSignup).not.toHaveBeenCalled(); expect(prepareWhatsAppSdk).not.toHaveBeenCalled();
+});
