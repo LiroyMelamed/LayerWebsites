@@ -14,6 +14,7 @@ router.get('/usage', authMiddleware, requirePlatformAdmin, billingController.get
 router.get('/plans', authMiddleware, requirePlatformAdmin, billingController.listPlans);
 router.post('/package', authMiddleware, requirePlatformAdmin, billingController.savePackage);
 router.post('/checkout', authMiddleware, requirePlatformAdmin, billingController.createCheckout);
+router.post('/checkout/confirm', authMiddleware, requirePlatformAdmin, billingController.confirmCheckout);
 router.post('/charge', authMiddleware, requirePlatformAdmin, billingController.chargeNow);
 router.post('/cancel-subscription', authMiddleware, requirePlatformAdmin, billingController.cancelSubscription);
 

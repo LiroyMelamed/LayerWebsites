@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, forwardRef } from "react";
+import React, { useCallback, useEffect, useRef, useState, forwardRef } from "react";
 import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import { colors } from "../../../constant/colors";
 import SimpleLoader from "../../simpleComponents/SimpleLoader";
@@ -43,7 +43,7 @@ const GenericButton = forwardRef(({
         }
     };
 
-    const ICON_SIZE = size == buttonSizes.SMALL ? 8 : 12;
+    const ICON_SIZE = size === buttonSizes.SMALL ? 8 : 12;
 
     const [isPressed, setIsPressed] = useState(false);
 
@@ -72,11 +72,11 @@ const GenericButton = forwardRef(({
         return !disabled && !isPerforming;
     }
 
-    function isButtonPressed() {
+    const isButtonPressed = useCallback(() => {
         return holdPressed || isPressed;
-    }
+    }, [holdPressed, isPressed]);
 
-    function getContentColor() {
+    const getContentColor = useCallback(() => {
         if (disabled) {
             return disabledContentColor;
         }
@@ -84,9 +84,9 @@ const GenericButton = forwardRef(({
             return pressedContentColor;
         }
         return contentColor;
-    }
+    }, [disabled, disabledContentColor, isButtonPressed, pressedContentColor, contentColor]);
 
-    function getBackgroundColor() {
+    const getBackgroundColor = useCallback(() => {
         if (disabled) {
             return disabledBackgroundColor;
         }
@@ -94,7 +94,7 @@ const GenericButton = forwardRef(({
             return pressedBackgroundColor;
         }
         return backgroundColor;
-    }
+    }, [disabled, disabledBackgroundColor, isButtonPressed, pressedBackgroundColor, backgroundColor]);
 
     useEffect(() => {
         if (!buttonRef.current) return;
@@ -130,6 +130,9 @@ const GenericButton = forwardRef(({
         shadowColor,
         isPerforming,
         customStyle,
+        getBackgroundColor,
+        getContentColor,
+        isButtonPressed,
     ]);
 
     return (

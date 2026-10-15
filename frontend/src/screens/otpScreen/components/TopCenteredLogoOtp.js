@@ -20,7 +20,7 @@ export default function TopCenteredLogoOtp({ logoSrc, logoWidth = 100, style: _s
                     src={resolvedLogo}
                     tintColor={naturalColors ? null : colors.text}
                     className="lw-topCenteredLogoOtp__logoImage"
-                    style={{ width: logoWidth, maxWidth: 'min(80vw, 280px)', height: 'auto' }}
+                    style={{ width: logoWidth, maxWidth: 'min(80vw, 280px)', height: naturalColors ? 'auto' : logoWidth }}
                 />
             </SimpleContainer>
 

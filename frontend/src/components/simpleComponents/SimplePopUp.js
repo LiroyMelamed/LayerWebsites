@@ -1,6 +1,7 @@
 // SimplePopUp.js
 import { useRef, useEffect, useState, isValidElement, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import SimpleContainer from './SimpleContainer';
 import SimpleButton from './SimpleButton';
 
@@ -17,6 +18,7 @@ const FOCUSABLE_SELECTOR = [
 ].join(',');
 
 const SimplePopUp = ({ isOpen, children, onClose, onBack, backEnabled = true, className, ...props }) => {
+    const { t } = useTranslation();
     const popupRef = useRef(null);
     const [shouldRender, setShouldRender] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
@@ -125,6 +127,7 @@ const SimplePopUp = ({ isOpen, children, onClose, onBack, backEnabled = true, cl
                         onPress={onClose}
                         className="lw-simplePopUp__close"
                         tabIndex={-1}
+                        aria-label={t('common.close')}
                     >
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -139,7 +142,7 @@ const SimplePopUp = ({ isOpen, children, onClose, onBack, backEnabled = true, cl
                             backEnabled ? null : 'lw-simplePopUp__back--disabled',
                         ].filter(Boolean).join(' ')}
                         tabIndex={-1}
-                        aria-label="חזרה"
+                        aria-label={t('common.back')}
                         aria-disabled={!backEnabled}
                     >
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">

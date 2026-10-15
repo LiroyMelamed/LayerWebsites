@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useFirmPermissions } from "../../../providers/FirmPermissionsProvider";
 import { useTranslation } from "react-i18next";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { icons } from "../../../assets/icons/icons";
@@ -33,6 +34,7 @@ export default function CaseTypeMenuItem({
     style
 }) {
     const { t } = useTranslation();
+    const canManage = Boolean(useFirmPermissions()?.canAction("caseTypes", "manage"));
     const { isPerforming: isPerformingSetCase } = useHttpRequest(casesApi.updateCaseById, () => { setCurrentStage(currentStage + 1) });
     const { openPopup, closePopup } = usePopup();
     const [isOpen, setIsOpen] = useState(false);
@@ -63,7 +65,7 @@ export default function CaseTypeMenuItem({
                             )}
                         </SimpleContainer>
 
-                        {!leftPreSecondLine && (
+                        {!leftPreSecondLine && canManage && (
                             <SimpleContainer className="lw-caseTypeMenuItem__actions">
                                 <SecondaryButton
                                     size={buttonSizes.SMALL}

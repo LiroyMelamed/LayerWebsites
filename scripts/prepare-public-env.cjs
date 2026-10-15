@@ -10,5 +10,9 @@ const destination = path.join(frontend, '.env');
 if (!tenant && fs.existsSync(destination)) process.exit(0);
 const variant = tenant ? path.join(frontend, `.env.production.${tenant}`) : destination;
 const source = tenant && fs.existsSync(variant) ? variant : variant + '.example';
+if (!fs.existsSync(source)) {
+  console.error(`Missing frontend configuration. Provision frontend/${path.basename(variant)} locally before starting or building${tenant ? ` ${tenant}` : ''}. Environment files, including examples, are intentionally excluded from Git.`);
+  process.exit(1);
+}
 fs.copyFileSync(source, destination);
 console.log('Prepared frontend public configuration from ' + path.basename(source));

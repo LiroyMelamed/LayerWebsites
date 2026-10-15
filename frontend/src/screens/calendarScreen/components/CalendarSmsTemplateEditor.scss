@@ -56,8 +56,8 @@
 .lw-calendarSmsEditor__bubbleBody {
     white-space: pre-wrap;
     overflow-wrap: break-word;
-    direction: rtl;
-    text-align: right;
+    text-align: start;
+    unicode-bidi: plaintext;
     color: #1A202C;
     line-height: 1.55;
 }

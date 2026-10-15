@@ -323,20 +323,32 @@ const requestOtp = async (req, res) => {
             console.log(`code: ${otp}\n`);
         }
 
-        await pool.query(
+        const otpHash = hashOtp(otp);
+        const storedOtp = await pool.query(
             `INSERT INTO otps (phonenumber, otp, expiry, userid)
              VALUES ($1, $2, $3, $4)
-             ON CONFLICT (phonenumber) DO UPDATE
-             SET otp = EXCLUDED.otp, expiry = EXCLUDED.expiry, userid = EXCLUDED.userid`,
-            [phoneNumber, hashOtp(otp), expiry, userResult.rows[0].userid]
+             ON CONFLICT (phonenumber) WHERE phonenumber IS NOT NULL DO UPDATE
+             SET otp = EXCLUDED.otp, expiry = EXCLUDED.expiry, userid = EXCLUDED.userid
+             RETURNING id`,
+            [phoneNumber, otpHash, expiry, userResult.rows[0].userid]
         );
 
-        // Send SMS
+        // Report success only after the transport accepts the message.
+        let sent;
         try {
             const smsBody = `קוד האימות שלך לצ׳אט הוא ${otp}`;
-            sendMessage(smsBody, formattedPhone, { fast: true });
+            sent = await sendMessage(smsBody, formattedPhone, { fast: true });
         } catch (smsErr) {
             console.warn('[chatbot] SMS send failed:', smsErr?.message);
+        }
+        if (!sent?.ok) {
+            // A later resend can reuse the row ID. Preserve its newer challenge.
+            await pool.query('DELETE FROM otps WHERE id = $1 AND otp = $2', [storedOtp.rows[0].id, otpHash]);
+            logSecurityEvent({ type: 'CHATBOT_OTP_REQUEST', phone: phoneNumber, ip, success: false });
+            return sendError(res, {
+                httpStatus: 503, errorCode: 'OTP_SEND_FAILED',
+                message: 'שליחת הקוד נכשלה. נסו שוב בעוד רגע',
+            });
         }
 
         logSecurityEvent({

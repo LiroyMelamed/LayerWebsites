@@ -11,6 +11,7 @@ function billingPayload(snap, extra = {}) {
         billing: {
             status: snap.status,
             billingEnabled: snap.billingEnabled,
+            autoRenew: snap.autoRenew !== false,
             stillComplimentary: snap.stillComplimentary,
             isUnlimited: snap.isUnlimited,
             complimentaryUntil: snap.complimentaryUntil,
@@ -27,6 +28,8 @@ function billingPayload(snap, extra = {}) {
             payUrl: snap.payUrl,
             payments: snap.payments || [],
             upcomingPayment: snap.upcomingPayment || null,
+            setupCheckoutAmountIls: snap.setupCheckoutAmountIls ?? 1,
+            takbullMode: snap.takbullMode || 'prod',
         },
         package: snap.package,
         ...extra,
@@ -36,7 +39,12 @@ function billingPayload(snap, extra = {}) {
 exports.getLockStatus = async (req, res) => {
     try {
         const snap = await billing.getBillingSnapshot();
+        let canManageBilling = false;
+        await require('../middlewares/requirePlatformAdmin')(req, res, error => { canManageBilling = !error; });
+        res.setHeader?.('Cache-Control', 'no-store');
+        if (!canManageBilling) return res.status(200).json({ locked: Boolean(snap.locked), canManageBilling: false });
         return res.status(200).json({
+            canManageBilling: true,
             locked: Boolean(snap.locked),
             status: snap.status || 'complimentary',
             stillComplimentary: Boolean(snap.stillComplimentary),
@@ -46,7 +54,7 @@ exports.getLockStatus = async (req, res) => {
         });
     } catch (e) {
         console.error('getLockStatus error:', e);
-        return res.status(200).json({ locked: false, status: 'unknown' });
+        return res.status(503).json({ errorCode: 'SERVICE_TEMPORARILY_UNAVAILABLE', message: 'השירות אינו זמין כרגע. נסו שוב מאוחר יותר.' });
     }
 };
 
@@ -195,6 +203,25 @@ exports.createCheckout = async (req, res) => {
         }
         console.error('createCheckout error:', e);
         return res.status(500).json({ message: e.message || 'שגיאה בפתיחת סליקה' });
+    }
+};
+
+exports.confirmCheckout = async (req, res) => {
+    try {
+        const intentId = req.body?.intentId || null;
+        const uniqId = req.body?.uniqId || null;
+        if (!intentId && !uniqId) {
+            return res.status(400).json({ message: 'חסר מזהה תשלום' });
+        }
+        await billing.handleTakbullReturn({ uniqId, intentId });
+        const snap = await billing.getBillingSnapshot();
+        return res.status(200).json({
+            success: true,
+            ...billingPayload(snap),
+        });
+    } catch (e) {
+        console.error('confirmCheckout error:', e);
+        return res.status(500).json({ message: e.message || 'שגיאה באימות התשלום' });
     }
 };
 

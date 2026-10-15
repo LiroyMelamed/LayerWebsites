@@ -9,7 +9,7 @@ import TopCenteredLogo from "./components/TopCenteredLogo";
 import useHttpRequest from "../../hooks/useHttpRequest";
 import PoweredByMela from "../../components/PoweredByMela";
 import { images } from "../../assets/images/images";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import loginApi from "../../api/loginApi";
 import { getActiveTenantSlug } from "../../lib/tenantSlug";
 import { useTranslation } from "react-i18next";

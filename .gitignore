@@ -177,7 +177,6 @@ backend/scripts/.env.neon
 !/backend/logs/
 !/.vscode/launch.json
 !/backend/.vscode/launch.json
-!/backend/logs/security-audit-2026-09-29.log
 # BEGIN reviewed Git completeness — 2026-10-15
 # Runtime environment values and credentials stay on this computer.
 .env
@@ -231,3 +230,6 @@ DerivedData/
 # Files with private operational/customer data or packaged runtime output.
 
 # END reviewed Git completeness
+
+# Generated runtime audit logs remain local, not source evidence.
+/backend/logs/security-audit-*.log

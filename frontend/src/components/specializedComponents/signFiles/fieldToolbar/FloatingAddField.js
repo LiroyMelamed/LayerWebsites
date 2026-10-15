@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import './fieldToolbar.scss';
 
 // containerSelector: CSS selector for the pdf viewer container (e.g. .lw-signing-pdfViewer)
-export default function FloatingAddField({ onAdd = () => { }, containerSelector = '.lw-signing-pdfViewer', currentPage }) {
+export default function FloatingAddField({ onAdd = () => { }, containerSelector = '.lw-signing-pdfViewer', currentPage, label }) {
     const { t } = useTranslation();
     const [visiblePage, setVisiblePage] = useState(Number(currentPage) || 1);
 
@@ -55,7 +55,8 @@ export default function FloatingAddField({ onAdd = () => { }, containerSelector 
                 type="button"
                 className="lw-floatingAddField__btn"
                 onClick={handleAddClick}
-                title={t('signing.fieldSettings.addFieldForPage', { page: visiblePage })}
+                title={label || t('signing.fieldSettings.addFieldForPage', { page: visiblePage })}
+                aria-label={label || t('signing.fieldSettings.addFieldForPage', { page: visiblePage })}
             >
                 +
             </button>

@@ -45,3 +45,15 @@ These are variable names only, collected from existing example files. Values are
 ### frontend/.env.production.morlevy.example
 
 `REACT_APP_API_BASE_URL`, `REACT_APP_APP_NAME`, `REACT_APP_CENTRAL_API_URL`, `REACT_APP_DEFAULT_LANG`, `REACT_APP_NATIVE_SCHEME`, `REACT_APP_NATIVE_SCHEME_ALT`, `REACT_APP_NOREPLY_EMAIL`
+
+## Starting and building after a fresh checkout
+
+All `.env` files, including `.example` files, stay outside Git. The variable names above are documentation, not deployable values. Provision the correct tenant configuration from the authorized private environment store before running the application. Never copy configuration from a different customer.
+
+- Generic start/build uses an existing `frontend/.env`. A locally provisioned `frontend/.env.example` is supported for compatibility.
+- `npm run build:<tenant>` uses `frontend/.env.production.<tenant>` (or an explicitly provisioned local example for that exact tenant). A different tenant or generic file is never a fallback.
+- Missing configuration stops preparation with the expected local path. It does not create an empty file.
+- Backend environment files are provisioned independently and remain local.
+- Generated `backend/logs/security-audit-*.log` files remain local; retained source and QA documents remain in Git.
+
+Validate configuration preparation without production credentials with `node --test scripts/prepare-public-env.test.cjs`. These fixture tests do not build or deploy the application and do not replace product QA.
