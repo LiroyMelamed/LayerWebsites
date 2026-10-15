@@ -1,0 +1,19 @@
+{
+  "license": "SIL Open Font License 1.1",
+  "files": [
+    {
+      "file": "NotoSansArabic-Regular.ttf",
+      "source": "https://raw.githubusercontent.com/notofonts/noto-fonts/main/hinted/ttf/NotoSansArabic/NotoSansArabic-Regular.ttf",
+      "gitBlobSha1": "ce21d4f5ac8765b51b9eedb1bb5c0069ee8115a4",
+      "sha256": "ceea25b464a656dc3b26849bab9356740401af62aedf1bfa8b7f0d9b75925b1b",
+      "bytes": 240456
+    },
+    {
+      "file": "NotoSansArabic-OFL.txt",
+      "source": "https://raw.githubusercontent.com/notofonts/noto-fonts/main/LICENSE",
+      "gitBlobSha1": "c82d72e422e2d08c5ab439b6bac7c2177ea0c565",
+      "sha256": "0dab92d0544f7b233403f14b84a663bdbfa746982eda629e7f4f9ffe1b036feb",
+      "bytes": 4377
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+[
+  {
+    "path": "backend/lib/signingV2/canonical.js",
+    "sha256": "35a3122f3b82aeff80a5b8c44865e2eb4081225ba4e9c33680d850baa3624ccf"
+  },
+  {
+    "path": "backend/lib/signingV2/compiler.js",
+    "sha256": "ae043bfc0766235b71fb6e08ff80daba9af73bf361c309b09d92858b2c40e1a7"
+  },
+  {
+    "path": "backend/lib/signingV2/dataRenderer.js",
+    "sha256": "a8f0e6aec4fada7f158f1c1341d81a0ef44ab953ab5314ff98f030c36e70339e"
+  },
+  {
+    "path": "backend/lib/signingV2/errors.js",
+    "sha256": "d875a5b3b091663ba6085056cda65fb0a43b77c169a31f92099b411a64edc8f3"
+  },
+  {
+    "path": "backend/lib/signingV2/limits.js",
+    "sha256": "d69b0b2b574dd7410b7f6e02812e789fc3631e8e88e03cd506a8ff6282f6fa4b"
+  },
+  {
+    "path": "backend/lib/signingV2/sourceCache.js",
+    "sha256": "8dc9d45f39d5544fe1fb1240b62913cc6c61b4248f54b771956dde043c8dba4d"
+  },
+  {
+    "path": "backend/services/signingV2/access.js",
+    "sha256": "cc2dd364c1d2015fdeb439b7c158a6c640c9acda95586cb375311c40c78225e9"
+  },
+  {
+    "path": "backend/services/signingV2/jobs.js",
+    "sha256": "63d929fc92346aa9c4e3cb158fff5ec0f3956ef57a7a66fb00cacbd1dd0b10b2"
+  },
+  {
+    "path": "backend/services/signingV2/people.js",
+    "sha256": "319081581ee7a96e99becacaef7bdb4c5d6f541a34de5adc39321b09e2543447"
+  },
+  {
+    "path": "backend/services/signingV2/preparation.js",
+    "sha256": "0a62213e784a82eddd11836cb5dce3835120e6a5b23dad099f5cdea88e1367a4"
+  },
+  {
+    "path": "backend/services/signingV2/renderPool.js",
+    "sha256": "a9cae0d56d1983c22c8e7214cb26b5253893bb7a1641217b215f3b5cec2baa11"
+  },
+  {
+    "path": "backend/services/signingV2/renderWorker.js",
+    "sha256": "11e8c7a7fb4be82d9f69bc8725632c6f027fda7087d057ae56553a6d66a8dbbd"
+  },
+  {
+    "path": "backend/services/signingV2/submissions.js",
+    "sha256": "625a7f7e3e4b0d471f2dbb6e541bb080a51f26cf6ea24ab07b3c0152379cdb6b"
+  },
+  {
+    "path": "backend/services/signingV2/templates.js",
+    "sha256": "02c23526b566546315dfedc69c827bd810c236051f87e2b24b264ead12dd17fe"
+  },
+  {
+    "path": "backend/services/signingV2/transaction.js",
+    "sha256": "18f71048ad875bdc29cf90db3ba1a5d0d583ab44e31fe90ad0426cf058936824"
+  },
+  {
+    "path": "backend/migrations/2026-10-07_00_signing_workflow_v2.sql",
+    "sha256": "605e4a8656f86efc6d5236717d323331b8a3805efe02788ebe258fcf0078e9c2"
+  },
+  {
+    "path": "backend/migrations/2026-10-07_01_signing_v2_reference_integrity.sql",
+    "sha256": "a5f00bef2618097674c54933e2a839633024c416468a5792a4a719fd5cd919a9"
+  }
+]

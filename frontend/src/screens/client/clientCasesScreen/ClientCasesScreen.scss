@@ -1,0 +1,9 @@
+@use '../../../styles/variables' as v;
+
+.lw-clientCasesScreen__closedCard {
+    margin-block: 1.25rem;
+}
+.lw-clientCasesScreen__selection {
+    padding: 1rem;
+    button { min-block-size: 2.75rem; }
+}
