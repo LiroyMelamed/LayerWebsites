@@ -1,0 +1,26 @@
+# Include inside API server { } block for tenant backends (37.60.230.148).
+# Apply via scripts/apply-nginx-perf-all-tenants.sh
+
+client_max_body_size 30m;
+
+gzip on;
+gzip_vary on;
+gzip_proxied any;
+gzip_comp_level 5;
+gzip_min_length 1024;
+gzip_types application/json text/plain text/javascript application/javascript;
+
+proxy_http_version 1.1;
+proxy_set_header Connection "";
+proxy_set_header Host $host;
+proxy_set_header X-Real-IP $remote_addr;
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+proxy_set_header X-Forwarded-Proto $scheme;
+
+proxy_connect_timeout 30s;
+proxy_send_timeout 120s;
+proxy_read_timeout 120s;
+
+location / {
+    proxy_pass http://127.0.0.1:__PORT__;
+}

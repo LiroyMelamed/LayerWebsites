@@ -1,0 +1,42 @@
+.lw-signingSpotsPreview {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: min(960px, 100%);
+    margin-inline: auto;
+    padding: 1rem;
+    box-sizing: border-box;
+    min-height: 70vh;
+}
+
+.lw-signingSpotsPreview__header {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+.lw-signingSpotsPreview__fileName {
+    font-size: 0.875rem;
+    color: #64748b;
+    word-break: break-word;
+}
+
+.lw-signingSpotsPreview__body {
+    flex: 1;
+    min-height: 60vh;
+    overflow: auto;
+    background: #fff;
+    border-radius: 0.75rem;
+    padding: 0.5rem;
+}
+
+.lw-signingSpotsPreview__loading,
+.lw-signingSpotsPreview__error {
+    padding: 2rem 1rem;
+    text-align: center;
+}
+
+.lw-signingSpotsPreview__error {
+    color: #721c24;
+}
