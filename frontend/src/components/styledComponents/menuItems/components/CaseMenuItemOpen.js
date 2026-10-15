@@ -168,6 +168,9 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, alwaysExpanded = fa
                         {!alwaysExpanded && (
                             <ImageButton
                                 src={icons.Button.DownArrow}
+                                aria-label={`${stagesExpanded ? 'סגירת שלבי התיק' : 'פתיחת שלבי התיק'}: ${fullCase.CaseName || ''}`}
+                                aria-expanded={stagesExpanded}
+                                alt=""
                                 className={"lw-caseMenuItemOpen__dropDownBtn" + (stagesExpanded ? " is-open" : "")}
                             />
                         )}

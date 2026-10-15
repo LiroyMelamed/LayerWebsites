@@ -3131,6 +3131,7 @@
     "liveMode": "Live WhatsApp",
     "autoCreate": "Create a group for every new case",
     "recipients": "Default numbers to invite to every case — one per line",
+    "recipientsTitle": "Default numbers",
     "includeCaseManager": "Automatically invite the case manager too",
     "caseManagerHelp": "Uses the assigned manager's phone number when the case opens. Numbers already in the defaults are not invited twice.",
     "demoManagerHelp": "Demonstration cases use a synthetic manager number only.",
