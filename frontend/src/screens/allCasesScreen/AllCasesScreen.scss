@@ -1,0 +1,47 @@
+@use '../../styles/mixins' as m;
+@use '../../styles/variables' as v;
+
+.lw-allCasesScreen__topRow {
+    @include m.row(v.$space-3, no-wrap);
+    justify-content: center;
+    max-width: 100%;
+    margin: 1rem 1rem 0.5rem;
+}
+
+.lw-allCasesScreen__filtersRow {
+    @include m.row(v.$space-3, wrap);
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    margin-top: 1rem;
+}
+
+.lw-allCasesScreen__search {
+    min-inline-size: 0;
+}
+
+.lw-allCasesScreen__clientFilter {
+    min-inline-size: 0;
+}
+
+.lw-allCasesScreen__choose {
+    flex: 0 0 auto;
+    min-inline-size: 8.5rem;
+}
+
+.lw-allCasesScreen__footer {
+    display: flex;
+    justify-content: center;
+    align-self: center;
+}
+
+.lw-allCasesScreen__footer>.lw-textButtonWithTwoOptionalIcons {
+    margin: 0.5rem 0;
+    align-self: center;
+    min-block-size: 2.75rem;
+}
+
+.lw-allCasesScreen__addButton {
+    margin: 0.5rem 0;
+    align-self: center;
+}

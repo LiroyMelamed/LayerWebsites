@@ -1,0 +1,79 @@
+@use '../../../styles/mixins' as m;
+@use '../../../styles/variables' as v;
+
+.lw-caseMenuItem {
+    flex-direction: column;
+    min-inline-size: 0;
+}
+
+.lw-caseMenuItem__header {
+    @include m.row(v.$space-4, nowrap, center, space-between);
+    min-block-size: 2.75rem;
+    min-inline-size: 0;
+    overflow: hidden;
+}
+
+.lw-caseMenuItem__content {
+    flex: 1;
+    flex-direction: column;
+    gap: v.$space-2;
+    min-inline-size: 0;
+}
+
+.lw-caseMenuItem__row {
+    @include m.row(v.$space-2, nowrap, center);
+    min-inline-size: 0;
+    max-inline-size: 100%;
+}
+
+.lw-caseMenuItem__row--top {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+.lw-caseMenuItem__row--bottom {
+    align-items: flex-start;
+}
+
+.lw-caseMenuItem__title {
+    flex: 1 1 100%;
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lw-caseMenuItem__pair {
+    @include m.row(v.$space-1, nowrap, center);
+}
+
+.lw-caseMenuItem__pair--caseType {
+    flex: 1;
+    min-inline-size: 0;
+    align-items: flex-start;
+
+    > :first-child {
+        white-space: nowrap;
+    }
+}
+
+.lw-caseMenuItem__pair--grow {
+    flex: 1;
+    min-inline-size: 0;
+    align-items: flex-start;
+
+    > :first-child {
+        white-space: nowrap;
+    }
+}
+
+.lw-caseMenuItem__toggle {
+    flex: 0 0 auto;
+    max-width: 0.75rem;
+    height: 0.75rem;
+    transform: rotate(0deg);
+    transition: transform 0.3s ease;
+}
+
+.lw-caseMenuItem__toggle.is-open {
+    transform: rotate(180deg);
+}
