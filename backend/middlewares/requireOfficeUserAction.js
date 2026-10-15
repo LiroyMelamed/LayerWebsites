@@ -8,7 +8,8 @@ module.exports = function requireOfficeUserAction(action) {
             if (error) return next(error);
             if (req.firmPermissionMode === 'role') {
                 // Legacy adminController is dedicated-database only; do not expose global lists across tenants.
-                if (!req.firmPermissionContextValidated || isMultiTenantMode() || req.firmTenantId) {
+                const isolatedOffice = require('../lib/tenant/databaseScope').enabled() && req.firmTenantId;
+                if (!req.firmPermissionContextValidated || (!isolatedOffice && (isMultiTenantMode() || req.firmTenantId))) {
                     return next(createAppError('FORBIDDEN', 403));
                 }
             }

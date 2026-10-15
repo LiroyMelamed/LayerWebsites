@@ -908,7 +908,7 @@ async function buildManagerHomePayload({ userId } = {}) {
 }
 
 async function getManagerHomeData({ userId, ttlMs = C.MANAGER_HOME_CACHE_TTL_MS } = {}) {
-    return cache.getOrSet(`managerHome:${userId || 'admin'}`, { ttlMs }, () =>
+    return cache.getOrSet(`managerHome:${require('../../lib/tenant/databaseScope').cacheKey()}:${userId || 'admin'}`, { ttlMs }, () =>
         buildManagerHomePayload({ userId })
     );
 }

@@ -53,6 +53,7 @@ import CalendarSmsTemplateEditor, {
 import { getFirmName } from "../../services/firmSettings";
 
 import "./PlatformSettingsScreen.scss";
+import OfficeIntegrations from '../officeIntegrations/OfficeIntegrations';
 
 export const PlatformSettingsScreenName = "/PlatformSettingsScreen";
 
@@ -61,6 +62,7 @@ const isMelamedLawTenant =
     String(process.env.REACT_APP_APP_NAME || "").toLowerCase() === "melamedlaw";
 
 const CATEGORIES = [
+    { key: "integrations", labelKey: "officeIntegrations.title", icon: "🔗" },
     { key: "messaging", labelKey: "platformSettings.cat_messaging", icon: "📧" },
     { key: "signing", labelKey: "platformSettings.cat_signing", icon: "✍️" },
     { key: "firm", labelKey: "platformSettings.cat_firm", icon: "🏢" },
@@ -1156,6 +1158,7 @@ export default function PlatformSettingsScreen() {
             );
         }
 
+        if (activeTab === 'integrations') return <OfficeIntegrations embedded />;
         // Channels tab
         if (activeTab === "channels") {
             return (
@@ -2551,7 +2554,7 @@ export default function PlatformSettingsScreen() {
                         {activeTab === "reminders" && renderReminderTemplatesSection()}
 
                         {/* Save bar (only for settings tabs, not channels/admins/emailTemplates) */}
-                        {activeTab !== "admins" && activeTab !== "emailTemplates" && (
+                        {activeTab !== "integrations" && activeTab !== "admins" && activeTab !== "emailTemplates" && (
                             <SimpleContainer className="lw-platformSettings__saveBar">
                                 {saveMessage && (
                                     <Text14 className="lw-platformSettings__saveMessage">{saveMessage}</Text14>

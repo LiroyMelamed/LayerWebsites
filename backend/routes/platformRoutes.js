@@ -11,11 +11,11 @@ const router = express.Router();
 
 const PRODUCT_ID = 'layerwebsites';
 const SERVICE_KEY =
-  process.env.CENTRAL_SERVICE_KEY?.trim() || 'dev-central-service-key-change-me';
+  process.env.CENTRAL_SERVICE_KEY?.trim() || '';
 
 function requireCentralService(req, res) {
   const header = req.headers.authorization || '';
-  if (!header.startsWith('Bearer ') || header.slice(7).trim() !== SERVICE_KEY) {
+  if (SERVICE_KEY.length < 32 || !header.startsWith('Bearer ') || header.slice(7).trim() !== SERVICE_KEY) {
     if (!res.headersSent) res.status(401).json({ error: 'UNAUTHORIZED' });
     return false;
   }
@@ -44,7 +44,7 @@ async function resolvePlatformAdminUser() {
       `SELECT pa.user_id AS userid, u.role, u.phonenumber
        FROM platform_admins pa
        JOIN users u ON u.userid = pa.user_id
-       WHERE pa.is_active = TRUE AND LOWER(COALESCE(u.role, '')) = 'admin'
+       WHERE pa.is_active = TRUE AND LOWER(COALESCE(u.role, '')) = 'admin' AND u.law_firm_tenant_id IS NULL
        ORDER BY pa.added_at ASC NULLS LAST
        LIMIT 1`,
     );
@@ -58,7 +58,7 @@ async function resolvePlatformAdminUser() {
   if (!Number.isFinite(first) || first <= 0) return null;
 
   const { rows } = await pool.query(
-    `SELECT userid, role, phonenumber FROM users WHERE userid = $1 LIMIT 1`,
+    `SELECT userid, role, phonenumber FROM users WHERE userid = $1 AND law_firm_tenant_id IS NULL AND role='Admin' LIMIT 1`,
     [first],
   );
   return rows[0] || null;
@@ -76,7 +76,7 @@ router.post('/master-handoff', async (req, res) => {
       return sendJson(res, 401, { error: 'INVALID_HANDOFF' });
     }
 
-    const user = await resolvePlatformAdminUser();
+    const user = await require('../lib/tenant/databaseScope').withSystem(resolvePlatformAdminUser);
     if (!user?.userid) {
       return sendJson(res, 503, { error: 'MASTER_NOT_CONFIGURED' });
     }
@@ -107,6 +107,8 @@ router.post('/master-handoff', async (req, res) => {
     });
   }
 });
+
+router.use((req,res,next)=>{ if (!requireCentralService(req,res)) return; return require('../lib/tenant/databaseScope').withSystem(next); });
 
 router.get('/health', async (req, res) => {
   if (!requireCentralService(req, res)) return;

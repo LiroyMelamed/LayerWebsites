@@ -26,7 +26,7 @@ function initSignReminderScheduler() {
         if (running) return;
         running = true;
         try {
-            const result = await processDueSignReminders();
+            const result = await require('../../lib/tenant/officeJobs').forEachOffice(() => processDueSignReminders());
             if (result && !result.skipped && (result.sent || result.cancelled || result.failed)) {
                 console.log(
                     `[sign-reminder-scheduler] sent=${result.sent} cancelled=${result.cancelled} failed=${result.failed}`

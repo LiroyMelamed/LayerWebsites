@@ -12,6 +12,10 @@ export function isSignupEmbedded() {
 }
 
 export function navigateAfterSignup(slug, navigate) {
+    // A completed office is a new login context. An older office session must
+    // not redirect the owner past its login screen or carry old permissions.
+    ['token', 'refreshToken', 'role', 'isPlatformAdmin', 'lw-active-tenant-slug'].forEach(key => localStorage.removeItem(key));
+    window.dispatchEvent(new Event('lw-auth-changed'));
     const path = tenantPath(slug, '/LoginStack/LoginScreen');
     if (isSignupEmbedded()) {
         window.top.location.href = `${window.location.origin}${path}`;

@@ -47,7 +47,7 @@ function initLicenseRenewalScheduler() {
         running = true;
         try {
             console.log(JSON.stringify({ event: 'license_renewal_scheduler_run_start', tz, dayKey, hour, minute }));
-            const result = await runLicenseRenewalRemindersOnce({ timeZone: tz });
+            const result = await require('../../lib/tenant/officeJobs').forEachOffice(() => runLicenseRenewalRemindersOnce({ timeZone: tz }));
             console.log(
                 JSON.stringify({
                     event: 'license_renewal_scheduler_run_result',

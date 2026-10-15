@@ -17,6 +17,7 @@ export const ROUTE_SEGMENT_TO_NAV_KEY = Object.freeze({
     AllManger: "allManagers",
     FirmStaffRoles: "firmStaffRoles",
     PlatformSettingsScreen: "platformSettings",
+    OfficeIntegrations: 'officeIntegrations',
     PlanUsage: "planUsage",
     PlansPricing: "planUsage",
     NoPermissions: "noPermissions",

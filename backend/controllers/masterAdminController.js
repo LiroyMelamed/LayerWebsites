@@ -49,7 +49,7 @@ async function createTenantManual(req, res) {
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
-        const tenant = await createTenant({ slug, name, adminPhone, adminEmail });
+        const tenant = await createTenant({ slug, name, adminPhone, adminEmail }, client);
         const pkg = resolvePricingLineItems({
             platformId: req.body?.platformId || 'site_app',
             resourceId: req.body?.resourceId || 'pro',
@@ -78,11 +78,11 @@ async function createTenantManual(req, res) {
              VALUES ($1,$2,$3,'Admin',$4) RETURNING userid`,
             [adminName, adminPhone, adminEmail, tenant.id]
         );
-        await client.query(
-            `INSERT INTO platform_admins (user_id, is_active) VALUES ($1, true)
-             ON CONFLICT (user_id) DO UPDATE SET is_active = true`,
-            [userRes.rows[0].userid]
-        );
+        // Office ownership must not confer global platform administration.
+        if (require('../lib/tenant/databaseScope').enabled()) {
+            await client.query('UPDATE law_firm_tenants SET owner_user_id=$2 WHERE id=$1',[tenant.id,userRes.rows[0].userid]);
+            await require('../lib/tenant/seedOfficeDefaults').seedOfficeDefaults(client,tenant);
+        }
         await client.query('COMMIT');
         return res.status(201).json({ tenant, adminUserId: userRes.rows[0].userid });
     } catch (e) {

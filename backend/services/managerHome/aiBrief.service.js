@@ -517,7 +517,7 @@ async function generateAiMorningBrief({
     const fingerprint = factsFingerprint(facts);
     const timeBucket = aiBriefTimeBucket(facts.contextNow);
     const scope = includeManagerWorkload ? 'full' : 'firm';
-    const cacheKey = `managerHomeAiBrief:${userId || 'admin'}:${scope}:${fingerprint}:${timeBucket}`;
+    const cacheKey = `managerHomeAiBrief:${require('../../lib/tenant/databaseScope').cacheKey()}:${userId || 'admin'}:${scope}:${fingerprint}:${timeBucket}`;
 
     const cached = cache.get(cacheKey);
     if (cached !== undefined) return cached;
