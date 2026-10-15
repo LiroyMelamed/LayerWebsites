@@ -1,0 +1,482 @@
+[
+  {
+    "manifest": "outputs/readiness-v4-evidence/MANIFEST.json",
+    "sha256": "c15a482878c454e9fcb9fdec2f769c424ce035da03d47a712db268cc996abbbf",
+    "evidence": {
+      "STATUS.json": "a9ecec270ad58e102ec064214a5d25b02da37bcc3d6eb068394fcc53dc8ea586",
+      "all-downloads-verification.json": "4075e2ec5590e27153653e5f7b01c9f5e123f14fa53e2e7f6795b40eee207edf",
+      "android-evidence-received.png": "512eaa93450266aa78f7d83a30208bae3d98fb4a961d6fd3934f4a76d2042a6c",
+      "android-evidence.zip": "0ea2a7e7dd88d98e818dfedb8a7612c8be59cab19838c95ae4b53205742343e3",
+      "android-zip-verification.json": "78c39dbe4bbbb934f8d3c1db8da54a5c085fc422fa333d5141d5e2a1f538e830",
+      "browser-all-fields-complete.txt": "3caec995b3aa54aad9d00e478793e866ae2a26e6cc89e83caf408696160827e6",
+      "browser-evidence-uninstrumented.zip": "bee3f5c4cd330958a67da3ebe00d577a1e798f1fc241ac928a2c7658a886f8d4",
+      "browser-first-signer-complete.txt": "d8178eabf5d68b064ae6a64283ee1e17d1401fef86ce501b85b9f35581cdda40",
+      "combined-product-source-comparison.json": "b1ff6e3bd3b677b3b5cefb40e0d6529512d248297c8b449c2321d1af3b1cb06d",
+      "ios-evidence-screen.png": "05a4901f7495e2b6452e4dd53f3639b074c82d9f29f724f381628f3337f3e81f",
+      "ios-evidence.zip": "2e6f669b60954d9649712c48dddd81146d9579c77ea6b6f92d3ae6df9cc58aea",
+      "mixed-field-measurements.json": "fed093d78a45fdaaa2d043aa095560435c4126bc709069eba13841a734b4bb0d",
+      "mixed-final-verification.json": "e5504404a477f3fe2e59420a109b8bc79c45720b3caec8fd436330d570f72909",
+      "mixed-final.pdf": "a98a4f7afdfa9048168fa28c7a5dae476cc848d4f76e124cfcf9b3882765f8fe",
+      "mixed-raster-measurements.json": "87496fd80bfd930febc53f8df9925aed5f4fdd5d180989cbe6e13c148a4a6679"
+    }
+  },
+  {
+    "manifest": "outputs/readiness-v4-dependency-evidence/MANIFEST.json",
+    "sha256": "d2921e848eed0b64923afb584209ee8574c96fa4813ef64557fec093b884a47a",
+    "evidence": [
+      {
+        "path": "STATUS.json",
+        "sha256": "471fd6396d0ea4476e058c85d195b15316c2da802eea2d745bf47f223eaa4847",
+        "bytes": 777
+      },
+      {
+        "path": "backend-units.log",
+        "sha256": "5b7ecbc5f79910da11956417452d5767c3d29d91dbf1a2a6065b4cd2ea272cb4",
+        "bytes": 33135
+      },
+      {
+        "path": "bundle-module-audit.json",
+        "sha256": "2f8fd14fe62f0b1c039637b2b06b2e11cf3dec085874e54ca7c2b19d0a12ccfc",
+        "bytes": 197
+      },
+      {
+        "path": "dependency-update.patch",
+        "sha256": "6f9b750084fc2e810df1b6683c7e47d6fad2d149c7977312a678b5fcd4a4dcd9",
+        "bytes": 12593
+      },
+      {
+        "path": "runtime-transport-tests.log",
+        "sha256": "a9ad93f7e56e5c532f8402b02f14dbd5485f754ea42f8cc46c84bafb6b3c28a2",
+        "bytes": 311
+      },
+      {
+        "path": "selected-http-pdf-tests.log",
+        "sha256": "0d101e92047257079a0b1ff0ddb424bbc51d61364e59f84068ee62fe4ccba619",
+        "bytes": 1214
+      }
+    ]
+  },
+  {
+    "manifest": "outputs/readiness-v6-web-api-evidence/MANIFEST.json",
+    "sha256": "1c63413c0d9c6392b0b8afe0a33e39d402d8564ad19618d8005c5f968ca812ed",
+    "evidence": {
+      "STATUS.json": {
+        "sha256": "211e8a69519b65fb7de583b13d2dd5cd6c3069631bf6cc890a62e01f2a47ce96",
+        "bytes": 1502
+      },
+      "browser-fresh-build-download-verification.json": {
+        "sha256": "8274c4a8370b73caa756497f6b9e3443977a079e44a24e7be36c104e3b574423",
+        "bytes": 212
+      },
+      "browser-live-fresh-build-evidence.zip": {
+        "sha256": "92a18f886d4c34919c240893ea113210e15de561c5622a7b5a3a610a4855e31a",
+        "bytes": 28488
+      },
+      "calendar-cleanup.json": {
+        "sha256": "f004091977bd10612e14cd1346b2e89ce576ff2ed8f3b7e45558421e2e744a7e",
+        "bytes": 100
+      },
+      "calendar-color-changed-ui.json": {
+        "sha256": "b0993dd165b0674670c9a660e1c466746c160b88224bbf913753392d1269fbff",
+        "bytes": 421
+      },
+      "calendar-color-restored-ui.json": {
+        "sha256": "8407270f5129ab267e051f7e41dcae2bb56642baf9649d46f2c25ef80729ec92",
+        "bytes": 179
+      },
+      "calendar-range-changed-ui.txt": {
+        "sha256": "97c801140938ca51e1429cb53b24455d9fd028aa2e87cc162c3c2d08c44260c3",
+        "bytes": 5599
+      },
+      "calendar-range-restored-ui.txt": {
+        "sha256": "94d6630eef3ae52140ec2d8a9e96caeb4207b6da3dd1f318d002714dee744cea",
+        "bytes": 5599
+      },
+      "calendar-verification.json": {
+        "sha256": "d8622207f64c8d91c85ce6aa536d0886fc0e24939f6e8567cec4bb95665cc6b5",
+        "bytes": 909
+      },
+      "case-closure-tests.log": {
+        "sha256": "430d9ff065f6ac70b046b067452c1060c450086b8c14d77e149191e344d066f3",
+        "bytes": 478
+      },
+      "case-workflow-israel-tests.log": {
+        "sha256": "987f33b62c1a94ffbec5696ded83abd3ef30dbf303300b8d6f35579e61c9e662",
+        "bytes": 852
+      },
+      "case-workflow-utc-tests.log": {
+        "sha256": "7347ebdcefb2137c346e5e0304c48d6d284e6284cae76d33ff3b506ddfec1956",
+        "bytes": 855
+      },
+      "certificate.pdf": {
+        "sha256": "51a9576ea54a9f0029c62c735968737a2ddbcb026db90302feb62e61fdb5c1b5",
+        "bytes": 200891
+      },
+      "cleanup.json": {
+        "sha256": "1f39da6e69926543a202e8f4b9c4f7d772112d9e8d4c235a8552c7436305ab69",
+        "bytes": 233
+      },
+      "final.pdf": {
+        "sha256": "bc422d5f49792740f62ea647950fe374d125ab32dd9bce6786bb81f49c3794e5",
+        "bytes": 29367
+      },
+      "live-certificate-timing.json": {
+        "sha256": "8a95c2aac3160590a47dd0c48cf07bfb77bdf4dcabddcf5294e63293ff96386a",
+        "bytes": 108
+      },
+      "message-settings-harness.cjs": {
+        "sha256": "8ba74a4628d8f6c8b3aba9840e3b0c7396157d37ed2ff8d1746e8b0ae65f76a4",
+        "bytes": 6227
+      },
+      "message-settings-tests.log": {
+        "sha256": "6e8e0e4c41fda5829b5879b5e368b30e3199449141da48e954c3850626d940fc",
+        "bytes": 1014
+      },
+      "platform-settings-audit.csv": {
+        "sha256": "d7824737598c1d5eb8f3e4e98d2e5f5c1ae30c029aa16bd67d5745701cfadec7",
+        "bytes": 36729
+      },
+      "verification.json": {
+        "sha256": "2495ff42d183fdd6b8a360f299d89d9995af6a74d96ded6f7b1d36ec52056850",
+        "bytes": 1501
+      }
+    }
+  },
+  {
+    "manifest": "outputs/native-readiness-20261006-v7/MANIFEST.json",
+    "sha256": "a0d090e3efc29ea6bf86b480a30930d48ff8b5846ec9395489a51e7546d9f8fd",
+    "evidence": [
+      {
+        "name": "STATUS.json",
+        "sha256": "49a06cf6427ffbbd1e5baf8d838879ee260e28a292ff47ffb47a0a04000f436a",
+        "bytes": 1130
+      },
+      {
+        "name": "expo-project-resolution.json",
+        "sha256": "a775966128373c41817ff4da6212497eb73ecd59f5eac88ca11d4ac3ef5ad70a",
+        "bytes": 2173
+      },
+      {
+        "name": "phone-input-after.log",
+        "sha256": "86388a82791151bcb914aa2a237555c0ee3af96952bcd83bc033e9261c5fc1b3",
+        "bytes": 347
+      },
+      {
+        "name": "phone-input-before.log",
+        "sha256": "7c57497eb6e41b0bcde6c1cb633d993c5b11bb4a041630d6d1288e381089a3a0",
+        "bytes": 2157
+      },
+      {
+        "name": "phone-single-value-tests.log",
+        "sha256": "8f8269d423179e6e2a8fc9bd8250e4bd6bbb366c46fd059e0f45acf08e2b99a1",
+        "bytes": 352
+      },
+      {
+        "name": "qa-android-single-value-build.log",
+        "sha256": "ce37b2de84f92d1d77cb271168045e7c717787223e0455d46e8b134555d35ebb",
+        "bytes": 81916
+      },
+      {
+        "name": "qa-identity-correction.json",
+        "sha256": "2d2cbb192bb12bb9bc6d131ec965a9f308d922134376ec33a00adf22c0ce85a3",
+        "bytes": 764
+      },
+      {
+        "name": "qa-merge-resolutions.json",
+        "sha256": "9bf668c25bd4557bfc3ad794188e5841773dd9a24afb20534f04b131c0fa799b",
+        "bytes": 1833
+      },
+      {
+        "name": "qa-native-tests-single-value.log",
+        "sha256": "c5876f649d77e853e3d00a161db709c7192f01b65d18913dc23a9549b78d80cd",
+        "bytes": 9108
+      }
+    ]
+  },
+  {
+    "manifest": "outputs/readiness-v8-settings-android-evidence/MANIFEST.json",
+    "sha256": "f397c1d75e27e42d3937e152ef1bbbf7e6f1dcfd2cdce0b60c8696287a955999",
+    "evidence": {
+      "android-chat-enabled.png": "789a6f6f5f7d0fa24be553ac2cb8c846e09d6c12250abcda4bbdf86ac052c86b",
+      "android-calendar-reminders.png": "9a47a8aac3cf677e002b52e4e7d7d123bb103f3c6e5da33887d75554064c57e9",
+      "monitor-before.log": "e3b5f756d710462aa791431b6304e6bb5bdc3073ab0175c51c831983af1f5895",
+      "monitor-after.log": "309492579dd154a9a7b8b01340edba01bd9792f438132eaf1facb7de710809cc",
+      "android-chat-disabled-closes-open.png": "cc8cfcc57cb604a62e03962b6f5b822f0340ea9ac00c5255ded800999215e968",
+      "signing-message-consumers.log": "4d6c372c6892c778b0c98b53564b2032487a774d97f4ff1115233119e5ef9bc2",
+      "native-ui-checkpoints.json": "4fbe854f8d2b9e3c33eb4e688d1d1dd296b03d735c328187074b2db6deb43c0c",
+      "android-batch-signed.png": "340b40a17746f9488bac02ee42dcab7c69deb2b0492d9922d3eb7d41cc69175c",
+      "android-calendar-reminder-detail.png": "757b63601136d35b0aa70a789cb0cc241269fd3f22a411abf90bfbb6dbcef2b8",
+      "platform-settings-audit.csv": "8aa7bd7503cd0d0c37eb9e4f9ed688ec4e011e878af675e99d929f79c006bb70",
+      "STATUS.json": "1da947314392e729a34482b5391075eb7a9c5c2766f5917c2418218124fbc593",
+      "browser-calendar-reminder-event.png": "162220a51f37ef7ee4dc8e3122d059b1e86e8e60117799ed35b6376db64cadfb"
+    }
+  },
+  {
+    "manifest": "outputs/readiness-v10-native-final-evidence/MANIFEST.json",
+    "sha256": "93a4740b67406b33932ce4431aaf0f3f6099e2902aa84e051b6dd59f771908aa",
+    "evidence": {
+      "android-final-downloads.json": "d76f525770b79c8fe61588756998c02100825157359e09e557954bf0b7590e2b",
+      "android-manager-certificate-share.png": "6671ab6e28d9ce6a5c214520868b0c78c029f664b1c79646b0e4fa53ab65167f",
+      "ios-evidence-download.json": "fc7e2e93eafc1eac062a49c96386720f0cc59b1bdc9b0112dac923225ec1dacb",
+      "measure-final.py": "6b121d4ed2ca97652bb7da77e785cb327dbcb34d6db64028e09acc9900097db2",
+      "store-baselines.json": "3951799a60f09f1aa108e41a9790cc1c7adcc37d998730c844765048dd2dad67",
+      "final.pdf": "8573503ebbf416afd131d8e1090a81ab2547dd6dfa9d2b3057ed4e6856f1fc4c",
+      "android-certificate-share-received.png": "d494c29836478d8714ae943fdebb0259d12def0d97be7918259511750023966d",
+      "ios-cold-phone-pass.png": "3137149fc7fcd231dd9cb24376c13d18ff5a1935e744d1b4917c0a9edf4c481c",
+      "android-manager-zip-share.png": "3f9752e2e8d1141fffc76a8506b838d15a4fa0b52d4146d9bf301c817365b397",
+      "android-final-preview-pages1-2.png": "234e4e1298069c827788e8934dbb4296e6bd44d92b5eddb17cd2180827445659",
+      "android-final-preview-pages5-6.png": "daf4d2c9920f476f15eb061d597d4433a9693f257353bd703964c98d216d0660",
+      "client-preservation-PROVENANCE.json": "f0615478ec82782b1b05eeca4943a1a93777ef3785f031e90d77226be4ada406",
+      "ios-final-preview-page2.png": "8faa32e39c489a5bcba16f43c926a007bb9779ab67bb0c19b05b2db08294989e",
+      "native-ui-checkpoints.json": "7acba0f39b9b7559d00a41580ad4fe18f6b9b24ef9a9e3361acaecd2173222e6",
+      "ios-final-preview-page1.png": "3f157988db9a2d95c14ca90ec1386201946c787d4c373a938b350800e709a09d",
+      "android-manager-blob-preview.png": "aef2d2e0aa584aa15fa04c94f90287a2d1f6f00b06ce19dea4c4943305b9dc59",
+      "android-preview-measurements.json": "019a7802db644a8a1fd19fb239eba025b639dda643c36f4f6fac89964a803dc5",
+      "captured-1.png": "07222e6fc6327163b84e9c626414f3dfbe7f6f6b7062eb0a14ff3e2d413c5116",
+      "verification.json": "68ee733fed611cd58b371eafea3dcc105d523fdf50aad1bd3a1556a4f8f1bafa",
+      "ios-preview-measurements.json": "038c353d63b28f88ad93712f890ae8ae8c16931c2d2b5de70d74e04d5f1a1df2",
+      "android-manager-zip-received.png": "474e39ffed2f14df5d0f8b9a1c5ccfd2b7c607cf7e433d8af23ccbc95b785d0f",
+      "captured-2.png": "07222e6fc6327163b84e9c626414f3dfbe7f6f6b7062eb0a14ff3e2d413c5116",
+      "source.pdf": "996dea45073c42e4b5b84c3afd30533294c4e908c5106f72dfa885fef2a79067",
+      "client-preservation-HANDOFF.md": "3577f9bbca8facad926589e84a484867415fd9d5e2cb6256f1b26ffdcdaa545a",
+      "raster-measurements.json": "4254b63e9e10fb096bbd50ad958ddb97e2b7c21c47b7b5b05a49e875512223d0",
+      "STATUS.json": "579b473130292ad3993d9fee1fd18d645bf177aa296dd2401ddd9ba39338c989",
+      "ios-batch-complete.png": "1f6c2d533466e41ccdbd57953a1a50fbb459f24a3e026c8933fa1a57f857f321",
+      "captured-6.png": "78900b42a8f8c59685529c34f3d09253360836d481bf0afbf4640c28ddedf7d3",
+      "android-calendar-reminder-event.png": "286691b97c2697f9ad9e1469c470d8cf6508d0de79900460dd88b1e11e3f09a6",
+      "android-evidence-zip-received.png": "2fe23278d4ad8775c73230537d21dda394b9c047d1abcce0b399b62257eb52ee",
+      "captured-5.png": "78900b42a8f8c59685529c34f3d09253360836d481bf0afbf4640c28ddedf7d3"
+    }
+  },
+  {
+    "manifest": "outputs/readiness-v11-server-preservation/MANIFEST.json",
+    "sha256": "f70999d1fd94299338f129b8f8809eab5a1560ce63e38345a06104e355c307c5",
+    "evidence": {
+      "regression.log": "adc48a00bd4f0f9b1dc7d08d5f27ea87cf31d59e4058bff4ec2f33ce3f7612d3",
+      "SOURCE-PRESERVATION.md": "4f72a243ff4f7463b4ff461d105976d2a4ec68c214d95fb0562bcc198685af5c",
+      "qa-preservation-smoke.json": "6a7576534c5793049e7349f1b92a234ba9df33b0ac1cc4b272bece56644e2157",
+      "qa-final-artifact-recheck.json": "f5f07b91bde41b7539a94f295f4e83e328e22bab0dfb8e3cad7bca534f36ea9e",
+      "server-source-comparison.json": "2df6a5a5ad70c296ac492334208012c053a6fa2f97b791bf4ed877250aa014a0",
+      "STATUS.json": "cad9fa3d5c63b6af99e67f3ad3be088ed9951fca8dafa60be732241c2ff476dc"
+    }
+  },
+  {
+    "manifest": "outputs/readiness-v14-release-gate/MANIFEST.json",
+    "sha256": "c5ee07b73e75a6a1ddbfdd27e5a25049c605f1a298e907b6c9d2d135ab84c4e5",
+    "evidence": [
+      {
+        "file": "STATUS.json",
+        "sha256": "dde8b0fd45d1fa2ca51c15db054141f716fda79151dd8c96521be5f8e066181d",
+        "bytes": 5729
+      },
+      {
+        "file": "android-v14-chat-disabled-verified.png",
+        "sha256": "c9b80f197e13abb9e5f0f8a375f8bfeb0eca0d26319e21a341ec04445b095e51",
+        "bytes": 160514
+      },
+      {
+        "file": "android-v14-chat-enabled-verified.png",
+        "sha256": "a90e29b6e67da31561a257c7a49b3b6ab6065682b1e9d697ce4c2a8b5785cc30",
+        "bytes": 162050
+      },
+      {
+        "file": "android-v14-chat-restored-verified.png",
+        "sha256": "0eb432b3486506ade8e2a58aca91772a31347fd9c88f2bf1aa24bf819ecb2b52",
+        "bytes": 160206
+      },
+      {
+        "file": "android-v14-dashboard2-preview-measurements.json",
+        "sha256": "8a1411e2c9bd7f123dbc4718d97fa2f502a8de2f89b067cccc6ff80611246550",
+        "bytes": 2561
+      },
+      {
+        "file": "android-v14-dashboard2-preview-pages1-2.png",
+        "sha256": "742703974d131420dea17321109170ad77b9ec00ad02082f466dd512228beed8",
+        "bytes": 29300
+      },
+      {
+        "file": "android-v14-dashboard2-preview-pages5-6.png",
+        "sha256": "bd353c92a83cdab39da4b82f2bc8441d28301fe5fbb2e39d2343b5e70ec9cad4",
+        "bytes": 31461
+      },
+      {
+        "file": "android-v14-dashboard2-zip-verification.json",
+        "sha256": "6db973efb4f69f7892b811dd0aecf0213194407c9f189422eb028bbd502aa690",
+        "bytes": 517
+      },
+      {
+        "file": "android-v14-invalid-to-valid-same-session-pass.png",
+        "sha256": "3bebd2665ebf5e92268cddcd88eb1ab3126618e1f3872a51996210aa513756f6",
+        "bytes": 157717
+      },
+      {
+        "file": "android-v14-navbar-measurements.json",
+        "sha256": "9f7cb4c0049d7926148d96b9b3c31939887d1ce5936eba885713d0fa04fc3546",
+        "bytes": 1019
+      },
+      {
+        "file": "android-v14-resend-success.png",
+        "sha256": "670e5738e11697470cbfc070731704064bc111b900967b7e6634c12dd1445758",
+        "bytes": 109268
+      },
+      {
+        "file": "approved-store-candidates-v14.json",
+        "sha256": "1e85363d20deee3951b247e6dcad031c0c228642f7484e9ac50dff015f195b6b",
+        "bytes": 3334
+      },
+      {
+        "file": "frontend-artifacts-v13.json",
+        "sha256": "b948af9413eb572e7068bbfda85e10fd045140a45173c14fdcbe1c4179fec0ff",
+        "bytes": 1316
+      },
+      {
+        "file": "ios-dashboard2-zip-verification.json",
+        "sha256": "74e9cbefe41360d052ca98e1c310904f2fb82b7fb4e6d514afc6e36b1aa2f187",
+        "bytes": 1473
+      },
+      {
+        "file": "ios-v13-chat-disabled-verified.png",
+        "sha256": "506f93a053906791fb4a20df31deb740cdb1d1ec7facaab47b3123af1545aa3a",
+        "bytes": 549847
+      },
+      {
+        "file": "ios-v13-chat-enabled-verified.png",
+        "sha256": "9b9775febc7fd7081ef6667343eb29a02866259a8fec92342a60a88a898d220c",
+        "bytes": 504185
+      },
+      {
+        "file": "ios-v13-chat-restored-verified.png",
+        "sha256": "544e8f52b375411f49e79b9bcc7f9606919c2ca310c7c41913c24bb002037d22",
+        "bytes": 552594
+      },
+      {
+        "file": "ios-v13-navbar-measurements.json",
+        "sha256": "8a60e47b37078c6dd895a442556c69be6f4c01205ce5ab819497ef4d3167dbf9",
+        "bytes": 532
+      },
+      {
+        "file": "ios-v14-final-preview-page1.png",
+        "sha256": "09376a6c7c3d4dee7fc838c997067736530efa70d0fe94795a855dc186e4c6d0",
+        "bytes": 139974
+      },
+      {
+        "file": "ios-v14-final-preview-page2.png",
+        "sha256": "28701d33e4cb054927158ceb3c6ce5cb69cf93a2f343258b7a5e60600577f184",
+        "bytes": 121698
+      },
+      {
+        "file": "ios-v14-final-preview-smoke.json",
+        "sha256": "4e8fa657a520ac3387e385b99bbcc06f9fed15d4026f873c1296321b38c851cf",
+        "bytes": 984
+      },
+      {
+        "file": "migration-plan-v15.json",
+        "sha256": "5e9c7e19a17db76c7fe3498bab5fe9fd26fa81e488d10cf1adef83120dc2410a",
+        "bytes": 3952
+      },
+      {
+        "file": "monitor-changed-files-v14.json",
+        "sha256": "43264b4891c0554b5b27c3a803f8a7ccef7e605f90af276406842b4a76dab962",
+        "bytes": 1029
+      },
+      {
+        "file": "native-merged-heads-v14.json",
+        "sha256": "db92ae0e0df5df72ad7a57b6d4b98ac5e58cd554291bc159e31b5697e200c0fd",
+        "bytes": 1441
+      },
+      {
+        "file": "web-merged-heads-v13.json",
+        "sha256": "eb3998c2c0d5546fdc64aa5e402dcfbe44db209650c62e6d3d9ed88fcb2b3921",
+        "bytes": 756
+      }
+    ]
+  },
+  {
+    "manifest": "outputs/readiness-v14-final-document-downloads/MANIFEST.json",
+    "sha256": "88c2e8a6dde3da94206a8fcd91d3a49e2b0553a9411ba68814761553485614fc",
+    "evidence": [
+      {
+        "file": "android-v14-dashboard2-evidence.zip",
+        "sha256": "318ee71122e5f1eb0bada52536993b74294a3c5f6ffd013e8ae480c504502d46"
+      },
+      {
+        "file": "android-v14-dashboard2-preview-measurements.json",
+        "sha256": "8a1411e2c9bd7f123dbc4718d97fa2f502a8de2f89b067cccc6ff80611246550"
+      },
+      {
+        "file": "android-v14-dashboard2-zip-verification.json",
+        "sha256": "6db973efb4f69f7892b811dd0aecf0213194407c9f189422eb028bbd502aa690"
+      },
+      {
+        "file": "ios-dashboard2-zip-verification.json",
+        "sha256": "74e9cbefe41360d052ca98e1c310904f2fb82b7fb4e6d514afc6e36b1aa2f187"
+      },
+      {
+        "file": "ios-v14-final-preview-smoke.json",
+        "sha256": "4e8fa657a520ac3387e385b99bbcc06f9fed15d4026f873c1296321b38c851cf"
+      },
+      {
+        "file": "measure-android-v14-preview.py",
+        "sha256": "66a5c280f6684e273fb8650de61d0e7b24c6e67dd635d3a3102472a0dcd585c0"
+      }
+    ]
+  },
+  {
+    "manifest": "outputs/readiness-v14-deployed/MANIFEST.json",
+    "sha256": "268c564a969c23b891c6c17ecd8c22968adfebcbd207c232a7845067d0487017",
+    "evidence": [
+      {
+        "file": "STATUS.json",
+        "sha256": "43fe3ed0b66c7e3ca3278ecc2c2aac443c0d61f84e9ef797c93efb6722c8304f"
+      },
+      {
+        "file": "deployed-server-readback-v14.json",
+        "sha256": "5cee994dd74af06ea7901d8058692868c201007a13bcce39a50dbc8b748553ed"
+      },
+      {
+        "file": "github-alerts-release-assessment-v14.json",
+        "sha256": "ebf60fe033ff26124589989aab2fdfd8ecc821018d6fd6174a0c5993316a830d"
+      },
+      {
+        "file": "github-alerts-v14.json",
+        "sha256": "0290e498230cb1d70b08b1ee6e9dcce0ea378c525938302ba7be9966b462c32c"
+      },
+      {
+        "file": "google-ashrafessa-review-v14.txt",
+        "sha256": "c603604e7e85049b866c84a1d8121226bc20801b81263cbdb8f55ea11dcdd735"
+      },
+      {
+        "file": "google-melamedlaw-review-v14.txt",
+        "sha256": "4687d18ae81c5a7b8ffd5082f3fb4d4381049c295957e1e172ce1a70ef0f4ed9"
+      },
+      {
+        "file": "google-morlevi-review-v14.txt",
+        "sha256": "eba7e613df776d89683b9ed1099f076362f0dd4913025ae5209a6d3f2bdd0831"
+      },
+      {
+        "file": "public-ashrafessa-v14.json",
+        "sha256": "a52bd7ec41fcd0ad7c5913991c73852c2475663966ff05ecdd8a73471c462c24"
+      },
+      {
+        "file": "public-idm-v14.json",
+        "sha256": "8c1627521c9486e99766b771cc464a09136ac5bc0df7ddc3480658e210d36a26"
+      },
+      {
+        "file": "public-melamedlaw-v14.json",
+        "sha256": "50fc6dfa9e8cdbdd667a37352a6f29e6856bada89de990259d79a0a3346c8073"
+      },
+      {
+        "file": "public-morlevi-v14.json",
+        "sha256": "37174362fbea969c57730ca8aae33e14f4ca874a2b06a7d1f322a456d0deca70"
+      },
+      {
+        "file": "server-results.json",
+        "sha256": "c09720edd3ca5a4578611777177d4b7e12aea37f277363e1b89084d1f605074f"
+      },
+      {
+        "file": "store-status.json",
+        "sha256": "c33bdc515137917edd90276eb5a909e579dffdf9450e1167d38334ef38d1a265"
+      }
+    ]
+  }
+]

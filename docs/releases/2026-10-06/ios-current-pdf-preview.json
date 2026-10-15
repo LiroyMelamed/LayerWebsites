@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "build": 23,
+  "version": "1.0.6",
+  "sourceCommit": "caae786070369772bf600a25dd1ad137f30aeeb0",
+  "completedUtc": "2026-10-06T08:55:34.182829+00:00",
+  "scope": "Final installed iOS 23 native PDF viewer smoke: signed portrait page and signed rotated landscape page visually verified via XCTest screenshots. Full coordinate regression remains in prior immutable geometry evidence.",
+  "fixtureSigningFileId": 12,
+  "finalPdfSha256": "a8d850f7b386987c34d8b08d774abdeeb67ecfcf6a8dfacb1ebce496befdbb43",
+  "nativeDashboardOpen": true,
+  "portraitSignatureVisible": true,
+  "rotatedLandscapeSignatureVisible": true,
+  "nativeScrollResponsive": true,
+  "screenshots": [
+    {
+      "file": "ios-v14-final-preview-page1.png",
+      "sha256": "09376a6c7c3d4dee7fc838c997067736530efa70d0fe94795a855dc186e4c6d0"
+    },
+    {
+      "file": "ios-v14-final-preview-page2.png",
+      "sha256": "28701d33e4cb054927158ceb3c6ce5cb69cf93a2f343258b7a5e60600577f184"
+    }
+  ]
+}
