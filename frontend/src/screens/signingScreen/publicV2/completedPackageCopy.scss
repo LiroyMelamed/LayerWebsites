@@ -1,0 +1,20 @@
+.lw-publicSigningScreen__container.lw-completedCopy {
+    height: auto;
+    min-height: 100dvh;
+    overflow: auto;
+    padding: 24px 16px;
+    align-items: flex-start;
+}
+.lw-completedCopy__content.lw-publicSigningScreen__stack {
+    max-width: 720px;
+    margin-inline: auto;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 20px;
+    min-width: 0;
+    text-align: start;
+    section { display: grid; gap: 20px; min-width: 0; }
+    section > div { display: grid; gap: 12px; min-width: 0; }
+    h2, h3 { margin: 0; overflow-wrap: anywhere; }
+    button { min-height: 44px; max-width: 100%; white-space: normal; }
+}

@@ -1,0 +1,11 @@
+{
+  "complete": true,
+  "tenant": "morlevy",
+  "candidate": "03fd5e4ab9bd06f2e0c1add170d67495e232538c",
+  "filesVerified": 315,
+  "indexSha256": "ac19886e0afffe7b9fb62113b102d086a5686bdcb265b67b82884ad0ad89c30d",
+  "atomicIndexLast": true,
+  "oldAssetsRetained": true,
+  "backupIndex": "93d2c69a70cf535141f1e9d3e7565f32ce7021e73f80e1eb9bbb712576d211e2",
+  "at": "2026-10-08T23:01:03.647Z"
+}

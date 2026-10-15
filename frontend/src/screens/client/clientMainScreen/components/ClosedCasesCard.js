@@ -1,0 +1,80 @@
+import { Fragment } from "react";
+import { images } from "../../../../assets/images/images";
+import SimpleCard from "../../../../components/simpleComponents/SimpleCard";
+import SimpleContainer from "../../../../components/simpleComponents/SimpleContainer";
+import Skeleton from "../../../../components/simpleComponents/Skeleton";
+import { TextBold20 } from "../../../../components/specializedComponents/text/AllTextKindFile";
+import DefaultState from "../../../../components/styledComponents/defaultState/DefaultState";
+import CaseMenuItem from "../../../../components/styledComponents/menuItems/CaseMenuItem";
+import Separator from "../../../../components/styledComponents/separators/Separator";
+import { getOpenDataClient } from "../../../allCasesScreen/components/AllCasesCard";
+import { useTranslation } from 'react-i18next';
+
+import './ClosedCasesCard.scss';
+
+export default function ClosedCasesCard({ closedCases, reperformAfterSave, style: _style, className, isPerforming, initialOpenCaseId }) {
+    const { t } = useTranslation();
+
+    if (isPerforming) {
+        return (
+            <SimpleCard className={["lw-closedCasesCard", className].filter(Boolean).join(' ')}>
+                <TextBold20>{t('cases.closedCases')}</TextBold20>
+                {[1, 2, 3].map(i => (
+                    <SimpleContainer key={i} style={{ padding: '0.75rem 0' }}>
+                        {i !== 1 && <Separator />}
+                        <Skeleton width="60%" height={16} />
+                        <SimpleContainer style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                            <Skeleton width="30%" height={12} />
+                            <Skeleton width="30%" height={12} />
+                        </SimpleContainer>
+                    </SimpleContainer>
+                ))}
+            </SimpleCard>
+        );
+    }
+
+    if (closedCases?.length === 0 || !closedCases) {
+        return (
+            <DefaultState
+                content={t('cases.noClosedCases')}
+                imageClassName="lw-defaultState__image--h156"
+                imageSrc={images.Defaults.Cases}
+                className={className}
+            />
+        )
+    }
+
+    return (
+        <SimpleCard className={["lw-closedCasesCard", className].filter(Boolean).join(' ')}>
+            <TextBold20>{t('cases.closedCases')}</TextBold20>
+
+            <SimpleContainer className="lw-closedCasesCard__list">
+                {closedCases.map((item, index) => (
+                    <Fragment key={item.CaseId}>
+                        {index !== 0 && <Separator />}
+
+                        <CaseMenuItem
+                            fullCase={item}
+                            defaultOpen={initialOpenCaseId != null && String(item.CaseId) === String(initialOpenCaseId)}
+                            rightTitle={item.CaseName}
+
+                            leftPreFirstLine={t('cases.caseType')}
+                            leftValueFirstLine={item.CaseTypeName}
+
+                            rightPreSecondLine={t('cases.currentStage')}
+                            rightValueSecondLine={item.IsClosed ? t('cases.ended') : item.CurrentStage}
+
+                            leftPreSecondLine={""}
+                            leftValueSecondLine={""}
+
+                            openData={getOpenDataClient(closedCases, index, t)}
+                            isClient={true}
+                        />
+                    </Fragment>
+
+                ))}
+            </SimpleContainer>
+
+        </SimpleCard>
+    );
+}

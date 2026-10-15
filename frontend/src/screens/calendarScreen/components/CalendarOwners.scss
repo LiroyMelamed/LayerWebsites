@@ -1,0 +1,12 @@
+.lw-calendarAvatar {
+    display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+    width: 36px; height: 36px; border-radius: 50%; overflow: hidden;
+    color: var(--calendar-person-color, var(--lw-color-primary)); background: var(--lw-color-secondary-highlighted);
+    border: 1px solid var(--lw-color-disabled); font-size: 14px; font-weight: 600; line-height: 1;
+    img { width: 100%; height: 100%; object-fit: cover; }
+    &--small { width: 26px; height: 26px; font-size: 11px; }
+}
+.lw-calendarOwners { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; min-width: 0; }
+.lw-calendarOwners__avatars { display: inline-flex; flex-wrap: wrap; gap: 3px; max-width: 120px; }
+.lw-calendarOwners__names { min-width: 0; overflow-wrap: anywhere; }
+.lw-calendarOwners--names { flex-shrink: 1; }
