@@ -1,0 +1,61 @@
+@use '../../../styles/variables' as v;
+@use '../../../styles/mixins' as m;
+
+.lw-progressBar {
+    --lw-progressBar-height: 0.75rem;
+    --lw-progressBar-radius: 0.75rem;
+
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    min-inline-size: 0;
+}
+
+.lw-progressBar__labelRow {
+    @include m.row(v.$space-2, nowrap);
+    margin-block-end: v.$space-3;
+    min-inline-size: 0;
+}
+
+.lw-progressBar__percent {
+    margin-inline-start: auto;
+    white-space: nowrap;
+}
+
+.lw-progressBar__bar {
+    position: relative;
+    height: var(--lw-progressBar-height);
+    width: 100%;
+    background:
+        linear-gradient(180deg, var(--lw-color-secondary-highlighted), var(--lw-color-disabled));
+    border: 0.0625rem solid var(--lw-color-disabled);
+    border-radius: var(--lw-progressBar-radius);
+    overflow: visible;
+    min-inline-size: 0;
+}
+
+.lw-progressBar__fill {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+
+    height: 100%;
+    width: var(--lw-progressBar-percent, 0%);
+    inline-size: var(--lw-progressBar-percent, 0%);
+    background:
+        repeating-linear-gradient(45deg,
+            var(--lw-color-primary),
+            var(--lw-color-primary) 0.5rem,
+            var(--lw-color-primary-highlighted) 0.5rem,
+            var(--lw-color-primary-highlighted) 1rem);
+    transition: width 0.4s ease;
+    border-radius: var(--lw-progressBar-radius);
+    max-width: 100%;
+    max-inline-size: 100%;
+}
+
+@media (max-width: v.$bp-md) {
+    .lw-progressBar__labelRow {
+        flex-wrap: wrap;
+    }
+}
