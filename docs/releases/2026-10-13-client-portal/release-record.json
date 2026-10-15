@@ -1,0 +1,582 @@
+{
+  "schemaVersion": 1,
+  "snapshotAt": "2026-10-13T18:50:48.789095+00:00",
+  "featureCommit": "3022964c695e55af7f3f3aa3e7de25a30bba1f82",
+  "mainIntegration": "8268d1befa10547c2fa94370ae0db72be5448044",
+  "deploymentStatus": "ALL_SIX_RECEIPTS_VERIFIED",
+  "missing": [],
+  "proposedTag": "PROD_13_10_2026_LIROY_CLIENT_PORTAL",
+  "gitPublicationStatus": "PENDING_ROOT_VERIFIED_PUSH_TAG_EVIDENCE",
+  "customerMessageStatus": "DRAFT_NOT_SENT",
+  "nativeQa": {
+    "result": "PASS",
+    "featureCommit": "3022964c695e55af7f3f3aa3e7de25a30bba1f82",
+    "newDeltaCases": 4,
+    "platform": "Installed MelamediaAdv 1.0.3 build19; Legal Calendar QA20261012 iPhone17Pro simulator iOS26.4, real DeviceHub/CUA input by root",
+    "limitations": [
+      "Synthetic identity/session/API data and localhost fixture only; no production authentication proof.",
+      "Installed simulator app, not physical iPhone or Android.",
+      "No new OTP, consent, actual signature acceptance or provider-message tests.",
+      "No customer data mutations or deployment; exact source/runtime evidence only."
+    ]
+  },
+  "qaClientSmoke": {
+    "result": "PASS",
+    "candidate": "d7c0231bc860bbc214aadbf54789937cefb3e3c4",
+    "realTestMessages": 0,
+    "customerDataWrites": 0,
+    "limits": [
+      "Composite gate: newly deployed static/health/anonymous proof, current changed UI/native checks, and explicitly reused unchanged authenticated API evidence.",
+      "No fresh authenticated browser UI on deployed QA claimed; local browser/native use synthetic fixtures.",
+      "Native proof is actual installed iOS simulator, not physical iPhone or Android.",
+      "Original QA fixture package list was empty; no positive V2 package, new OTP, actual signature acceptance or provider delivery proof claimed.",
+      "Figma application, final guide and customer rollout remain separately owned tasks; this gate does not claim them complete."
+    ]
+  },
+  "deliverables": {
+    "guide": {
+      "status": "PASS_ARTIFACT_ONLY",
+      "pages": 8,
+      "artifacts": {
+        "client-personal-area-guide-he.pdf": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/guide/client-personal-area-guide-he.pdf",
+          "sha256": "1a151640c53df8dd0a69e976c322b755561433a558438dda5956e7a202a295d1"
+        },
+        "client-personal-area-guide-he.html": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/guide/client-personal-area-guide-he.html",
+          "sha256": "4f943c2c4a7a5edd3f5a7d419d6b1814bc81152b0a8e9766998bd15ea97182a8"
+        }
+      },
+      "validation": {
+        "path": "outputs/client-portal-20261013/release/unified-documents/guide/release-artifact-validation.json",
+        "sha256": "61341635f2e6861cb9020cfd399027bbdc2f29eb8aed52c891895015f9338766"
+      },
+      "visualScope": {
+        "status": "PASS",
+        "reviewed_rendered_pages": [
+          1,
+          2,
+          3,
+          6,
+          7,
+          8
+        ],
+        "reused_unchanged_pixel_identical_pages": [
+          4,
+          5
+        ],
+        "checks": [
+          "RTL title/question-mark placement",
+          "TOC numbers on right and links",
+          "fresh matching home/docs/signed screenshots",
+          "copy describes single documents destination with filters",
+          "text bounds/no overlap/clipping",
+          "source case progression content retained unchanged"
+        ],
+        "html_limit": "Responsive HTML layout and zoom code unchanged; prior browser390/1440 checks reused. Current logical Hebrew/bidi isolation/embedded images/link targets structurally verified; no new browser claim."
+      }
+    },
+    "customerUpdate": {
+      "status": "DRAFT_NOT_SENT",
+      "path": "outputs/client-portal-20261013/release/unified-documents/CUSTOMER-UPDATE-DRAFT.md",
+      "sha256": "b9f509e9d47efdcd8e18791667de0be8f70b0ec28220b98f5660fcd1b87e2034"
+    },
+    "figma": {
+      "status": "PASS_LOCAL_FIGMA_APPLY_AND_VISUAL_REVIEW_CLOUD_SYNC_UNCONFIRMED",
+      "review": {
+        "path": "outputs/client-portal-20261013/release/unified-documents/figma/FINAL-LOCAL-REVIEW.json",
+        "sha256": "0cc8f018188cd0440cf9cc530bfae181f82f107a78ba332e589afac29dd7074b"
+      },
+      "editableBackup": {
+        "path": "outputs/client-portal-20261013/release/unified-documents/figma/MelamedLaw-client-portal-unified-20261013.fig",
+        "sha256": "05561c4606b40d9c09c5ffdf213822c11eca3cc69acf833264cdcf32797faf7f",
+        "bytes": 3345608
+      },
+      "viewsReviewed": 9,
+      "cloudSync": "UNCONFIRMED; desktop reconnect warning. Local apply/export and .fig backup verified only."
+    }
+  },
+  "tenants": [
+    {
+      "tenant": "melamedia",
+      "name": "Melamedia",
+      "publicHost": "melamedia.mela-media.co.il",
+      "runtimeBranch": "Melamedia",
+      "runtimeRepository": "/root/Melamedia",
+      "process": "melamedia-api",
+      "port": 3003,
+      "candidate": "d7c0231bc860bbc214aadbf54789937cefb3e3c4",
+      "priorRuntime": "035c08eae5ab906c32de584e71efd3bd7b26f4fe",
+      "priorRemoteBranch": "4c0e7b0f6db019c70e4a4149ded831c8fb6b5814",
+      "buildArtifactFiles": 238,
+      "proposedTag": "PROD_13_10_2026_LIROY_CLIENT_PORTAL_Melamedia",
+      "backendStatus": "PASS",
+      "frontendStatus": "PASS",
+      "evidence": {
+        "build": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/build/melamedia-proof.json",
+          "sha256": "b1ad82044a71063c7abd15e60cc472f6b622fd7f1a21409fec53d1bf6ef6e039"
+        },
+        "artifact": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/melamedia-artifact-check01.json",
+          "sha256": "1dc14e6e93c1ad303872de37469205e2f9aca658ecba248241e23bb72f0d8d5d"
+        },
+        "backendReceipt": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/activation/melamedia-backend-receipt.json",
+          "sha256": "125ecbfb1ae95f417bef37909f8265ca8c5a2f1b64c9c56d6b6c871889ede8ed"
+        },
+        "frontendReceipt": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/activation/melamedia-frontend-receipt.json",
+          "sha256": "bbd6cc02af24875f0661c497bc75b4bc801448ec552a0e2f3e3279dba1d788dd"
+        }
+      },
+      "rollback": {
+        "backendPrivatePlan": "/root/client-portal-backups-20261013-unified-documents/melamedia/rollback-plan.json",
+        "webBackup": "/root/client-portal-web-backups-20261013-unified-documents/melamedia",
+        "localFrontendJournal": "activation/melamedia-frontend-journal.json"
+      },
+      "backend": {
+        "result": "PASS",
+        "headReadback": "d7c0231bc860bbc214aadbf54789937cefb3e3c4",
+        "sourceFiles": 6,
+        "environmentPreserved": true,
+        "operationalFlagsPreserved": true,
+        "health": 200,
+        "anonymousChecks": [
+          {
+            "route": "/api/files/client-files",
+            "status": 401
+          },
+          {
+            "route": "/api/signing-v2/client/documents",
+            "status": 401
+          }
+        ],
+        "dbMigrations": 0,
+        "realTestMessages": 0
+      },
+      "frontend": {
+        "result": "PASS",
+        "oldIndexSha256": "306d780b8e42b49e5bb95469f546477b26214888d8c66eb29225afedc31a0695",
+        "newIndexSha256": "bce0673102f48868323e4a2f33ad064f290849188bd8176fe16783f791bb3280",
+        "changedFiles": 4,
+        "oldAssetsPreserved": true,
+        "realTestMessages": 0,
+        "publicRoutes": "SPA fallback index bytes PASS; authenticated rendering is a separate smoke gate",
+        "publicFilesChecked": 134
+      },
+      "deploymentStatus": "DEPLOYED_VERIFIED"
+    },
+    {
+      "tenant": "melamedlaw",
+      "name": "MelamedLaw",
+      "publicHost": "client.melamedlaw.co.il",
+      "runtimeBranch": "MelamedLaw",
+      "runtimeRepository": "/root/LayerWebsites",
+      "process": "melamed-backend",
+      "port": 3000,
+      "candidate": "0bad9446daceff6a36f810fb479583c08fff1d4f",
+      "priorRuntime": "f22bc0e1549a2767c208ced645fe9321feebb82f",
+      "priorRemoteBranch": "f22bc0e1549a2767c208ced645fe9321feebb82f",
+      "buildArtifactFiles": 235,
+      "proposedTag": "PROD_13_10_2026_LIROY_CLIENT_PORTAL_MelamedLaw",
+      "backendStatus": "PASS",
+      "frontendStatus": "PASS",
+      "evidence": {
+        "build": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/build/melamedlaw-proof.json",
+          "sha256": "c8bac86ffb36000bd6a64a0c30a6f4e3e39266118c522ac74f78cd3a3efac961"
+        },
+        "artifact": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/melamedlaw-artifact-check01.json",
+          "sha256": "e0d253fd1b65349711a00b3cdaa829c9f5c89595d81a1bc6a0e082d8bd3ae134"
+        },
+        "backendReceipt": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/activation/melamedlaw-backend-receipt.json",
+          "sha256": "6713fb76dc7c991bc2398bc449aeb393f4de6353924f998eafb94768fdd3190e"
+        },
+        "frontendReceipt": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/activation/melamedlaw-frontend-receipt.json",
+          "sha256": "45c26e4c2c3cf25e9c17eee859b86ecd1f35bc82ce5177fe41022c9302d75f4c"
+        }
+      },
+      "rollback": {
+        "backendPrivatePlan": "/root/client-portal-backups-20261013-unified-documents/melamedlaw/rollback-plan.json",
+        "webBackup": "~/.codex/private-backups/client-portal-web-20261013-unified-documents/melamedlaw/files",
+        "localFrontendJournal": "activation/melamedlaw-frontend-journal.json"
+      },
+      "backend": {
+        "result": "PASS",
+        "headReadback": "0bad9446daceff6a36f810fb479583c08fff1d4f",
+        "sourceFiles": 45,
+        "environmentPreserved": true,
+        "operationalFlagsPreserved": true,
+        "health": 200,
+        "anonymousChecks": [
+          {
+            "route": "/api/files/client-files",
+            "status": 401
+          },
+          {
+            "route": "/api/signing-v2/client/documents",
+            "status": 401
+          }
+        ],
+        "dbMigrations": 0,
+        "realTestMessages": 0
+      },
+      "frontend": {
+        "result": "PASS",
+        "oldIndexSha256": "43ff4d00ea3b5d054ce9aa54abc0328ad1ec79a58f3e86f0361acd4ac6a5c5a8",
+        "newIndexSha256": "d352393577a38fb6bc3c94d568c6e4fab8e44553960e6dd6234c9f6717431600",
+        "changedFiles": 90,
+        "oldAssetsPreserved": true,
+        "realTestMessages": 0,
+        "publicRoutes": "SPA fallback index bytes PASS; authenticated rendering is a separate smoke gate",
+        "publicFilesChecked": 131
+      },
+      "deploymentStatus": "DEPLOYED_VERIFIED"
+    },
+    {
+      "tenant": "morlevy",
+      "name": "MorLevi",
+      "publicHost": "morlevy.mela-media.co.il",
+      "runtimeBranch": "MorLevi",
+      "runtimeRepository": "/root/MorLevi",
+      "process": "morlevy-api",
+      "port": 3001,
+      "candidate": "54a97b68d0bc9c52442a117b6e2e52b01c74658e",
+      "priorRuntime": "308b671e70d9e2ad69882559a99fb7abcd1ead2c",
+      "priorRemoteBranch": "308b671e70d9e2ad69882559a99fb7abcd1ead2c",
+      "buildArtifactFiles": 235,
+      "proposedTag": "PROD_13_10_2026_LIROY_CLIENT_PORTAL_MorLevi",
+      "backendStatus": "PASS",
+      "frontendStatus": "PASS",
+      "evidence": {
+        "build": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/build/morlevy-proof.json",
+          "sha256": "3deb8ba267bdc289c056d571f49cf286ec5437dc1b7bdbf03d40967fcbceeaa7"
+        },
+        "artifact": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/morlevy-artifact-check01.json",
+          "sha256": "b8ed3578cc203f5bf952cc8d6b345514fa364600e1468bcece2ac9fd289182bf"
+        },
+        "backendReceipt": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/activation/morlevy-backend-receipt.json",
+          "sha256": "c3e176b30442c35f4b4d6249863120567d6410eafe858bfc810b512642d47dac"
+        },
+        "frontendReceipt": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/activation/morlevy-frontend-receipt.json",
+          "sha256": "9f61b822593e2042c4a9f5b719aa31099b9591531b3f261191dc421a8d8e34f9"
+        }
+      },
+      "rollback": {
+        "backendPrivatePlan": "/root/client-portal-backups-20261013-unified-documents/morlevy/rollback-plan.json",
+        "webBackup": "/root/client-portal-web-backups-20261013-unified-documents/morlevy",
+        "localFrontendJournal": "activation/morlevy-frontend-journal.json"
+      },
+      "backend": {
+        "result": "PASS",
+        "headReadback": "54a97b68d0bc9c52442a117b6e2e52b01c74658e",
+        "sourceFiles": 45,
+        "environmentPreserved": true,
+        "operationalFlagsPreserved": true,
+        "health": 200,
+        "anonymousChecks": [
+          {
+            "route": "/api/files/client-files",
+            "status": 401
+          },
+          {
+            "route": "/api/signing-v2/client/documents",
+            "status": 401
+          }
+        ],
+        "dbMigrations": 0,
+        "realTestMessages": 0
+      },
+      "frontend": {
+        "result": "PASS",
+        "oldIndexSha256": "1dc229b552ed823620846e236398e6e71d8c208dd38f53059ae52a762537f535",
+        "newIndexSha256": "1ec4bfb286549c8e89ab9844ae7b24155b40104698a49d8b73f82964f12ab728",
+        "changedFiles": 90,
+        "oldAssetsPreserved": true,
+        "realTestMessages": 0,
+        "publicRoutes": "SPA fallback index bytes PASS; authenticated rendering is a separate smoke gate",
+        "publicFilesChecked": 131
+      },
+      "deploymentStatus": "DEPLOYED_VERIFIED"
+    },
+    {
+      "tenant": "ashrafessa",
+      "name": "AshrafEssa",
+      "publicHost": "ashrafessa.mela-media.co.il",
+      "runtimeBranch": "AshrafEssa",
+      "runtimeRepository": "/root/AshrafEssa",
+      "process": "ashrafessa-api",
+      "port": 3002,
+      "candidate": "01e65bafb30be63a7c72e00711d11bcbdcaa3b3b",
+      "priorRuntime": "73db0186efb312c40edc8388e16f28232aa4f22a",
+      "priorRemoteBranch": "73db0186efb312c40edc8388e16f28232aa4f22a",
+      "buildArtifactFiles": 237,
+      "proposedTag": "PROD_13_10_2026_LIROY_CLIENT_PORTAL_AshrafEssa",
+      "backendStatus": "PASS",
+      "frontendStatus": "PASS",
+      "evidence": {
+        "build": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/build/ashrafessa-proof.json",
+          "sha256": "c7a50e3d51bf82034295d9671c9f1155997df116fad954fb1de3bcc7d84ed1ad"
+        },
+        "artifact": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/ashrafessa-artifact-check01.json",
+          "sha256": "d66be2ee42486eca549e729641d8c64ce565459605b3593c33f14f3005678b06"
+        },
+        "backendReceipt": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/activation/ashrafessa-backend-receipt.json",
+          "sha256": "1c184ec02bc80d24074b1b35b9b3a519cc91b01d3a23a879006d471c43d52ebc"
+        },
+        "frontendReceipt": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/recovery/ashrafessa-frontend-recovery-receipt01.json",
+          "sha256": "bfecec47aeb1b08dd4275583d2e8daae89950117fac87223eda3ccf581cc9abc"
+        }
+      },
+      "rollback": {
+        "backendPrivatePlan": "/root/client-portal-backups-20261013-unified-documents/ashrafessa/rollback-plan.json",
+        "webBackup": "/root/client-portal-web-backups-20261013-unified-documents/ashrafessa",
+        "localFrontendJournal": "activation/ashrafessa-frontend-journal.json"
+      },
+      "backend": {
+        "result": "PASS",
+        "headReadback": "01e65bafb30be63a7c72e00711d11bcbdcaa3b3b",
+        "sourceFiles": 45,
+        "environmentPreserved": true,
+        "operationalFlagsPreserved": true,
+        "health": 200,
+        "anonymousChecks": [
+          {
+            "route": "/api/files/client-files",
+            "status": 401
+          },
+          {
+            "route": "/api/signing-v2/client/documents",
+            "status": 401
+          }
+        ],
+        "dbMigrations": 0,
+        "realTestMessages": 0
+      },
+      "recovery": {
+        "scope": "READ_ONLY_STATIC_RECOVERY_RECEIPT; actual frozen artifacts, backups and SPA fallback only. Not authenticated rendering, customer readiness or approval. Original FAILED journal preserved.",
+        "originalFailure": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/activation/ashrafessa-frontend-journal.json",
+          "sha256": "eb43e4ded11f96524e3fe5ccfe2e533cfad011bd2c9d6796f6918cfc4ce22267"
+        },
+        "serverExactFiles": 133,
+        "publicExactFiles": 132,
+        "hostPolicy": {
+          "path": "robots.txt",
+          "expectedBuildAndDiskSha256": "accec118732c432b1092dc49989ffaafd075dbb69539f244eaba846845c6d2a6",
+          "expectedPublicSha256": "331ea9090db0c9f6f597bd9840fd5b171830f6e0b3ba1cb24dfa91f0c95aedc1",
+          "nginxConfigSha256": "b1d6e03a091fb4050d76270a34ead21713969f0f8999efe24816932d842d5ed1"
+        }
+      },
+      "frontend": {
+        "result": "PASS",
+        "oldIndexSha256": "56d8ca6f9331e1e2e2ee8ee3b09758b4588f3c6fa9892a12f80e8a07d91101b3",
+        "newIndexSha256": "251fce7aeef8e63b0693693898714f992103a861a35638b7d2c479e16635d319",
+        "oldAssetsPreserved": "Remote original publish journal confirms guarded writes; old mutable backup hashes verified",
+        "realTestMessages": 0,
+        "publicRoutes": "Five SPA fallback routes exactly match candidate index; authenticated UI separate",
+        "publicFilesChecked": 133
+      },
+      "deploymentStatus": "DEPLOYED_VERIFIED"
+    },
+    {
+      "tenant": "idm",
+      "name": "Idm",
+      "publicHost": "idm.mela-media.co.il",
+      "runtimeBranch": "Idm",
+      "runtimeRepository": "/root/Idm",
+      "process": "idm-api",
+      "port": 3004,
+      "candidate": "801da8e8478ad81c6b6f5de733bf0da843c82fd6",
+      "priorRuntime": "ee6f4ae8bcb55579855ee30c16980b2edbc3ca03",
+      "priorRemoteBranch": "ee6f4ae8bcb55579855ee30c16980b2edbc3ca03",
+      "buildArtifactFiles": 233,
+      "proposedTag": "PROD_13_10_2026_LIROY_CLIENT_PORTAL_Idm",
+      "backendStatus": "PASS",
+      "frontendStatus": "PASS",
+      "evidence": {
+        "build": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/build/idm-proof.json",
+          "sha256": "353a3819d3537a29a7f3a793514023ef97fa60b9f3e92cf23be98efb9357dd52"
+        },
+        "artifact": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/idm-artifact-check01.json",
+          "sha256": "10b31392b2fe2ce8a45460fd456fe42219e623232ccb2cdbd82476bd416c789f"
+        },
+        "backendReceipt": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/activation/idm-backend-receipt.json",
+          "sha256": "f83da29a2194454859a4ec9bf7398c20b0643bf8f39bd441fd2b3b054cb0f939"
+        },
+        "frontendReceipt": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/activation/idm-frontend-receipt.json",
+          "sha256": "81080c298abe516ce520178ae7e4684fae91682031076b178d0377c4c197df5f"
+        }
+      },
+      "rollback": {
+        "backendPrivatePlan": "/root/client-portal-backups-20261013-unified-documents/idm/rollback-plan.json",
+        "webBackup": "/root/client-portal-web-backups-20261013-unified-documents/idm",
+        "localFrontendJournal": "activation/idm-frontend-journal.json"
+      },
+      "backend": {
+        "result": "PASS",
+        "headReadback": "801da8e8478ad81c6b6f5de733bf0da843c82fd6",
+        "sourceFiles": 45,
+        "environmentPreserved": true,
+        "operationalFlagsPreserved": true,
+        "health": 200,
+        "anonymousChecks": [
+          {
+            "route": "/api/files/client-files",
+            "status": 401
+          },
+          {
+            "route": "/api/signing-v2/client/documents",
+            "status": 401
+          }
+        ],
+        "dbMigrations": 0,
+        "realTestMessages": 0
+      },
+      "frontend": {
+        "result": "PASS",
+        "oldIndexSha256": "016d1f230cf208f6138372dbf4b122068d506ac242b3bc02f492a09be5608378",
+        "newIndexSha256": "17d4114e45fcc9e35ac0d9d8c8a1cbf49d722c6a18dbfebc3b15cf0471d34376",
+        "changedFiles": 90,
+        "oldAssetsPreserved": true,
+        "realTestMessages": 0,
+        "publicRoutes": "SPA fallback index bytes PASS; authenticated rendering is a separate smoke gate",
+        "publicFilesChecked": 129
+      },
+      "deploymentStatus": "DEPLOYED_VERIFIED"
+    },
+    {
+      "tenant": "lawyer",
+      "name": "LawyerPlatform",
+      "publicHost": "lawyer.mela-media.co.il",
+      "runtimeBranch": "codex/legal-isolation-runtime-20261012",
+      "runtimeRepository": "/root/LawyerPlatform",
+      "process": "lawyer-api",
+      "port": 3005,
+      "candidate": "75579158e12212fa46aa3e506af784f131df0b8a",
+      "priorRuntime": "bccec76a2f0635eecc418f2a6d61fddc60a5b1a9",
+      "priorRemoteBranch": "bccec76a2f0635eecc418f2a6d61fddc60a5b1a9",
+      "buildArtifactFiles": 145,
+      "proposedTag": "PROD_13_10_2026_LIROY_CLIENT_PORTAL_LawyerPlatform",
+      "backendStatus": "PASS",
+      "frontendStatus": "PASS",
+      "evidence": {
+        "build": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/build/lawyer-proof.json",
+          "sha256": "b0fc4f9814c54f813eaf25c57bdea2e2d136816d681b979d0bf85e8d737a5454"
+        },
+        "artifact": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/lawyer-artifact-check02.json",
+          "sha256": "05440780629073fd5566942899a0469d2183e4a85f08ad942a84b21008330ff8"
+        },
+        "backendReceipt": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/activation/lawyer-backend-receipt.json",
+          "sha256": "9676359f469361f1cd614eaac5c0a555998d1f2ed89b4a30d5622a711cd32f3e"
+        },
+        "frontendReceipt": {
+          "path": "outputs/client-portal-20261013/release/unified-documents/activation/lawyer-frontend-receipt.json",
+          "sha256": "f9fb65ee4d5fc18e3e6fb08c5ad33ad550ada157742f14cff97a02bd31c7718f"
+        }
+      },
+      "rollback": {
+        "backendPrivatePlan": "/root/client-portal-backups-20261013-unified-documents/lawyer/rollback-plan.json",
+        "webBackup": "/root/client-portal-web-backups-20261013-unified-documents/lawyer",
+        "localFrontendJournal": "activation/lawyer-frontend-journal.json"
+      },
+      "backend": {
+        "result": "PASS",
+        "headReadback": "75579158e12212fa46aa3e506af784f131df0b8a",
+        "sourceFiles": 43,
+        "environmentPreserved": true,
+        "operationalFlagsPreserved": true,
+        "health": 200,
+        "anonymousChecks": [
+          {
+            "route": "/api/files/client-files",
+            "status": 401
+          },
+          {
+            "route": "/api/signing-v2/client/documents",
+            "status": 401
+          }
+        ],
+        "dbMigrations": 0,
+        "realTestMessages": 0
+      },
+      "frontend": {
+        "result": "PASS",
+        "oldIndexSha256": "454e0b2839a926673d832dc4eb2e8aaea1f5158ae0161598b3a1068266de0da1",
+        "newIndexSha256": "49e9acda7b662195a4469d7399b808d51da6ae1a5c7eece3a6e206734d59d18c",
+        "changedFiles": 5,
+        "oldAssetsPreserved": true,
+        "realTestMessages": 0,
+        "publicRoutes": "SPA fallback index bytes PASS; authenticated rendering is a separate smoke gate",
+        "publicFilesChecked": 48
+      },
+      "deploymentStatus": "DEPLOYED_VERIFIED"
+    }
+  ],
+  "evidence": {
+    "candidatePlan": {
+      "path": "outputs/client-portal-20261013/release/unified-documents/candidate-plan.json",
+      "sha256": "bcc768c5e74361c1009ff03db14f6c551a59620561244ddb2044c063aab884c2"
+    },
+    "main": {
+      "path": "outputs/client-portal-20261013/release/unified-documents/main-candidate.json",
+      "sha256": "66765b34d6b9b446bd700c49a4a98aba333bc5b43ecf2e27b3736df70b7599a5"
+    },
+    "native": {
+      "path": "outputs/client-portal-20261013/release/unified-documents/native-qa.json",
+      "sha256": "934fd0df649c620ce46406437e3e49995a4bcc94831b4d6ff5d8a51cd2cb80d5"
+    },
+    "artifactSummary": {
+      "path": "outputs/client-portal-20261013/release/unified-documents/artifact-summary01.json",
+      "sha256": "d1ceebe2531e2b8e050b304f170158fbcbd7416a5e33019c334cc3f4cd505bdf"
+    },
+    "frontendBaseline": {
+      "path": "outputs/client-portal-20261013/release/unified-documents/activation/frontend-baseline01.json",
+      "sha256": "49d69161b15295635d208ee11e17856b233bc63a835d0f789b0207aa8190f6a5"
+    },
+    "scopedSourcePatternOnly": {
+      "path": "outputs/client-portal-20261013/release/unified-documents/finalization/prepush-source-pattern01.json",
+      "sha256": "8176a7dcf85ef43eeb92aacff750d4caacb36f362c2aaf67634018c87ad0dd86"
+    },
+    "qa": {
+      "path": "outputs/client-portal-20261013/release/unified-documents/activation/melamedia-qa-smoke.json",
+      "sha256": "9047e1ccdf7837290cbed95980baf6ddc8a7fa756d1b89bde3f22059bb47ad66"
+    }
+  },
+  "limitations": [
+    "Installed iOS simulator and synthetic native transport, not physical-device or Android proof.",
+    "Customer production accounts were not used for new signing or messaging tests; production checks bind source, public artifacts, health and anonymous access denial.",
+    "Existing configured QA Client uses normal server-issued demo OTP flow; no real provider messages. QA V2 positive data coverage is limited by that fixture.",
+    "No migrations or operational environment changes in this rollout. Existing performance measurements are unchanged; no new load/performance claim.",
+    "Legacy build retains incumbent lint warnings; exact original CI=false setting used and all21 warning files bound unchanged.",
+    "Figma local editable views/exports and full .fig backup verified; cloud synchronization remains unconfirmed due desktop reconnect warning. Git push/tag status requires separate remote ref evidence."
+  ],
+  "preservedFailures": [
+    "First QA frontend attempt and Ashraf final publication readback failed on robots.txt; exact incumbent nginx Disallow-all overrides identified and separately hash-bound. Original failed journals remain unchanged; Ashraf recovery is a separate read-only static receipt.",
+    "Lawyer build01 CI=true elevated unchanged lint warnings; build02 restored original CI=false, first proof/log retained.",
+    "Lawyer artifact-check01 assumed tenant manifest; corrected check02 binds inherited public manifest to exact Git source.",
+    "Native cold-open lacked running Metro; recovery served identical prior native bundle, then current four UI cases passed.",
+    "MelamedLaw initial backend SSH refused before execution; exact preexecution readback permitted bounded retry. Original failure retained.",
+    "MorLevi frontend staging SCP and Lawyer read-only host-policy checks encountered temporary SSH refusal before web activation. Their original journals are retained; final receipts, if present, separately bind recovery.",
+    "Browser capture attempts04/05/06 and cropped home-desktop07 were rejected/preserved; final guide/Figma use accepted replacement capture evidence."
+  ]
+}

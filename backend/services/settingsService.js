@@ -9,18 +9,28 @@
 
 const pool = require('../config/db');
 const contractorPolicy = require('../lib/contractorMonitorPolicy');
+const dbScope = require('../lib/tenant/databaseScope');
+const { isMultiTenantMode } = require('../lib/tenant/tenantContext');
 
 // ── Cache ───────────────────────────────────────────────────────────
 const CACHE_TTL_MS = 60_000; // 1 minute
-let _cache = new Map();
-let _cacheLoadedAt = 0;
+const caches = new Map();
+function scopeCache() {
+    const key = dbScope.cacheKey();
+    if (!caches.has(key)) {
+        if (caches.size >= 1000) caches.delete(caches.keys().next().value);
+        caches.set(key, { values: new Map(), loadedAt: 0 });
+    }
+    return caches.get(key);
+}
 
 function _isCacheFresh() {
-    return _cacheLoadedAt > 0 && Date.now() - _cacheLoadedAt < CACHE_TTL_MS;
+    return scopeCache().loadedAt > 0 && Date.now() - scopeCache().loadedAt < CACHE_TTL_MS;
 }
 
 /** Warm the full cache in one query (called lazily on first read). */
 async function _warmCache() {
+    const cache = scopeCache();
     try {
         const { rows } = await pool.query(
             `SELECT category, setting_key, setting_value, value_type FROM platform_settings
@@ -33,12 +43,12 @@ async function _warmCache() {
                 type: r.value_type,
             });
         }
-        _cache = fresh;
-        _cacheLoadedAt = Date.now();
+        cache.values = fresh;
+        cache.loadedAt = Date.now();
     } catch (err) {
         // If the table doesn't exist yet (pre-migration), silently fall back to env
         if (err?.code === '42P01') {
-            _cacheLoadedAt = Date.now(); // Prevent repeated failing queries
+            cache.loadedAt = Date.now(); // Prevent repeated failing queries
             return;
         }
         console.warn('[settingsService] cache warm failed:', err?.message);
@@ -91,7 +101,7 @@ async function getSetting(category, key, fallback = undefined) {
     if (contractorPolicy.isContractorSetting(category, key)) await contractorPolicy.assertTenant(pool);
     if (!_isCacheFresh()) await _warmCache();
 
-    const cached = _cache.get(`${category}:${key}`);
+    const cached = scopeCache().values.get(`${category}:${key}`);
     if (cached && cached.value === '' && contractorPolicy.explicitRecipients(category, key)) return '';
     if (cached && cached.value !== null && cached.value !== undefined && cached.value !== '') {
         return _castValue(cached.value, cached.type);
@@ -151,7 +161,7 @@ async function upsertSetting(category, key, value, { valueType, label, descripti
     const result = await pool.query(
         `INSERT INTO platform_settings (category, setting_key, setting_value, value_type, label, description, updated_by, updated_at)
          VALUES ($1, $2, $3, COALESCE($4, 'string'), $5, $6, $7, NOW())
-         ON CONFLICT (category, setting_key)
+         ON CONFLICT (${dbScope.enabled() ? 'law_firm_tenant_id, ' : ''}category, setting_key)
          DO UPDATE SET
              setting_value = EXCLUDED.setting_value,
              value_type    = COALESCE($4, platform_settings.value_type),
@@ -188,7 +198,7 @@ async function bulkUpsert(settings, updatedBy) {
             const r = await client.query(
                 `INSERT INTO platform_settings (category, setting_key, setting_value, updated_by, updated_at, value_type)
                  VALUES ($1, $2, $3, $4, NOW(), COALESCE($5, 'string'))
-                 ON CONFLICT (category, setting_key)
+                 ON CONFLICT (${dbScope.enabled() ? 'law_firm_tenant_id, ' : ''}category, setting_key)
                  DO UPDATE SET
                      setting_value = EXCLUDED.setting_value,
                      value_type = COALESCE($5, platform_settings.value_type),
@@ -212,8 +222,7 @@ async function bulkUpsert(settings, updatedBy) {
 
 /** Force cache refresh on next read. */
 function invalidateCache() {
-    _cacheLoadedAt = 0;
-    _cache.clear();
+    caches.delete(dbScope.cacheKey());
 }
 
 // ── Notification channel config ─────────────────────────────────────
@@ -290,6 +299,12 @@ async function updateNotificationChannel(notificationType, { pushEnabled, emailE
 // ── Platform admins ─────────────────────────────────────────────────
 
 async function getPlatformAdmins() {
+    if (dbScope.enabled() && dbScope.current().mode === 'office') {
+        const tenant = require('../lib/tenant/tenantContext').getCurrentTenant();
+        const ownerId = tenant?.ownerUserId || (await require('../lib/tenant/tenantService').getTenantById(dbScope.current().tenantId))?.ownerUserId;
+        return (await pool.query(`SELECT userid AS user_id, name AS user_name, email, phonenumber AS phone, role
+            FROM users WHERE userid=$1 AND role='Admin'`,[ownerId])).rows;
+    }
     try {
         const { rows } = await pool.query(
             `SELECT pa.id, pa.user_id, pa.is_active, pa.added_at,
@@ -361,6 +376,13 @@ async function removePlatformAdmin(userId) {
  * Falls back to the env var allowlist for backward compatibility.
  */
 async function isPlatformAdmin(userId) {
+    if (isMultiTenantMode()) {
+        // Ignore old, incorrectly seeded platform_admins rows and env allowlists for office users.
+        const { rows } = await dbScope.withSystem(() => pool.query(
+            `SELECT 1 FROM users u JOIN platform_admins pa ON pa.user_id=u.userid
+             WHERE u.userid=$1 AND u.law_firm_tenant_id IS NULL AND u.role='Admin' AND pa.is_active=TRUE`, [userId]));
+        return rows.length > 0;
+    }
     try {
         const { rows } = await pool.query(
             `SELECT 1 FROM platform_admins WHERE user_id = $1 AND is_active = TRUE`,

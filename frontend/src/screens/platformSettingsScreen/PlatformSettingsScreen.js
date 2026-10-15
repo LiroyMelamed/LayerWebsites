@@ -3,6 +3,7 @@ import { formatDisplayDate, formatDisplayDateTime } from "../../functions/date/f
 import { loadFirmSettings } from "../../services/firmSettings";
 import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from 'react-router-dom';
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
@@ -54,6 +55,7 @@ import { getFirmName } from "../../services/firmSettings";
 
 import "./PlatformSettingsScreen.scss";
 import ContractorDatasetCard, { CM_DATASETS } from "./ContractorDatasetCard";
+import OfficeIntegrations from '../officeIntegrations/OfficeIntegrations';
 
 export const PlatformSettingsScreenName = "/PlatformSettingsScreen";
 
@@ -62,6 +64,7 @@ const isMelamedLawTenant =
     String(process.env.REACT_APP_APP_NAME || "").toLowerCase() === "melamedlaw";
 
 const CATEGORIES = [
+    { key: "integrations", labelKey: "officeIntegrations.title", icon: "🔗" },
     { key: "messaging", labelKey: "platformSettings.cat_messaging", icon: "📧" },
     { key: "signing", labelKey: "platformSettings.cat_signing", icon: "✍️" },
     { key: "firm", labelKey: "platformSettings.cat_firm", icon: "🏢" },
@@ -677,7 +680,14 @@ export default function PlatformSettingsScreen() {
     const { isSmallScreen } = useScreenSize();
     const { openPopup, closePopup } = usePopup();
 
-    const [activeTab, setActiveTab] = useState("messaging");
+    const [searchParams, setSearchParams] = useSearchParams();
+    const selectedTab = searchParams.get('tab');
+    const activeTab = CATEGORIES.some(category => category.key === selectedTab) ? selectedTab : 'messaging';
+    const setActiveTab = (tab) => setSearchParams(previous => {
+        const next = new URLSearchParams(previous);
+        next.set('tab', tab);
+        return next;
+    }, { replace: true });
     const [editedValues, setEditedValues] = useState({});
     const [editedChannels, setEditedChannels] = useState({});
     const [localChannels, setLocalChannels] = useState(null);
@@ -1161,6 +1171,7 @@ export default function PlatformSettingsScreen() {
             );
         }
 
+        if (activeTab === 'integrations') return <OfficeIntegrations embedded />;
         // Channels tab
         if (activeTab === "channels") {
             return (
@@ -2498,7 +2509,7 @@ export default function PlatformSettingsScreen() {
                         {activeTab === "reminders" && renderReminderTemplatesSection()}
 
                         {/* Save bar (only for settings tabs, not channels/admins/emailTemplates) */}
-                        {activeTab !== "admins" && activeTab !== "emailTemplates" && (
+                        {activeTab !== "integrations" && activeTab !== "admins" && activeTab !== "emailTemplates" && (
                             <SimpleContainer className="lw-platformSettings__saveBar">
                                 {saveMessage && (
                                     <Text14 className="lw-platformSettings__saveMessage">{saveMessage}</Text14>

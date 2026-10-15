@@ -39,10 +39,10 @@ function mapOfficeUserToRow(u) {
 
 export default function AllMangerScreen() {
     const { t } = useTranslation();
-    const { permissionMode, canAction } = useFirmPermissions() || {};
+    const { permissionMode, canAction, scope } = useFirmPermissions() || {};
     const canManageOfficeUsers = permissionMode !== 'role' || Boolean(canAction?.('officeUsers', 'manage'));
     const isPlatformAdminSession =
-        typeof window !== "undefined" && localStorage.getItem("isPlatformAdmin") === "true";
+        scope?.isOfficeOwner === true || (typeof window !== "undefined" && localStorage.getItem("isPlatformAdmin") === "true");
 
     const officeUsersLoader = useCallback(async () => {
         const list = await staffRolesApi.listOfficeUsers("");

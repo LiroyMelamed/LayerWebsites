@@ -1,4 +1,4 @@
-import React, { forwardRef, useState, useEffect, useRef } from 'react';
+import React, { forwardRef, useState, useEffect, useRef, useId } from 'react';
 import SimpleContainer from './SimpleContainer';
 import BlockDateInput from './BlockDateInput';
 import { colors } from '../../constant/colors';
@@ -58,6 +58,7 @@ const SimpleInputCore = forwardRef(
         acceptExternalValueWhileFocused = false,
         ...props
     }, ref) => {
+        const accessibleErrorId = useId();
         const temporalTypes = ['date', 'datetime-local', 'time', 'month', 'week'];
         const isTemporalInput = temporalTypes.includes(type);
         const showCalendarButton = type === 'date' || type === 'datetime-local' || type === 'month' || type === 'week';
@@ -461,6 +462,8 @@ const SimpleInputCore = forwardRef(
                 {title && (
                     <SimpleContainer
                         className="lw-simpleInput__label"
+                        id={accessibleErrorId}
+                        role={error ? 'alert' : undefined}
                         style={{
                             fontSize: `${Number(titleFontSize || 16) / 16}rem`,
                             borderColor: getBorderColor(),
@@ -527,6 +530,9 @@ const SimpleInputCore = forwardRef(
                             spellCheck={false}
                             maxLength={type === 'datetime-local' ? 16 : type === 'date' ? 10 : 5}
                             {...safeProps}
+                            aria-label={safeProps['aria-label'] || (typeof title === 'string' ? title : undefined)}
+                            aria-invalid={Boolean(error)}
+                            aria-errormessage={error ? accessibleErrorId : undefined}
                             style={{
                                 textAlign: 'right',
                                 ...(textStyle || {}),
@@ -561,6 +567,9 @@ const SimpleInputCore = forwardRef(
                         className="lw-simpleInput__field"
                         dir={inputDir}
                         {...safeProps}
+                        aria-label={safeProps['aria-label'] || (typeof title === 'string' ? title : undefined)}
+                        aria-invalid={Boolean(error)}
+                        aria-errormessage={error ? accessibleErrorId : undefined}
                         style={{
                             textAlign: 'right',
                             ...(textStyle || {}),

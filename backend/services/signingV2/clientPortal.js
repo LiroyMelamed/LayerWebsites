@@ -11,7 +11,9 @@ async function clientScope(db, req, env, enabled) {
     const actor = (await db.query('SELECT userid,role,law_firm_tenant_id FROM users WHERE userid=$1', [userId])).rows[0];
     if (!actor || !['User', 'Client'].includes(actor.role)) fail('FORBIDDEN', 403);
     const tenantId = getCurrentTenantId() || req.tenant?.id || null;
-    if ((isMultiTenantMode() && !tenantId)
+    const databaseScope = require('../../lib/tenant/databaseScope');
+    const validatedLegacyOffice = req.firmPermissionContextValidated === true && databaseScope.enabled() && databaseScope.current().mode === 'legacy';
+    if ((isMultiTenantMode() && !tenantId && !validatedLegacyOffice)
         || String(actor.law_firm_tenant_id || '') !== String(tenantId || '')
         || String(req.firmTenantId || '') !== String(tenantId || '')) fail('FORBIDDEN', 403);
     if (!enabled) return { userId, tenantId, contextId: null };

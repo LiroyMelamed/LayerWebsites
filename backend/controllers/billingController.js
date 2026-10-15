@@ -40,7 +40,7 @@ exports.getLockStatus = async (req, res) => {
     try {
         const snap = await billing.getBillingSnapshot();
         let canManageBilling = false;
-        await require('../middlewares/requirePlatformAdmin')(req, res, error => { canManageBilling = !error; });
+        await require('../middlewares/requireOfficeOwner')(req, res, error => { canManageBilling = !error; });
         res.setHeader?.('Cache-Control', 'no-store');
         if (!canManageBilling) return res.status(200).json({ locked: Boolean(snap.locked), canManageBilling: false });
         return res.status(200).json({

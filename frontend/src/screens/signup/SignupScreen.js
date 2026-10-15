@@ -1,3 +1,4 @@
+import { SignupLogoPicker } from './SignupLogoPicker';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiUtils from '../../api/apiUtils';
@@ -30,8 +31,15 @@ export default function SignupScreen() {
     const embedded = isSignupEmbedded();
     const [step, setStep] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [signupAvailable, setSignupAvailable] = useState(null);
+    useEffect(() => {
+        let active = true;
+        ApiUtils.get('/public/signup/config').then(({data}) => { if (active) setSignupAvailable(data?.available === true); }).catch(() => { if (active) setSignupAvailable(false); });
+        return () => { active = false; };
+    }, []);
     const [error, setError] = useState('');
     const [form, setForm] = useState({
+        logoDataUrl: '',
         firmName: '',
         slug: '',
         adminName: '',
@@ -56,7 +64,10 @@ export default function SignupScreen() {
     const recurringPrice = price.recurringAmountIls.toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const pricingLink = 'https://mela-media.co.il/platform/pricing/?' + new URLSearchParams({ platformId: form.platformId, resourceId: form.resourceId, signingId: form.signingId, billingInterval: form.billingInterval || 'monthly' }).toString();
 
-    const update = (patch) => setForm((prev) => ({ ...prev, ...patch }));
+    const update = (patch) => {
+        setError('');
+        setForm((prev) => ({ ...prev, ...patch }));
+    };
 
     const handlePhoneChange = (event) => {
         const raw = event?.target?.value ?? '';
@@ -71,6 +82,7 @@ export default function SignupScreen() {
     const validateStep = () => {
         setError('');
         if (step === 0) {
+            if (!form.logoDataUrl) return setError('יש להעלות לוגו למשרד כדי להמשיך.');
             if (!form.firmName.trim()) return setError('נא להזין שם משרד');
             const slug = form.slug.trim().toLowerCase();
             if (!SLUG_RE.test(slug)) return setError('כתובת משרד: אותיות באנגלית, מספרים ומקף בלבד');
@@ -78,6 +90,7 @@ export default function SignupScreen() {
         if (step === 1) {
             if (!form.adminName.trim()) return setError('נא להזין שם מנהל');
             if (!form.adminPhone.trim()) return setError('נא להזין טלפון');
+            if (!/^[^\s@<>,;:]+@[^\s@<>,;:]+\.[^\s@<>,;:]+$/.test(form.adminEmail.trim()) || form.adminEmail.trim().length > 254) return setError('נא להזין כתובת דוא״ל תקינה לקבלת פרטי החשבון');
         }
         return true;
     };
@@ -87,9 +100,10 @@ export default function SignupScreen() {
         setStep((s) => Math.min(s + 1, STEPS.length - 1));
     };
 
-    const back = () => setStep((s) => Math.max(s - 1, 0));
+    const back = () => { setError(''); setStep((s) => Math.max(s - 1, 0)); };
 
     const submitSignup = async () => {
+        if (signupAvailable !== true) { setError('הרשמה אוטומטית אינה זמינה כרגע. לא יבוצע חיוב.'); return; }
         if (!billingConsent) { setError('יש לאשר את תנאי התשלום ושמירת הכרטיס'); return; }
         sessionStorage.setItem('legal-signup-form',JSON.stringify(form));
         setLoading(true);
@@ -98,6 +112,7 @@ export default function SignupScreen() {
             const key=sessionStorage.getItem('legal-signup-key')||crypto.randomUUID();
             sessionStorage.setItem('legal-signup-key',key);
             const res = await ApiUtils.post('/public/signup/start', {
+                logoDataUrl: form.logoDataUrl,
                 firmName: form.firmName.trim(),
                 slug: form.slug.trim().toLowerCase(),
                 adminName: form.adminName.trim(),
@@ -127,7 +142,7 @@ export default function SignupScreen() {
             }
             setError('פתיחת המשרד נכשלה');
         } catch (e) {
-            setError(e?.response?.data?.message || e?.response?.data?.error || 'הרשמה נכשלה');
+            setError(({LOGO_REQUIRED:'יש להעלות לוגו למשרד.',LOGO_INVALID:'בחרו קובץ לוגו PNG או JPG תקין.',LOGO_DIMENSIONS:'נדרש לוגו ריבועי בגודל 1,024–4,096 פיקסלים.',LOGO_TOO_LARGE:'גודל הלוגו המרבי הוא 2MB.',LOGO_STORAGE_UNAVAILABLE:'שמירת הלוגו נכשלה. לא נוצר תשלום; נסו שוב.'}[e?.response?.data?.error]) || e?.response?.data?.message || e?.response?.data?.error || 'הרשמה נכשלה');
         } finally {
             setLoading(false);
         }
@@ -135,17 +150,23 @@ export default function SignupScreen() {
 
     const footer = (
         <SimpleContainer className="lw-signup__footer">
+            {error && (
+                <div className="lw-signup__feedback" role="alert" aria-atomic="true">
+                    <span>{error}</span>
+                    <button type="button" className="lw-signup__feedbackClose" aria-label="סגירת הודעת השגיאה" onClick={() => setError('')}>×</button>
+                </div>
+            )}
             {step > 0 && (
                 <SecondaryButton onPress={back} disabled={loading}>
                     חזרה
                 </SecondaryButton>
             )}
             {step < STEPS.length - 1 ? (
-                <PrimaryButton onPress={next}>
+                <PrimaryButton onPress={next} disabled={signupAvailable !== true}>
                     המשך
                 </PrimaryButton>
             ) : (
-                <PrimaryButton isPerforming={loading} onPress={submitSignup} disabled={loading}>
+                <PrimaryButton isPerforming={loading} onPress={submitSignup} disabled={loading || signupAvailable !== true}>
                     המשיכו לתשלום ₪1
                 </PrimaryButton>
             )}
@@ -170,6 +191,8 @@ export default function SignupScreen() {
                     3 חודשים ללא דמי מנוי · ₪1 בהרשמה · כרטיס לחידוש עתידי
                 </Text14>
 
+                {signupAvailable !== true && <SimpleContainer className="lw-signup__error" role="status">{signupAvailable === null ? 'בודקים זמינות הרשמה…' : 'ההרשמה האוטומטית למשרדים חדשים אינה זמינה כרגע. לא יבוצע חיוב. משרדים קיימים יכולים להמשיך להתחבר כרגיל.'}</SimpleContainer>}
+
                 <SimpleCard className="lw-signup__trialCard">
                     <TextBold14>החבילה שבחרתם</TextBold14>
                     <Text14>{price.platform.label} · {price.resource.label} · {price.signing.label}</Text14>
@@ -183,10 +206,9 @@ export default function SignupScreen() {
                     ))}
                 </SimpleContainer>
 
-                {error && <SimpleContainer className="lw-signup__error">{error}</SimpleContainer>}
-
                 {step === 0 && (
                     <SimpleContainer className="lw-signup__fields">
+                        <SignupLogoPicker value={form.logoDataUrl || ''} onChange={logoDataUrl=>update({logoDataUrl})} disabled={loading} />
                         <SimpleInput
                             title="שם המשרד"
                             className="lw-signup__input"
@@ -229,7 +251,9 @@ export default function SignupScreen() {
                             maxLength={10}
                         />
                         <SimpleInput
-                            title="דוא״ל (אופציונלי)"
+                            title="דוא״ל לקבלת פרטי החשבון"
+                            required
+                            maxLength={254}
                             type="email"
                             className="lw-signup__input"
                             value={form.adminEmail}

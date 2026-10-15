@@ -1,0 +1,10 @@
+{
+  "files": {
+    "RELEASE.md": "801a1ec6d81ac3c5fbac4a6b2902a999742beac0c86541357a8b31d9099e318d",
+    "release-record.json": "15e45b8560905171f7045fd262ed64c6dd6efb1ffc8f4af90c9e1ca0918f6035",
+    "ROLLBACK.md": "0cd5f669819dddd80457fd4a8b8642a899ec7742316a7c432fc3abe420faab0c",
+    "SOURCE-RUNTIME-MAP.md": "44b4129e9f0d586db593be4b1dab8b1d9cb42b5a28bba5bbb009cbd5b5a29812"
+  },
+  "generatorSha256": "28ddbe38ace7307c36b329b595b2fdf399a4bcdd8f9064e0142c17bf69057f57",
+  "scope": "Sanitized whitelist only; no environment values, credentials, tokens, customer payloads or private receipt copies."
+}

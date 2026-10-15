@@ -11,7 +11,7 @@ test(`OTP and two-signer PDF lifecycle preserves both images after a partial pre
     skip: process.env.LEGAL_DB_QA !== 'true', timeout: 60000,
 }, async (t) => {
     assert.equal(process.env.DB_HOST, '127.0.0.1');
-    assert.equal(process.env.DB_PORT, '55439');
+    assert.equal(process.env.DB_PORT, process.env.CANDIDATE_DB_PORT || '55439');
     assert.equal(process.env.DB_NAME, 'legal_e2e_qa');
     process.env.SIGNING_ENABLED = 'true';
     process.env.SIGNING_CLIENT_OTP_REQUIRED = 'true';

@@ -121,20 +121,13 @@
 }
 .lw-clientHome__caseSummary {
     > .lw-clientHome__icon { margin-block-end: 1rem; }
-    > .lw-simpleButton { margin-block-start: 0.5rem; }
 }
+.lw-clientHome__caseAction { display: flex; justify-content: flex-end; margin-block-start: 0.5rem; }
 .lw-clientHome__caseCounts {
     margin: 1.125rem 0 0;
     > div { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: 0.8125rem; border-block-start: 1px solid var(--lw-color-disabled); }
     dt { color: var(--client-home-muted); font-size: 0.9375rem; }
     dd { margin: 0; font-size: 1.125rem; font-weight: 600; color: var(--lw-color-primary-highlighted); font-variant-numeric: tabular-nums; }
-}
-.lw-clientHome__cases {
-    min-inline-size: 0;
-    margin-block-start: 2.25rem;
-    > .lw-clientHome__sectionHeading h2 { margin: 0; color: var(--lw-color-primary-highlighted); font-size: 1.25rem; font-weight: 600; }
-    // Place the incumbent cards without changing their case or stage appearance.
-    > .lw-openCasesCard, > .lw-closedCasesCard { margin: 1rem 0 0; }
 }
 .lw-clientHome__empty {
     padding-block: 2rem 1rem;

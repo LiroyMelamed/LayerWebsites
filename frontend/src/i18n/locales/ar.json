@@ -1,4 +1,11 @@
 {
+  "support": {
+    "events": {
+      "created": "تم فتح الطلب",
+      "statusChanged": "تم تحديث حالة الطلب",
+      "updated": "تم تحديث الطلب"
+    }
+  },
   "common": {
     "loading": "جارٍ التحميل…",
     "language": "اللغة",
@@ -317,6 +324,9 @@
     "noClosedCases": "لا توجد ملفات مغلقة حاليًا",
     "noCaseTypes": "لا توجد أنواع ملفات حاليًا",
     "currentStage": "المرحلة الحالية",
+    "courtCaseNumber": "رقم ملف المحكمة (اختياري)",
+    "invalidCourtCaseNumber": "أدخل رقم الملف بالصيغة 12345-01-26",
+    "saveFailed": "تعذّر حفظ الملف. يُرجى المحاولة مرة أخرى.",
     "completedSuccessfully": "اكتمل بنجاح",
     "stageDetailsTitle": "تفاصيل المراحل",
     "ended": "انتهى",

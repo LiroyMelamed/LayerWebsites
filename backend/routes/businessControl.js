@@ -3,7 +3,7 @@ const router=express.Router();
 router.use((req,res,next)=>{
  const key=process.env.BUSINESS_CONTROL_KEY;
  if(!key||key.length<32||key===process.env.CENTRAL_SERVICE_KEY||!crypto.timingSafeEqual(crypto.createHash('sha256').update(req.headers.authorization||'').digest(),crypto.createHash('sha256').update('Bearer '+key).digest()))return res.status(401).json({error:'UNAUTHORIZED'});
- res.set('Cache-Control','no-store');next();
+ res.set('Cache-Control','no-store');require('../lib/tenant/databaseScope').withSystem(next);
 });
 router.get('/',async(req,res)=>{try{
  const rows=(await pool.query(`SELECT t.id,t.slug,t.name,b.platform_id,b.resource_id,b.signing_id,b.price_monthly_ils,b.billing_interval,b.status,b.billing_enabled,b.auto_renew,b.renews_at,b.complimentary_until,
