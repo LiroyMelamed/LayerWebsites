@@ -12,7 +12,7 @@ export function useBillingLock() {
 }
 
 export function BillingLockProvider({ children }) {
-    const refreshing = useRef(false);
+    const refreshing = useRef(null);
     const [lock, setLock] = useState({
         locked: false,
         canManageBilling: false,
@@ -35,24 +35,28 @@ export function BillingLockProvider({ children }) {
     }, []);
 
     const refresh = useCallback(async () => {
-        if (refreshing.current) return;
         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
         if (!token) {
+            refreshing.current = null;
             setLock({ locked: false, canManageBilling: false, status: null, graceUntil: null, payUrl: null, loaded: true });
             return;
         }
-        refreshing.current = true;
+        if (refreshing.current?.token === token) return;
+        const request = { token };
+        refreshing.current = request;
         try {
             const res = await billingApi.getLockStatus();
-            if (localStorage.getItem('token') !== token) return;
+            if (refreshing.current !== request || localStorage.getItem('token') !== token) return;
             if (res?.success && res.data) {
                 applyLock(res.data);
                 return;
             }
             setLock((prev) => ({ ...prev, loaded: true }));
         } catch {
-            setLock((prev) => ({ ...prev, loaded: true }));
-        } finally { refreshing.current = false; }
+            if (refreshing.current === request && localStorage.getItem('token') === token) {
+                setLock((prev) => ({ ...prev, loaded: true }));
+            }
+        } finally { if (refreshing.current === request) refreshing.current = null; }
     }, [applyLock]);
 
     useEffect(() => {
