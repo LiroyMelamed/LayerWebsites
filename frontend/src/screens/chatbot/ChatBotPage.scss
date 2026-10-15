@@ -1,0 +1,41 @@
+@use '../../styles/mixins' as m;
+@use '../../styles/variables' as v;
+
+.lw-chatbotPage {
+
+    // Override SimpleScreen defaults for standalone public page
+    .lw-simpleScreen__content {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        align-items: stretch;
+        width: 100%;
+        margin-right: 0;
+    }
+
+    &__header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: v.$space-3;
+        padding: v.$space-3 v.$space-5;
+        background: var(--lw-color-primary);
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    &__badge {
+        display: inline-block;
+        background: var(--lw-color-positive);
+        padding: v.$space-1 v.$space-2;
+        border-radius: m.rem(10);
+    }
+
+    &__error {
+        padding: v.$space-2 v.$space-4;
+        text-align: center;
+        flex-shrink: 0;
+    }
+}
+
+.lw-chatbotOtp {}

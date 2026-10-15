@@ -1,0 +1,165 @@
+@use '../../styles/variables' as v;
+
+/* ─── Base ─── */
+.lw-simpleCheckbox {
+    display: flex;
+    flex-direction: column;
+    gap: v.$space-1;
+    direction: rtl;
+}
+
+.lw-simpleCheckbox__label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: v.$space-2;
+    cursor: pointer;
+    font-family: inherit;
+    user-select: none;
+}
+
+.lw-simpleCheckbox.is-disabled .lw-simpleCheckbox__label {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+/* ─── Standard checkbox ─── */
+.lw-simpleCheckbox__input {
+    appearance: none;
+    -webkit-appearance: none;
+    margin: 0;
+    flex-shrink: 0;
+    border: 0.125rem solid var(--lw-color-secondary-highlighted);
+    border-radius: 0.25rem;
+    background-color: var(--lw-color-white);
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+    position: relative;
+}
+
+/* Sizes */
+.lw-simpleCheckbox--small .lw-simpleCheckbox__input {
+    width: 1rem;
+    height: 1rem;
+}
+
+.lw-simpleCheckbox--medium .lw-simpleCheckbox__input {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.lw-simpleCheckbox--big .lw-simpleCheckbox__input {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+/* Checked state */
+.lw-simpleCheckbox__input:checked {
+    background-color: var(--lw-color-primary);
+    border-color: var(--lw-color-primary-highlighted);
+}
+
+.lw-simpleCheckbox__input:checked::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -60%) rotate(45deg);
+    border: solid var(--lw-color-white);
+    border-width: 0 0.125rem 0.125rem 0;
+}
+
+.lw-simpleCheckbox--small .lw-simpleCheckbox__input:checked::after {
+    width: 0.25rem;
+    height: 0.5rem;
+}
+
+.lw-simpleCheckbox--medium .lw-simpleCheckbox__input:checked::after {
+    width: 0.3rem;
+    height: 0.6rem;
+}
+
+.lw-simpleCheckbox--big .lw-simpleCheckbox__input:checked::after {
+    width: 0.35rem;
+    height: 0.7rem;
+}
+
+/* Focus ring */
+.lw-simpleCheckbox__input:focus-visible {
+    outline: 0.125rem solid var(--lw-color-primary-highlighted);
+    outline-offset: 0.125rem;
+}
+
+/* Disabled */
+.lw-simpleCheckbox.is-disabled .lw-simpleCheckbox__input {
+    border-color: var(--lw-color-disabled-highlighted);
+    background-color: var(--lw-color-disabled);
+    cursor: not-allowed;
+}
+
+.lw-simpleCheckbox.is-disabled .lw-simpleCheckbox__input:checked {
+    background-color: var(--lw-color-disabled-highlighted);
+    border-color: var(--lw-color-disabled-highlighted);
+}
+
+/* Error */
+.lw-simpleCheckbox.has-error .lw-simpleCheckbox__input {
+    border-color: var(--lw-color-error);
+}
+
+/* ─── Toggle variant ─── */
+.lw-simpleCheckbox__input--toggle {
+    width: 2.75rem !important;
+    height: 1.5rem !important;
+    border-radius: 0.75rem;
+    background-color: var(--lw-color-disabled);
+    border: none;
+    transition: background-color 0.2s ease;
+}
+
+.lw-simpleCheckbox__input--toggle::before {
+    content: "";
+    position: absolute;
+    top: 0.125rem;
+    inset-inline-end: 0.125rem;
+    width: 1.25rem;
+    height: 1.25rem;
+    background-color: var(--lw-color-white);
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+    box-shadow: 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.15);
+}
+
+.lw-simpleCheckbox__input--toggle::after {
+    display: none !important;
+}
+
+.lw-simpleCheckbox__input--toggle:checked {
+    background-color: var(--lw-color-primary);
+}
+
+.lw-simpleCheckbox__input--toggle:checked::before {
+    transform: translateX(-1.25rem);
+}
+
+/* ─── Text ─── */
+.lw-simpleCheckbox__text {
+    font-size: v.$font-size-base;
+    color: var(--lw-color-text);
+    line-height: v.$line-height-base;
+}
+
+.lw-simpleCheckbox--small .lw-simpleCheckbox__text {
+    font-size: 0.875rem;
+}
+
+.lw-simpleCheckbox--big .lw-simpleCheckbox__text {
+    font-size: 1.125rem;
+}
+
+/* ─── Error message ─── */
+.lw-simpleCheckbox__error {
+    font-size: 0.8125rem;
+    color: var(--lw-color-error);
+    padding-inline-start: 0.25rem;
+}

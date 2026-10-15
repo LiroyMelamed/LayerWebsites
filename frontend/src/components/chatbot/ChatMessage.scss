@@ -1,0 +1,58 @@
+@use '../../styles/mixins' as m;
+@use '../../styles/variables' as v;
+
+.lw-chatMessage {
+    display: flex;
+    margin-bottom: v.$space-3;
+    padding: 0 v.$space-4;
+
+    &--user {
+        justify-content: flex-end;
+    }
+
+    &--assistant {
+        justify-content: flex-start;
+    }
+
+    &__bubble {
+        max-width: 75%;
+        padding: v.$space-2 v.$space-3;
+        border-radius: m.rem(16);
+        word-wrap: break-word;
+        white-space: pre-wrap;
+        position: relative;
+
+        .lw-chatMessage--user & {
+            background-color: var(--lw-color-primary);
+            border-bottom-left-radius: m.rem(16);
+            border-bottom-right-radius: m.rem(4);
+        }
+
+        .lw-chatMessage--assistant & {
+            background-color: var(--lw-color-secondary-highlighted);
+            border-bottom-right-radius: m.rem(16);
+            border-bottom-left-radius: m.rem(4);
+        }
+    }
+
+    &__text {
+        margin: 0;
+        line-height: 1.5;
+        direction: rtl;
+        text-align: right;
+    }
+
+    &__time {
+        display: block;
+        margin-top: v.$space-1;
+        opacity: 0.6;
+
+        .lw-chatMessage--user & {
+            text-align: left;
+        }
+
+        .lw-chatMessage--assistant & {
+            text-align: right;
+        }
+    }
+}
