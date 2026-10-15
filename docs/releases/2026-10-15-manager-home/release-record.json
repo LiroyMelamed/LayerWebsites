@@ -1,0 +1,164 @@
+{
+  "releasedAt": "2026-10-15T19:08:42.358888+00:00",
+  "productSource": "4b7026dd4154b0179d5db73be6fa2b1cf35252e3",
+  "productionTag": "PROD_15_10_2026_LIROY_MANAGER_HOME",
+  "qaSource": "d3660280731dca4e55cfea21cdec449a938fb39f",
+  "macUnionSource": "df0692937c6189959a968d47a4cfea66efbde77e",
+  "macExportVerifiedAt": "2026-10-15T18:50:49.143715+00:00",
+  "tenants": [
+    {
+      "tenant": "melamedlaw",
+      "branch": "MelamedLaw",
+      "source": "d806dd88eba50a2a38e8546f12d9bbbfb40dfcb8",
+      "tag": "PROD_15_10_2026_LIROY_MANAGER_HOME_MelamedLaw",
+      "previousSource": "0bad9446daceff6a36f810fb479583c08fff1d4f",
+      "backendBackup": "/root/melamedlaw-home-release-backup-2026-10-15T19-02-27-151Z",
+      "frontendBackup": "C:\\Users\\Liroy\\Documents\\Codex\\2026-10-13\\melamedlaw-desktop\\outputs\\release-manager-home-20261015\\melamedlaw-frontend-backup-20261015T190424Z",
+      "mainAsset": "static/js/main.2803dcd4.js",
+      "privateConfigsPreserved": 9,
+      "existingCountsUnchanged": true,
+      "platformSettingsUnchanged": true,
+      "migrations": [
+        "2026-10-11_00_signup_consent.sql",
+        "2026-10-12_00_calendar_daily_agenda_delivery_receipts.sql",
+        "2026-10-12_90_signup_logo.sql",
+        "2026-10-12_firm_auto_renew.sql",
+        "2026-10-12_signup_recurring_quote.sql",
+        "2026-10-12_signup_renewal_cycle.sql",
+        "2026-10-13_signup_retry_cycle.sql",
+        "2026-10-13_signup_welcome_email.sql",
+        "2026-10-14_00_office_integrations.sql",
+        "2026-10-15_00_case_court_reference.sql",
+        "2026-10-15_00_manager_case_activity.sql",
+        "2026-10-15_01_court_daily_sync.sql"
+      ],
+      "health": 200,
+      "unauthenticatedDashboard": 401,
+      "assetsVerified": [
+        "static/js/main.2803dcd4.js",
+        "static/css/main.a4a05fd3.css",
+        "firm-logo.png",
+        "manifest.json"
+      ],
+      "dashboardQueriesPassed": true
+    },
+    {
+      "tenant": "morlevy",
+      "branch": "MorLevi",
+      "source": "29dee3ae05bfd3b2b41f36c586fc48e90255197b",
+      "tag": "PROD_15_10_2026_LIROY_MANAGER_HOME_MorLevi",
+      "previousSource": "54a97b68d0bc9c52442a117b6e2e52b01c74658e",
+      "backendBackup": "/root/morlevy-home-release-backup-2026-10-15T18-55-53-297Z",
+      "frontendBackup": "/var/www/morlevy-home-release-backup-20261015T185741Z",
+      "mainAsset": "static/js/main.b65074ae.js",
+      "privateConfigsPreserved": 9,
+      "existingCountsUnchanged": true,
+      "platformSettingsUnchanged": true,
+      "migrations": [
+        "2026-10-11_00_signup_consent.sql",
+        "2026-10-12_00_calendar_daily_agenda_delivery_receipts.sql",
+        "2026-10-12_90_signup_logo.sql",
+        "2026-10-12_firm_auto_renew.sql",
+        "2026-10-12_signup_recurring_quote.sql",
+        "2026-10-12_signup_renewal_cycle.sql",
+        "2026-10-13_signup_retry_cycle.sql",
+        "2026-10-13_signup_welcome_email.sql",
+        "2026-10-14_00_office_integrations.sql",
+        "2026-10-15_00_case_court_reference.sql",
+        "2026-10-15_00_manager_case_activity.sql",
+        "2026-10-15_01_court_daily_sync.sql"
+      ],
+      "health": 200,
+      "unauthenticatedDashboard": 401,
+      "assetsVerified": [
+        "static/js/main.b65074ae.js",
+        "static/css/main.ad3bf7b6.css",
+        "firm-logo.png",
+        "manifest.json"
+      ],
+      "dashboardQueriesPassed": true
+    },
+    {
+      "tenant": "ashrafessa",
+      "branch": "AshrafEssa",
+      "source": "e77d4bf84e17ee0332d4e51840e5d73c930932db",
+      "tag": "PROD_15_10_2026_LIROY_MANAGER_HOME_AshrafEssa",
+      "previousSource": "01e65bafb30be63a7c72e00711d11bcbdcaa3b3b",
+      "backendBackup": "/root/ashrafessa-home-release-backup-2026-10-15T18-57-40-334Z",
+      "frontendBackup": "/var/www/ashrafessa-home-release-backup-20261015T190022Z",
+      "mainAsset": "static/js/main.e77a7669.js",
+      "privateConfigsPreserved": 9,
+      "existingCountsUnchanged": true,
+      "platformSettingsUnchanged": true,
+      "migrations": [
+        "2026-10-11_00_signup_consent.sql",
+        "2026-10-12_00_calendar_daily_agenda_delivery_receipts.sql",
+        "2026-10-12_90_signup_logo.sql",
+        "2026-10-12_firm_auto_renew.sql",
+        "2026-10-12_signup_recurring_quote.sql",
+        "2026-10-12_signup_renewal_cycle.sql",
+        "2026-10-13_signup_retry_cycle.sql",
+        "2026-10-13_signup_welcome_email.sql",
+        "2026-10-14_00_office_integrations.sql",
+        "2026-10-15_00_case_court_reference.sql",
+        "2026-10-15_00_manager_case_activity.sql",
+        "2026-10-15_01_court_daily_sync.sql"
+      ],
+      "health": 200,
+      "unauthenticatedDashboard": 401,
+      "assetsVerified": [
+        "static/js/main.e77a7669.js",
+        "static/css/main.ad3bf7b6.css",
+        "firm-logo.png",
+        "manifest.json"
+      ],
+      "dashboardQueriesPassed": true
+    },
+    {
+      "tenant": "idm",
+      "branch": "Idm",
+      "source": "5a0b58fb43a32909091fbb933002af0d8f48d362",
+      "tag": "PROD_15_10_2026_LIROY_MANAGER_HOME_Idm",
+      "previousSource": "801da8e8478ad81c6b6f5de733bf0da843c82fd6",
+      "backendBackup": "/root/idm-home-release-backup-2026-10-15T19-00-19-421Z",
+      "frontendBackup": "/var/www/idm-home-release-backup-20261015T190230Z",
+      "mainAsset": "static/js/main.f581cf54.js",
+      "privateConfigsPreserved": 9,
+      "existingCountsUnchanged": true,
+      "platformSettingsUnchanged": true,
+      "migrations": [
+        "2026-10-11_00_signup_consent.sql",
+        "2026-10-12_00_calendar_daily_agenda_delivery_receipts.sql",
+        "2026-10-12_90_signup_logo.sql",
+        "2026-10-12_firm_auto_renew.sql",
+        "2026-10-12_signup_recurring_quote.sql",
+        "2026-10-12_signup_renewal_cycle.sql",
+        "2026-10-13_signup_retry_cycle.sql",
+        "2026-10-13_signup_welcome_email.sql",
+        "2026-10-14_00_office_integrations.sql",
+        "2026-10-15_00_case_court_reference.sql",
+        "2026-10-15_00_manager_case_activity.sql",
+        "2026-10-15_01_court_daily_sync.sql"
+      ],
+      "health": 200,
+      "unauthenticatedDashboard": 401,
+      "assetsVerified": [
+        "static/js/main.f581cf54.js",
+        "static/css/main.ad3bf7b6.css",
+        "firm-logo.png",
+        "manifest.json"
+      ],
+      "dashboardQueriesPassed": true
+    }
+  ],
+  "guide": {
+    "pages": 5,
+    "sha256": "f75e5f5e7c45cc1f550c381914521d0a4b69f8e1cdcd4ddf157bb7cddfd4ec2b"
+  },
+  "scope": "Four isolated legal-client deployments. LawyerPlatform shared runtime and native apps remain on their separate reviewed lineages.",
+  "testMessagesSent": false,
+  "notes": [
+    "MelamedLaw frontend was built at 9f7095b3; d806dd88 adds only the passing settings-test fixtures. Runtime/frontend bytes are identical.",
+    "Prior successful tests were retained; follow-up runs covered failed tests, new merge differences and deployment checks only."
+  ]
+}
