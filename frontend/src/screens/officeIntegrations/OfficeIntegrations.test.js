@@ -30,6 +30,7 @@ test('owner settings use the authenticated office and save recipients and manage
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('office')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('projectContext')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('automation', { selector: 'summary' }));
     fireEvent.change(screen.getByLabelText('recipients'), { target: { value: '0501234567\n0521234567' } });
     fireEvent.click(screen.getByLabelText('autoCreate'));
     fireEvent.click(screen.getByLabelText('includeCaseManager'));
@@ -64,7 +65,9 @@ test('ready connection opens the official signup on one click and saves to the a
     api.snapshot.mockResolvedValue(state({ signup: { ready: true, appId: 'app', version: 'v25.0', liveEnabled: true, demoOnly: false } }));
     render(<OfficeIntegrations />); await screen.findByDisplayValue('My office court');
     await waitFor(() => expect(prepareWhatsAppSdk).toHaveBeenCalledWith({ appId: 'app', version: 'v25.0' }));
+    await act(async () => { await Promise.all([api.startSignup.mock.results[0].value, prepareWhatsAppSdk.mock.results[0].value]); });
     expect(api.startSignup).toHaveBeenCalledWith();
+    fireEvent.click(screen.getByText('automation', { selector: 'summary' }));
     expect(screen.getByLabelText('autoCreate')).toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: 'connect' }));
     expect(launchWhatsAppSignup).toHaveBeenCalledTimes(1);
@@ -85,6 +88,7 @@ test('a failed office load cannot fall back to the first customer in an office l
 test('switching the environment from demo to live never silently enables real groups', async () => {
     api.snapshot.mockResolvedValue(state({ whatsapp: { enabled: true, status: 'ready', connected: true, settings: { mode: 'demo', recipients: ['+972501111111'] } }, signup: { ready: true, liveEnabled: true, demoOnly: false } }));
     render(<OfficeIntegrations />); await screen.findByDisplayValue('My office court');
+    fireEvent.click(screen.getByText('automation', { selector: 'summary' }));
     expect(screen.getByLabelText('autoCreate')).not.toBeChecked();
     fireEvent.click(screen.getByRole('button', { name: 'saveWhatsapp' }));
     await waitFor(() => expect(api.saveWhatsapp).toHaveBeenCalledWith(undefined, expect.objectContaining({ enabled: false, mode: 'live' })));
@@ -101,6 +105,7 @@ test('connection-only QA offers the actual QR button and keeps automation in sim
     api.snapshot.mockResolvedValue(state({ signup: { ready: true, flow: 'business_app', connectionOnly: true, appId: 'app', version: 'v26.0', liveEnabled: false, demoOnly: false } }));
     render(<OfficeIntegrations />); await screen.findByDisplayValue('My office court');
     await waitFor(() => expect(api.startSignup).toHaveBeenCalled());
+    await act(async () => { await Promise.all([api.startSignup.mock.results[0].value, prepareWhatsAppSdk.mock.results[0].value]); });
     expect(screen.getByText('connectionOnlyNotice')).toBeInTheDocument();
     expect(screen.getByText('qrPrerequisite')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'connectQr' }));
