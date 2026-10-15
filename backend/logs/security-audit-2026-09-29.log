@@ -1,0 +1,8 @@
+{"timestamp":"2026-09-29T14:12:03.787Z","level":"WARN","type":"OTP_VERIFY_FAIL","phone":"***4567","success":false}
+{"timestamp":"2026-09-29T14:12:03.961Z","level":"WARN","type":"OTP_VERIFY_FAIL","phone":"***4567","success":false}
+{"timestamp":"2026-09-29T14:20:15.306Z","level":"WARN","type":"OTP_VERIFY_FAIL","phone":"***4567","success":false}
+{"timestamp":"2026-09-29T14:23:25.250Z","level":"WARN","type":"OTP_VERIFY_FAIL","phone":"***4567","success":false}
+{"timestamp":"2026-09-29T14:23:40.296Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***4567","userId":99,"success":true}
+{"timestamp":"2026-09-29T14:26:59.176Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***4567","userId":99,"success":true}
+{"timestamp":"2026-09-29T14:31:50.772Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***4567","userId":99,"success":true}
+{"timestamp":"2026-09-29T14:36:29.386Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***4567","userId":99,"success":true}

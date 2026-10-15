@@ -1,0 +1,70 @@
+Resuming from row 1384 (state file: /Users/liroymelamed/Projects/LayerWebsites/backend/logs/outreach-state.json)
+---------------------------------------------
+Law-firm outreach run (REAL sender)
+Mode:         SEND
+SMTP:         MelamedLaw SMTP (SMTP_*)
+Workbook:     /Users/liroymelamed/Projects/LayerWebsites/backend/data/רשימת עורכי דין.xlsx
+Sheet:        גיליון1
+Rows in file: 3766
+Start at row: 1384
+Max sends:    (no cap)
+Rows to scan: 2383
+Delay (ms):   5000
+Sales deck:   /Users/liroymelamed/Projects/LayerWebsites/backend/data/מצגת מכירות.pdf
+Platform URL: https://mela-media.co.il/platform/
+Reply-To:     liroymelamed@icloud.com
+From:         לירוי מלמד · Melamedia <noreply@melamedlaw.co.il>
+SMTP host:    mail.melamedlaw.co.il
+---------------------------------------------
+[SENT] row=1385 to=reu***@zahav.net.il messageId=<61adfee8-0244-8aa3-01e9-d0440993d745@melamedlaw.co.il>
+[SENT] row=1386 to=tzo***@gmail.com messageId=<7d2bdb9e-389a-ff74-5ada-d7bb3cc6e61c@melamedlaw.co.il>
+[SENT] row=1387 to=ami***@hotmail.com messageId=<eab8ea73-233d-c147-e277-48f0a46aaf90@melamedlaw.co.il>
+[SENT] row=1388 to=han***@gmail.com messageId=<3701e2e4-faad-d3d2-812e-5d351ddd0be4@melamedlaw.co.il>
+[SENT] row=1389 to=yaa***@gmail.com messageId=<2087a558-ddad-c660-3984-e302119b7349@melamedlaw.co.il>
+[SENT] row=1390 to=tal***@gmail.com messageId=<847490c5-dfa0-5bf0-5d68-99839d260b08@melamedlaw.co.il>
+[SENT] row=1391 to=yar***@gmail.com messageId=<55f780f6-14fd-9bc6-5590-9a5eaf8e5e3b@melamedlaw.co.il>
+[SENT] row=1392 to=osh***@walla.co.il messageId=<3675a128-baa5-00f5-8e4b-595c583d9ebc@melamedlaw.co.il>
+[SENT] row=1393 to=wil***@hotmail.com messageId=<a19369cc-dc05-6a6b-671e-01f9a6a9786f@melamedlaw.co.il>
+[SENT] row=1394 to=reu***@walla.com messageId=<eb3a924a-1ee2-e5ec-3b8a-658bc28b9e87@melamedlaw.co.il>
+[SKIP] row=1395 invalid email
+[SENT] row=1396 to=che***@bezeqint.net messageId=<121de099-3e44-e1b3-44a8-fbdde9f948e3@melamedlaw.co.il>
+[SENT] row=1397 to=doa***@bezeqint.net messageId=<44fddb33-1f26-5f54-a46f-ced3de687047@melamedlaw.co.il>
+[SENT] row=1398 to=d.d***@gmail.com messageId=<d9f7f66e-eb90-3ac0-b899-8c75bcc196a4@melamedlaw.co.il>
+[SENT] row=1399 to=mic***@walla.com messageId=<fd487b89-126d-b32f-2507-34f841dfed14@melamedlaw.co.il>
+[SENT] row=1400 to=sha***@gmail.com messageId=<07c24a99-f555-90a5-debe-a7eabeb43b9c@melamedlaw.co.il>
+[SENT] row=1401 to=ami***@gmail.com messageId=<b10cd8f6-91f6-9e7d-2c85-0e49357de198@melamedlaw.co.il>
+[SENT] row=1402 to=shi***@gmail.com messageId=<85b17502-0d57-b043-6166-dfca7342c045@melamedlaw.co.il>
+[SENT] row=1403 to=koc***@bezeqint.net messageId=<2a031a81-8de1-b7aa-c178-ddfd0cac68da@melamedlaw.co.il>
+[SENT] row=1404 to=mei***@gmail.com messageId=<45f2b4fc-ef5d-a9e6-ec12-c60f33a7c229@melamedlaw.co.il>
+[SENT] row=1405 to=ker***@gmail.com messageId=<cbe7081e-3cc8-4837-56c7-57e2517b39f0@melamedlaw.co.il>
+[SENT] row=1406 to=hag***@gmail.com messageId=<ede25a0c-2d54-cd6d-583a-54833c1c1df7@melamedlaw.co.il>
+[SENT] row=1407 to=ela***@gmail.com messageId=<798633ed-e015-08a7-8571-c0e3d6670aca@melamedlaw.co.il>
+[SENT] row=1408 to=aha***@gmail.com messageId=<96605c3f-7b90-bbc0-e9bd-74f2df72e185@melamedlaw.co.il>
+[SENT] row=1409 to=gal***@lo-adv.biz messageId=<129807e4-f5db-a5c8-deb0-b06e0b5ad066@melamedlaw.co.il>
+[SENT] row=1410 to=ori***@gmail.com messageId=<0b2ef429-6502-f036-5152-8b0142a36226@melamedlaw.co.il>
+[SENT] row=1411 to=avi***@yahoo.com messageId=<c053dd79-2959-b864-5491-f821f1060875@melamedlaw.co.il>
+[SENT] row=1412 to=noa***@bezeqint.net messageId=<80e81d21-1ac7-e9ba-dd33-fe092d59c136@melamedlaw.co.il>
+[SENT] row=1413 to=ham***@gmail.com messageId=<317b3a7a-aa99-f828-0c9f-ef55369ee42e@melamedlaw.co.il>
+[SENT] row=1414 to=gro***@gmail.com messageId=<48d47a14-4841-2aff-b0e7-bbdc3c536048@melamedlaw.co.il>
+[SENT] row=1415 to=hay***@gmail.com messageId=<dc872bce-53c4-67b9-66e7-8d0cccd7cc4f@melamedlaw.co.il>
+[SENT] row=1416 to=gab***@gmail.com messageId=<1571c0f3-cbe4-cee4-ce67-2aad55b966c7@melamedlaw.co.il>
+[SENT] row=1417 to=612***@gmail.com messageId=<6a033394-8079-3d0a-3228-13734d380629@melamedlaw.co.il>
+[SENT] row=1418 to=dov***@hotmail.com messageId=<6ff08d61-64f3-850c-d6fa-dcbb834b6a43@melamedlaw.co.il>
+[SENT] row=1419 to=tal***@gmail.com messageId=<e910aa32-a937-1d0a-28fb-1783ee840bb1@melamedlaw.co.il>
+[SENT] row=1420 to=dca***@inter.net.il messageId=<4ebd0781-6e81-d4ee-f6c8-448ec458b6e4@melamedlaw.co.il>
+[SENT] row=1421 to=zeh***@gmail.com messageId=<ea6f28db-3f9a-f773-1b98-01515d1e4051@melamedlaw.co.il>
+[SENT] row=1422 to=shi***@gmail.com messageId=<35ac4bd0-ecad-d93f-e403-05b2f92cdbb9@melamedlaw.co.il>
+[SENT] row=1423 to=shm***@bezeqint.net messageId=<3b2d0538-fa8d-3afa-88d4-2bfb635d5d88@melamedlaw.co.il>
+[SENT] row=1424 to=sha***@barak-online.net messageId=<5bba0b51-baf1-062e-2468-a8bd45438d34@melamedlaw.co.il>
+[SENT] row=1425 to=sku***@gmail.com messageId=<96d8878b-dea1-f02e-174d-2f87ec9df373@melamedlaw.co.il>
+[SENT] row=1426 to=alo***@hotmail.com messageId=<fe10fd94-d401-fa26-8ee9-0a41ed5ed9ff@melamedlaw.co.il>
+[SENT] row=1427 to=pie***@yahoo.fr messageId=<cf26d48f-2259-cfb5-df65-fa0524c6e596@melamedlaw.co.il>
+[SENT] row=1428 to=rsh***@gmail.com messageId=<016b4608-67bf-6023-fa2a-4fc92d12603c@melamedlaw.co.il>
+[SENT] row=1429 to=yos***@gmail.com messageId=<72efecbb-25b2-9147-994a-28b03af68a84@melamedlaw.co.il>
+[SENT] row=1430 to=ran***@gmail.com messageId=<c661b171-e7ce-de6d-18b5-b8df3295bba1@melamedlaw.co.il>
+[SENT] row=1431 to=ben***@gmail.com messageId=<d2c9d5d3-96af-d4c7-7635-525effb3b1db@melamedlaw.co.il>
+[SENT] row=1432 to=tal***@bezeqint.net messageId=<1a1d6108-5cf1-93d2-97bc-231edd020ba1@melamedlaw.co.il>
+[SENT] row=1433 to=siv***@gmail.com messageId=<ec345232-f1bd-05ce-97e1-dc345d02717c@melamedlaw.co.il>
+[SENT] row=1434 to=ome***@gmail.com messageId=<f3dfdba7-d0b8-e836-ea11-75a7b673dba1@melamedlaw.co.il>
+[SENT] row=1435 to=par***@bezeqint.net messageId=<eef3d2d5-806e-45e9-c8d8-dff7723818d8@melamedlaw.co.il>
+[SENT] row=1436 to=rik***@sms-projects.com messageId=<2a0ddbdc-e3b6-6289-7cf0-5f7cafd58b17@melamedlaw.co.il>

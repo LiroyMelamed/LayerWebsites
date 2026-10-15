@@ -1,0 +1,299 @@
+{
+  "mode": "send",
+  "wave": 2,
+  "sender": "melamedlaw-smtp",
+  "smtpHost": "mail.melamedlaw.co.il",
+  "file": "/Users/liroymelamed/Projects/LayerWebsites/backend/data/רשימת עורכי דין.xlsx",
+  "sheetName": "גיליון1",
+  "wave1SentRows": 3637,
+  "suppressCount": 10,
+  "eligible": 3426,
+  "startIndex": 0,
+  "sent": 3392,
+  "failed": 34,
+  "failures": [
+    {
+      "row": 14,
+      "email": "office@yakar-law.co.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 550-The mail server could not deliver mail to office@yakar-law.co.il.  The\n550-account or domain may not exist, they may be blacklisted, or missing the\n550 proper dns entries."
+      }
+    },
+    {
+      "row": 70,
+      "email": "hila-77@smile.met.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 550-The mail server could not deliver mail to hila-77@smile.met.il.  The\n550-account or domain may not exist, they may be blacklisted, or missing the\n550 proper dns entries."
+      }
+    },
+    {
+      "row": 73,
+      "email": "eyal@vr-law.co.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 550-The mail server could not deliver mail to eyal@vr-law.co.il.  The account\n550-or domain may not exist, they may be blacklisted, or missing the proper dns\n550 entries."
+      }
+    },
+    {
+      "row": 96,
+      "email": "moshe@rosenthal.co.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 451 Temporary local problem - please try later"
+      }
+    },
+    {
+      "row": 109,
+      "email": "nerya@betan.org.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 550-The mail server could not deliver mail to nerya@betan.org.il.  The account\n550-or domain may not exist, they may be blacklisted, or missing the proper dns\n550 entries."
+      }
+    },
+    {
+      "row": 160,
+      "email": "refaelb@refaellaw.com",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 550-The mail server could not deliver mail to refaelb@refaellaw.com.  The\n550-account or domain may not exist, they may be blacklisted, or missing the\n550 proper dns entries."
+      }
+    },
+    {
+      "row": 213,
+      "email": "ayelet757@nana.co.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 451 Temporary local problem - please try later"
+      }
+    },
+    {
+      "row": 281,
+      "email": "info@praklit.biz",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 550-The mail server could not deliver mail to info@praklit.biz.  The account or\n550-domain may not exist, they may be blacklisted, or missing the proper dns\n550 entries."
+      }
+    },
+    {
+      "row": 411,
+      "email": "sofi@korish.co.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 550-The mail server could not deliver mail to sofi@korish.co.il.  The account\n550-or domain may not exist, they may be blacklisted, or missing the proper dns\n550 entries."
+      }
+    },
+    {
+      "row": 412,
+      "email": "ami@korish.co.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 550-The mail server could not deliver mail to ami@korish.co.il.  The account or\n550-domain may not exist, they may be blacklisted, or missing the proper dns\n550 entries."
+      }
+    },
+    {
+      "row": 507,
+      "email": "liron@engel-adv.com",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 550-The mail server could not deliver mail to liron@engel-adv.com.  The account\n550-or domain may not exist, they may be blacklisted, or missing the proper dns\n550 entries."
+      }
+    },
+    {
+      "row": 521,
+      "email": "sela@glusman.co.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 550-The mail server could not deliver mail to sela@glusman.co.il.  The account\n550-or domain may not exist, they may be blacklisted, or missing the proper dns\n550 entries."
+      }
+    },
+    {
+      "row": 655,
+      "email": "yaron@yaron-law.co.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 550-The mail server could not deliver mail to yaron@yaron-law.co.il.  The\n550-account or domain may not exist, they may be blacklisted, or missing the\n550 proper dns entries."
+      }
+    },
+    {
+      "row": 706,
+      "email": "ayelet@dmh-law.co.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 550-The mail server could not deliver mail to ayelet@dmh-law.co.il.  The\n550-account or domain may not exist, they may be blacklisted, or missing the\n550 proper dns entries."
+      }
+    },
+    {
+      "row": 779,
+      "email": "gilad@harishlaw.co.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 550-The mail server could not deliver mail to gilad@harishlaw.co.il.  The\n550-account or domain may not exist, they may be blacklisted, or missing the\n550 proper dns entries."
+      }
+    },
+    {
+      "row": 780,
+      "email": "sharona@harishlaw.co.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 550-The mail server could not deliver mail to sharona@harishlaw.co.il.  The\n550-account or domain may not exist, they may be blacklisted, or missing the\n550 proper dns entries."
+      }
+    },
+    {
+      "row": 819,
+      "email": "shiran@saglaw.co.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 550-The mail server could not deliver mail to shiran@saglaw.co.il.  The account\n550-or domain may not exist, they may be blacklisted, or missing the proper dns\n550 entries."
+      }
+    },
+    {
+      "row": 924,
+      "email": "weissh@mail.biu.net.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 550-The mail server could not deliver mail to weissh@mail.biu.net.il.  The\n550-account or domain may not exist, they may be blacklisted, or missing the\n550 proper dns entries."
+      }
+    },
+    {
+      "row": 947,
+      "email": "roy@rslaw.co.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 451 Temporary local problem - please try later"
+      }
+    },
+    {
+      "row": 1007,
+      "email": "lili555000@walla.com",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Connection timeout"
+      }
+    },
+    {
+      "row": 1052,
+      "email": "huberman.david@gmail.com",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Timeout"
+      }
+    },
+    {
+      "row": 1067,
+      "email": "kayakolev@gmail.com",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Connection timeout"
+      }
+    },
+    {
+      "row": 1111,
+      "email": "goodpin@gmail.com",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Connection timeout"
+      }
+    },
+    {
+      "row": 1124,
+      "email": "nitzan@stgal.co.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 550-The mail server could not deliver mail to nitzan@stgal.co.il.  The account\n550-or domain may not exist, they may be blacklisted, or missing the proper dns\n550 entries."
+      }
+    },
+    {
+      "row": 1128,
+      "email": "kasirer2@inter.net.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "read ETIMEDOUT"
+      }
+    },
+    {
+      "row": 1175,
+      "email": "chaim_daniel@walla.co.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Timeout"
+      }
+    },
+    {
+      "row": 1228,
+      "email": "diana84adv@gmail.com",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Connection timeout"
+      }
+    },
+    {
+      "row": 1235,
+      "email": "qusai@massarwa-qasim.com",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 550-The mail server could not deliver mail to qusai@massarwa-qasim.com.  The\n550-account or domain may not exist, they may be blacklisted, or missing the\n550 proper dns entries."
+      }
+    },
+    {
+      "row": 1255,
+      "email": "dovlaw@gmail.com",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "read ETIMEDOUT"
+      }
+    },
+    {
+      "row": 1331,
+      "email": "tal@talmaor.co.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 451 Temporary local problem - please try later"
+      }
+    },
+    {
+      "row": 1336,
+      "email": "info@ozgadot.com",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 451 Temporary local problem - please try later"
+      }
+    },
+    {
+      "row": 1369,
+      "email": "itai@lawbd.co.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 550-The mail server could not deliver mail to itai@lawbd.co.il.  The account or\n550-domain may not exist, they may be blacklisted, or missing the proper dns\n550 entries."
+      }
+    },
+    {
+      "row": 1465,
+      "email": "kfir@masham.org.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "read ETIMEDOUT"
+      }
+    },
+    {
+      "row": 1697,
+      "email": "tamar@schlachet.com",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 451 Temporary local problem - please try later"
+      }
+    }
+  ],
+  "skippedStats": {
+    "notInWave1": 129,
+    "invalidEmail": 144,
+    "suppress": 10,
+    "warmLead": 2,
+    "alreadyFollowedUp": 30,
+    "duplicate": 25
+  },
+  "platformUrl": "https://mela-media.co.il/platform/",
+  "subject": "עדיין רלוונטי? עדכון קצר לגבי המשרד",
+  "finishedAt": "2026-07-30T16:09:53.523Z"
+}

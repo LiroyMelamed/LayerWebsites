@@ -1,0 +1,25 @@
+=============================================
+Scheduled outreach waiter started: Sat Jul 18 16:22:15 EEST 2026
+Will start send at 20:26 Asia/Jerusalem
+Resume state: /Users/liroymelamed/Projects/LayerWebsites/backend/logs/outreach-state.json
+=============================================
+now=2026-07-18T16:22:16.030509+03:00
+target=2026-07-18T20:26:00+03:00
+sleeping 14623s (~4.06h)
+=============================================
+Scheduled outreach waiter started: Sat Jul 18 16:22:37 EEST 2026
+Will start send at 20:26 Asia/Jerusalem
+Resume state: /Users/liroymelamed/Projects/LayerWebsites/backend/logs/outreach-state.json
+=============================================
+now=2026-07-18T16:22:37.432345+03:00
+target=2026-07-18T20:26:00+03:00
+sleeping 14602s (~4.06h)
+Starting resume send at Sat Jul 18 22:04:50 EEST 2026 → logs/real-run-resume-20260718-220450.console.log
+Resume state: {
+  "file": "/Users/liroymelamed/Projects/LayerWebsites/backend/data/רשימת עורכי דין.xlsx",
+  "lastSentRow": 1436,
+  "nextRow": 1437,
+  "totalRowsInFile": 3766,
+  "updatedAt": "2026-07-18T13:17:02.761Z",
+  "smtpMode": "app"
+}

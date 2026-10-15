@@ -1,0 +1,26 @@
+{
+  "mode": "dry-run",
+  "wave": 2,
+  "sender": "melamedlaw-smtp",
+  "smtpHost": "mail.melamedlaw.co.il",
+  "file": "/Users/liroymelamed/Projects/LayerWebsites/backend/data/רשימת עורכי דין.xlsx",
+  "sheetName": "גיליון1",
+  "wave1SentRows": 3637,
+  "suppressCount": 10,
+  "eligible": 3456,
+  "startIndex": 0,
+  "sent": 3456,
+  "failed": 0,
+  "failures": [],
+  "skippedStats": {
+    "notInWave1": 129,
+    "invalidEmail": 144,
+    "suppress": 10,
+    "warmLead": 2,
+    "alreadyFollowedUp": 0,
+    "duplicate": 25
+  },
+  "platformUrl": "https://mela-media.co.il/platform/",
+  "subject": "עדיין רלוונטי? עדכון קצר לגבי המשרד",
+  "finishedAt": "2026-07-29T17:00:05.324Z"
+}

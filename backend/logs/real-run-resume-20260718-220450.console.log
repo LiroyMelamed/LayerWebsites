@@ -1,0 +1,49 @@
+Resuming from row 1437 (state file: /Users/liroymelamed/Projects/LayerWebsites/backend/logs/outreach-state.json)
+---------------------------------------------
+Law-firm outreach run (REAL sender)
+Mode:         SEND
+SMTP:         MelamedLaw SMTP (SMTP_*)
+Workbook:     /Users/liroymelamed/Projects/LayerWebsites/backend/data/רשימת עורכי דין.xlsx
+Sheet:        גיליון1
+Rows in file: 3766
+Start at row: 1437
+Max sends:    (no cap)
+Rows to scan: 2330
+Delay (ms):   5000
+Sales deck:   /Users/liroymelamed/Projects/LayerWebsites/backend/data/מצגת מכירות.pdf
+Platform URL: https://mela-media.co.il/platform/
+Reply-To:     liroymelamed@icloud.com
+From:         לירוי מלמד · Melamedia <noreply@melamedlaw.co.il>
+SMTP host:    mail.melamedlaw.co.il
+---------------------------------------------
+[SENT] row=1438 to=ami***@windowslive.com messageId=<57e393fc-ee86-75fd-ca6b-338fff245b0d@melamedlaw.co.il>
+[SENT] row=1439 to=inb***@netvision.net.il messageId=<021f3ec4-3d06-fada-25d8-181f00d20102@melamedlaw.co.il>
+
+=== RESTART Sat Jul 18 22:05:29 EEST 2026 from state {
+  "file": "/Users/liroymelamed/Projects/LayerWebsites/backend/data/רשימת עורכי דין.xlsx",
+  "lastSentRow": 1439,
+  "nextRow": 1440,
+  "totalRowsInFile": 3766,
+  "updatedAt": "2026-07-18T19:05:03.160Z",
+  "smtpMode": "app"
+} ===
+Resuming from row 1440 (state file: /Users/liroymelamed/Projects/LayerWebsites/backend/logs/outreach-state.json)
+---------------------------------------------
+Law-firm outreach run (REAL sender)
+Mode:         SEND
+SMTP:         MelamedLaw SMTP (SMTP_*)
+Workbook:     /Users/liroymelamed/Projects/LayerWebsites/backend/data/רשימת עורכי דין.xlsx
+Sheet:        גיליון1
+Rows in file: 3766
+Start at row: 1440
+Max sends:    (no cap)
+Rows to scan: 2327
+Delay (ms):   5000
+Sales deck:   /Users/liroymelamed/Projects/LayerWebsites/backend/data/מצגת מכירות.pdf
+Platform URL: https://mela-media.co.il/platform/
+Reply-To:     liroymelamed@icloud.com
+From:         לירוי מלמד · Melamedia <noreply@melamedlaw.co.il>
+SMTP host:    mail.melamedlaw.co.il
+---------------------------------------------
+[SENT] row=1441 to=noa***@gmail.com messageId=<6c0bb0d2-914d-3b4d-c395-54e48bba8c8a@melamedlaw.co.il>
+[SENT] row=1442 to=hil***@gmail.com messageId=<3f2cc29e-f5be-ada4-e5a5-6b0c189e74a4@melamedlaw.co.il>

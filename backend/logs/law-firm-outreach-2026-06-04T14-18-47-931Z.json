@@ -1,0 +1,18 @@
+{
+  "mode": "dry-run",
+  "file": "/Users/liroymelamed/Projects/LayerWebsites/backend/data/רשימת עורכי דין.xlsx",
+  "sheetName": "גיליון1",
+  "totalRowsInFile": 3766,
+  "attemptedRows": 1,
+  "sent": 0,
+  "skipped": 1,
+  "failed": 0,
+  "failures": [
+    {
+      "row": 2,
+      "email": null,
+      "reason": "invalid_email"
+    }
+  ],
+  "finishedAt": "2026-06-04T14:18:47.929Z"
+}

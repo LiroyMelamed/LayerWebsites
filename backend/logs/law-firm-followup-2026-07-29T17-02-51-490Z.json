@@ -1,0 +1,35 @@
+{
+  "mode": "send",
+  "wave": 2,
+  "sender": "melamedlaw-smtp",
+  "smtpHost": "mail.melamedlaw.co.il",
+  "file": "/Users/liroymelamed/Projects/LayerWebsites/backend/data/רשימת עורכי דין.xlsx",
+  "sheetName": "גיליון1",
+  "wave1SentRows": 3637,
+  "suppressCount": 10,
+  "eligible": 3456,
+  "startIndex": 0,
+  "sent": 30,
+  "failed": 1,
+  "failures": [
+    {
+      "row": 14,
+      "email": "office@yakar-law.co.il",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "Can't send mail - all recipients were rejected: 550-The mail server could not deliver mail to office@yakar-law.co.il.  The\n550-account or domain may not exist, they may be blacklisted, or missing the\n550 proper dns entries."
+      }
+    }
+  ],
+  "skippedStats": {
+    "notInWave1": 129,
+    "invalidEmail": 144,
+    "suppress": 10,
+    "warmLead": 2,
+    "alreadyFollowedUp": 0,
+    "duplicate": 25
+  },
+  "platformUrl": "https://mela-media.co.il/platform/",
+  "subject": "עדיין רלוונטי? עדכון קצר לגבי המשרד",
+  "finishedAt": "2026-07-29T17:02:51.490Z"
+}

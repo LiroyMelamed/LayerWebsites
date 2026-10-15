@@ -1,0 +1,58 @@
+---------------------------------------------
+Law-firm FOLLOW-UP run (wave 2)
+Mode:            SEND
+SMTP:            MelamedLaw SMTP (SMTP_*)
+Workbook:        /Users/liroymelamed/Projects/LayerWebsites/backend/data/רשימת עורכי דין.xlsx
+Sheet:           גיליון1
+Wave1 SENT rows: 3637
+Suppress list:   10 (/Users/liroymelamed/Projects/LayerWebsites/backend/data/outreach-suppress.json)
+Eligible:        3456
+Queue (resume):  3456
+Max sends:       30
+Delay (ms):      5000
+Platform URL:    https://mela-media.co.il/platform/
+Reply-To:        liroymelamed@icloud.com
+From:            לירוי מלמד · Melamedia <noreply@melamedlaw.co.il>
+Skip stats:      {"notInWave1":129,"invalidEmail":144,"suppress":10,"warmLead":2,"alreadyFollowedUp":0,"duplicate":25}
+---------------------------------------------
+[SENT] row=4 to=hai***@gmail.com messageId=<8acda724-7190-762a-d1f6-22313b00490c@melamedlaw.co.il>
+[SENT] row=5 to=ofi***@gmail.com messageId=<8cb69470-5769-dc55-3155-cde19298a0c1@melamedlaw.co.il>
+[SENT] row=6 to=pap***@gmail.com messageId=<02dd8b12-024e-901d-284c-ba4fa7508d5d@melamedlaw.co.il>
+[SENT] row=8 to=may***@walla.com messageId=<4502e213-ea3f-0420-abd4-3ff41ee3f96e@melamedlaw.co.il>
+[SENT] row=9 to=hal***@barak.net.il messageId=<4b4ff62b-2bf1-2adf-0ec3-f9a652bb1496@melamedlaw.co.il>
+[SENT] row=10 to=mas***@walla.co.il messageId=<3e0a2a8f-96fd-c5b6-b55f-e1dd0552d266@melamedlaw.co.il>
+[SENT] row=11 to=dav***@meitar.com messageId=<5986e441-e7f8-3503-a171-dd80d8243f1d@melamedlaw.co.il>
+[SENT] row=12 to=des***@bezeqint.net messageId=<b9210226-47e8-f247-5878-a7d52c9c5abf@melamedlaw.co.il>
+[SENT] row=13 to=tal***@gmail.com messageId=<fb8e83f4-0491-7e39-1934-214c3bbf72e9@melamedlaw.co.il>
+[FAIL] row=14 to=off***@yakar-law.co.il reason=Can't send mail - all recipients were rejected: 550-The mail server could not deliver mail to office@yakar-law.co.il.  The
+550-account or domain may not exist, they may be blacklisted, or missing the
+550 proper dns entries.
+[SENT] row=15 to=lin***@yahoo.com messageId=<a8a4e52a-9a09-b293-62b8-3b29c9369a4a@melamedlaw.co.il>
+[SENT] row=17 to=sho***@gmail.com messageId=<cc80ea92-a82c-b8c8-2114-90709a0f5f74@melamedlaw.co.il>
+[SENT] row=18 to=vs2***@bezeqint.net messageId=<464ade11-be03-a8ea-1e2f-e7910ad7fd16@melamedlaw.co.il>
+[SENT] row=19 to=aaz***@gmail.com messageId=<05171689-9013-3859-7880-aaf895cf4d26@melamedlaw.co.il>
+[SENT] row=20 to=lia***@hotmail.com messageId=<656ec9c1-07bb-9464-0ec7-79903f73c573@melamedlaw.co.il>
+[SENT] row=22 to=tal***@walla.com messageId=<e6d52bb4-838c-6566-896e-3ed723ed4606@melamedlaw.co.il>
+[SENT] row=23 to=yar***@gmail.com messageId=<349f3b52-97b6-1ec2-bcee-9193ce34c20e@melamedlaw.co.il>
+[SENT] row=24 to=ita***@hotmail.com messageId=<f8537945-11f4-3924-1ae7-ce35000c4eac@melamedlaw.co.il>
+[SENT] row=25 to=s_j***@walla.co.il messageId=<79491a43-5ab4-e947-5e40-c9c153f6b9b3@melamedlaw.co.il>
+[SENT] row=26 to=rsh***@gmail.com messageId=<74cdc176-8df8-1c1d-d875-06f2cbaf2271@melamedlaw.co.il>
+[SENT] row=27 to=adm***@st-adv.com messageId=<e0e6b82a-531f-bb3d-c225-4a3afc298f60@melamedlaw.co.il>
+[SENT] row=28 to=ety***@gmail.com messageId=<e666a40e-dffd-2bf3-c4f2-05397d2ca850@melamedlaw.co.il>
+[SENT] row=29 to=tal***@gmail.com messageId=<51adbb5e-cd60-3ec2-7ab9-8ec6deacd1af@melamedlaw.co.il>
+[SENT] row=30 to=ori***@gmail.com messageId=<f8a2fca9-813c-9c17-3a78-db46e62d9dfa@melamedlaw.co.il>
+[SENT] row=31 to=mei***@gmail.com messageId=<6c2f1006-42d6-86d7-73e3-83cf06ec6247@melamedlaw.co.il>
+[SENT] row=32 to=lee***@hotmail.com messageId=<77022223-7e33-0eae-b33d-cad3e70375e5@melamedlaw.co.il>
+[SENT] row=34 to=cke***@outlook.co.il messageId=<cce7010e-bbd3-6e5b-e4aa-28908b09f3c0@melamedlaw.co.il>
+[SENT] row=36 to=mil***@gmail.com messageId=<223c5a4f-a383-94d0-e341-6e98514aa189@melamedlaw.co.il>
+[SENT] row=37 to=oha***@gmail.com messageId=<0e05e1bb-4f80-8df0-6aa3-ba36e85c1823@melamedlaw.co.il>
+[SENT] row=38 to=ben***@walla.com messageId=<eaa13a41-eee3-f753-ae30-d8e79267b212@melamedlaw.co.il>
+[SENT] row=39 to=ubr***@bezeqint.net messageId=<ac9e14a1-a5ef-bea4-6cdf-ff22d42cace6@melamedlaw.co.il>
+Reached max sends (30). Stopping.
+---------------------------------------------
+Completed follow-up run
+Sent:    30
+Failed:  1
+Report:  /Users/liroymelamed/Projects/LayerWebsites/backend/logs/law-firm-followup-2026-07-29T17-02-51-490Z.json
+State:   /Users/liroymelamed/Projects/LayerWebsites/backend/logs/outreach-followup-state.json
+---------------------------------------------

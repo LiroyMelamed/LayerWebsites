@@ -1,0 +1,19 @@
+{"timestamp":"2026-10-05T08:15:27.729Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***4567","userId":99,"success":true}
+{"timestamp":"2026-10-05T18:20:10.260Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***4567","userId":99,"success":true}
+{"timestamp":"2026-10-05T18:57:00.505Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***4567","userId":99,"success":true}
+{"timestamp":"2026-10-05T18:57:00.648Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***4567","userId":99,"success":true}
+{"timestamp":"2026-10-05T19:10:29.748Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***0000","ip":"::ffff:127.0.0.1","success":false,"meta":{"error":"relation \"users\" does not exist"}}
+{"timestamp":"2026-10-05T19:10:29.811Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***1111","ip":"192.168.88.88","success":false,"meta":{"error":"relation \"users\" does not exist"}}
+{"timestamp":"2026-10-05T19:10:29.815Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***1111","ip":"192.168.88.88","success":false,"meta":{"error":"relation \"users\" does not exist"}}
+{"timestamp":"2026-10-05T19:11:14.826Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":1,"verified":false,"messageLength":30}}
+{"timestamp":"2026-10-05T19:11:14.838Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":2,"verified":false,"messageLength":20}}
+{"timestamp":"2026-10-05T19:11:14.845Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":3,"verified":false,"messageLength":62}}
+{"timestamp":"2026-10-05T19:11:14.858Z","level":"WARN","type":"CHATBOT_OTP_REQUEST","phone":"***0000","ip":"::ffff:127.0.0.1","success":false,"meta":{"error":"there is no unique or exclusion constraint matching the ON CONFLICT specification"}}
+{"timestamp":"2026-10-05T19:11:14.879Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":4,"verified":false,"messageLength":14}}
+{"timestamp":"2026-10-05T19:11:14.885Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":5,"verified":false,"messageLength":14}}
+{"timestamp":"2026-10-05T19:11:14.891Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":6,"verified":false,"messageLength":14}}
+{"timestamp":"2026-10-05T19:11:14.896Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":7,"verified":false,"messageLength":14}}
+{"timestamp":"2026-10-05T19:11:14.913Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":8,"verified":false,"messageLength":14}}
+{"timestamp":"2026-10-05T19:11:14.920Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":9,"verified":false,"messageLength":14}}
+{"timestamp":"2026-10-05T19:11:14.929Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-10-05T19:11:14.931Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}

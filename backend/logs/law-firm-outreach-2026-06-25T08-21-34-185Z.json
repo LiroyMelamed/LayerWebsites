@@ -1,0 +1,64 @@
+{
+  "mode": "send",
+  "sender": "brevo-direct",
+  "file": "/Users/liroymelamed/Projects/LayerWebsites/backend/data/רשימת עורכי דין.xlsx",
+  "sheetName": "גיליון1",
+  "totalRowsInFile": 3766,
+  "attemptedRows": 2694,
+  "sent": 300,
+  "skipped": 10,
+  "failed": 0,
+  "failures": [
+    {
+      "row": 1283,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1296,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1307,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1314,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1337,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1345,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1348,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1368,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1371,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1374,
+      "email": null,
+      "reason": "invalid_email"
+    }
+  ],
+  "finishedAt": "2026-06-25T08:21:34.185Z"
+}

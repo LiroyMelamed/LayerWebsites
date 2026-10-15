@@ -1,0 +1,404 @@
+Resuming from row 770 (state file: /Users/liroymelamed/Projects/LayerWebsites/backend/logs/outreach-state.json)
+---------------------------------------------
+Law-firm outreach run
+Mode:         SEND
+Workbook:     /Users/liroymelamed/Projects/LayerWebsites/backend/data/רשימת עורכי דין.xlsx
+Sheet:        גיליון1
+Rows in file: 3766
+Start at row: 770
+Max sends:    300
+Rows to scan: 2997
+Delay (ms):   800
+Sales deck:   /Users/liroymelamed/Projects/LayerWebsites/backend/data/מצגת מכירות.pdf
+Reply-To:     liroymelamed@icloud.com
+From name:    Melamedia | לירוי מלמד
+From email:   liroy@mela-media.co.il
+SMTP host:    mail.melamedlaw.co.il
+---------------------------------------------
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: lia***@gmail.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=771 to=liathazak@gmail.com
+Connected to PostgreSQL database: neondb
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: mot***@cls.co.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=772 to=motih@cls.co.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: ilm***@gmail.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=773 to=ilmorana@gmail.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: ham***@netvision.net.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=774 to=hamzany@netvision.net.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: tal***@hotmail.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=775 to=talhanoch@hotmail.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: eli***@bezeqint.net
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=776 to=elihas@bezeqint.net
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: ram***@gmail.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=777 to=ramihefetz@gmail.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: yae***@levitansharon.co.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=778 to=yaelh@levitansharon.co.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: gil***@harishlaw.co.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=779 to=gilad@harishlaw.co.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: sha***@harishlaw.co.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=780 to=sharona@harishlaw.co.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: ifa***@takticum.co.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=781 to=ifat@takticum.co.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: tal***@gmail.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=782 to=taliatab@gmail.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: ran***@gmail.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=783 to=rantal@gmail.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: shl***@netvision.net.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=784 to=shlotik@netvision.net.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: at4***@walla.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=785 to=at48@walla.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: eli***@gmail.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=786 to=elizabetta.tarrab@gmail.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: ema***@walla.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=787 to=emanuel1981@walla.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: edn***@walla.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=788 to=ednat55@walla.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: iri***@012.net.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=789 to=iristr@012.net.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: gru***@gmail.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=790 to=grubner1@gmail.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: mor***@walla.co.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=791 to=mor_tay@walla.co.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: yog***@gmail.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=792 to=yogev.ido@gmail.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: ita***@hotmail.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=793 to=itaiyosefi@hotmail.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: mot***@walla.co.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=794 to=moti_ya@walla.co.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: era***@bezeqint.net
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=795 to=eranyh@bezeqint.net
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: srj***@gmail.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=796 to=srj.law18@gmail.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: yya***@idc.ac.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=797 to=yyativ@idc.ac.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: yal***@post.tau.ac.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=798 to=yalinm@post.tau.ac.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: avi***@012.net.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=799 to=aviinon@012.net.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: noa***@hotmail.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=800 to=noam_yaniv@hotmail.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: yai***@gmail.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=801 to=yair.jacobe@gmail.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: ofi***@yahoo.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=802 to=ofir27_1@yahoo.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: dan***@naveh-law.co.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=803 to=daniela@naveh-law.co.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: alo***@mac.org.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=804 to=alon_y@mac.org.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: raf***@bezeqint.net
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=805 to=rafiiz@bezeqint.net
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: rin***@walla.co.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=806 to=rinale123@walla.co.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: izc***@gmail.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=807 to=izchkobich@gmail.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: eri***@bezeqint.net
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=808 to=erikita@bezeqint.net
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: tal***@gmail.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=809 to=tali.yekutiel@gmail.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: sya***@hotmail.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=810 to=syakter@hotmail.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: yuv***@tour-center.net
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=811 to=yuval@tour-center.net
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: yaf***@gmail.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=812 to=yafit.jeremiah@gmail.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: ker***@gmail.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=813 to=kerenisrael30@gmail.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: hil***@shoob.co.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=814 to=hila@shoob.co.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: ila***@holtd.co.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=815 to=ilan@holtd.co.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: gal***@hotmail.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=816 to=gali_asulin@hotmail.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: coh***@zahav.net.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=817 to=cohend11@zahav.net.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: coh***@law-z.co.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=818 to=cohen@law-z.co.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: shi***@saglaw.co.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=819 to=shiran@saglaw.co.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: rot***@gmail.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=820 to=rotemetegi@gmail.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: ver***@walla.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=821 to=vered640@walla.com
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: mei***@gmail.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=822 to=meirdhn@gmail.com
+[SKIP] row=823 invalid email
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: ham***@neto.net.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=824 to=hamoutal@neto.net.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: uzi***@walla.co.il
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=825 to=uzieliezer@walla.co.il
+--- EMAIL Nodemailer Simulation (Dev Mode) ---
+To: ary***@gmail.com
+Label: LAW_FIRM_OUTREACH
+Subject: שאלה קצרה לגבי עדכון לקוחות במשרד שלך
+Attachments: מצגת מכירות.pdf
+----------------------------------------------
+[SENT] row=826 to=aryearbus@gmail.com

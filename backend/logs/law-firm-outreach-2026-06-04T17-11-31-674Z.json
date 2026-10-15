@@ -1,0 +1,12 @@
+{
+  "mode": "send",
+  "file": "/tmp/brevo-test.xlsx",
+  "sheetName": "Sheet1",
+  "totalRowsInFile": 1,
+  "attemptedRows": 1,
+  "sent": 1,
+  "skipped": 0,
+  "failed": 0,
+  "failures": [],
+  "finishedAt": "2026-06-04T17:11:31.674Z"
+}

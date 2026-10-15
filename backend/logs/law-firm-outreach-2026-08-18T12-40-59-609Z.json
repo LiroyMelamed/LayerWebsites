@@ -1,0 +1,968 @@
+{
+  "mode": "dry-run",
+  "sender": "melamedlaw-smtp",
+  "smtpHost": "mail.melamedlaw.co.il",
+  "file": "/Users/liroymelamed/Projects/LayerWebsites/backend/data/רשימת עורכי דין.xlsx",
+  "sheetName": "גיליון1",
+  "totalRowsInFile": 3766,
+  "startAt": 1,
+  "attemptedRows": 3766,
+  "sent": 0,
+  "skipped": 3766,
+  "failed": 0,
+  "failures": [
+    {
+      "row": 2,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 3,
+      "email": "עלות לבן אדם",
+      "reason": "invalid_email"
+    },
+    {
+      "row": 7,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 16,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 21,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 33,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 35,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 42,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 46,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 52,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 53,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 56,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 87,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 91,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 95,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 106,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 120,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 122,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 129,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 130,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 131,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 139,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 141,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 149,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 159,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 162,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 163,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 165,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 167,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 171,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 176,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 179,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 182,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 189,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 193,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 194,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 199,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 200,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 212,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 217,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 233,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 241,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 244,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 248,
+      "email": "amir.gabel@col",
+      "reason": "invalid_email"
+    },
+    {
+      "row": 251,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 253,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 255,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 259,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 294,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 302,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 303,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 304,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 311,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 319,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 323,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 331,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 340,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 341,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 347,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 356,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 366,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 370,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 374,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 375,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 378,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 383,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 399,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 402,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 403,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 413,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 416,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 421,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 427,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 434,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 443,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 449,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 456,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 457,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 460,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 461,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 465,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 470,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 471,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 472,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 476,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 481,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 483,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 489,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 491,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 493,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 494,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 498,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 499,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 504,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 513,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 514,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 515,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 522,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 526,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 530,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 531,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 535,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 536,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 537,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 542,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 545,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 548,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 549,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 550,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 554,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 571,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 581,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 582,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 588,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 589,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 595,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 598,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 602,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 611,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 612,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 623,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 625,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 631,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 632,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 637,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 638,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 646,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 649,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 650,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 652,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 653,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 663,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 669,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 673,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 684,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 697,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 708,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 723,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 724,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 729,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 733,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 742,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 745,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 753,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 823,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 832,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1283,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1296,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1307,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1314,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1337,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1345,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1348,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1368,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1371,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1374,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1395,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1486,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1487,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1539,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1542,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1567,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1580,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1583,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1604,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1655,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1659,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1666,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1680,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1683,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1687,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1695,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1737,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1741,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1838,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1863,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1871,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1893,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1903,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1917,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1943,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1982,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 2007,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 2030,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 2068,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 2117,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 2189,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 2194,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 2426,
+      "email": "michaelram-law.co.il",
+      "reason": "invalid_email"
+    },
+    {
+      "row": 2605,
+      "email": null,
+      "reason": "invalid_email"
+    }
+  ],
+  "salesDeck": "/Users/liroymelamed/Projects/LayerWebsites/backend/data/מצגת מכירות.pdf",
+  "platformUrl": "https://mela-media.co.il/platform/",
+  "finishedAt": "2026-08-18T12:40:59.609Z"
+}

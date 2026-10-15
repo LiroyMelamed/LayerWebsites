@@ -1,0 +1,188 @@
+{
+  "mode": "dry-run",
+  "sender": "melamedlaw-smtp",
+  "smtpHost": "mail.melamedlaw.co.il",
+  "file": "/Users/liroymelamed/Projects/LayerWebsites/backend/data/רשימת עורכי דין.xlsx",
+  "sheetName": "גיליון1",
+  "totalRowsInFile": 3766,
+  "startAt": 1384,
+  "attemptedRows": 2383,
+  "sent": 2332,
+  "skipped": 51,
+  "failed": 0,
+  "failures": [
+    {
+      "row": 1395,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1486,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1487,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1539,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1542,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1567,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1580,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1583,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1604,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1655,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1659,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1666,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1680,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1683,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1687,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1695,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1737,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1741,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1838,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1863,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1871,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1893,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1903,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1917,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1943,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 1982,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 2007,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 2030,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 2068,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 2117,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 2189,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 2194,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 2426,
+      "email": "michaelram-law.co.il",
+      "reason": "invalid_email"
+    },
+    {
+      "row": 2605,
+      "email": null,
+      "reason": "invalid_email"
+    }
+  ],
+  "salesDeck": "/Users/liroymelamed/Projects/LayerWebsites/backend/data/מצגת מכירות.pdf",
+  "platformUrl": "https://mela-media.co.il/platform/",
+  "finishedAt": "2026-07-18T13:10:47.306Z"
+}

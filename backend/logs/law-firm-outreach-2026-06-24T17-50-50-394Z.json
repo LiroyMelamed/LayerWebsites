@@ -1,0 +1,24 @@
+{
+  "mode": "send",
+  "sender": "brevo-direct",
+  "file": "/Users/liroymelamed/Projects/LayerWebsites/backend/data/רשימת עורכי דין.xlsx",
+  "sheetName": "גיליון1",
+  "totalRowsInFile": 3766,
+  "attemptedRows": 2997,
+  "sent": 300,
+  "skipped": 2,
+  "failed": 0,
+  "failures": [
+    {
+      "row": 823,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 832,
+      "email": null,
+      "reason": "invalid_email"
+    }
+  ],
+  "finishedAt": "2026-06-24T17:50:50.394Z"
+}

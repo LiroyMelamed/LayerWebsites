@@ -1,0 +1,321 @@
+{
+  "mode": "send",
+  "file": "/Users/liroymelamed/Projects/LayerWebsites/backend/data/רשימת עורכי דין.xlsx",
+  "sheetName": "גיליון1",
+  "totalRowsInFile": 3766,
+  "attemptedRows": 3766,
+  "sent": 300,
+  "skipped": 60,
+  "failed": 1,
+  "failures": [
+    {
+      "row": 2,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 3,
+      "email": "עלות לבן אדם",
+      "reason": "invalid_email"
+    },
+    {
+      "row": 7,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 16,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 21,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 33,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 35,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 42,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 46,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 52,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 53,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 56,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 87,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 91,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 95,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 106,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 120,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 122,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 129,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 130,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 131,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 139,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 141,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 143,
+      "email": "einatshtein@gmail.com",
+      "reason": "EMAIL_SEND_FAILED",
+      "details": {
+        "error": "write EPIPE"
+      }
+    },
+    {
+      "row": 149,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 159,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 162,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 163,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 165,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 167,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 171,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 176,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 179,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 182,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 189,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 193,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 194,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 199,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 200,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 212,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 217,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 233,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 241,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 244,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 248,
+      "email": "amir.gabel@col",
+      "reason": "invalid_email"
+    },
+    {
+      "row": 251,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 253,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 255,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 259,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 294,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 302,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 303,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 304,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 311,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 319,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 323,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 331,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 340,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 341,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 347,
+      "email": null,
+      "reason": "invalid_email"
+    },
+    {
+      "row": 356,
+      "email": null,
+      "reason": "invalid_email"
+    }
+  ],
+  "finishedAt": "2026-06-04T18:48:36.679Z"
+}
