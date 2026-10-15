@@ -1,0 +1,55 @@
+{
+  "createdUtc": "2026-10-06T10:05:24.006578+00:00",
+  "files": [
+    {
+      "path": "STATUS.json",
+      "sha256": "cd7d3b0725e732cc525f936b68cf311d19545c132c3190a7d04bf11aa0d76ade",
+      "bytes": 3348
+    },
+    {
+      "path": "apple-auth.txt",
+      "sha256": "c3d6a1845eb362ce60b0fb53c8f69834b3d06fcba10122bc3614dbc338bffd2a",
+      "bytes": 1450
+    },
+    {
+      "path": "google-ashrafessa-dashboard.txt",
+      "sha256": "a34e25666ecf81ac860d71dc1357580c4076a3fed847d9bf5c58a8df25c73bd8",
+      "bytes": 12226
+    },
+    {
+      "path": "google-ashrafessa-public-version.txt",
+      "sha256": "7e2c75821355a8f82514fc50ac1bc4ac81461fc0bc26097cf672d0fc56c385d3",
+      "bytes": 1115
+    },
+    {
+      "path": "google-ashrafessa-release.txt",
+      "sha256": "709ff620e572eed2609c724f14962b75f61176c5f952eeff4382677796faee66",
+      "bytes": 10576
+    },
+    {
+      "path": "google-melamedlaw-dashboard.txt",
+      "sha256": "e681bf29c1034d2979b5afb4f045f316b6f6ffe8a6c1d5d3d66091ac9d0a4aa4",
+      "bytes": 12157
+    },
+    {
+      "path": "google-melamedlaw-public-version.txt",
+      "sha256": "81c83b47c90b75420623816b2a5cf496c55d5b40c804ab910a7bc3091eb7d881",
+      "bytes": 1855
+    },
+    {
+      "path": "google-melamedlaw-publishing.txt",
+      "sha256": "270e85df432c3164e9d7b86c3c2697bda6999e5ffc050431e58fd0ad4376c3ca",
+      "bytes": 5151
+    },
+    {
+      "path": "google-melamedlaw-release.txt",
+      "sha256": "5f82351c3acf05f171419ff2b5eb23f05ecf491ae1a1948a10c8dd72d7b49b4e",
+      "bytes": 10508
+    },
+    {
+      "path": "google-morlevi-publishing.txt",
+      "sha256": "916b62de4af973b978ff0501b4349c7e231b996f25a082a4722f80991e5688b0",
+      "bytes": 4867
+    }
+  ]
+}

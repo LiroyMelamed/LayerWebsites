@@ -1,0 +1,23 @@
+.lw-noPermissionsScreen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    padding: 2rem;
+    direction: inherit;
+
+    &__card {
+        max-width: 28rem;
+        text-align: center;
+    }
+
+    &__title {
+        font-size: 1.35rem;
+        margin-bottom: 0.75rem;
+    }
+
+    &__body {
+        color: var(--lw-text-muted, #666);
+        line-height: 1.5;
+    }
+}
