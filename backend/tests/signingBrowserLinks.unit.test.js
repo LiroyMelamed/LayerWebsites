@@ -5,7 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const crypto = require('node:crypto');
 // Execute the production URL/persistence functions with an isolated fake DB.
-const source = fs.readFileSync(path.join(__dirname, '../controllers/signingFileController.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '../controllers/signingFileController.js'), 'utf8').replace(/\r\n/g, '\n');
 const block = source.slice(source.indexOf('function getWebsiteDomain()'), source.indexOf('/**\n * iMessage'));
 function runtime(query, domain = 'client.example.invalid') {
   const scope = { process: { env: { WEBSITE_DOMAIN: domain } }, WEBSITE_DOMAIN: '', crypto,
