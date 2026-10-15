@@ -1,0 +1,503 @@
+// src/components/specializedComponents/signFiles/signatureSpots/SignatureSpot.js
+import React, { useRef } from "react";
+import SimpleContainer from "../../../simpleComponents/SimpleContainer";
+import { useTranslation } from "react-i18next";
+import { signerPaletteClassByIndex } from '../../../../utils/signerColorMap';
+import {
+    SPOT_MIN_HEIGHT,
+    SPOT_MIN_WIDTH,
+    SPOT_MAX_HEIGHT,
+    SPOT_MAX_WIDTH,
+    clampSpotToPage,
+    clientPointToSpotSpace,
+    measuredPageWidth,
+    pageSizeInSpotSpace,
+} from "../../../../utils/signingSpotGeometry";
+
+// Color classes are defined in SCSS (lw-signer-palette-N) and keyed by signer index
+
+export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot, onRequestRemove, onSelectSpot, onEditSpot, onRequestContext, signerIndex = 0, signerName, scale = 1, isSelected = false }) {
+    const { t } = useTranslation();
+    const ref = useRef(null);
+
+    const dragMovedRef = useRef(false);
+    const pointerStartRef = useRef({ x: 0, y: 0 });
+    const pressStartedAtRef = useRef(0);
+    const DRAG_THRESHOLD_PX = 8;
+    const TAP_MAX_MS = 350;
+
+    const canEditSpot = typeof onUpdateSpot === "function";
+    const canRemoveSpot = typeof onRemoveSpot === "function";
+
+    const signerNameSafe = signerName || t("signing.spot.defaultSignerName");
+
+    const hasSignatureImage = Boolean(spot?.IsSigned && (spot?.SignatureUrl || spot?.signatureUrl));
+    const fieldTypeRaw = spot?.type ?? spot?.fieldType ?? spot?.FieldType ?? 'signature';
+    const fieldType = typeof fieldTypeRaw === 'string' ? fieldTypeRaw.toLowerCase() : fieldTypeRaw;
+    const isSignatureLike = fieldType === 'signature' || fieldType === 'initials';
+    const isLawyerStamp = fieldType === 'lawyerstamp';
+    const isClientStamp = fieldType === 'clientstamp';
+    const isStampType = isLawyerStamp || isClientStamp;
+    const stampImageUrl = spot?.stampImageDataUrl || spot?.StampImageDataUrl;
+    const isRequiredRaw = spot?.isRequired ?? spot?.IsRequired;
+    const isRequired = typeof isRequiredRaw === 'boolean' ? isRequiredRaw : true;
+
+    const fieldTypeLabels = {
+        signature: t('signing.fields.signature'),
+        email: t('signing.fields.email'),
+        phone: t('signing.fields.phone'),
+        initials: t('signing.fields.initials'),
+        text: t('signing.fields.text'),
+        date: t('signing.fields.date'),
+        checkbox: t('signing.fields.checkbox'),
+        number: '#',
+        idnumber: t('signing.fields.idNumber'),
+        lawyerstamp: t('signing.fields.lawyerStamp'),
+        clientstamp: t('signing.fields.clientStamp'),
+    };
+
+    const spotStyle = {
+        top: (spot.y || 0) * (scale || 1),
+        // Physical left only — never set inset-inline-* here (conflicts with left in LTR).
+        left: (spot.x || 0) * (scale || 1),
+        right: "auto",
+        width: (spot.width || 130) * (scale || 1),
+        height: (spot.height || 48) * (scale || 1),
+        ...(hasSignatureImage ? { backgroundColor: "transparent" } : null),
+    };
+
+    // Color by signer ordinal in the document (0,1,2…) — never hash user ids
+    // (hashing into 4 slots made different signers share the same amber/tan).
+    const colorClass = signerPaletteClassByIndex(signerIndex);
+
+    const startDragFromClientPoint = (startClientX, startClientY) => {
+        const startX = Number(startClientX);
+        const startY = Number(startClientY);
+        const baseX = Number(spot.x || 0);
+        const baseY = Number(spot.y || 0);
+        const basePage = Number(spot.pageNum ?? spot.PageNumber ?? 1) || 1;
+        const safeScale = scale || 1;
+        const spotW = Number(spot.width || 130);
+        const spotH = Number(spot.height || 48);
+
+        const startPageEl = document.querySelector(`.lw-signing-pageInner[data-page-number="${basePage}"]`);
+        const startRect = startPageEl?.getBoundingClientRect();
+        let grabOffsetX = startRect ? startX - (startRect.left + baseX * safeScale) : 0;
+        let grabOffsetY = startRect ? startY - (startRect.top + baseY * safeScale) : 0;
+        let lastPageNumber = basePage;
+
+        const findPageUnderPoint = (clientX, clientY) => {
+            const hit = document.elementsFromPoint(clientX, clientY)
+                .map((el) => el?.closest?.(".lw-signing-pageInner"))
+                .find(Boolean);
+            if (hit) return hit;
+
+            // Between-page gutters: snap to nearest page by vertical distance
+            // so spots can keep moving across pages.
+            const pages = Array.from(document.querySelectorAll(".lw-signing-pageInner[data-page-number]"));
+            let best = null;
+            let bestDist = Infinity;
+            for (const page of pages) {
+                const rect = page.getBoundingClientRect();
+                let dist = 0;
+                if (clientY < rect.top) dist = rect.top - clientY;
+                else if (clientY > rect.bottom) dist = clientY - rect.bottom;
+                // Prefer a page the cursor is horizontally over when close in Y.
+                if (clientX < rect.left || clientX > rect.right) {
+                    dist += Math.min(Math.abs(clientX - rect.left), Math.abs(clientX - rect.right));
+                }
+                if (dist < bestDist) {
+                    bestDist = dist;
+                    best = page;
+                }
+            }
+            return best;
+        };
+
+        const moveFromClientPoint = (clientX, clientY) => {
+            const pageEl = findPageUnderPoint(clientX, clientY) || startPageEl;
+            if (!pageEl) {
+                onUpdateSpot?.(index, {
+                    x: baseX + (Number(clientX) - startX) / safeScale,
+                    y: baseY + (Number(clientY) - startY) / safeScale,
+                });
+                return;
+            }
+
+            const pageNumber = Number(pageEl.getAttribute("data-page-number")) || basePage;
+            const rect = pageEl.getBoundingClientRect();
+            // Measured page width, not the width the viewer asked for.
+            const measuredWidth = measuredPageWidth(pageEl);
+            if (!(measuredWidth > 0)) return;
+
+            // When crossing onto another page, re-anchor the grab offset so the
+            // spot doesn't jump (page boxes may differ in size).
+            if (pageNumber !== lastPageNumber) {
+                grabOffsetX = Math.max(0, Math.min(Number(clientX) - rect.left, spotW * safeScale));
+                grabOffsetY = Math.max(0, Math.min(Number(clientY) - rect.top, spotH * safeScale));
+                lastPageNumber = pageNumber;
+            }
+
+            // Canonical conversion: pointer -> spot space, via the measured page.
+            const point = clientPointToSpotSpace({
+                clientX: Number(clientX) - grabOffsetX,
+                clientY: Number(clientY) - grabOffsetY,
+                rectLeft: rect.left,
+                rectTop: rect.top,
+                measuredWidth,
+            });
+            if (!point) return;
+
+            const pageSize = pageSizeInSpotSpace({
+                measuredWidth,
+                measuredHeight: rect.height,
+            });
+
+            const clamped = clampSpotToPage({
+                x: point.x,
+                y: point.y,
+                width: spotW,
+                height: spotH,
+                pageWidth: pageSize.width,
+                pageHeight: pageSize.height,
+            });
+
+            onUpdateSpot?.(index, {
+                x: clamped.x,
+                y: clamped.y,
+                pageNum: pageNumber,
+                PageNumber: pageNumber,
+            });
+        };
+
+        return { moveFromClientPoint };
+    };
+
+    /**
+     * Drag MUST start from the top overlay (not the spot root).
+     * On iOS, touching child labels without touch-action:none lets the PDF
+     * scroll parent steal the gesture — which looked like "can't drag at all".
+     */
+    const startDragPointer = (e) => {
+        if (!canEditSpot) return;
+        if (e.button != null && e.button !== 0) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        dragMovedRef.current = false;
+        pointerStartRef.current = { x: Number(e.clientX), y: Number(e.clientY) };
+        pressStartedAtRef.current = Date.now();
+
+        const target = e.currentTarget;
+        const pointerId = e.pointerId;
+        const { moveFromClientPoint } = startDragFromClientPoint(e.clientX, e.clientY);
+
+        const onPointerMove = (ev) => {
+            if (ev.pointerId !== pointerId) return;
+            ev.preventDefault();
+            const dx = Math.abs(Number(ev.clientX) - pointerStartRef.current.x);
+            const dy = Math.abs(Number(ev.clientY) - pointerStartRef.current.y);
+            if (dx <= DRAG_THRESHOLD_PX && dy <= DRAG_THRESHOLD_PX) return;
+            dragMovedRef.current = true;
+            moveFromClientPoint(ev.clientX, ev.clientY);
+        };
+
+        const stop = (ev) => {
+            if (ev && ev.pointerId !== pointerId) return;
+            window.removeEventListener("pointermove", onPointerMove);
+            window.removeEventListener("pointerup", stop);
+            window.removeEventListener("pointercancel", stop);
+            try {
+                target?.releasePointerCapture?.(pointerId);
+            } catch {
+                // ignore
+            }
+            // Settings only on a short deliberate tap — never after drag or long-press.
+            const heldMs = Date.now() - pressStartedAtRef.current;
+            if (!dragMovedRef.current && heldMs <= TAP_MAX_MS && typeof onSelectSpot === 'function') {
+                onSelectSpot(index);
+            }
+        };
+
+        try {
+            target?.setPointerCapture?.(pointerId);
+        } catch {
+            // ignore
+        }
+
+        window.addEventListener("pointermove", onPointerMove, { passive: false });
+        window.addEventListener("pointerup", stop);
+        window.addEventListener("pointercancel", stop);
+    };
+
+    const startDragTouchFallback = (e) => {
+        if (!canEditSpot) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        const touch = e.touches?.[0];
+        if (!touch) return;
+
+        dragMovedRef.current = false;
+        pointerStartRef.current = { x: Number(touch.clientX), y: Number(touch.clientY) };
+        pressStartedAtRef.current = Date.now();
+        const { moveFromClientPoint } = startDragFromClientPoint(touch.clientX, touch.clientY);
+
+        const onTouchMove = (ev) => {
+            const t = ev.touches?.[0];
+            if (!t) return;
+            ev.preventDefault();
+            const dx = Math.abs(Number(t.clientX) - pointerStartRef.current.x);
+            const dy = Math.abs(Number(t.clientY) - pointerStartRef.current.y);
+            if (dx <= DRAG_THRESHOLD_PX && dy <= DRAG_THRESHOLD_PX) return;
+            dragMovedRef.current = true;
+            moveFromClientPoint(t.clientX, t.clientY);
+        };
+
+        const stop = () => {
+            window.removeEventListener("touchmove", onTouchMove);
+            window.removeEventListener("touchend", stop);
+            window.removeEventListener("touchcancel", stop);
+            const heldMs = Date.now() - pressStartedAtRef.current;
+            if (!dragMovedRef.current && heldMs <= TAP_MAX_MS && typeof onSelectSpot === 'function') {
+                onSelectSpot(index);
+            }
+        };
+
+        window.addEventListener("touchmove", onTouchMove, { passive: false });
+        window.addEventListener("touchend", stop);
+        window.addEventListener("touchcancel", stop);
+    };
+
+    const startResizePointer = (e) => {
+        if (!canEditSpot) return;
+        if (e.button != null && e.button !== 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        const pointerId = e.pointerId;
+        const target = e.currentTarget;
+        const safeScale = scale || 1;
+        const startX = Number(e.clientX);
+        const startY = Number(e.clientY);
+        const baseW = Number(spot.width || 130);
+        const baseH = Number(spot.height || 48);
+        const baseX = Number(spot.x || 0);
+        const baseY = Number(spot.y || 0);
+        const pageNumber = Number(spot.pageNum ?? spot.PageNumber ?? 1) || 1;
+        const pageEl = document.querySelector(`.lw-signing-pageInner[data-page-number="${pageNumber}"]`);
+        const pageRect = pageEl?.getBoundingClientRect();
+        const measuredWidth = measuredPageWidth(pageEl);
+        const pageSize = pageRect && measuredWidth > 0
+            ? pageSizeInSpotSpace({ measuredWidth, measuredHeight: pageRect.height })
+            : null;
+        // Without a measured page there is no honest scale, so fall back to the
+        // spot-space page width and leave the height unconstrained.
+        const pageW = pageSize ? pageSize.width : SPOT_MAX_WIDTH + baseX;
+        const pageH = pageSize ? pageSize.height : SPOT_MAX_HEIGHT + baseY;
+
+        const onPointerMove = (ev) => {
+            if (ev.pointerId !== pointerId) return;
+            ev.preventDefault();
+            const dw = (Number(ev.clientX) - startX) / safeScale;
+            const dh = (Number(ev.clientY) - startY) / safeScale;
+            let nextW = Math.max(SPOT_MIN_WIDTH, Math.min(SPOT_MAX_WIDTH, baseW + dw));
+            let nextH = Math.max(SPOT_MIN_HEIGHT, Math.min(SPOT_MAX_HEIGHT, baseH + dh));
+            nextW = Math.min(nextW, Math.max(SPOT_MIN_WIDTH, pageW - baseX));
+            nextH = Math.min(nextH, Math.max(SPOT_MIN_HEIGHT, pageH - baseY));
+            onUpdateSpot?.(index, { width: nextW, height: nextH });
+        };
+
+        const stop = (ev) => {
+            if (ev && ev.pointerId !== pointerId) return;
+            window.removeEventListener("pointermove", onPointerMove);
+            window.removeEventListener("pointerup", stop);
+            window.removeEventListener("pointercancel", stop);
+            try {
+                target?.releasePointerCapture?.(pointerId);
+            } catch {
+                // ignore
+            }
+        };
+
+        try {
+            target?.setPointerCapture?.(pointerId);
+        } catch {
+            // ignore
+        }
+        window.addEventListener("pointermove", onPointerMove, { passive: false });
+        window.addEventListener("pointerup", stop);
+        window.addEventListener("pointercancel", stop);
+    };
+
+    // Some API responses include both FieldValue and fieldvalue/fieldValue.
+    // Prefer a non-empty value to avoid empty-string masking.
+    const pickNonEmpty = (...candidates) => {
+        for (const c of candidates) {
+            if (c === null || c === undefined) continue;
+            const s = String(c);
+            if (s.trim().length > 0) return s;
+        }
+        return "";
+    };
+
+    const fieldValue = pickNonEmpty(spot?.fieldValue, spot?.FieldValue, spot?.fieldvalue);
+    const hasFieldValue = fieldValue.length > 0;
+    const showFieldValue = !isSignatureLike && hasFieldValue;
+    const isLtrValueType = fieldType === 'phone' || fieldType === 'email' || fieldType === 'number' || fieldType === 'idnumber' || fieldType === 'date';
+    const formatDateForDisplay = (value) => {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+        const [y, m, d] = value.split('-');
+        return `${d}/${m}/${y}`;
+    };
+
+    const displayFieldValue = (() => {
+        if (!showFieldValue) return "";
+        if (fieldType === 'checkbox') return (fieldValue === 'true' ? '✓' : '');
+        if (fieldType === 'date') return formatDateForDisplay(fieldValue);
+        return fieldValue;
+    })();
+
+    const isSigned = Boolean(spot?.IsSigned);
+
+    return (
+        <SimpleContainer
+            ref={ref}
+            className={`lw-signing-spot ${colorClass} lw-signing-spot--type-${fieldType} ${isRequired ? 'is-required' : 'is-optional'}${isSigned ? ' is-signed' : ''}${isSelected ? ' is-selected' : ''}${canEditSpot ? ' is-editable' : ''}`}
+            style={spotStyle}
+            title={spot?.authoredDataLabel ? t("signingV2.authoring.dataTitleNamed", { name: spot.authoredDataLabel }) : t("signing.spot.signedByTitle", { name: signerNameSafe })}
+        >
+            {!isSigned && (
+                <>
+                    <div className="lw-signing-spotMeta">
+                        <span className="lw-signing-spotType">
+                            <span className="lw-signing-spotTypeLabel">{spot?.authoredDataLabel ? t('signingV2.authoring.dataField') : fieldTypeLabels[fieldType] || t('signing.fields.signature')}</span>
+                        </span>
+                    </div>
+                    <span className={`lw-signing-spotRequired ${isRequired ? 'is-required' : 'is-optional'}`}>
+                        {isRequired ? t('signing.fieldSettings.requiredShort') : t('signing.fieldSettings.optionalShort')}
+                    </span>
+                </>
+            )}
+
+            {/* Value renderer (non-signature fields). Must render above click-capture overlay but not block clicks. */}
+            {showFieldValue && (
+                <div
+                    className={`spotValue${isLtrValueType ? ' is-ltr' : ''}`}
+                    dir={isLtrValueType ? 'ltr' : undefined}
+                    aria-hidden
+                >
+                    {displayFieldValue}
+                </div>
+            )}
+
+            {isStampType && (stampImageUrl || hasSignatureImage) ? (
+                <img
+                    src={stampImageUrl || spot.SignatureUrl || spot.signatureUrl}
+                    alt={isClientStamp ? t("signing.fields.clientStamp") : t("signing.fields.lawyerStamp")}
+                    className="lw-signing-spotImg lw-signing-spotImg--stamp"
+                    draggable={false}
+                />
+            ) : hasSignatureImage ? (
+                <img
+                    src={spot.SignatureUrl || spot.signatureUrl}
+                    alt={t("signing.spot.signatureAlt")}
+                    className="lw-signing-spotImg"
+                    draggable={false}
+                />
+            ) : !showFieldValue && (
+                <div className="lw-signing-spotLabel">
+                    <div className="lw-signing-spotLabelText">
+                        {signerNameSafe.length > 10 ? signerNameSafe.substring(0, 8) + "..." : signerNameSafe}
+                    </div>
+                </div>
+            )}
+            {canRemoveSpot && (
+                <span
+                    onPointerDown={(e) => {
+                        e.stopPropagation();
+                    }}
+                    onMouseDown={(e) => {
+                        e.stopPropagation();
+                    }}
+                    onTouchStart={(e) => {
+                        e.stopPropagation();
+                    }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (typeof onRequestRemove === 'function') onRequestRemove(index);
+                        else onRemoveSpot?.(index);
+                    }}
+                    className="lw-signing-spotRemove"
+                >
+                    X
+                </span>
+            )}
+            {/* Admin/edit mode only (canEditSpot). Always show — no need to select first. */}
+            {canEditSpot && !isSigned && (
+                <button
+                    type="button"
+                    className="lw-signing-spotResize"
+                    aria-label={t('signing.fieldSettings.resize', { defaultValue: 'שנה גודל' })}
+                    title={t('signing.fieldSettings.resize', { defaultValue: 'שנה גודל' })}
+                    onPointerDown={startResizePointer}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <svg
+                        className="lw-signing-spotResize__icon"
+                        viewBox="0 0 16 16"
+                        width="12"
+                        height="12"
+                        aria-hidden="true"
+                        focusable="false"
+                    >
+                        <path
+                            d="M4.5 11.5 L11.5 4.5 M7.5 12.5 L12.5 7.5 M3.5 8.5 L8.5 3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.6"
+                            strokeLinecap="round"
+                        />
+                    </svg>
+                </button>
+            )}
+            {/* Top hit-layer: owns drag on edit, select on client. touch-action:none is critical on iOS. */}
+            {!isSigned && (
+            <div
+                onPointerDown={canEditSpot ? startDragPointer : undefined}
+                onTouchStart={
+                    canEditSpot && typeof window !== "undefined" && !window.PointerEvent
+                        ? startDragTouchFallback
+                        : undefined
+                }
+                onClick={(e) => {
+                    if (canEditSpot) return; // edit mode uses pointerup tap detection
+                    e.stopPropagation();
+                    if (typeof onSelectSpot === 'function') onSelectSpot(index);
+                }}
+                onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    if (canEditSpot && typeof onEditSpot === 'function') {
+                        onEditSpot(index);
+                        return;
+                    }
+                    if (typeof onSelectSpot === 'function') onSelectSpot(index);
+                }}
+                onContextMenu={(e) => {
+                    // macOS trackpad long-press synthesizes contextmenu — must NOT open settings.
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Explicit right-click only (button 2): optional context menu.
+                    // Drag / long-press / tap never open settings via this path.
+                    if (!canEditSpot) return;
+                    if (e.button !== 2 && e.which !== 3) return;
+                    if (typeof onRequestContext === 'function') onRequestContext(index, e);
+                }}
+                aria-hidden
+                className={`lw-signing-spotOverlay${canEditSpot ? ' lw-signing-spotOverlay--drag' : ''}`}
+            />
+            )}
+        </SimpleContainer>
+    );
+}
