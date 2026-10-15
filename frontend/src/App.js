@@ -47,6 +47,7 @@ import CalendarInviteScreen from './screens/calendarScreen/CalendarInviteScreen'
 import SignupScreen, { SignupCompleteScreen } from './screens/signup/SignupScreen';
 import TenantShell from './components/tenant/TenantShell';
 import TenantAdminRedirect from './components/tenant/TenantAdminRedirect';
+import LegacyTenantStackRedirect from './components/tenant/LegacyTenantStackRedirect';
 import { isMultiTenantApp } from './lib/tenantSlug';
 
 const STACK_SUFFIX = "/*"
@@ -209,6 +210,9 @@ const App = () => {
 
         {multiTenant ? (
           <>
+            <Route path="/LoginStack/*" element={<LegacyTenantStackRedirect />} />
+            <Route path="/ClientStack/*" element={<LegacyTenantStackRedirect />} />
+            <Route path="/AdminStack/*" element={<LegacyTenantStackRedirect />} />
             <Route
               path="/:tenantSlug/LoginStack/*"
               element={<TenantShell><LoginStack /></TenantShell>}
