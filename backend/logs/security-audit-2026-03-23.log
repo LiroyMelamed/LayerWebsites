@@ -1,0 +1,125 @@
+{"timestamp":"2026-03-23T16:19:31.634Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36","success":true,"meta":{"sessionId":12,"verified":false,"messageLength":25}}
+{"timestamp":"2026-03-23T16:19:38.936Z","level":"INFO","type":"CHATBOT_OTP_REQUEST","phone":"***0218","ip":"::1","success":true}
+{"timestamp":"2026-03-23T16:19:45.348Z","level":"INFO","type":"CHATBOT_OTP_VERIFY_SUCCESS","phone":"***0218","userId":1093,"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36","success":true,"meta":{"sessionId":12}}
+{"timestamp":"2026-03-23T16:19:57.600Z","level":"INFO","type":"AI_CHATBOT_DOC_CONTEXT_USED","userId":1093,"ip":"::1","meta":{"sessionId":12,"numberOfChunks":40,"queryLength":13,"contextLength":5538}}
+{"timestamp":"2026-03-23T16:20:02.992Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","userId":1093,"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36","success":true,"meta":{"sessionId":12,"verified":true,"messageLength":13}}
+{"timestamp":"2026-03-23T16:20:10.659Z","level":"INFO","type":"AI_CHATBOT_DOC_CONTEXT_USED","userId":1093,"ip":"::1","meta":{"sessionId":12,"numberOfChunks":33,"queryLength":11,"contextLength":5145}}
+{"timestamp":"2026-03-23T16:20:15.324Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","userId":1093,"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36","success":true,"meta":{"sessionId":12,"verified":true,"messageLength":11}}
+{"timestamp":"2026-03-23T16:20:47.691Z","level":"INFO","type":"AI_CHATBOT_DOC_CONTEXT_USED","ip":"::1","meta":{"sessionId":13,"numberOfChunks":40,"queryLength":44,"contextLength":5595}}
+{"timestamp":"2026-03-23T16:20:53.167Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36","success":true,"meta":{"sessionId":13,"verified":false,"messageLength":44}}
+{"timestamp":"2026-03-23T16:21:00.815Z","level":"INFO","type":"AI_CHATBOT_DOC_CONTEXT_USED","ip":"::1","meta":{"sessionId":13,"numberOfChunks":40,"queryLength":18,"contextLength":5383}}
+{"timestamp":"2026-03-23T16:21:01.775Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":14,"verified":false,"messageLength":30}}
+{"timestamp":"2026-03-23T16:21:02.051Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":15,"verified":false,"messageLength":20}}
+{"timestamp":"2026-03-23T16:21:02.321Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":16,"verified":false,"messageLength":62}}
+{"timestamp":"2026-03-23T16:21:02.405Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***0000","ip":"::ffff:127.0.0.1","success":false}
+{"timestamp":"2026-03-23T16:21:02.695Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":17,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T16:21:02.967Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":18,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T16:21:03.238Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":19,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T16:21:03.509Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":20,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T16:21:03.779Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":21,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T16:21:04.045Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":22,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T16:21:04.227Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36","success":true,"meta":{"sessionId":13,"verified":false,"messageLength":18}}
+{"timestamp":"2026-03-23T16:21:04.314Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":23,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T16:21:04.589Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":24,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T16:21:04.860Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":25,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T16:21:05.128Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":26,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T16:21:05.204Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T16:21:05.272Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T16:21:05.345Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T16:21:05.413Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T16:21:05.480Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T16:21:12.673Z","level":"INFO","type":"AI_CHATBOT_DOC_CONTEXT_USED","ip":"::1","meta":{"sessionId":13,"numberOfChunks":40,"queryLength":11,"contextLength":5724}}
+{"timestamp":"2026-03-23T16:21:16.398Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36","success":true,"meta":{"sessionId":13,"verified":false,"messageLength":11}}
+{"timestamp":"2026-03-23T16:21:28.926Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36","success":true,"meta":{"sessionId":13,"verified":false,"messageLength":10}}
+{"timestamp":"2026-03-23T17:19:35.965Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":27,"verified":false,"messageLength":30}}
+{"timestamp":"2026-03-23T17:19:36.249Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":28,"verified":false,"messageLength":20}}
+{"timestamp":"2026-03-23T17:19:36.524Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":29,"verified":false,"messageLength":62}}
+{"timestamp":"2026-03-23T17:19:36.609Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***0000","ip":"::ffff:127.0.0.1","success":false}
+{"timestamp":"2026-03-23T17:19:36.900Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":30,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T17:19:37.172Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":31,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T17:19:37.441Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":32,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T17:19:37.715Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":33,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T17:19:37.987Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":34,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T17:19:38.255Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":35,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T17:19:38.527Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":36,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T17:19:38.797Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":37,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T17:19:39.072Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":38,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T17:19:39.343Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":39,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T17:19:39.428Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T17:19:39.497Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T17:19:39.566Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T17:19:39.636Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T17:19:39.704Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T18:20:02.629Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***9064","userId":1017,"ip":"::1","success":true}
+{"timestamp":"2026-03-23T18:20:03.830Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":40,"verified":false,"messageLength":30}}
+{"timestamp":"2026-03-23T18:20:04.120Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":41,"verified":false,"messageLength":20}}
+{"timestamp":"2026-03-23T18:20:04.398Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":42,"verified":false,"messageLength":62}}
+{"timestamp":"2026-03-23T18:20:04.486Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***0000","ip":"::ffff:127.0.0.1","success":false}
+{"timestamp":"2026-03-23T18:20:04.784Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":43,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:05.063Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":44,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:05.339Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":45,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:05.616Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":46,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:06.809Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***9064","userId":1017,"ip":"::1","success":true}
+{"timestamp":"2026-03-23T18:20:08.015Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":48,"verified":false,"messageLength":30}}
+{"timestamp":"2026-03-23T18:20:08.298Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":49,"verified":false,"messageLength":20}}
+{"timestamp":"2026-03-23T18:20:08.572Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":50,"verified":false,"messageLength":62}}
+{"timestamp":"2026-03-23T18:20:08.656Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***0000","ip":"::ffff:127.0.0.1","success":false}
+{"timestamp":"2026-03-23T18:20:08.942Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":51,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:09.217Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":52,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:09.485Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":53,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:09.757Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":54,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:10.030Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":55,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:10.302Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":56,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:10.572Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":57,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:10.843Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":58,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:11.121Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":59,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:11.395Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":60,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:11.471Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T18:20:11.544Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T18:20:11.612Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T18:20:11.682Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T18:20:11.751Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T18:20:54.954Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":61,"verified":false,"messageLength":30}}
+{"timestamp":"2026-03-23T18:20:55.235Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":62,"verified":false,"messageLength":20}}
+{"timestamp":"2026-03-23T18:20:55.508Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":63,"verified":false,"messageLength":62}}
+{"timestamp":"2026-03-23T18:20:55.597Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***0000","ip":"::ffff:127.0.0.1","success":false}
+{"timestamp":"2026-03-23T18:20:55.889Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":64,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:56.158Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":65,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:56.431Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":66,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:56.702Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":67,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:56.973Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":68,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:57.241Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":69,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:57.511Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":70,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:57.784Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":71,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:58.056Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":72,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:58.329Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":73,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T18:20:58.405Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T18:20:58.473Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T18:20:58.543Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T18:20:58.612Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T18:20:58.681Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T19:08:16.058Z","level":"WARN","type":"OTP_VERIFY_FAIL","ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36","success":false}
+{"timestamp":"2026-03-23T19:08:16.462Z","level":"WARN","type":"OTP_VERIFY_FAIL","ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36","success":false}
+{"timestamp":"2026-03-23T19:08:21.872Z","level":"WARN","type":"OTP_VERIFY_FAIL","ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36","success":false}
+{"timestamp":"2026-03-23T19:08:34.455Z","level":"WARN","type":"OTP_VERIFY_FAIL","ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36","success":false}
+{"timestamp":"2026-03-23T19:08:56.199Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***9898","userId":1088,"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36","success":true}
+{"timestamp":"2026-03-23T19:13:14.775Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***9064","userId":1017,"ip":"::1","success":true}
+{"timestamp":"2026-03-23T19:13:15.512Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":74,"verified":false,"messageLength":30}}
+{"timestamp":"2026-03-23T19:13:15.791Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":75,"verified":false,"messageLength":20}}
+{"timestamp":"2026-03-23T19:13:16.066Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"::ffff:127.0.0.1","success":true,"meta":{"sessionId":76,"verified":false,"messageLength":62}}
+{"timestamp":"2026-03-23T19:13:16.151Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***0000","ip":"::ffff:127.0.0.1","success":false}
+{"timestamp":"2026-03-23T19:13:16.437Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":77,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T19:13:16.709Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":78,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T19:13:16.979Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":79,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T19:13:17.252Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":80,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T19:13:17.522Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":81,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T19:13:17.812Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":82,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T19:13:18.086Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":83,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T19:13:18.358Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":84,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T19:13:18.634Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":85,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T19:13:18.907Z","level":"INFO","type":"AI_CHATBOT_MESSAGE","ip":"192.168.99.99","success":true,"meta":{"sessionId":86,"verified":false,"messageLength":14}}
+{"timestamp":"2026-03-23T19:13:18.983Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T19:13:19.052Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T19:13:19.121Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T19:13:19.191Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}
+{"timestamp":"2026-03-23T19:13:19.260Z","level":"WARN","type":"CHATBOT_OTP_REQUEST_UNKNOWN_USER","phone":"***1111","ip":"192.168.88.88","success":false}

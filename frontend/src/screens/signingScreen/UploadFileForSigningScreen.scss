@@ -1,0 +1,608 @@
+@use '../../styles/variables' as v;
+@use '../../styles/mixins' as m;
+
+.lw-uploadSigningScreen {
+    width: 100%;
+    box-sizing: border-box;
+    flex-direction: column;
+    padding: v.$space-4;
+}
+
+@media (max-width: v.$bp-md) {
+    .lw-uploadSigningScreen {
+        padding: 0;
+    }
+}
+
+.lw-uploadSigningScreen__scroll {
+    align-items: center;
+    padding: 0 1rem;
+    margin-top: 1rem;
+    box-sizing: border-box;
+    max-inline-size: 100%;
+}
+
+.lw-uploadSigningScreen__headerRow {
+    @include m.row(v.$space-3);
+    margin-block-end: v.$space-4;
+}
+
+.lw-uploadSigningScreen__formCard {
+    direction: rtl;
+    flex-direction: column;
+    border-radius: 0.5rem;
+    border: 0.0625rem solid #e0e0e0;
+    padding: 1rem;
+    box-shadow: 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.08);
+    width: 100%;
+    min-inline-size: 0;
+}
+
+.lw-uploadSigningScreen__message {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.18);
+    max-width: calc(100% - 2rem);
+    text-align: center;
+    animation: lw-toast-slide-up 0.3s ease-out;
+}
+
+@keyframes lw-toast-slide-up {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(1rem);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.lw-uploadSigningScreen__message.is-error {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+.lw-uploadSigningScreen__message.is-success {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.lw-uploadSigningScreen__searchRow {
+    @include m.row(v.$space-3, wrap);
+    max-width: 100%;
+    margin: 1rem;
+    min-inline-size: 0;
+}
+
+.lw-uploadSigningScreen__search {
+    flex: 1 1 10rem;
+    max-inline-size: 31.25rem;
+    width: 100%;
+    min-inline-size: 0;
+}
+
+.lw-uploadSigningScreen__formGroup {
+    margin-block-start: v.$space-3;
+    margin-block-end: v.$space-4;
+    gap: 0.5rem;
+    width: 100%;
+    flex-direction: column;
+    min-inline-size: 0;
+}
+
+.lw-uploadSigningScreen__otpPolicyGroup {
+    border: 0.0625rem solid #e0e0e0;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    background-color: #fff;
+}
+
+.lw-fieldSettingsPopup,
+.lw-fieldConfirmPopup,
+.lw-fieldInfoPopup {
+    background: transparent;
+    border-radius: 0;
+    padding: 0;
+    min-width: 18rem;
+    max-width: 32rem;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.lw-fieldSettingsPopup__header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.lw-fieldSettingsPopup__close {
+    margin-inline-start: auto;
+}
+
+.lw-fieldSettingsPopup__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.lw-fieldSettingsPopup__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.lw-fieldSettingsPopup__label {
+    font-weight: 600;
+    color: var(--lw-color-text);
+}
+
+.lw-fieldSettingsPopup__value {
+    color: var(--lw-color-text);
+}
+
+.lw-fieldSettingsPopup__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.lw-fieldSettingsPopup__section {
+    border-top: 0.0625rem solid var(--lw-color-border, #e2e8f0);
+    padding-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.lw-fieldSettingsPopup__sectionTitle {
+    font-weight: 700;
+}
+
+.lw-fieldSettingsPopup__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.lw-fieldSettingsPopup__rangeRow {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.lw-fieldSettingsPopup__rangeButton {
+    height: fit-content;
+}
+
+.lw-fieldSettingsPopup__error {
+    color: var(--lw-color-negative, #C53030);
+}
+
+.lw-fieldSettingsPopup__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.lw-fieldSettingsPopup__footerActions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.lw-fieldConfirmPopup__actions,
+.lw-fieldInfoPopup__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.lw-fieldInfoPopup__text,
+.lw-fieldConfirmPopup__text {
+    color: var(--lw-color-text);
+}
+
+.lw-uploadSigningScreen__radioRow {
+    display: flex;
+    align-items: center;
+}
+
+.lw-uploadSigningScreen__radioLabel {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #333;
+}
+
+// ── Sequential signer reorder list ──
+.lw-uploadSigningScreen__seqOrderSection {
+    margin-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.lw-uploadSigningScreen__seqOrderTitle {
+    font-weight: 600;
+    font-size: 0.8125rem;
+    color: #555;
+}
+
+.lw-uploadSigningScreen__seqOrderList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.lw-uploadSigningScreen__seqOrderItem {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    background: var(--lw-color-white, #fff);
+    border: 0.0625rem solid #e0e0e0;
+    transition: background-color 0.15s, border-color 0.15s, opacity 0.15s;
+
+    &--dragOver {
+        background: #eef4ff;
+        border-color: var(--lw-color-primary, #1976d2);
+    }
+
+    &--dragging {
+        opacity: 0.4;
+    }
+}
+
+.lw-uploadSigningScreen__seqDragHandle {
+    cursor: grab;
+    font-size: 1rem;
+    color: #aaa;
+    user-select: none;
+    touch-action: none;
+    line-height: 1;
+
+    &:active {
+        cursor: grabbing;
+    }
+}
+
+.lw-uploadSigningScreen__seqOrderNum {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: var(--lw-color-primary, #1976d2);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.lw-uploadSigningScreen__seqOrderName {
+    font-size: 0.875rem;
+    color: #333;
+}
+
+.lw-uploadSigningScreen__waiverBox {
+    margin-top: 0.5rem;
+    border: 0.0625rem solid #f0e0a0;
+    background-color: #fff3cd;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.lw-uploadSigningScreen__waiverText {
+    font-size: 0.875rem;
+    color: #856404;
+}
+
+.lw-uploadSigningScreen__checkboxLabel {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #333;
+}
+
+.lw-uploadSigningScreen__fileGroup {
+    align-items: center;
+}
+
+.lw-uploadSigningScreen__notesTitle {
+    display: block;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #333;
+}
+
+.lw-uploadSigningScreen__label {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #333;
+}
+
+.lw-uploadSigningScreen__selectedSignersRow {
+    @include m.row(v.$space-2, wrap);
+    min-inline-size: 0;
+}
+
+.lw-uploadSigningScreen__signerChip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    background-color: var(--lw-color-white);
+    border: 0.0625rem solid #e0e0e0;
+    min-inline-size: 0;
+}
+
+.lw-uploadSigningScreen__signerChipName {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-inline-size: 16rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.lw-uploadSigningScreen__signerChipContact {
+    display: block;
+    font-size: 0.65rem;
+    color: #888;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lw-uploadSigningScreen__signerChipEdit {
+    margin-inline-start: 0.4rem;
+    border: 0.0625rem solid #d0d7de;
+    background: #fff;
+    color: #2a4365;
+    border-radius: 0.35rem;
+    padding: 0.15rem 0.45rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+}
+
+.lw-uploadSigningScreen__signerChip--manual {
+    border-color: #1976d2;
+    border-style: dashed;
+}
+
+.lw-uploadSigningScreen__manualSignerToggle {
+    margin-block-start: v.$space-1;
+    margin-block-end: v.$space-2;
+    margin-inline-start: auto;
+}
+
+.lw-uploadSigningScreen__manualSignerForm {
+    flex-direction: column;
+    gap: v.$space-2;
+    padding: v.$space-3;
+    border: 0.0625rem dashed #1976d2;
+    border-radius: 0.5rem;
+    background: #f8fbff;
+    margin-block: v.$space-2;
+}
+
+.lw-uploadSigningScreen__manualSignerFields {
+    @include m.row(v.$space-2, wrap);
+}
+
+.lw-uploadSigningScreen__manualInput {
+    min-width: 10rem;
+    max-width: 16rem;
+    flex: 1;
+}
+
+.lw-uploadSigningScreen__manualSignerActions {
+    @include m.row(v.$space-2);
+}
+
+.lw-uploadSigningScreen__deliverySelect {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.3rem;
+    border-radius: 0.25rem;
+    border: 0.0625rem solid #ccc;
+    background: #f9f9f9;
+    cursor: pointer;
+}
+
+.lw-uploadSigningScreen__signerChipRemove {
+    position: absolute;
+    top: -0.625rem;
+    inset-inline-end: -0.625rem;
+    width: 1rem;
+    height: 1rem;
+    background-color: var(--lw-color-negative, #C53030);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 0.5rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
+    border: 0.125rem solid #fff;
+    padding: 0;
+    line-height: 1;
+}
+
+.lw-uploadSigningScreen__fileBox {
+    border: 0.125rem dashed #1976d2;
+    border-radius: 0.25rem;
+    padding: 1.5rem;
+    text-align: center;
+    background-color: #fff;
+    cursor: pointer;
+    width: 100%;
+    max-inline-size: 31.25rem;
+    margin-inline: auto;
+}
+
+.lw-uploadSigningScreen__fileBox.is-dragActive {
+    background-color: #f0f8ff;
+}
+
+.lw-uploadSigningScreen__fileHint {
+    font-size: 0.75rem;
+    color: #777;
+    margin-block-start: v.$space-1;
+}
+
+.lw-uploadSigningScreen__fileInput {
+    display: none;
+}
+
+.lw-uploadSigningScreen__fileName {
+    margin-top: 0.75rem;
+    padding: 0.625rem;
+    border-radius: 0.25rem;
+    background-color: #d4edda;
+    border: 0.0625rem solid #c3e6cb;
+    color: #155724;
+    font-size: 0.875rem;
+    width: 100%;
+    max-inline-size: 31.25rem;
+    margin-inline: auto;
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lw-uploadSigningScreen__documentNameInput {
+    margin-block-start: v.$space-2;
+    max-inline-size: 31.25rem;
+    margin-inline: auto;
+    width: 100%;
+}
+
+.lw-uploadSigningScreen__textarea {
+    width: 100%;
+    min-height: 5rem;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    border: 0.0625rem solid #ddd;
+    font-size: 0.875rem;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.lw-uploadSigningScreen__viewerHeaderRow {
+    @include m.row(v.$space-3, wrap);
+    margin-block-start: v.$space-6;
+    margin-block-end: v.$space-3;
+    min-inline-size: 0;
+}
+
+.lw-uploadSigningScreen__signerSticky {
+    width: fit-content;
+    position: sticky;
+    top: v.$space-2;
+    z-index: 4000;
+    background: var(--lw-color-white);
+    padding: v.$space-2;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(15, 23, 42, 0.08);
+    align-self: flex-start;
+}
+
+.lw-fieldTypeNavbar__signerButtons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: v.$space-2;
+}
+
+.lw-uploadSigningScreen__viewerHeaderRow> :last-child {
+    margin-inline-start: auto;
+}
+
+.lw-uploadSigningScreen__viewerTitle {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.lw-uploadSigningScreen__infoText {
+    font-size: 0.8125rem;
+    color: #777;
+    margin-top: 0.5rem;
+}
+
+.lw-uploadSigningScreen__actionsRow {
+    @include m.row(v.$space-2, wrap);
+    margin-block-start: v.$space-4;
+}
+
+.lw-uploadSigningScreen__actionsRow .lw-textButtonWithTwoOptionalIcons {
+    min-block-size: 2.75rem;
+    flex: 1 1 12rem;
+}
+
+@media (max-width: v.$bp-narrow) {
+    .lw-uploadSigningScreen__viewerHeaderRow>.lw-textButtonWithTwoOptionalIcons {
+        width: 100%;
+    }
+
+    .lw-uploadSigningScreen__actionsRow .lw-textButtonWithTwoOptionalIcons {
+        width: 100%;
+        flex-basis: 100%;
+    }
+}
+
+.lw-uploadSigningScreen__loading {
+    margin-block-start: v.$space-3;
+}
+
+.lw-retentionNoticePopup {
+    background: transparent;
+    border-radius: 0;
+    padding: 0;
+    min-width: 18rem;
+    max-width: 36rem;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.lw-retentionNoticePopup__text {
+    color: var(--lw-color-text);
+}
+
+.lw-retentionNoticePopup__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}

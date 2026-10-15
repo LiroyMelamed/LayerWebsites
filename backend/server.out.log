@@ -1,0 +1,43 @@
+Server running on port 5000
+Connected to PostgreSQL database: MelamedLaw
+Public IP: 79.177.149.150
+--- SMS Simulation (Dev Mode) ---
+To: +972504084168
+Body: היי ????? ?????, 
+
+ תיק e2e-20251229-224842-case-other נוצר, היכנס לאתר למעקב. 
+
+ client.melamedlaw.co.il
+---------------------------------
+No push tokens found for UserId: 1033. Skipping push notification.
+Notification stored in DB for UserId: 1033 - Title: תיק חדש נוצר
+--- SMS Simulation (Dev Mode) ---
+To: +972504084168
+Body: היי ????? ?????, 
+
+ תיק e2e-20251229-224906-case נוצר, היכנס לאתר למעקב. 
+
+ client.melamedlaw.co.il
+---------------------------------
+No push tokens found for UserId: 1033. Skipping push notification.
+Notification stored in DB for UserId: 1033 - Title: תיק חדש נוצר
+--- SMS Simulation (Dev Mode) ---
+To: +972504084168
+Body: היי ????? ?????, 
+
+ תיק e2e-20251229-224916-case נוצר, היכנס לאתר למעקב. 
+
+ client.melamedlaw.co.il
+---------------------------------
+No push tokens found for UserId: 1033. Skipping push notification.
+Notification stored in DB for UserId: 1033 - Title: תיק חדש נוצר
+--- SMS Simulation (Dev Mode) ---
+To: +972504084168
+Body: היי ????? ?????, 
+
+ תיק e2e-20251229-225025-case-other נוצר, היכנס לאתר למעקב. 
+
+ client.melamedlaw.co.il
+---------------------------------
+No push tokens found for UserId: 1033. Skipping push notification.
+Notification stored in DB for UserId: 1033 - Title: תיק חדש נוצר

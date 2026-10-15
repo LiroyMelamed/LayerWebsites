@@ -1,0 +1,76 @@
+import { useLoginVerifyOtpCodeFieldsProvider } from "../../providers/LoginVerifyOtpCodeFieldsProvider";
+import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
+import { LoginOtpScreenName } from "../otpScreen/OtpScreen.js/LoginOtpScreen";
+import SimpleInput from "../../components/simpleComponents/SimpleInput";
+import LoginSimpleScreen from "./components/LoginSimpleScreen";
+import { LoginStackName } from "../../navigation/LoginStack";
+import NextLoginButton from "./components/NextLoginButton";
+import TopCenteredLogo from "./components/TopCenteredLogo";
+import useHttpRequest from "../../hooks/useHttpRequest";
+import PoweredByMela from "../../components/PoweredByMela";
+import { images } from "../../assets/images/images";
+import { useNavigate } from "react-router-dom";
+import loginApi from "../../api/loginApi";
+import { useTranslation } from "react-i18next";
+
+import "./LoginScreen.scss";
+
+export const LoginScreenName = "/LoginScreen";
+
+export default function LoginScreen() {
+    const { phoneNumber, setPhoneNumber, phoneNumberError } = useLoginVerifyOtpCodeFieldsProvider();
+    const navigate = useNavigate();
+    const { t } = useTranslation();
+
+    const { isPerforming, performRequest } = useHttpRequest(loginApi.sendOtp, () => navigate(LoginStackName + LoginOtpScreenName));
+
+    const handleInputChange = (event) => {
+        const raw = event?.target?.value ?? "";
+        const digitsOnly = String(raw).replace(/\D/g, "");
+
+        let normalized = digitsOnly;
+        if (normalized.startsWith("972") && normalized.length >= 11) {
+            normalized = "0" + normalized.slice(3);
+        }
+
+        setPhoneNumber(normalized.slice(0, 10));
+    };
+
+    const handleKeyDown = (event) => {
+        if (event.key === 'Enter' && !isPerforming && phoneNumberError == null) {
+            performRequest(phoneNumber);
+        }
+    };
+
+    return (
+        <LoginSimpleScreen
+            imageBackgroundSource={images.Backgrounds.AppBackground}
+            unScrollableTopComponent={<TopCenteredLogo />}
+            unScrollableBottomComponent={
+                <>
+                    <NextLoginButton
+                        isPerforming={isPerforming}
+                        buttonText={t('auth.login')}
+                        onPress={() => performRequest(phoneNumber)}
+                        disabled={phoneNumberError != null}
+                    />
+                    <PoweredByMela />
+                </>
+            }
+        >
+            <SimpleContainer className="lw-loginScreen__center">
+                <SimpleInput
+                    title={t('auth.enterPhone')}
+                    type="tel"
+                    className="lw-loginScreen__input"
+                    value={phoneNumber}
+                    onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
+                    error={phoneNumberError}
+                    textStyle={{ textAlign: 'center' }}
+                    maxLength={10}
+                />
+            </SimpleContainer>
+        </LoginSimpleScreen>
+    );
+}

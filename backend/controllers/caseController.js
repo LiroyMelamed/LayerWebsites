@@ -1,0 +1,1658 @@
+const pool = require("../config/db"); // Direct import of the pg pool
+const { formatPhoneNumber } = require("../utils/phoneUtils");
+const { sendMessage, getWebsiteDomain } = require("../utils/sendMessage");
+const sendAndStoreNotification = require("../utils/sendAndStoreNotification"); // Import the new consolidated utility
+const { notifyRecipient } = require("../services/notifications/notificationOrchestrator");
+const { requireInt } = require("../utils/paramValidation");
+const { getPagination } = require("../utils/pagination");
+const { getSetting, getChannelConfig, getPlatformAdmins } = require("../services/settingsService");
+const { renderTemplate } = require("../utils/templateRenderer");
+
+/**
+ * Notify the case manager (casemanagerid) about a case change,
+ * but only if the manager is not already in the notified users set.
+ * @param {string[]} changedTypes - Array of granular notification types that changed
+ */
+async function notifyCaseManager({ caseId, caseName, title, message, smsBody, smsTemplate, smsTemplateData, alreadyNotifiedUserIds, changedTypes, notificationType: explicitType }) {
+    try {
+        // Check manager_cc across all changed types; skip if none enabled
+        if (changedTypes && changedTypes.length > 0) {
+            const configs = await Promise.all(changedTypes.map(t => getChannelConfig(t)));
+            if (!configs.some(c => c.manager_cc === true)) return;
+        } else {
+            // Fallback: check CASE_STAGE_CHANGE
+            const channelCfg = await getChannelConfig('CASE_STAGE_CHANGE');
+            if (channelCfg.manager_cc === false) return;
+        }
+
+        const caseRes = await pool.query(
+            'SELECT casemanagerid FROM cases WHERE caseid = $1',
+            [caseId]
+        );
+        const managerId = Number(caseRes.rows?.[0]?.casemanagerid);
+        if (!Number.isFinite(managerId) || managerId <= 0) return;
+
+        // Skip if already notified as a linked user
+        if (alreadyNotifiedUserIds && alreadyNotifiedUserIds.has(managerId)) {
+            console.log(`\n[QA DEBUG] notifyCaseManager SKIP: manager ${managerId} already notified as linked user`);
+            return;
+        }
+
+        // Skip if manager is a platform admin who already received admin CC
+        // (the orchestrator sends admin CC to all platform admins when notifying clients)
+        try {
+            const platformAdmins = await getPlatformAdmins();
+            const isManagerPlatformAdmin = platformAdmins.some(a => Number(a.user_id) === managerId);
+            if (isManagerPlatformAdmin) {
+                // Check if admin_cc is enabled for any of the changed types
+                const cfgs = changedTypes && changedTypes.length > 0
+                    ? await Promise.all(changedTypes.map(t => getChannelConfig(t)))
+                    : [await getChannelConfig('CASE_STAGE_CHANGE')];
+                const adminCcEnabled = cfgs.some(c => c.admin_cc === true);
+                if (adminCcEnabled) {
+                    console.log(`\n[QA DEBUG] notifyCaseManager SKIP: manager ${managerId} is platform admin with admin_cc enabled — already CC'd`);
+                    return;
+                }
+            }
+            console.log(`\n[QA DEBUG] notifyCaseManager: manager ${managerId}, isPlatformAdmin=${isManagerPlatformAdmin}, changedTypes=${JSON.stringify(changedTypes)}`);
+        } catch (e) {
+            console.warn('[notifyCaseManager] Platform admin check failed (will still notify):', e?.message);
+        }
+
+        const managerRes = await pool.query(
+            'SELECT userid AS "UserId", name AS "Name", phonenumber AS "PhoneNumber" FROM users WHERE userid = $1',
+            [managerId]
+        );
+        if (!managerRes.rows?.length) return;
+        const mgr = managerRes.rows[0];
+
+        const recipientName = String(mgr.Name || '').trim();
+        const domain = await getWebsiteDomain();
+        const finalMessage = message || `תיק "${caseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`;
+
+        // Re-render SMS with actual manager name (instead of using pre-rendered body with hardcoded 'מנהל תיק')
+        let finalSms;
+        if (smsTemplate && smsTemplateData) {
+            finalSms = renderTemplate(smsTemplate, { ...smsTemplateData, recipientName: recipientName || 'מנהל תיק' });
+        } else {
+            finalSms = smsBody || finalMessage;
+        }
+
+        console.log('\n---------- [QA DEBUG] CASE MANAGER NOTIFICATION ----------');
+        console.log(`  Manager:     ${recipientName} (userId=${mgr.UserId})`);
+        console.log(`  Phone:       ${mgr.PhoneNumber || 'N/A'}`);
+        console.log(`  Case:        ${caseName} (caseId=${caseId})`);
+        console.log(`  Title:       ${title}`);
+        console.log(`  Message:     ${finalMessage}`);
+        console.log(`  SMS:         ${finalSms}`);
+        console.log(`  ChangedTypes: ${JSON.stringify(changedTypes)}`);
+        console.log('-----------------------------------------------------------\n');
+
+        const mgrNotifType = explicitType || (changedTypes && changedTypes[0]) || 'CASE_STAGE_CHANGE';
+        const caseStage = smsTemplateData?.stageName || '';
+        await notifyRecipient({
+            recipientUserId: mgr.UserId,
+            recipientPhone: mgr.PhoneNumber,
+            notificationType: mgrNotifType,
+            push: {
+                title: title || 'עדכון תיק',
+                body: finalMessage,
+                data: { caseId: String(caseId) },
+            },
+            email: {
+                campaignKey: mgrNotifType,
+                contactFields: {
+                    recipient_name: recipientName || 'מנהל תיק',
+                    case_title: String(caseName || '').trim(),
+                    case_stage: caseStage,
+                    manager_name: recipientName,
+                    action_url: `https://${domain}`,
+                },
+            },
+            sms: {
+                messageBody: finalSms,
+            },
+            skipAdminCc: true, // Case manager notification should not re-trigger admin CC
+        });
+    } catch (e) {
+        console.error('notifyCaseManager error (non-fatal):', e?.message || e);
+    }
+}
+
+const _buildBaseCaseQuery = () => `
+    SELECT
+        C.caseid,
+        C.casename,
+        C.casetypeid,
+        CT.casetypename,
+        C.userid,
+        U.name AS customername,
+        U.email AS customermail,
+        U.phonenumber,
+        C.companyname,
+        C.currentstage,
+        C.isclosed,
+        C.istagged,
+        C.createdat,
+        C.updatedat,
+        C.whatsappgrouplink,
+        C.casemanager,     
+        C.casemanagerid,
+        MGR.phonenumber AS casemanagerphone,
+        C.estimatedcompletiondate,
+        C.licenseexpirydate,
+        C.haslicenseexpiry,
+        CD.descriptionid,
+        CD.stage,
+        CD.text,
+        CD.timestamp,
+        CD.isnew
+    FROM cases C
+    LEFT JOIN users U ON C.userid = U.userid
+    LEFT JOIN users MGR ON C.casemanagerid = MGR.userid
+    LEFT JOIN casetypes CT ON C.casetypeid = CT.casetypeid
+    LEFT JOIN casedescriptions CD ON C.caseid = CD.caseid
+`;
+
+const _mapCaseResults = (rows, caseUsersMap) => {
+    const casesMap = new Map();
+
+    rows.forEach(row => {
+        const caseId = row.caseid;
+        if (!casesMap.has(caseId)) {
+            casesMap.set(caseId, {
+                CaseId: caseId,
+                CaseName: row.casename,
+                CaseTypeId: row.casetypeid,
+                CaseTypeName: row.casetypename,
+                UserId: row.userid,
+                CustomerName: row.customername,
+                CustomerMail: row.customermail,
+                PhoneNumber: row.phonenumber,
+                CompanyName: row.companyname,
+                WhatsappGroupLink: row.whatsappgrouplink,
+                CurrentStage: row.currentstage,
+                IsClosed: row.isclosed,
+                IsTagged: row.istagged,
+                CreatedAt: row.createdat,
+                UpdatedAt: row.updatedat,
+                CaseManager: row.casemanager,
+                CaseManagerId: row.casemanagerid,
+                CaseManagerPhone: row.casemanagerphone || null,
+                EstimatedCompletionDate: row.estimatedcompletiondate,
+                LicenseExpiryDate: row.licenseexpirydate,
+                HasLicenseExpiry: row.haslicenseexpiry || false,
+                Descriptions: [],
+                Users: [],
+            });
+        }
+
+        if (row.descriptionid) {
+            const c = casesMap.get(caseId);
+            // Avoid duplicate descriptions from joined rows
+            if (!c.Descriptions.some(d => d.DescriptionId === row.descriptionid)) {
+                c.Descriptions.push({
+                    DescriptionId: row.descriptionid,
+                    Stage: row.stage,
+                    Text: row.text,
+                    Timestamp: row.timestamp,
+                    IsNew: row.isnew
+                });
+            }
+        }
+    });
+
+    // Enrich with linked users from case_users
+    if (caseUsersMap) {
+        for (const [caseId, c] of casesMap) {
+            c.Users = caseUsersMap.get(caseId) || [];
+            // Backward compatibility: keep primary UserId/CustomerName from the first linked user
+            if (c.Users.length > 0 && !c.UserId) {
+                c.UserId = c.Users[0].UserId;
+                c.CustomerName = c.Users[0].Name;
+                c.CustomerMail = c.Users[0].Email;
+                c.PhoneNumber = c.Users[0].PhoneNumber;
+            }
+        }
+    }
+
+    return Array.from(casesMap.values());
+};
+
+/**
+ * Fetch all users linked to the given case IDs via the case_users junction table.
+ * Returns a Map<caseId, [{UserId, Name, Email, PhoneNumber}]>
+ */
+const _fetchCaseUsers = async (caseIds, client) => {
+    const caseUsersMap = new Map();
+    if (!caseIds || caseIds.length === 0) return caseUsersMap;
+
+    const queryFn = client || pool;
+    const result = await queryFn.query(
+        `SELECT cu.caseid, u.userid, u.name, u.email, u.phonenumber
+         FROM case_users cu
+         JOIN users u ON cu.userid = u.userid
+         WHERE cu.caseid = ANY($1::int[])
+         ORDER BY cu.created_at`,
+        [caseIds]
+    );
+
+    for (const row of result.rows) {
+        if (!caseUsersMap.has(row.caseid)) {
+            caseUsersMap.set(row.caseid, []);
+        }
+        caseUsersMap.get(row.caseid).push({
+            UserId: row.userid,
+            Name: row.name,
+            Email: row.email,
+            PhoneNumber: row.phonenumber,
+        });
+    }
+    return caseUsersMap;
+};
+
+const getCases = async (req, res) => {
+    const userId = req.user?.UserId;
+    const userRole = req.user?.Role;
+
+    if (!userId) {
+        return res.status(401).json({ message: "נדרש להתחבר" });
+    }
+
+    try {
+        const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
+        if (pagination === null) return;
+
+        if (!pagination.enabled) {
+            let query = _buildBaseCaseQuery();
+            const params = [];
+
+            if (userRole !== "Admin") {
+                query += " WHERE C.caseid IN (SELECT caseid FROM case_users WHERE userid = $1)";
+                params.push(userId);
+            }
+            query += " ORDER BY C.createdat DESC, C.caseid DESC, CD.stage";
+
+            const result = await pool.query(query, params);
+            const cases = _mapCaseResults(result.rows);
+            const caseIds = cases.map(c => c.CaseId);
+            const caseUsersMap = await _fetchCaseUsers(caseIds);
+            return res.json(_mapCaseResults(result.rows, caseUsersMap));
+        }
+
+        const { limit, offset } = pagination;
+
+        // Paginate by caseId (not joined rows) so descriptions aren't truncated.
+        const idsQuery =
+            userRole === 'Admin'
+                ? `SELECT DISTINCT C.caseid
+                   FROM cases C
+                   ORDER BY C.createdat DESC, C.caseid DESC
+                   LIMIT $1 OFFSET $2`
+                : `SELECT DISTINCT C.caseid
+                   FROM cases C
+                   JOIN case_users CU ON C.caseid = CU.caseid
+                   WHERE CU.userid = $1
+                   ORDER BY C.createdat DESC, C.caseid DESC
+                   LIMIT $2 OFFSET $3`;
+
+        const idsParams = userRole === 'Admin' ? [limit, offset] : [userId, limit, offset];
+        const idsResult = await pool.query(idsQuery, idsParams);
+        const ids = idsResult.rows.map((r) => r.caseid);
+
+        if (ids.length === 0) return res.json([]);
+
+        const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
+
+        const result = await pool.query(detailsQuery, [ids]);
+        const caseUsersMap = await _fetchCaseUsers(ids);
+        return res.json(_mapCaseResults(result.rows, caseUsersMap));
+
+    } catch (error) {
+        console.error("Error retrieving cases:", error);
+        res.status(500).json({ message: "שגיאה בשליפת תיקים" });
+    }
+};
+
+const getCaseById = async (req, res) => {
+    try {
+        const caseId = requireInt(req, res, { source: 'params', name: 'caseId' });
+        if (caseId === null) return;
+        const userId = req.user?.UserId;
+        const userRole = req.user?.Role;
+
+        if (userRole !== "Admin") {
+            const ownership = await pool.query(
+                "SELECT 1 FROM case_users WHERE caseid = $1 AND userid = $2",
+                [caseId, userId]
+            );
+
+            if (ownership.rows.length === 0) {
+                return res.status(403).json({ message: "אין הרשאה", code: 'FORBIDDEN' });
+            }
+        }
+
+        const query = `${_buildBaseCaseQuery()} WHERE C.caseid = $1 ORDER BY CD.stage`;
+        const result = await pool.query(query, [caseId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "תיק לא נמצא" });
+        }
+        const caseUsersMap = await _fetchCaseUsers([caseId]);
+        res.json(_mapCaseResults(result.rows, caseUsersMap)[0]);
+    } catch (error) {
+        console.error("Error retrieving case by ID:", error);
+        res.status(500).json({ message: "שגיאה בשליפת תיק לפי מזהה" });
+    }
+};
+
+const getCaseByName = async (req, res) => {
+    let { caseName } = req.query;
+
+    const normalizedCaseName = typeof caseName === 'string' ? caseName.trim() : '';
+
+    const userId = req.user?.UserId;
+    const userRole = req.user?.Role;
+
+    if (!userId) {
+        return res.status(401).json({ message: "נדרש להתחבר" });
+    }
+
+    try {
+        // If empty query: return a default list so dropdowns can preload.
+        if (!normalizedCaseName) {
+            const pagination = getPagination(req, res, { defaultLimit: 200, maxLimit: 500 });
+            if (pagination === null) return;
+
+            const limit = pagination.enabled ? pagination.limit : 200;
+            const offset = pagination.enabled ? pagination.offset : 0;
+
+            // Paginate by caseId (not joined rows) so descriptions aren't truncated.
+            const idsQuery =
+                userRole === 'Admin'
+                    ? `SELECT DISTINCT C.caseid, C.createdat
+                       FROM cases C
+                       ORDER BY C.createdat DESC, C.caseid DESC
+                       LIMIT $1 OFFSET $2`
+                    : `SELECT DISTINCT C.caseid, C.createdat
+                       FROM cases C
+                       JOIN case_users CU ON C.caseid = CU.caseid
+                       WHERE CU.userid = $1
+                       ORDER BY C.createdat DESC, C.caseid DESC
+                       LIMIT $2 OFFSET $3`;
+
+            const idsParams = userRole === 'Admin' ? [limit, offset] : [userId, limit, offset];
+            const idsResult = await pool.query(idsQuery, idsParams);
+            const ids = idsResult.rows.map((r) => r.caseid);
+            if (ids.length === 0) return res.json([]);
+
+            const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
+
+            const result = await pool.query(detailsQuery, [ids]);
+            const caseUsersMap = await _fetchCaseUsers(ids);
+            return res.json(_mapCaseResults(result.rows, caseUsersMap));
+        }
+
+        let query = _buildBaseCaseQuery();
+        const params = [];
+        let paramIndex = 1;
+
+        let whereClauses = [];
+
+        whereClauses.push(`C.casename ILIKE $${paramIndex}`);
+        params.push(`%${normalizedCaseName}%`);
+        paramIndex++;
+
+        whereClauses.push(`U.name ILIKE $${paramIndex}`);
+        params.push(`%${normalizedCaseName}%`);
+        paramIndex++;
+
+        whereClauses.push(`C.companyname ILIKE $${paramIndex}`);
+        params.push(`%${normalizedCaseName}%`);
+        paramIndex++;
+
+        whereClauses.push(`U.phonenumber ILIKE $${paramIndex}`);
+        params.push(`%${normalizedCaseName}%`);
+        paramIndex++;
+
+        whereClauses.push(`U.email ILIKE $${paramIndex}`);
+        params.push(`%${normalizedCaseName}%`);
+        paramIndex++;
+
+        whereClauses.push(`CT.casetypename ILIKE $${paramIndex}`);
+        params.push(`%${normalizedCaseName}%`);
+        paramIndex++;
+
+        query += ` WHERE (${whereClauses.join(" OR ")})`;
+
+        if (userRole !== "Admin") {
+            query += ` AND C.caseid IN (SELECT caseid FROM case_users WHERE userid = $${paramIndex})`;
+            params.push(userId);
+            paramIndex++;
+        }
+
+        query += " ORDER BY C.createdat DESC, C.caseid DESC, CD.stage";
+
+        const result = await pool.query(query, params);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "לא נמצאו תיקים עם שם זה" });
+        }
+        const mappedIds = [...new Set(result.rows.map(r => r.caseid))];
+        const caseUsersMap = await _fetchCaseUsers(mappedIds);
+        res.json(_mapCaseResults(result.rows, caseUsersMap));
+
+    } catch (error) {
+        console.error("Error retrieving case by name:", error);
+        res.status(500).json({ message: "שגיאה בשליפת תיק לפי שם" });
+    }
+};
+
+const addCase = async (req, res) => {
+    const {
+        CaseName,
+        CaseTypeId,
+        UserId,
+        UserIds,
+        CompanyName,
+        CurrentStage,
+        Descriptions,
+        PhoneNumber,
+        CustomerName,
+        IsTagged,
+        WhatsappGroupLink,
+        CaseManager,
+        CaseManagerId,
+        EstimatedCompletionDate,
+        LicenseExpiryDate,
+        HasLicenseExpiry
+    } = req.body;
+
+    // ── Validate required CaseManager ──────────────────────────────
+    if (!CaseManagerId) {
+        return res.status(400).json({ code: 'CASE_MANAGER_REQUIRED', message: 'יש לבחור מנהל תיק' });
+    }
+    const parsedCaseManagerId = Number(CaseManagerId);
+    if (!Number.isFinite(parsedCaseManagerId) || parsedCaseManagerId <= 0) {
+        return res.status(400).json({ code: 'CASE_MANAGER_REQUIRED', message: 'מנהל תיק לא תקין' });
+    }
+
+    // Build resolved user list: prefer UserIds array, fall back to single UserId
+    const resolvedUserIds = Array.isArray(UserIds) && UserIds.length > 0
+        ? [...new Set(UserIds.map(Number).filter(Boolean))]
+        : (UserId ? [Number(UserId)] : []);
+
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query('BEGIN');
+
+        const caseResult = await client.query(
+            `
+            INSERT INTO cases (
+                casename, casetypeid, userid, companyname, currentstage,
+                isclosed, istagged, whatsappgrouplink, createdat, updatedat,
+                casemanager, casemanagerid, estimatedcompletiondate, licenseexpirydate, haslicenseexpiry
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW(), $9, $10, $11, $12, $13)
+            RETURNING caseid
+            `,
+            [
+                CaseName,
+                CaseTypeId || null,
+                resolvedUserIds[0] || UserId || null,
+                CompanyName,
+                CurrentStage || 1,
+                false,
+                IsTagged ? true : false,
+                WhatsappGroupLink || null,
+                CaseManager || null,
+                parsedCaseManagerId,
+                EstimatedCompletionDate || null,
+                LicenseExpiryDate || null,
+                HasLicenseExpiry ? true : false
+            ]
+        );
+
+        const caseId = caseResult.rows[0].caseid;
+
+        // Insert into case_users junction table for all linked clients
+        for (const uid of resolvedUserIds) {
+            await client.query(
+                `INSERT INTO case_users (caseid, userid) VALUES ($1, $2) ON CONFLICT (caseid, userid) DO NOTHING`,
+                [caseId, uid]
+            );
+        }
+
+        if (Descriptions && Descriptions.length > 0) {
+            const initStage = Number(CurrentStage) || 1;
+            for (const [index, desc] of Descriptions.entries()) {
+                // Stages before the current stage are "past" and get today's date.
+                // The current stage (index === initStage - 1) also gets today's date.
+                // Future stages get null.
+                const isPastOrCurrent = index < initStage;
+                await client.query(
+                    `
+                    INSERT INTO casedescriptions (caseid, stage, text, timestamp, isnew)
+                    VALUES ($1, $2, $3, $4, $5)
+                    `,
+                    [
+                        caseId,
+                        desc.Stage,
+                        desc.Text,
+                        isPastOrCurrent ? new Date() : null,
+                        index === initStage - 1 ? true : false
+                    ]
+                );
+            }
+        }
+
+        await client.query('COMMIT');
+
+        // ── Notify linked users (ONE message per user, regardless of stage) ──
+        const createdCfg = await getChannelConfig('CASE_CREATED');
+        const shouldNotifyCreated = createdCfg.push_enabled || createdCfg.email_enabled || createdCfg.sms_enabled;
+
+        const linkedUsers = resolvedUserIds.length > 0
+            ? (await pool.query(
+                `SELECT userid AS "UserId", name AS "Name", phonenumber AS "PhoneNumber" FROM users WHERE userid = ANY($1::int[])`,
+                [resolvedUserIds]
+            )).rows
+            : [];
+
+        const domain = await getWebsiteDomain();
+        const websiteUrl = `https://${domain}`;
+        const initStageNum = Number(CurrentStage) || 1;
+        const initStageName = (Descriptions && initStageNum > 0 && Descriptions[initStageNum - 1]?.Text) || '';
+        const createdSmsTemplate = await getSetting('templates', 'CASE_CREATED_SMS',
+            'היי {{recipientName}}, תיק {{caseName}} נוצר, היכנס לאתר למעקב. {{websiteUrl}}');
+
+        // Fetch manager name for template variables
+        let managerName = '';
+        if (CaseManagerId) {
+            const mgrNameRes = await pool.query('SELECT name FROM users WHERE userid = $1', [CaseManagerId]);
+            managerName = String(mgrNameRes.rows?.[0]?.name || '').trim();
+        }
+
+        // Common template data for all SMS renders
+        const templateData = { caseName: CaseName, stageName: initStageName, managerName, websiteUrl };
+
+        if (shouldNotifyCreated) {
+            for (const u of linkedUsers) {
+                const recipientName = u.Name || CustomerName || '';
+                const notificationTitle = "תיק חדש נוצר";
+                const notificationMessage = initStageNum > 1 && initStageName
+                    ? `תיק "${CaseName}" נוצר בהצלחה ונמצא בשלב - ${initStageName}. היכנס לאתר או לאפליקציה למעקב.`
+                    : `תיק "${CaseName}" נוצר בהצלחה. היכנס לאתר או לאפליקציה למעקב.`;
+                const smsBody = renderTemplate(createdSmsTemplate, { ...templateData, recipientName });
+
+                try {
+                    await notifyRecipient({
+                        recipientUserId: u.UserId,
+                        recipientPhone: u.PhoneNumber || PhoneNumber,
+                        notificationType: 'CASE_CREATED',
+                        push: {
+                            title: notificationTitle,
+                            body: notificationMessage,
+                            data: { caseId: String(caseId) },
+                        },
+                        email: {
+                            campaignKey: 'CASE_CREATED',
+                            contactFields: {
+                                recipient_name: String(recipientName).trim(),
+                                case_title: String(CaseName || '').trim(),
+                                case_stage: initStageName,
+                                manager_name: managerName,
+                                action_url: websiteUrl,
+                            },
+                        },
+                        sms: {
+                            messageBody: smsBody,
+                        },
+                    });
+                } catch (notifyErr) {
+                    console.error(`[addCase] Failed to notify user ${u.UserId}:`, notifyErr?.message);
+                }
+            }
+        }
+
+        // Notify case manager if not already notified as a linked user
+        const notifiedCreateIds = new Set(linkedUsers.map(u => u.UserId));
+        const mgrCreatedMsg = initStageNum > 1 && initStageName
+            ? `תיק "${CaseName}" נוצר בהצלחה ונמצא בשלב - ${initStageName}. היכנס לאתר או לאפליקציה למעקב.`
+            : `תיק "${CaseName}" נוצר בהצלחה. היכנס לאתר או לאפליקציה למעקב.`;
+        await notifyCaseManager({
+            caseId,
+            caseName: CaseName,
+            title: 'תיק חדש נוצר',
+            message: mgrCreatedMsg,
+            smsTemplate: createdSmsTemplate,
+            smsTemplateData: templateData,
+            alreadyNotifiedUserIds: notifiedCreateIds,
+            changedTypes: ['CASE_CREATED'],
+        });
+
+        if (!res.headersSent) {
+            res.status(201).json({ message: "התיק נוצר בהצלחה", caseId });
+        }
+
+    } catch (error) {
+        console.error("Error creating case:", error);
+        if (client) {
+            try { await client.query('ROLLBACK'); } catch (_) { /* ignore */ }
+        }
+        if (!res.headersSent) {
+            const isProd = String(process.env.NODE_ENV || "").toLowerCase() === "production";
+            if (!isProd) {
+                console.error('[addCase] Full error details:', error?.message, '| pg code:', error?.code);
+            }
+            res.status(500).json({ message: "שגיאה ביצירת תיק" });
+        }
+    } finally {
+        if (client) {
+            client.release();
+        }
+    }
+};
+
+const updateCase = async (req, res) => {
+    const caseId = requireInt(req, res, { source: 'params', name: 'caseId' });
+    if (caseId === null) return;
+    const { CaseName, CurrentStage, IsClosed, IsTagged, Descriptions, PhoneNumber, CustomerName, CompanyName, CaseTypeId, UserId, UserIds, CaseManager, CaseManagerId, CaseTypeName, EstimatedCompletionDate, LicenseExpiryDate, HasLicenseExpiry } = req.body;
+
+    // Build resolved user list: prefer UserIds array, fall back to single UserId
+    const resolvedUserIds = Array.isArray(UserIds) && UserIds.length > 0
+        ? [...new Set(UserIds.map(Number).filter(Boolean))]
+        : (UserId ? [Number(UserId)] : []);
+
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query('BEGIN');
+
+        // ── Fetch old case data for change detection ──
+        const oldCaseResult = await client.query(
+            `SELECT casename, currentstage, isclosed, istagged, companyname, casetypeid,
+                    casemanagerid, casetypename, estimatedcompletiondate, licenseexpirydate
+             FROM cases WHERE caseid = $1`,
+            [caseId]
+        );
+        if (oldCaseResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ message: "תיק לא נמצא" });
+        }
+        const oldCase = oldCaseResult.rows[0];
+
+        const toDateStr = (v) => v ? new Date(v).toISOString().slice(0, 10) : null;
+        const oldManagerId = oldCase?.casemanagerid ? Number(oldCase.casemanagerid) : null;
+        const newManagerId = CaseManagerId ? Number(CaseManagerId) || null : null;
+        const managerChanged = oldManagerId !== newManagerId;
+
+        const oldEstDate = toDateStr(oldCase?.estimatedcompletiondate);
+        const newEstDate = toDateStr(EstimatedCompletionDate);
+        const estDateChanged = oldEstDate !== newEstDate;
+
+        const oldLicDate = toDateStr(oldCase?.licenseexpirydate);
+        const newLicDate = toDateStr(LicenseExpiryDate);
+        const licDateChanged = oldLicDate !== newLicDate;
+
+        // Check if substantive (client-facing) fields changed
+        const stageChanged = oldCase && String(oldCase.currentstage ?? '') !== String(CurrentStage ?? '');
+        const closedChanged = oldCase && Boolean(oldCase.isclosed) !== Boolean(IsClosed);
+        const nameChanged = oldCase && (oldCase.casename ?? '') !== (CaseName ?? '');
+        const typeChanged = oldCase && CaseTypeId !== undefined && String(oldCase.casetypeid ?? '') !== String(CaseTypeId ?? '');
+        const companyChanged = oldCase && CompanyName !== undefined && (oldCase.companyname ?? '') !== (CompanyName ?? '');
+
+        await client.query(
+            `
+            UPDATE cases
+            SET casename = $1,
+                currentstage = $2,
+                isclosed = $3,
+                istagged = $4,
+                companyname = $5,
+                casetypeid = COALESCE($6, casetypeid),
+                userid = $7,
+                casemanager = $8,
+                casemanagerid = $9,
+                casetypename = $10,
+                estimatedcompletiondate = $11,
+                licenseexpirydate = $12,
+                haslicenseexpiry = $13,
+                updatedat = NOW()
+            WHERE caseid = $14
+            `,
+            [CaseName, CurrentStage, IsClosed, IsTagged, CompanyName, CaseTypeId, resolvedUserIds[0] || UserId, CaseManager || null, CaseManagerId ? Number(CaseManagerId) || null : null, CaseTypeName, EstimatedCompletionDate || null, LicenseExpiryDate || null, HasLicenseExpiry ? true : false, caseId]
+        );
+
+        // Sync case_users junction table
+        if (resolvedUserIds.length > 0) {
+            // Remove users no longer linked
+            await client.query(
+                `DELETE FROM case_users WHERE caseid = $1 AND userid != ALL($2::int[])`,
+                [caseId, resolvedUserIds]
+            );
+            // Insert new links (ON CONFLICT ignores existing)
+            for (const uid of resolvedUserIds) {
+                await client.query(
+                    `INSERT INTO case_users (caseid, userid) VALUES ($1, $2) ON CONFLICT (caseid, userid) DO NOTHING`,
+                    [caseId, uid]
+                );
+            }
+        }
+
+        if (Descriptions && Descriptions.length > 0) {
+            // Collect IDs of descriptions the client still has
+            const keptIds = Descriptions
+                .filter((d) => d.DescriptionId)
+                .map((d) => d.DescriptionId);
+
+            // Delete descriptions that were removed on the client
+            if (keptIds.length > 0) {
+                await client.query(
+                    `DELETE FROM casedescriptions WHERE caseid = $1 AND descriptionid != ALL($2::int[])`,
+                    [caseId, keptIds]
+                );
+            } else {
+                // All existing descriptions were removed (shouldn't normally happen)
+                await client.query(
+                    `DELETE FROM casedescriptions WHERE caseid = $1`,
+                    [caseId]
+                );
+            }
+
+            for (const desc of Descriptions) {
+                if (desc.DescriptionId) {
+                    // Update existing description
+                    await client.query(
+                        `
+                        UPDATE casedescriptions
+                        SET stage = $1,
+                            text = $2,
+                            timestamp = $3,
+                            isnew = $4
+                        WHERE descriptionid = $5 AND caseid = $6
+                        `,
+                        [desc.Stage, desc.Text, desc.Timestamp ? new Date(desc.Timestamp) : null, desc.IsNew ? true : false, desc.DescriptionId, caseId]
+                    );
+                } else {
+                    // Insert new description (added via "הוסף שלב")
+                    await client.query(
+                        `
+                        INSERT INTO casedescriptions (caseid, stage, text, timestamp, isnew)
+                        VALUES ($1, $2, $3, $4, $5)
+                        `,
+                        [caseId, desc.Stage, desc.Text, desc.Timestamp ? new Date(desc.Timestamp) : null, desc.IsNew ? true : false]
+                    );
+                }
+            }
+        }
+
+        await client.query('COMMIT');
+
+        // ── Notify linked users (ONE message per user with current stage) ──
+        const stageName = (Descriptions && CurrentStage && Descriptions[CurrentStage - 1]?.Text) || '';
+        const notificationTitle = "עדכון תיק";
+        const domain = await getWebsiteDomain();
+        const websiteUrl = `https://${domain}`;
+
+        // ── Per-field notification gating via channel config ──
+        const changedTypes = [];
+        if (nameChanged) changedTypes.push('CASE_NAME_CHANGE');
+        if (typeChanged) changedTypes.push('CASE_TYPE_CHANGE');
+        if (stageChanged) changedTypes.push('CASE_STAGE_CHANGE');
+        if (closedChanged) changedTypes.push(IsClosed ? 'CASE_CLOSED' : 'CASE_REOPENED');
+        if (managerChanged) changedTypes.push('CASE_MANAGER_CHANGE');
+        if (estDateChanged) changedTypes.push('CASE_EST_DATE_CHANGE');
+        if (licDateChanged) changedTypes.push('CASE_LICENSE_CHANGE');
+        if (companyChanged) changedTypes.push('CASE_COMPANY_CHANGE');
+
+        console.log('\n========== [QA DEBUG] updateCase CHANGE DETECTION ==========');
+        console.log(`  caseId:         ${caseId}`);
+        console.log(`  nameChanged:    ${nameChanged} (old="${oldCase?.casename}" new="${CaseName}")`);
+        console.log(`  typeChanged:    ${typeChanged} (old="${oldCase?.casetypeid}" new="${CaseTypeId}")`);
+        console.log(`  stageChanged:   ${stageChanged} (old="${oldCase?.currentstage}" new="${CurrentStage}")`);
+        console.log(`  closedChanged:  ${closedChanged} (old=${oldCase?.isclosed} new=${IsClosed})`);
+        console.log(`  managerChanged: ${managerChanged} (old=${oldCase?.casemanagerid} new=${CaseManagerId})`);
+        console.log(`  estDateChanged: ${estDateChanged}`);
+        console.log(`  licDateChanged: ${licDateChanged}`);
+        console.log(`  companyChanged: ${companyChanged}`);
+        console.log(`  changedTypes:   ${JSON.stringify(changedTypes)}`);
+        console.log('=============================================================\n');
+
+        let skipClientNotifications = true;
+        if (changedTypes.length > 0) {
+            const configs = await Promise.all(changedTypes.map(t => getChannelConfig(t)));
+            skipClientNotifications = !configs.some(c => c.push_enabled || c.email_enabled || c.sms_enabled);
+        }
+
+        // Load per-type SMS templates
+        const SMS_TEMPLATE_MAP = {
+            'CASE_NAME_CHANGE': 'CASE_NAME_CHANGE_SMS',
+            'CASE_TYPE_CHANGE': 'CASE_TYPE_CHANGE_SMS',
+            'CASE_STAGE_CHANGE': 'CASE_STAGE_CHANGED_SMS',
+            'CASE_CLOSED': 'CASE_CLOSED_SMS',
+            'CASE_REOPENED': 'CASE_REOPENED_SMS',
+            'CASE_MANAGER_CHANGE': 'CASE_MANAGER_CHANGE_SMS',
+            'CASE_EST_DATE_CHANGE': 'CASE_EST_DATE_CHANGE_SMS',
+            'CASE_LICENSE_CHANGE': 'CASE_LICENSE_CHANGE_SMS',
+            'CASE_COMPANY_CHANGE': 'CASE_COMPANY_CHANGE_SMS',
+        };
+        const SMS_TEMPLATE_DEFAULTS = {
+            'CASE_NAME_CHANGE_SMS': 'שלום {{recipientName}}, שם התיק "{{caseName}}" עודכן. {{websiteUrl}}',
+            'CASE_TYPE_CHANGE_SMS': 'שלום {{recipientName}}, סוג התיק "{{caseName}}" עודכן. {{websiteUrl}}',
+            'CASE_STAGE_CHANGED_SMS': 'שלום {{recipientName}}, התיק "{{caseName}}" עבר לשלב {{stageName}}. {{websiteUrl}}',
+            'CASE_CLOSED_SMS': 'שלום {{recipientName}}, התיק "{{caseName}}" נסגר. {{websiteUrl}}',
+            'CASE_REOPENED_SMS': 'שלום {{recipientName}}, התיק "{{caseName}}" נפתח מחדש. {{websiteUrl}}',
+            'CASE_MANAGER_CHANGE_SMS': 'שלום {{recipientName}}, מנהל התיק "{{caseName}}" עודכן ל-{{managerName}}. {{websiteUrl}}',
+            'CASE_EST_DATE_CHANGE_SMS': 'שלום {{recipientName}}, תאריך משוער בתיק "{{caseName}}" עודכן. {{websiteUrl}}',
+            'CASE_LICENSE_CHANGE_SMS': 'שלום {{recipientName}}, רישיון בתיק "{{caseName}}" עודכן. {{websiteUrl}}',
+            'CASE_COMPANY_CHANGE_SMS': 'שלום {{recipientName}}, חברה בתיק "{{caseName}}" עודכנה. {{websiteUrl}}',
+        };
+        const primaryType = changedTypes[0] || 'CASE_NAME_CHANGE';
+        const templateKey = SMS_TEMPLATE_MAP[primaryType] || 'CASE_NAME_CHANGE_SMS';
+        const defaultFallback = SMS_TEMPLATE_DEFAULTS[templateKey]
+            || 'היי {{recipientName}}, תיק {{caseName}} התעדכן, היכנס לאתר למעקב. {{websiteUrl}}';
+        const updatedSmsTemplate = await getSetting('templates', templateKey, defaultFallback);;
+
+        // Fetch manager name for template variables
+        let managerName = '';
+        const effectiveManagerId = CaseManagerId || oldCase?.casemanagerid;
+        if (effectiveManagerId) {
+            const mgrNameRes = await pool.query('SELECT name FROM users WHERE userid = $1', [effectiveManagerId]);
+            managerName = String(mgrNameRes.rows?.[0]?.name || '').trim();
+        }
+
+        // Common template data for all SMS renders
+        const templateData = { caseName: CaseName, stageName, managerName, websiteUrl };
+
+        // Fetch all linked users to notify
+        const linkedUsers = resolvedUserIds.length > 0
+            ? (await pool.query(
+                `SELECT userid AS "UserId", name AS "Name", phonenumber AS "PhoneNumber" FROM users WHERE userid = ANY($1::int[])`,
+                [resolvedUserIds]
+            )).rows
+            : [];
+
+        if (!skipClientNotifications) {
+            for (const u of linkedUsers) {
+                const recipientName = u.Name || CustomerName || '';
+                const notificationMessage = stageName
+                    ? `היי ${recipientName}, \n\nתיק "${CaseName}" עודכן לשלב - ${stageName}. היכנס לאתר או לאפליקציה למעקב.`
+                    : `תיק "${CaseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`;
+                const smsBody = renderTemplate(updatedSmsTemplate, { ...templateData, recipientName });
+
+                try {
+                    await notifyRecipient({
+                        recipientUserId: u.UserId,
+                        recipientPhone: u.PhoneNumber || PhoneNumber,
+                        notificationType: primaryType,
+                        push: {
+                            title: notificationTitle,
+                            body: notificationMessage,
+                            data: { caseId: String(caseId) },
+                        },
+                        email: {
+                            campaignKey: primaryType,
+                            contactFields: {
+                                recipient_name: String(recipientName).trim(),
+                                case_title: String(CaseName || '').trim(),
+                                case_stage: stageName,
+                                manager_name: managerName,
+                                action_url: websiteUrl,
+                            },
+                        },
+                        sms: {
+                            messageBody: smsBody,
+                        },
+                    });
+                } catch (notifyErr) {
+                    console.error(`[updateCase] Failed to notify user ${u.UserId}:`, notifyErr?.message);
+                }
+            }
+        } else if (changedTypes.length > 0) {
+            console.log(`[updateCase] Skipping client notifications for case ${caseId} — no client channels enabled for: ${changedTypes.join(', ')}`);
+        }
+
+        // Notify case manager regardless of client notification skip
+        // (manager_cc is independent of push/email/sms client channels)
+        if (changedTypes.length > 0) {
+            const notifiedUpdateIds = new Set(linkedUsers.map(u => u.UserId));
+            await notifyCaseManager({
+                caseId,
+                caseName: CaseName,
+                title: notificationTitle,
+                message: stageName
+                    ? `תיק "${CaseName}" עודכן לשלב - ${stageName}. היכנס לאתר או לאפליקציה למעקב.`
+                    : `תיק "${CaseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`,
+                smsTemplate: updatedSmsTemplate,
+                smsTemplateData: templateData,
+                alreadyNotifiedUserIds: notifiedUpdateIds,
+                changedTypes,
+            });
+        }
+
+        res.status(200).json({ message: "התיק עודכן בהצלחה" });
+    } catch (error) {
+        console.error("Error updating case:", error);
+        if (client) {
+            try { await client.query('ROLLBACK'); } catch (rbErr) { console.error('[updateCase] ROLLBACK failed:', rbErr?.message); }
+        }
+        res.status(500).json({ message: "שגיאה בעדכון תיק" });
+    } finally {
+        if (client) {
+            client.release();
+        }
+    }
+};
+
+const updateStage = async (req, res) => {
+    const caseId = requireInt(req, res, { source: 'params', name: 'caseId' });
+    if (caseId === null) return;
+    const { CurrentStage, IsClosed, PhoneNumber, CustomerName, Descriptions, CaseName } = req.body;
+
+    // --- Stage validation ---
+    if (CurrentStage != null) {
+        const stageNum = Number(CurrentStage);
+        if (!Number.isInteger(stageNum) || stageNum < 1) {
+            return res.status(400).json({ message: "שלב חייב להיות מספר חיובי" });
+        }
+        if (Descriptions && Descriptions.length > 0 && stageNum > Descriptions.length) {
+            return res.status(400).json({ message: `שלב לא יכול לחרוג ממספר השלבים (${Descriptions.length})` });
+        }
+    }
+
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query('BEGIN');
+
+        const currentData = await client.query(
+            "SELECT currentstage, isclosed, userid FROM cases WHERE caseid = $1",
+            [caseId]
+        );
+
+        if (currentData.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ message: "תיק לא נמצא" });
+        }
+
+        const currentStageValue = currentData.rows[0]?.currentstage;
+        const currentlyClosed = currentData.rows[0]?.isclosed;
+        const caseUserId = currentData.rows[0]?.userid;
+
+        // Prevent stage changes on already-closed cases (unless reopening)
+        if (currentlyClosed && !IsClosed && CurrentStage !== undefined) {
+            // Reopening — allowed
+        } else if (currentlyClosed && IsClosed) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ message: "אין אפשרות לעדכן תיק שנסגר" });
+        }
+
+        await client.query(
+            `
+            UPDATE cases
+            SET currentstage = $1,
+                isclosed = $2,
+                updatedat = NOW()
+            WHERE caseid = $3
+            `,
+            [CurrentStage, IsClosed, caseId]
+        );
+
+        if (Descriptions && Descriptions.length > 0) {
+            const stageNum = Number(CurrentStage) || 0;
+
+            for (const desc of Descriptions) {
+                // When rolling back stages, clear timestamps and IsNew on
+                // descriptions that are now ahead of the current stage.
+                const descStage = Number(desc.Stage) || 0;
+                const isFutureStage = stageNum > 0 && descStage > stageNum;
+                const timestamp = isFutureStage ? null : (desc.Timestamp ? new Date(desc.Timestamp) : null);
+                const isNew = isFutureStage ? false : (desc.IsNew ? true : false);
+
+                await client.query(
+                    `
+                    UPDATE casedescriptions
+                    SET stage = $1,
+                        text = $2,
+                        timestamp = $3,
+                        isnew = $4
+                    WHERE descriptionid = $5 AND caseid = $6
+                    `,
+                    [desc.Stage, desc.Text, timestamp, isNew, desc.DescriptionId, caseId]
+                );
+            }
+        }
+
+        // Only notify if stage actually changed
+        let notificationType = null;
+        let channelType = null;
+        if (CurrentStage !== currentStageValue) {
+            notificationType = 'stage_changed';
+            channelType = 'CASE_STAGE_CHANGE';
+        }
+        if (IsClosed && !currentlyClosed) {
+            notificationType = 'case_closed';
+            channelType = 'CASE_CLOSED';
+        }
+        // Notify when reopening a closed case
+        if (!IsClosed && currentlyClosed) {
+            notificationType = 'case_reopened';
+            channelType = 'CASE_REOPENED';
+        }
+
+        if (notificationType) {
+            // Check channel config for this specific change type
+            const channelCfg = await getChannelConfig(channelType);
+            const shouldNotifyClient = channelCfg.push_enabled || channelCfg.email_enabled || channelCfg.sms_enabled;
+            // ── ONE notification per user with the current (final) stage ──
+            const linkedUsersResult = await client.query(
+                `SELECT U.userid AS "UserId", U.name AS "Name", U.phonenumber AS "PhoneNumber"
+                 FROM case_users CU JOIN users U ON CU.userid = U.userid
+                 WHERE CU.caseid = $1`,
+                [caseId]
+            );
+            const linkedUsers = linkedUsersResult.rows;
+            const domain = await getWebsiteDomain();
+            const websiteUrl = `https://${domain}`;
+            const currentStageName = Descriptions?.[CurrentStage - 1]?.Text || String(CurrentStage);
+
+            // Fetch manager name for template variables
+            let managerName = '';
+            const mgrIdRes = await client.query('SELECT casemanagerid FROM cases WHERE caseid = $1', [caseId]);
+            const mgIdVal = mgrIdRes.rows?.[0]?.casemanagerid;
+            if (mgIdVal) {
+                const mgrNameRes = await client.query('SELECT name FROM users WHERE userid = $1', [mgIdVal]);
+                managerName = String(mgrNameRes.rows?.[0]?.name || '').trim();
+            }
+
+            // Common template data
+            const templateData = { caseName: CaseName, stageName: currentStageName, managerName, websiteUrl };
+
+            // Load appropriate SMS template
+            let smsTemplateKey = 'CASE_STAGE_CHANGED_SMS';
+            let smsTemplateDefault = 'היי {{recipientName}}, בתיק {{caseName}} התעדכן שלב: {{stageName}}. היכנס לאתר למעקב. {{websiteUrl}}';
+            if (notificationType === 'stage_changed') {
+                smsTemplateKey = 'CASE_STAGE_CHANGED_SMS';
+                smsTemplateDefault = 'היי {{recipientName}}, בתיק {{caseName}} התעדכן שלב: {{stageName}}. היכנס לאתר למעקב. {{websiteUrl}}';
+            } else if (notificationType === 'case_closed') {
+                smsTemplateKey = 'CASE_CLOSED_SMS';
+                smsTemplateDefault = 'היי {{recipientName}}, תיק {{caseName}} הסתיים בהצלחה. היכנס לאתר למעקב. {{websiteUrl}}';
+            } else if (notificationType === 'case_reopened') {
+                smsTemplateKey = 'CASE_REOPENED_SMS';
+                smsTemplateDefault = 'היי {{recipientName}}, תיק {{caseName}} נפתח מחדש. היכנס לאתר למעקב. {{websiteUrl}}';
+            }
+            const smsTemplate = await getSetting('templates', smsTemplateKey, smsTemplateDefault);
+
+            if (shouldNotifyClient) {
+                for (const u of linkedUsers) {
+                    const recipientName = u.Name || CustomerName || '';
+                    let title = '';
+                    let message = '';
+
+                    if (notificationType === 'stage_changed') {
+                        title = "עדכון שלב בתיק";
+                        message = `היי ${recipientName}, \n\nבתיק "${CaseName}" התעדכן שלב, תיקך נמצא בשלב - ${currentStageName}, היכנס לאתר או לאפליקציה למעקב.`;
+                    } else if (notificationType === 'case_closed') {
+                        title = "תיק הסתיים";
+                        message = `היי ${recipientName}, \n\nתיק "${CaseName}" הסתיים בהצלחה, היכנס לאתר או לאפליקציה למעקב.`;
+                    } else if (notificationType === 'case_reopened') {
+                        title = "תיק נפתח מחדש";
+                        message = `היי ${recipientName}, \n\nתיק "${CaseName}" נפתח מחדש, היכנס לאתר או לאפליקציה למעקב.`;
+                    }
+
+                    const smsBody = renderTemplate(smsTemplate, { ...templateData, recipientName });
+
+                    await notifyRecipient({
+                        recipientUserId: u.UserId,
+                        recipientPhone: u.PhoneNumber || PhoneNumber,
+                        notificationType: channelType,
+                        push: {
+                            title,
+                            body: message,
+                            data: { caseId: String(caseId), stage: String(CurrentStage) },
+                        },
+                        email: {
+                            campaignKey: channelType,
+                            contactFields: {
+                                recipient_name: String(recipientName).trim(),
+                                case_title: String(CaseName || '').trim(),
+                                case_stage: currentStageName,
+                                manager_name: managerName,
+                                action_url: websiteUrl,
+                            },
+                        },
+                        sms: {
+                            messageBody: smsBody,
+                        },
+                    });
+                }
+            }
+
+            // Notify case manager if not already notified as a linked user
+            const notifiedStageIds = new Set(linkedUsers.map(u => u.UserId));
+            let mgrTitle = 'עדכון תיק';
+            let mgrMessage = `תיק "${CaseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`;
+            if (notificationType === 'stage_changed') {
+                mgrTitle = 'עדכון שלב בתיק';
+                mgrMessage = `בתיק "${CaseName}" התעדכן שלב, התיק נמצא בשלב - ${currentStageName}. היכנס לאתר או לאפליקציה למעקב.`;
+            } else if (notificationType === 'case_closed') {
+                mgrTitle = 'תיק הסתיים';
+                mgrMessage = `תיק "${CaseName}" הסתיים בהצלחה. היכנס לאתר או לאפליקציה למעקב.`;
+            } else if (notificationType === 'case_reopened') {
+                mgrTitle = 'תיק נפתח מחדש';
+                mgrMessage = `תיק "${CaseName}" נפתח מחדש. היכנס לאתר או לאפליקציה למעקב.`;
+            }
+            await notifyCaseManager({
+                caseId,
+                caseName: CaseName,
+                title: mgrTitle,
+                message: mgrMessage,
+                smsTemplate,
+                smsTemplateData: templateData,
+                alreadyNotifiedUserIds: notifiedStageIds,
+                changedTypes: [channelType],
+            });
+        }
+
+        await client.query('COMMIT');
+
+        res.status(200).json({ message: "השלב עודכן בהצלחה" });
+
+    } catch (error) {
+        console.error("Error updating stage:", error);
+        if (client) {
+            await client.query('ROLLBACK');
+        }
+        res.status(500).json({ message: "שגיאה בעדכון שלב" });
+    } finally {
+        if (client) {
+            client.release();
+        }
+    }
+};
+
+const deleteCase = async (req, res) => {
+    const caseId = requireInt(req, res, { source: 'params', name: 'caseId' });
+    if (caseId === null) return;
+
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query('BEGIN');
+
+        await client.query("DELETE FROM casedescriptions WHERE caseid = $1", [caseId]);
+        const result = await client.query("DELETE FROM cases WHERE caseid = $1", [caseId]);
+
+        await client.query('COMMIT');
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: "לא נמצא תיק עם מזהה זה" });
+        }
+
+        res.status(200).json({ message: "התיק נמחק בהצלחה" });
+
+    } catch (error) {
+        console.error("Error deleting case:", error);
+        if (client) {
+            await client.query('ROLLBACK');
+        }
+        res.status(500).json({ message: "שגיאה במחיקת תיק" });
+    } finally {
+        if (client) {
+            client.release();
+        }
+    }
+};
+
+const tagCase = async (req, res) => {
+    const caseId = requireInt(req, res, { source: 'params', name: 'caseId', aliases: ['CaseId'] });
+    if (caseId === null) return;
+    const { IsTagged } = req.body;
+
+    try {
+        await pool.query(
+            `
+            UPDATE cases
+            SET istagged = $1, updatedat = NOW()
+            WHERE caseid = $2
+            `,
+            [IsTagged ? true : false, caseId]
+        );
+
+        res.status(200).json({ message: "התיק תויג בהצלחה" });
+    } catch (error) {
+        console.error("Error updating case tag:", error);
+        res.status(500).json({ message: "שגיאה בעדכון תיוג תיק" });
+    }
+};
+
+const getTaggedCases = async (req, res) => {
+    try {
+        const userId = req.user?.UserId;
+        const userRole = req.user?.Role;
+
+        if (!userId) {
+            return res.status(401).json({ message: "נדרש להתחבר" });
+        }
+
+        const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
+        if (pagination === null) return;
+
+        // Each lawyer sees only their own tagged cases (by casemanagerid).
+        if (!pagination.enabled) {
+            const query = `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.casemanagerid = $1 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage;`;
+            const result = await pool.query(query, [userId]);
+            const ids = [...new Set(result.rows.map(r => r.caseid))];
+            const caseUsersMap = await _fetchCaseUsers(ids);
+            return res.json(_mapCaseResults(result.rows, caseUsersMap));
+        }
+
+        const { limit, offset } = pagination;
+
+        const idsQuery = `SELECT DISTINCT C.caseid
+                   FROM cases C
+                   WHERE C.istagged = true AND C.casemanagerid = $1
+                   ORDER BY C.createdat DESC, C.caseid DESC
+                   LIMIT $2 OFFSET $3`;
+
+        const idsResult = await pool.query(idsQuery, [userId, limit, offset]);
+        const ids = idsResult.rows.map((r) => r.caseid);
+
+        if (ids.length === 0) return res.json([]);
+
+        const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
+
+        const result = await pool.query(detailsQuery, [ids]);
+        const caseUsersMap = await _fetchCaseUsers(ids);
+        return res.json(_mapCaseResults(result.rows, caseUsersMap));
+    } catch (error) {
+        console.error("Error retrieving tagged cases:", error);
+        res.status(500).json({ message: "שגיאה בשליפת תיקים מתויגים" });
+    }
+};
+
+const getTaggedCasesByName = async (req, res) => {
+    let { caseName } = req.query;
+
+    const normalizedCaseName = typeof caseName === 'string' ? caseName.trim() : '';
+
+    const userId = req.user?.UserId;
+    const userRole = req.user?.Role;
+
+    if (!userId) {
+        return res.status(401).json({ message: "נדרש להתחבר" });
+    }
+
+    try {
+        // If empty query: return a default list so dropdowns can preload.
+        if (!normalizedCaseName) {
+            const pagination = getPagination(req, res, { defaultLimit: 200, maxLimit: 500 });
+            if (pagination === null) return;
+
+            const limit = pagination.enabled ? pagination.limit : 200;
+            const offset = pagination.enabled ? pagination.offset : 0;
+
+            const idsQuery = `SELECT DISTINCT C.caseid
+                       FROM cases C
+                       WHERE C.istagged = true AND C.casemanagerid = $1
+                       ORDER BY C.createdat DESC, C.caseid DESC
+                       LIMIT $2 OFFSET $3`;
+
+            const idsResult = await pool.query(idsQuery, [userId, limit, offset]);
+            const ids = idsResult.rows.map((r) => r.caseid);
+            if (ids.length === 0) return res.json([]);
+
+            const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
+
+            const result = await pool.query(detailsQuery, [ids]);
+            const caseUsersMap = await _fetchCaseUsers(ids);
+            return res.json(_mapCaseResults(result.rows, caseUsersMap));
+        }
+
+        const params = [];
+        let paramIndex = 1;
+
+        let whereClauses = [];
+
+        // Search in case name
+        whereClauses.push(`C.casename ILIKE $${paramIndex}`);
+        params.push(`%${normalizedCaseName}%`);
+        paramIndex++;
+
+        // Add more columns for tagged case search
+        whereClauses.push(`U.name ILIKE $${paramIndex}`);
+        params.push(`%${normalizedCaseName}%`);
+        paramIndex++;
+
+        whereClauses.push(`C.companyname ILIKE $${paramIndex}`);
+        params.push(`%${normalizedCaseName}%`);
+        paramIndex++;
+
+        whereClauses.push(`U.phonenumber ILIKE $${paramIndex}`);
+        params.push(`%${normalizedCaseName}%`);
+        paramIndex++;
+
+        whereClauses.push(`CT.casetypename ILIKE $${paramIndex}`);
+        params.push(`%${normalizedCaseName}%`);
+        paramIndex++;
+
+        let query = `
+            ${_buildBaseCaseQuery()}
+            WHERE (${whereClauses.join(" OR ")})
+            AND C.istagged = true
+            AND C.casemanagerid = $${paramIndex}
+        `;
+        params.push(userId);
+        paramIndex++;
+
+        query += " ORDER BY C.createdat DESC, C.caseid DESC, CD.stage";
+
+        const result = await pool.query(query, params);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "לא נמצאו תיקים מתויגים עם שם זה" });
+        }
+        const mappedIds = [...new Set(result.rows.map(r => r.caseid))];
+        const caseUsersMap = await _fetchCaseUsers(mappedIds);
+        res.json(_mapCaseResults(result.rows, caseUsersMap));
+
+    } catch (error) {
+        console.error("Error retrieving tagged cases by name:", error);
+        res.status(500).json({ message: "שגיאה בשליפת תיקים מתויגים לפי שם" });
+    }
+};
+
+const linkWhatsappGroup = async (req, res) => {
+    const caseId = requireInt(req, res, { source: 'params', name: 'caseId', aliases: ['CaseId'] });
+    if (caseId === null) return;
+    const { WhatsappGroupLink } = req.body;
+
+    const raw = WhatsappGroupLink;
+    const normalized = typeof raw === "string" ? raw.trim() : raw;
+    const isEmpty = normalized === null || normalized === undefined || normalized === "";
+
+    // Allow clearing the link by sending empty/null.
+    if (!isEmpty) {
+        // Basic URL validation: accept https? links only.
+        // (We allow WhatsApp invite links like https://chat.whatsapp.com/...)
+        let parsed;
+        try {
+            parsed = new URL(String(normalized));
+        } catch {
+            return res.status(400).json({ message: "קישור קבוצת הוואטסאפ חייב להיות כתובת URL תקינה" });
+        }
+        if (!/^https?:$/.test(parsed.protocol)) {
+            return res.status(400).json({ message: "קישור קבוצת הוואטסאפ חייב להתחיל ב-http או https" });
+        }
+    }
+
+    try {
+        const caseDataResult = await pool.query(
+            "SELECT casename, userid FROM cases WHERE caseid = $1",
+            [caseId]
+        );
+
+        const caseName = caseDataResult.rows[0]?.casename;
+        const caseUserId = caseDataResult.rows[0]?.userid;
+
+        await pool.query(
+            `
+            UPDATE cases
+            SET whatsappgrouplink = $1, updatedat = NOW()
+            WHERE caseid = $2
+            `,
+            [isEmpty ? null : String(normalized), caseId]
+        );
+
+        if (!isEmpty) {
+            // Fetch all linked users from case_users
+            const linkedUsersResult = await pool.query(
+                `SELECT U.userid AS "UserId", U.name AS "Name", U.phonenumber AS "PhoneNumber"
+                 FROM case_users CU JOIN users U ON CU.userid = U.userid
+                 WHERE CU.caseid = $1`,
+                [caseId]
+            );
+
+            for (const u of linkedUsersResult.rows) {
+                const msg = `קבוצת וואטסאפ קושרה לתיק "${caseName}".`;
+                const caseTaggedTemplate = await getSetting('templates', 'CASE_TAGGED_SMS',
+                    'שלום {{recipientName}}, קבוצת וואטסאפ קושרה לתיק "{{caseName}}". {{websiteUrl}}');
+                await notifyRecipient({
+                    recipientUserId: u.UserId,
+                    notificationType: 'CASE_TAGGED',
+                    push: {
+                        title: 'קבוצת וואטסאפ מקושרת',
+                        body: msg,
+                        data: { caseId: String(caseId), type: 'whatsapp_group_linked' },
+                    },
+                    email: {
+                        campaignKey: 'CASE_TAGGED',
+                        contactFields: {
+                            case_title: String(caseName || '').trim(),
+                            action_url: String(normalized || '').trim(),
+                            recipient_name: String(u.Name || '').trim(),
+                        },
+                    },
+                    sms: {
+                        messageBody: renderTemplate(caseTaggedTemplate, {
+                            recipientName: String(u.Name || '').trim(),
+                            caseName: String(caseName || '').trim(),
+                            websiteUrl: String(normalized || '').trim(),
+                        }),
+                    },
+                });
+            }
+
+            // Notify case manager if not already notified as a linked user
+            const notifiedWaIds = new Set(linkedUsersResult.rows.map(u => u.UserId));
+            await notifyCaseManager({
+                caseId,
+                caseName,
+                title: 'קבוצת וואטסאפ מקושרת',
+                message: `קבוצת וואטסאפ קושרה לתיק "${caseName}".`,
+                smsBody: `קבוצת וואטסאפ קושרה לתיק "${caseName}".\n${String(normalized || '').trim()}`,
+                alreadyNotifiedUserIds: notifiedWaIds,
+                changedTypes: ['CASE_TAGGED'],
+            });
+        }
+
+        res.status(200).json({ message: "קישור קבוצת הוואטסאפ עודכן בהצלחה" });
+    } catch (error) {
+        console.error("Error linking Whatsapp group:", error);
+        res.status(500).json({ message: "שגיאה בקישור קבוצת הוואטסאפ" });
+    }
+};
+
+const getMyCases = async (req, res) => {
+    const userId = req.user?.UserId;
+    const role = req.user?.Role;
+
+    if (!userId) {
+        return res.status(401).json({ message: "נדרש להתחבר" });
+    }
+
+    if (role !== 'Admin' && role !== 'Lawyer') {
+        return res.status(403).json({ message: "אין הרשאה", code: 'FORBIDDEN' });
+    }
+
+    try {
+        const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
+        if (pagination === null) return;
+
+        if (!pagination.enabled) {
+            const query = `${_buildBaseCaseQuery()} WHERE C.casemanagerid = $1 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
+            const result = await pool.query(query, [userId]);
+            const ids = [...new Set(result.rows.map(r => r.caseid))];
+            const caseUsersMap = await _fetchCaseUsers(ids);
+            return res.json(_mapCaseResults(result.rows, caseUsersMap));
+        }
+
+        const { limit, offset } = pagination;
+
+        const idsQuery = `SELECT DISTINCT C.caseid
+                  FROM cases C
+                  WHERE C.casemanagerid = $1
+                  ORDER BY C.createdat DESC, C.caseid DESC
+                  LIMIT $2 OFFSET $3`;
+
+        const idsResult = await pool.query(idsQuery, [userId, limit, offset]);
+        const ids = idsResult.rows.map((r) => r.caseid);
+        if (ids.length === 0) return res.json([]);
+
+        const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) AND C.casemanagerid = $2 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
+        const result = await pool.query(detailsQuery, [ids, userId]);
+        const caseUsersMap = await _fetchCaseUsers(ids);
+        return res.json(_mapCaseResults(result.rows, caseUsersMap));
+    } catch (error) {
+        console.error("Error retrieving my cases:", error);
+        return res.status(500).json({ message: "שגיאה בשליפת התיקים שלי" });
+    }
+};
+
+/**
+ * Create scheduled license-renewal reminders for a case.
+ * Body: { caseId, licenseExpiryDate, intervals: ['4m','3m','2m','1m','2w'] }
+ */
+const createLicenseReminders = async (req, res) => {
+    const { caseId, licenseExpiryDate, intervals } = req.body;
+    const createdBy = req.user?.userid || null;
+
+    if (!caseId || !licenseExpiryDate || !Array.isArray(intervals) || intervals.length === 0) {
+        return res.status(400).json({ message: 'חסרים פרטים ליצירת תזכורות' });
+    }
+
+    const expiry = new Date(licenseExpiryDate);
+    if (isNaN(expiry.getTime())) {
+        return res.status(400).json({ message: 'תאריך תוקף לא תקין' });
+    }
+
+    // Map interval codes to millisecond offsets before expiry
+    const offsetMap = {
+        '4m': 4 * 30 * 24 * 60 * 60 * 1000,
+        '3m': 3 * 30 * 24 * 60 * 60 * 1000,
+        '2m': 2 * 30 * 24 * 60 * 60 * 1000,
+        '1m': 1 * 30 * 24 * 60 * 60 * 1000,
+        '2w': 14 * 24 * 60 * 60 * 1000,
+    };
+
+    const labelMap = {
+        '4m': '4 חודשים',
+        '3m': '3 חודשים',
+        '2m': 'חודשיים',
+        '1m': 'חודש',
+        '2w': 'שבועיים',
+    };
+
+    try {
+        // Fetch case details + linked users
+        const caseResult = await pool.query(
+            `SELECT c.caseid, c.casename, c.casemanagerid, c.casemanager,
+                    u.name AS client_name, u.email AS client_email
+             FROM cases c
+             LEFT JOIN case_users cu ON cu.caseid = c.caseid
+             LEFT JOIN users u ON u.userid = cu.userid
+             WHERE c.caseid = $1
+             LIMIT 1`,
+            [caseId]
+        );
+
+        if (!caseResult.rows.length) {
+            return res.status(404).json({ message: 'תיק לא נמצא' });
+        }
+
+        const caseRow = caseResult.rows[0];
+        const clientName = caseRow.client_name || caseRow.casename || 'לקוח';
+        const clientEmail = caseRow.client_email;
+
+        // Fetch platform admin emails for 2-week reminder
+        const adminRows = await getPlatformAdmins();
+
+        // Fetch case manager email
+        let managerEmail = null;
+        if (caseRow.casemanagerid) {
+            const mgrRes = await pool.query(
+                `SELECT email FROM users WHERE userid = $1`,
+                [caseRow.casemanagerid]
+            );
+            if (mgrRes.rows.length) managerEmail = mgrRes.rows[0].email;
+        }
+
+        const created = [];
+
+        for (const interval of intervals) {
+            const offset = offsetMap[interval];
+            if (!offset) continue;
+
+            const scheduledDate = new Date(expiry.getTime() - offset);
+            // Normalize to 08:00 Israel time (05:00 UTC)
+            scheduledDate.setUTCHours(5, 0, 0, 0);
+            // Don't create reminders in the past
+            if (scheduledDate <= new Date()) continue;
+
+            const label = labelMap[interval] || interval;
+            const subject = `תזכורת חידוש רישיון - ${caseRow.casename || 'תיק'} (${label} לפני)`;
+
+            // Determine recipients: client email + (for 2w: admin + manager)
+            const recipients = [];
+            if (clientEmail) recipients.push({ name: clientName, email: clientEmail });
+
+            if (interval === '2w') {
+                // Add admin emails
+                for (const admin of adminRows) {
+                    if (admin.email && !recipients.some(r => r.email === admin.email)) {
+                        recipients.push({ name: admin.name || 'מנהל', email: admin.email });
+                    }
+                }
+                // Add case manager
+                if (managerEmail && !recipients.some(r => r.email === managerEmail)) {
+                    recipients.push({ name: caseRow.casemanager || 'מנהל תיק', email: managerEmail });
+                }
+            }
+
+            for (const recipient of recipients) {
+                const expiryFormatted = expiry.toLocaleDateString('he-IL');
+                const { rows } = await pool.query(
+                    `INSERT INTO scheduled_email_reminders
+                        (user_id, client_name, to_email, subject, template_key, template_data, scheduled_for, created_by)
+                     VALUES (
+                        (SELECT userid FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1),
+                        $2, $1, $3, 'LICENSE_RENEWAL', $4, $5, $6
+                     )
+                     RETURNING *`,
+                    [
+                        recipient.email,
+                        recipient.name,
+                        subject,
+                        JSON.stringify({ client_name: recipient.name, date: expiryFormatted }),
+                        scheduledDate.toISOString(),
+                        createdBy,
+                    ]
+                );
+                if (rows.length) created.push(rows[0]);
+            }
+        }
+
+        return res.status(201).json({ ok: true, count: created.length, reminders: created });
+    } catch (error) {
+        console.error('Error creating license reminders:', error);
+        return res.status(500).json({ message: 'שגיאה ביצירת תזכורות' });
+    }
+};
+
+module.exports = {
+    getCases,
+    getMyCases,
+    getCaseById,
+    getCaseByName,
+    addCase,
+    updateCase,
+    updateStage,
+    deleteCase,
+    tagCase,
+    getTaggedCases,
+    getTaggedCasesByName,
+    linkWhatsappGroup,
+    createLicenseReminders,
+};

@@ -1,0 +1,114 @@
+@use '../../styles/variables' as v;
+
+.lw-simplePopUp__overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(45, 55, 72, 0);
+    align-items: center;
+    justify-content: center;
+    z-index: 20000;
+    transition: background-color 0.25s ease;
+
+    &.is-visible {
+        background-color: rgba(45, 55, 72, 0.75);
+    }
+}
+
+.lw-simplePopUp__overlay--transparent {
+    background-color: transparent !important;
+}
+
+
+.lw-simplePopUp__container {
+    position: relative;
+    background-color: var(--lw-color-white);
+    border-radius: 1rem;
+    box-shadow: 0 1.25rem 1.5625rem -0.3125rem rgba(0, 0, 0, 0.1),
+        0 0.625rem 0.625rem -0.3125rem rgba(0, 0, 0, 0.04);
+
+    padding: 1rem;
+    width: auto;
+    max-width: 90vw;
+    max-height: 85vh;
+    overflow: visible;
+
+    flex-direction: column;
+    align-items: center;
+
+    border: 0.0625rem solid rgba(226, 232, 240, 0.8);
+
+    // Enter/exit animation
+    opacity: 0;
+    transform: scale(0.92) translateY(0.5rem);
+    transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &.is-visible {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.lw-simplePopUp__container--floating {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    width: auto;
+    max-width: none;
+    max-height: none;
+    overflow: visible;
+}
+
+
+.lw-simplePopUp__close {
+    position: absolute;
+    top: -0.75rem;
+    left: -0.75rem;
+    z-index: 2;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background-color: var(--lw-color-white);
+    border: 0.0625rem solid rgba(226, 232, 240, 0.8);
+    box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.12);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
+    padding: 0;
+
+    &:hover {
+        background-color: #f1f5f9;
+        color: #334155;
+        box-shadow: 0 0.125rem 0.75rem rgba(0, 0, 0, 0.18);
+    }
+}
+
+.lw-simplePopUp__content {
+    flex-direction: column;
+    width: 100%;
+    min-inline-size: 0;
+    direction: rtl;
+    text-align: right;
+    gap: 0.5rem;
+    max-height: calc(85vh - 2rem);
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 40rem) {
+    .lw-simplePopUp__container {
+        width: calc(100vw - 1.25rem);
+        max-width: calc(100vw - 1.25rem);
+        padding: 0.75rem;
+        max-height: calc(100dvh - 1.5rem);
+    }
+
+    .lw-simplePopUp__content {
+        max-height: calc(100dvh - 3.5rem);
+    }
+}

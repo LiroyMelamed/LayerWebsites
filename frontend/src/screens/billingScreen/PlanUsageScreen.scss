@@ -1,0 +1,39 @@
+@use '../../styles/mixins' as m;
+@use '../../styles/variables' as v;
+
+.lw-planUsageScreen__card {
+    flex-direction: column;
+    margin-bottom: 1rem;
+}
+
+.lw-planUsageScreen__row {
+    display: flex;
+    gap: 1rem;
+    margin: 0.5rem 0;
+}
+
+.lw-planUsageScreen__label {
+    opacity: 0.8;
+}
+
+.lw-planUsageScreen__value {
+    font-weight: 600;
+    text-align: end;
+}
+
+.lw-planUsageScreen__meter {
+    flex-direction: column;
+    margin-top: 1rem;
+}
+
+.lw-planUsageScreen__storageDetail {
+    color: var(--lw-color-winter);
+    margin-block-start: 0.25rem;
+    font-style: italic;
+}
+
+.lw-planUsageScreen__upgradeButton {
+    margin-top: 0.75rem;
+    align-self: flex-end;
+    padding: 0.625rem 0.875rem;
+}

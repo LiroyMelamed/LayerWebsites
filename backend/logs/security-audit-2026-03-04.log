@@ -1,0 +1,2 @@
+{"timestamp":"2026-03-04T14:46:17.968Z","level":"WARN","type":"TOKEN_REFRESH_FAIL","ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36","success":false,"meta":{"reason":"invalid_token"}}
+{"timestamp":"2026-03-04T14:46:25.508Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***9064","userId":1017,"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36","success":true}

@@ -1,0 +1,160 @@
+@use '../../../styles/mixins' as m;
+@use '../../../styles/variables' as v;
+
+.lw-topToolBarSmallScreen {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 5rem;
+    width: 100%;
+    background-color: var(--lw-color-white);
+    box-shadow: -0.125rem 0 0.3125rem rgba(0, 0, 0, 0.1);
+}
+
+.lw-topToolBarSmallScreen__logoButton {
+    align-self: center;
+
+    // Responsive logo sizing (RTL-safe)
+    @include m.fluid-size(height, 40, 9vw, 56);
+    @include m.fluid-size(width, 160, 55vw, 320);
+}
+
+.lw-topToolBarSmallScreen__menuButton {
+    position: absolute;
+    z-index: 11112;
+    background: none;
+    border: none;
+    cursor: pointer;
+
+    inset-block-start: 0.75rem;
+    /* 1.25rem */
+    inset-inline-start: 0.5rem;
+    /* 1.25rem */
+}
+
+.lw-topToolBarSmallScreen__icon {
+    display: block;
+    font-size: 1.5rem;
+    /* 1.5rem */
+    transition: transform 0.3s ease, color 0.3s ease;
+    color: var(--lw-color-text);
+}
+
+.lw-topToolBarSmallScreen__icon--open {
+    transform: rotate(90deg);
+    color: var(--lw-color-white);
+}
+
+.lw-topToolBarSmallScreen__sidebar {
+    position: fixed;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+
+    width: 15.625rem;
+    /* 15.625rem */
+    height: 100%;
+    min-height: 100svh;
+
+    background-color: var(--lw-color-text);
+    flex-direction: column;
+    padding-block-start: 5rem;
+    /* 5rem */
+
+    z-index: 11111;
+    box-shadow: -0.125rem 0 0.3125rem rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    // Hidden by default — slide off-screen (inline-start direction)
+    transform: translateX(-100%);
+    pointer-events: none;
+
+    [dir="rtl"] & {
+        transform: translateX(100%);
+    }
+
+    &--open {
+        transform: translateX(0);
+        pointer-events: auto;
+
+        [dir="rtl"] & {
+            transform: translateX(0);
+        }
+    }
+}
+
+// Backdrop overlay
+.lw-topToolBarSmallScreen__backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 11110;
+    background: rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lw-topToolBarSmallScreen__backdrop--open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+// Staggered menu item entrance
+.lw-topToolBarSmallScreen__menuItem {
+    opacity: 0;
+    transform: translateX(-0.75rem);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+
+    [dir="rtl"] & {
+        transform: translateX(0.75rem);
+    }
+}
+
+.lw-topToolBarSmallScreen__sidebar--open .lw-topToolBarSmallScreen__menuItem {
+    opacity: 1;
+    transform: translateX(0);
+
+    [dir="rtl"] & {
+        transform: translateX(0);
+    }
+}
+
+.lw-topToolBarSmallScreen__scroll {
+    flex: 1;
+}
+
+.lw-topToolBarSmallScreen__sidebarContent {
+    flex: 1;
+    flex-direction: column;
+}
+
+.lw-topToolBarSmallScreen__languageWrap {
+    align-self: center;
+    margin-block: 0.75rem;
+}
+
+.lw-topToolBarSmallScreen__isoBadgeWrap {
+    display: flex;
+    justify-content: center;
+    margin-block: 0.5rem;
+}
+
+.lw-topToolBarSmallScreen__isoBadge {
+    width: 3rem;
+    height: auto;
+    opacity: 0.85;
+}
+
+.lw-topToolBarSmallScreen__logout {
+    align-self: center;
+    margin-block: 0.75rem 1.25rem;
+}
+
+.lw-topToolBarSmallScreen__logoutButton {
+    background-color: var(--lw-color-dark-red) !important;
+}
+
+/* Inside the native app the bottom nav covers the sidebar bottom */
+body.lw-fromApp .lw-topToolBarSmallScreen__sidebar {
+    // padding-bottom: 6rem;
+}

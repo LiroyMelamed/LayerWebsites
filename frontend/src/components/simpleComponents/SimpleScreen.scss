@@ -1,0 +1,40 @@
+@use '../../styles/variables' as v;
+
+.lw-simpleScreen {
+  display: flex;
+  flex-direction: row;
+  height: 100svh;
+  width: 100%;
+  position: relative;
+}
+
+.lw-simpleScreen__bg {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover !important;
+  z-index: 0;
+}
+
+
+.lw-simpleScreen__content {
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+  flex-direction: column;
+
+  width: 100%;
+  height: 100%;
+  margin-right: 0;
+  align-items: center;
+  overflow: hidden;
+}
+
+@media (min-width: v.$bp-lg) {
+  .lw-simpleScreen__content {
+    width: calc(100% - 15.625rem);
+    margin-right: 15.625rem;
+    align-items: flex-end;
+  }
+}

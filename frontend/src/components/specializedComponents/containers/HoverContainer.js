@@ -1,0 +1,176 @@
+import React, { useLayoutEffect, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import SimpleContainer from '../../simpleComponents/SimpleContainer';
+import SimpleLoader from '../../simpleComponents/SimpleLoader';
+import { Text20 } from '../text/AllTextKindFile';
+import SimpleButton from '../../simpleComponents/SimpleButton';
+import SimpleScrollView from '../../simpleComponents/SimpleScrollView';
+import { useTranslation } from 'react-i18next';
+
+import './HoverContainer.scss';
+
+const HoverContainer = ({
+    queryResult = [],
+    isPerforming,
+    getButtonTextFunction,
+    onPressButtonFunction,
+    query,
+    emptyActionText,
+    onEmptyAction,
+    targetRef,
+    onClose,
+    style: _style,
+    className,
+}) => {
+    const { t } = useTranslation();
+    const hoverRef = useRef(null);
+
+    // useLayoutEffect: runs after DOM commit but BEFORE browser paint.
+    // This guarantees hoverRef.current is set and getBoundingClientRect() is valid,
+    // and positions the element before the first visible frame (no flash at 0,0).
+    useLayoutEffect(() => {
+        const el = hoverRef.current;
+        if (!el) return;
+
+        const adjustPosition = () => {
+            const target = targetRef?.current;
+            const hover = hoverRef.current;
+            if (!target || !hover) return;
+
+            const targetRect = target.getBoundingClientRect();
+            const hoverWidth = hover.offsetWidth || hover.getBoundingClientRect().width;
+            const hoverHeight = hover.offsetHeight || hover.getBoundingClientRect().height;
+            // Prefer the visual viewport — on mobile webviews the on-screen keyboard
+            // shrinks it while window.innerHeight stays stale.
+            const vv = window.visualViewport;
+            const viewportWidth = vv?.width || window.innerWidth;
+            const viewportHeight = vv?.height || window.innerHeight;
+
+            const margin = 8;
+            const gap = 4;
+            const desiredLeft = targetRect.left + targetRect.width / 2 - hoverWidth / 2;
+            const left = Math.max(margin, Math.min(desiredLeft, viewportWidth - hoverWidth - margin));
+
+            const spaceBelow = viewportHeight - targetRect.bottom - margin;
+            const spaceAbove = targetRect.top - margin;
+            let top;
+
+            if (spaceBelow >= hoverHeight + gap || spaceBelow >= spaceAbove) {
+                top = targetRect.bottom + gap;
+                if (top + hoverHeight > viewportHeight - margin) {
+                    top = Math.max(margin, viewportHeight - hoverHeight - margin);
+                }
+            } else {
+                top = targetRect.top - hoverHeight - gap;
+                if (top < margin) {
+                    top = margin;
+                }
+            }
+
+            // Project convention: rem units (keeps browser font-size scaling consistent).
+            const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+            const toRem = (valuePx) => `${valuePx / rootFontSize}rem`;
+
+            hover.style.top = toRem(top);
+            hover.style.left = toRem(left);
+            hover.style.maxHeight = toRem(Math.max(120, viewportHeight - margin * 2));
+        };
+
+        adjustPosition();
+
+        window.addEventListener('resize', adjustPosition);
+        // Capture scroll from scrollable parents (e.g. inside a popup)
+        window.addEventListener('scroll', adjustPosition, true);
+
+        // Mobile webviews: opening the on-screen keyboard resizes/offsets the
+        // visual viewport without firing window resize/scroll — reposition then too.
+        const vv = window.visualViewport;
+        vv?.addEventListener('resize', adjustPosition);
+        vv?.addEventListener('scroll', adjustPosition);
+
+        // Reposition when the dropdown's own size changes (loader → results) or
+        // when the anchor input moves/resizes due to layout shifts.
+        let resizeObserver;
+        if (typeof ResizeObserver !== 'undefined') {
+            resizeObserver = new ResizeObserver(adjustPosition);
+            resizeObserver.observe(el);
+            if (targetRef?.current) resizeObserver.observe(targetRef.current);
+        }
+
+        return () => {
+            window.removeEventListener('resize', adjustPosition);
+            window.removeEventListener('scroll', adjustPosition, true);
+            vv?.removeEventListener('resize', adjustPosition);
+            vv?.removeEventListener('scroll', adjustPosition);
+            resizeObserver?.disconnect();
+        };
+    }, [targetRef, queryResult, isPerforming, query]);
+
+    // Separate effect for click-outside so it doesn't re-run just because onClose changes reference
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (hoverRef.current && !hoverRef.current.contains(event.target)) {
+                onClose();
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [onClose]);
+
+    return createPortal(
+        <SimpleContainer
+            ref={hoverRef}
+            className={['lw-hoverContainer', className].filter(Boolean).join(' ')}
+        >
+            <SimpleScrollView className="lw-hoverContainer__scroll">
+                {isPerforming ? (
+                    <SimpleContainer className="lw-hoverContainer__loading">
+                        <SimpleLoader />
+                    </SimpleContainer>
+                ) : (
+                    queryResult?.length > 0 ? (
+                        <SimpleContainer className="lw-hoverContainer__list">
+                            {queryResult.map((result, index) => (
+                                <SimpleButton
+                                    key={`choiceNumber${index}`}
+                                    className="lw-hoverContainer__option"
+                                    onPressIn={(e) => {
+                                        e.preventDefault();
+                                    }}
+                                    onPress={() => onPressButtonFunction(getButtonTextFunction?.(result), result)}
+                                >
+                                    <Text20 className="lw-hoverContainer__optionText">{getButtonTextFunction?.(result)}</Text20>
+                                </SimpleButton>
+
+                            ))}
+                        </SimpleContainer>
+                    ) : (
+                        (query?.trim?.() && emptyActionText && onEmptyAction) ? (
+                            <SimpleContainer className="lw-hoverContainer__list">
+                                <SimpleButton
+                                    className="lw-hoverContainer__option"
+                                    onPressIn={(e) => {
+                                        e.preventDefault();
+                                    }}
+                                    onPress={() => {
+                                        onEmptyAction(query);
+                                        onClose?.();
+                                    }}
+                                >
+                                    <Text20 className="lw-hoverContainer__optionText">{emptyActionText}</Text20>
+                                </SimpleButton>
+                            </SimpleContainer>
+                        ) : (
+                            <SimpleContainer className="lw-hoverContainer__noResults">
+                                <Text20 className="lw-hoverContainer__optionText">{t('common.noResultsFound')}</Text20>
+                            </SimpleContainer>
+                        )
+                    )
+                )}
+            </SimpleScrollView>
+        </SimpleContainer>,
+        document.body
+    );
+};
+
+export default HoverContainer;
