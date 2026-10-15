@@ -7,7 +7,7 @@ const request = require('supertest');
 const scope = require('../lib/tenant/databaseScope');
 const A = '11111111-1111-4111-8111-111111111111', B = '22222222-2222-4222-8222-222222222222';
 
-function setup(t) {
+function setup(t, { multiTenantMode = true } = {}) {
     const restored = [], calls = [];
     function stub(module, exports) {
         const id = require.resolve(module); restored.push([id, require.cache[id]]);
@@ -19,8 +19,8 @@ function setup(t) {
         if (sql.includes('FROM office_integrations')) return { rows: args[0] === '123456789' && args[1] === '987654321' ? [{ id: 'connection-a', law_firm_tenant_id: A }] : [] };
         return { rows: [A, B].includes(args?.[0]) ? [{ id: args[0] }] : [] };
     } });
-    stub('../lib/tenant/tenantContext', { isMultiTenantMode: () => true });
-    stub('../services/settingsService', { isPlatformAdmin: async id => id === 1 });
+    stub('../lib/tenant/tenantContext', { isMultiTenantMode: () => multiTenantMode });
+    stub('../services/settingsService', { isPlatformAdmin: async id => id === 1, getSetting: async () => 'MelamedLaw' });
     // Authentication is covered elsewhere. Here trusted identity fixtures exercise
     // the real platform-admin and route authorization/scope boundaries.
     stub('../middlewares/authMiddleware', (req, _res, next) => {
@@ -32,7 +32,7 @@ function setup(t) {
     });
     stub('../middlewares/requireFirmAction', () => (_req, _res, next) => next());
     stub('../lib/firmPermissions/caseAccess', { assertCaseRecordAccess: async () => null });
-    stub('../services/integrations/runtime', { service, worker: { receiveLifecycle: async (...args) => calls.push({ name: 'lifecycle', args, scope: scope.current() }) }, runOffice: (id, fn) => scope.withOffice(id, fn) });
+    stub('../services/integrations/runtime', { service, worker: { receiveLifecycle: async (...args) => calls.push({ name: 'lifecycle', args, scope: scope.current() }) }, runOffice: (id, fn) => id ? scope.withOffice(id, fn) : scope.withLegacyOffice(fn) });
     const routes = ['../routes/officeIntegrationsRoutes', '../routes/whatsappWebhookRoutes', '../middlewares/requirePlatformAdmin'];
     for (const name of routes) { const id = require.resolve(name); restored.push([id, require.cache[id]]); delete require.cache[id]; }
     const app = express();
@@ -66,6 +66,20 @@ test('only platform admin configures recipients; owner connects own office; staf
     await request(app).get('/integrations').set('x-test-identity', 'platform').expect(400);
     await request(app).get('/integrations/cases/1').set('x-test-identity', 'client').expect(403);
 });
+test('dedicated office can share the product name but foreign office selectors are rejected', async t => {
+    const { app, calls } = setup(t, { multiTenantMode: false });
+    const offices = await request(app).get('/integrations/offices').set('x-test-identity', 'platform').expect(200);
+    assert.deepEqual(offices.body.context.organization, { key: 'melamedia', name: 'MelaMedia' });
+    assert.deepEqual(offices.body.context.project, { key: 'melamedlaw', name: 'MelamedLaw' });
+    assert.deepEqual(offices.body.offices, [{ id: 'dedicated', name: 'MelamedLaw' }]);
+    await request(app).get('/integrations/settings?officeId=dedicated').set('x-test-identity', 'platform').expect(200);
+    assert.equal(calls.find(c => c.name === 'settingsSnapshot').args[0], null);
+    for (const officeId of [A, 'MelamedLaw', 'FitBase']) {
+        await request(app).put('/integrations/whatsapp').query({ officeId }).set('x-test-identity', 'platform').send({ enabled: true }).expect(404);
+    }
+    assert.equal(calls.filter(c => c.name === 'saveWhatsapp').length, 0);
+});
+
 test('webhook authenticates exact bytes and routes by both verified assets into office scope', async t => {
     const { app, calls } = setup(t);
     await request(app).get('/webhook').query({ 'hub.mode': 'subscribe', 'hub.verify_token': 'wrong', 'hub.challenge': 'challenge' }).expect(403);

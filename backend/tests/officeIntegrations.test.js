@@ -209,6 +209,28 @@ test('signup nonce is office/user bound, single-use; snapshots do not expose tok
     assert.equal((await service.snapshot(A)).whatsapp.connected, false);
     assert.equal((await service.snapshot(A)).whatsapp.enabled, false);
 });
+test('same-named offices retain independent grants, defaults and disconnect state', async t => {
+    const { service, pool, calls } = await fixture(t);
+    await pool.query("UPDATE law_firm_tenants SET name='MelamedLaw'");
+    await connect(service, A, '111111111', '111111112');
+    await connect(service, B, '222222221', '222222222');
+    await service.saveWhatsapp(A, { ...policy, recipients: ['0500000001'] });
+    await service.saveWhatsapp(B, { ...policy, recipients: ['0500000002'] });
+    const beforeA = await service.settingsSnapshot(A), beforeB = await service.settingsSnapshot(B);
+    assert.notEqual(beforeA.whatsapp.id, beforeB.whatsapp.id);
+    assert.deepEqual(beforeA.whatsapp.settings.recipients, ['+972500000001']);
+    assert.deepEqual(beforeB.whatsapp.settings.recipients, ['+972500000002']);
+    const records = (await pool.query("SELECT * FROM office_integrations WHERE provider='whatsapp' ORDER BY law_firm_tenant_id")).rows;
+    assert.notEqual(records[0].secret_ciphertext, records[1].secret_ciphertext);
+    assert.throws(() => secrets.open(records[0].secret_ciphertext, `${B}:${records[1].id}:whatsapp`, env));
+    const pending = await service.startSignup(B, 1);
+    await assert.rejects(service.completeSignup(A, 1, { state: pending.state }), { errorCode: 'INVALID_SIGNUP_STATE' });
+    await service.disconnectWhatsapp(A);
+    assert.equal((await service.settingsSnapshot(A)).whatsapp.connected, false);
+    assert.deepEqual((await service.settingsSnapshot(B)).whatsapp, beforeB.whatsapp);
+    assert.equal(calls.length, 0, 'No messaging provider calls');
+});
+
 test('live group lifecycle is routed by office/phone/request, retries do not duplicate groups or invitations', async t => {
     const { service, pool, worker, calls } = await fixture(t);
     await connect(service);
