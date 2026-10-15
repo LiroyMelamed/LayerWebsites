@@ -1,10 +1,25 @@
-# lw-spa-perf — gzip only (location blocks stay in each tenant vhost)
+# lw-spa-perf — gzip + brotli (location blocks stay in each tenant vhost)
 gzip on;
 gzip_vary on;
 gzip_proxied any;
 gzip_comp_level 5;
 gzip_min_length 256;
 gzip_types
+    text/plain
+    text/css
+    text/javascript
+    application/javascript
+    application/json
+    application/xml
+    image/svg+xml;
+
+# Requires libnginx-mod-http-brotli-{filter,static} on the frontend VPS.
+# Static SPA assets: serve pre-compressed *.br when present (see apply-nginx-perf script).
+brotli on;
+brotli_static on;
+brotli_comp_level 6;
+brotli_min_length 256;
+brotli_types
     text/plain
     text/css
     text/javascript

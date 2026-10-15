@@ -11,7 +11,7 @@
 #   - SSH key: ~/.ssh/id_ed25519 (or SSH_KEY)
 #   - MelamedLaw FTP: frontend/.env.ftp.local
 #   - All tenant branches pushed to origin (MelamedLaw, MorLevi, AshrafEssa, Melamedia, Idm)
-#   - Never run `pm2 restart all`
+#   - Never run `pm2 restart all` — each tenant uses rolling restart + /health wait
 #
 set -euo pipefail
 
