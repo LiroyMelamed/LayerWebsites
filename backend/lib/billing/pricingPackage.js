@@ -1,0 +1,295 @@
+/**
+ * Commercial package catalog — keep in sync with
+ * frontend/src/components/pricing/pricingConfig.js
+ */
+
+const PRICING = {
+    currency: 'ILS',
+    system: { id: 'system', label: 'מערכת', amount: 296 },
+    platforms: [
+        { id: 'none', label: 'ללא', amount: 0 },
+        { id: 'site', label: 'אתר', amount: 152 },
+        { id: 'app', label: 'אפליקציה', amount: 194 },
+        { id: 'site_app', label: 'אתר + אפליקציה', amount: 296 },
+    ],
+    resources: [
+        { id: 'basic', label: 'בסיסי', amount: 84, storageMb: 250, usersQuota: 2, planKey: 'BASIC' },
+        { id: 'pro', label: 'פרו', amount: 211, storageMb: 1024, usersQuota: 5, planKey: 'PRO' },
+        { id: 'enterprise', label: 'ארגוני', amount: 592, storageMb: null, usersQuota: null, planKey: 'ENTERPRISE' },
+    ],
+    signing: [
+        { id: 'none', label: 'ללא חתימות', amount: 0, includedSignatures: 0 },
+        { id: '500', label: '500 חתימות', amount: 169, includedSignatures: 500 },
+        { id: '1500', label: '1500 חתימות', amount: 338, includedSignatures: 1500 },
+        { id: '5000', label: '5000 חתימות', amount: 677, includedSignatures: 5000 },
+        { id: 'unlimited', label: 'חתימות ללא הגבלה', amount: 1101, includedSignatures: null },
+    ],
+};
+
+/** SMS monthly caps by resource pack. Enterprise is capped (not unlimited). */
+const RESOURCE_SMS_MONTHLY_QUOTA = {
+    basic: 200,
+    pro: 2000,
+    enterprise: 5000,
+};
+
+const DEFAULT_SELECTION = {
+    platformId: 'site_app',
+    resourceId: 'pro',
+    signingId: '500',
+};
+
+const YEARLY_DISCOUNT_RATE = 0.10;
+
+function normalizeBillingInterval(value) {
+    return String(value || '').trim().toLowerCase() === 'yearly' ? 'yearly' : 'monthly';
+}
+
+function yearlyTotalIls(monthlyAmount) {
+    const monthly = Number(monthlyAmount || 0);
+    if (!Number.isFinite(monthly) || monthly <= 0) return 0;
+    return Math.round(monthly * 12 * (1 - YEARLY_DISCOUNT_RATE));
+}
+
+function yearlySavingsIls(monthlyAmount) {
+    const monthly = Number(monthlyAmount || 0);
+    if (!Number.isFinite(monthly) || monthly <= 0) return 0;
+    return Math.round(monthly * 12) - yearlyTotalIls(monthly);
+}
+
+function findById(list, id, fallbackId) {
+    return list.find((x) => x.id === id) || list.find((x) => x.id === fallbackId) || list[0];
+}
+
+function resolvePricingLineItems({ platformId, resourceId, signingId } = {}) {
+    const platform = findById(PRICING.platforms, platformId, DEFAULT_SELECTION.platformId);
+    const resource = findById(PRICING.resources, resourceId, DEFAULT_SELECTION.resourceId);
+    const signing = findById(PRICING.signing, signingId, DEFAULT_SELECTION.signingId);
+    const system = PRICING.system;
+
+    const breakdown = [
+        { id: 'system', label: system.label, amount: Number(system.amount || 0) },
+        { id: 'platform', label: `פלטפורמה: ${platform.label}`, amount: Number(platform.amount || 0) },
+        { id: 'resources', label: `חבילת משאבים: ${resource.label}`, amount: Number(resource.amount || 0) },
+        { id: 'signing', label: `חבילת חתימות: ${signing.label}`, amount: Number(signing.amount || 0) },
+    ];
+    const total = breakdown.reduce((sum, it) => sum + Number(it.amount || 0), 0);
+
+    return {
+        platformId: platform.id,
+        resourceId: resource.id,
+        signingId: signing.id,
+        system,
+        platform,
+        resource,
+        signing,
+        breakdown,
+        total,
+        yearlyTotal: yearlyTotalIls(total),
+        yearlySavings: yearlySavingsIls(total),
+        currency: PRICING.currency,
+        displayName: `${resource.label} · ${platform.label} · ${signing.label}`,
+    };
+}
+
+function quotasForPackage({ resourceId, signingId } = {}) {
+    const resource = findById(PRICING.resources, resourceId, DEFAULT_SELECTION.resourceId);
+    const signing = findById(PRICING.signing, signingId, DEFAULT_SELECTION.signingId);
+    const storageMb = resource.storageMb;
+    return {
+        planKey: resource.planKey,
+        planName: resource.label,
+        documentsMonthlyQuota: signing.includedSignatures,
+        storageMbQuota: storageMb,
+        usersQuota: resource.usersQuota,
+        otpSmsMonthlyQuota: Object.prototype.hasOwnProperty.call(RESOURCE_SMS_MONTHLY_QUOTA, resource.id)
+            ? RESOURCE_SMS_MONTHLY_QUOTA[resource.id]
+            : null,
+        storageBytesQuota:
+            storageMb == null ? null : Number(storageMb) * 1024 * 1024,
+    };
+}
+
+function platformRank(platformId) {
+    const id = String(platformId || '');
+    if (id === 'site_app') return 2;
+    if (id === 'site' || id === 'app') return 1;
+    return 0;
+}
+
+function quotaExceeded(used, quota) {
+    if (quota === null || quota === undefined) return false;
+    const q = Number(quota);
+    if (!Number.isFinite(q) || q < 0) return false;
+    const u = Number(used || 0);
+    return u > q;
+}
+
+const SIGNING_FLOOR_ID = '500';
+
+function signingRank(signingId) {
+    const idx = PRICING.signing.findIndex((s) => s.id === signingId);
+    return idx < 0 ? 0 : idx;
+}
+
+/**
+ * Cheapest pack that fits current usage.
+ * Platform stays as-is (already deployed). Signing never drops below 500.
+ * Resource considers seats, storage, and SMS volume.
+ */
+function recommendCheapestPackage({ current, usage } = {}) {
+    const cur = resolvePricingLineItems(current || DEFAULT_SELECTION);
+    const platformId = cur.platformId;
+    const smsUsed = Number(usage?.sms?.sentThisMonth || 0);
+
+    let resourceId = 'enterprise';
+    for (const resource of PRICING.resources) {
+        const ev = evaluatePackageChange({
+            current: cur,
+            next: { platformId, resourceId: resource.id, signingId: cur.signingId },
+            usage,
+        });
+        const smsOk = !quotaExceeded(smsUsed, RESOURCE_SMS_MONTHLY_QUOTA[resource.id]);
+        if (ev.allowed && smsOk) {
+            resourceId = resource.id;
+            break;
+        }
+    }
+
+    const floorRank = signingRank(SIGNING_FLOOR_ID);
+    let signingId = 'unlimited';
+    for (const signing of PRICING.signing) {
+        if (signingRank(signing.id) < floorRank) continue;
+        const ev = evaluatePackageChange({
+            current: cur,
+            next: { platformId, resourceId, signingId: signing.id },
+            usage,
+        });
+        if (ev.allowed) {
+            signingId = signing.id;
+            break;
+        }
+    }
+
+    const recommended = resolvePricingLineItems({ platformId, resourceId, signingId });
+    return {
+        current: cur,
+        recommended,
+        changed:
+            cur.platformId !== recommended.platformId
+            || cur.resourceId !== recommended.resourceId
+            || cur.signingId !== recommended.signingId,
+    };
+}
+
+/**
+ * Cheaper resource/signing packs are blocked when current usage would not fit.
+ * Platform add-on cannot be decreased (already deployed).
+ */
+function evaluatePackageChange({ current, next, usage } = {}) {
+    const cur = resolvePricingLineItems(current || {});
+    const nxt = resolvePricingLineItems(next || {});
+    const nextQuotas = quotasForPackage(nxt);
+    const blocks = [];
+    if (!['site', 'app', 'site_app'].includes(next?.platformId)) {
+        blocks.push({ field: 'platformId', message: 'יש לבחור אתר, אפליקציה או אתר ואפליקציה. אין חבילה ללא פלטפורמה.' });
+    }
+
+    if (platformRank(nxt.platformId) < platformRank(cur.platformId)) {
+        blocks.push({
+            field: 'platformId',
+            message: 'לא ניתן להוריד את חבילת האתר/האפליקציה — היא כבר פרוסה אצלכם.',
+        });
+    }
+
+    const docsUsed = Number(usage?.documents?.createdThisMonth || 0);
+    const seatsUsed = Number(usage?.seats?.used || 0);
+    const storageBytes = Number(usage?.storage?.bytesTotal || 0);
+    const smsUsed = Number(usage?.sms?.sentThisMonth || 0);
+
+    if (quotaExceeded(docsUsed, nextQuotas.documentsMonthlyQuota)) {
+        blocks.push({
+            field: 'signingId',
+            message: `לא ניתן לרדת בחבילת החתימות: השתמשתם ב-${docsUsed} מסמכים החודש, והחבילה כוללת ${nextQuotas.documentsMonthlyQuota}.`,
+        });
+    }
+    if (quotaExceeded(seatsUsed, nextQuotas.usersQuota)) {
+        blocks.push({
+            field: 'resourceId',
+            message: `לא ניתן לרדת בחבילת המשאבים: יש ${seatsUsed} מנהלי מערכת, והחבילה מאפשרת ${nextQuotas.usersQuota}.`,
+        });
+    }
+    if (quotaExceeded(storageBytes, nextQuotas.storageBytesQuota)) {
+        const usedMb = (storageBytes / (1024 * 1024)).toFixed(1);
+        blocks.push({
+            field: 'resourceId',
+            message: `לא ניתן לרדת בחבילת המשאבים: בשימוש ${usedMb} MB, והחבילה כוללת ${nextQuotas.storageMbQuota} MB.`,
+        });
+    }
+    if (quotaExceeded(smsUsed, nextQuotas.otpSmsMonthlyQuota)) {
+        blocks.push({
+            field: 'resourceId',
+            message: `לא ניתן לרדת בחבילת המשאבים: נשלחו ${smsUsed} SMS החודש, והחבילה כוללת ${nextQuotas.otpSmsMonthlyQuota}.`,
+        });
+    }
+
+    return {
+        allowed: blocks.length === 0,
+        blocks,
+        current: cur,
+        next: nxt,
+        nextQuotas,
+        priceIncreased: nxt.total > cur.total,
+        priceDecreased: nxt.total < cur.total,
+    };
+}
+
+function disabledOptionsForUsage({ current, usage } = {}) {
+    const cur = resolvePricingLineItems(current || {});
+    const resourceIds = [];
+    const signingIds = [];
+    const platformIds = [];
+
+    for (const p of PRICING.platforms) {
+        const ev = evaluatePackageChange({
+            current: cur,
+            next: { ...cur, platformId: p.id },
+            usage,
+        });
+        if (!ev.allowed) platformIds.push(p.id);
+    }
+    for (const r of PRICING.resources) {
+        const ev = evaluatePackageChange({
+            current: cur,
+            next: { ...cur, resourceId: r.id },
+            usage,
+        });
+        if (!ev.allowed) resourceIds.push(r.id);
+    }
+    for (const s of PRICING.signing) {
+        const ev = evaluatePackageChange({
+            current: cur,
+            next: { ...cur, signingId: s.id },
+            usage,
+        });
+        if (!ev.allowed) signingIds.push(s.id);
+    }
+
+    return { platformIds, resourceIds, signingIds };
+}
+
+module.exports = {
+    PRICING,
+    DEFAULT_SELECTION,
+    RESOURCE_SMS_MONTHLY_QUOTA,
+    YEARLY_DISCOUNT_RATE,
+    normalizeBillingInterval,
+    yearlyTotalIls,
+    yearlySavingsIls,
+    resolvePricingLineItems,
+    quotasForPackage,
+    platformRank,
+    evaluatePackageChange,
+    disabledOptionsForUsage,
+    recommendCheapestPackage,
+};

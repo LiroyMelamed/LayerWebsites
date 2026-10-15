@@ -1,0 +1,59 @@
+const { createAppError } = require('../utils/appError');
+const { getHebrewMessage } = require('../utils/errors.he');
+const settingsService = require('../services/settingsService');
+const { isMultiTenantMode } = require('../lib/tenant/tenantContext');
+const dbScope = require('../lib/tenant/databaseScope');
+
+function parseAllowlist() {
+    const raw = String(process.env.PLATFORM_ADMIN_USER_IDS || '').trim();
+    if (!raw) return null;
+    const ids = raw
+        .split(',')
+        .map((s) => Number(String(s).trim()))
+        .filter((n) => Number.isFinite(n) && n > 0);
+    return ids.length > 0 ? new Set(ids) : null;
+}
+
+const allowlistSet = parseAllowlist();
+
+module.exports = async function requirePlatformAdmin(req, _res, next) {
+    const userId = Number(req.user?.UserId);
+    const role = req.user?.ProfessionalRole || req.user?.Role;
+
+    if (!Number.isFinite(userId) || userId <= 0) {
+        return next(createAppError('UNAUTHORIZED', 401, getHebrewMessage('AUTH_REQUIRED')));
+    }
+
+    if (role !== 'Admin') {
+        return next(createAppError('FORBIDDEN', 403, getHebrewMessage('FORBIDDEN')));
+    }
+
+    if (isMultiTenantMode()) {
+        try {
+            if (req.firmTenantId || !await settingsService.isPlatformAdmin(userId)) {
+                return next(createAppError('FORBIDDEN', 403, getHebrewMessage('FORBIDDEN')));
+            }
+            return dbScope.withSystem(next);
+        } catch (error) { return next(error); }
+    }
+
+    // Check DB-based platform_admins table first (async)
+    try {
+        const isAdmin = await settingsService.isPlatformAdmin(userId);
+        if (isAdmin) return next();
+    } catch {
+        // If DB check fails, fall through to env-based allowlist
+    }
+
+    // Fallback: env-based allowlist
+    const isProd = String(process.env.NODE_ENV || '').toLowerCase() === 'production';
+    if (isProd && !allowlistSet) {
+        return next(createAppError('FORBIDDEN', 403, 'רשימת מנהלי פלטפורמה לא הוגדרה'));
+    }
+
+    if (allowlistSet && !allowlistSet.has(userId)) {
+        return next(createAppError('FORBIDDEN', 403, getHebrewMessage('FORBIDDEN')));
+    }
+
+    return next();
+};

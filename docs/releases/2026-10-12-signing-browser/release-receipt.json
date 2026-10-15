@@ -1,0 +1,212 @@
+{
+  "web": [
+    {
+      "tenant": "melamedlaw",
+      "candidate": "f22bc0e1549a2767c208ced645fe9321feebb82f",
+      "publicIndexSha256": "43ff4d00ea3b5d054ce9aa54abc0328ad1ec79a58f3e86f0361acd4ac6a5c5a8",
+      "backendControllerSha256": "7c3652d6e22ca13652f376b7c9882a4b37e7e5e27037240ed7fc7be1986942b7",
+      "health": 200,
+      "databaseMigrations": 0,
+      "realTestMessages": 0,
+      "evidence": {
+        "outputs/signing-link-20261012/rollout03/melamedlaw-frontend-receipt.json": "2ef7c6d736081bcd946463060ffb9617465e29dab85bc94a750eb1ef56adea56",
+        "outputs/signing-link-20261012/backend03/melamedlaw-receipt.json": "2f5ef5d779c8268362e78fdee310aa20fec847ea6d24c6ae112d73c7d3a7841b"
+      }
+    },
+    {
+      "tenant": "morlevy",
+      "candidate": "308b671e70d9e2ad69882559a99fb7abcd1ead2c",
+      "publicIndexSha256": "1dc229b552ed823620846e236398e6e71d8c208dd38f53059ae52a762537f535",
+      "backendControllerSha256": "7c3652d6e22ca13652f376b7c9882a4b37e7e5e27037240ed7fc7be1986942b7",
+      "health": 200,
+      "databaseMigrations": 0,
+      "realTestMessages": 0,
+      "evidence": {
+        "outputs/signing-link-20261012/rollout03/morlevy-frontend-receipt.json": "a3a74a186f6d0c74d329b4a0dd805a24fa4a3c0c81a15c1182d211967412e697",
+        "outputs/signing-link-20261012/backend03/morlevy-receipt.json": "4cc1689381aea8a6afa6698488e9fa432ba524848923173986d132470b172157"
+      }
+    },
+    {
+      "tenant": "ashrafessa",
+      "candidate": "73db0186efb312c40edc8388e16f28232aa4f22a",
+      "publicIndexSha256": "56d8ca6f9331e1e2e2ee8ee3b09758b4588f3c6fa9892a12f80e8a07d91101b3",
+      "backendControllerSha256": "7c3652d6e22ca13652f376b7c9882a4b37e7e5e27037240ed7fc7be1986942b7",
+      "health": 200,
+      "databaseMigrations": 0,
+      "realTestMessages": 0,
+      "evidence": {
+        "outputs/signing-link-20261012/rollout03/ashrafessa-frontend-receipt.json": "6a1802c8aaa7e81505dc64014d6caa15499b8510dcf28b9964b7de7cb944bac8",
+        "outputs/signing-link-20261012/backend03/ashrafessa-receipt.json": "1c9e5e4ff8f4c16cde273c87ca4130a6c1e9e582c3f11e090415a1797fb49f6a"
+      }
+    },
+    {
+      "tenant": "idm",
+      "candidate": "ee6f4ae8bcb55579855ee30c16980b2edbc3ca03",
+      "publicIndexSha256": "016d1f230cf208f6138372dbf4b122068d506ac242b3bc02f492a09be5608378",
+      "backendControllerSha256": "7c3652d6e22ca13652f376b7c9882a4b37e7e5e27037240ed7fc7be1986942b7",
+      "health": 200,
+      "databaseMigrations": 0,
+      "realTestMessages": 0,
+      "evidence": {
+        "outputs/signing-link-20261012/rollout03/idm-frontend-receipt.json": "17ce4af645f3448cf6f81476d64a9529cda4b75c7cb257984b7580d7ab0db709",
+        "outputs/signing-link-20261012/backend03/idm-receipt.json": "4c419ae8a7e78e4464edcb63799ec14953103aad968f1b187affb68b55d19485"
+      }
+    },
+    {
+      "tenant": "melamedia",
+      "candidate": "4c0e7b0f6db019c70e4a4149ded831c8fb6b5814",
+      "publicIndexSha256": "3b70f90e81215a6e9264db750f7b9b211c926b37cec201d2cafe610278b1bbd7",
+      "backendControllerSha256": "7c3652d6e22ca13652f376b7c9882a4b37e7e5e27037240ed7fc7be1986942b7",
+      "health": 200,
+      "databaseMigrations": 0,
+      "realTestMessages": 0,
+      "evidence": {
+        "outputs/signing-link-20261012/rollout03/melamedia-frontend-receipt.json": "0bacc96535a2df9035ae7af5492bbc0cd8b7cf594b5cf9c5dca9a3451bf40971",
+        "outputs/signing-link-20261012/backend03/melamedia-receipt.json": "feed1c33b5eb5564673fe400ee60d7a0788a943bcd2a7282ebf6a23e719a0cc1"
+      }
+    },
+    {
+      "tenant": "lawyer",
+      "candidate": "edcf91d30eab98985c458b47bfd75aa30b953808",
+      "publicIndexSha256": "4ddab67770a727d3e0b8b9043b336ed59bdb8c90bbd3a152675e72596d5f68f3",
+      "backendControllerSha256": "e82ead684bce0edc16c12385cacc0732729220e85715b2586164993cfd253fa1",
+      "health": 200,
+      "databaseMigrations": 0,
+      "realTestMessages": 0,
+      "evidence": {
+        "outputs/signing-link-20261012/rollout04/lawyer-frontend-receipt.json": "3e8357f6cae14fc8515788ef6a2fb2de1dadb94ec3b09de04fb453e4197e14fb",
+        "outputs/signing-link-20261012/backend04/lawyer-receipt.json": "4d24f45ebe479aaac24082247f5f15709207f1738e9ac7af03b740162dddff66"
+      }
+    }
+  ],
+  "native": [
+    {
+      "tenant": "melamedlaw-compat",
+      "candidate": "5af9154c3f7355dac6a3920e5ed2af7770932978",
+      "runtime": "1.0.9",
+      "projectId": "addf6c5b-7571-41fb-b6d3-cfd6412ede99",
+      "group": "80271d60-84b3-4bcc-9d64-4fa76754eb9d",
+      "updates": [
+        {
+          "id": "01a12f84-3e21-75cc-b0b8-0638cd90ec97",
+          "group": "80271d60-84b3-4bcc-9d64-4fa76754eb9d",
+          "platform": "ios",
+          "runtimeVersion": "1.0.9",
+          "gitCommitHash": "5af9154c3f7355dac6a3920e5ed2af7770932978",
+          "createdAt": "2026-10-12T09:49:18.241Z"
+        },
+        {
+          "id": "01a12f84-3e21-7f2a-80ee-b91174271883",
+          "group": "80271d60-84b3-4bcc-9d64-4fa76754eb9d",
+          "platform": "android",
+          "runtimeVersion": "1.0.9",
+          "gitCommitHash": "5af9154c3f7355dac6a3920e5ed2af7770932978",
+          "createdAt": "2026-10-12T09:49:18.241Z"
+        }
+      ]
+    },
+    {
+      "tenant": "melamedlaw",
+      "candidate": "56b7c8923822e0e179a15726fbdba873d8d0e3a6",
+      "runtime": "1.0.11",
+      "projectId": "addf6c5b-7571-41fb-b6d3-cfd6412ede99",
+      "group": "ae7834bc-100f-4172-b8a5-f32265a84c23",
+      "updates": [
+        {
+          "id": "01a12f84-9647-75c0-aff0-67d40b959efc",
+          "group": "ae7834bc-100f-4172-b8a5-f32265a84c23",
+          "platform": "ios",
+          "runtimeVersion": "1.0.11",
+          "gitCommitHash": "56b7c8923822e0e179a15726fbdba873d8d0e3a6",
+          "createdAt": "2026-10-12T09:49:40.807Z"
+        },
+        {
+          "id": "01a12f84-9647-7cca-8cfa-f4fdbb5cac0d",
+          "group": "ae7834bc-100f-4172-b8a5-f32265a84c23",
+          "platform": "android",
+          "runtimeVersion": "1.0.11",
+          "gitCommitHash": "56b7c8923822e0e179a15726fbdba873d8d0e3a6",
+          "createdAt": "2026-10-12T09:49:40.807Z"
+        }
+      ]
+    },
+    {
+      "tenant": "morlevi",
+      "candidate": "f7f7a178ffcb7dbd29437815bd1bdf00906148e3",
+      "runtime": "1.0.5",
+      "projectId": "d611c3ba-46e3-4548-aced-950de568caf2",
+      "group": "811c132a-a3de-43d9-9b0b-5b09f2717def",
+      "updates": [
+        {
+          "id": "01a12f85-b6d7-7630-be0c-74adfe7935d6",
+          "group": "811c132a-a3de-43d9-9b0b-5b09f2717def",
+          "platform": "ios",
+          "runtimeVersion": "1.0.5",
+          "gitCommitHash": "f7f7a178ffcb7dbd29437815bd1bdf00906148e3",
+          "createdAt": "2026-10-12T09:50:54.679Z"
+        },
+        {
+          "id": "01a12f85-b6d7-7750-91d6-956f9be19a5f",
+          "group": "811c132a-a3de-43d9-9b0b-5b09f2717def",
+          "platform": "android",
+          "runtimeVersion": "1.0.5",
+          "gitCommitHash": "f7f7a178ffcb7dbd29437815bd1bdf00906148e3",
+          "createdAt": "2026-10-12T09:50:54.679Z"
+        }
+      ]
+    },
+    {
+      "tenant": "ashrafessa",
+      "candidate": "00104d91b6d96c72cf3cee400dc03226fd4d3a95",
+      "runtime": "1.0.8",
+      "projectId": "ceb1c9db-aebe-41e6-9765-b6b2add96835",
+      "group": "50099843-7394-4067-9cac-ed9d041e171b",
+      "updates": [
+        {
+          "id": "01a12f86-0ec1-7f32-95da-9c8c2c8fba6c",
+          "group": "50099843-7394-4067-9cac-ed9d041e171b",
+          "platform": "ios",
+          "runtimeVersion": "1.0.8",
+          "gitCommitHash": "00104d91b6d96c72cf3cee400dc03226fd4d3a95",
+          "createdAt": "2026-10-12T09:51:17.185Z"
+        },
+        {
+          "id": "01a12f86-0ec1-7774-ad28-0ac81ec2c59a",
+          "group": "50099843-7394-4067-9cac-ed9d041e171b",
+          "platform": "android",
+          "runtimeVersion": "1.0.8",
+          "gitCommitHash": "00104d91b6d96c72cf3cee400dc03226fd4d3a95",
+          "createdAt": "2026-10-12T09:51:17.185Z"
+        }
+      ]
+    }
+  ],
+  "tests": {
+    "geometryAndRealPdfRenderer": 51,
+    "focusedUiUnique": 35,
+    "databasePdfIntegrationIncludingNested": 12,
+    "releaseGuard": 4,
+    "nativeBoundary": 4
+  },
+  "testLimits": [
+    "No real SMS/email/push test messages",
+    "No claim that every installed device has already downloaded the OTA",
+    "Legacy LawyerPlatform keeps its independent feature lineage; modern package guards applied to five modern builds"
+  ],
+  "failedAttemptsRetained": [
+    "deep-signing-ui01 (PDF error callback)",
+    "deep-signing-integration01 (missing isolated schema)",
+    "browser fixture CSP/build setup",
+    "native-compat-export01 (incumbent secondary button import)",
+    "legacy03 source drift then rollback/preserve/rebase04"
+  ],
+  "rootCauses": [
+    "Reported transaction was processed by MelamedLaw native build9/runtime1.0.9; the latest published correction had targeted1.0.11 only.",
+    "Customer web/signing runtime hashes matched their Git/deployment artifacts; no broad web rollback.",
+    "Main branch lacked previously shipped signing corrections:39 absent and26 divergent runtime files. Restored as a merge, preserving prior commits."
+  ],
+  "ownerLinkReadbackEvidence": {
+    "live-owner-browser03.json": "b3f8ab5221268421e2c75a74fe500897767e1e7ae10941b743e99d94d0db4003",
+    "live-owner-desktop03.json": "56ee44eabd557faeec7af75ed6cbf5fc6197c6b4aad8a2285827b710258decf0"
+  }
+}
