@@ -1,5 +1,6 @@
 const pool = require('../../config/db');
 const C = require('./constants');
+const { fetchTeamActivity } = require('./teamActivity');
 const { personalCalendarSql } = require('../../lib/calendarVisibility');
 const { isPlatformAdmin } = require('../settingsService');
 const {
@@ -792,6 +793,7 @@ async function buildManagerHomePayload({ userId } = {}) {
         casesOpenedTodayList,
         casesClosedTodayList,
         todayActivityLog,
+        teamActivity,
     ] = await Promise.all([
         fetchManagerGreeting(userId),
         fetchOpenCasesWithActivity(),
@@ -808,6 +810,7 @@ async function buildManagerHomePayload({ userId } = {}) {
         fetchCasesOpenedTodayList(),
         fetchCasesClosedTodayList(),
         fetchTodayActivityLog(),
+        fetchTeamActivity(pool),
     ]);
 
     const attentionItems = buildAttentionItems({
@@ -831,6 +834,7 @@ async function buildManagerHomePayload({ userId } = {}) {
             managerName: greeting.managerName,
         },
         summary,
+        teamActivity,
         firmStats: {
             ...firmDailyStats,
             openCases: caseRows.length,

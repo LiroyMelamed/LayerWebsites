@@ -235,6 +235,10 @@ function buildFactsSnapshot(payload, { now = new Date(), includeManagerWorkload 
         contextNow,
         managerName: payload?.greeting?.managerName || null,
         insights,
+        businessPerformance: Object.fromEntries(['today', 'week', 'month'].flatMap(period => {
+            const value = payload?.teamActivity?.periods?.[period];
+            return value ? [[period, { casesOpened: value.casesOpened, casesClosed: value.casesClosed }]] : [];
+        })),
         summary: {
             urgentCount: summary.urgentCount || 0,
             needsAttentionCount: summary.needsAttentionCount || 0,
@@ -312,10 +316,14 @@ function buildPrompt(facts, { includeManagerWorkload = true } = {}) {
         {
             role: 'system',
             content: [
-                'אתה אנalist תפעולי למשרד עורכי דין.',
+                'אתה יועץ עסקי למשרד עורכי דין. עזור לבעל המשרד לקבל החלטה מעשית על שירות, קיבולת וקצב העבודה.',
                 'קיבלת JSON עם נתונים תפעוליים בלבד מהמערכת, כולל שדה insights עם ניתוח מובנה.',
-                'כתוב 4-6 משפטים קצרים בעברית לסיכום תפעולי למנהל/ת המשרד.',
-                'בנוסף, הוסף recommendations: 2-3 פעולות מומלצות קצרות בצורת פקודה (למשל "טפלו ב-X חתימות שפג תוקפן").',
+                'בחר רק 2-3 תובנות בעלות משמעות עסקית. בכל תובנה חבר נתון מסוים למשמעות אפשרית עבור המשרד. אל תחזור על כרטיסי הספירה כרשימת התראות.',
+                'בנוסף, הוסף recommendations: 1-2 צעדים ממוקדים בניסוח מציע כמו "כדאי לבדוק...", עם דרך לבדוק אם חל שיפור. אין צורך לחזור על כל המספרים.',
+                'השתמש ב-businessPerformance להשוואת פתיחות וסגירות בתוך אותה תקופה. today הוא היום, week הוא מתחילת השבוע ביום ראשון, month הוא מתחילת החודש. כולן תקופות חלקיות עד עכשיו.',
+                'פתיחות מול סגירות יכולות להצביע על צורך בבדיקת קיבולת, אך אינן הוכחה לצמיחה, גיוס לקוחות או רווחיות. אין נתוני הכנסות, הוצאות, שכר טרחה או המרת פניות: אל תמציא מסקנות, סכומים, תשואה או תחזיות כספיות.',
+                'נתון יחיד אינו מגמה: אל תטען לשיפור, ירידה או השוואה לתקופה קודמת בלי נתוני השוואה. הצג פרשנות כהשערה לבדיקה, ולא כעובדה.',
+                'העדף הזדמנות לשיפור שירות, קיצור המתנה לחתימה או שחרור קיבולת. אין סיסמאות מוטיבציה, תחרות בין אנשים, לחץ מלאכותי, נזיפות או עצות משפטיות.',
                 'חובה: השתמש רק בנתונים שסופקו. אל תמציא מספרים, שמות תיקים, מועדים או מסקנות.',
                 ...workloadRules,
                 'לגבי תור תשומת לב: summary.attentionQueueCount הוא מספר הפריטים שמוצג בכרטיס "פריטים לטיפול" בלוח הבקרה.',
@@ -329,9 +337,9 @@ function buildPrompt(facts, { includeManagerWorkload = true } = {}) {
                 'אל תמציא פגישות עתידיות שלא מופיעות ב-upcomingEvents או upcomingClientMeetings.',
                 'אם contextNow.period הוא evening או night — אל תדבר על פגישות שכבר עברו היום; התמקד בחתימות, תיקים, ועומס מנהלים.',
                 'אל תפתח בברכה, אל תכתוב "בוקר טוב", "ערב טוב", "לילה טוב" ואל תפנה בשם.',
-                'התחל ישר בתוכן התפעולי (מה דורש תשומת לב עכשיו).',
+                'התחל ישר בתובנה העסקית החשובה ביותר. אל תדווח שעות או תאריכים ואל תעתיק את סדר היום.',
                 'אם אין נושאים דחופים — ציין זאת בקצרה.',
-                'טון: מקצועי, רגוע, ממוקד פעולה.',
+                'טון: יועץ עסקי מקצועי, ענייני ורגוע. לא מנהל שנותן פקודות ולא מאמן תחרותי.',
                 'כתוב בעברית בלבד. ב-topAttention השתמש ב-signalLabel — אל תעתיק signalType באנגלית (למשל RSVP).',
                 'החזר JSON בלבד בפורמט: {"lines":["משפט 1","משפט 2"],"recommendations":["פעולה 1","פעולה 2"]}',
             ].join('\n'),
@@ -430,6 +438,7 @@ function collectFactNumbers(facts) {
         facts.summary?.signingExpired,
         facts.summary?.signingExpiring,
         facts.summary?.signingPending,
+        facts.summary?.signingRejected,
         facts.today?.count,
         facts.today?.potentialClientCount,
         facts.today?.upcomingCount,
@@ -441,8 +450,17 @@ function collectFactNumbers(facts) {
         facts.insights?.dayMomentum?.casesOpenedToday,
         facts.insights?.dayMomentum?.casesClosedToday,
         facts.insights?.urgentBreakdown?.total,
+        facts.insights?.inactivityBurden?.ratioPercent,
+        facts.insights?.inactivityBurden?.openCases,
+        facts.insights?.signingPressure?.totalRisk,
+        ...Object.values(facts.insights?.urgentBreakdown?.bySignalType || {}),
+        ...(facts.insights?.focusAreas || []).map(item => item.count),
+        ...(facts.insights?.workloadHotspots || []).map(item => item.attentionRatio),
+        ...(facts.topAttention || []).map(item => item.reasonParams?.days),
+        ...Object.values(facts.businessPerformance || {}).flatMap(period => [period.casesOpened, period.casesClosed]),
+        ...(facts.workload || []).flatMap(item => [item.activeCases, item.needsAttention, item.urgentCases]),
     ]
-        .filter((n) => n != null && Number(n) > 0)
+        .filter((n) => n != null && Number(n) >= 0)
         .map(String);
 }
 
@@ -461,6 +479,10 @@ function collectFactNames(facts) {
 
 function lineMatchesFacts(line, facts) {
     const numbers = collectFactNumbers(facts);
+    // A topic keyword alone must not allow fabricated figures through.
+    const mentionedNumbers = String(line).match(/\d+(?:[.,]\d+)*/g) || [];
+    if (mentionedNumbers.some(number => !numbers.includes(number.replace(/,/g, '')))) return false;
+    if (/[₪$€]|\d\s*(?:שקל|ש״ח|דולר)/.test(line)) return false;
     const { caseNames, managerNames } = collectFactNames(facts);
 
     if (numbers.some((n) => line.includes(n))) return true;
@@ -488,7 +510,7 @@ function lineMatchesFacts(line, facts) {
 
 function validateLinesAgainstFacts(lines, facts) {
     if (!Array.isArray(lines) || lines.length === 0) return false;
-    return lines.some((line) => lineMatchesFacts(line, facts));
+    return lines.every((line) => lineMatchesFacts(line, facts));
 }
 
 function validateRecommendationsAgainstFacts(recommendations, facts) {
@@ -517,7 +539,7 @@ async function generateAiMorningBrief({
     const fingerprint = factsFingerprint(facts);
     const timeBucket = aiBriefTimeBucket(facts.contextNow);
     const scope = includeManagerWorkload ? 'full' : 'firm';
-    const cacheKey = `managerHomeAiBrief:${require('../../lib/tenant/databaseScope').cacheKey()}:${userId || 'admin'}:${scope}:${fingerprint}:${timeBucket}`;
+    const cacheKey = `managerHomeAiBrief:business-v1:${require('../../lib/tenant/databaseScope').cacheKey()}:${userId || 'admin'}:${scope}:${fingerprint}:${timeBucket}`;
 
     const cached = cache.get(cacheKey);
     if (cached !== undefined) return cached;
