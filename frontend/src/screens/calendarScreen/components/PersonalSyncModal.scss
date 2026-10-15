@@ -1,0 +1,104 @@
+@use '../../../styles/variables' as v;
+@use '../../../styles/mixins' as m;
+
+.lw-personalSyncModal {
+    flex-direction: column;
+    width: 100%;
+    min-inline-size: min(26.25rem, 90vw);
+    max-inline-size: 32.5rem;
+    max-block-size: calc(85vh - 2rem);
+    overflow: hidden;
+    margin: 0 auto;
+
+    > .lw-simpleScrollView {
+        padding: v.$space-4;
+    }
+}
+
+.lw-personalSyncModal__scroll {
+    flex: 1 1 auto;
+    min-block-size: 0;
+    flex-direction: column;
+    gap: v.$space-4;
+}
+
+.lw-personalSyncModal__title {
+    margin-block-end: v.$space-2;
+    text-align: right;
+}
+
+.lw-personalSyncModal__section {
+    flex-direction: column;
+    gap: v.$space-3;
+}
+
+.lw-personalSyncModal__section--border {
+    padding-block-start: v.$space-3;
+    border-block-start: 0.0625rem solid rgba(226, 232, 240, 0.8);
+}
+
+.lw-personalSyncModal__icalRow {
+    flex-direction: column;
+    gap: v.$space-3;
+}
+
+.lw-personalSyncModal__icalUrl {
+    background: #EDF2F7;
+    border-radius: 0.5rem;
+    padding: v.$space-3;
+}
+
+.lw-personalSyncModal__btnRow {
+    @include m.row(v.$space-3);
+    flex-wrap: wrap;
+}
+
+.lw-personalSyncModal__chips {
+    @include m.row(0.5rem);
+    flex-wrap: wrap;
+}
+
+.lw-personalSyncModal__agendaSwitch {
+    width: 100%;
+
+    .lw-segmentedSwitch__track {
+        width: 100%;
+        display: flex;
+    }
+
+    .lw-segmentedSwitch__option {
+        flex: 1 1 0;
+        text-align: center;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+/* Same chip pattern as EventFormModal reminder channels */
+.lw-personalSyncModal__chip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    padding: 0.45rem 0.75rem;
+    background: #FFFFFF;
+    border: 0.0625rem solid #CBD5E0;
+    border-radius: 62.4375rem;
+    cursor: pointer;
+    transition: border-color 120ms ease, background-color 120ms ease;
+
+    &:hover:not(:disabled) {
+        border-color: #2A4365;
+        background: #F7FAFC;
+    }
+
+    &.is-active {
+        background: #2A4365;
+        border-color: #2A4365;
+
+        .lw-simpleText {
+            color: #FFFFFF !important;
+        }
+    }
+}
