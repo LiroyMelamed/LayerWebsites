@@ -1,0 +1,32 @@
+{
+  "status": "PASS",
+  "platform": "Android",
+  "version": "1.0.6",
+  "build": 14,
+  "sourceCommit": "c33d1791f3ec87c9324ac906bdfea29b5f33586a",
+  "viewportPixels": [
+    720,
+    1600
+  ],
+  "densityDpi": 280,
+  "webViewBottomY": 1446,
+  "navItemTopY": 1467,
+  "topSpacingPixels": 21,
+  "topSpacingDp": 12,
+  "chatButtonVisible": false,
+  "screenshotSha256": "c9b80f197e13abb9e5f0f8a375f8bfeb0eca0d26319e21a341ec04445b095e51",
+  "otpAutoSixDigits": "PASS",
+  "otpWrongCodeRecovery": "PASS: wrong000000 -> error -> dismiss -> clear -> current correct sixdigits -> authenticated dashboard, same running app; no resend/relaunch",
+  "changePhone": "PASS",
+  "resendCooldown": "PASS",
+  "resendSuccess": "PASS",
+  "realProviderDelivery": false,
+  "enabledToggle": "PASS",
+  "timestampUtc": "2026-10-06T08:28:12.785850+00:00",
+  "footerTopY": 1446,
+  "enabledButtonVisible": true,
+  "chatPanelOpened": true,
+  "remoteDisableClosedOpenChat": true,
+  "remoteDisableRestored12dpSpacing": true,
+  "finalQaChatEnabled": false
+}

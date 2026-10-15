@@ -1,0 +1,18 @@
+{
+  "complete": true,
+  "tenant": "melamedlaw",
+  "rollback": false,
+  "indexSha256": "8bbe19967d78fbd529e125f57f58eb01a2870fa301470843f59f7ace5b32f9d1",
+  "atomicIndexRename": true,
+  "oldAssetsRetained": true,
+  "tlsCertificateVerified": true,
+  "protectedDataChannel": true,
+  "credentialsEmitted": false,
+  "artifactFilesPublished": 316,
+  "protectedServerConfigPreserved": {
+    "path": ".htaccess",
+    "sha256": "bc4bc59efc9feb6d329a577a3ccc6821174aaaec16a8defd298d18e2c668e9dc",
+    "artifactPrefixSHA": "6fcf0c6b9924e80ed60f0cb02250abc7116ee2735077b52b5b2386494994ce27",
+    "rationale": "Live snapshot equals artifact plus cPanel-managed PHP handler; preserve host-managed configuration and do not write protected file"
+  }
+}

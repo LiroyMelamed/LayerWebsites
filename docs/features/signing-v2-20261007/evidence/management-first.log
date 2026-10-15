@@ -1,0 +1,15 @@
+▶ pending management groups sends, sums obligations and never exposes inaccessible counts/search results
+  ✔ same-template sends are distinct and pagination is stable (4.982208ms)
+  ✔ 1/1 plus 1/9 is 2/10, not averaged percentages, and completion is not inferred from signatures alone (7.45075ms)
+  ✔ a person search finds the send but its summary still includes all authorized children (4.065292ms)
+  ✔ restricted summaries/search/detail are scoped before aggregation and do not expose hidden existence (9.916708ms)
+  ✔ cancelled packages are explicit and removed from the active denominator without erasing history (3.507083ms)
+✔ pending management groups sends, sums obligations and never exposes inaccessible counts/search results (71.959ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 172.551292

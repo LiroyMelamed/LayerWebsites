@@ -1,0 +1,129 @@
+@use '../../../styles/mixins' as m;
+@use '../../../styles/variables' as v;
+
+.lw-clientPopup {
+    width: 100%;
+    margin: 0 auto;
+    position: relative;
+}
+
+// Legal-delete confirm uses the shared SimplePopUp overlay, but keeps the custom modal UI below.
+.lw-clientPopup__legalDeletePopUp {
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.lw-clientPopup__legalDeletePopUp .lw-simplePopUp__close {
+    display: none;
+}
+
+.lw-clientPopup__legalDeletePopUp .lw-simplePopUp__content {
+    margin-top: 0;
+}
+
+.lw-clientPopup__legalDeleteOverlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    padding: v.$space-4;
+}
+
+.lw-clientPopup__legalDeleteModal {
+    flex-direction: column;
+    width: 100%;
+    max-width: 35rem;
+    background: #fff;
+    border-radius: 0.875rem;
+    padding: v.$space-4;
+}
+
+.lw-clientPopup__legalDeleteText {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #111;
+    text-align: right;
+}
+
+.lw-clientPopup__legalDeleteButtons {
+    margin-top: v.$space-4;
+    @include m.row(v.$space-3, nowrap, center, center);
+    justify-content: flex-end;
+}
+
+.lw-clientPopup__legalDeleteBtn {
+    // min-width: 8.75rem;
+}
+
+.lw-clientPopup__existingBanner {
+    display: flex;
+    align-items: center;
+    gap: v.$space-2;
+    padding: v.$space-2 v.$space-3;
+    margin-block-end: v.$space-3;
+    background: #ebf8ff;
+    border: 0.0625rem solid #90cdf4;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: #2b6cb0;
+    direction: rtl;
+    transition: background 0.15s;
+
+    &:hover {
+        background: #bee3f8;
+    }
+}
+
+.lw-clientPopup__existingIcon {
+    font-size: 1.125rem;
+    flex-shrink: 0;
+}
+
+.lw-clientPopup__row {
+    @include m.row(v.$space-3, wrap);
+    margin-block-end: v.$space-4;
+}
+
+.lw-clientPopup__contactHint {
+    margin-block: calc(-1 * v.$space-2) v.$space-4;
+    opacity: 0.75;
+}
+
+.lw-clientPopup__saveBlockedHint {
+    margin-block: calc(-1 * v.$space-2) v.$space-4;
+    color: #c53030;
+}
+
+.lw-clientPopup__input {
+    flex: 1;
+    flex: 1 1 9.375rem;
+    min-inline-size: 0;
+}
+
+.lw-clientPopup__actions {
+    @include m.row(v.$space-2, wrap, center, center);
+    justify-content: center;
+    margin-block: v.$space-4;
+}
+
+.lw-clientPopup__actions .lw-textButtonWithTwoOptionalIcons {
+    min-block-size: 2.75rem;
+    flex: 1 1 12rem;
+}
+
+@media (max-width: v.$bp-narrow) {
+    .lw-clientPopup__input {
+        flex-basis: 100%;
+    }
+
+    .lw-clientPopup__actions .lw-textButtonWithTwoOptionalIcons {
+        width: 100%;
+        flex-basis: 100%;
+    }
+}
