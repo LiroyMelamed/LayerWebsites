@@ -1,0 +1,160 @@
+@use '../../../styles/mixins' as m;
+@use '../../../styles/variables' as v;
+
+.lw-notificationsScreen {
+    width: 100%;
+}
+
+.lw-notificationsScreen__scroll {
+    margin-top: m.rem(40);
+}
+
+.lw-notificationsScreen__header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+
+    padding: 2.5rem 1rem;
+    background: var(--lw-color-primary);
+    border-end-start-radius: 2.5rem;
+    border-end-end-radius: 2.5rem;
+
+    margin: 0 1.25rem 1.25rem;
+}
+
+.lw-notificationsScreen__headerTitle {
+    color: var(--lw-color-white);
+    text-align: center;
+}
+
+.lw-notificationsScreen__content {
+    flex-direction: column;
+    width: 100%;
+    padding-inline: m.rem(20);
+    padding-block-end: m.rem(72);
+}
+
+.lw-notificationsScreen__loading {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-block: m.rem(40);
+}
+
+.lw-notificationsScreen__progress {
+    width: 15rem;
+    margin-bottom: v.$space-3;
+}
+
+.lw-notificationsScreen__loadingText {
+    text-align: center;
+    color: var(--lw-color-text);
+}
+
+.lw-notificationsScreen__error {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-block: m.rem(40);
+}
+
+.lw-notificationsScreen__errorText {
+    text-align: center;
+    color: var(--lw-color-error);
+    margin-bottom: v.$space-4;
+}
+
+.lw-notificationsScreen__retryButton {
+    align-self: center;
+}
+
+.lw-notificationsScreen__empty {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-block: m.rem(50);
+}
+
+.lw-notificationsScreen__emptyText {
+    color: var(--lw-color-winter);
+}
+
+.lw-notificationsScreen__list {
+    flex-direction: column;
+    width: 100%;
+}
+
+.lw-notificationsScreen__item {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: v.$space-3;
+
+    padding: v.$space-4;
+    border-radius: m.rem(10);
+    margin-bottom: v.$space-3;
+}
+
+.lw-notificationsScreen__item.is-read {
+    opacity: 0.9;
+}
+
+.lw-notificationsScreen__itemContent {
+    @include m.row(v.$space-2, nowrap, flex-start);
+    width: 100%;
+}
+
+.lw-notificationsScreen__unreadDot {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 0.25rem;
+    background: var(--lw-color-primary-highlighted);
+    margin-inline-start: v.$space-2;
+    margin-top: v.$space-2;
+}
+
+.lw-notificationsScreen__text {
+    flex: 1;
+    flex-direction: column;
+    min-inline-size: 0;
+}
+
+.lw-notificationsScreen__title {
+    color: var(--lw-color-primary);
+    margin-bottom: v.$space-1;
+    text-align: start;
+}
+
+.lw-notificationsScreen__message {
+    color: var(--lw-color-text);
+    margin-bottom: v.$space-1;
+    text-align: start;
+}
+
+.lw-notificationsScreen__signLinkButton {
+    align-self: flex-start;
+    margin-top: v.$space-2;
+}
+
+.lw-notificationsScreen__timestamp {
+    color: var(--lw-color-winter);
+}
+
+.lw-notificationsScreen__markAsRead {
+    flex: 0 0 auto;
+}
+
+.lw-notificationsScreen__footerRow {
+    @include m.row(v.$space-2, wrap, center);
+    justify-content: space-between;
+    width: 100%;
+    margin-top: v.$space-2;
+    min-inline-size: 0;
+}
+
+.lw-notificationsScreen__back {
+    align-self: center;
+    margin-top: 0.75rem;
+}
