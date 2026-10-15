@@ -2972,7 +2972,7 @@
     "signedByYou": "Signed by you",
     "noSignedDocuments": "You have not signed any documents yet.",
     "caseSummaryTitle": "Your cases at a glance",
-    "caseSummaryIntro": "Case details and the current stage are available further down the page.",
+    "caseSummaryIntro": "Open your case list to view case details and the current stage.",
     "loadingCases": "Loading cases…",
     "caseDetailsIntro": "Open a case to see its details and progress.",
     "documentsIntro": "Documents shared with you and documents for signing, with their associated case names.",
