@@ -1,6 +1,6 @@
 {
-  "name": "ליאב מלמד - משרד עו\"ד",
-  "short_name": "מלמד עו\"ד",
+  "name": "משרד עורכי דין - אשראף עיסא",
+  "short_name": "אשראף עיסא",
   "icons": [
     {
       "src": "/logo192.png",
@@ -17,6 +17,6 @@
   ],
   "start_url": "/",
   "display": "standalone",
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff"
+  "theme_color": "#3c3c3c",
+  "background_color": "#3c3c3c"
 }
