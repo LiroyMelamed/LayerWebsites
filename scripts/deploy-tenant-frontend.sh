@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Deploy frontend build to 84.46.253.85 for morlevy, ashrafessa, melamedia, or idm.
+# Usage: ./scripts/deploy-tenant-frontend.sh morlevy|ashrafessa|melamedia|idm|lawyer
+# Prefers SSH key (SSH_KEY, default ~/.ssh/id_ed25519). Do not add new sshpass usage.
+set -euo pipefail
+
+TENANT="${1:-}"
+SSH_KEY="${SSH_KEY:-$HOME/.ssh/id_ed25519}"
+FRONTEND_HOST="${FRONTEND_HOST:-root@84.46.253.85}"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=lib/deploy-ssh-retry.sh
+source "$ROOT/scripts/lib/deploy-ssh-retry.sh"
+RSYNC_SSH="ssh -i ${SSH_KEY} -o BatchMode=yes"
+
+if [[ "$TENANT" != "morlevy" && "$TENANT" != "ashrafessa" && "$TENANT" != "melamedia" && "$TENANT" != "idm" && "$TENANT" != "lawyer" ]]; then
+  echo "Usage: $0 morlevy|ashrafessa|melamedia|idm|lawyer" >&2
+  exit 1
+fi
+
+node "$ROOT/scripts/check-signing-release.cjs"
+cd "$ROOT/frontend"
+
+# Tenant logos live in separate paths so builds never overwrite each other.
+TENANT_LOGO="public/tenants/${TENANT}/firm-logo.png"
+if [[ ! -f "$TENANT_LOGO" ]]; then
+  echo "Missing $TENANT_LOGO — add the tenant logo before deploying." >&2
+  exit 1
+fi
+cp "$TENANT_LOGO" public/firm-logo.png
+
+npm run "build:$TENANT"
+
+"$ROOT/frontend/scripts/restore-public-baseline.sh"
+
+DEPLOY_API="$(grep -o 'https://api-[^"]*' build/static/js/main.*.js | sort -u || true)"
+echo "# Built API: $DEPLOY_API"
+
+rsync_with_retry -az --delete -e "$RSYNC_SSH" build/ "${FRONTEND_HOST}:/var/www/${TENANT}/"
+
+# Always re-apply tenant logo after rsync (build may embed a stale public/firm-logo.png).
+scp_with_retry -i "$SSH_KEY" -o BatchMode=yes "$TENANT_LOGO" "${FRONTEND_HOST}:/var/www/${TENANT}/firm-logo.png"
+if [[ -f "public/tenants/${TENANT}/melamedia-mark.png" ]]; then
+  scp_with_retry -i "$SSH_KEY" -o BatchMode=yes "public/tenants/${TENANT}/melamedia-mark.png" "${FRONTEND_HOST}:/var/www/${TENANT}/melamedia-mark.png"
+fi
+echo "# Deployed logo: $(file -b "$TENANT_LOGO")"
+
+REMOTE_API="$(ssh -i "$SSH_KEY" -o BatchMode=yes "${FRONTEND_HOST}" "grep -o 'https://api-[^\"]*' /var/www/${TENANT}/static/js/main.*.js | sort -u")"
+echo "# Deployed API: $REMOTE_API"
+echo "# Done: https://${TENANT}.mela-media.co.il"
+
+# shellcheck source=../../scripts/deploy-notify.sh
+source "$ROOT/../scripts/deploy-notify.sh"
+DEPLOY_ROOT="$ROOT" notify_central_deploy layerwebsites "frontend:${TENANT}"

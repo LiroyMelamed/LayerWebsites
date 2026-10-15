@@ -1,0 +1,121 @@
+{
+  "verifiedAtUtc": "2026-10-12T04:25:44.875754+00:00",
+  "result": "PASS_RELEASED",
+  "web": {
+    "registeredCustomerCount": 5,
+    "productTag": "PROD_12_10_2026_LIROY_CALENDAR",
+    "productRuntime": "a746b915d0262eb75c43e2985ffa29eb64f6792e",
+    "deployedCandidates": {
+      "melamedlaw": "6edfeb1f3d69ef3506eedb4b0e37927d1056e4b1",
+      "morlevy": "93daf72062fcfc08322be6e07ea8d55cc3dfe4da",
+      "ashrafessa": "466e971e510ec02eef26bd36994dc202f9d15fa1",
+      "idm": "28adf8e91dbc3ce3f7ce96523f6097c7c01f349b",
+      "lawyer": "82202c18a5ac09d7e277e68245be86211d403349"
+    },
+    "sourceAndPublicReadback": "PASS",
+    "backendFileChecks": 49,
+    "publicEntryFileChecks": 36,
+    "gitPublicationReceiptSha256": "24e9a9393e85ef8fe8bb441ab6d8b53d13bad402822592e2c717fadb220d48d9"
+  },
+  "native": {
+    "status": "PASS",
+    "otaReceiptSha256": "5b3158dae5a394455715a80e4925ed5b4c47f6879e831d0fecb9afb452667f92",
+    "gitReceiptSha256": "3e91655c8dcb36aa7fefd52747970d6d14518556d91f1f84f78e6d5c1d4345ed",
+    "productionChannel": "production",
+    "projects": [
+      {
+        "tenant": "melamedlaw",
+        "candidate": "1a4e37eacd7346f00125d0ccfc19fc38c88014f7",
+        "runtime": "1.0.11",
+        "group": "5686ad8b-49ed-4cbd-924c-5e16696723f9",
+        "platforms": [
+          "ios",
+          "android"
+        ],
+        "publishedAtUtc": "2026-10-12T04:20:38.900255+00:00"
+      },
+      {
+        "tenant": "morlevi",
+        "candidate": "c05dc4d19970ac3fa3e8ed388825406e22da14b5",
+        "runtime": "1.0.5",
+        "group": "5768aa40-ae4b-4198-896d-0cc0896345d0",
+        "platforms": [
+          "ios",
+          "android"
+        ],
+        "publishedAtUtc": "2026-10-12T04:21:12.488701+00:00"
+      },
+      {
+        "tenant": "ashrafessa",
+        "candidate": "32c0a622c686cddfc9ca187b06563f6b11b4a6df",
+        "runtime": "1.0.8",
+        "group": "8c4351a0-75cb-42d9-ba3a-0c21a4fa1d50",
+        "platforms": [
+          "ios",
+          "android"
+        ],
+        "publishedAtUtc": "2026-10-12T04:21:43.366292+00:00"
+      }
+    ],
+    "gitPublication": {
+      "atomic": true,
+      "forceUsed": false,
+      "remoteHeadsAndAnnotatedPeeledTagsVerified": true,
+      "priorTagsPreserved": true,
+      "tags": {
+        "PROD_12_10_2026_LIROY_CALENDAR_NATIVE": "61ecd5aafa985755a2a7167a8ecfe0dcee60f60c",
+        "PROD_12_10_2026_LIROY_CALENDAR_NATIVE_MELAMEDLAW": "1a4e37eacd7346f00125d0ccfc19fc38c88014f7",
+        "PROD_12_10_2026_LIROY_CALENDAR_NATIVE_MORLEVI": "c05dc4d19970ac3fa3e8ed388825406e22da14b5",
+        "PROD_12_10_2026_LIROY_CALENDAR_NATIVE_ASHRAFESSA": "32c0a622c686cddfc9ca187b06563f6b11b4a6df"
+      }
+    },
+    "deliveryLimit": "Matching installed runtime versions receive OTA according to the existing app update flow; receipt does not prove every physical client device has installed it.",
+    "deviceProof": {
+      "iOS": "Actual isolated simulator day/week/month/editor interaction and OS permission/save/readback passed under native evidence.",
+      "android": "Hermes export and focused logic passed; no physical or Android OS interaction is claimed.",
+      "iOSEvidenceSha256": "5bff4d0e2192ece81c8476766de882f74c31706375c9892b7e1f802cacbd7591",
+      "scope": "One synthetic EventKit record in an owned isolated iOS simulator; fresh local synthetic API payload, not a live QA/customer calendar record."
+    },
+    "optionalDirectManifestProbe": {
+      "status": "UNVERIFIED",
+      "reason": "Tool HTTP403; no retries or bypass. Authenticated EAS group/platform/runtime/source readbacks passed. Physical installation is not implied."
+    }
+  },
+  "figma": {
+    "status": "PASS_ACTUALLY_APPLIED_AND_VISUALLY_REVIEWED",
+    "fileUrl": "https://www.figma.com/design/qnclFuKDylmbBZ9ASZiTet/MelamedLaw?node-id=3-1454",
+    "evidenceSha256": "70657bec41c53a0b3dd8a280a62f5d3296392b16ef0b050edf15640c5563e307",
+    "originalPageCountPreserved": 49,
+    "ownedTargetCount": 41,
+    "editableComponentFamilies": 8,
+    "sourceVariants": 16,
+    "sourceHashDrift": false,
+    "originalMasterAndNavigationIdsPreserved": true,
+    "stagedNodesRemaining": 0,
+    "actualNativeOsProofSeparate": true
+  },
+  "guide": {
+    "pdf": "calendar-user-guide-he-v2.pdf",
+    "pdfSha256": "01ac62ce7141fbb0a2e0ae7e6afd605baf58dd3cfe8a8b1508e7d368b7df8fca",
+    "presentation": "calendar-user-guide-he-v2.pptx",
+    "presentationSha256": "f2aa678d16f0918922e61f5c0dca820b1eb0171f4856e8056ab4991099e3a08a",
+    "pdfPages": 45,
+    "rootVerifiedExportsReused": true,
+    "deviceCalendarPermissionFlowExplainedOnPage": 35
+  },
+  "customerAnnouncementSent": false,
+  "socialPostPublished": false,
+  "evidencePolicy": "Only sanitized status, commit/tag/artifact hashes and public design links are included. Full logs, failures, credentials, private checkpoints/sessions and customer data remain outside Git.",
+  "limitations": [
+    "OTA acceptance and matching group/runtime readbacks do not prove installation on every physical client device.",
+    "Actual iOS simulator interaction and OS calendar save/readback were verified; Android has export and logic proof only.",
+    "Figma synchronization is Hebrew RTL; runtime Arabic/English verification is recorded separately."
+  ],
+  "runtimeTagPolicy": "The published production tag stays pinned to a746b915. Later documentation-only commits do not change deployed runtime bytes or move tags.",
+  "separateRemoteQaFixtureProof": {
+    "evidenceSha256": "67ad171780abe0f0ac684dc04b9c99a25004df7cc8b2db5728b3d3ed858f9da7",
+    "scope": "Two own future synthetic fixtures; sixteen HTTP requests under disabled delivery settings, cleanup verified; separate from native simulator data.",
+    "customerDataCopied": false,
+    "realProviderTestMessages": 0
+  }
+}
