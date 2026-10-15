@@ -1,0 +1,99 @@
+@use '../../styles/mixins' as m;
+@use '../../styles/variables' as v;
+
+.lw-topAndRightNavBar {
+    display: flex;
+    width: 100%;
+}
+
+.lw-topAndRightNavBar__sidebar {
+    position: fixed;
+    width: 15.625rem;
+    height: 100vh;
+    inset-inline-start: 0;
+    background-color: var(--lw-color-text);
+    display: flex;
+    flex-direction: column;
+    padding-top: 1.25rem;
+    z-index: 11111;
+}
+
+.lw-topAndRightNavBar__logoRow {
+    display: flex;
+    justify-content: center;
+}
+
+.lw-topAndRightNavBar__logoBtn {
+    // Fluid logo sizing (keeps brand visible without overflowing)
+    @include m.fluid-size(height, 48, 7vh, 72);
+    width: min(70%, 12rem);
+    max-height: none;
+    align-self: center;
+}
+
+.lw-topAndRightNavBar__separatorWrap {
+    margin: 1.25rem 0;
+}
+
+.lw-topAndRightNavBar__navList {
+    flex-direction: column;
+    flex: 1;
+}
+
+.lw-topAndRightNavBar__bottom {
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: auto;
+    margin-bottom: 1.5rem;
+}
+
+.lw-topAndRightNavBar__languageWrap {
+    align-self: center;
+}
+
+.lw-topAndRightNavBar__isoBadgeWrap {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    max-width: 100%;
+    overflow: hidden;
+
+    .lw-complianceBadges {
+        flex-wrap: nowrap;
+        gap: 0.5rem;
+    }
+
+    @media (max-height: 43.75rem) {
+        transform: scale(0.8);
+    }
+
+    @media (max-height: 34.375rem) {
+        transform: scale(0.65);
+    }
+}
+
+.lw-topAndRightNavBar__isoBadge {
+    width: 3.5rem;
+    height: auto;
+    opacity: 0.85;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+        opacity: 1;
+    }
+}
+
+.lw-topAndRightNavBar__logoutWrap {
+    align-self: center;
+}
+
+.lw-topAndRightNavBar__content {
+    flex: 1;
+    // Flex items default to min-width:auto, so wide screen content (e.g. a
+    // nowrap chip row) used to blow the whole layout past the viewport.
+    min-width: 0;
+    max-width: 100%;
+}
