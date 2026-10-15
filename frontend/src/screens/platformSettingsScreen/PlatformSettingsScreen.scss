@@ -1,0 +1,1138 @@
+@use "../../styles/variables" as v;
+
+.lw-platformSettings {
+    direction: rtl;
+    width: 100%;
+
+    &__scroll {
+        padding: 0;
+        overflow-x: hidden;
+        max-width: 100%;
+    }
+
+    &__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 1rem 1rem 0.5rem;
+        flex-wrap: wrap;
+        gap: v.$space-3;
+    }
+
+    &__saveMessage {
+        color: #16a34a;
+        font-weight: 600;
+        background: #f0fdf4;
+        padding: v.$space-2 v.$space-4;
+        border-radius: 0.5rem;
+        border: 0.0625rem solid #bbf7d0;
+    }
+
+    &__layout {
+        display: flex;
+        gap: v.$space-3;
+        align-items: flex-start;
+        margin: 0 1rem;
+    }
+
+    // ── Tabs sidebar ────────────────────────────────────────────────
+    &__tabs {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-2;
+        min-width: 12.5rem;
+        border-radius: 0.75rem;
+        padding: v.$space-3;
+        position: sticky;
+        top: 1rem;
+    }
+
+    &__tab {
+        justify-content: start;
+        display: flex;
+        align-items: center;
+        gap: v.$space-3;
+        padding: v.$space-3 v.$space-4;
+        border: none;
+        background: transparent;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        text-align: right;
+        font-family: inherit;
+        width: 100%;
+
+        &:hover {
+            background: #f5f5f5;
+        }
+
+        &--active {
+
+            background: var(--lw-color-primary) !important;
+            color: #fff;
+
+            .lw-simpleText {
+                color: #fff !important;
+            }
+
+            &:hover {
+                background: var(--lw-color-primary) !important;
+                color: #fff;
+            }
+        }
+    }
+
+    &__tabIcon {
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    &__tabLabel {
+        white-space: nowrap;
+    }
+
+    // ── Content area ────────────────────────────────────────────────
+    &__content {
+        flex-direction: column;
+        gap: 1rem;
+        width: 100%;
+        flex: 1;
+        min-width: 0;
+        overflow-x: hidden;
+        overflow-y: visible;
+    }
+
+    &__card {
+        flex: 1;
+        flex-direction: column;
+        min-width: 0;
+        overflow: hidden;
+        margin: 0;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    &__subtitle {
+        color: #888;
+        margin-top: v.$space-1;
+        margin-bottom: v.$space-3;
+    }
+
+    &__loading {
+        display: flex;
+        justify-content: center;
+        padding: v.$space-4;
+    }
+
+    &__empty {
+        color: #999;
+        text-align: center;
+        padding: v.$space-4;
+    }
+
+    // ── Settings list ───────────────────────────────────────────────
+    &__settingsList {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-3;
+        margin-top: v.$space-3;
+    }
+
+    &__settingRow {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-2;
+        padding: v.$space-3 0;
+        border-bottom: 0.0625rem solid #f0f0f0;
+
+        &:last-child {
+            border-bottom: none;
+        }
+
+        .lw-calendarSmsEditor {
+            width: 100%;
+        }
+    }
+
+    &__settingLabel {
+        flex-direction: column;
+        flex: 1;
+        min-width: 0;
+    }
+
+    &__settingName {
+        font-weight: 600;
+        color: #333;
+    }
+
+    &__settingDesc {
+        color: #999;
+        margin-top: 0.125rem;
+    }
+
+    &__settingDescription {
+        color: #888;
+        margin-top: 0.25rem;
+        font-size: 0.6875rem;
+        line-height: 1.4;
+        direction: rtl;
+    }
+
+    &__settingInput {
+        width: 100%;
+    }
+
+    &__input {
+        width: 100%;
+        direction: rtl;
+    }
+
+    &__textarea {
+        width: 100%;
+        direction: rtl;
+
+        &--sms {
+            min-block-size: 10rem;
+            font-family: inherit;
+            line-height: 1.55;
+        }
+    }
+
+    // ── Calendar tab ────────────────────────────────────────────────
+    &__calendarTab {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-3;
+        width: 100%;
+    }
+
+    &__dayPicker {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: v.$space-2;
+        margin-top: v.$space-3;
+    }
+
+    &__dayChip {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: v.$space-2 v.$space-4;
+        border-radius: 62.4375rem;
+        border: 0.0625rem solid #e2e8f0;
+        background: #fff;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        min-width: 4rem;
+
+        &:hover {
+            background: #f8fafc;
+        }
+
+        &--active {
+            background: var(--lw-color-primary) !important;
+            border-color: var(--lw-color-primary);
+
+            .lw-simpleText {
+                color: #fff !important;
+            }
+        }
+    }
+
+    &__dayChipLabel {
+        white-space: nowrap;
+    }
+
+    &__dayHoursTable {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-2;
+        margin-top: v.$space-3;
+        width: 100%;
+    }
+
+    &__dayHoursHeader,
+    &__dayHoursRow {
+        display: grid;
+        grid-template-columns: minmax(4.5rem, 1fr) minmax(6.25rem, 1.2fr) minmax(7.5rem, 1fr) minmax(7.5rem, 1fr);
+        gap: v.$space-2;
+        align-items: center;
+        padding: v.$space-2 0;
+        border-bottom: 0.0625rem solid #f0f0f0;
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+
+    &__dayHoursHeader {
+        padding-top: 0;
+        border-bottom: 0.0625rem solid #e2e8f0;
+    }
+
+    &__dayHoursCol {
+        min-width: 0;
+
+        &--day {
+            font-weight: 600;
+        }
+
+        &--open {
+            display: flex;
+            align-items: center;
+        }
+
+        &--time {
+            .lw-platformSettings__input {
+                opacity: 1;
+            }
+        }
+    }
+
+    &__dayHoursRow--closed {
+        .lw-platformSettings__dayHoursCol--time .lw-platformSettings__input {
+            opacity: 0.45;
+            pointer-events: none;
+        }
+    }
+
+    // Desktop: column headers label the time fields — hide duplicate floated labels
+    &__dayHoursCol--time .lw-simpleInput__label {
+        @media (min-width: 48.01rem) {
+            display: none;
+        }
+    }
+
+    &__dayHoursCol--time .lw-simpleInput {
+        margin-top: 0;
+
+        @media (max-width: 48rem) {
+            margin-top: 1.25rem;
+        }
+    }
+
+    &__reminderOptions {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: v.$space-2;
+        margin-top: v.$space-2;
+    }
+
+    // ── Toggle switch ───────────────────────────────────────────────
+    &__toggle {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: v.$space-3;
+        cursor: pointer;
+
+        input[type="checkbox"] {
+            width: 2.75rem;
+            height: 1.5rem;
+            appearance: none;
+            background: #ddd;
+            border-radius: 0.75rem;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            flex-shrink: 0;
+
+            &::before {
+                content: "";
+                position: absolute;
+                top: 0.125rem;
+                right: 0.125rem;
+                width: 1.25rem;
+                height: 1.25rem;
+                background: #fff;
+                border-radius: 50%;
+                transition: transform 0.2s ease;
+                box-shadow: 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.15);
+            }
+
+            &:checked {
+                background: var(--lw-color-primary);
+
+                &::before {
+                    transform: translateX(-1.25rem);
+                }
+            }
+        }
+    }
+
+    &__toggleLabel {
+        color: #666;
+    }
+
+    // ── Notification channels ───────────────────────────────────────
+    &__channelGrid {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-2;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    &__channelHeader,
+    &__channelRow {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        min-width: 0;
+    }
+
+    &__channelHeader {
+        padding: v.$space-2 v.$space-3;
+        font-weight: 600;
+        color: #888;
+        border-bottom: 0.125rem solid #eee;
+    }
+
+    &__channelRow {
+        padding: v.$space-3;
+        border-bottom: 0.0625rem solid #f5f5f5;
+        border-radius: 0.5rem;
+        transition: background 0.1s ease;
+
+        &:hover {
+            background: #fafafa;
+        }
+    }
+
+    &__channelName {
+        font-weight: 500;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__channelToggles {
+        display: flex;
+        flex-direction: row;
+        gap: 0;
+        flex-shrink: 0;
+    }
+
+    &__channelToggle {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        width: 5rem;
+        flex-shrink: 0;
+        cursor: pointer;
+
+        input[type="checkbox"] {
+            width: 1rem;
+            height: 1rem;
+            cursor: pointer;
+            accent-color: var(--lw-color-primary);
+        }
+
+        p {
+            text-align: center;
+        }
+    }
+
+    &__channelToggleLabel {
+        display: none;
+        color: #888;
+        font-size: 0.6875rem;
+    }
+
+    &__channelPerActionNote {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 0.75rem;
+        color: #4a5568;
+        font-size: 0.75rem;
+        font-style: italic;
+        line-height: 1.3;
+        text-align: center;
+        flex: 1 1 auto;
+        min-width: 12rem;
+    }
+
+    // ── Admin management ────────────────────────────────────────────
+    &__adminList {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-2;
+        margin-bottom: v.$space-5;
+    }
+
+    &__adminRow {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: v.$space-3 v.$space-4;
+        background: #fafafa;
+        border-radius: 0.5rem;
+        border: 0.0625rem solid #eee;
+    }
+
+    &__adminInfo {
+        display: flex;
+        flex-direction: column;
+        gap: 0.125rem;
+    }
+
+    &__adminName {
+        font-weight: 600;
+    }
+
+    &__adminPhone {
+        color: #888;
+        direction: ltr;
+        text-align: right;
+    }
+
+    &__addAdmin {
+        display: flex;
+        flex-direction: row;
+        gap: v.$space-3;
+        align-items: center;
+    }
+
+    &__addAdminInput {
+        width: 100%;
+        flex: 1;
+        min-width: 0;
+    }
+
+    &__addBtn {
+        white-space: nowrap;
+    }
+
+    &__removeBtn {
+        padding: v.$space-1 v.$space-3 !important;
+        background: #fee2e2 !important;
+        color: #dc2626 !important;
+        border: 0.0625rem solid #fecaca !important;
+        border-radius: 0.375rem !important;
+
+        &:hover {
+            background: #fecaca !important;
+        }
+    }
+
+    // ── Save bar ────────────────────────────────────────────────────
+    &__saveBar {
+        display: flex;
+        gap: v.$space-3;
+        justify-content: center;
+        padding: v.$space-3 v.$space-4;
+        margin-top: v.$space-3;
+    }
+
+    &__saveBtn {
+        white-space: nowrap;
+    }
+
+    &__cancelBtn {
+        white-space: nowrap;
+    }
+
+    // ── Email Templates Layout ────────────────────────────────────
+    &__emailTemplatesLayout {
+        flex-direction: column;
+        display: flex;
+        gap: v.$space-4;
+        width: 100%;
+        align-items: flex-start;
+    }
+
+    &__emailTemplateList {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-2;
+        padding: v.$space-3;
+    }
+
+    &__emailTemplateListTitle {
+        padding-bottom: v.$space-2;
+        border-bottom: 0.0625rem solid #f0f0f0;
+        margin-bottom: v.$space-1;
+    }
+
+    &__emailTemplateItem {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.125rem;
+        padding: v.$space-2 v.$space-3;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        border: none;
+        background: transparent;
+        text-align: right;
+        width: 100%;
+
+        &:hover {
+            background: #f8f8f8;
+        }
+
+        &--active {
+            background: var(--lw-color-primary-highlighted, #e8f4fd);
+            border-right: 0.1875rem solid var(--lw-color-primary, #2563eb);
+        }
+    }
+
+    &__emailTemplateEditorArea {
+        width: 100%;
+    }
+
+    &__emailEditor {
+        width: 100%;
+        padding: v.$space-4;
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-4;
+    }
+
+    &__emailEditorHeader {
+        display: flex;
+        align-items: center;
+        gap: v.$space-3;
+        padding-bottom: v.$space-3;
+        border-bottom: 0.0625rem solid #f0f0f0;
+    }
+
+    &__emailEditorField {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-2;
+    }
+
+    &__emailEditorLabel {
+        font-weight: 600;
+        color: #555;
+    }
+
+    &__emailEditorLabelRow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    &__emailEditorInput {
+        width: 100%;
+        padding: v.$space-2 v.$space-3;
+        border: 0.0625rem solid #e0e0e0;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-family: inherit;
+        direction: rtl;
+        transition: border-color 0.2s;
+
+        &:focus {
+            outline: none;
+            border-color: var(--lw-color-primary, #2563eb);
+            box-shadow: 0 0 0 0.1875rem rgba(37, 99, 235, 0.1);
+        }
+    }
+
+    &__emailEditorTextarea {
+        width: 100%;
+        padding: v.$space-3;
+        border: 0.0625rem solid #e0e0e0;
+        border-radius: 0.5rem;
+        font-family: 'Courier New', Consolas, monospace;
+        font-size: 0.8125rem;
+        line-height: 1.5;
+        resize: vertical;
+        direction: ltr;
+        text-align: left;
+        background: #fafafa;
+        min-height: 18.75rem;
+        transition: border-color 0.2s;
+        box-sizing: border-box;
+        max-width: 100%;
+
+        &:focus {
+            outline: none;
+            border-color: var(--lw-color-primary, #2563eb);
+            box-shadow: 0 0 0 0.1875rem rgba(37, 99, 235, 0.1);
+            background: #fff;
+        }
+    }
+
+
+
+    &__emailPreview {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-2;
+    }
+
+    &__emailPreviewFrame {
+        width: 100%;
+        height: 39rem;
+        border: 0.0625rem solid #e0e0e0;
+        border-radius: 0.5rem;
+        background: #fff;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    &__emailEditorActions {
+        display: flex;
+        gap: v.$space-3;
+        padding-top: v.$space-3;
+        border-top: 0.0625rem solid #f0f0f0;
+    }
+
+
+
+    // ── Variable Buttons (shared by SMS & Email) ────────────────
+    &__varButtons {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-2;
+        margin-top: v.$space-2;
+    }
+
+    &__varButtonsLabel {
+        font-weight: 600;
+        color: #666;
+    }
+
+    &__varButtonsRow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: v.$space-2;
+    }
+
+
+
+    // ── SMS Preview ─────────────────────────────────────────────
+    &__smsPreview {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-1;
+        margin-top: v.$space-2;
+        width: 100%;
+    }
+
+    &__smsPreviewLabel {
+        font-weight: 600;
+        color: #888;
+        font-size: 0.6875rem;
+    }
+
+    &__smsPreviewBox {
+        background: #f0fdf4;
+        border: 0.0625rem solid #bbf7d0;
+        border-radius: 0.5rem;
+        padding: v.$space-2 v.$space-3;
+        direction: rtl;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    &__emailTemplateButtons {
+        flex-wrap: wrap;
+        gap: v.$space-1;
+    }
+
+    &__senderPending {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: v.$space-2;
+        margin-top: v.$space-2;
+        width: 100%;
+        background: #fffbeb;
+        border: 0.0625rem solid #fde68a;
+        border-radius: 0.5rem;
+        padding: v.$space-2 v.$space-3;
+    }
+
+    &__senderPendingLabel {
+        font-weight: 600;
+        color: #92400e;
+    }
+
+    // ── Reminder Templates ──────────────────────────────────────
+    &__reminderTplHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: v.$space-4;
+        flex-wrap: wrap;
+        gap: v.$space-3;
+    }
+
+    &__reminderTplList {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-3;
+    }
+
+    &__reminderTplRow {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: v.$space-3;
+        background: #fafafa;
+        border: 0.0625rem solid #f0f0f0;
+        border-radius: 0.5rem;
+        gap: v.$space-3;
+        flex-wrap: wrap;
+        min-width: 0;
+    }
+
+    &__reminderTplInfo {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-1;
+        flex: 1;
+        min-width: 0;
+    }
+
+    &__reminderTplNameRow {
+        display: flex;
+        align-items: center;
+        gap: v.$space-2;
+        flex-wrap: wrap;
+    }
+
+    &__reminderTplBadge {
+        background: #dbeafe;
+        color: #1e40af;
+        padding: 0.125rem 0.5rem;
+        border-radius: 0.75rem;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    &__reminderTplDesc {
+        color: #666;
+    }
+
+    &__reminderTplActions {
+        display: flex;
+        gap: v.$space-2;
+        flex-shrink: 0;
+        flex-wrap: wrap;
+    }
+
+    &__reminderEditor {
+        margin-top: v.$space-4;
+        padding: v.$space-4;
+        background: #f9fafb;
+        border: 0.0625rem solid #e5e7eb;
+        border-radius: 0.625rem;
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-3;
+        min-width: 0;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    &__reminderEditorTitle {
+        margin-bottom: v.$space-2;
+    }
+
+    &__reminderEditorField {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-1;
+    }
+
+    &__reminderEditorActions {
+        display: flex;
+        gap: v.$space-3;
+        padding-top: v.$space-3;
+        border-top: 0.0625rem solid #e5e7eb;
+    }
+
+    // ── Knowledge Documents ─────────────────────────────────────────
+
+    &__knowledgeUpload {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-3;
+        margin-bottom: v.$space-4;
+        padding: v.$space-4;
+        background: #f9fafb;
+        border: 0.0625rem solid #e5e7eb;
+        border-radius: 0.625rem;
+    }
+
+    &__knowledgeUploadRow {
+        display: flex;
+        align-items: center;
+        gap: v.$space-3;
+        flex-wrap: wrap;
+    }
+
+    &__knowledgeTitleInput {
+        flex: 1;
+        min-width: 12.5rem;
+    }
+
+    &__knowledgeFileInputHidden {
+        display: none;
+    }
+
+    &__knowledgeChooseBtn {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    &__knowledgeFileName {
+        color: #6b7280;
+        max-width: 13.75rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex-shrink: 1;
+    }
+
+    &__knowledgeUploading {
+        display: flex;
+        align-items: center;
+        gap: v.$space-2;
+        color: #4b5563;
+    }
+
+    &__knowledgeList {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-3;
+    }
+
+    &__knowledgeRow {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: v.$space-3;
+        background: #fafafa;
+        border: 0.0625rem solid #f0f0f0;
+        border-radius: 0.5rem;
+        gap: v.$space-3;
+    }
+
+    &__knowledgeInfo {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-1;
+        flex: 1;
+    }
+
+    &__knowledgeMeta {
+        color: #666;
+    }
+
+    &__knowledgeNotifSection {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-2;
+        margin-bottom: v.$space-4;
+        padding: v.$space-4;
+        background: #eff6ff;
+        border: 0.0625rem solid #bfdbfe;
+        border-radius: 0.625rem;
+    }
+
+    // ── Mobile responsive ───────────────────────────────────────────
+    @media (max-width: 48rem) {
+        &__layout {
+            flex-direction: column;
+            margin: 0 0.5rem;
+        }
+
+        &__tabs {
+            justify-content: space-around;
+            flex-direction: row;
+            min-width: unset;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            position: static;
+            padding: v.$space-2;
+            gap: v.$space-1;
+            flex-wrap: wrap;
+        }
+
+        &__tab {
+            justify-content: center;
+            padding: v.$space-2 v.$space-3;
+            font-size: 0.8rem;
+            width: auto;
+        }
+
+        &__tabLabel {
+            display: none;
+        }
+
+        &__tabIcon {
+            font-size: 1.3rem;
+        }
+
+        &__settingRow {
+            flex-direction: column;
+            gap: v.$space-2;
+        }
+
+        &__settingInput {
+            margin-top: v.$space-2;
+            flex-direction: column;
+            flex: unset;
+            width: 100%;
+        }
+
+        &__channelHeader {
+            display: none;
+        }
+
+        &__channelGrid {
+            gap: v.$space-3;
+        }
+
+        &__channelRow {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: v.$space-2;
+            padding: v.$space-3;
+            background: #fafafa;
+            border-radius: 0.5rem;
+            border: 0.0625rem solid #f0f0f0;
+        }
+
+        &__channelName {
+            white-space: normal;
+            overflow: visible;
+        }
+
+        &__channelToggles {
+            width: 100%;
+            justify-content: space-around;
+        }
+
+        &__channelToggle {
+            flex-direction: column;
+            width: auto;
+            gap: 0.25rem;
+        }
+
+        &__channelToggleLabel {
+            display: block;
+        }
+
+        &__addAdmin {
+            flex-direction: column;
+        }
+
+        &__saveBar {
+            flex-direction: column;
+            padding: v.$space-2 v.$space-3;
+        }
+
+        &__emailEditorTextarea {
+            min-height: 12.5rem;
+            font-size: 0.75rem;
+        }
+
+        &__emailPreviewFrame {
+            height: 39rem;
+        }
+
+        &__emailEditorActions {
+            flex-direction: column;
+        }
+
+        &__reminderTplRow {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        &__reminderTplActions {
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+        &__reminderEditor {
+            padding: v.$space-3;
+        }
+
+        &__reminderEditorActions {
+            flex-direction: column;
+        }
+
+        &__emailPreviewFrame {
+            height: 24rem;
+        }
+
+        &__card {
+            overflow: visible;
+        }
+
+        &__dayHoursHeader {
+            display: none;
+        }
+
+        &__dayHoursRow {
+            grid-template-columns: 1fr auto;
+            grid-template-areas:
+                "day open"
+                "start end";
+            gap: v.$space-2 v.$space-3;
+            padding: v.$space-3;
+            background: #fafafa;
+            border: 0.0625rem solid #e2e8f0;
+            border-radius: 0.5rem;
+            border-bottom: none;
+            margin-bottom: v.$space-2;
+        }
+
+        &__dayHoursCol--day {
+            grid-area: day;
+            font-weight: 600;
+        }
+
+        &__dayHoursCol--open {
+            grid-area: open;
+            justify-content: flex-end;
+
+            .lw-platformSettings__toggle {
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 0.25rem;
+            }
+
+            .lw-platformSettings__toggleLabel {
+                font-size: 0.75rem;
+            }
+        }
+
+        &__dayHoursCol--start {
+            grid-area: start;
+            min-width: 0;
+        }
+
+        &__dayHoursCol--end {
+            grid-area: end;
+            min-width: 0;
+        }
+
+        &__reminderOptions {
+            // Wrap chips instead of nowrap horizontal scroll — the nowrap row
+            // propagated its max-content width and overflowed the screen.
+            flex-wrap: wrap;
+            min-width: 0;
+            max-width: 100%;
+            padding-block-end: 0.25rem;
+        }
+    }
+}
