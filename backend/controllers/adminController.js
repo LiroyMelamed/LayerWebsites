@@ -11,7 +11,9 @@ const { insertAuditEvent } = require('../utils/auditEvents');
 function officeTargetSql(req, alias = 'users') {
     if (req.firmPermissionMode !== 'role') return '';
     const hidden = _getHiddenAdminIds();
-    return ` AND ${alias}.law_firm_tenant_id IS NULL
+    const owner = require('../lib/tenant/databaseScope').enabled() && req.firmTenantId
+        ? '= public.office_scope_id()' : 'IS NULL';
+    return ` AND ${alias}.law_firm_tenant_id ${owner}
         AND NOT EXISTS (SELECT 1 FROM platform_admins pa WHERE pa.user_id = ${alias}.userid AND pa.is_active = TRUE)
         ${hidden.length ? `AND ${alias}.userid <> ALL(ARRAY[${hidden.join(',')}]::int[])` : ''}`;
 }

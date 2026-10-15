@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { ArrowLeft, BriefcaseBusiness, UserRoundSearch } from "lucide-react";
 import SimpleCard from "../../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../../components/simpleComponents/SimpleContainer";
 import Skeleton from "../../../../components/simpleComponents/Skeleton";
-import { Text12, Text14, TextBold14, TextBold18 } from "../../../../components/specializedComponents/text/AllTextKindFile";
+import { TextBold14 } from "../../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../../constant/colors";
 import { usePopup } from "../../../../providers/PopUpProvider";
 import { navigateOpenCasesByManager } from "./commandCenterUtils";
@@ -28,15 +29,19 @@ export default function CaseOperationsPanel({
     );
 
     return (
-        <SimpleCard className="lw-commandCenter__section" id="manager-home-operations">
+        <SimpleCard className="lw-commandCenter__section lw-businessHome__operations" id="manager-home-operations">
             <SimpleContainer className="lw-commandCenter__sectionHeader">
-                <TextBold18 color={colors.primary}>{t("managerHome.operations.byManager")}</TextBold18>
-                <SimpleContainer
-                    className="lw-commandCenter__link"
-                    onPress={() => dashboardModals.openOpenCases(drillDown)}
+                <div className="lw-businessHome__sectionTitle">
+                    <span className="lw-businessHome__icon"><BriefcaseBusiness size={20} aria-hidden="true" /></span>
+                    <div><h2>{t("managerHome.operations.byManager")}</h2><p>{t("managerHome.business.workloadSubtitle")}</p></div>
+                </div>
+                <button
+                    type="button"
+                    className="lw-businessHome__sectionLink"
+                    onClick={() => dashboardModals.openOpenCases(drillDown)}
                 >
-                    <Text12 color={colors.primary}>{t("managerHome.actions.viewAllCases")}</Text12>
-                </SimpleContainer>
+                    {t("managerHome.actions.viewAllCases")}<ArrowLeft size={15} aria-hidden="true" />
+                </button>
             </SimpleContainer>
 
             {isPerforming ? (
@@ -44,7 +49,7 @@ export default function CaseOperationsPanel({
             ) : (
                 <SimpleContainer className="lw-commandCenter__panelBody">
                     {managerWorkload.length === 0 ? (
-                        <Text14 color={colors.winter}>{t("managerHome.operations.noManagers")}</Text14>
+                        <p className="lw-businessHome__empty">{t("managerHome.operations.noManagers")}</p>
                     ) : (
                         <ManagerWorkloadChart
                             managers={managerWorkload}
@@ -53,14 +58,17 @@ export default function CaseOperationsPanel({
                     )}
 
                     {unassignedCases?.count > 0 && (
-                        <SimpleContainer
+                        <button
+                            type="button"
                             className="lw-commandCenter__unassignedBanner"
-                            onPress={() => dashboardModals.openUnassignedCases(drillDown)}
+                            onClick={() => dashboardModals.openUnassignedCases(drillDown)}
                         >
+                            <UserRoundSearch size={18} aria-hidden="true" />
                             <TextBold14 color={colors.negative}>
                                 {t("managerHome.operations.unassignedBanner", { count: unassignedCases.count })}
                             </TextBold14>
-                        </SimpleContainer>
+                            <ArrowLeft size={16} className="lw-businessHome__rowArrow" aria-hidden="true" />
+                        </button>
                     )}
                 </SimpleContainer>
             )}

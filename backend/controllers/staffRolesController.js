@@ -70,6 +70,7 @@ async function getSessionScope(req, res) {
     return res.json({
         ...scope,
         isPlatformAdmin: Boolean(req.isPlatformAdminUser),
+        isOfficeOwner: Boolean(req.isOfficeOwner),
     });
 }
 

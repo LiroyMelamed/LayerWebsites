@@ -15,6 +15,7 @@ import {
     PlanUsageScreenName,
     PlansPricingScreenName,
     PlatformSettingsScreenName,
+    OfficeIntegrationsScreenName,
     FirmStaffRolesScreenName,
     RemindersScreenName,
     AdminSupportScreenName,
@@ -49,6 +50,7 @@ const EvidenceDocumentsScreen = lazy(() => import("../screens/evidenceDocuments/
 const PlanUsageScreen = lazy(() => import("../screens/billingScreen/PlanUsageScreen"));
 const PlansPricingScreen = lazy(() => import("../screens/billingScreen/PlansPricingScreen"));
 const PlatformSettingsScreen = lazy(() => import("../screens/platformSettingsScreen/PlatformSettingsScreen"));
+const OfficeIntegrations = lazy(() => import('../screens/officeIntegrations/OfficeIntegrationsScreen'));
 const FirmStaffRolesScreen = lazy(() => import("../screens/firmStaffRoles/FirmStaffRolesScreen"));
 const CalendarScreen = lazy(() => import("../screens/calendarScreen/CalendarScreen"));
 const DailyAgendaScreen = lazy(() => import("../screens/calendarScreen/DailyAgendaScreen"));
@@ -99,6 +101,7 @@ function AdminStack() {
                     <Route path={toRelativePath(RemindersScreenName)} element={<RemindersScreen />} />
                     <Route path={toRelativePath(AdminSupportScreenName)} element={<AdminSupportScreen />} />
                     <Route path={toRelativePath(PlatformSettingsScreenName)} element={<PlatformSettingsScreen />} />
+                    <Route path={toRelativePath(OfficeIntegrationsScreenName)} element={<OfficeIntegrations />} />
                     <Route path={toRelativePath(FirmStaffRolesScreenName)} element={<FirmStaffRolesScreen />} />
                     {calendarEnabled && (
                         <>

@@ -27,12 +27,14 @@ function initSignPendingCleanupScheduler() {
         if (running) return;
         running = true;
         try {
+            await require('../../lib/tenant/officeJobs').forEachOffice(async () => {
             const result = await purgeStalePendingSigningFiles({ limit: batchSize });
             if (result.deleted > 0 || result.errors.length > 0) {
                 console.log(
                     `[sign-pending-cleanup] deleted=${result.deleted} scanned=${result.scanned} errors=${result.errors.length}`
                 );
             }
+            });
         } catch (err) {
             console.error('[sign-pending-cleanup] Error:', err.message);
         } finally {

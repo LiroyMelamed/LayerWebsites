@@ -245,8 +245,8 @@
       "name": "Document filter",
       "kind": "nav",
       "refersTo": "segment-active",
-      "description": "Existing equal-width SegmentedSwitch; static sample of active and inactive options.",
-      "html": "<div class=\"ds-segments\" role=\"radiogroup\" aria-label=\"סינון מסמכים\" dir=\"rtl\"><button role=\"radio\" aria-checked=\"true\">כל המסמכים</button><button role=\"radio\" aria-checked=\"false\">ממתינים לחתימה</button><button role=\"radio\" aria-checked=\"false\">מסמכים שחתמתי</button></div>",
+      "description": "Existing equal-width SegmentedSwitch in the single My documents destination; all, pending and signed are views of the same page. Exact shipped labels from feature3022964c: Hebrew הכול / ממתינים לי / חתמתי; English All / Waiting for me / I signed; Arabic الكل / بانتظاري / وقّعتها. Personal signed history has no separate navigation entry; the former signed-documents route redirects to the signed filter.",
+      "html": "<div class=\"ds-segments\" role=\"radiogroup\" aria-label=\"סינון מסמכים\" dir=\"rtl\"><button role=\"radio\" aria-checked=\"true\">הכול</button><button role=\"radio\" aria-checked=\"false\">ממתינים לי</button><button role=\"radio\" aria-checked=\"false\">חתמתי</button></div>",
       "css": ".ds-segments{display:flex;align-items:stretch;padding:.1875rem;gap:.1875rem;border:1px solid #e0e0e0;border-radius:999rem;background:#edf2f7;box-shadow:inset 0 .0625rem .125rem rgba(0,0,0,.04);}.ds-segments button{font-family:var(--lw-font-stack,Heebo,system-ui,sans-serif);flex:1 1 0;min-width:0;min-height:2.75rem;border:0;border-radius:999rem;padding:.4375rem clamp(.375rem,1.25vw,1rem);background:transparent;color:#4a5568;font-size:.875rem;font-weight:600;white-space:normal;overflow-wrap:anywhere;cursor:pointer;transition:background-color .18s ease,color .18s ease,box-shadow .18s ease;}.ds-segments button[aria-checked=true]{background:#2a4365;color:white;box-shadow:0 .0625rem .1875rem rgba(0,0,0,.18);}.ds-segments button:not([aria-checked=true]):hover{background:rgba(42,67,101,.06);color:#2a4365;}.ds-segments button:focus-visible{outline:2px solid #2a4365;outline-offset:2px;}"
     },
     {

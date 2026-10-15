@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const consumed = new Map();
 
 function serviceKey() {
-  return process.env.CENTRAL_SERVICE_KEY?.trim() || 'dev-central-service-key-change-me';
+  return process.env.CENTRAL_SERVICE_KEY?.trim() || '';
 }
 
 function fromB64url(s) {
@@ -15,6 +15,7 @@ function fromB64url(s) {
  * @returns {{ v:1, productId:string, to:string, jti:string, exp:number } | null}
  */
 function verifyAndConsumeCentralHandoff(token, expectedProductId) {
+  if (serviceKey().length < 32) return null;
   const raw = String(token || '').trim();
   const parts = raw.split('.');
   if (parts.length !== 2) return null;

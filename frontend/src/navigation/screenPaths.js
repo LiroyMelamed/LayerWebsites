@@ -20,6 +20,7 @@ export const PlanUsageScreenName = "/PlanUsage";
 export const PlansPricingScreenName = "/PlansPricing";
 export const RemindersScreenName = "/RemindersScreen";
 export const PlatformSettingsScreenName = "/PlatformSettingsScreen";
+export const OfficeIntegrationsScreenName = "/OfficeIntegrations";
 export const AdminSupportScreenName = "/support";
 export const CalendarScreenName = "/CalendarScreen";
 export const DailyAgendaScreenName = "/calendar/day/:date";

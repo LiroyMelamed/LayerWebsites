@@ -152,7 +152,7 @@ Reuse PrimaryButton, SecondaryButton and TertiaryButton over GenericButton. Prim
 
 ### Segmented filter
 
-Reuse SegmentedSwitch for all documents, ready actions and personal signing history. Options share equal flexible width, wrap their labels, and keep the incumbent active navy pill, focus outline and disabled treatment. This control changes the data view; it does not imply that personal signing history contains only globally completed files.
+Reuse SegmentedSwitch within the single My documents destination for all documents, ready actions and personal signing history. The shipped labels are Hebrew `הכול / ממתינים לי / חתמתי`, English `All / Waiting for me / I signed`, and Arabic `الكل / بانتظاري / وقّعتها`. Options share equal flexible width, wrap their labels, and keep the incumbent active navy pill, focus outline and disabled treatment. This control changes the data view; it does not imply that personal signing history contains only globally completed files.
 
 ### Panels and document rows
 
@@ -168,7 +168,7 @@ Reuse SimplePopUp with dialog semantics, a labelled heading, existing close beha
 
 ### Navigation and case status
 
-The portal adds home, documents, personal signed history and case destinations using the actual shell. Tenant-aware paths are part of navigation behavior. The selected case route expands an authorized existing case card; it does not introduce a new timeline, completion percentage or case-progress design.
+The portal uses home, one My documents destination and case status within the actual shell. Personal signed history is the `signed` filter of My documents, not a separate navigation entry. The home offers My documents and Case status shortcuts; its recent signed documents link opens the same documents destination with `?tab=signed`. The former signed-documents route remains compatible and redirects into that filter. Tenant-aware paths are part of navigation behavior. The selected case route expands an authorized existing case card; it does not introduce a new timeline, completion percentage or case-progress design.
 
 ### Actions and personal history
 

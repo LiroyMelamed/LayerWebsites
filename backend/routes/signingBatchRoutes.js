@@ -20,10 +20,10 @@ const deliver = (req, res, next) => service.loadBatch(req, req.params.id).then((
 }).catch(next);
 
 router.use((req, res, next) => { res.set('Cache-Control', 'private, no-store');next(); });
-router.get('/completed/:token', run(require('../services/signingPackageCompletion').downloadPackage));
-router.get('/public/:token', run(async (req, res) => res.json(await publicService.publicDetails(req))));
-router.post('/public/:token/session', run(async (req, res) => res.json(await publicService.startSession(req))));
-router.post('/public/:token/confirm-otp', run(async (req, res) => res.json(await publicService.confirmOtp(req))));
+router.get('/completed/:token', require('../middlewares/publicOfficeScope').signingPackage, run(require('../services/signingPackageCompletion').downloadPackage));
+router.get('/public/:token', require('../middlewares/publicOfficeScope').signingBatch, run(async (req, res) => res.json(await publicService.publicDetails(req))));
+router.post('/public/:token/session', require('../middlewares/publicOfficeScope').signingBatch, run(async (req, res) => res.json(await publicService.startSession(req))));
+router.post('/public/:token/confirm-otp', require('../middlewares/publicOfficeScope').signingBatch, run(async (req, res) => res.json(await publicService.confirmOtp(req))));
 router.use(auth, requireSigningEnabledForUser);
 router.get('/contacts', upload, run(async (req, res) => {
     const scope = await templates.actorScope(req);const query = String(req.query.q || '').trim().slice(0, 100);

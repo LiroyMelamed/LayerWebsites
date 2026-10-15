@@ -15,6 +15,7 @@ const { canViewAllFirmCases, requireAreaAction } = require("../lib/firmPermissio
 const { assertCaseRecordAccess } = require("../lib/firmPermissions/caseAccess");
 const { getHebrewMessage } = require('../utils/errors.he');
 const { caseHasLegalData } = require('../utils/legalData');
+const { saveCaseCourtNumber } = require('../services/integrations/courtCaseReference');
 
 function respondPermissionError(res, err) {
     if (!err) return false;
@@ -246,6 +247,7 @@ const _buildBaseCaseQuery = () => `
     SELECT
         C.caseid,
         C.casename,
+        (SELECT l.court_number FROM court_case_links l WHERE l.case_id=C.caseid AND l.law_firm_tenant_id IS NOT DISTINCT FROM C.law_firm_tenant_id AND l.is_primary) AS court_case_number,
         C.casetypeid,
         CT.casetypename,
         C.userid,
@@ -297,6 +299,7 @@ const _mapCaseResults = (rows, caseUsersMap) => {
             casesMap.set(caseId, {
                 CaseId: caseId,
                 CaseName: row.casename,
+                CourtCaseNumber: row.court_case_number || '',
                 CaseTypeId: row.casetypeid,
                 CaseTypeName: row.casetypename,
                 UserId: row.userid,
@@ -688,6 +691,10 @@ const addCase = async (req, res) => {
             }
         }
 
+        // Persist automation in the same transaction as the new case. No network
+        // calls here: a WhatsApp failure must not turn a saved case into a retry.
+        await saveCaseCourtNumber(client, caseId, req.firmTenantId || null, req.body.CourtCaseNumber);
+        await require('../services/integrations/runtime').service.enqueueCase(client, caseId, req.firmTenantId || null);
         await client.query('COMMIT');
 
         // ── Notify linked users (ONE message per user, regardless of stage) ──
@@ -784,6 +791,7 @@ const addCase = async (req, res) => {
             try { await client.query('ROLLBACK'); } catch (_) { /* ignore */ }
         }
         if (!res.headersSent) {
+            if (error.httpStatus >= 400 && error.httpStatus < 500) return respondPermissionError(res, error);
             const isProd = String(process.env.NODE_ENV || "").toLowerCase() === "production";
             if (!isProd) {
                 console.error('[addCase] Full error details:', error?.message, '| pg code:', error?.code);
@@ -893,6 +901,8 @@ const updateCase = async (req, res) => {
                 caseId,
             ]
         );
+
+        await saveCaseCourtNumber(client, caseId, req.firmTenantId || null, req.body.CourtCaseNumber);
 
         // Sync case_users junction table
         if (resolvedUserIds.length > 0) {
@@ -1109,6 +1119,7 @@ const updateCase = async (req, res) => {
         if (client) {
             try { await client.query('ROLLBACK'); } catch (rbErr) { console.error('[updateCase] ROLLBACK failed:', rbErr?.message); }
         }
+        if (error.httpStatus >= 400 && error.httpStatus < 500) return respondPermissionError(res, error);
         res.status(500).json({ message: "שגיאה בעדכון תיק" });
     } finally {
         if (client) {

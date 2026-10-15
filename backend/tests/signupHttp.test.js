@@ -11,6 +11,7 @@ require.cache[servicePath] = { id: servicePath, filename: servicePath, loaded: t
     syncSignup: async () => {},
     completeSignupWithoutPayment: async () => { throw Object.assign(Error('payment required'), { code: 'PAYMENT_REQUIRED' }); },
 } };
+process.env.SELF_SERVICE_SIGNUP_ENABLED = '1';
 process.env.TRUST_PROXY = 'false';
 process.env.RATE_LIMIT_SIGNUP_MAX = '2';
 const router = require('../routes/publicSignupRoutes');

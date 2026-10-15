@@ -133,7 +133,7 @@ export default function ClientDocumentsScreen({ initialTab = 'all' }) {
     return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
         {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={path(ClientMainScreenName)} GetNavBarData={getClientNavBarData} isClient />}
         <SimpleScrollView>
-            <main className="lw-clientDocuments">
+            <div className="lw-clientDocuments">
                 <header className="lw-clientDocuments__header">
                     <div><h1>{t('clientPortal.myDocuments')}</h1><p>{t('clientPortal.documentsIntro')}</p></div>
                     <TertiaryButton onPress={() => navigate(path(ClientMainScreenName))}>{t('clientPortal.backHome')}</TertiaryButton>
@@ -168,7 +168,7 @@ export default function ClientDocumentsScreen({ initialTab = 'all' }) {
                     </div>
                 </>}
                 {selectedId && !selected && !loading && <div role="alert" className="lw-clientDocuments__notice"><p>{t('clientPortal.documentUnavailable')}</p><SecondaryButton onPress={close}>{t('common.close')}</SecondaryButton></div>}
-            </main>
+            </div>
         </SimpleScrollView>
         <SimplePopUp isOpen={Boolean(selected)} onClose={close} className="lw-clientDocumentPopup" role="dialog" aria-modal="true" aria-labelledby="client-document-title">
             {selected && <DocumentDetails key={selected.PortalId} title={selected.FileName}>

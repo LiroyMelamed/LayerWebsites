@@ -7,6 +7,8 @@ const attachFirmPermissions = require('./attachFirmPermissions');
 const { applyLegacyOfficeRole } = require('../lib/officeRole');
 const { runWithTenant } = require('../lib/tenant/tenantContext');
 const { requireBillingAccess } = require('./requireBillingAccess');
+const dbScope = require('../lib/tenant/databaseScope');
+const { getTenantById } = require('../lib/tenant/tenantService');
 
 const SECRET_KEY = process.env.JWT_SECRET;
 if (!SECRET_KEY) {
@@ -88,9 +90,20 @@ const authMiddleware = (req, res, next) => {
             if (jwtErr?.__firmPermissionBlocked) return next(jwtErr);
             return next(jwtErr);
         }
-        attachFirmPermissions(req, res, (permErr) => {
+        attachFirmPermissions(req, res, async (permErr) => {
             if (permErr) return next(permErr);
             applyLegacyOfficeRole(req);
+            if (dbScope.enabled()) {
+                try {
+                    if (!req.firmTenantId) return dbScope.withLegacyOffice(() => requireBillingAccess(req, res, next));
+                    const tenant = await getTenantById(req.firmTenantId);
+                    if (!tenant?.isActive) return next(createAppError('FORBIDDEN', 403, getHebrewMessage('FORBIDDEN')));
+                    req.tenant = tenant;
+                    req.tenantSlug = tenant.slug;
+                    req.isOfficeOwner = Number(tenant.ownerUserId) === Number(req.user.UserId) && req.user.Role === 'Admin';
+                    return runWithTenant(tenant, () => requireBillingAccess(req, res, next));
+                } catch (error) { return next(error); }
+            }
             // The current DB identity is authoritative even when no tenant header
             // was sent. A header cannot bypass the owning firm's billing gate.
             if (req.firmTenantId && String(req.tenant?.id || '') !== String(req.firmTenantId)) {
