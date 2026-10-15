@@ -2,10 +2,9 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const authMiddleware = require('../middlewares/authMiddleware');
-const requireLawyerOrAdmin = require('../middlewares/requireLawyerOrAdmin');
+const requireFirmAction = require('../middlewares/requireFirmAction');
 const reminderController = require('../controllers/reminderController');
 
-// Multer config for Excel/CSV upload (in memory, 5 MB limit)
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 },
@@ -19,37 +18,23 @@ const upload = multer({
     },
 });
 
-// GET  /api/reminders/templates  – list available email templates (built-in + custom)
-router.get('/templates', authMiddleware, requireLawyerOrAdmin, reminderController.getTemplates);
+const remView = [authMiddleware, requireFirmAction('reminders', 'view', { legacy: 'lawyerOrAdmin' })];
+const remManage = [authMiddleware, requireFirmAction('reminders', 'manage', { legacy: 'lawyerOrAdmin' })];
 
-// GET  /api/reminders/templates/:key/example-excel – download example Excel for a template
-router.get('/templates/:key/example-excel', authMiddleware, requireLawyerOrAdmin, reminderController.downloadTemplateExcel);
+router.get('/templates', ...remView, reminderController.getTemplates);
+router.get('/templates/:key/example-excel', ...remView, reminderController.downloadTemplateExcel);
 
-// CRUD for custom reminder templates (lawyer/admin only)
-router.get('/custom-templates', authMiddleware, requireLawyerOrAdmin, reminderController.listCustomTemplates);
-router.post('/custom-templates', authMiddleware, requireLawyerOrAdmin, reminderController.createCustomTemplate);
-router.put('/custom-templates/:id', authMiddleware, requireLawyerOrAdmin, reminderController.updateCustomTemplate);
-router.delete('/custom-templates/:id', authMiddleware, requireLawyerOrAdmin, reminderController.deleteCustomTemplate);
+router.get('/custom-templates', ...remView, reminderController.listCustomTemplates);
+router.post('/custom-templates', ...remManage, reminderController.createCustomTemplate);
+router.put('/custom-templates/:id', ...remManage, reminderController.updateCustomTemplate);
+router.delete('/custom-templates/:id', ...remManage, reminderController.deleteCustomTemplate);
 
-// POST /api/reminders/import     – import reminders from Excel/CSV (lawyer/admin only)
-router.post('/import', authMiddleware, requireLawyerOrAdmin, upload.single('file'), reminderController.importReminders);
-
-// POST /api/reminders            – create a single reminder (lawyer/admin only)
-router.post('/', authMiddleware, requireLawyerOrAdmin, reminderController.createSingleReminder);
-
-// GET  /api/reminders            – list reminders (lawyer/admin only)
-router.get('/', authMiddleware, requireLawyerOrAdmin, reminderController.listReminders);
-
-// GET  /api/reminders/:id        – fetch a single reminder by id (lawyer/admin only)
-router.get('/:id', authMiddleware, requireLawyerOrAdmin, reminderController.getReminderById);
-
-// PUT  /api/reminders/:id/cancel – cancel a PENDING reminder (lawyer/admin only)
-router.put('/:id/cancel', authMiddleware, requireLawyerOrAdmin, reminderController.cancelReminder);
-
-// PUT  /api/reminders/:id – update a PENDING reminder (lawyer/admin only)
-router.put('/:id', authMiddleware, requireLawyerOrAdmin, reminderController.updateReminder);
-
-// DELETE /api/reminders/:id – permanently delete a reminder (lawyer/admin only)
-router.delete('/:id', authMiddleware, requireLawyerOrAdmin, reminderController.deleteReminder);
+router.post('/import', ...remManage, upload.single('file'), reminderController.importReminders);
+router.post('/', ...remManage, reminderController.createSingleReminder);
+router.get('/', ...remView, reminderController.listReminders);
+router.get('/:id', ...remView, reminderController.getReminderById);
+router.put('/:id/cancel', ...remManage, reminderController.cancelReminder);
+router.put('/:id', ...remManage, reminderController.updateReminder);
+router.delete('/:id', ...remManage, reminderController.deleteReminder);
 
 module.exports = router;

@@ -43,6 +43,11 @@ function initBillingRenewalScheduler() {
             // Run at most once per poll window key; maintenance itself is idempotent.
             if (lastRunKey === key) return;
             lastRunKey = key;
+            if(String(process.env.MULTI_TENANT_MODE).toLowerCase()==='true'){
+                const results=await require('../../lib/billing/selfServiceRenewal').signupRenewal.due();
+                console.log('[billing-renewal] self-service',JSON.stringify({processed:results.length,needsReview:results.filter(r=>r.status==='needs_review').length}));
+                return;
+            }
             const result = await runBillingMaintenance();
             if (!result?.skipped) {
                 console.log('[billing-renewal]', JSON.stringify(result?.result?.ok != null ? { ok: result.result.ok } : result));

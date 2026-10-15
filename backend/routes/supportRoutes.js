@@ -1,6 +1,6 @@
 const express = require('express');
 const authMiddleware = require('../middlewares/authMiddleware');
-const requireAdmin = require('../middlewares/requireAdmin');
+const requireFirmAction = require('../middlewares/requireFirmAction');
 
 const router = express.Router();
 
@@ -48,7 +48,7 @@ async function proxyJson(res, path, init = {}) {
   res.status(response.status).type('application/json').send(text);
 }
 
-router.use(authMiddleware, requireAdmin);
+router.use(authMiddleware, requireFirmAction('support', 'view', { legacy: 'admin' }));
 
 router.get('/tickets', async (req, res) => {
   const slug = firmSlug();

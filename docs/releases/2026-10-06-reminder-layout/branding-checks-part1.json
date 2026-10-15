@@ -1,0 +1,20 @@
+[
+  {
+    "tenant": "melamedlaw",
+    "title": "ליאב מלמד לקוחות | אזור אישי - משרד עו\"ד ליאב מלמד",
+    "api": {
+      "REACT_APP_API_BASE_URL": "https://api.calls.melamedlaw.co.il/api",
+      "REACT_APP_CENTRAL_API_URL": "https://central-api.mela-media.co.il"
+    },
+    "apiIncludedInBuild": true
+  },
+  {
+    "tenant": "morlevy",
+    "title": "מור לוי לקוחות | אזור אישי - משרד עו\"ד מור לוי",
+    "api": {
+      "REACT_APP_API_BASE_URL": "https://api-morlevy.mela-media.co.il/api",
+      "REACT_APP_CENTRAL_API_URL": "https://central-api.mela-media.co.il"
+    },
+    "apiIncludedInBuild": true
+  }
+]
