@@ -1,0 +1,29 @@
+@use '../../styles/mixins' as m;
+@use '../../styles/variables' as v;
+
+.lw-chatInput {
+    display: flex;
+    align-items: flex-end;
+    gap: v.$space-2;
+    padding: v.$space-3 v.$space-4;
+    border-top: 0.0625rem solid var(--lw-color-disabled);
+    background: var(--lw-color-secondary);
+    flex-shrink: 0;
+
+    &__field {
+        flex: 1;
+
+        // Single-row chatbot input: center the floating label vertically
+        .lw-simpleTextArea__label {
+            transform: translateY(0) scale(1);
+        }
+
+        &.is-floated .lw-simpleTextArea__label {
+            transform: translateY(-1.25rem) scale(0.8);
+        }
+    }
+
+    &__send {
+        white-space: nowrap;
+    }
+}

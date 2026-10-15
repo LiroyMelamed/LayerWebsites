@@ -1,0 +1,11 @@
+{
+  "tenant": "ashrafessa",
+  "sourceCommit": "d7e008c78dc9bafbb76c1504a5443bdde88a9471",
+  "build": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/reminder-layout-ashrafessa-20261006/frontend/build",
+  "archive": "ashrafessa.tar.gz",
+  "archiveSha256": "7532b52837b42ad3b3fa6096ae35d0eb033eb9dfa4f2418b8fe5960e21034db2",
+  "manifest": "ashrafessa-files.json",
+  "manifestSha256": "cb6ac2941241a8528606656dc71a2e010d53a70ddc3f21d81f3d9468b57b231d",
+  "files": 236,
+  "scope": "frontend only; no API, database, scheduling or native changes"
+}

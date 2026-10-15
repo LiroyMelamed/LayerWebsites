@@ -1,0 +1,270 @@
+@use '../../styles/variables' as v;
+
+.lw-simpleInput {
+    position: relative;
+    flex-direction: row;
+    align-items: center;
+
+    height: 2rem;
+    margin-top: 0.5rem;
+
+    border-radius: 0.75rem;
+    border: 0.0625rem solid var(--lw-color-secondary-highlighted);
+    background-color: var(--lw-color-white);
+    box-shadow: none;
+
+    direction: inherit;
+}
+
+.lw-simpleInput.is-focused {
+    border-color: var(--lw-color-primary-highlighted);
+}
+
+.lw-simpleInput.has-error {
+    border-color: var(--lw-color-error);
+}
+
+.lw-simpleInput.is-disabled {
+    border-color: var(--lw-color-disabled-highlighted);
+    background-color: var(--lw-color-disabled);
+}
+
+.lw-simpleInput--small {
+    height: 1.5rem;
+}
+
+.lw-simpleInput--big {
+    height: 2.5rem;
+}
+
+.lw-simpleInput__label {
+    position: absolute;
+    pointer-events: auto;
+    cursor: text;
+    background-color: var(--lw-color-white);
+
+    inset-inline-start: 0.5rem;
+    top: 50%;
+
+    transform: translateY(-50%);
+    opacity: 0.6;
+
+    font-size: 1rem;
+    display: inline-block;
+    max-inline-size: calc(100% - 0.5rem - 0.5rem);
+    white-space: nowrap;
+    overflow-x: hidden;
+    overflow-y: visible;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+    padding-inline: 0.25rem;
+    padding-block: 0.125rem;
+    font-family: inherit;
+    color: var(--lw-color-primary-highlighted);
+    border: none;
+    border-radius: 624.9375rem;
+    transition: transform 0.2s ease, opacity 0.2s ease, inset-inline-start 0.2s ease;
+}
+
+.lw-simpleInput.has-rightIcon .lw-simpleInput__label {
+    inset-inline-start: 2.5rem;
+    max-inline-size: calc(100% - 2.5rem - 0.5rem);
+}
+
+.lw-simpleInput.is-floated .lw-simpleInput__label {
+    opacity: 1;
+}
+
+.lw-simpleInput__labelAccessory {
+    position: absolute;
+    inset-inline-end: 100%;
+    inset-block-start: 0;
+    transform: translate(35%, -42%);
+    pointer-events: auto;
+    line-height: 0;
+}
+
+.lw-simpleInput.is-floated .lw-simpleInput__field::placeholder {
+    opacity: 0.5;
+}
+
+.lw-simpleInput--small.is-floated .lw-simpleInput__label {
+    transform: translateY(-85%) scale(0.7);
+}
+
+.lw-simpleInput--medium.is-floated .lw-simpleInput__label,
+.lw-simpleInput--big.is-floated .lw-simpleInput__label {
+    transform: translateY(-110%) scale(0.7);
+}
+
+.lw-simpleInput.has-error .lw-simpleInput__label {
+    color: var(--lw-color-error);
+}
+
+.lw-simpleInput.is-disabled .lw-simpleInput__label {
+    background-color: var(--lw-color-disabled);
+    color: var(--lw-color-disabled-highlighted);
+}
+
+.lw-simpleInput__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lw-simpleInput__icon--right {
+    margin-inline-end: 0.5rem;
+    /* 0.5rem */
+}
+
+.lw-simpleInput__icon--left {
+    margin-inline-start: 0.5rem;
+    /* 0.5rem */
+}
+
+.lw-simpleInput__field {
+    width: 100%;
+    min-width: 0;
+
+    padding-block: 0.5rem;
+    padding-inline-start: 1rem;
+    padding-inline-end: 1rem;
+
+    border: none;
+    background-color: transparent;
+    outline: none;
+
+    direction: inherit;
+    unicode-bidi: plaintext;
+
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--lw-color-text);
+    text-align: start;
+
+    &::placeholder {
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    // Override browser autofill blue/yellow background
+    &:-webkit-autofill,
+    &:-webkit-autofill:hover,
+    &:-webkit-autofill:focus {
+        -webkit-box-shadow: 0 0 0 62.5rem var(--lw-color-white) inset;
+        -webkit-text-fill-color: var(--lw-color-text);
+        transition: background-color 5000s ease-in-out 0s;
+    }
+}
+
+.lw-simpleInput--small .lw-simpleInput__field {
+    padding-block: 0.25rem;
+    font-size: 0.75rem;
+}
+
+.lw-simpleInput--big .lw-simpleInput__field {
+    font-size: 1.5rem;
+}
+
+.lw-simpleInput.has-rightIcon .lw-simpleInput__field {
+    padding-inline-start: 1.875rem;
+}
+
+.lw-simpleInput.has-leftIcon .lw-simpleInput__field {
+    padding-inline-end: 0.625rem;
+}
+
+.lw-simpleInput__field:focus-visible {
+    outline: none;
+}
+
+.lw-simpleInput__field:disabled {
+    color: var(--lw-color-disabled);
+}
+
+.lw-simpleInput__field[type='date'],
+.lw-simpleInput__field[type='datetime-local'],
+.lw-simpleInput__field[type='time'],
+.lw-simpleInput__field[type='month'],
+.lw-simpleInput__field[type='week'],
+.lw-simpleInput__field--temporalText {
+    direction: ltr;
+    text-align: right;
+    unicode-bidi: isolate;
+    position: relative;
+    // Calendar icon sits on the physical left; date text stays right-aligned.
+    padding-inline-start: 2.75rem;
+    padding-inline-end: 0.75rem;
+    color-scheme: light;
+    color: var(--lw-color-text);
+    -webkit-text-fill-color: var(--lw-color-text);
+    caret-color: var(--lw-color-text);
+}
+
+.lw-simpleInput__field--temporalText {
+    // Real editable text — select/highlight digits like any other input.
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+}
+
+.lw-simpleInput__field[type='date']::-webkit-calendar-picker-indicator,
+.lw-simpleInput__field[type='datetime-local']::-webkit-calendar-picker-indicator,
+.lw-simpleInput__field[type='month']::-webkit-calendar-picker-indicator,
+.lw-simpleInput__field[type='week']::-webkit-calendar-picker-indicator {
+    position: absolute;
+    left: 0.45rem;
+    right: auto;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.75rem;
+    height: 1.75rem;
+    opacity: 0;
+    cursor: pointer;
+}
+
+// Off-screen native picker used only by the calendar button.
+.lw-simpleInput__nativePicker {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+}
+
+.lw-simpleInput__calendarBtn {
+    position: absolute;
+    left: 0.45rem;
+    right: auto;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    margin: 0;
+
+    border: none;
+    border-radius: 0.35rem;
+    background: transparent;
+    color: #4a5568;
+    cursor: pointer;
+}
+
+.lw-simpleInput__calendarBtn:hover:not(:disabled) {
+    color: var(--lw-color-primary-highlighted);
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.lw-simpleInput__calendarBtn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
