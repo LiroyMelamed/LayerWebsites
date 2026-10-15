@@ -1,0 +1,310 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-13T16:57:29.772318+00:00",
+  "title": "Design System: Legal platform — client portal",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Primary",
+        "tonalRamp": [
+          "oklch(15% 0.0663 256.38)",
+          "oklch(25% 0.0663 256.38)",
+          "oklch(35% 0.0663 256.38)",
+          "oklch(45% 0.0663 256.38)",
+          "oklch(60% 0.0663 256.38)",
+          "oklch(75% 0.0663 256.38)",
+          "oklch(85% 0.0663 256.38)",
+          "oklch(95% 0.0663 256.38)"
+        ]
+      },
+      "primary-highlighted": {
+        "role": "primary",
+        "displayName": "Primary Highlighted",
+        "tonalRamp": [
+          "oklch(15% 0.0772 257.10)",
+          "oklch(25% 0.0772 257.10)",
+          "oklch(35% 0.0772 257.10)",
+          "oklch(45% 0.0772 257.10)",
+          "oklch(60% 0.0772 257.10)",
+          "oklch(75% 0.0772 257.10)",
+          "oklch(85% 0.0772 257.10)",
+          "oklch(95% 0.0772 257.10)"
+        ]
+      },
+      "sidebar-selected": {
+        "role": "primary",
+        "displayName": "Sidebar Selected",
+        "tonalRamp": [
+          "oklch(15% 0.0741 259.74)",
+          "oklch(25% 0.0741 259.74)",
+          "oklch(35% 0.0741 259.74)",
+          "oklch(45% 0.0741 259.74)",
+          "oklch(60% 0.0741 259.74)",
+          "oklch(75% 0.0741 259.74)",
+          "oklch(85% 0.0741 259.74)",
+          "oklch(95% 0.0741 259.74)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(25% 0.0000 89.88)",
+          "oklch(35% 0.0000 89.88)",
+          "oklch(45% 0.0000 89.88)",
+          "oklch(60% 0.0000 89.88)",
+          "oklch(75% 0.0000 89.88)",
+          "oklch(85% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ]
+      },
+      "surface-muted": {
+        "role": "neutral",
+        "displayName": "Surface Muted",
+        "tonalRamp": [
+          "oklch(15% 0.0086 247.92)",
+          "oklch(25% 0.0086 247.92)",
+          "oklch(35% 0.0086 247.92)",
+          "oklch(45% 0.0086 247.92)",
+          "oklch(60% 0.0086 247.92)",
+          "oklch(75% 0.0086 247.92)",
+          "oklch(85% 0.0086 247.92)",
+          "oklch(95% 0.0086 247.92)"
+        ]
+      },
+      "divider": {
+        "role": "neutral",
+        "displayName": "Divider",
+        "tonalRamp": [
+          "oklch(15% 0.0126 255.51)",
+          "oklch(25% 0.0126 255.51)",
+          "oklch(35% 0.0126 255.51)",
+          "oklch(45% 0.0126 255.51)",
+          "oklch(60% 0.0126 255.51)",
+          "oklch(75% 0.0126 255.51)",
+          "oklch(85% 0.0126 255.51)",
+          "oklch(95% 0.0126 255.51)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Text",
+        "tonalRamp": [
+          "oklch(15% 0.0331 260.91)",
+          "oklch(25% 0.0331 260.91)",
+          "oklch(35% 0.0331 260.91)",
+          "oklch(45% 0.0331 260.91)",
+          "oklch(60% 0.0331 260.91)",
+          "oklch(75% 0.0331 260.91)",
+          "oklch(85% 0.0331 260.91)",
+          "oklch(95% 0.0331 260.91)"
+        ]
+      },
+      "text-secondary": {
+        "role": "neutral",
+        "displayName": "Text Secondary",
+        "tonalRamp": [
+          "oklch(15% 0.0343 261.32)",
+          "oklch(25% 0.0343 261.32)",
+          "oklch(35% 0.0343 261.32)",
+          "oklch(45% 0.0343 261.32)",
+          "oklch(60% 0.0343 261.32)",
+          "oklch(75% 0.0343 261.32)",
+          "oklch(85% 0.0343 261.32)",
+          "oklch(95% 0.0343 261.32)"
+        ]
+      },
+      "home-muted": {
+        "role": "neutral",
+        "displayName": "Home Muted",
+        "tonalRamp": [
+          "oklch(15% 0.0395 249.94)",
+          "oklch(25% 0.0395 249.94)",
+          "oklch(35% 0.0395 249.94)",
+          "oklch(45% 0.0395 249.94)",
+          "oklch(60% 0.0395 249.94)",
+          "oklch(75% 0.0395 249.94)",
+          "oklch(85% 0.0395 249.94)",
+          "oklch(95% 0.0395 249.94)"
+        ]
+      },
+      "disabled-content": {
+        "role": "neutral",
+        "displayName": "Disabled Content",
+        "tonalRamp": [
+          "oklch(15% 0.0304 254.72)",
+          "oklch(25% 0.0304 254.72)",
+          "oklch(35% 0.0304 254.72)",
+          "oklch(45% 0.0304 254.72)",
+          "oklch(60% 0.0304 254.72)",
+          "oklch(75% 0.0304 254.72)",
+          "oklch(85% 0.0304 254.72)",
+          "oklch(95% 0.0304 254.72)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "home-heading": {
+        "displayName": "Client home heading",
+        "purpose": "Fluid Heebo heading; no separate display face."
+      },
+      "metadata": {
+        "displayName": "Document metadata",
+        "purpose": "Case association, dates and secondary descriptions."
+      }
+    },
+    "shadows": [
+      {
+        "name": "button",
+        "value": "0 0.125rem 0.25rem rgba(0,0,0,0.1)",
+        "purpose": "Existing GenericButton elevation; tertiary explicitly removes it."
+      },
+      {
+        "name": "segment-active",
+        "value": "0 0.0625rem 0.1875rem rgba(0,0,0,0.18)",
+        "purpose": "Existing selected segmented option."
+      },
+      {
+        "name": "popup",
+        "value": "0 1.25rem 1.5625rem -0.3125rem rgba(0,0,0,0.1), 0 0.625rem 0.625rem -0.3125rem rgba(0,0,0,0.04)",
+        "purpose": "Incumbent SimplePopUp only."
+      }
+    ],
+    "motion": [
+      {
+        "name": "button-feedback",
+        "value": "box-shadow 120ms ease, transform 80ms ease",
+        "purpose": "Incumbent slight pressed response."
+      },
+      {
+        "name": "segment-feedback",
+        "value": "background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease",
+        "purpose": "Existing option state transitions."
+      },
+      {
+        "name": "popup-enter-exit",
+        "value": "opacity 0.25s cubic-bezier(0.4,0,0.2,1), transform 0.25s cubic-bezier(0.4,0,0.2,1)",
+        "purpose": "Existing popup; not a new global animation recommendation."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "home-stack",
+        "value": "62rem"
+      },
+      {
+        "name": "home-compact",
+        "value": "36rem"
+      },
+      {
+        "name": "documents-stack",
+        "value": "47.999rem"
+      },
+      {
+        "name": "popup-safe-area",
+        "value": "40rem"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Existing GenericButton variant with portal minimum touch height. Color changes are pressed states; no new hover treatment is invented.",
+      "html": "<button class=\"ds-button-primary\" dir=\"rtl\">לצפייה ולחתימה</button>",
+      "css": ".ds-button-primary{font-family:var(--lw-font-stack,Heebo,system-ui,sans-serif);display:inline-flex;align-items:center;justify-content:center;min-height:2.75rem;padding:.8rem 1rem;border-radius:.5rem;font-size:.875rem;font-weight:700;cursor:pointer;transition:box-shadow 120ms ease,transform 80ms ease;background:var(--lw-color-primary,#2A4365);color:var(--lw-color-white,#FFFFFF);border:0;box-shadow:0 .125rem .25rem rgba(0,0,0,.1);} .ds-button-primary:active{background:var(--lw-color-primary-highlighted,#1A365D);transform:scale(.98);} .ds-button-primary:focus-visible{outline:2px solid var(--lw-color-primary,#2A4365);outline-offset:3px;} .ds-button-primary:disabled{cursor:not-allowed;color:var(--lw-color-disabled-highlighted,#A0AEC0);background:var(--lw-color-disabled,#E2E8F0);box-shadow:none;}"
+    },
+    {
+      "name": "Secondary button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Existing GenericButton variant with portal minimum touch height. Color changes are pressed states; no new hover treatment is invented.",
+      "html": "<button class=\"ds-button-secondary\" dir=\"rtl\">המסמכים שלי</button>",
+      "css": ".ds-button-secondary{font-family:var(--lw-font-stack,Heebo,system-ui,sans-serif);display:inline-flex;align-items:center;justify-content:center;min-height:2.75rem;padding:.8rem 1rem;border-radius:.5rem;font-size:.875rem;font-weight:700;cursor:pointer;transition:box-shadow 120ms ease,transform 80ms ease;background:var(--lw-color-white,#FFFFFF);color:var(--lw-color-primary-highlighted,#1A365D);border:1px solid var(--lw-color-primary-highlighted,#1A365D);box-shadow:0 .125rem .25rem rgba(0,0,0,.1);} .ds-button-secondary:active{background:var(--lw-color-secondary-highlighted,#EDF2F7);transform:scale(.98);} .ds-button-secondary:focus-visible{outline:2px solid var(--lw-color-primary,#2A4365);outline-offset:3px;} .ds-button-secondary:disabled{cursor:not-allowed;color:var(--lw-color-disabled-highlighted,#A0AEC0);background:var(--lw-color-disabled,#E2E8F0);box-shadow:none;}"
+    },
+    {
+      "name": "Tertiary button",
+      "kind": "button",
+      "refersTo": "button-tertiary",
+      "description": "Existing GenericButton variant with portal minimum touch height. Color changes are pressed states; no new hover treatment is invented.",
+      "html": "<button class=\"ds-button-tertiary\" dir=\"rtl\">חזרה לבית</button>",
+      "css": ".ds-button-tertiary{font-family:var(--lw-font-stack,Heebo,system-ui,sans-serif);display:inline-flex;align-items:center;justify-content:center;min-height:2.75rem;padding:.8rem 1rem;border-radius:.5rem;font-size:.875rem;font-weight:700;cursor:pointer;transition:box-shadow 120ms ease,transform 80ms ease;background:transparent;color:var(--lw-color-primary-highlighted,#1A365D);border:0;box-shadow:none;} .ds-button-tertiary:active{background:var(--lw-color-secondary-highlighted,#EDF2F7);transform:scale(.98);} .ds-button-tertiary:focus-visible{outline:2px solid var(--lw-color-primary,#2A4365);outline-offset:3px;} .ds-button-tertiary:disabled{cursor:not-allowed;color:var(--lw-color-disabled-highlighted,#A0AEC0);background:var(--lw-color-disabled,#E2E8F0);box-shadow:none;}"
+    },
+    {
+      "name": "Document search",
+      "kind": "input",
+      "refersTo": "input-search",
+      "description": "Existing SimpleInput with scoped portal height and font size; sample shows its floated labelled state.",
+      "html": "<label class=\"ds-search\" dir=\"rtl\"><span>חיפוש מסמכים</span><input type=\"search\" aria-label=\"חיפוש מסמכים\" value=\"הסכם\" /></label>",
+      "css": ".ds-search{font-family:var(--lw-font-stack,Heebo,system-ui,sans-serif);position:relative;display:flex;align-items:center;min-height:2.75rem;border:1px solid var(--lw-color-secondary-highlighted,#EDF2F7);border-radius:.75rem;background:var(--lw-color-white,#FFFFFF);}.ds-search>span{position:absolute;inset-inline-start:.5rem;top:0;transform:translateY(-50%);padding:.125rem .25rem;background:var(--lw-color-white,#FFFFFF);font-size:.7rem;color:var(--lw-color-primary-highlighted,#1A365D);}.ds-search:focus-within{border-color:var(--lw-color-primary-highlighted,#1A365D);}.ds-search input{font-family:var(--lw-font-stack,Heebo,system-ui,sans-serif);width:100%;min-width:0;min-height:2.5rem;padding:.5rem 1rem;border:0;background:transparent;border-radius:.75rem;color:var(--lw-color-text,#2D3748);font-size:16px;direction:inherit;text-align:start;unicode-bidi:plaintext;}.ds-search input:focus-visible{outline:2px solid var(--lw-color-primary,#2A4365);outline-offset:3px;}"
+    },
+    {
+      "name": "Document filter",
+      "kind": "nav",
+      "refersTo": "segment-active",
+      "description": "Existing equal-width SegmentedSwitch in the single My documents destination; all, pending and signed are views of the same page. Exact shipped labels from feature3022964c: Hebrew הכול / ממתינים לי / חתמתי; English All / Waiting for me / I signed; Arabic الكل / بانتظاري / وقّعتها. Personal signed history has no separate navigation entry; the former signed-documents route redirects to the signed filter.",
+      "html": "<div class=\"ds-segments\" role=\"radiogroup\" aria-label=\"סינון מסמכים\" dir=\"rtl\"><button role=\"radio\" aria-checked=\"true\">הכול</button><button role=\"radio\" aria-checked=\"false\">ממתינים לי</button><button role=\"radio\" aria-checked=\"false\">חתמתי</button></div>",
+      "css": ".ds-segments{display:flex;align-items:stretch;padding:.1875rem;gap:.1875rem;border:1px solid #e0e0e0;border-radius:999rem;background:#edf2f7;box-shadow:inset 0 .0625rem .125rem rgba(0,0,0,.04);}.ds-segments button{font-family:var(--lw-font-stack,Heebo,system-ui,sans-serif);flex:1 1 0;min-width:0;min-height:2.75rem;border:0;border-radius:999rem;padding:.4375rem clamp(.375rem,1.25vw,1rem);background:transparent;color:#4a5568;font-size:.875rem;font-weight:600;white-space:normal;overflow-wrap:anywhere;cursor:pointer;transition:background-color .18s ease,color .18s ease,box-shadow .18s ease;}.ds-segments button[aria-checked=true]{background:#2a4365;color:white;box-shadow:0 .0625rem .1875rem rgba(0,0,0,.18);}.ds-segments button:not([aria-checked=true]):hover{background:rgba(42,67,101,.06);color:#2a4365;}.ds-segments button:focus-visible{outline:2px solid #2a4365;outline-offset:2px;}"
+    },
+    {
+      "name": "Home panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Flat bordered recurring white section; not an elevated marketing card.",
+      "html": "<section class=\"ds-panel\" dir=\"rtl\"><h2>מה מחכה לי</h2><p>כאן מופיעים המסמכים שמוכנים לחתימה שלך.</p></section>",
+      "css": ".ds-panel{font-family:var(--lw-font-stack,Heebo,system-ui,sans-serif);min-width:0;padding:1.5rem;border:1px solid var(--lw-color-disabled,#E2E8F0);border-radius:1rem;background:var(--lw-color-white,#FFFFFF);color:var(--lw-color-text,#2D3748);line-height:1.6;}.ds-panel h2{margin:0;font-size:1.25rem;font-weight:600;line-height:1.4;color:var(--lw-color-primary-highlighted,#1A365D);overflow-wrap:anywhere;}.ds-panel p{margin:.375rem 0 0;font-size:.9375rem;color:#526579;}"
+    },
+    {
+      "name": "Document status",
+      "kind": "chip",
+      "description": "Textual neutral, personal pending and personal signed states; signed does not imply all parties completed.",
+      "html": "<div class=\"ds-statuses\" dir=\"rtl\"><span>ממתין</span><span class=\"ds-pending\">ממתין לחתימה שלך</span><span class=\"ds-signed\">חתמתי</span></div>",
+      "css": ".ds-statuses{display:flex;flex-wrap:wrap;gap:.75rem;}.ds-statuses span{font-family:var(--lw-font-stack,Heebo,system-ui,sans-serif);display:inline-block;border-radius:1rem;padding:.25rem .65rem;background:#EDF2F7;color:#2A4365;font-size:.8125rem;font-weight:500;line-height:1.6;}.ds-statuses .ds-pending{background:#FFF3CD;color:#765A00;}.ds-statuses .ds-signed{background:#E6F4EA;color:#25633C;}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The existing legal-platform workspace",
+    "overview": "This feature extends the incumbent Heebo, navy and white interface. It uses its existing buttons, segmented switch, inputs, popup, navigation and case cards. The approved direction is to make available work understandable without replacing the office's familiar visual identity.\n\nThis document is scoped to the built client portal, not a replacement for the entire application's design system. It describes the local build on base `237d31ad1b402d26857b85d77a9a1407bb9192c4`; it does not assert production deployment or installed-device verification. The source of authority is [DIRECTION.md](DIRECTION.md), the actual frontend and the final `02` source/visual captures. A subsequent scoped document-popup LTR correction is recorded from source; its build04 English browser verification is pending and is not claimed by this record. The earlier concept PRODUCT.md supplies the incumbent brand commitment; its pre-implementation API limitations do not describe the current build.",
+    "keyCharacteristics": [
+      "Familiar navy actions, white surfaces and fine separators.",
+      "Readable hierarchy with actions, metadata and status visibly distinguished.",
+      "Responsive logical layout with Hebrew, Arabic and English support.",
+      "Existing navigation and case-progress appearance remain intact."
+    ],
+    "rules": [
+      {
+        "name": "The Existing Theme Rule",
+        "body": "Extend the current theme and component variants; do not introduce a parallel portal palette or a new navbar skin.",
+        "section": "colors"
+      },
+      {
+        "name": "The Readable Identity Rule",
+        "body": "Preserve the complete meaningful file or case name in the available wrapping layout; do not use a decorative ellipsis as a substitute for identifying an action.",
+        "section": "typography"
+      },
+      {
+        "name": "The Preserve the Shell Rule",
+        "body": "Add destinations through the existing navigation data. Preserve the desktop sidebar, mobile toolbar/drawer and native bottom navigation. CaseMenuItem, CaseMenuItemOpen, ProgressBar, CaseTimeline and StageFileUpload keep their existing appearance.",
+        "section": "layout"
+      }
+    ],
+    "dos": [
+      "**Do** reuse the incumbent theme and components for new client-facing surfaces.",
+      "**Do** preserve navbar and case-progress appearance while adding authorized destinations.",
+      "**Do** wrap long names, use logical spacing and follow the selected locale's direction, dates and plurals.",
+      "**Do** distinguish personal signing history, current required action and final completion in text.",
+      "**Do** expose partial failures and retry without hiding successfully loaded documents.",
+      "**Do** keep new touch controls comfortably sized and keyboard focus visible."
+    ],
+    "donts": [
+      "**Don't** imply that a personal signature means everyone signed.",
+      "**Don't** infer authorization from a name, contact match, URL parameter or visual affordance.",
+      "**Don't** create a new navbar or timeline appearance inside this feature.",
+      "**Don't** use a native signing fallback when the browser handoff is unavailable.",
+      "**Don't** treat synthetic preview captures as production or installed-app proof."
+    ]
+  }
+}

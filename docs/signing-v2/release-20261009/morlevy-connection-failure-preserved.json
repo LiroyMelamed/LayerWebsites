@@ -1,0 +1,7 @@
+{
+  "tenant": "morlevy",
+  "phase": "frontend",
+  "message": "Command failed: ssh -o BatchMode=yes -o ConnectTimeout=15 melamedia-frontend node /root/signing-customer-update-20261009/morlevy/remote-update.cjs /root/signing-customer-update-20261009/morlevy/manifest.json morlevy publish\nssh: connect to host 84.46.253.85 port 22: Connection refused\r\n",
+  "category": "Error",
+  "partialStatePreserved": true
+}

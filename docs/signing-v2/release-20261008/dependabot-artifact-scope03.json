@@ -1,0 +1,27 @@
+{
+  "at": "2026-10-08T20:38:30.680Z",
+  "rows": [
+    {
+      "tenant": "melamedlaw",
+      "browserSourceMapPackageHits": []
+    },
+    {
+      "tenant": "morlevy",
+      "browserSourceMapPackageHits": []
+    },
+    {
+      "tenant": "ashrafessa",
+      "browserSourceMapPackageHits": []
+    },
+    {
+      "tenant": "idm",
+      "browserSourceMapPackageHits": []
+    }
+  ],
+  "unchangedDependencyLocksFromMain": true,
+  "backendLockPatched": {
+    "proxy-addr": "2.0.8",
+    "compression": "1.8.2"
+  },
+  "interpretation": "Four alerts target frontend Node build/dev tooling; no affected package present in emitted browser source maps; static frontend servers do not run webpack-dev-server. This is scoped dependency evidence, not a broad security audit."
+}
