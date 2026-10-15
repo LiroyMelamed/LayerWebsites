@@ -118,8 +118,8 @@ export default function OfficeIntegrations({ embedded = false }) {
                     {data.canConfigurePolicy && <details className="oi-details oi-automation"><summary>{tr('automation')}</summary><fieldset disabled={busy} aria-label={tr('automation')}>
                         {whatsapp.mode === 'demo' && <p className="oi-muted">{tr('demoMode')}</p>}
                         <div className="oi-setting-row"><SimpleCheckbox variant="toggle" title={tr('autoCreate')} checked={whatsapp.enabled} onChange={e => setWhatsapp({ ...whatsapp, enabled: e.target.checked })} disabled={busy || (whatsapp.mode === 'live' && (!data.signup.liveEnabled || data.whatsapp?.status !== 'ready'))} /></div>
-                        <SimpleTextArea className="oi-recipients" title={tr('recipients')} aria-label={tr('recipients')} rows={3} value={whatsapp.recipients} disabled={busy} onChange={value => setWhatsapp({ ...whatsapp, recipients: value })} placeholder="+972501234567" />
-                        <p className="oi-muted">{tr(whatsapp.includeCaseManager ? 'recipientManagerHelp' : 'recipientHelp')}</p>
+                        <SimpleTextArea className="oi-recipients" title={tr('recipientsTitle')} aria-label={tr('recipients')} rows={3} value={whatsapp.recipients} disabled={busy} onChange={value => setWhatsapp({ ...whatsapp, recipients: value })} placeholder="+972501234567" />
+                        <p className="oi-muted">{tr('recipients')}. {tr(whatsapp.includeCaseManager ? 'recipientManagerHelp' : 'recipientHelp')}</p>
                         <div className="oi-setting-row"><SimpleCheckbox title={tr('includeCaseManager')} checked={whatsapp.includeCaseManager} disabled={busy} onChange={e => setWhatsapp({ ...whatsapp, includeCaseManager: e.target.checked })} /></div>
                         <p className="oi-muted">{tr('caseManagerHelp')}{whatsapp.mode === 'demo' && ` ${tr('demoManagerHelp')}`}</p>
                         {whatsapp.mode === 'live' && data.whatsapp?.connected && <details className="oi-details"><summary>{tr('advancedInvitations')}</summary>
