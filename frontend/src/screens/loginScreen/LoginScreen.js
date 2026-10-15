@@ -11,7 +11,7 @@ import PoweredByMela from "../../components/PoweredByMela";
 import { images } from "../../assets/images/images";
 import { useNavigate, useParams } from "react-router-dom";
 import loginApi from "../../api/loginApi";
-import { getActiveTenantSlug } from "../../lib/tenantSlug";
+import { getActiveTenantSlug, tenantPath } from "../../lib/tenantSlug";
 import { useTranslation } from "react-i18next";
 // Email login UI is disabled for now — email-only contacts are for public signing only.
 // import SimpleButton from "../../components/simpleComponents/SimpleButton";
@@ -37,7 +37,12 @@ export default function LoginScreen() {
 
     const { isPerforming, performRequest } = useHttpRequest(
         loginApi.sendOtp,
-        () => navigate(LoginStackName + LoginOtpScreenName)
+        () => {
+            const path = LoginStackName + LoginOtpScreenName;
+            const slug = getActiveTenantSlug();
+            // Stay in the same LoginStack so its in-memory phone state survives.
+            navigate(slug ? tenantPath(slug, path) : path);
+        }
     );
 
     const handlePhoneChange = (event) => {
