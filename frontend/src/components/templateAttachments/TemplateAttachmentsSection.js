@@ -1,0 +1,101 @@
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import SimpleContainer from "../simpleComponents/SimpleContainer";
+import { Text12, Text14 } from "../specializedComponents/text/AllTextKindFile";
+import TertiaryButton from "../styledComponents/buttons/TertiaryButton";
+import SimpleLoader from "../simpleComponents/SimpleLoader";
+import FileUploadBox from "../styledComponents/fileUpload/FileUploadBox";
+import { toastError, toastSuccess } from "../ui/toast";
+import templateAttachmentsApi from "../../api/templateAttachmentsApi";
+
+import "./TemplateAttachmentsSection.scss";
+
+function formatFileSize(bytes) {
+    if (!bytes || bytes < 1024) return `${bytes || 0} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+export default function TemplateAttachmentsSection({ templateType, templateKey }) {
+    const [attachments, setAttachments] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef(null);
+
+    const loadAttachments = useCallback(async () => {
+        if (!templateType || !templateKey) return;
+        setLoading(true);
+        try {
+            const res = await templateAttachmentsApi.list(templateType, templateKey);
+            setAttachments(res.data?.attachments || []);
+        } catch {
+            // ignore
+        }
+        setLoading(false);
+    }, [templateType, templateKey]);
+
+    useEffect(() => {
+        loadAttachments();
+    }, [loadAttachments]);
+
+    const handleUpload = useCallback(async (file) => {
+        if (!file) return;
+        setUploading(true);
+        try {
+            await templateAttachmentsApi.upload(templateType, templateKey, file);
+            await loadAttachments();
+            toastSuccess("הקובץ הועלה בהצלחה");
+        } catch (err) {
+            toastError(err?.response?.data?.error || "שגיאה בהעלאת קובץ");
+        }
+        setUploading(false);
+    }, [templateType, templateKey, loadAttachments]);
+
+    const handleDelete = useCallback(async (id) => {
+        try {
+            await templateAttachmentsApi.delete(id);
+            setAttachments(prev => prev.filter(a => a.id !== id));
+            toastSuccess("הקובץ נמחק");
+        } catch {
+            toastError("שגיאה במחיקת קובץ");
+        }
+    }, []);
+
+    return (
+        <SimpleContainer className="lw-templateAttachments">
+            <Text12 className="lw-templateAttachments__label">קבצים מצורפים:</Text12>
+
+            {loading ? (
+                <SimpleLoader size="small" />
+            ) : (
+                <>
+                    {attachments.length > 0 && (
+                        <SimpleContainer className="lw-templateAttachments__list">
+                            {attachments.map(att => (
+                                <SimpleContainer key={att.id} className="lw-templateAttachments__item">
+                                    <Text14 className="lw-templateAttachments__filename">
+                                        📎 {att.filename}
+                                    </Text14>
+                                    <Text12 className="lw-templateAttachments__size">
+                                        {formatFileSize(att.file_size)}
+                                    </Text12>
+                                    <TertiaryButton
+                                        className="lw-templateAttachments__deleteBtn"
+                                        onPress={() => handleDelete(att.id)}
+                                    >
+                                        ✕
+                                    </TertiaryButton>
+                                </SimpleContainer>
+                            ))}
+                        </SimpleContainer>
+                    )}
+
+                    <FileUploadBox
+                        onFileSelected={handleUpload}
+                        uploading={uploading}
+                        label="צרף קובץ"
+                    />
+                </>
+            )}
+        </SimpleContainer>
+    );
+}
