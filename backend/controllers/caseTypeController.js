@@ -1,0 +1,430 @@
+const { getCurrentTenantId, isMultiTenantMode } = require("../lib/tenant/tenantContext");
+const pool = require("../config/db");
+const { requireInt } = require("../utils/paramValidation");
+const {
+    getCaseTypesListCached,
+    getCaseTypeByIdCached,
+    invalidateCaseTypes,
+} = require("../utils/caseTypesCache");
+
+const getCaseTypes = async (req, res) => {
+    try {
+        const userId = req.user?.UserId;
+        const userRole = useIsolatedOfficeCaseTypeCatalog(req) ? 'Admin' : req.user?.Role;
+
+        let query = `
+            SELECT
+                ct.casetypeid,
+                ct.casetypename,
+                ct.numberofstages,
+                cd.casetypedescriptionid,
+                cd.stage,
+                cd.text
+            FROM casetypes ct
+            LEFT JOIN casetypedescriptions cd ON ct.casetypeid = cd.casetypeid
+        `;
+        const params = [];
+
+        if (userRole !== "Admin") {
+            query += `
+                WHERE ct.casetypeid IN (
+                    SELECT DISTINCT c.casetypeid
+                    FROM cases c
+                    WHERE c.userid = $1
+                )
+            `;
+            params.push(userId);
+        }
+
+        query += " ORDER BY ct.casetypeid DESC, cd.stage";
+
+        const result = await getCaseTypesListCached({
+            role: userRole,
+            userId,
+            loader: () => pool.query(query, params),
+        });
+
+        const caseTypesMap = new Map();
+
+        result.rows.forEach(row => {
+            const caseTypeId = row.casetypeid;
+            if (!caseTypesMap.has(caseTypeId)) {
+                caseTypesMap.set(caseTypeId, {
+                    CaseTypeId: caseTypeId,
+                    CaseTypeName: row.casetypename,
+                    NumberOfStages: row.numberofstages,
+                    Descriptions: []
+                });
+            }
+
+            if (row.casetypedescriptionid) {
+                caseTypesMap.get(caseTypeId).Descriptions.push({
+                    CaseTypeDescriptionId: row.casetypedescriptionid,
+                    Stage: row.stage,
+                    Text: row.text
+                });
+            }
+        });
+
+        res.json(Array.from(caseTypesMap.values()));
+
+    } catch (error) {
+        console.error("Error retrieving case types:", error);
+        res.status(500).json({ message: "שגיאה בשליפת סוגי תיקים" });
+    }
+};
+
+const getCaseTypesForFilter = async (req, res) => {
+    try {
+        const userId = req.user?.UserId;
+        const userRole = useIsolatedOfficeCaseTypeCatalog(req) ? 'Admin' : req.user?.Role;
+
+        let query = `
+            SELECT DISTINCT ct.casetypename
+            FROM casetypes ct
+        `;
+        const params = [];
+
+        if (userRole !== "Admin") {
+            query += `
+                WHERE ct.casetypeid IN (
+                    SELECT DISTINCT c.casetypeid
+                    FROM cases c
+                    WHERE c.userid = $1
+                )
+            `;
+            params.push(userId);
+        }
+
+        query += " ORDER BY ct.casetypename";
+
+        const result = await pool.query(query, params);
+
+        const caseTypeNames = result.rows.map(row => row.casetypename);
+
+        res.json(caseTypeNames);
+
+    } catch (error) {
+        console.error("Error retrieving case type names for filter:", error);
+        res.status(500).json({ message: "שגיאה בשליפת שמות סוגי תיקים" });
+    }
+};
+
+const getCaseTypeById = async (req, res) => {
+    const caseTypeIdInt = requireInt(req, res, { source: 'params', name: 'caseTypeId', aliases: ['CaseTypeId'] });
+    if (caseTypeIdInt === null) return;
+    try {
+        const userId = req.user?.UserId;
+        const userRole = useIsolatedOfficeCaseTypeCatalog(req) ? 'Admin' : req.user?.Role;
+
+        const result = await getCaseTypeByIdCached({
+            caseTypeId: caseTypeIdInt,
+            loader: () => pool.query(`SELECT * FROM casetypes WHERE casetypeid = $1`, [caseTypeIdInt]),
+        });
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "סוג תיק לא נמצא" });
+        }
+
+        if (userRole !== 'Admin') {
+            const hasAccess = await pool.query(
+                `select 1
+                 from cases
+                 where userid = $1
+                   and casetypeid = $2
+                 limit 1`,
+                [userId, caseTypeIdInt]
+            );
+
+            if (hasAccess.rows.length === 0) {
+                return res.status(403).json({ message: "אין הרשאה", code: 'FORBIDDEN' });
+            }
+        }
+
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error("Error retrieving case type by ID:", error);
+        res.status(500).json({ message: "שגיאה בשליפת סוג תיק לפי מזהה" });
+    }
+};
+
+// Case types lack tenant ownership. Extend these older read paths only in an
+// explicitly identified NULL-tenant office, never in a multi-tenant request.
+function useIsolatedOfficeCaseTypeCatalog(req) {
+    if (req.firmTenantId !== null || req.tenant?.id || getCurrentTenantId() || isMultiTenantMode()) return false;
+    if (!['role', 'platform_admin'].includes(req.firmPermissionMode)) return false;
+    return useFirmWideCaseTypeCatalog(req);
+}
+
+function useFirmWideCaseTypeCatalog(req) {
+    const userRole = String(req.user?.Role || '');
+    const mode = req.firmPermissionMode || 'legacy';
+    if (userRole === 'Admin' || mode === 'platform_admin') return true;
+    if (mode === 'legacy') {
+        return userRole === 'Staff' || userRole === 'Lawyer' || userRole === 'Admin';
+    }
+    if (mode === 'role' && req.firmPermissions) {
+        const { hasAreaAction, isAreaVisible } = require('../lib/firmRolePermissions');
+        const p = req.firmPermissions;
+        return (
+            hasAreaAction(p, 'cases', 'create') ||
+            hasAreaAction(p, 'cases', 'edit') ||
+            (isAreaVisible(p, 'caseTypes') && hasAreaAction(p, 'caseTypes', 'view'))
+        );
+    }
+    return false;
+}
+
+const getCaseTypeByName = async (req, res) => {
+    try {
+        const rawCaseTypeName = req?.query?.caseTypeName;
+        const caseTypeName = typeof rawCaseTypeName === 'string' ? rawCaseTypeName.trim() : '';
+
+        const userId = req.user?.UserId;
+        const userRole = req.user?.Role;
+
+        let query = `
+            SELECT
+                ct.casetypeid,
+                ct.casetypename,
+                ct.numberofstages,
+                cd.casetypedescriptionid,
+                cd.stage,
+                cd.text
+            FROM casetypes ct
+            LEFT JOIN casetypedescriptions cd ON ct.casetypeid = cd.casetypeid
+        `;
+        const params = [];
+        const whereClauses = [];
+        let paramIndex = 1;
+
+        if (caseTypeName) {
+            whereClauses.push(`ct.casetypename ILIKE $${paramIndex}`);
+            params.push(`%${caseTypeName}%`);
+            paramIndex++;
+        }
+
+        if (!useFirmWideCaseTypeCatalog(req)) {
+            whereClauses.push(
+                `ct.casetypeid IN (
+                    SELECT DISTINCT c.casetypeid
+                    FROM cases c
+                    WHERE c.userid = $${paramIndex}
+                )`
+            );
+            params.push(userId);
+            paramIndex++;
+        }
+
+        if (whereClauses.length > 0) {
+            query += ` WHERE ${whereClauses.join(' AND ')}`;
+        }
+
+        query += ' ORDER BY ct.casetypeid DESC, cd.stage';
+
+        const result = await pool.query(query, params);
+
+        if (result.rows.length === 0) {
+            return res.json([]);
+        }
+
+        const caseTypesMap = new Map();
+
+        result.rows.forEach(row => {
+            const caseTypeId = row.casetypeid;
+            if (!caseTypesMap.has(caseTypeId)) {
+                caseTypesMap.set(caseTypeId, {
+                    CaseTypeId: caseTypeId,
+                    CaseTypeName: row.casetypename,
+                    NumberOfStages: row.numberofstages,
+                    Descriptions: []
+                });
+            }
+
+            if (row.casetypedescriptionid) {
+                caseTypesMap.get(caseTypeId).Descriptions.push({
+                    CaseTypeDescriptionId: row.casetypedescriptionid,
+                    Stage: row.stage,
+                    Text: row.text
+                });
+            }
+        });
+
+        res.json(Array.from(caseTypesMap.values()));
+    } catch (error) {
+        console.error("Error retrieving case type by name:", error);
+        res.status(500).json({ message: "שגיאה בשליפת סוג תיק" });
+    }
+};
+
+const deleteCaseType = async (req, res) => {
+    const CaseTypeId = requireInt(req, res, { source: 'params', name: 'caseTypeId', aliases: ['CaseTypeId'] });
+    if (CaseTypeId === null) return;
+
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query('BEGIN');
+
+        await client.query(`DELETE FROM uploadedfiles WHERE caseid IN (SELECT caseid FROM cases WHERE casetypeid = $1)`, [CaseTypeId]);
+        await client.query(`DELETE FROM casedescriptions WHERE caseid IN (SELECT caseid FROM cases WHERE casetypeid = $1)`, [CaseTypeId]);
+        await client.query(`DELETE FROM cases WHERE casetypeid = $1`, [CaseTypeId]);
+        await client.query(`DELETE FROM casetypedescriptions WHERE casetypeid = $1`, [CaseTypeId]);
+        const result = await client.query("DELETE FROM casetypes WHERE casetypeid = $1", [CaseTypeId]);
+
+        await client.query('COMMIT');
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: "סוג תיק לא נמצא או כבר נמחק" });
+        }
+
+        invalidateCaseTypes({ caseTypeId: CaseTypeId });
+
+        res.status(200).json({ message: "סוג התיק נמחק בהצלחה" });
+    } catch (error) {
+        console.error("Error deleting case type:", error);
+        if (client) {
+            await client.query('ROLLBACK');
+        }
+        res.status(500).json({ message: "שגיאה במחיקת סוג תיק" });
+    } finally {
+        if (client) {
+            client.release();
+        }
+    }
+};
+
+const addCaseType = async (req, res) => {
+    const { CaseTypeName, NumberOfStages, Descriptions = [] } = req.body;
+
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query('BEGIN');
+
+        const caseTypeResult = await client.query(
+            `
+            INSERT INTO casetypes (casetypename, numberofstages)
+            VALUES ($1, $2)
+            RETURNING casetypeid
+            `,
+            [CaseTypeName, NumberOfStages]
+        );
+
+        const caseTypeId = caseTypeResult.rows[0].casetypeid;
+
+        if (Descriptions.length > 0) {
+            for (const desc of Descriptions) {
+                await client.query(
+                    `
+                    INSERT INTO casetypedescriptions (casetypeid, stage, text)
+                    VALUES ($1, $2, $3)
+                    `,
+                    [caseTypeId, desc.Stage, desc.Text]
+                );
+            }
+        }
+
+        await client.query('COMMIT');
+
+        invalidateCaseTypes();
+
+        res.status(201).json({ message: "סוג התיק נוצר בהצלחה", CaseTypeId: caseTypeId });
+    } catch (error) {
+        console.error("Error creating case type:", error);
+        if (client) {
+            await client.query('ROLLBACK');
+        }
+        res.status(500).json({ message: "שגיאה ביצירת סוג תיק" });
+    } finally {
+        if (client) {
+            client.release();
+        }
+    }
+};
+
+const updateCaseType = async (req, res) => {
+    const caseTypeIdInt = requireInt(req, res, { source: 'params', name: 'caseTypeId', aliases: ['CaseTypeId'] });
+    if (caseTypeIdInt === null) return;
+    const { CaseTypeName, NumberOfStages, Descriptions = [] } = req.body;
+
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query('BEGIN');
+
+        await client.query(
+            `
+            UPDATE casetypes
+            SET casetypename = $1, numberofstages = $2
+            WHERE casetypeid = $3
+            `,
+            [CaseTypeName, NumberOfStages, caseTypeIdInt]
+        );
+
+        const existingDescriptionsResult = await client.query(
+            "SELECT casetypedescriptionid, stage FROM casetypedescriptions WHERE casetypeid = $1",
+            [caseTypeIdInt]
+        );
+
+        const existingDescriptionsMap = new Map(existingDescriptionsResult.rows.map(desc => [desc.stage, desc.casetypedescriptionid]));
+
+        for (const desc of Descriptions) {
+            if (existingDescriptionsMap.has(desc.Stage)) {
+                await client.query(
+                    `
+                    UPDATE casetypedescriptions
+                    SET text = $1
+                    WHERE casetypedescriptionid = $2
+                    `,
+                    [desc.Text, existingDescriptionsMap.get(desc.Stage)]
+                );
+            } else {
+                await client.query(
+                    `
+                    INSERT INTO casetypedescriptions (casetypeid, stage, text)
+                    VALUES ($1, $2, $3)
+                    `,
+                    [caseTypeIdInt, desc.Stage, desc.Text]
+                );
+            }
+        }
+
+        await client.query(
+            `
+            DELETE FROM casetypedescriptions
+            WHERE casetypeid = $1 AND stage > $2
+            `,
+            [caseTypeIdInt, NumberOfStages]
+        );
+
+        await client.query('COMMIT');
+
+        invalidateCaseTypes({ caseTypeId: caseTypeIdInt });
+        res.status(200).json({ message: "סוג התיק עודכן בהצלחה" });
+
+    } catch (error) {
+        console.error("Error updating case type:", error);
+        if (client) {
+            try {
+                await client.query('ROLLBACK');
+            } catch (rollbackError) {
+                console.error("Error during transaction rollback:", rollbackError);
+            }
+        }
+        res.status(500).json({ message: "שגיאה בעדכון סוג תיק" });
+    } finally {
+        if (client) {
+            client.release();
+        }
+    }
+};
+
+module.exports = {
+    getCaseTypes,
+    getCaseTypesForFilter,
+    getCaseTypeById,
+    getCaseTypeByName,
+    deleteCaseType,
+    addCaseType,
+    updateCaseType,
+};
