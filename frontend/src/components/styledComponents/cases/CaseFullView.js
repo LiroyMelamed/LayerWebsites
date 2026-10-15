@@ -19,18 +19,23 @@ import './CaseFullView.scss';
 import useAutoHttpRequest from '../../../hooks/useAutoHttpRequest';
 import { useTranslation } from 'react-i18next';
 import { usePopup } from '../../../providers/PopUpProvider';
+import { useFirmPermissions } from '../../../providers/FirmPermissionsProvider';
 import ConfirmationDialog from '../popups/ConfirmationDialog';
 import ClientPopup from '../../../screens/mainScreen/components/ClientPopUp';
 import SimplePopUp from '../../simpleComponents/SimplePopUp';
+import CaseSigningFlow from '../../../screens/signingScreen/templates/CaseSigningFlow';
+import { useSigningV2Available } from '../../../screens/signingScreen/templates/SigningPackagesHub';
 
 function _buildInitialCaseData(caseDetails, initialDraft) {
     const source = caseDetails?.CaseId ? caseDetails : (initialDraft || caseDetails || {});
     return {
         CaseId: source.CaseId || '',
         CaseName: source.CaseName || '',
+        CourtCaseNumber: source.CourtCaseNumber || '',
+        CaseTypeId: source.CaseTypeId || '',
         CaseTypeName: source.CaseTypeName || '',
         CompanyName: source.CompanyName || '',
-        CurrentStage: source.CurrentStage || '',
+        CurrentStage: source.CurrentStage || 1,
         CustomerMail: source.CustomerMail || '',
         CustomerName: source.CustomerName || '',
         Descriptions: source.Descriptions || [{ Stage: 1, Text: '', Timestamp: '', New: false }],
@@ -55,11 +60,20 @@ function _buildInitialCaseData(caseDetails, initialDraft) {
 export default function CaseFullView({ caseDetails, initialDraft, rePerformRequest, onFailureFunction, closePopUpFunction, onCaseCreated, style: _style }) {
     const { t } = useTranslation();
     const { openPopup: openConfirm, closePopup: closeConfirm } = usePopup();
-    const isEditingExisting = !!caseDetails?.CaseId;
+    const { canAction } = useFirmPermissions() || { canAction: () => true };
+    const canCreateCases = canAction('cases', 'create');
+    const canEditCases = canAction('cases', 'edit');
+    const canDeleteCases = canAction('cases', 'delete');
     const [caseHasBeenChosen, setCaseHasBeenChosen] = useState(false)
     const [hasSubmitted, setHasSubmitted] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({});
+    const [saveError, setSaveError] = useState('');
     const [caseData, setCaseData] = useState(() => _buildInitialCaseData(caseDetails, initialDraft));
+    const isEditingExisting = !!caseDetails?.CaseId || (caseHasBeenChosen && !!caseData.CaseId);
+    const canSaveCase = isEditingExisting ? canEditCases : canCreateCases;
+    const caseFormReadOnly = isEditingExisting && !canEditCases;
+    const [signingOpen, setSigningOpen] = useState(false);
+    const signingAvailable = useSigningV2Available();
 
     const seed = caseDetails?.CaseId ? caseDetails : (initialDraft || caseDetails);
     const [showLicenseExpiry, setShowLicenseExpiry] = useState(!!seed?.HasLicenseExpiry || !!seed?.LicenseExpiryDate);
@@ -124,6 +138,11 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
 
             const caseManager = String(data?.CaseManagerId || '').trim();
             if (!caseManager) errors.CaseManager = t('errors.required');
+
+            const courtNumber = String(data?.CourtCaseNumber || '').normalize('NFKC').replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, '').replace(/[‐‑‒–—−]/g, '-').trim();
+            if (courtNumber && (!/^\d{1,7}-(0[1-9]|1[0-2])-\d{2}$/.test(courtNumber) || Number(courtNumber.split('-')[0]) === 0)) {
+                errors.CourtCaseNumber = t('cases.invalidCourtCaseNumber');
+            }
 
             return errors;
         };
@@ -226,7 +245,10 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
                 }
             })();
         },
-        onFailureFunction
+        (error) => {
+            setSaveError(error?.data?.message || error?.response?.data?.message || error?.message || t('cases.saveFailed'));
+            onFailureFunction?.(error);
+        }
     );
 
     const { isPerforming: isDeleting, performRequest: deleteCase } = useHttpRequest(
@@ -287,6 +309,7 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
     };
 
     const handleSaveCase = () => {
+        setSaveError('');
         setHasSubmitted(true);
         const errors = validateCaseData(caseData);
         setFieldErrors(errors);
@@ -297,6 +320,7 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
     };
 
     const handleUpdateCase = () => {
+        setSaveError('');
         setHasSubmitted(true);
         const errors = validateCaseData(caseData);
         setFieldErrors(errors);
@@ -400,9 +424,11 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
             setCaseData({
                 CaseId: caseDetails.CaseId || '',
                 CaseName: caseDetails.CaseName || '',
+                CourtCaseNumber: caseDetails.CourtCaseNumber || '',
+                CaseTypeId: caseDetails.CaseTypeId || '',
                 CaseTypeName: caseDetails.CaseTypeName || '',
                 CompanyName: caseDetails.CompanyName || '',
-                CurrentStage: caseDetails.CurrentStage || '',
+                CurrentStage: caseDetails.CurrentStage || 1,
                 CustomerMail: caseDetails.CustomerMail || '',
                 CustomerName: caseDetails.CustomerName || '',
                 Descriptions: caseDetails.Descriptions || [{ Stage: 1, Text: '', Timestamp: '', New: false }],
@@ -420,9 +446,11 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
         }
     };
 
+    if (signingOpen) return <CaseSigningFlow caseId={caseDetails?.CaseId || caseData.CaseId} onBack={() => setSigningOpen(false)} />;
     return (
         <>
-        <SimpleContainer className="lw-caseFullView">
+        <SimpleContainer className={`lw-caseFullView${caseFormReadOnly ? ' lw-caseFullView--readOnly' : ''}`}>
+            {saveError && <p role="alert">{saveError}</p>}
             <SimpleScrollView>
                 <SimpleContainer className="lw-caseFullView__row">
                     {isEditingExisting ?
@@ -529,6 +557,18 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
                     />
                 </SimpleContainer>
 
+                <SimpleContainer className="lw-caseFullView__row">
+                    <SimpleInput
+                        className="lw-caseFullView__field"
+                        title={t('cases.courtCaseNumber')}
+                        value={caseData.CourtCaseNumber}
+                        error={fieldErrors?.CourtCaseNumber}
+                        onChange={(e) => handleInputChange('CourtCaseNumber', e.target.value)}
+                        timeToWaitInMilli={0}
+                        dir="ltr"
+                        placeholder="12345-01-26"
+                    />
+                </SimpleContainer>
                 <SimpleContainer className="lw-caseFullView__row">
                     <SimpleInput
                         className="lw-caseFullView__field"
@@ -667,7 +707,11 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
                 </SimpleContainer>
 
                 <SimpleContainer className="lw-caseFullView__buttonsRow">
-                    {(isEditingExisting || caseHasBeenChosen) && (
+                    {signingAvailable && (caseDetails?.CaseId || caseData.CaseId) && canAction('signing', 'upload') && <SecondaryButton
+                        onPress={() => setSigningOpen(true)} size={buttonSizes.MEDIUM}>
+                        {t('signingV2.compose.context.open')}
+                    </SecondaryButton>}
+                    {(isEditingExisting || caseHasBeenChosen) && canDeleteCases && (
                         <SecondaryButton
                             onPress={handleDeleteCase}
                             isPerforming={isDeleting}
@@ -676,6 +720,7 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
                             {isDeleting ? t('common.deleting') : t('cases.deleteCase')}
                         </SecondaryButton>
                     )}
+                    {canSaveCase && (
                     <PrimaryButton
                         onPress={isEditingExisting ? handleUpdateCase : handleSaveCase}
                         isPerforming={isSaving}
@@ -683,6 +728,7 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
                     >
                         {isSaving ? t('common.saving') : isEditingExisting || caseHasBeenChosen ? t('cases.updateCase') : t('cases.saveCase')}
                     </PrimaryButton>
+                    )}
                     <SecondaryButton
                         onPress={() => closePopUpFunction?.()}
                         size={buttonSizes.MEDIUM}

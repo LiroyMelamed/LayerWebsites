@@ -1,7 +1,6 @@
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
-import { Text14, TextBold16 } from "../../specializedComponents/text/AllTextKindFile";
+import { Text14, TextBold20 } from "../../specializedComponents/text/AllTextKindFile";
 import PrimaryButton from "../buttons/PrimaryButton";
-import Separator from "../separators/Separator";
 import { useTranslation } from "react-i18next";
 
 import "./ErrorPopup.scss";
@@ -28,14 +27,8 @@ export default function ErrorPopup({
 
     return (
         <SimpleContainer className="lw-errorPopup">
-            <TextBold16>{resolvedTitle}</TextBold16>
-
-            <Separator className="lw-errorPopup__separator" />
-
+            <TextBold20 className="lw-errorPopup__title">{resolvedTitle}</TextBold20>
             <Text14 className="lw-errorPopup__message">{resolvedMessage}</Text14>
-
-            <Separator className="lw-errorPopup__separator" />
-
             <SimpleContainer className="lw-errorPopup__actions">
                 <PrimaryButton onPress={() => closePopup()}>{resolvedOk}</PrimaryButton>
             </SimpleContainer>

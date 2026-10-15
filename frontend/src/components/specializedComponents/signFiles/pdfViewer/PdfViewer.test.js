@@ -71,6 +71,7 @@ test.each(['Fail load', 'Fail source'])('%s can be retried without leaving the s
     fireEvent.click(screen.getByText(failure));
     expect(screen.getByRole('alert')).toHaveTextContent('signing.pdf.loadError');
     expect(onDocumentReady).toHaveBeenCalledTimes(2);
+    expect(onDocumentReady).toHaveBeenLastCalledWith(false);
 
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
@@ -78,6 +79,7 @@ test.each(['Fail load', 'Fail source'])('%s can be retried without leaving the s
     expect(mockDocumentProps.file).toBe(source);
     await finishLoading();
     expect(screen.getByTestId('page-1')).toBeInTheDocument();
+    expect(onDocumentReady).toHaveBeenLastCalledWith(true);
 });
 
 test('switching PDFs resets document state while changing signature spots preserves it', async () => {

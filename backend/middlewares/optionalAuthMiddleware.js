@@ -1,4 +1,6 @@
 const jwt = require('jsonwebtoken');
+const attachFirmPermissions = require('./attachFirmPermissions');
+const { applyLegacyOfficeRole } = require('../lib/officeRole');
 
 // Optional auth: if a Bearer token exists and is valid, populate req.user.
 // If no token (or invalid token), continue without failing.
@@ -22,6 +24,18 @@ module.exports = function optionalAuthMiddleware(req, _res, next) {
                 Role: decoded.role,
                 PhoneNumber: decoded.phoneNumber,
             };
+            return attachFirmPermissions(req, _res, (error) => {
+                if (error && req.publicOfficeResolved) {
+                    // The public link remains authoritative when another office is logged in.
+                    delete req.user;
+                    req.firmPermissionMode = 'legacy';
+                    req.isPlatformAdminUser = false;
+                    return next();
+                }
+                if (error) return next(error);
+                applyLegacyOfficeRole(req);
+                return next();
+            });
         }
 
         return next();

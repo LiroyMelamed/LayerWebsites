@@ -73,7 +73,14 @@ test('signer contact changes are atomic and attributed', {
     });
     await t.test('unrelated client cannot change a signer', async () => {
         const id = await fixture();
-        assert.equal((await patch(id, { email: 'forbidden@example.invalid' }, auth(1091, 'Client'))).status, 403);
+        // Shared QA users can change role between runs; a token whose role disagrees with the row is rejected earlier (401).
+        const { rows: [outsider] } = await pool.query(`INSERT INTO users(name,email,role,passwordhash)
+            VALUES('Synthetic unrelated client',$1,'Client','synthetic-not-login') RETURNING userid`, [`${require('node:crypto').randomUUID()}@example.invalid`]);
+        try {
+            assert.equal((await patch(id, { email: 'forbidden@example.invalid' }, auth(outsider.userid, 'Client'))).status, 403);
+        } finally {
+            await pool.query('DELETE FROM users WHERE userid=$1', [outsider.userid]);
+        }
     });
     await t.test('audit failure rolls back replacement and delivery migration', async () => {
         const id = await fixture();

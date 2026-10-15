@@ -28,7 +28,7 @@ function initEmailReminderScheduler() {
 
         running = true;
         try {
-            await processEmailReminders();
+            await require('../../lib/tenant/officeJobs').forEachOffice(() => processEmailReminders());
         } catch (err) {
             console.error('[email-reminder-scheduler] Error:', err.message);
         } finally {

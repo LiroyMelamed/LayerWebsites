@@ -1,3 +1,4 @@
+import useAutoOtpSubmit from "../../hooks/useAutoOtpSubmit";
 import React, { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import SimpleScreen from '../../components/simpleComponents/SimpleScreen';
@@ -13,13 +14,21 @@ import { buttonSizes } from '../../styles/buttons/buttonSizes';
 import ChatWindow from '../../components/chatbot/ChatWindow';
 import ChatInput from '../../components/chatbot/ChatInput';
 import chatbotApi from '../../api/chatbotApi';
-import { useFirmName } from '../../services/firmSettings';
+import { useFirmName, useAiChatbotEnabled, useFirmSettingsLoaded } from '../../services/firmSettings';
 import { toastError } from '../../components/ui/toast';
 import './ChatBotPage.scss';
 
 export const ChatBotPageName = '/ChatBot';
 
 export default function ChatBotPage() {
+    const enabled = useAiChatbotEnabled();
+    const loaded = useFirmSettingsLoaded();
+    if (!loaded) return <SimpleScreen><p role="status">טוען הגדרות...</p></SimpleScreen>;
+    if (!enabled) return <SimpleScreen><p role="status">הצ׳אטבוט אינו פעיל כרגע</p></SimpleScreen>;
+    return <EnabledChatBotPage />;
+}
+
+function EnabledChatBotPage() {
     const { t } = useTranslation();
     const firmNameRaw = useFirmName();
     const firmName = firmNameRaw || t('chatbot.firmNameFallback', 'המשרד');
@@ -123,39 +132,20 @@ export default function ChatBotPage() {
         }
     };
 
-    const handleVerifyOtp = async () => {
-        if (!otpCode.trim()) return;
-        setOtpLoading(true);
-        setOtpError('');
-
-        try {
-            const res = await chatbotApi.verifyOtp(otpPhone, otpCode, sessionId);
-            if (res.status === 200) {
-                const data = res.data;
-                setSessionId(data.sessionId);
-                setVerified(true);
-                setShowOtpModal(false);
-                setOtpStep('phone');
-                setOtpPhone('');
-                setOtpCode('');
-
-                setMessages((prev) => [
-                    ...prev,
-                    {
-                        role: 'assistant',
-                        content: t('chatbot.verificationSuccess'),
-                        timestamp: new Date().toISOString(),
-                    },
-                ]);
-            } else {
-                setOtpError(res.data?.message || t('chatbot.otpInvalid'));
-            }
-        } catch {
-            setOtpError(t('chatbot.otpInvalid'));
-        } finally {
-            setOtpLoading(false);
-        }
-    };
+    const otpVerifying = useAutoOtpSubmit({
+        enabled: showOtpModal && otpStep === 'code',
+        scope: otpPhone + ':' + (sessionId || ''),
+        code: otpCode,
+        verify: code => chatbotApi.verifyOtp(otpPhone, code, sessionId),
+        onError: setOtpError,
+        onVerified: data => {
+            if (data.sessionId) setSessionId(data.sessionId);
+            setVerified(true); setShowOtpModal(false);
+            setOtpStep('phone'); setOtpPhone(''); setOtpCode(''); setOtpError('');
+            setMessages(prev => [...prev, { role: 'assistant', content: 'הזהות אומתה בהצלחה! כעת ניתן לשאול שאלות על התיק שלך.', timestamp: new Date().toISOString() }]);
+        },
+    });
+    const otpBusy = otpLoading || otpVerifying;
 
     const normalizePhone = (raw) => {
         const digitsOnly = String(raw).replace(/\D/g, '');
@@ -200,11 +190,11 @@ export default function ChatBotPage() {
                         />
                         <PrimaryButton
                             onPress={handleRequestOtp}
-                            disabled={otpLoading || otpPhone.length < 9}
-                            isPerforming={otpLoading}
+                            disabled={otpBusy || otpPhone.length < 9}
+                            isPerforming={otpBusy}
                             size={buttonSizes.MEDIUM}
                         >
-                            {otpLoading ? t('chatbot.sending') : t('chatbot.sendOtp')}
+                            {otpBusy ? t('chatbot.sending') : t('chatbot.sendOtp')}
                         </PrimaryButton>
                     </>
                 )}
@@ -214,20 +204,17 @@ export default function ChatBotPage() {
                         <SimpleInput
                             title={t('chatbot.otpCodePlaceholder')}
                             value={otpCode}
-                            onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            onChange={(e) => { setOtpError(''); setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6)); }}
+                            disabled={otpBusy}
+                            autoComplete="one-time-code"
+                            inputMode="numeric"
                             timeToWaitInMilli={0}
                         />
-                        <PrimaryButton
-                            onPress={handleVerifyOtp}
-                            disabled={otpLoading || otpCode.length < 6}
-                            isPerforming={otpLoading}
-                            size={buttonSizes.MEDIUM}
-                        >
-                            {otpLoading ? t('chatbot.verifying') : t('chatbot.verifyOtp')}
-                        </PrimaryButton>
+                        {otpVerifying && <p role="status">מאמת את הקוד…</p>}
+
                         <SecondaryButton
                             onPress={() => { setOtpStep('phone'); setOtpCode(''); setOtpError(''); }}
-                            disabled={otpLoading}
+                            disabled={otpBusy}
                             size={buttonSizes.MEDIUM}
                         >
                             {t('common.back')}

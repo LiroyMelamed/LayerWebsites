@@ -33,6 +33,11 @@ const STATUS_KEYS = {
   closed: 'closed',
 };
 
+const EVENT_KEYS = {
+  created: 'created',
+  status_change: 'statusChanged',
+};
+
 function statusClass(status) {
   const key = STATUS_KEYS[status] || 'open';
   if (key === 'inProgress') return 'in_progress';
@@ -213,7 +218,7 @@ export default function AdminSupportScreen() {
                   <ul className="lw-adminSupport__timeline">
                     {(detail.events || []).map((ev) => (
                       <li key={ev.id}>
-                        <Text14>{ev.body || ev.type}</Text14>
+                        <Text14>{ev.body || t(`support.events.${EVENT_KEYS[ev.type] || 'updated'}`)}</Text14>
                       </li>
                     ))}
                   </ul>

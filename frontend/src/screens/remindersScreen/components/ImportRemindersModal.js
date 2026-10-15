@@ -1,9 +1,9 @@
-import React, { useState, useCallback, useMemo, useRef } from "react";
+import React, { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import remindersApi from "../../../api/remindersApi";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import Skeleton from "../../../components/simpleComponents/Skeleton";
-import SimpleCard from "../../../components/simpleComponents/SimpleCard";
+
 import ChooseButton from "../../../components/styledComponents/buttons/ChooseButton";
 import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
@@ -19,7 +19,7 @@ export default function ImportRemindersModal({ closePopUpFunction, rePerformRequ
 
     const [file, setFile] = useState(null);
     const [selectedTemplate, setSelectedTemplate] = useState("GENERAL");
-    const fileInputRef = useRef(null);
+    
 
     // Fetch templates on mount
     const { result: templatesResult, isPerforming: loadingTemplates } = useAutoHttpRequest(
@@ -49,9 +49,7 @@ export default function ImportRemindersModal({ closePopUpFunction, rePerformRequ
 
     const hasUploadResult = uploadResult?.created != null;
 
-    const handleFileChange = useCallback((e) => {
-        setFile(e.target.files?.[0] || null);
-    }, []);
+    
 
     const maxDetails = 20;
 

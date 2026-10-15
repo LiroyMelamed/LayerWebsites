@@ -1,5 +1,0 @@
-{"timestamp":"2026-09-29T11:41:45.964Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***4567","userId":99,"success":true}
-{"timestamp":"2026-09-29T14:06:34.594Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***4567","userId":99,"success":true}
-{"timestamp":"2026-09-29T14:16:04.926Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***4567","userId":99,"success":true}
-{"timestamp":"2026-09-29T14:17:14.708Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***4567","userId":99,"success":true}
-{"timestamp":"2026-09-29T14:23:40.103Z","level":"INFO","type":"OTP_VERIFY_SUCCESS","phone":"***4567","userId":99,"success":true}

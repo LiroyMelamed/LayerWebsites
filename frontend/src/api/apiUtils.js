@@ -46,14 +46,18 @@ async function tryRefreshToken() {
     if (_refreshPromise) return _refreshPromise;
 
     const refreshToken = localStorage.getItem("refreshToken");
+    const previousToken = localStorage.getItem("token");
     if (!refreshToken) return null;
 
     _refreshPromise = axios
-        .post(`${resolveApiBaseUrl()}/Auth/Refresh`, { refreshToken }, { headers: { "x-client-platform": "web" } })
+        .post(`${resolveApiBaseUrl()}/Auth/Refresh`, { refreshToken }, { timeout: 15000, headers: { "x-client-platform": "web" } })
         .then((res) => {
+            // A refresh started by a previous account must not replace a new login.
+            if (localStorage.getItem("token") !== previousToken || localStorage.getItem("refreshToken") !== refreshToken) return null;
             if (res.status === 200 && res.data?.token) {
                 localStorage.setItem("token", res.data.token);
                 if (res.data.refreshToken) localStorage.setItem("refreshToken", res.data.refreshToken);
+                window.dispatchEvent(new Event('lw-auth-changed'));
                 return res.data.token;
             }
             return null;
@@ -66,7 +70,8 @@ async function tryRefreshToken() {
 
 function isPublicSigningApiRequest(config) {
     const url = String(config?.url || "");
-    return /\/SigningFiles\/public\//i.test(url);
+    return /(?:^|\/)(?:SigningFiles|signing-batches)\/public\//i.test(url)
+        || /(?:^|\/)signing-v2\/public(?:\/|$)/i.test(url);
 }
 
 function clearAuthAndRedirect() {
@@ -74,6 +79,11 @@ function clearAuthAndRedirect() {
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("role");
     localStorage.removeItem("isPlatformAdmin");
+    window.dispatchEvent(new Event('lw-auth-changed'));
+
+    // An expired office session must not interrupt a valid public signing link.
+    // Background permission requests can fail while this independent flow is open.
+    if (/^\/(?:PublicSignScreen|ViewSignedDocument|s)(?:\/|$)/i.test(window.location.pathname)) return;
 
     if (window.ReactNativeWebView?.postMessage) {
         window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'LOGOUT' }));
@@ -113,11 +123,14 @@ ApiUtils.interceptors.response.use(
         const status = error.response?.status || 500;
         const originalRequest = error.config;
 
+        if (status === 503 && error.response?.data?.errorCode === 'SERVICE_TEMPORARILY_UNAVAILABLE') {
+            window.dispatchEvent(new CustomEvent('lw-billing-locked', { detail: { locked: true } }));
+        }
         if (status === 402 && (error.response?.data?.errorCode === 'BILLING_LOCKED' || error.response?.data?.billingLocked)) {
             window.dispatchEvent(new CustomEvent('lw-billing-locked', { detail: error.response.data || {} }));
         }
 
-        if (status !== 401 || originalRequest._retried) {
+        if (status !== 401 || !originalRequest || originalRequest._retried || /(?:^|\/)Auth\/(?:RequestOtp|VerifyOtp|Login)(?:$|[?])/i.test(originalRequest.url || "")) {
             return formatError(error);
         }
 
@@ -126,12 +139,19 @@ ApiUtils.interceptors.response.use(
             return formatError(error);
         }
 
+        const requestToken = String(originalRequest.headers?.Authorization || '').replace(/^Bearer\s+/i, '');
+        // Concurrent startup requests may return 401 after another request has
+        // already rotated the session. Retry with the current token instead of
+        // rotating it again or logging out the newly authenticated account.
+        const tokenAtFailure = localStorage.getItem('token');
+
         // Try refreshing the token once
         originalRequest._retried = true;
-        const newToken = await tryRefreshToken();
+        const newToken = requestToken && tokenAtFailure && requestToken !== tokenAtFailure
+            ? tokenAtFailure : await tryRefreshToken();
 
         if (!newToken) {
-            clearAuthAndRedirect();
+            if (localStorage.getItem('token') === tokenAtFailure) clearAuthAndRedirect();
             return formatError(error);
         }
 
@@ -140,7 +160,7 @@ ApiUtils.interceptors.response.use(
         try {
             return formatSuccess(await axios(originalRequest));
         } catch (retryErr) {
-            if (retryErr.response?.status === 401 && !isPublicSigningApiRequest(retryErr.config)) {
+            if (retryErr.response?.status === 401 && !isPublicSigningApiRequest(retryErr.config) && localStorage.getItem('token') === newToken) {
                 clearAuthAndRedirect();
             }
             return formatError(retryErr);

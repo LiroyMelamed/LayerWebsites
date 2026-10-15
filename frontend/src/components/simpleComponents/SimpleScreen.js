@@ -16,7 +16,7 @@ export default function SimpleScreen({
     const resolvedContentClassName = ['lw-simpleScreen__content', contentClassName].filter(Boolean).join(' ');
 
     return (
-        <SimpleContainer className={resolvedScreenClassName} {...rest}>
+        <SimpleContainer role="main" className={resolvedScreenClassName} {...rest}>
             {imageBackgroundSource && (
                 <SimpleImage
                     className="lw-simpleScreen__bg"

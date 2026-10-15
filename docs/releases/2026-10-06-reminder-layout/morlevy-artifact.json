@@ -1,0 +1,11 @@
+{
+  "tenant": "morlevy",
+  "sourceCommit": "074ce3f3c4df75035cb51add35f98b5aeca6cde4",
+  "build": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/reminder-layout-morlevy-20261006/frontend/build",
+  "archive": "morlevy.tar.gz",
+  "archiveSha256": "b6ebc0ac1a56e18e67cb2fc057f7b89f2caf0d1924604f25d4bda78c1696e611",
+  "manifest": "morlevy-files.json",
+  "manifestSha256": "bae533f15c6c0c95163f48793c1233e6c2adb2af0d7e9f58aeb1c827dcd0419d",
+  "files": 234,
+  "scope": "frontend only; no API, database, scheduling or native changes"
+}

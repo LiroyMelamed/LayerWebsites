@@ -1,5 +1,7 @@
 // controllers/signingFileController.js
 const pool = require("../config/db");
+const { signingDetailsSummary } = require('../lib/signingDetailsSummary');
+const { canOverridePublicSignerIdentity } = require("../lib/officeRole");
 const { hasSigningContactOverride, CONTACT_EDIT_MESSAGE } = require("../lib/signingSignerContact");
 const jwt = require('jsonwebtoken');
 const { PutObjectCommand, GetObjectCommand, HeadObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
@@ -29,6 +31,7 @@ const {
     rectangle,
     clip,
     endPath,
+    concatTransformationMatrix,
 } = require("pdf-lib");
 let fontkit = null;
 try {
@@ -56,7 +59,7 @@ const { consume } = require('../utils/rateLimiter');
 const {
     BASE_RENDER_WIDTH,
     pageGeometryFromPdfLibPage,
-    visualBoxToPdfBox,
+    visualDrawingFrame,
 } = require('../lib/signingGeometry');
 
 const MAX_SIGNING_PDF_BYTES = Number(
@@ -295,7 +298,8 @@ async function loadEvidenceRowsForZip(signingFileId) {
                 verify_ip as "VerifyIp",
                 verify_user_agent as "VerifyUserAgent"
              from signing_otp_challenges
-             where signingfileid = $1
+             where signingfileid = $1 OR challengeid IN
+                (SELECT otpverificationid FROM signaturespots WHERE signingfileid=$1 AND otpverificationid IS NOT NULL)
              order by sent_at_utc asc`,
             [signingFileId]
         ),
@@ -356,7 +360,7 @@ async function loadSignedPdfStreamOrPlaceholder({ signingFileId, fileRow }) {
                 };
             }
         } catch (e) {
-            if (isProductionFailClosed()) throw e;
+            if (statusLower === 'signed' || isProductionFailClosed()) throw e;
         }
     }
 
@@ -568,7 +572,7 @@ function getWebsiteDomain() {
 function buildLongPublicSigningUrl(token) {
     const domain = getWebsiteDomain();
     if (!domain) return null;
-    return `https://${domain}/PublicSignScreen?token=${encodeURIComponent(String(token))}`;
+    return `https://${domain}/ViewSignedDocument/Signing?token=${encodeURIComponent(String(token))}`;
 }
 
 function generateSigningShortSlug() {
@@ -588,7 +592,7 @@ function decodeJwtExpDate(token) {
 }
 
 /**
- * Persist JWT under /s/<slug>. Falls back to longUrl if insert fails.
+ * Persist JWT under the browser-only /ViewSignedDocument/Link/<slug> route. Falls back to longUrl if insert fails.
  * Used for both signing invites and signed-document view links (DOC_SIGNED SMS).
  */
 async function persistSigningShortLink(token, longUrl) {
@@ -607,7 +611,7 @@ async function persistSigningShortLink(token, longUrl) {
                  VALUES ($1, $2, $3)`,
                 [slug, String(token), expiresAt]
             );
-            return `https://${domain}/s/${encodeURIComponent(slug)}`;
+            return `https://${domain}/ViewSignedDocument/Link/${encodeURIComponent(slug)}`;
         } catch (err) {
             // Unique violation → retry with a new slug; anything else → long URL fallback.
             if (err?.code === '23505') continue;
@@ -621,7 +625,7 @@ async function persistSigningShortLink(token, longUrl) {
 }
 
 /**
- * Prefer a short /s/<slug> link. Falls back to the long JWT URL if persistence fails.
+ * Prefer a short browser-only link. Falls back to the long JWT URL if persistence fails.
  */
 async function buildPublicSigningUrl(token) {
     return persistSigningShortLink(token, buildLongPublicSigningUrl(token));
@@ -731,6 +735,9 @@ function createPublicSigningToken({ signingFileId, signerUserId, fileExpiresAt }
 // Exported for sign-reminder worker (lazy-required to avoid circular deps).
 exports.createPublicSigningToken = createPublicSigningToken;
 exports.buildPublicSigningUrl = buildPublicSigningUrl;
+exports.insertAuditEvent = insertAuditEvent;
+exports.getDeliverableSignedPdf = getDeliverableSignedPdf;
+exports.generateEvidenceCertificateBuffer = generateEvidenceCertificateBuffer;
 
 function getSavedSignatureKey(userId) {
     const safeId = Number(userId);
@@ -1505,6 +1512,7 @@ async function loadSigningFileBase({ signingFileId, schemaSupport }) {
 async function ensurePublicUserAuthorized({ signingFileId, userId, schemaSupport }) {
     const file = await loadSigningFileBase({ signingFileId, schemaSupport });
     if (!file) return { ok: false, httpStatus: 404, errorCode: 'DOCUMENT_NOT_FOUND' };
+    if (file.Status === 'draft') return { ok: false, httpStatus: 403, errorCode: 'FORBIDDEN' };
 
     const isLawyer = file.LawyerId === userId;
     const isPrimaryClient = file.ClientId === userId;
@@ -1538,22 +1546,30 @@ function isSigningFileOwner({ file, requesterId }) {
     return Number(ownerId) === Number(requesterId);
 }
 
-/** Read access for lawyers/admins viewing any office signing document. */
-function canViewSigningFileAsOfficeStaff({ file, requesterId, role }) {
+/** Read access for lawyers/admins (legacy) or firm Staff role with signing.view (scope enforced on route). */
+function canViewSigningFileAsOfficeStaff({ file, requesterId, role, req = null }) {
     if (!requesterId) return false;
+    if (req?.firmPermissionMode === 'role') {
+        const { hasVerifiedSigningAction } = require('../lib/firmPermissions/signingAccess');
+        return hasVerifiedSigningAction(req, file, 'view');
+    }
     if (isSigningFileOwner({ file, requesterId })) return true;
     return isSigningOfficeStaffRole(role);
 }
 
 /** Mutations (delete, rename, resend, policy) — owner lawyer or firm admin only. */
-function canManageSigningFile({ file, requesterId, role }) {
+function canManageSigningFile({ file, requesterId, role, req = null }) {
     if (!requesterId) return false;
+    if (req?.firmPermissionMode === 'role') {
+        const { hasVerifiedSigningAction } = require('../lib/firmPermissions/signingAccess');
+        return hasVerifiedSigningAction(req, file, 'manage');
+    }
     if (String(role) === 'Admin') return true;
     return isSigningFileOwner({ file, requesterId });
 }
 
-function canViewAllSigningSpots({ file, requesterId, role }) {
-    return isSigningFileOwner({ file, requesterId }) || canViewSigningFileAsOfficeStaff({ file, requesterId, role });
+function canViewAllSigningSpots({ file, requesterId, role, req = null }) {
+    return canViewSigningFileAsOfficeStaff({ file, requesterId, role, req });
 }
 
 function normalizeSignerDeliveryMethod(raw) {
@@ -1594,7 +1610,7 @@ async function saveSignerDeliveryMethod(signingFileId, signerUserId, deliveryMet
     return method;
 }
 
-function buildLawyerSigningFilesListQuery({ scope, pagination }) {
+function buildLawyerSigningFilesListQuery({ scope, pagination, customFilter = null }) {
     const isOffice = scope === 'office';
     const selectColumns = `
                 sf.signingfileid      as "SigningFileId",
@@ -1630,7 +1646,7 @@ function buildLawyerSigningFilesListQuery({ scope, pagination }) {
         ? `left join users owner_u on owner_u.userid = sf.lawyerid`
         : '';
 
-    const whereClause = isOffice
+    const whereClause = customFilter ? `where ${customFilter.sql}` : isOffice
         ? `where exists (
                 select 1 from users owner_u2
                 where owner_u2.userid = sf.lawyerid
@@ -1652,7 +1668,8 @@ function buildLawyerSigningFilesListQuery({ scope, pagination }) {
                       sf.otpwaiveracknowledged, sf.otpwaiveracknowledgedatutc, sf.otpwaiveracknowledgedbyuserid,
                       c.casename`;
 
-    const limitClause = pagination.enabled ? ` limit $${isOffice ? 1 : 2} offset $${isOffice ? 2 : 3}` : '';
+    const baseParams = customFilter ? customFilter.params.length : (isOffice ? 0 : 1);
+    const limitClause = pagination.enabled ? ` limit $${baseParams + 1} offset $${baseParams + 2}` : '';
 
     return `
              select ${selectColumns}
@@ -1825,7 +1842,9 @@ async function getVerifiedOtpChallengeIdOrNull({ signingFileId, signerUserId, si
              limit 1`,
             [signingFileId, signerUserId, signingSessionId, String(presentedPdfSha256 || '')]
         );
-        return res.rows?.[0]?.ChallengeId || null;
+        return res.rows?.[0]?.ChallengeId || await require('../lib/signingBatchOtpGrant').batchOtpGrant({
+            signingFileId, signerUserId, signingSessionId, presentedPdfSha256,
+        });
     } catch (err) {
         const code = String(err?.code || '');
         const msg = String(err?.message || '').toLowerCase();
@@ -2223,13 +2242,18 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
         // the conversion into PDF user space, including CropBox clipping and
         // /Rotate, so this path cannot drift from what the signer saw.
         const geometry = pageGeometryFromPdfLibPage(page, BASE_RENDER_WIDTH);
-        const { x, y, width: w, height: h } = visualBoxToPdfBox(geometry, {
+        const { width: w, height: h, transform } = visualDrawingFrame(geometry, {
             x: Number(spot.X ?? spot.x ?? 0),
             y: Number(spot.Y ?? spot.y ?? 0),
             // Fallback field dimensions, not coordinate corrections.
             width: Number(spot.Width ?? spot.width ?? 130),
             height: Number(spot.Height ?? spot.height ?? 48),
         });
+        // Draw in an upright local frame. An axis-aligned PDF bounding box
+        // alone loses orientation on /Rotate pages and swaps contain-fit axes.
+        const x = 0;
+        const y = 0;
+        page.pushOperators(pushGraphicsState(), concatTransformationMatrix(...transform));
 
         if (signatureKey) {
             const { buffer: rawBuffer, contentType } = await getR2ObjectBuffer(signatureKey);
@@ -2335,6 +2359,7 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
                 });
             }
         }
+        page.pushOperators(popGraphicsState());
     }
 
     const bytes = await pdfDoc.save();
@@ -2384,8 +2409,9 @@ async function ensureSignedPdfKey({ signingFileId, lawyerId, pdfKey, persist = t
     const schemaSupport = await getSchemaSupport();
 
     if (persist) {
+    let persisted;
     if (schemaSupport.signingfilesSignedPdfBytes) {
-        await pool.query(
+        persisted = await pool.query(
             `update signingfiles
              set signedfilekey = $2,
                  signedstoragebucket = $3,
@@ -2395,7 +2421,8 @@ async function ensureSignedPdfKey({ signingFileId, lawyerId, pdfKey, persist = t
                  signedpdfsha256 = $7,
                  signedpdfbytes = $8,
                  immutableatutc = coalesce(immutableatutc, now())
-             where signingfileid = $1`,
+             where signingfileid = $1 and immutableatutc is null
+             returning signingfileid`,
             [
                 signingFileId,
                 signedKey,
@@ -2408,7 +2435,7 @@ async function ensureSignedPdfKey({ signingFileId, lawyerId, pdfKey, persist = t
             ]
         );
     } else {
-        await pool.query(
+        persisted = await pool.query(
             `update signingfiles
              set signedfilekey = $2,
                  signedstoragebucket = $3,
@@ -2417,7 +2444,8 @@ async function ensureSignedPdfKey({ signingFileId, lawyerId, pdfKey, persist = t
                  signedstorageversionid = $6,
                  signedpdfsha256 = $7,
                  immutableatutc = coalesce(immutableatutc, now())
-             where signingfileid = $1`,
+             where signingfileid = $1 and immutableatutc is null
+             returning signingfileid`,
             [
                 signingFileId,
                 signedKey,
@@ -2429,6 +2457,16 @@ async function ensureSignedPdfKey({ signingFileId, lawyerId, pdfKey, persist = t
             ]
         );
     }
+    if (!persisted.rowCount) {
+        // Another finalization/read won while the PDF was rendering. Keep the
+        // winner byte-for-byte; delete only this attempt's unreferenced object.
+        const { rows } = await pool.query('SELECT signedstoragekey,signedfilekey FROM signingfiles WHERE signingfileid=$1', [signingFileId]);
+        const winnerKey = rows[0]?.signedstoragekey || rows[0]?.signedfilekey;
+        if (!winnerKey) throw new Error('Immutable signed PDF has no stored artifact');
+        try { await r2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: signedKey })); }
+        catch (error) { console.warn('[pdf-sign] redundant output cleanup failed:', error.message); }
+        return winnerKey;
+    }
     }
 
     return signedKey;
@@ -2436,9 +2474,37 @@ async function ensureSignedPdfKey({ signingFileId, lawyerId, pdfKey, persist = t
 
 /**
  * Single delivery path for signed PDF bytes — download, email attachments, public view, evidence.
- * Always burns from current signaturespots via generateSignedPdfBuffer.
+ * Finalized artifacts are immutable; only unfinished output is generated.
  */
-async function getDeliverableSignedPdf({ signingFileId, lawyerId, pdfKey, persist = true }) {
+async function getDeliverableSignedPdf({ signingFileId, lawyerId, pdfKey, persist = true, finalize = false }) {
+    if (persist) {
+        const readArtifact = async () => (await pool.query(
+            `SELECT status, signedat, immutableatutc, signedstoragekey, signedfilekey, signedpdfsha256
+             FROM signingfiles WHERE signingfileid=$1`, [signingFileId],
+        )).rows[0];
+        let finalized = await readArtifact();
+        // Signing responds before PDF finalization. A viewer may arrive during
+        // that short interval, including on another API process. Wait only for a
+        // recent initial finalization; never regenerate an artifact from a read.
+        for (let attempt = 0; !finalize && attempt < 40 &&
+            finalized?.status === 'signed' && !finalized.immutableatutc &&
+            !finalized.signedstoragekey && !finalized.signedfilekey &&
+            Math.abs(Date.now() - new Date(finalized.signedat).getTime()) < 60000; attempt++) {
+            await new Promise(resolve => setTimeout(resolve, 250));
+            finalized = await readArtifact();
+        }
+        const existingKey = finalized?.signedstoragekey || finalized?.signedfilekey;
+        if (finalized?.status === 'signed' && existingKey) {
+            const { buffer } = await getR2ObjectBuffer(existingKey);
+            if (finalized.signedpdfsha256 && sha256Hex(buffer) !== finalized.signedpdfsha256) {
+                throw new Error('Finalized PDF integrity check failed');
+            }
+            return { key: existingKey, buffer };
+        }
+        if (finalized?.status === 'signed' && (finalized.immutableatutc || !finalize)) {
+            throw new Error('Finalized PDF artifact is missing');
+        }
+    }
     const key = await ensureSignedPdfKey({ signingFileId, lawyerId, pdfKey, persist });
     if (!key) return null;
     const { buffer } = await getR2ObjectBuffer(key);
@@ -3295,93 +3361,18 @@ exports.uploadFileForSigning = async (req, res, next) => {
 };
 
 exports.getClientSigningFiles = async (req, res, next) => {
+    res.set('Cache-Control', 'private, no-store');
     try {
         const clientId = req.user?.UserId;
         if (!clientId) return fail(next, 'UNAUTHORIZED', 401);
         const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
         if (pagination === null) return;
 
-        const schemaSupport = await getSchemaSupport();
-
-        if (!schemaSupport.signaturespotsSignerUserId) {
-            // Legacy DB behavior: only primary client sees their files
-            const query =
-                `select
-                    sf.signingfileid      as "SigningFileId",
-                    sf.caseid             as "CaseId",
-                    sf.filename           as "FileName",
-                    sf.filekey            as "FileKey",
-                    sf.status             as "Status",
-                    sf.createdat          as "CreatedAt",
-                    sf.expiresat          as "ExpiresAt",
-                    sf.notes              as "Notes",
-                    sf.signedat           as "SignedAt",
-                    c.casename            as "CaseName",
-                    u.name                as "LawyerName",
-                    count(case when ss.isrequired = true and lower(coalesce(ss.fieldtype, 'signature')) != 'lawyerstamp' then ss.signaturespotid end) as "TotalSpots",
-                    coalesce(sum(case when ss.isrequired = true and ss.issigned = true and lower(coalesce(ss.fieldtype, 'signature')) != 'lawyerstamp' then 1 else 0 end),0) as "SignedSpots"
-                 from signingfiles sf
-                 join cases c  on c.caseid  = sf.caseid
-                 join users u  on u.userid  = sf.lawyerid
-                 left join signaturespots ss on ss.signingfileid = sf.signingfileid
-                 where sf.clientid = $1
-                 group by sf.signingfileid, sf.caseid, sf.filename, sf.filekey,
-                          sf.status, sf.createdat, sf.expiresat, sf.notes, sf.signedat,
-                          c.casename, u.name
-                 order by sf.createdat desc` +
-                (pagination.enabled ? ` limit $2 offset $3` : ``);
-
-            const params = pagination.enabled
-                ? [clientId, pagination.limit, pagination.offset]
-                : [clientId];
-
-            const legacy = await pool.query(query, params);
-
-            return res.json({ files: legacy.rows });
-        }
-
-        const query =
-            `select 
-                sf.signingfileid      as "SigningFileId",
-                sf.caseid             as "CaseId",
-                sf.filename           as "FileName",
-                sf.filekey            as "FileKey",
-                sf.status             as "Status",
-                sf.createdat          as "CreatedAt",
-                sf.expiresat          as "ExpiresAt",
-                sf.notes              as "Notes",
-                sf.signedat           as "SignedAt",
-                c.casename            as "CaseName",
-                u.name                as "LawyerName",
-                count(case when ss.isrequired = true and lower(coalesce(ss.fieldtype, 'signature')) != 'lawyerstamp' then ss.signaturespotid end) as "TotalSpots",
-                coalesce(sum(case when ss.isrequired = true and ss.issigned = true and lower(coalesce(ss.fieldtype, 'signature')) != 'lawyerstamp' then 1 else 0 end),0) as "SignedSpots"
-             from signingfiles sf
-             left join cases c  on c.caseid  = sf.caseid
-             join users u  on u.userid  = sf.lawyerid
-             left join signaturespots ss
-                on ss.signingfileid = sf.signingfileid
-               and (ss.signeruserid = $1 or ss.signeruserid is null)
-             where sf.clientid = $1
-                or exists (
-                    select 1
-                    from signaturespots ss2
-                    where ss2.signingfileid = sf.signingfileid
-                      and ss2.signeruserid = $1
-                )
-             group by sf.signingfileid, sf.caseid, sf.filename, sf.filekey,
-                      sf.status, sf.createdat, sf.expiresat, sf.notes, sf.signedat,
-                      c.casename, u.name
-             order by sf.createdat desc` +
-            (pagination.enabled ? ` limit $2 offset $3` : ``);
-
-        const params = pagination.enabled
-            ? [clientId, pagination.limit, pagination.offset]
-            : [clientId];
-
-        const result = await pool.query(query, params);
-
-        return res.json({ files: result.rows });
+        const { listClientSigningFiles } = require('../lib/clientSigningReadiness');
+        const files = await listClientSigningFiles(pool, req, pagination);
+        return res.json({ files });
     } catch (err) {
+        if (err.errorCode === 'FORBIDDEN') return next(err);
         console.error("getClientSigningFiles error:", err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: "שגיאה בשליפת המסמכים של הלקוח" });
     }
@@ -3392,18 +3383,22 @@ exports.getLawyerSigningFiles = async (req, res, next) => {
         const lawyerId = req.user?.UserId;
         const role = req.user?.Role;
         if (!lawyerId) return fail(next, 'UNAUTHORIZED', 401);
-        if (!isSigningOfficeStaffRole(role)) {
+        if (req.firmPermissionMode !== 'role' && !isSigningOfficeStaffRole(role)) {
             return fail(next, 'FORBIDDEN', 403);
         }
 
         const scopeRaw = String(req.query.scope || 'mine').trim().toLowerCase();
-        const scope = scopeRaw === 'office' ? 'office' : 'mine';
+        let scope = scopeRaw === 'office' ? 'office' : 'mine';
+        const { signingScopeFilter } = require('../lib/firmPermissions/signingAccess');
+        const customFilter = signingScopeFilter(req, { forceMine: scope === 'mine' });
+        if (customFilter?.error) return next(customFilter.error);
+        if (customFilter?.own) scope = 'mine';
 
         const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
         if (pagination === null) return;
 
-        const query = buildLawyerSigningFilesListQuery({ scope, pagination });
-        const params = pagination.enabled
+        const query = buildLawyerSigningFilesListQuery({ scope, pagination, customFilter });
+        const params = customFilter ? [...customFilter.params, ...(pagination.enabled ? [pagination.limit, pagination.offset] : [])] : pagination.enabled
             ? (scope === 'office'
                 ? [pagination.limit, pagination.offset]
                 : [lawyerId, pagination.limit, pagination.offset])
@@ -3529,6 +3524,7 @@ exports.getSigningFileDetails = async (req, res, next) => {
             `select 
                 signingfileid   as "SigningFileId",
                 caseid          as "CaseId",
+                (select c.casename from cases c where c.caseid = signingfiles.caseid) as "CaseName",
                 lawyerid        as "LawyerId",
                 clientid        as "ClientId",
                 filename        as "FileName",
@@ -3569,7 +3565,7 @@ exports.getSigningFileDetails = async (req, res, next) => {
 
         const isLawyer = file.LawyerId === userId;
         const isPrimaryClient = file.ClientId === userId;
-        const isOfficeStaffView = canViewSigningFileAsOfficeStaff({ file, requesterId: userId, role });
+        const isOfficeStaffView = canViewSigningFileAsOfficeStaff({ file, requesterId: userId, role, req });
 
         // Multi-signer support: allow access if user is assigned to at least one spot
         let isAssignedSigner = false;
@@ -3588,7 +3584,7 @@ exports.getSigningFileDetails = async (req, res, next) => {
             return fail(next, 'FORBIDDEN', 403);
         }
 
-        const viewAllSpots = canViewAllSigningSpots({ file, requesterId: userId, role });
+        const viewAllSpots = canViewAllSigningSpots({ file, requesterId: userId, role, req });
 
         // If user is NOT viewing as owner/office staff, filter spots to only their assigned spots
         let spotsQuery = `select
@@ -3700,7 +3696,7 @@ exports.getSigningFileDetails = async (req, res, next) => {
         }
 
         return res.json({
-            file: { ...file, OtpEnabled: (await getSigningOtpEnabled()) },
+            file: { ...file, ...signingDetailsSummary(signatureSpots), OtpEnabled: (await getSigningOtpEnabled()) },
             signatureSpots,
             signerUserId: userId,
             isLawyer: viewAllSpots,
@@ -3729,7 +3725,7 @@ exports.getEvidencePackage = async (req, res, next) => {
         const file = await loadSigningPolicyForFile(signingFileId);
         if (!file) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
 
-        if (!canViewSigningFileAsOfficeStaff({ file, requesterId, role })) {
+        if (!canViewSigningFileAsOfficeStaff({ file, requesterId, role, req })) {
             return fail(next, 'FORBIDDEN', 403);
         }
 
@@ -3854,7 +3850,8 @@ exports.getEvidencePackage = async (req, res, next) => {
                 verify_ip as "VerifyIp",
                 verify_user_agent as "VerifyUserAgent"
              from signing_otp_challenges
-             where signingfileid = $1
+             where signingfileid = $1 OR challengeid IN
+                (SELECT otpverificationid FROM signaturespots WHERE signingfileid=$1 AND otpverificationid IS NOT NULL)
              order by sent_at_utc asc`,
             [signingFileId]
         );
@@ -3925,7 +3922,7 @@ exports.getEvidencePackageZip = async (req, res, next) => {
         const filePolicy = await loadSigningPolicyForFile(signingFileId);
         if (!filePolicy) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
 
-        if (!canViewSigningFileAsOfficeStaff({ file: filePolicy, requesterId, role })) {
+        if (!canViewSigningFileAsOfficeStaff({ file: filePolicy, requesterId, role, req })) {
             return fail(next, 'FORBIDDEN', 403);
         }
 
@@ -4550,7 +4547,7 @@ exports.getEvidenceCertificate = async (req, res, next) => {
         const filePolicy = await loadSigningPolicyForFile(signingFileId);
         if (!filePolicy) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
 
-        if (!canViewSigningFileAsOfficeStaff({ file: filePolicy, requesterId, role })) {
+        if (!canViewSigningFileAsOfficeStaff({ file: filePolicy, requesterId, role, req })) {
             return fail(next, 'FORBIDDEN', 403);
         }
 
@@ -4602,7 +4599,7 @@ exports.getSigningFileSigners = async (req, res, next) => {
         );
         if (fileResult.rows.length === 0) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
         const ownerFile = fileResult.rows[0];
-        if (!canViewSigningFileAsOfficeStaff({ file: ownerFile, requesterId, role: req.user?.Role })) {
+        if (!canViewSigningFileAsOfficeStaff({ file: ownerFile, requesterId, role: req.user?.Role, req })) {
             return fail(next, 'FORBIDDEN', 403);
         }
 
@@ -4734,7 +4731,7 @@ exports.resendSigningInvite = async (req, res, next) => {
         );
         if (fileResult.rows.length === 0) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
         const file = fileResult.rows[0];
-        if (!canManageSigningFile({ file, requesterId, role: req.user?.Role })) {
+        if (!canManageSigningFile({ file, requesterId, role: req.user?.Role, req })) {
             return fail(next, 'FORBIDDEN', 403);
         }
         if (file.Status !== 'pending') return fail(next, 'VALIDATION_ERROR', 422, { message: 'ניתן לשלוח מחדש רק מסמכים ממתינים' });
@@ -4951,7 +4948,7 @@ exports.updateSigningSignerContact = async (req, res, next) => {
         );
         if (!fileResult.rows.length) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
         const file = fileResult.rows[0];
-        if (!canManageSigningFile({ file, requesterId, role: req.user?.Role })) {
+        if (!canManageSigningFile({ file, requesterId, role: req.user?.Role, req })) {
             return fail(next, 'FORBIDDEN', 403);
         }
         if (file.Status !== 'pending') {
@@ -5101,8 +5098,9 @@ exports.createPublicSigningLink = async (req, res, next) => {
         const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId, next });
         if (!enabledCheck.ok) return;
 
-        const signerUserId = parsePositiveIntStrict(req?.body?.signerUserId) ?? null;
         const requesterId = req.user?.UserId;
+        const signerUserId = req.clientSelfSigningLink === true
+            ? requesterId : (parsePositiveIntStrict(req?.body?.signerUserId) ?? null);
 
         const fileResult = await pool.query(
             `select signingfileid as "SigningFileId",
@@ -5123,7 +5121,7 @@ exports.createPublicSigningLink = async (req, res, next) => {
         }
 
         const file = fileResult.rows[0];
-        const isManager = canManageSigningFile({ file, requesterId, role: req.user?.Role });
+        const isManager = req.clientSelfSigningLink !== true && canManageSigningFile({ file, requesterId, role: req.user?.Role, req });
         const schemaSupport = await getSchemaSupport();
 
         let targetSignerUserId = signerUserId || file.ClientId;
@@ -5230,7 +5228,7 @@ exports.updateSigningPolicy = async (req, res, next) => {
         const file = await loadSigningPolicyForFile(signingFileId);
         if (!file) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
 
-        if (!canManageSigningFile({ file, requesterId, role })) {
+        if (!canManageSigningFile({ file, requesterId, role, req })) {
             return fail(next, 'FORBIDDEN', 403);
         }
 
@@ -5312,7 +5310,7 @@ exports.renameSigningFile = async (req, res, next) => {
             [signingFileId]
         );
         if (ownerRes.rows.length === 0) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
-        if (!canManageSigningFile({ file: ownerRes.rows[0], requesterId, role })) {
+        if (!canManageSigningFile({ file: ownerRes.rows[0], requesterId, role, req })) {
             return fail(next, 'FORBIDDEN', 403);
         }
 
@@ -5352,6 +5350,9 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
         }
 
         const { file, isLawyer } = authz;
+        // Legacy spots without an explicit signer belong only to the primary
+        // client, matching the ownership check used when accepting signatures.
+        const ownsLegacySpots = Number(file.ClientId) === Number(signerUserId);
 
         let spotsQuery = `select
                 signaturespotid as "SignatureSpotId",
@@ -5378,8 +5379,8 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
         // Other signers' unsigned spots are omitted so they cannot appear as canvases
         // or be targeted by "sign all" / next-spot navigation.
         if (schemaSupport.signaturespotsSignerUserId) {
-            spotsQuery += ` and (issigned = true or signeruserid = $2)`;
-            spotsParams.push(signerUserId);
+            spotsQuery += ` and (issigned = true or signeruserid = $2 or (signeruserid is null and $3::boolean))`;
+            spotsParams.push(signerUserId, ownsLegacySpots);
         }
         spotsQuery += ` order by pagenumber, y, x`;
 
@@ -5388,7 +5389,7 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
         const signatureSpots = await Promise.all(
             (spotsResult.rows || []).map(async (spot) => {
                 const canSign = schemaSupport.signaturespotsSignerUserId
-                    ? Number(spot?.SignerUserId) === Number(signerUserId)
+                    ? (spot?.SignerUserId == null ? ownsLegacySpots : Number(spot.SignerUserId) === Number(signerUserId))
                     : true;
                 const withCanSign = { ...spot, CanSign: canSign, IsMine: canSign };
 
@@ -5443,8 +5444,8 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
                     `select min(signerindex) as "myIndex"
                      from signaturespots
                      where signingfileid = $1
-                       and signeruserid = $2`,
-                    [signingFileId, signerUserId]
+                       and (signeruserid = $2 or (signeruserid is null and $3::boolean))`,
+                    [signingFileId, signerUserId, ownsLegacySpots]
                 );
                 const minIndex = lowestRes.rows[0]?.minIndex;
                 const myIndex = myIndexRes.rows[0]?.myIndex;
@@ -5472,8 +5473,8 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
                         )::int as "remaining"
                      from signaturespots
                      where signingfileid = $1
-                       and signeruserid = $2`,
-                    [signingFileId, signerUserId]
+                       and (signeruserid = $2 or (signeruserid is null and $3::boolean))`,
+                    [signingFileId, signerUserId, ownsLegacySpots]
                 );
                 const total = Number(doneRes.rows[0]?.total || 0);
                 const remaining = Number(doneRes.rows[0]?.remaining || 0);
@@ -5490,6 +5491,19 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
             requireOtpEffective = false;
         }
 
+        // Native PDF callbacks expose only one page's size. Supply every page
+        // in the same visual coordinate system as the persisted fields.
+        let pageGeometries;
+        if (req.query.includePageGeometry === '1') {
+            const key = file.FileKey;
+            const { buffer } = await getR2ObjectBuffer(key);
+            const document = await PDFDocument.load(buffer);
+            pageGeometries = document.getPages().map((page, index) => {
+                const g = pageGeometryFromPdfLibPage(page, BASE_RENDER_WIDTH);
+                return { pageNumber: index + 1, width: g.visualWidth, height: g.visualHeight };
+            });
+        }
+
         return res.json({
             file: {
                 ...file,
@@ -5504,6 +5518,7 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
             isMyTurn,
             signerCompleted,
             readOnly,
+            ...(pageGeometries ? { pageGeometries } : {}),
         });
     } catch (err) {
         console.error('getPublicSigningFileDetails error:', err);
@@ -5560,8 +5575,7 @@ exports.publicSignFile = async (req, res, next) => {
         // Admins (lawyers) are exempt so they can test public signing links.
         if (!requireOtpEffective) {
             const authUserId = req.user?.UserId;
-            const authRole = req.user?.Role;
-            if (authUserId && authRole !== 'Admin' && Number(authUserId) !== Number(signerUserId)) {
+            if (authUserId && !canOverridePublicSignerIdentity(req) && Number(authUserId) !== Number(signerUserId)) {
                 await insertAuditEvent({
                     req,
                     eventType: 'SIGNING_FORBIDDEN',
@@ -6202,6 +6216,7 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
     }
 
     const fileStatus = String(file.Status || '').toLowerCase();
+    if (fileStatus === 'draft') return otpRequestFail('FORBIDDEN', 403, 'המסמך טרם נשלח לחתימה');
     if (fileStatus === 'signed' || fileStatus === 'rejected') {
         await auditOtpBlocked({
             req,
@@ -6657,14 +6672,15 @@ async function runSigningFinalize({
     let signedPdfKey = null;
     let signedPdfBuffer = null;
     try {
-        // Always (re)burn with every signed spot — a partial preview download must not
-        // leave a stale signedfilekey that omits later signers.
+        // Only completion may create the initial final artifact. Partial
+        // previews are not persisted, and existing signed artifacts are kept.
         try {
             const delivered = await getDeliverableSignedPdf({
                 signingFileId,
                 lawyerId: file.LawyerId,
                 pdfKey: file.FileKey,
                 persist: true,
+                finalize: true,
             });
             signedPdfKey = delivered?.key || null;
             signedPdfBuffer = delivered?.buffer || null;
@@ -6735,7 +6751,9 @@ async function runSigningFinalize({
         const evidenceCertificateUrl = buildPublicEvidenceUrl(publicViewToken)
             || `https://${domainForUrls}/ViewSignedDocument?token=${encodeURIComponent(publicViewToken)}&evidence=1`;
 
-        await notifyRecipient({
+        const completionContext = await require('../services/signingPackageCompletion').packageContext(signingFileId);
+        const completeTogether = completionContext?.snapshot?.definition?.completionMode === 'package';
+        if (!completeTogether) await notifyRecipient({
             recipientUserId: file.LawyerId,
             notificationType: 'DOC_SIGNED',
             caseId: file.CaseId || null,
@@ -6859,6 +6877,7 @@ async function runSigningFinalize({
             console.error('[signingFinalize] Failed to notify signer (non-fatal):', e?.message || e);
         }
 
+        if (completeTogether) await require('../services/signingPackageCompletion').completePackage(completionContext, req);
         console.log('[signingFinalize] done', { signingFileId, ms: Date.now() - t0 });
     } catch (err) {
         console.error('[signingFinalize] unexpected error:', err?.message || err);
@@ -6922,6 +6941,8 @@ async function notifyNextSequentialSignerIfNeeded({
 
         const nextSignerUserId = nextSignerResult.rows[0].signerUserId;
         if (!nextSignerUserId || Number(nextSignerUserId) === Number(finishedSignerUserId)) return;
+
+        if (await require('../services/signingBatchDelivery').notifyBatchTurn(signingFileId, nextSignerUserId)) return;
 
         const token = createPublicSigningToken({
             signingFileId,
@@ -7041,10 +7062,22 @@ async function markFileSignedAndScheduleFinalize({
         // Best-effort
     }
 
+    // Older releases persisted partial previews, sometimes with an immutable
+    // timestamp. Only the atomic pending -> signed transition may discard that
+    // preview metadata; reads of already-signed artifacts remain immutable.
+    const schemaSupport = await getSchemaSupport();
     const finalizeRes = await pool.query(
         `update signingfiles
          set status = 'signed',
              signedat = now(),
+             signedfilekey = null,
+             signedstoragebucket = null,
+             signedstoragekey = null,
+             signedstorageetag = null,
+             signedstorageversionid = null,
+             signedpdfsha256 = null,
+             immutableatutc = null,
+             ${schemaSupport.signingfilesSignedPdfBytes ? 'signedpdfbytes = null,' : ''}
              plan_key_at_signing = $2,
              retention_days_core_at_signing = $3,
              retention_days_pii_at_signing = $4,
@@ -7696,7 +7729,7 @@ exports.reuploadFile = async (req, res, next) => {
         const file = fileResult.rows[0];
 
         if (file.LawyerId !== lawyerId) {
-            if (!canManageSigningFile({ file, requesterId: lawyerId, role: req.user?.Role })) {
+            if (!canManageSigningFile({ file, requesterId: lawyerId, role: req.user?.Role, req })) {
                 return fail(next, 'FORBIDDEN', 403, { message: "אין הרשאה למסמך זה" });
             }
         }
@@ -8107,7 +8140,7 @@ exports.getSignedFileDownload = async (req, res, next) => {
 
         const isLawyer = file.LawyerId === userId;
         const isPrimaryClient = file.ClientId === userId;
-        const isOfficeStaffView = canViewSigningFileAsOfficeStaff({ file, requesterId: userId, role });
+        const isOfficeStaffView = canViewSigningFileAsOfficeStaff({ file, requesterId: userId, role, req });
         let isAssignedSigner = false;
 
         if (schemaSupport.signaturespotsSignerUserId && !isLawyer && !isPrimaryClient && !isOfficeStaffView) {
@@ -8184,7 +8217,8 @@ exports.getSignedFileDownload = async (req, res, next) => {
                 });
                 if (delivered?.key) key = delivered.key;
             } catch (e) {
-                console.error("Failed to generate signed PDF; falling back to original", e);
+                console.error("Failed to load signed PDF", e);
+                return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בטעינת המסמך החתום' });
             }
         }
 
@@ -8279,6 +8313,7 @@ exports.getPublicSignedDocumentView = async (req, res, next) => {
                 if (delivered?.key) key = delivered.key;
             } catch (e) {
                 console.error('Public view: failed to generate signed PDF', e);
+                return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בטעינת המסמך החתום' });
             }
         }
         key = key || file.FileKey;
@@ -8349,7 +8384,7 @@ exports.getSigningFilePdf = async (req, res, next) => {
 
         const isLawyer = file.LawyerId === userId;
         const isPrimaryClient = file.ClientId === userId;
-        const isOfficeStaffView = canViewSigningFileAsOfficeStaff({ file, requesterId: userId, role });
+        const isOfficeStaffView = canViewSigningFileAsOfficeStaff({ file, requesterId: userId, role, req });
         let isAssignedSigner = false;
 
         if (schemaSupport.signaturespotsSignerUserId && !isLawyer && !isPrimaryClient && !isOfficeStaffView) {
@@ -8438,13 +8473,32 @@ exports.getSigningFilePdf = async (req, res, next) => {
                     });
                     if (delivered?.key) signedKey = delivered.key;
                 } catch (e) {
-                    console.error('getSigningFilePdf: ensureSignedPdfKey failed, falling back to original:', e?.message);
+                    console.error('getSigningFilePdf: signed output failed:', e?.message);
+                    return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בטעינת המסמך החתום' });
                 }
             }
             if (signedKey) {
                 pdfKey = signedKey;
                 pdfBucket = file.SignedStorageBucket || BUCKET;
             }
+        }
+
+        // Native signing renders one page per row. A single-page preview keeps
+        // PDFKit/Android fit calculations independent of other pages' sizes.
+        if (req.query.page !== undefined) {
+            const pageNumber = parsePositiveIntStrict(req.query.page);
+            if (!pageNumber) return fail(next, 'INVALID_INPUT', 400);
+            const { buffer } = await getR2ObjectBuffer(pdfKey);
+            const source = await PDFDocument.load(buffer);
+            if (pageNumber > source.getPageCount()) return fail(next, 'INVALID_INPUT', 400);
+            const preview = await PDFDocument.create();
+            const [page] = await preview.copyPages(source, [pageNumber - 1]);
+            preview.addPage(page);
+            const bytes = Buffer.from(await preview.save());
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', 'inline');
+            res.setHeader('Cache-Control', 'private, no-store');
+            return res.send(bytes);
         }
 
         const range = req.headers.range;
@@ -8570,7 +8624,7 @@ exports.deleteSigningFile = async (req, res, next) => {
         const file = rows[0];
         let rejection = null;
         if (!file) rejection = ['NOT_FOUND', 404];
-        else if (!canManageSigningFile({ file, requesterId, role })) rejection = ['FORBIDDEN', 403];
+        else if (!canManageSigningFile({ file, requesterId, role, req })) rejection = ['FORBIDDEN', 403];
         else if (file.LegalHold) rejection = ['FILE_UNDER_LEGAL_HOLD', 409];
         else if (!['pending', 'signed', 'rejected'].includes(String(file.Status || '').toLowerCase())) {
             rejection = ['FILE_STATUS_NOT_DELETABLE', 400];

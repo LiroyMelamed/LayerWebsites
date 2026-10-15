@@ -15,6 +15,7 @@ const {
     composeClientReminderMessage,
     parseReminderTargets,
     parseStoredOffsets,
+    parseStoredChannels,
 } = require('../../lib/calendarEventReminders');
 const { dispatchCalendarReminder } = require('../../lib/calendarReminderDispatch');
 const { effectiveFireAt } = require('../../lib/shabbatDeferral');
@@ -48,7 +49,10 @@ function _parseSentKeys(raw) {
             keys.add(_sentKey('lawyer', Number(item)));
             keys.add(_sentKey('client', Number(item)));
         } else {
-            keys.add(String(item));
+            const key = String(item);
+            keys.add(key);
+            const claim = key.match(/^claim:(lawyer|client):(\d+):\d+$/);
+            if (claim) keys.add(`${claim[1]}:${claim[2]}`);
         }
     }
     return keys;
@@ -57,7 +61,7 @@ function _parseSentKeys(raw) {
 function _offsetsForRole(row, role) {
     const col = role === 'lawyer' ? row.lawyer_reminder_offsets : row.client_reminder_offsets;
     const parsed = parseStoredOffsets(col);
-    if (parsed.length) return parsed;
+    if (col != null) return parsed;
     return parseStoredOffsets(row.reminder_offsets);
 }
 
@@ -130,6 +134,9 @@ async function _enrichWithNames(rows) {
 
 async function _eventHasClientAudience(ev) {
     if (ev.client_user_id || ev.lead_phone || ev.lead_email) return true;
+    let leads = ev.lead_participants;
+    if (typeof leads === 'string') { try { leads = JSON.parse(leads); } catch { leads = []; } }
+    if (Array.isArray(leads) && leads.some(p => p?.phone || p?.email)) return true;
     try {
         const { rows } = await pool.query(
             'SELECT 1 FROM calendar_event_clients WHERE event_id = $1 LIMIT 1',
@@ -144,7 +151,7 @@ async function _eventHasClientAudience(ev) {
 async function _claimDueReminders(pollMinutes, limit = 200) {
     // Late-only grace: claim when fireAt is due or slightly overdue.
     // Do NOT look ahead by the poll interval (that caused "in 30 minutes" at +29 min early).
-    const lateGrace = 5;
+    const lateGrace = Math.max(5, Math.min(60, Number(pollMinutes) || 5));
     const now = Date.now();
     const windowStart = now - lateGrace * 60 * 1000;
     const windowEnd = now;
@@ -161,6 +168,8 @@ async function _claimDueReminders(pollMinutes, limit = 200) {
                ce.location,
                ce.meeting_type,
                ce.start_time,
+               ce.created_at,
+               ce.reminder_deferred_until,
                ce.lead_phone,
                ce.lead_email,
                ce.lead_name,
@@ -188,7 +197,9 @@ async function _claimDueReminders(pollMinutes, limit = 200) {
              OR COALESCE(ce.reminder_channels->>'email', 'false') IN ('true', '1')
           )
           AND ce.start_time > NOW() - INTERVAL '14 days'
-          AND ce.start_time < NOW() + INTERVAL '14 days'
+          AND (ce.start_time < NOW() + INTERVAL '14 days'
+               OR COALESCE(ce.lawyer_reminder_offsets, '[]'::jsonb) @> '[0]'::jsonb
+               OR COALESCE(ce.client_reminder_offsets, '[]'::jsonb) @> '[0]'::jsonb)
         ORDER BY ce.start_time ASC
         LIMIT 500
         `
@@ -209,7 +220,10 @@ async function _claimDueReminders(pollMinutes, limit = 200) {
             for (const offsetMinutes of _offsetsForRole(row, role)) {
                 const key = _sentKey(role, offsetMinutes);
                 if (sent.has(key)) continue;
-                const natural = new Date(new Date(row.start_time).getTime() - offsetMinutes * 60 * 1000);
+                const deferred = row.reminder_deferred_until?.[key];
+                const natural = deferred ? new Date(deferred) : offsetMinutes === 0
+                    ? new Date(row.created_at)
+                    : new Date(new Date(row.start_time).getTime() - offsetMinutes * 60 * 1000);
                 const fireAt = effectiveFireAt(natural);
                 const t = fireAt.getTime();
                 if (t >= windowStart && t <= windowEnd) {
@@ -233,19 +247,23 @@ async function _claimDueReminders(pollMinutes, limit = 200) {
     try {
         await dbClient.query('BEGIN');
         for (const row of candidates.slice(0, limit)) {
+            const claimKey = `claim:${row.sent_key}:${Date.now()}`;
             const { rows: updated } = await dbClient.query(
                 `
                 UPDATE calendar_events
                 SET reminders_sent_offsets = COALESCE(reminders_sent_offsets, '[]'::jsonb)
                     || to_jsonb($2::text)
                 WHERE id = $1
-                  AND NOT COALESCE(reminders_sent_offsets, '[]'::jsonb) @> to_jsonb($2::text)
+                  AND NOT COALESCE(reminders_sent_offsets, '[]'::jsonb) @> to_jsonb($5::text)
                   AND NOT COALESCE(reminders_sent_offsets, '[]'::jsonb) @> to_jsonb($3::int)
+                  AND NOT EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(reminders_sent_offsets, '[]'::jsonb)) k WHERE k LIKE 'claim:' || $5::text || ':%')
+                  AND COALESCE(event_status, 'scheduled') = 'scheduled'
+                  AND start_time = $4::timestamptz
                 RETURNING id, owner_id, manager_user_id, client_user_id, case_id, title, event_type, location, meeting_type, start_time,
                           lead_phone, lead_email, lead_name, lead_participants, client_name, reminder_channels, reminder_targets,
                           invite_token, client_reminder_sms, reminders_sent_offsets
                 `,
-                [row.id, row.sent_key, row.offset_minutes]
+                [row.id, claimKey, row.offset_minutes, row.start_time, row.sent_key]
             );
             if (updated.length) {
                 claimed.push({
@@ -253,6 +271,7 @@ async function _claimDueReminders(pollMinutes, limit = 200) {
                     role: row.role,
                     offset_minutes: row.offset_minutes,
                     sent_key: row.sent_key,
+                    claim_key: claimKey,
                     prev_sent: row.prev_sent,
                 });
             }
@@ -268,20 +287,38 @@ async function _claimDueReminders(pollMinutes, limit = 200) {
     return _enrichWithNames(claimed);
 }
 
-async function _revertSentKey(eventId, sentKey, prevSent) {
-    try {
-        let prev = [];
-        if (Array.isArray(prevSent)) prev = prevSent;
-        else if (typeof prevSent === 'string') {
-            try { prev = JSON.parse(prevSent); } catch { prev = []; }
+async function _revertSentKey(eventId, sentKey) {
+    // Remove only this claim: a parallel audience may already have succeeded.
+    await pool.query(`UPDATE calendar_events SET reminders_sent_offsets = COALESCE(reminders_sent_offsets, '[]'::jsonb) - $2::text WHERE id = $1`, [eventId, sentKey]);
+}
+
+async function _completeClaim(ev) {
+    await pool.query(`UPDATE calendar_events SET reminders_sent_offsets=(COALESCE(reminders_sent_offsets,'[]'::jsonb)-$2::text)||to_jsonb($3::text)
+        WHERE id=$1 AND COALESCE(event_status,'scheduled')='scheduled' AND COALESCE(reminders_sent_offsets,'[]'::jsonb) @> to_jsonb($2::text)`, [ev.id, ev.claim_key, ev.sent_key]);
+}
+
+async function _dispatchRecipient(ev, recipient, message, options) {
+    const selected = parseStoredChannels(ev.reminder_channels);
+    const recipientKey = recipient.userId ? `user${recipient.userId}` : require('node:crypto').createHash('sha256').update(`${recipient.phone || ''}|${recipient.email || ''}`).digest('hex').slice(0, 24);
+    let complete = true;
+    for (const channel of ['push', 'sms', 'email'].filter(channel => selected[channel])) {
+        const receiptKey = `receipt:${ev.sent_key}:${recipientKey}:${channel}`;
+        const { rows } = await pool.query('SELECT event_status, reminders_sent_offsets, start_time FROM calendar_events WHERE id=$1', [ev.id]);
+        const current = rows[0];
+        if (!current || isEventCancelled(current.event_status) || new Date(current.start_time).getTime() !== new Date(ev.start_time).getTime()) return false;
+        if (ev.claim_key && !_parseSentKeys(current.reminders_sent_offsets).has(ev.claim_key)) return false;
+        if (_parseSentKeys(current.reminders_sent_offsets).has(receiptKey)) continue;
+        try {
+            const result = await dispatchCalendarReminder({ ...options, ...recipient, eventChannels: { push: false, sms: false, email: false, [channel]: true }, title: message.title, body: message.body });
+            if (result.sent) {
+                await pool.query(`UPDATE calendar_events SET reminders_sent_offsets=COALESCE(reminders_sent_offsets,'[]'::jsonb)||to_jsonb($2::text) WHERE id=$1 AND NOT COALESCE(reminders_sent_offsets,'[]'::jsonb) @> to_jsonb($2::text)`, [ev.id, receiptKey]);
+            } else complete = false;
+        } catch (err) {
+            complete = false;
+            console.error(`[calendar-reminders] channel failed eventId=${ev.id} channel=${channel}:`, err.message);
         }
-        await pool.query(
-            `UPDATE calendar_events SET reminders_sent_offsets = $2::jsonb WHERE id = $1`,
-            [eventId, JSON.stringify(prev)]
-        );
-    } catch (err) {
-        console.error(`[calendar-reminders] revert failed eventId=${eventId} key=${sentKey}:`, err.message);
     }
+    return complete;
 }
 
 async function _resolveLawyerRecipients(ev) {
@@ -360,92 +397,35 @@ async function _resolveClientRecipients(ev) {
 
 async function _dispatchOne(ev) {
     const payload = _buildDeepLinkPayload(ev.id);
-    const channels = ev.reminder_channels;
-
+    const base = { eventType: ev.event_type, recipientRole: ev.role, payload };
+    let complete = true;
     if (ev.role === 'lawyer') {
-        const lawyerMsg = await composeLawyerReminderMessage(ev.offset_minutes, ev);
-        const lawyerIds = await _resolveLawyerRecipients(ev);
-        if (!lawyerIds.length) return;
-        let anySent = false;
-        for (const lawyerId of lawyerIds) {
-            try {
-                const result = await dispatchCalendarReminder({
-                    userId: lawyerId,
-                    eventChannels: channels,
-                    eventType: ev.event_type,
-                    recipientRole: 'lawyer',
-                    title: lawyerMsg.title,
-                    body: lawyerMsg.body,
-                    payload,
-                    emailTemplateKey: 'CALENDAR_LAWYER_REMINDER',
-                    emailEvent: ev,
-                    emailOpts: {
-                        clientsNames: ev.clients_names,
-                        whenLabel: lawyerMsg.whenLabel,
-                        bodyText: lawyerMsg.body.split('\n')[0] || lawyerMsg.body,
-                    },
-                });
-                if (result.sent) anySent = true;
-            } catch (err) {
-                console.error(`[calendar-reminders] lawyer dispatch failed eventId=${ev.id} userId=${lawyerId}:`, err.message);
-            }
+        const msg = await composeLawyerReminderMessage(ev.offset_minutes, ev);
+        const ids = await _resolveLawyerRecipients(ev);
+        for (const userId of ids) {
+            if (!(await _dispatchRecipient(ev, { userId }, msg, { ...base, emailTemplateKey: 'CALENDAR_LAWYER_REMINDER', emailEvent: ev,
+                emailOpts: { clientsNames: ev.clients_names, whenLabel: msg.whenLabel, bodyText: msg.body.split('\n')[0] || msg.body } }))) complete = false;
         }
-        if (!anySent) throw new Error('lawyer_reminder_not_sent');
-        return;
-    }
-
-    // client role
-    const recipients = await _resolveClientRecipients(ev);
-    if (!recipients.length) return;
-
-    const allClientNames = recipients.map((r) => r.name).filter(Boolean);
-    if (Array.isArray(ev.clients_names) && ev.clients_names.length) {
-        for (const n of ev.clients_names) {
-            if (n && !allClientNames.includes(n)) allClientNames.push(n);
+    } else {
+        const recipients = await _resolveClientRecipients(ev);
+        const names = [...new Set([...recipients.map(r => r.name), ...(ev.clients_names || [])].filter(Boolean))];
+        const unique = new Map();
+        for (const recipient of recipients) unique.set(recipient.userId ? `user:${recipient.userId}` : `${recipient.phone || ''}|${recipient.email || ''}`, recipient);
+        for (const recipient of unique.values()) {
+            const emailEvent = { ...ev, client_name: recipient.name || ev.client_name || ev.lead_name, clients_names: names };
+            const msg = await composeClientReminderMessage(ev.offset_minutes, emailEvent);
+            if (!(await _dispatchRecipient(ev, recipient, msg, { ...base, emailTemplateKey: 'CALENDAR_REMINDER', emailEvent,
+                emailOpts: { recipientName: emailEvent.client_name, clientsNames: names } }))) complete = false;
         }
     }
-
-    let anySent = false;
-    for (const recipient of recipients) {
-        const clientMsg = await composeClientReminderMessage(ev.offset_minutes, {
-            ...ev,
-            client_name: recipient.name || ev.client_name || ev.lead_name,
-            clients_names: allClientNames,
-        });
-        try {
-            const result = await dispatchCalendarReminder({
-                userId: recipient.userId,
-                email: recipient.email,
-                phone: recipient.phone,
-                eventChannels: channels,
-                eventType: ev.event_type,
-                recipientRole: 'client',
-                title: clientMsg.title,
-                body: clientMsg.body,
-                payload,
-                emailTemplateKey: 'CALENDAR_REMINDER',
-                emailEvent: {
-                    ...ev,
-                    client_name: recipient.name || ev.client_name || ev.lead_name,
-                    clients_names: allClientNames,
-                },
-                emailOpts: {
-                    recipientName: recipient.name || ev.client_name || ev.lead_name,
-                    clientsNames: allClientNames,
-                },
-            });
-            if (result.sent) anySent = true;
-        } catch (err) {
-            console.error(`[calendar-reminders] client dispatch failed eventId=${ev.id}:`, err.message);
-        }
-    }
-    if (!anySent) throw new Error('client_reminder_not_sent');
+    if (!complete) throw new Error(`${ev.role}_reminder_incomplete`);
 }
 
 async function _processClaimedRows(rows) {
     for (const ev of rows) {
         try {
             await _dispatchOne(ev);
+            await _completeClaim(ev);
             console.log(
                 `[calendar-reminders] ${ev.sent_key} dispatched → eventId=${ev.id}`
             );
@@ -454,7 +434,7 @@ async function _processClaimedRows(rows) {
                 `[calendar-reminders] ${ev.sent_key} FAILED → eventId=${ev.id}:`,
                 err.message
             );
-            await _revertSentKey(ev.id, ev.sent_key, ev.prev_sent);
+            await _revertSentKey(ev.id, ev.claim_key || ev.sent_key);
         }
     }
 }
@@ -488,7 +468,12 @@ async function processDeferredInvites() {
         try {
             // Re-check at send time — never flush during a quiet window.
             if (isInQuietWindow(new Date())) return;
-            await sendFn(row.id);
+            const result = await sendFn(row.id);
+            if (result?.error) {
+                console.error(`[calendar-reminders] deferred invitation incomplete eventId=${row.id}:`, result.error);
+                await pool.query(`UPDATE calendar_events SET invite_deferred_until=NOW()+INTERVAL '5 minutes' WHERE id=$1`, [row.id]);
+                continue;
+            }
             await pool.query(
                 `UPDATE calendar_events SET invite_deferred_until = NULL WHERE id = $1`,
                 [row.id]
@@ -500,7 +485,8 @@ async function processDeferredInvites() {
 }
 
 async function processCalendarReminders() {
-    const { pollMinutes } = await _readSchedulerSettings();
+    const { enabled, pollMinutes } = await _readSchedulerSettings();
+    if (enabled !== 'true' && enabled !== '1') return;
     try {
         const { warmShabbatCache } = require('../../lib/shabbatDeferral');
         await warmShabbatCache(new Date());
@@ -542,6 +528,8 @@ async function fireImmediateRemindersForEvent(eventId) {
         errors: [],
     };
     if (!Number.isFinite(id)) return result;
+    const { enabled } = await _readSchedulerSettings();
+    if (enabled !== 'true' && enabled !== '1') return result;
 
     const { rows } = await pool.query(
         `SELECT ce.*,
@@ -559,14 +547,6 @@ async function fireImmediateRemindersForEvent(eventId) {
 
     const { effectiveFireAt, describeQuietDeferral } = require('../../lib/shabbatDeferral');
     const now = new Date();
-    const quiet = describeQuietDeferral(now);
-    if (quiet) {
-        result.deferred = true;
-        result.deferredReason = quiet.reason;
-        result.deferredUntil = quiet.until.toISOString();
-        return result;
-    }
-
     const targets = parseReminderTargets(row.reminder_targets);
     const sent = _parseSentKeys(row.prev_sent);
     const jobs = [];
@@ -583,6 +563,13 @@ async function fireImmediateRemindersForEvent(eventId) {
     }
 
     if (!jobs.length) return result;
+    const quiet = describeQuietDeferral(now);
+    if (quiet) {
+        const deferred = Object.fromEntries(jobs.map(job => [job.sent_key, quiet.until.toISOString()]));
+        await pool.query(`UPDATE calendar_events SET reminder_deferred_until=COALESCE(reminder_deferred_until,'{}'::jsonb)||$2::jsonb WHERE id=$1 AND COALESCE(event_status,'scheduled')='scheduled'`, [id, JSON.stringify(deferred)]);
+        result.deferred = true; result.deferredReason = quiet.reason; result.deferredUntil = quiet.until.toISOString();
+        return result;
+    }
 
     // Ensure "now" is the effective fire (offset 0 at create ≠ start_time).
     for (const job of jobs) {
@@ -595,18 +582,22 @@ async function fireImmediateRemindersForEvent(eventId) {
             continue;
         }
         result.attempted += 1;
+        const claimKey = `claim:${job.sent_key}:${Date.now()}`;
         const { rows: updated } = await pool.query(
             `
             UPDATE calendar_events
             SET reminders_sent_offsets = COALESCE(reminders_sent_offsets, '[]'::jsonb)
                 || to_jsonb($2::text)
             WHERE id = $1
-              AND NOT COALESCE(reminders_sent_offsets, '[]'::jsonb) @> to_jsonb($2::text)
+              AND NOT COALESCE(reminders_sent_offsets, '[]'::jsonb) @> to_jsonb($4::text)
+              AND NOT EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(reminders_sent_offsets, '[]'::jsonb)) k WHERE k LIKE 'claim:' || $4::text || ':%')
+              AND COALESCE(event_status, 'scheduled') = 'scheduled'
+              AND start_time = $3::timestamptz
             RETURNING id, owner_id, manager_user_id, client_user_id, case_id, title, event_type, location, meeting_type, start_time,
                       lead_phone, lead_email, lead_name, lead_participants, client_name, reminder_channels, reminder_targets,
                       invite_token, client_reminder_sms, reminders_sent_offsets
             `,
-            [id, job.sent_key]
+            [id, claimKey, row.start_time, job.sent_key]
         );
         if (!updated.length) continue;
         const ev = {
@@ -614,15 +605,17 @@ async function fireImmediateRemindersForEvent(eventId) {
             role: job.role,
             offset_minutes: 0,
             sent_key: job.sent_key,
+            claim_key: claimKey,
             prev_sent: row.prev_sent,
         };
         const [enriched] = await _enrichWithNames([ev]);
         try {
             await _dispatchOne(enriched || ev);
+            await _completeClaim(ev);
             result.sent += 1;
         } catch (err) {
             result.errors.push(err.message || String(err));
-            await _revertSentKey(id, job.sent_key, row.prev_sent);
+            await _revertSentKey(id, claimKey);
         }
     }
     return result;
@@ -654,35 +647,33 @@ async function _readSchedulerSettings() {
 }
 
 async function initCalendarReminderScheduler() {
-    const { enabled, pollMinutes } = await _readSchedulerSettings();
-    if (enabled !== 'true' && enabled !== '1') {
-        console.log('[calendar-reminders] Disabled via calendar settings (platform_settings/env).');
-        return { ok: true, enabled: false };
-    }
-
-    const cronExpr = _minutesToCronExpression(pollMinutes);
     let running = false;
-
+    const officeRuns = new Map();
+    let lastEnabled = false;
     async function tick() {
         if (running) return;
         running = true;
         try {
+            await require('../../lib/tenant/officeJobs').forEachOffice(async () => {
+            const key = require('../../lib/tenant/databaseScope').cacheKey();
+            const previous = officeRuns.get(key) || { enabled: false, lastRun: 0 };
+            const { enabled, pollMinutes } = await _readSchedulerSettings();
+            const active = enabled === 'true' || enabled === '1';
+            const interval = Math.max(1, Math.min(60, pollMinutes || 5)) * 60000;
+            if (!active) { officeRuns.set(key, { enabled: false, lastRun: 0 }); return; }
+            if (previous.enabled && Date.now() - previous.lastRun < interval) return;
+            lastEnabled = true;
             await processCalendarReminders();
+            officeRuns.set(key, { enabled: true, lastRun: Date.now() });
+            });
         } catch (err) {
             console.error('[calendar-reminders] Unhandled tick error:', err.message);
-        } finally {
-            running = false;
-        }
+        } finally { running = false; }
     }
-
-    const task = cron.schedule(cronExpr, () => {
-        tick().catch(() => { /* logged inside */ });
-    });
-
-    tick().catch(() => { });
-
-    console.log(`[calendar-reminders] Started. cron="${cronExpr}" (${pollMinutes}m poll, split offsets + Shabbat deferral)`);
-    return { ok: true, enabled: true, pollMinutes, cronExpr, taskStarted: !!task };
+    // Keep the watcher alive while disabled so enabling never requires a restart.
+    const task = cron.schedule('* * * * *', () => { tick().catch(() => {}); });
+    await tick();
+    return { ok: true, enabled: lastEnabled, cronExpr: '* * * * *', taskStarted: !!task };
 }
 
 module.exports = {

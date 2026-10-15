@@ -469,3 +469,41 @@ test('generateAiMorningBrief cache key rotates hourly even when facts are unchan
         __testReset();
     }
 });
+
+
+test('business adviser receives aggregate periods without team identities and rejects invented financial figures', () => {
+    const facts = buildFactsSnapshot({ ...samplePayload, teamActivity: { periods: {
+        week: { casesOpened: 18, casesClosed: 9, leaders: [{managerName: 'Private leaderboard name'}] }
+    } } });
+    assert.deepEqual(facts.businessPerformance, { week: {casesOpened: 18, casesClosed: 9} });
+    assert.equal(JSON.stringify(facts).includes('Private leaderboard name'), false);
+    assert.equal(validateLinesAgainstFacts(['השבוע נפתחו 18 תיקים ונסגרו 9 תיקים'], facts), true);
+    assert.equal(validateLinesAgainstFacts(['השבוע נפתחו 18 תיקים', 'הכנסות המשרד הן 99999 שקלים'], facts), false);
+    assert.equal(validateLinesAgainstFacts(['הרווח בתיק הוא 18 ₪'], facts), false);
+    assert.equal(validateRecommendationsAgainstFacts(['יש לטפל ב-999 תיקים'], facts), false);
+    assert.equal(validateLinesAgainstFacts(['חתימה שפגה היא סיכון קריטי ודורשת טיפול מיידי'], facts), false);
+});
+
+test('adviser prompt sends aggregate business facts rather than personal alerts or calendar contents', async () => {
+    const previousKey = process.env.CHATBOT_LLM_API_KEY;
+    process.env.CHATBOT_LLM_API_KEY = 'test-key';
+    __testReset();
+    try {
+        let input;
+        await generateAiMorningBrief({ userId: 88, payload: samplePayload,
+            getSettingFn: async () => true, isPlatformAdminFn: async () => true,
+            callLlmFn: async messages => {
+                input = JSON.parse(messages.find(m => m.role === 'user').content);
+                return JSON.stringify({lines:['4 חתימות ממתינות עשויות להצדיק בדיקת חיכוך בתהליך השירות.'],recommendations:[]});
+            },
+        });
+        assert.deepEqual(Object.keys(input).sort(), ['periods','portfolio','signing']);
+        assert.equal(JSON.stringify(input).includes('Danny Cohen'), false);
+        assert.equal(JSON.stringify(input).includes('Case Alpha'), false);
+        assert.equal(input.signing.expiredLinks, 2);
+    } finally {
+        if (previousKey === undefined) delete process.env.CHATBOT_LLM_API_KEY;
+        else process.env.CHATBOT_LLM_API_KEY = previousKey;
+        __testReset();
+    }
+});

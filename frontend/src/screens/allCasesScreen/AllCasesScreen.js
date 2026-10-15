@@ -10,6 +10,8 @@ import ChooseButton from "../../components/styledComponents/buttons/ChooseButton
 import FilterSearchInput from "../../components/specializedComponents/containers/FilterSearchInput";
 
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
+import useHttpRequest from "../../hooks/useHttpRequest";
+import { useFirmPermissions } from "../../providers/FirmPermissionsProvider";
 import { AdminStackName } from "../../navigation/AdminStack";
 
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
@@ -44,8 +46,30 @@ export default function AllCasesScreen() {
     const [selectedCompany, setSelectedCompany] = useState(null);
     const [selectedCaseName, setSelectedCaseName] = useState(null);
 
-    const { result: allCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
+    const { permissionMode, canPage, loaded: permsLoaded } = useFirmPermissions();
+    const canFetchCaseTypesFilter =
+        !permsLoaded || permissionMode !== "role" || canPage("allCaseTypes");
+
+    const { result: allCasesTypesRemote, performRequest: fetchCaseTypesFilter } = useHttpRequest(
+        casesTypeApi.getAllCasesTypeForFilter,
+        null,
+        () => {},
+    );
+
+    useEffect(() => {
+        if (canFetchCaseTypesFilter) {
+            fetchCaseTypesFilter([]);
+        }
+    }, [canFetchCaseTypesFilter, fetchCaseTypesFilter]);
+
     const { result: allCases, isPerforming: isPerformingAllCases, performRequest: reperformAfterSave } = useAutoHttpRequest(casesApi.getAllCases);
+
+    const allCasesTypes = useMemo(() => {
+        if (canFetchCaseTypesFilter && Array.isArray(allCasesTypesRemote) && allCasesTypesRemote.length > 0) {
+            return allCasesTypesRemote;
+        }
+        return [...new Set((allCases || []).map((c) => c.CaseTypeName).filter(Boolean))];
+    }, [canFetchCaseTypesFilter, allCasesTypesRemote, allCases]);
 
     const clearDeepCaseId = useCallback(() => {
         if (!searchParams.has('caseId')) return;

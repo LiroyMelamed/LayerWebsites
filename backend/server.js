@@ -33,11 +33,30 @@ async function getPublicIp() {
     }
 }
 
+let signingV2Runtime = null;
 const server = app.listen(PORT, HOST, async () => {
+    try { await pool.ensureOfficeIsolation(); }
+    catch (error) { console.error('[office-isolation] startup refused:', error.message); server.close(); setTimeout(() => process.exit(1), 1000).unref(); await pool.end(); process.exit(1); }
     console.log(`Server running on ${HOST}:${PORT}`);
     await getPublicIp();
     await signingSchemaStartupCheck();
     await assertRuntimeTenantMatchesBranch(pool);
+
+    // Own flag: SIGNING_V2_WORKER_ENABLED. Do not hide it behind calendar/reminder crons.
+    try {
+        signingV2Runtime = require('./services/signingV2/runtime').startFromEnvironment({ pool });
+    } catch (e) {
+        console.error('[signing-v2] worker not started:', e?.errorCode || e?.message);
+    }
+
+    // The explicitly isolated demo worker can simulate case groups while all
+    // delivery schedulers remain disabled. Live work still obeys the job boundary.
+    require('./services/integrations/runtime').start();
+    // QA can disable the complete delivery/job boundary without changing provider credentials.
+    if (!require('./lib/backgroundJobsEnabled')(process.env)) {
+        console.log('[scheduled-jobs] disabled by BACKGROUND_JOBS_ENABLED');
+        return;
+    }
 
     // Scheduled jobs (best-effort; idempotent at DB layer)
     initLicenseRenewalScheduler();
@@ -49,6 +68,7 @@ const server = app.listen(PORT, HOST, async () => {
     startDailyAgendaScheduler();
     startHebcalHolidaysScheduler();
     initBillingRenewalScheduler();
+    require('./lib/tenant/signupWelcomeEmail').startWelcomeWorker();
 });
 
 // Hard timeouts at the Node server layer (useful behind Nginx).
@@ -70,6 +90,7 @@ const SHUTDOWN_GRACE_MS = Number(process.env.SHUTDOWN_GRACE_MS || 10_000);
 let shuttingDown = false;
 
 async function gracefulShutdown(signal) {
+    require('./services/integrations/runtime').stop();
     if (shuttingDown) return;
     shuttingDown = true;
     console.log(`[shutdown] ${signal} received — closing server…`);
@@ -83,6 +104,7 @@ async function gracefulShutdown(signal) {
     server.close(async (err) => {
         if (err) console.error('[shutdown] server.close error:', err.message);
         try {
+            await signingV2Runtime?.stop();
             await pool.end();
             console.log('[shutdown] database pool closed');
         } catch (e) {

@@ -1,7 +1,25 @@
 const express = require('express');
 const router = express.Router();
+router.use((req,res,next) => {
+    if (require('../lib/tenant/tenantContext').isMultiTenantMode() && !req.tenant?.id) return res.status(400).json({error:'TENANT_REQUIRED'});
+    return next();
+});
 const chatbotController = require('../controllers/chatbotController');
 const { createRateLimitMiddleware, getClientIp } = require('../utils/rateLimiter');
+const { getSetting } = require('../services/settingsService');
+
+// Enforce the runtime switch before every public endpoint, including old sessions.
+router.use(async (_req, res, next) => {
+    try {
+        const enabled = await getSetting('chatbot', 'AI_CHATBOT_ENABLED', false);
+        if (![true, 'true', 1, '1'].includes(enabled)) {
+            return res.status(403).json({ success: false, errorCode: 'CHATBOT_DISABLED', message: 'הצ׳אטבוט אינו פעיל כרגע' });
+        }
+        return next();
+    } catch (error) {
+        return next(error);
+    }
+});
 
 const trustProxy = process.env.TRUST_PROXY === 'true';
 

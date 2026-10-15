@@ -2,5 +2,7 @@
 assets/fonts/*.ttf
 # Required by Hebrew PDF generation and geometry tests.
 !assets/fonts/NotoSansHebrew-Regular.ttf
+# Bundled static font: Arabic shaping and stable Unicode maps in generated PDFs.
+!assets/fonts/NotoSansArabic-Regular.ttf
 # Security audit logs (never commit to repo)
 logs/

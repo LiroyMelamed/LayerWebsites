@@ -19,7 +19,14 @@ function StatTile({ label, value, sublabel, accent, onClick, valueFirst = true }
     );
 
     return (
-        <SimpleCard className="lw-commandCenter__statTile" onPress={onClick}>
+        <SimpleCard className="lw-commandCenter__statTile" onPress={onClick}
+            role={onClick ? 'button' : undefined} tabIndex={onClick ? 0 : undefined}
+            onKeyDown={(event) => {
+                if (onClick && !event.repeat && (event.key === 'Enter' || event.key === ' ')) {
+                    event.preventDefault();
+                    onClick();
+                }
+            }}>
             {valueFirst ? (
                 <>
                     {valueNode}
@@ -39,6 +46,8 @@ function StatTile({ label, value, sublabel, accent, onClick, valueFirst = true }
 }
 
 export default function FirmStatsPanel({
+    showActivityLeader = true,
+    showSigning = true,
     firmStats,
     drillDown,
     signing,
@@ -159,7 +168,7 @@ export default function FirmStatsPanel({
 
     return (
         <SimpleContainer className="lw-commandCenter__statsGrid" id="manager-home-stats">
-            {tiles.map((tile) => (
+            {tiles.filter(tile => (showActivityLeader || tile.key !== 'mostActive') && (showSigning || tile.key !== 'signing')).map((tile) => (
                 <StatTile key={tile.key} {...tile} />
             ))}
         </SimpleContainer>

@@ -6,12 +6,13 @@ const LIST_TTL_MS = 10 * 60 * 1000;
 const BY_ID_TTL_MS = 60 * 60 * 1000;
 
 function listKey({ role, userId }) {
-    if (String(role).toLowerCase() === 'admin') return 'caseTypes:list:admin';
-    return `caseTypes:list:user:${userId}`;
+    const scope = require('../lib/tenant/databaseScope').cacheKey();
+    if (String(role).toLowerCase() === 'admin') return `caseTypes:list:${scope}:admin`;
+    return `caseTypes:list:${scope}:user:${userId}`;
 }
 
 function byIdKey(caseTypeId) {
-    return `caseTypes:id:${caseTypeId}`;
+    return `caseTypes:id:${require('../lib/tenant/databaseScope').cacheKey()}:${caseTypeId}`;
 }
 
 async function getCaseTypesListCached({ role, userId, loader, ttlMs = LIST_TTL_MS }) {

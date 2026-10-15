@@ -119,10 +119,6 @@ export default function AiBriefSection({
         return null;
     }
 
-    if (!showSkeleton && !isAiBrief) {
-        return null;
-    }
-
     const content = showSkeleton
         ? (
             <SimpleContainer className="lw-commandCenter__aiBriefSkeleton">
@@ -132,13 +128,18 @@ export default function AiBriefSection({
                 <Skeleton width="76%" height={16} borderRadius={4} />
             </SimpleContainer>
         )
-        : renderAiBriefContent(t, aiBrief.lines, aiBrief.recommendations || []);
+        : isAiBrief ? renderAiBriefContent(t, aiBrief.lines, aiBrief.recommendations || [])
+            : <p className="lw-businessHome__empty">{t('managerHome.business.insightsUnavailable')}</p>;
 
     return (
         <SimpleContainer className="lw-commandCenter__aiBriefSparkle">
             <AiBriefBadge t={t} />
             <SimpleContainer className="lw-commandCenter__aiBriefSparkleRing">
                 <SimpleCard className="lw-commandCenter__aiBriefCard">
+                    <div className="lw-businessHome__sectionTitle"><div>
+                        <h2>{t('managerHome.business.insightsTitle')}</h2>
+                        <p>{t('managerHome.business.insightsSubtitle')}</p>
+                    </div></div>
                     {content}
                 </SimpleCard>
             </SimpleContainer>

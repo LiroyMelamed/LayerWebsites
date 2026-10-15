@@ -2,6 +2,9 @@ import SimpleScreen from '../../components/simpleComponents/SimpleScreen';
 import { useScreenSize } from '../../providers/ScreenSizeProvider';
 import useHttpRequest from '../../hooks/useHttpRequest';
 import { useCallback, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { RefreshCw, LayoutDashboard } from 'lucide-react';
+import SimpleButton from '../../components/simpleComponents/SimpleButton';
 import { useFirmPermissions } from '../../providers/FirmPermissionsProvider';
 import { images } from '../../assets/images/images';
 import SimpleContainer from '../../components/simpleComponents/SimpleContainer';
@@ -16,6 +19,8 @@ import { useNavigate } from 'react-router-dom';
 import AiBriefSection from './components/commandCenter/AiBriefSection';
 import CalendarWidget from './components/CalendarWidget';
 import FirmStatsPanel from './components/commandCenter/FirmStatsPanel';
+import TeamActivityPanel from './components/commandCenter/TeamActivityPanel';
+import { openAttentionModal } from './components/commandCenter/openAttentionModal';
 import CaseOperationsPanel from './components/commandCenter/CaseOperationsPanel';
 import SigningOperationsPanel from './components/commandCenter/SigningOperationsPanel';
 import PotentialClientsPanel from './components/commandCenter/PotentialClientsPanel';
@@ -25,9 +30,13 @@ import { openCalendarEventModal } from './components/commandCenter/openCalendarE
 import { openCaseMenuModal } from './components/commandCenter/openCaseMenuModal';
 import { useFirmSettingsLoaded, useManagerHomeAiInsightsEnabled } from '../../services/firmSettings';
 import { usePopup } from '../../providers/PopUpProvider';
+import { toastFromApiError } from '../../components/ui/showAppToast';
+import { Text14 } from '../../components/specializedComponents/text/AllTextKindFile';
+import { useOfficeLogoNavigate } from '../../navigation/useOfficeLogoNavigate';
 
 import "./MainScreen.scss";
 import "./components/commandCenter/CommandCenter.scss";
+import "./BusinessHome.scss";
 
 export const MainScreenName = "/MainScreen";
 
@@ -37,6 +46,7 @@ function scrollToSection(id) {
 }
 
 export default function MainScreen() {
+    const { t, i18n } = useTranslation();
     const navigate = useNavigate();
     const { isSmallScreen } = useScreenSize();
     const { openPopup, closePopup, pushPopup, popPopup } = usePopup();
@@ -44,22 +54,43 @@ export default function MainScreen() {
     const aiInsightsSettingEnabled = useManagerHomeAiInsightsEnabled();
     const aiInsightsEnabled = aiInsightsSettingEnabled;
     const firmPerms = useFirmPermissions();
-    const dashboardEnabled = useMemo(() => {
+    const logoNavigate = useOfficeLogoNavigate();
+    const roleMode = firmPerms?.permissionMode === 'role';
+    const mainEnabled = useMemo(() => {
         if (!firmPerms?.loaded) return false;
-        if (firmPerms.permissionMode !== 'role') return true;
-        return firmPerms.canPage('main') && firmPerms.canAction('cases', 'view');
-    }, [firmPerms]);
+        if (!roleMode) return true;
+        return firmPerms.canPage('main');
+    }, [firmPerms, roleMode]);
+    const casesDashboardEnabled = useMemo(() => {
+        if (!firmPerms?.loaded) return false;
+        if (!roleMode) return true;
+        return firmPerms.canAction('cases', 'view');
+    }, [firmPerms, roleMode]);
+    const dashboardEnabled = mainEnabled && casesDashboardEnabled;
     const calendarEnabled = useMemo(() => {
         if (!firmPerms?.loaded) return false;
-        if (firmPerms.permissionMode !== 'role') return true;
+        if (!roleMode) return true;
         return firmPerms.canPage('calendar') && firmPerms.canAction('calendar', 'view');
-    }, [firmPerms]);
+    }, [firmPerms, roleMode]);
+    const signingDashboardEnabled = useMemo(() => {
+        if (!firmPerms?.loaded) return false;
+        if (!roleMode) return true;
+        return firmPerms.canAction('signing', 'view');
+    }, [firmPerms, roleMode]);
+    const clientsDashboardEnabled = useMemo(() => {
+        if (!firmPerms?.loaded) return false;
+        if (!roleMode) return true;
+        return firmPerms.canAction('clients', 'view');
+    }, [firmPerms, roleMode]);
 
     const {
         result: managerHome,
         isPerforming: isLoadingHome,
         performRequest: refreshManagerHome,
-    } = useHttpRequest(casesApi.getManagerHomeData, null, () => {});
+    } = useHttpRequest(casesApi.getManagerHomeData, null, (error) => {
+        if (error?.status === 404 || error?.status === 403) return;
+        toastFromApiError(error, 'שגיאה בקבלת נתוני לוח הבקרה');
+    });
 
     const {
         result: calendarResponse,
@@ -71,7 +102,7 @@ export default function MainScreen() {
         result: aiBriefResponse,
         isPerforming: isLoadingAiBrief,
         performRequest: fetchAiBrief,
-    } = useHttpRequest(casesApi.getManagerHomeAiBrief);
+    } = useHttpRequest(casesApi.getManagerHomeAiBrief, null, () => {});
 
     const handleSummaryNavigate = (key) => {
         if (key === "totalCases") {
@@ -98,7 +129,7 @@ export default function MainScreen() {
             scrollToSection("manager-home-today");
             return;
         }
-        scrollToSection("manager-home-attention");
+        openAttentionModal({ attentionItems: managerHome?.attentionItems || [], openPopup, pushPopup, popPopup, closePopup, onDataChanged: handleRefresh });
     };
 
     useEffect(() => {
@@ -127,19 +158,22 @@ export default function MainScreen() {
         ? aiBriefResponse
         : null;
 
-    const calendarEvents = calendarResponse?.events || calendarResponse?.data?.events || [];
+    const calendarEvents = useMemo(
+        () => calendarResponse?.events || calendarResponse?.data?.events || [],
+        [calendarResponse],
+    );
     const todayEventCount = useMemo(
         () => countJerusalemTodayEvents(calendarEvents),
         [calendarEvents],
     );
 
     const handleRefresh = useCallback(() => {
-        refreshManagerHome();
-        refreshCalendar();
-        if (aiInsightsEnabled) {
+        if (dashboardEnabled) refreshManagerHome();
+        if (calendarEnabled) refreshCalendar();
+        if (dashboardEnabled && aiInsightsEnabled) {
             fetchAiBrief();
         }
-    }, [refreshManagerHome, refreshCalendar, aiInsightsEnabled, fetchAiBrief]);
+    }, [dashboardEnabled, refreshManagerHome, calendarEnabled, refreshCalendar, aiInsightsEnabled, fetchAiBrief]);
 
     const handleCalendarEventPress = useCallback(async (ev, { usePush = false } = {}) => {
         if (ev?.caseId) {
@@ -175,67 +209,90 @@ export default function MainScreen() {
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
-            {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={AdminStackName + MainScreenName} />}
+            {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={logoNavigate} chosenNavKey="main" />}
 
             <SimpleScrollView>
-                <SimpleContainer className="lw-commandCenter">
-                    <CalendarWidget
-                        events={calendarEvents}
-                        isPerforming={isLoadingCalendar}
-                        onEventPress={handleCalendarEventPress}
-                    />
+                <SimpleContainer className="lw-commandCenter lw-commandCenter--business">
+                    <header className="lw-businessHome__header">
+                        <div><p className="lw-businessHome__eyebrow"><LayoutDashboard size={16} aria-hidden="true" />{t('managerHome.business.eyebrow')}</p>
+                            <h1>{t('managerHome.business.title')}</h1>
+                            <p>{new Intl.DateTimeFormat(i18n.language === 'en' ? 'en-GB' : 'he-IL', { timeZone: 'Asia/Jerusalem', weekday: 'long', day: 'numeric', month: 'long' }).format(new Date())}</p></div>
+                        <SimpleButton className="lw-businessHome__refresh" onPress={handleRefresh} disabled={isLoadingHome || isLoadingCalendar || isLoadingAiBrief}>
+                            <RefreshCw size={16} aria-hidden="true" />{t('managerHome.business.refresh')}
+                        </SimpleButton>
+                    </header>
 
-                    <AiBriefSection
-                        aiBrief={aiBrief}
-                        aiBriefEnabled={aiInsightsEnabled}
-                        aiBriefLoading={aiInsightsEnabled && isLoadingAiBrief}
-                        settingsLoaded={settingsLoaded}
-                        isPerforming={isLoadingHome}
-                    />
+                    {calendarEnabled ? <section id="manager-home-today" className="lw-businessHome__calendar">
+                        <CalendarWidget events={calendarEvents} isPerforming={isLoadingCalendar} onEventPress={handleCalendarEventPress} />
+                    </section> : null}
 
-                    <SummaryStrip
-                        summary={managerHome?.summary}
-                        firmStats={managerHome?.firmStats}
-                        todayCount={todayEventCount}
-                        isPerforming={isLoadingHome || isLoadingCalendar}
-                        onNavigate={handleSummaryNavigate}
-                    />
+                    {dashboardEnabled ? (
+                        <>
+                            <SummaryStrip
+                                summary={managerHome?.summary}
+                                firmStats={managerHome?.firmStats}
+                                todayCount={todayEventCount}
+                                showSigning={signingDashboardEnabled}
+                                isPerforming={isLoadingHome || isLoadingCalendar}
+                                onNavigate={handleSummaryNavigate}
+                            />
 
-                    <FirmStatsPanel
-                        firmStats={managerHome?.firmStats}
-                        drillDown={managerHome?.drillDown}
-                        signing={managerHome?.signing}
-                        attentionItems={managerHome?.attentionItems || []}
-                        todayEvents={managerHome?.today || []}
-                        onTodayEventPress={handleCalendarEventPress}
-                        isPerforming={isLoadingHome}
-                        onDataChanged={handleRefresh}
-                    />
+                            <div className={`lw-businessHome__focus${aiInsightsEnabled ? '' : ' lw-businessHome__focus--single'}`}>
+                                <AiBriefSection
+                                    aiBrief={aiBrief}
+                                    aiBriefEnabled={aiInsightsEnabled}
+                                    aiBriefLoading={aiInsightsEnabled && isLoadingAiBrief}
+                                    settingsLoaded={settingsLoaded}
+                                    isPerforming={isLoadingHome}
+                                />
+                                <TeamActivityPanel activity={managerHome?.teamActivity} isPerforming={isLoadingHome} />
+                            </div>
 
-                    <SimpleContainer className="lw-commandCenter__grid">
-                        <CaseOperationsPanel
-                            managerWorkload={managerHome?.managerWorkload || []}
-                            unassignedCases={managerHome?.unassignedCases}
-                            drillDown={managerHome?.drillDown}
-                            isPerforming={isLoadingHome}
-                            onDataChanged={handleRefresh}
-                        />
+                            <FirmStatsPanel
+                                showActivityLeader={false}
+                                showSigning={signingDashboardEnabled}
+                                firmStats={managerHome?.firmStats}
+                                drillDown={managerHome?.drillDown}
+                                signing={signingDashboardEnabled ? managerHome?.signing : null}
+                                attentionItems={managerHome?.attentionItems || []}
+                                todayEvents={calendarEnabled ? managerHome?.today || [] : []}
+                                onTodayEventPress={handleCalendarEventPress}
+                                isPerforming={isLoadingHome}
+                                onDataChanged={handleRefresh}
+                            />
 
-                        <SigningOperationsPanel
-                            signing={managerHome?.signing}
-                            isPerforming={isLoadingHome}
-                            onDataChanged={handleRefresh}
-                        />
-                    </SimpleContainer>
+                            <SimpleContainer className={`lw-commandCenter__grid${signingDashboardEnabled ? '' : ' lw-commandCenter__grid--single'}`}>
+                                <CaseOperationsPanel
+                                    managerWorkload={managerHome?.managerWorkload || []}
+                                    unassignedCases={managerHome?.unassignedCases}
+                                    drillDown={managerHome?.drillDown}
+                                    isPerforming={isLoadingHome}
+                                    onDataChanged={handleRefresh}
+                                />
 
-                    {(managerHome?.potentialClients?.length > 0) && (
-                        <PotentialClientsPanel
-                            items={managerHome.potentialClients}
-                            isPerforming={isLoadingHome}
-                            openPopup={openPopup}
-                            onEventPress={handleCalendarEventPress}
-                        />
-                    )}
+                                {signingDashboardEnabled ? (
+                                    <SigningOperationsPanel
+                                        signing={managerHome?.signing}
+                                        isPerforming={isLoadingHome}
+                                        onDataChanged={handleRefresh}
+                                    />
+                                ) : null}
+                            </SimpleContainer>
+
+                            {clientsDashboardEnabled && (managerHome?.potentialClients?.length > 0) ? (
+                                <PotentialClientsPanel
+                                    items={managerHome.potentialClients}
+                                    isPerforming={isLoadingHome}
+                                    openPopup={openPopup}
+                                    onEventPress={handleCalendarEventPress}
+                                />
+                            ) : null}
+                        </>
+                    ) : mainEnabled ? (
+                        <SimpleContainer className="lw-commandCenter__state">
+                            <Text14>לוח הבקרה זמין — אין הרשאת צפייה בתיקים לתצוגת נתונים מלאה.</Text14>
+                        </SimpleContainer>
+                    ) : null}
                 </SimpleContainer>
             </SimpleScrollView>
         </SimpleScreen>

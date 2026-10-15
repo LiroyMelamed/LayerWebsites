@@ -34,6 +34,48 @@
     max-inline-size: 100%;
 }
 
+.lw-adminPopup__firmStaffRole {
+    margin-block: v.$space-3 v.$space-4;
+    min-inline-size: 0;
+}
+
+.lw-adminPopup__firmStaffRoleLabel {
+    display: block;
+    font-weight: 600;
+    margin-block-end: v.$space-2;
+}
+
+.lw-adminPopup__firmStaffRoleSelect {
+    width: 100%;
+    max-inline-size: 100%;
+    min-block-size: 2.75rem;
+    padding: v.$space-2;
+    border-radius: 0.375rem;
+    border: 1px solid var(--lw-color-border, #cbd5e0);
+    background: var(--lw-color-surface, #fff);
+}
+
+.lw-adminPopup__firmStaffRoleHint {
+    margin-block-start: v.$space-2;
+    font-size: 0.875rem;
+    color: var(--lw-color-text-muted, #718096);
+    line-height: 1.4;
+}
+
+.lw-adminPopup__userTypeBadge {
+    font-weight: 600;
+    margin-block-end: v.$space-3;
+}
+
+.lw-adminPopup__platformOwner {
+    margin-block: v.$space-3;
+}
+
+.lw-adminPopup__platformOwnerLabel {
+    font-weight: 600;
+    margin-block-end: v.$space-1;
+}
+
 /* Cancel button */
 /* GenericButton applies runtime inline styles, so we override with !important. */
 .lw-cancelButton {

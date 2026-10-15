@@ -1,6 +1,8 @@
 const { createAppError } = require('../utils/appError');
 const { getHebrewMessage } = require('../utils/errors.he');
 const settingsService = require('../services/settingsService');
+const { isMultiTenantMode } = require('../lib/tenant/tenantContext');
+const dbScope = require('../lib/tenant/databaseScope');
 
 function parseAllowlist() {
     const raw = String(process.env.PLATFORM_ADMIN_USER_IDS || '').trim();
@@ -16,7 +18,7 @@ const allowlistSet = parseAllowlist();
 
 module.exports = async function requirePlatformAdmin(req, _res, next) {
     const userId = Number(req.user?.UserId);
-    const role = req.user?.Role;
+    const role = req.user?.ProfessionalRole || req.user?.Role;
 
     if (!Number.isFinite(userId) || userId <= 0) {
         return next(createAppError('UNAUTHORIZED', 401, getHebrewMessage('AUTH_REQUIRED')));
@@ -24,6 +26,15 @@ module.exports = async function requirePlatformAdmin(req, _res, next) {
 
     if (role !== 'Admin') {
         return next(createAppError('FORBIDDEN', 403, getHebrewMessage('FORBIDDEN')));
+    }
+
+    if (isMultiTenantMode()) {
+        try {
+            if (req.firmTenantId || !await settingsService.isPlatformAdmin(userId)) {
+                return next(createAppError('FORBIDDEN', 403, getHebrewMessage('FORBIDDEN')));
+            }
+            return dbScope.withSystem(next);
+        } catch (error) { return next(error); }
     }
 
     // Check DB-based platform_admins table first (async)

@@ -357,6 +357,7 @@ function _sanitizeEvent(row) {
         leadCaseName: row.lead_case_name ?? null,
         leadParticipants: _parseLeadParticipants(row.lead_participants),
         lastReminderSentAt: row.last_reminder_sent_at ?? null,
+        reminderDeliveryWarning: Array.isArray(row.reminders_sent_offsets) && row.reminders_sent_offsets.some(k => /^(?:claim:(?:lawyer|client):\d+|invite-claim:[a-f0-9]+:(?:sms|email)):\d+$/.test(String(k)) && Number(String(k).split(':')[3]) < Date.now()-15*60000) ? 'פעולת השליחה הופסקה; יש לבדוק אם ההודעה נמסרה לפני שליחה חוזרת' : null,
         reminderOffsets: legacyOffsets.length ? legacyOffsets : uniqueSortedDesc([
             ...lawyerReminderOffsets,
             ...clientReminderOffsets,
@@ -850,6 +851,11 @@ const listEvents = async (req, res) => {
         params.push(userId);
     }
 
+    if ((from && !Number.isFinite(new Date(from).getTime()))
+        || (to && !Number.isFinite(new Date(to).getTime()))
+        || (from && to && new Date(from) >= new Date(to))) {
+        return res.status(400).json({ message: 'טווח תאריכים לא תקין' });
+    }
     if (from && to) {
         conditions.push(
             `tstzrange(ce.start_time, ce.end_time, '[)') && tstzrange($${idx}::timestamptz, $${idx + 1}::timestamptz, '[)')`
@@ -857,14 +863,15 @@ const listEvents = async (req, res) => {
         params.push(from, to);
         idx += 2;
     } else {
-        if (from) { conditions.push(`ce.start_time >= $${idx++}`); params.push(from); }
-        if (to) { conditions.push(`ce.end_time > $${idx++}`); params.push(to); }
+        if (from) { conditions.push(`ce.end_time > $${idx++}`); params.push(from); }
+        if (to) { conditions.push(`ce.start_time < $${idx++}`); params.push(to); }
     }
 
     if (client_id) {
         const cid = parseInt(client_id, 10);
         if (!Number.isFinite(cid)) return res.status(400).json({ message: 'מזהה לקוח לא תקין' });
-        conditions.push(`ce.client_user_id = $${idx++}`);
+        conditions.push(`(ce.client_user_id = $${idx} OR EXISTS (SELECT 1 FROM calendar_event_clients cec WHERE cec.event_id = ce.id AND cec.user_id = $${idx}))`);
+        idx++;
         params.push(cid);
     }
     if (case_id) {
@@ -881,7 +888,7 @@ const listEvents = async (req, res) => {
         params.push(event_type);
     }
 
-    const lim = Math.min(parseInt(limit, 10) || 500, 1000);
+    const lim = Math.max(1, Math.min(parseInt(limit, 10) || 500, 1000));
     const off = Math.max(parseInt(offset, 10) || 0, 0);
     params.push(lim, off);
 
@@ -903,7 +910,7 @@ const listEvents = async (req, res) => {
              LEFT JOIN scheduled_email_reminders ser
                     ON ser.calendar_event_id = ce.id
              ${whereSql}
-             ORDER BY ce.start_time ASC
+             ORDER BY ce.start_time ASC, ce.id ASC
              LIMIT $${idx++} OFFSET $${idx++}`,
             params
         );
@@ -937,12 +944,11 @@ const getTodayAndTomorrow = async (req, res) => {
 
         const { rows } = await pool.query(
             `SELECT ce.* FROM calendar_events ce
-             WHERE (ce.start_time AT TIME ZONE 'Asia/Jerusalem')::date
-                   BETWEEN (NOW() AT TIME ZONE 'Asia/Jerusalem')::date
-                       AND (NOW() AT TIME ZONE 'Asia/Jerusalem')::date + 1
+             WHERE ce.end_time > ((NOW() AT TIME ZONE 'Asia/Jerusalem')::date AT TIME ZONE 'Asia/Jerusalem')
+               AND ce.start_time < (((NOW() AT TIME ZONE 'Asia/Jerusalem')::date + INTERVAL '2 days') AT TIME ZONE 'Asia/Jerusalem')
                AND COALESCE(ce.event_status, 'scheduled') = 'scheduled'
                ${visibilityClause}
-             ORDER BY ce.start_time ASC
+             ORDER BY ce.start_time ASC, ce.id ASC
              LIMIT 20`,
             params
         );
@@ -985,11 +991,12 @@ function _normalizeAgendaChannels(raw) {
             .toLowerCase()
             .split(/[,;\s]+/)
             .map((s) => s.trim())
-            .filter((s) => s === 'email' || s === 'sms')
+            .filter((s) => s === 'email' || s === 'sms' || s === 'push')
     );
     const ordered = [];
     if (set.has('email')) ordered.push('email');
     if (set.has('sms')) ordered.push('sms');
+    if (set.has('push')) ordered.push('push');
     return ordered.length ? ordered.join(',') : 'email';
 }
 
@@ -1009,7 +1016,7 @@ const getDailyAgendaSettings = async (req, res) => {
     const userId = req.user.UserId;
     try {
         const { rows } = await pool.query(
-            `SELECT enabled, channels, recipients, send_time, last_sent_date
+            `SELECT enabled, channels, recipients, send_time, last_sent_date, delivery_receipts
              FROM user_daily_agenda_settings WHERE user_id = $1`,
             [userId]
         );
@@ -1022,6 +1029,7 @@ const getDailyAgendaSettings = async (req, res) => {
                 recipients: row?.recipients || '',
                 sendTime: row?.send_time || '07:30',
                 lastSentDate: row?.last_sent_date || '',
+                deliveryWarning: Object.values(row?.delivery_receipts || {}).some(r => ['sending','uncertain'].includes(r?.status)) ? 'שליחה קודמת לא הסתיימה בוודאות. יש לבדוק אם ההודעה נמסרה לפני שליחה חוזרת.' : null,
             },
         });
     } catch (err) {
@@ -1052,7 +1060,7 @@ const updateDailyAgendaSettings = async (req, res) => {
                 recipients = EXCLUDED.recipients,
                 send_time = EXCLUDED.send_time,
                 updated_at = NOW()
-             RETURNING enabled, channels, recipients, send_time, last_sent_date`,
+             RETURNING enabled, channels, recipients, send_time, last_sent_date, delivery_receipts`,
             [userId, enabled, channels, recipients, sendTime]
         );
         const row = rows[0];
@@ -1064,6 +1072,7 @@ const updateDailyAgendaSettings = async (req, res) => {
                 recipients: row.recipients || '',
                 sendTime: row.send_time,
                 lastSentDate: row.last_sent_date || '',
+                deliveryWarning: Object.values(row.delivery_receipts || {}).some(r => ['sending','uncertain'].includes(r?.status)) ? 'שליחה קודמת לא הסתיימה בוודאות. יש לבדוק אם ההודעה נמסרה לפני שליחה חוזרת.' : null,
             },
         });
     } catch (err) {
@@ -1115,8 +1124,11 @@ const createEvent = async (req, res) => {
         reminder_subject,
     } = req.body;
 
-    if (!title || !start_time || !end_time) {
+    if (typeof title !== 'string' || !title.trim() || !start_time || !end_time) {
         return res.status(400).json({ message: 'כותרת, שעת התחלה ושעת סיום הם שדות חובה' });
+    }
+    if (!Number.isFinite(new Date(start_time).getTime()) || !Number.isFinite(new Date(end_time).getTime())) {
+        return res.status(400).json({ message: 'תאריך או שעה לא תקינים' });
     }
     if (new Date(end_time) < new Date(start_time)) {
         return res.status(400).json({ message: 'שעת הסיום חייבת להיות אחרי שעת ההתחלה' });
@@ -1226,6 +1238,9 @@ const createEvent = async (req, res) => {
             until: recurrence.until,
         })
         : [{ start: new Date(start_time), end: new Date(end_time) }];
+    if (recurrenceEnabled && occurrences.length === 0) {
+        return res.status(400).json({ message: 'מועד סיום הסדרה חייב להיות בתאריך תקין ולא לפני תחילתה' });
+    }
     if (recurrenceEnabled && occurrences.length > MAX_OCCURRENCES) {
         return res.status(400).json({ message: `לא ניתן ליצור יותר מ-${MAX_OCCURRENCES} מופעים בסדרה` });
     }
@@ -1275,7 +1290,7 @@ const createEvent = async (req, res) => {
                     storedMeetingType,
                     eventType,
                     clientUserId,
-                    hasLead ? null : (client_name || null),
+                    client_name || null,
                     managerUserId,
                     manager_name || null,
                     color || null,
@@ -1318,9 +1333,9 @@ const createEvent = async (req, res) => {
 
             const clientMeta = await _syncEventClients(
                 created.id,
-                hasLead ? [] : clientIds,
+                clientIds,
                 dbClient,
-                { mintInvites: shouldInviteClient && !hasLead }
+                { mintInvites: shouldInviteClient }
             );
             if (clientMeta.clientUserId != null) {
                 created.client_user_id = clientMeta.clientUserId;
@@ -1480,6 +1495,11 @@ const updateEvent = async (req, res) => {
         reminder_subject,
     } = req.body;
 
+    if ((start_time !== undefined && !Number.isFinite(new Date(start_time).getTime()))
+        || (end_time !== undefined && !Number.isFinite(new Date(end_time).getTime()))
+        || (title !== undefined && (typeof title !== 'string' || !title.trim()))) {
+        return res.status(400).json({ message: 'כותרת, תאריך או שעה לא תקינים' });
+    }
     if (start_time && end_time && new Date(end_time) < new Date(start_time)) {
         return res.status(400).json({ message: 'שעת הסיום חייבת להיות אחרי שעת ההתחלה' });
     }
@@ -1505,9 +1525,13 @@ const updateEvent = async (req, res) => {
             'SELECT * FROM calendar_events WHERE id = $1', [eventId]
         );
         const ev = current[0];
+        if (!ev) return res.status(404).json({ message: 'אירוע לא נמצא' });
 
         const newStart = start_time || ev.start_time;
         const newEnd = end_time || ev.end_time;
+        if (new Date(newEnd) < new Date(newStart)) {
+            return res.status(400).json({ message: 'שעת הסיום חייבת להיות אחרי שעת ההתחלה' });
+        }
         const newEventType = event_type !== undefined ? event_type : (ev.event_type || 'appointment');
         const newAllDay = _isAllDayInternalEventType(newEventType)
             ? true
@@ -1583,7 +1607,8 @@ const updateEvent = async (req, res) => {
             : ev.lead_case_name;
 
         // Lead + registered clients may coexist on the same meeting.
-        const hasLead = !!(nextLeadName || nextLeadPhone || nextLeadEmail);
+        const hasLead = !!(nextLeadName || nextLeadPhone || nextLeadEmail
+            || _parseLeadParticipants(req.body?.lead_participants !== undefined ? req.body.lead_participants : ev.lead_participants).length);
         let resolvedClientUserId = nextClientUserId;
         let resolvedCaseId = nextCaseId;
         const resolvedClientIds = clientUpdate.sync ? clientUpdate.ids : null;
@@ -1743,14 +1768,7 @@ const updateEvent = async (req, res) => {
             }
         }
         let clientMeta = null;
-        if (hasLead) {
-            clientMeta = await _syncEventClients(eventId, [], pool, { mintInvites: false });
-            updated = {
-                ...updated,
-                client_user_id: null,
-                client_name: null,
-            };
-        } else if (clientUpdate.sync) {
+        if (clientUpdate.sync) {
             clientMeta = await _syncEventClients(eventId, clientUpdate.ids, pool, { mintInvites: false });
             updated = {
                 ...updated,
@@ -2769,7 +2787,7 @@ const checkConflict = async (req, res) => {
     if (!start_time || !end_time) {
         return res.status(400).json({ message: 'נא לציין שעת התחלה וסיום לבדיקת התנגשויות' });
     }
-    if (new Date(end_time) <= new Date(start_time)) {
+    if (!Number.isFinite(new Date(start_time).getTime()) || !Number.isFinite(new Date(end_time).getTime()) || new Date(end_time) <= new Date(start_time)) {
         return res.status(400).json({ message: 'שעת הסיום חייבת להיות אחרי שעת ההתחלה' });
     }
 
@@ -2806,6 +2824,7 @@ const checkConflict = async (req, res) => {
                  LEFT JOIN users u_client ON u_client.userid = ce.client_user_id
                  LEFT JOIN cases c        ON c.caseid        = ce.case_id
                  WHERE  ${_lawyerMatchSql(1)}
+                   AND COALESCE(ce.event_status, 'scheduled') = 'scheduled'
                    AND  ($4::int IS NULL OR ce.id <> $4)
                    AND  tstzrange(ce.start_time, ce.end_time, '[)')
                         && tstzrange($2::timestamptz, $3::timestamptz, '[)')
@@ -3169,7 +3188,34 @@ async function _publicAppBase() {
  * @param {{ force?: boolean }} [opts] - force=true skips Shabbat quiet-window deferral
  * @returns {Promise<{ sentSms: number, sentEmail: number, deferred: boolean, error: string|null, recipients: object[] }>}
  */
-async function _sendCalendarInvite(ev, { force = false } = {}) {
+async function _deliverCalendarInviteChannel(ev, recipient, channel, send, retry) {
+    const fingerprint = crypto.createHash('sha256').update(`${ev.id}|${recipient.inviteToken}|${recipient.phone || ''}|${recipient.email || ''}`).digest('hex').slice(0,24);
+    const receiptKey = `invite:${fingerprint}:${channel}`;
+    const claimPrefix = `invite-claim:${fingerprint}:${channel}:`;
+    const { rows } = await pool.query('SELECT reminders_sent_offsets FROM calendar_events WHERE id=$1', [ev.id]);
+    const keys = new Set(rows[0]?.reminders_sent_offsets || []);
+    if (retry && keys.has(receiptKey)) return { accepted: true, alreadyAccepted: true };
+    if ([...keys].some(k => String(k).startsWith(claimPrefix))) throw new Error('delivery_acceptance_unknown');
+    const claimKey = claimPrefix + Date.now();
+    const { rows: claimed } = await pool.query(`UPDATE calendar_events SET reminders_sent_offsets=(COALESCE(reminders_sent_offsets,'[]'::jsonb)-$2::text)||to_jsonb($3::text) WHERE id=$1 AND NOT EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(reminders_sent_offsets,'[]'::jsonb)) k WHERE k LIKE $4::text) RETURNING id`, [ev.id, receiptKey, claimKey, claimPrefix+'%']);
+    if (!claimed.length) throw new Error('delivery_acceptance_unknown');
+    try {
+        const result = await send();
+        if (!result?.ok) {
+            const error = new Error(result?.errorCode || result?.error || 'provider_rejected');
+            error.providerRejected = true;
+            throw error;
+        }
+        await pool.query(`UPDATE calendar_events SET reminders_sent_offsets=(COALESCE(reminders_sent_offsets,'[]'::jsonb)-$2::text)||to_jsonb($3::text) WHERE id=$1`, [ev.id, claimKey, receiptKey]);
+        return { accepted: true };
+    } catch (err) {
+        const uncertain = !err.providerRejected && (['ECONNRESET','ETIMEDOUT','ECONNABORTED'].includes(err.code) || /timeout|socket hang up/i.test(err.message));
+        if (!uncertain) await pool.query(`UPDATE calendar_events SET reminders_sent_offsets=COALESCE(reminders_sent_offsets,'[]'::jsonb)-$2::text WHERE id=$1`, [ev.id, claimKey]);
+        throw err;
+    }
+}
+
+async function _sendCalendarInvite(ev, { force = false, retry = false } = {}) {
     const result = {
         sentSms: 0,
         sentEmail: 0,
@@ -3181,6 +3227,10 @@ async function _sendCalendarInvite(ev, { force = false } = {}) {
     };
     if (!ev?.id) {
         result.error = 'אירוע לא תקין';
+        return result;
+    }
+    if (isEventCancelled(ev.event_status)) {
+        result.error = 'הפגישה בוטלה';
         return result;
     }
     if (String(ev.event_type || '').toLowerCase() === 'reminder') {
@@ -3209,7 +3259,7 @@ async function _sendCalendarInvite(ev, { force = false } = {}) {
 
     try {
         await pool.query(
-            `UPDATE calendar_events SET invite_deferred_until = NULL WHERE id = $1`,
+            `UPDATE calendar_events SET invite_deferred_until = invite_deferred_until WHERE id = $1`,
             [ev.id]
         );
     } catch (_) { /* column may not exist mid-migrate */ }
@@ -3350,7 +3400,8 @@ async function _sendCalendarInvite(ev, { force = false } = {}) {
         const e164 = _toE164Phone(recipient.phone);
         if (e164) {
             try {
-                await sendMessage(messageBody, e164);
+                const smsResult = await _deliverCalendarInviteChannel(ev, recipient, 'sms', () => sendMessage(messageBody, e164), retry);
+                if (!smsResult?.accepted) throw new Error(smsResult?.error || 'sms_failed');
                 entry.sentSms = true;
                 result.sentSms += 1;
             } catch (e) {
@@ -3370,12 +3421,13 @@ async function _sendCalendarInvite(ev, { force = false } = {}) {
                     recipientName: recipient.name,
                     clientsNames: allClientNames,
                 });
-                await sendTransactionalCustomHtmlEmail({
+                const emailResult = await _deliverCalendarInviteChannel(ev, recipient, 'email', () => sendTransactionalCustomHtmlEmail({
                     toEmail: recipient.email,
                     subject: composed.subject,
                     htmlBody: composed.htmlBody,
                     logLabel: 'CALENDAR_INVITE',
-                });
+                }), retry);
+                if (!emailResult?.accepted) throw new Error(emailResult?.errorCode || 'email_failed');
                 entry.sentEmail = true;
                 result.sentEmail += 1;
             } catch (e) {
@@ -3405,7 +3457,7 @@ async function sendDeferredCalendarInvite(eventId) {
     if (!Number.isFinite(id)) throw new Error('invalid eventId');
     const { rows } = await pool.query('SELECT * FROM calendar_events WHERE id = $1', [id]);
     if (!rows.length) throw new Error('event not found');
-    return _sendCalendarInvite(rows[0], { force: true });
+    return _sendCalendarInvite(rows[0], { force: true, retry: true });
 }
 
 /**
@@ -3417,7 +3469,7 @@ const getInviteByToken = async (req, res) => {
     try {
         let { rows } = await pool.query(
             `SELECT id, title, description, location, meeting_type, start_time, end_time, all_day,
-                    invite_status, invite_responded_at, client_name, lead_name
+                    invite_status, invite_responded_at, client_name, lead_name, event_status
              FROM calendar_events WHERE invite_token = $1 LIMIT 1`,
             [token]
         );
@@ -3427,6 +3479,7 @@ const getInviteByToken = async (req, res) => {
 
         if (rows.length) {
             const ev = rows[0];
+            if (isEventCancelled(ev.event_status)) return res.status(410).json({ code: 'EVENT_CANCELLED', message: 'הפגישה בוטלה' });
             clientName = ev.client_name || ev.lead_name || null;
             status = ev.invite_status;
             respondedAt = ev.invite_responded_at;
@@ -3449,7 +3502,7 @@ const getInviteByToken = async (req, res) => {
         try {
             const clientLookup = await pool.query(
                 `SELECT ce.title, ce.description, ce.location, ce.meeting_type, ce.start_time, ce.end_time, ce.all_day,
-                        cec.invite_status, cec.invite_responded_at, u.name AS client_name, ce.lead_name
+                        cec.invite_status, cec.invite_responded_at, u.name AS client_name, ce.lead_name, ce.event_status
                  FROM calendar_event_clients cec
                  JOIN calendar_events ce ON ce.id = cec.event_id
                  LEFT JOIN users u ON u.userid = cec.user_id
@@ -3464,6 +3517,7 @@ const getInviteByToken = async (req, res) => {
 
         if (!rows.length) return res.status(404).json({ message: 'הזמנה לא נמצאה' });
         const ev = rows[0];
+        if (isEventCancelled(ev.event_status)) return res.status(410).json({ code: 'EVENT_CANCELLED', message: 'הפגישה בוטלה' });
         return res.json({
             invite: {
                 title: ev.title,
@@ -3572,12 +3626,15 @@ const respondToInvite = async (req, res) => {
     }
     const nextStatus = action === 'accept' ? 'accepted' : 'declined';
     try {
+        const { rows: statusRows } = await pool.query(`SELECT ce.event_status FROM calendar_events ce LEFT JOIN calendar_event_clients cec ON cec.event_id=ce.id WHERE ce.invite_token=$1 OR cec.invite_token=$1 LIMIT 1`, [token]);
+        if (statusRows[0] && isEventCancelled(statusRows[0].event_status)) return res.status(410).json({ code: 'EVENT_CANCELLED', message: 'הפגישה בוטלה' });
         // Per-client token first
         try {
             const { rows: clientRows } = await pool.query(
                 `UPDATE calendar_event_clients
                  SET invite_status = $1, invite_responded_at = NOW()
                  WHERE invite_token = $2
+                   AND EXISTS(SELECT 1 FROM calendar_events ce WHERE ce.id=calendar_event_clients.event_id AND COALESCE(ce.event_status, 'scheduled')='scheduled')
                  RETURNING event_id, user_id, invite_status, invite_responded_at`,
                 [nextStatus, token]
             );
@@ -3611,7 +3668,7 @@ const respondToInvite = async (req, res) => {
         const { rows } = await pool.query(
             `UPDATE calendar_events
              SET invite_status = $1, invite_responded_at = NOW(), updated_at = NOW()
-             WHERE invite_token = $2
+             WHERE invite_token = $2 AND COALESCE(event_status,'scheduled')='scheduled'
              RETURNING id, invite_status, invite_responded_at, title`,
             [nextStatus, token]
         );
@@ -3738,7 +3795,7 @@ const duplicateEvent = async (req, res) => {
                 invite_status, invite_token, invite_responded_at,
                 client_reminder_sms, invite_sms,
                 lawyer_reminder_offsets, client_reminder_offsets,
-                last_reminder_sent_at, invite_deferred_until)
+                last_reminder_sent_at, invite_deferred_until, lead_participants, updated_by)
              VALUES (
                 $1, $2, $3, $4, $5, $6, $7,
                 $8, $9, $10, $11, $12,
@@ -3748,7 +3805,7 @@ const duplicateEvent = async (req, res) => {
                 $24, $25, NULL,
                 $26, $27,
                 $28::jsonb, $29::jsonb,
-                NULL, NULL
+                NULL, NULL, $30::jsonb, $31
              )
              RETURNING *`,
             [
@@ -3789,6 +3846,8 @@ const duplicateEvent = async (req, res) => {
                         ? parseStoredOffsets(src.client_reminder_offsets)
                         : parseStoredOffsets(src.reminder_offsets)
                 ),
+                _leadParticipantsToJson(src.lead_participants),
+                userId,
             ]
         );
         const created = rows[0];
@@ -3852,7 +3911,7 @@ const getDayAgenda = async (req, res) => {
             `SELECT ce.*
              FROM calendar_events ce
              WHERE ${personalCalendarSql(1)}
-               AND ce.start_time >= ($2::date AT TIME ZONE 'Asia/Jerusalem')
+               AND ce.end_time > ($2::date AT TIME ZONE 'Asia/Jerusalem')
                AND ce.start_time < (($2::date + INTERVAL '1 day') AT TIME ZONE 'Asia/Jerusalem')
              ORDER BY ce.start_time ASC`,
             [userId, dateStr]
