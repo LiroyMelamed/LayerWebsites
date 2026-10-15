@@ -1,0 +1,15 @@
+▶ real PostgreSQL links prevent case deletion without altering any linked record
+  ✔ stage file (73.008042ms)
+  ✔ signing document (61.258ms)
+  ✔ case description (32.939792ms)
+  ✔ linked client (23.025167ms)
+  ✔ calendar event (27.25825ms)
+✔ real PostgreSQL links prevent case deletion without altering any linked record (335.369791ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1068.1015

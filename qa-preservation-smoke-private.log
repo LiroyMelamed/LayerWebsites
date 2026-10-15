@@ -1,0 +1,3 @@
+tar: Ignoring unknown extended header keyword 'LIBARCHIVE.xattr.com.apple.provenance'
+Connected to PostgreSQL database: melamedia
+{"status":"PASS","environment":"Melamedia QA only, outbound noop","results":[{"route":"owned synthetic case deletion","status":403,"casePreserved":true},{"route":"checkout confirm with missing identifiers","status":400,"providerCalled":false},{"route":"anonymous checkout confirm","status":401}],"ownedCaseRemoved":true,"productionDataTouched":false}

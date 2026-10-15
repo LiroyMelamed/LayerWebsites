@@ -1,0 +1,18 @@
+✔ existing named production and sandbox credentials remain separate (4.471625ms)
+✔ legacy credentials retain compatibility; incomplete pairs do not become credentials (4.501583ms)
+✔ configured card verification amount remains available without accepting invalid amounts (3.141042ms)
+✔ checkout confirmation validates the provider return before exposing the refreshed snapshot (7.14675ms)
+✔ checkout confirmation rejects missing identifiers and failed validation without refreshing (0.551792ms)
+✔ case deletion keeps role permission checks ahead of all database mutations (6.319542ms)
+✔ production hard deletion remains disabled by default (1.402459ms)
+✔ explicit hard-delete permission never overrides linked legal data protection (1.641625ms)
+✔ an empty case deletes in one locked transaction when explicitly enabled (1.072958ms)
+✔ database failure rolls back deletion and releases the connection (0.498291ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 250.225666

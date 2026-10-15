@@ -1,0 +1,56 @@
+From https://github.com/LiroyMelamed/LayerWebsites
+ * branch            Melamedia  -> FETCH_HEAD
+   750bc1d..4f13cee  Melamedia  -> origin/Melamedia
+Updating 750bc1d..4f13cee
+Fast-forward
+ backend/controllers/billingController.js           |  21 +++
+ backend/controllers/caseController.js              |  14 ++
+ backend/docs/LIVE_SERVER_PRESERVATION_20261006.md  |  27 +++
+ backend/docs/SETTINGS_CONSUMER_REGRESSION.md       |  24 +++
+ backend/lib/billing/firmBillingService.js          |  13 +-
+ backend/lib/payments/takbullClient.js              |  13 +-
+ backend/lib/payments/takbullCredentials.js         |  70 ++++++++
+ backend/lib/tenant/signupService.js                |   3 +-
+ backend/routes/billingRoutes.js                    |   1 +
+ .../caseLegalDataPreservation.integration.test.js  |  38 +++++
+ backend/tests/helpers/settingsIsolation.js         |  31 ++++
+ backend/tests/liveServerPreservation.test.js       | 136 +++++++++++++++
+ .../messageSettingsConsumers.integration.test.js   |  86 ++++++++++
+ .../signingMessageSettings.integration.test.js     | 184 +++++++++++++++++++++
+ backend/utils/errors.he.js                         |   2 +
+ backend/utils/legalData.js                         |  30 ++++
+ 16 files changed, 684 insertions(+), 9 deletions(-)
+ create mode 100644 backend/docs/LIVE_SERVER_PRESERVATION_20261006.md
+ create mode 100644 backend/docs/SETTINGS_CONSUMER_REGRESSION.md
+ create mode 100644 backend/lib/payments/takbullCredentials.js
+ create mode 100644 backend/tests/caseLegalDataPreservation.integration.test.js
+ create mode 100644 backend/tests/helpers/settingsIsolation.js
+ create mode 100644 backend/tests/liveServerPreservation.test.js
+ create mode 100644 backend/tests/messageSettingsConsumers.integration.test.js
+ create mode 100644 backend/tests/signingMessageSettings.integration.test.js
+>>> pm2 restart melamedia-api (rolling, 0s gap after healthy)
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [melamedia-api](ids: [ 5 ])
+[PM2] [melamedia-api](5) ✓
+┌────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 3  │ ashrafessa-api        │ default     │ 1.0.0   │ fork    │ 1099443  │ 2D     │ 19   │ online    │ 0%       │ 213.8mb  │ root     │ disabled │
+│ 9  │ central-admin         │ default     │ N/A     │ fork    │ 488224   │ 7D     │ 3    │ online    │ 4.5%     │ 112.7mb  │ root     │ disabled │
+│ 8  │ central-api           │ default     │ N/A     │ fork    │ 1086950  │ 2D     │ 6    │ online    │ 0%       │ 115.2mb  │ root     │ disabled │
+│ 2  │ contractor-monitor    │ default     │ 1.0.0   │ fork    │ 1634     │ 10D    │ 0    │ online    │ 0%       │ 127.4mb  │ root     │ disabled │
+│ 6  │ idm-api               │ default     │ 1.0.0   │ fork    │ 1099456  │ 2D     │ 19   │ online    │ 4.5%     │ 207.1mb  │ root     │ disabled │
+│ 7  │ lawyer-api            │ default     │ 1.0.0   │ fork    │ 1099473  │ 2D     │ 14   │ online    │ 0%       │ 207.8mb  │ root     │ disabled │
+│ 1  │ melamed-backend       │ default     │ 1.0.0   │ fork    │ 1101613  │ 2D     │ 27   │ online    │ 4.5%     │ 372.3mb  │ root     │ disabled │
+│ 5  │ melamedia-api         │ default     │ 1.0.0   │ fork    │ 1462800  │ 0s     │ 85   │ online    │ 0%       │ 33.6mb   │ root     │ disabled │
+│ 4  │ morlevy-api           │ default     │ 1.0.0   │ fork    │ 1099435  │ 2D     │ 21   │ online    │ 9.1%     │ 219.4mb  │ root     │ disabled │
+└────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+Module
+┌────┬──────────────────────────────┬───────────────┬──────────┬──────────┬──────┬──────────┬──────────┬──────────┐
+│ id │ module                       │ version       │ pid      │ status   │ ↺    │ cpu      │ mem      │ user     │
+├────┼──────────────────────────────┼───────────────┼──────────┼──────────┼──────┼──────────┼──────────┼──────────┤
+│ 0  │ pm2-logrotate                │ 3.0.0         │ 1621     │ online   │ 0    │ 0%       │ 79.4mb   │ root     │
+└────┴──────────────────────────────┴───────────────┴──────────┴──────────┴──────┴──────────┴──────────┴──────────┘
+>>> melamedia-api healthy on :3003 (10s)
+PASS: Only QA process restarted. Other tenants unchanged.
+{"ok":true}4f13ceebcef3eeb46f608350e60a60ad94ed10f9

@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.melamedia.morlevy",
+      "sha256_cert_fingerprints": [
+        "E2:CE:1C:50:15:90:FC:60:94:16:8D:35:72:93:1C:79:BC:67:93:31:41:F2:CA:87:F1:E7:10:97:57:15:08:2E"
+      ]
+    }
+  }
+]
