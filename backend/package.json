@@ -46,6 +46,7 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.10",
     "adm-zip": "^0.6.1",
     "supertest": "^7.1.4"
   },

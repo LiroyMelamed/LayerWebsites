@@ -688,6 +688,9 @@ const addCase = async (req, res) => {
             }
         }
 
+        // Persist automation in the same transaction as the new case. No network
+        // calls here: a WhatsApp failure must not turn a saved case into a retry.
+        await require('../services/integrations/runtime').service.enqueueCase(client, caseId, req.firmTenantId || null);
         await client.query('COMMIT');
 
         // ── Notify linked users (ONE message per user, regardless of stage) ──

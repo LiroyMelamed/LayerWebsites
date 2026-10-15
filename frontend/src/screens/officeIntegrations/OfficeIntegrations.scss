@@ -1,0 +1,25 @@
+.office-integrations {
+  color: var(--text-primary, #233345); box-sizing: border-box; width: 100%; max-width: 1200px; margin: 0 auto; padding: 28px;
+  h1 { font-size: 26px; margin: 0 0 8px; } h2 { font-size: 20px; margin: 0; } h3 { font-size: 17px; }
+  p { line-height: 1.65; } label { display: flex; flex-direction: column; gap: 8px; margin: 14px 0; font-size: 14px; }
+  input:not([type=checkbox]), select, textarea { font: inherit; color: inherit; width: 100%; padding: 10px 12px; border: 1px solid #cbd5df; background: #fff; border-radius: 8px; box-sizing: border-box; }
+  input:focus-visible, button:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #81abc7; outline-offset: 2px; }
+  button { font: inherit; cursor: pointer; padding: 10px 14px; border: 1px solid #b8cad5; border-radius: 8px; background: #fff; color: #214e70; }
+  button.oi-primary { background: #245976; color: #fff; border-color: #245976; }
+  button:disabled, fieldset:disabled { opacity: .6; cursor: default; }
+  .oi-office { max-width: 440px; } .oi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 20px; }
+  .oi-card { background: #fff; border: 1px solid #dbe4e9; border-radius: 14px; padding: 22px; margin: 18px 0; min-width: 0; }
+  .oi-card-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .oi-badge { display: inline-block; background: #edf3f7; color: #355b76; padding: 4px 9px; font-size: 12px; border-radius: 20px; }
+  .oi-toggle { flex-direction: row; align-items: center; } .oi-toggle input { width: 18px; height: 18px; }
+  .oi-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+  .oi-muted { color: #647486; font-size: 13px; } .oi-note { background: #fff6df; padding: 12px; border-radius: 8px; font-size: 14px; }
+  .oi-error { color: #8a2630; background: #fff0f0; padding: 14px; border-radius: 8px; }
+  .oi-notice { color: #215c41; background: #eaf7f0; padding: 14px; border-radius: 8px; }
+  fieldset { border: 0; border-top: 1px solid #e4ebef; padding: 18px 0 0; margin-top: 20px; }
+  legend { font-weight: 600; padding-inline-end: 12px; } .oi-phone { display: block; margin-top: 8px; }
+  .oi-steps, .oi-mappings { padding-inline-start: 22px; line-height: 1.8; }
+  .oi-table { overflow-x: auto; } table { border-collapse: collapse; width: 100%; font-size: 14px; } th, td { text-align: start; padding: 13px; border-bottom: 1px solid #e3e9ef; vertical-align: top; } td p { margin: 6px 0; }
+  a { color: #245976; text-underline-offset: 3px; } &.oi-embedded { padding: 0; }
+  @media(max-width: 900px) { padding: 16px; .oi-grid { grid-template-columns: 1fr; gap: 0; } .oi-card { padding: 16px; } }
+}

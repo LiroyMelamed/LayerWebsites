@@ -11,6 +11,7 @@ import {
     PlanUsageScreenName,
     PlansPricingScreenName,
     PlatformSettingsScreenName,
+    OfficeIntegrationsScreenName,
     RemindersScreenName,
     AdminSupportScreenName,
     SigningManagerScreenName,
@@ -21,6 +22,7 @@ import { getCalendarModuleEnabledCached, loadFirmSettings } from "../../../servi
 const PLATFORM_ADMIN_ONLY_NAV_KEYS = new Set([
     "firmStaffRoles",
     "platformSettings",
+    "officeIntegrations",
     "planUsage",
 ]);
 
@@ -139,6 +141,11 @@ function buildPlatformAdminLinks({ navigate, t, isPlatformAdmin }) {
             icon: null,
             onClick: () => navigate(AdminStackName + PlatformSettingsScreenName),
         },
+        {
+            navKey: 'officeIntegrations', routeMatch: OfficeIntegrationsScreenName,
+            buttonText: t('officeIntegrations.title'), buttonScreen: t('officeIntegrations.title'), icon: null,
+            onClick: () => navigate(AdminStackName + OfficeIntegrationsScreenName),
+        },
     ];
 }
 
@@ -163,7 +170,7 @@ export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t, pe
             }
             return canPage(item.navKey);
         });
-        return { NavBarLinks: filtered };
+        return { NavBarLinks: [...filtered, ...platformLinks.filter(item => item.navKey === 'officeIntegrations' && isOfficeOwner)] };
     }
 
     if (permissionMode === "platform_admin") {

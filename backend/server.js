@@ -49,6 +49,9 @@ const server = app.listen(PORT, HOST, async () => {
         console.error('[signing-v2] worker not started:', e?.errorCode || e?.message);
     }
 
+    // The explicitly isolated demo worker can simulate case groups while all
+    // delivery schedulers remain disabled. Live work still obeys the job boundary.
+    require('./services/integrations/runtime').start();
     // QA can disable the complete delivery/job boundary without changing provider credentials.
     if (!require('./lib/backgroundJobsEnabled')(process.env)) {
         console.log('[scheduled-jobs] disabled by BACKGROUND_JOBS_ENABLED');
@@ -87,6 +90,7 @@ const SHUTDOWN_GRACE_MS = Number(process.env.SHUTDOWN_GRACE_MS || 10_000);
 let shuttingDown = false;
 
 async function gracefulShutdown(signal) {
+    require('./services/integrations/runtime').stop();
     if (shuttingDown) return;
     shuttingDown = true;
     console.log(`[shutdown] ${signal} received — closing server…`);

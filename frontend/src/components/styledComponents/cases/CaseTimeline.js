@@ -5,6 +5,7 @@ import { DateDDMMYY } from "../../../functions/date/DateDDMMYY";
 import { DateDDMMYY_HHMM } from "../../../functions/date/DateDDMMYY_HHMM";
 import { useTranslation } from "react-i18next";
 import StageFileUpload from "./StageFileUpload";
+import CaseIntegrationUpdates from './CaseIntegrationUpdates';
 
 import "./CaseTimeline.scss";
 
@@ -29,6 +30,7 @@ export default function CaseTimeline({ stages, currentStage, isClosed = false, t
         <SimpleContainer
             className="lw-caseTimeline"
         >
+            {!isClient && caseId && <CaseIntegrationUpdates caseId={caseId} />}
             <SimpleContainer className="lw-caseTimeline__title">
                 <TextBold12>
                     {title}
