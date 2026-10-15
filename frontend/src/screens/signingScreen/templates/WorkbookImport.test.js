@@ -1,3 +1,4 @@
+import { changeField } from '../../../testUtils/changeField';
 import React from 'react';
 import { act, fireEvent, render, screen, within, waitFor } from '@testing-library/react';
 import { createInstance } from 'i18next';
@@ -7,23 +8,6 @@ import he from '../../../i18n/locales/he.json';
 import ar from '../../../i18n/locales/ar.json';
 import en from '../../../i18n/locales/en.json';
 
-
-// Drive the real platform picker; DOM change on its combobox button is inert.
-async function choose(control, name) {
-    fireEvent.click(control);
-    const option = await screen.findByRole('option', { name });
-    expect(option).toBeEnabled();
-    fireEvent.pointerDown(option);
-}
-function expectChoice(control, name) {
-    fireEvent.click(control);
-    const option = screen.getByRole('option', { name });
-    expect(option).toHaveAttribute('aria-selected', 'true');
-    fireEvent.keyDown(option, { key: 'Escape' });
-}
-
-const chooseColumn = (control, index, language = 'en') => choose(control,
-    new RegExp('^' + new Intl.NumberFormat({he:'he-IL',ar:'ar-IL',en:'en-GB'}[language]).format(index) + ' · '));
 const metadata = { sheets: [{ id: 1, name: 'Office file', columns: [
     { index: 1, header: 'Contact', suggestedKey: null, samples: ['one@example.invalid'] },
     { index: 2, header: 'Person', suggestedKey: null, samples: ['Synthetic one'] },
@@ -35,7 +19,7 @@ async function setup(lang = 'en', options = {}) {
     const props = { api: { inspectWorkbook: jest.fn().mockResolvedValue(metadata), parseWorkbook: jest.fn().mockResolvedValue({ rows, errors: [] }) },
         versionId: 'template-v1', roles: [{ key: 'buyer', label: 'Buyer' }], layout: {}, onApply: jest.fn(), onPending: jest.fn(), ...options };
     render(<I18nextProvider i18n={i18n}><WorkbookImport {...props} /></I18nextProvider>);
-    const upload = () => fireEvent.change(screen.getByLabelText(i18n.t('signingV2.compose.excel.upload')), { target: { files: [new File(['synthetic'], 'office.xlsx')] } });
+    const upload = () => changeField(screen.getByLabelText(i18n.t('signingV2.compose.excel.upload')), { target: { files: [new File(['synthetic'], 'office.xlsx')] } });
     return { props, i18n, upload };
 }
 
@@ -47,12 +31,12 @@ test.each(['he', 'ar', 'en'])('arbitrary headings require mapping and explicit r
     const email = screen.getByRole('combobox', { name: i18n.t('signingV2.compose.fields.email'), exact: true });
     const review = screen.getByRole('button', { name: i18n.t('signingV2.compose.mapping.preview') });
     expect(review).toBeDisabled();
-    expectChoice(name, i18n.t('signingV2.compose.mapping.skip'));
-    await chooseColumn(name, 2, lang);
-    await chooseColumn(email, 2, lang);
+    expect(name).toHaveValue('');
+    changeField(name, { target: { value: '2' } });
+    changeField(email, { target: { value: '2' } });
     expect(review).toBeDisabled();
     expect(screen.getByRole('alert')).toHaveTextContent(i18n.t('signingV2.compose.errors.INVALID_COLUMN_MAPPING'));
-    await chooseColumn(email, 1, lang);
+    changeField(email, { target: { value: '1' } });
     fireEvent.click(review);
     await screen.findByText(i18n.t('signingV2.compose.mapping.replaceWarning'));
     expect(props.onApply).not.toHaveBeenCalled();
@@ -76,9 +60,9 @@ test('cancel ignores a late file-inspection response and never replaces existing
 
 test('ambiguous duplicate headings do not get automatically assigned', async () => {
     const api = { inspectWorkbook: jest.fn().mockResolvedValue({ sheets: [{ id: 1, name: 'People', columns: [1, 2].map(index => ({ index, header: 'Buyer — Name', suggestedKey: 'buyer.name', samples: [] })) }] }), parseWorkbook: jest.fn() };
-    const { upload, i18n } = await setup('en', { api }); upload();
+    const { upload } = await setup('en', { api }); upload();
     const name = await screen.findByRole('combobox', { name: 'Full name (required)' });
-    expectChoice(name, i18n.t('signingV2.compose.mapping.skip'));
+    expect(name).toHaveValue('');
     expect(screen.getByRole('button', { name: 'Review mapping' })).toBeDisabled();
 });
 
@@ -88,11 +72,11 @@ test('required data columns must be mapped and invalid spreadsheet rows cannot b
         { index: 3, header: 'Identifier', suggestedKey: null, samples: ['000123'] }] }] }),
         parseWorkbook: jest.fn().mockResolvedValue({ rows: [{ ...rows[0], data: { id: '000123' }, dataSources: { id: 'import' } }], errors: [{ row: 3, field: 'Identity number', code: 'UNSAFE_DATA_CELL' }] }) };
     const { props, i18n, upload } = await setup('en', { api, dataFields: fields }); upload();
-    await chooseColumn(await screen.findByRole('combobox', { name: 'Full name (required)' }), 2);
-    await chooseColumn(screen.getByRole('combobox', { name: 'Email', exact: true }), 1);
+    changeField(await screen.findByRole('combobox', { name: 'Full name (required)' }), { target: { value: '2' } });
+    changeField(screen.getByRole('combobox', { name: 'Email', exact: true }), { target: { value: '1' } });
     const review = screen.getByRole('button', { name: i18n.t('signingV2.compose.mapping.preview') });
     expect(review).toBeDisabled();
-    await chooseColumn(screen.getByRole('combobox', { name: 'Identity number (required)' }), 3);
+    changeField(screen.getByRole('combobox', { name: 'Identity number (required)' }), { target: { value: '3' } });
     fireEvent.click(review);
     await screen.findByText('000123');
     expect(await screen.findByRole('button', { name: i18n.t('signingV2.compose.mapping.apply') })).toBeDisabled();
@@ -104,7 +88,7 @@ test('conditional recipient columns are optional at import but are explained bef
     upload();await screen.findByRole('heading',{name:i18n.t('signingV2.compose.mapping.heading')});
     expect(screen.getByText(i18n.t('signingV2.compose.mapping.conditionalRole'))).toBeVisible();
     expect(screen.getByRole('button',{name:i18n.t('signingV2.compose.mapping.preview')})).toBeDisabled();
-    await chooseColumn(screen.getByRole('combobox',{name:'Full name'}), 2);
+    changeField(screen.getByRole('combobox',{name:'Full name'}),{target:{value:'2'}});
     fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.compose.mapping.preview')}));
     await waitFor(()=>expect(props.api.parseWorkbook).toHaveBeenCalledWith('template-v1',expect.any(String),{mapping:{sheetId:1,columns:{'buyer.name':2}}}));
     expect(props.onApply).not.toHaveBeenCalled();
@@ -116,12 +100,12 @@ test('two required people have separate mappings; an optional third never blocks
     const {upload}=await setup('en',{roles:[{key:'buyer',label:'Buyers',min:2,max:3}],api});upload();
     const first=within(await screen.findByRole('group',{name:'Buyers · 1'}));
     const second=within(screen.getByRole('group',{name:'Buyers · 2'}));
-    await chooseColumn(first.getByLabelText('Full name (required)'), 1);
-    await chooseColumn(first.getByLabelText('Email'), 2);
+    changeField(first.getByLabelText('Full name (required)'),{target:{value:'1'}});
+    changeField(first.getByLabelText('Email'),{target:{value:'2'}});
     expect(screen.getByRole('button',{name:'Review mapping'})).toBeDisabled();
-    await chooseColumn(second.getByLabelText('Full name (required)'), 3);
-    await chooseColumn(second.getByLabelText('Email'), 4);
-    expectChoice(within(screen.getByRole('group',{name:'Buyers · 3'})).getByLabelText('Full name'), 'Not mapped');
+    changeField(second.getByLabelText('Full name (required)'),{target:{value:'3'}});
+    changeField(second.getByLabelText('Email'),{target:{value:'4'}});
+    expect(within(screen.getByRole('group',{name:'Buyers · 3'})).getByLabelText('Full name')).toHaveValue('');
     fireEvent.click(screen.getByRole('button',{name:'Review mapping'}));
     await screen.findByText('First · one@example.invalid');
     expect(screen.getByText('Second · two@example.invalid')).toBeVisible();

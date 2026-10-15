@@ -1,5 +1,6 @@
+import { changeField, openChoices } from '../../../testUtils/changeField';
 import React,{useState} from 'react';
-import {render,screen,fireEvent,waitFor,act} from '@testing-library/react';
+import {render,screen,fireEvent,waitFor,within,act} from '@testing-library/react';
 import {createInstance} from 'i18next';
 import {I18nextProvider,initReactI18next} from 'react-i18next';
 import ParticipantDirectoryFields from './ParticipantDirectoryFields';
@@ -9,14 +10,6 @@ import en from '../../../i18n/locales/en.json';
 import {uploadFileToR2} from '../../../utils/fileUploadUtils';
 jest.mock('../../../utils/fileUploadUtils',()=>({uploadFileToR2:jest.fn()}));
 jest.mock('../../../utils/downloadBlobAsFile',()=>({downloadBlobAsFile:jest.fn()}));
-
-// Drive the real platform picker; DOM change on its combobox button is inert.
-async function choose(control, name) {
-    fireEvent.click(control);
-    const option = await screen.findByRole('option', { name });
-    expect(option).toBeEnabled();
-    fireEvent.pointerDown(option);
-}
 if(!window.crypto?.getRandomValues)Object.defineProperty(window,'crypto',{value:require('crypto').webcrypto});
 const person={id:'person-1',name:'Synthetic signer',version:1,endpoints:{email:'signer@example.invalid'},identityVerified:false};
 const party={id:'party-1',name:'Synthetic Company',kind:'legal_entity'};
@@ -34,18 +27,18 @@ for(const language of ['he','ar','en'])test(`explicit representative approval/re
     const {api,tr,changes}=await setup(language);
     await screen.findByText(tr('notReady'));
     await waitFor(()=>expect(api.directory).toHaveBeenCalled());
-    fireEvent.click(screen.getByText(tr('reviewEvidence')));
+    fireEvent.click(await screen.findByText(tr('reviewEvidence')));
     const approve=screen.getByRole('button',{name:tr('approve')});expect(approve).toBeDisabled();
-    fireEvent.change(screen.getByLabelText(tr('reason')),{target:{value:'Synthetic evidence checked'}});
+    changeField(screen.getByLabelText(tr('reason')),{target:{value:'Synthetic evidence checked'}});
     fireEvent.click(approve);await screen.findByText(tr('ready'));
     expect(api.changeAuthority).toHaveBeenCalledWith(authority.id,{action:'approve',expectedVersion:1,reason:'Synthetic evidence checked'});
     fireEvent.click(screen.getByRole('button',{name:tr('revoke')}));await screen.findByText(tr('notReady'));
     expect(api.changeAuthority).toHaveBeenLastCalledWith(authority.id,{action:'revoke',expectedVersion:2,reason:'Synthetic evidence checked'});
     uploadFileToR2.mockResolvedValue({success:true,data:{key:'users/1/synthetic.pdf'}});
-    fireEvent.change(screen.getByLabelText(tr('uploadEvidence')),{target:{files:[new File(['synthetic'],'evidence.pdf',{type:'application/pdf'})]}});
+    changeField(screen.getByLabelText(tr('uploadEvidence')),{target:{files:[new File(['synthetic'],'evidence.pdf',{type:'application/pdf'})]}});
     await screen.findByText(tr('evidenceSaved'));
     fireEvent.click(screen.getByText(tr('verifyIdentity')));
-    fireEvent.change(screen.getByLabelText(tr('identityValue')),{target:{value:'000000001'}});
+    changeField(screen.getByLabelText(tr('identityValue')),{target:{value:'000000001'}});
     fireEvent.click(screen.getByRole('button',{name:tr('confirmIdentity')}));
     await waitFor(()=>expect(api.verifyPersonIdentity).toHaveBeenCalledWith(person.id,expect.objectContaining({expectedVersion:1,identity:{country:'IL',type:'id',value:'000000001'},evidenceArtifactId:'proof-2'})));
     await screen.findByText(tr('identityVerified'),{exact:false});
@@ -71,15 +64,12 @@ test('a late search response cannot erase the selected person represented partie
     const api=service();let finishSearch;
     api.directory.mockImplementation(()=>new Promise(resolve=>{finishSearch=resolve;}));
     api.personAuthorities.mockResolvedValue({person,parties:[party],authorities:[authority]});
-    const {tr,changes}=await setup('en',api);
-    const control = await screen.findByRole('combobox',{name:tr('party')});
-    fireEvent.click(control);
-    await screen.findByRole('option',{name:party.name});
+    const {tr}=await setup('en',api);
+    await openChoices(await screen.findByLabelText(tr('party'))).findByRole('option',{name:party.name});
     await waitFor(()=>expect(finishSearch).toBeDefined());
     await act(async()=>finishSearch({people:[person],parties:[],canManageAuthority:true}));
-    expect(screen.getByRole('option',{name:party.name})).toBeInTheDocument();
-    expect(screen.getByRole('option',{name:party.name})).toHaveAttribute('aria-selected','true');
-    expect(changes).not.toHaveBeenCalled();
+    expect(openChoices(screen.getByLabelText(tr('party'))).getByRole('option',{name:party.name})).toBeInTheDocument();
+    expect(screen.getByLabelText(tr('party'))).toHaveValue(party.id);
 });
 test('a new represented person uses the returned personal party without a truncated search',async()=>{
     const api=service(),represented={id:'represented-party',name:'Same frequent name',kind:'person',personId:'different-person'};
@@ -87,8 +77,8 @@ test('a new represented person uses the returned personal party without a trunca
     const {tr,changes}=await setup('en',api);
     await screen.findByText(tr('notReady'));await waitFor(()=>expect(api.directory).toHaveBeenCalled());
     fireEvent.click(screen.getByText(tr('newParty')));
-    await choose(screen.getByLabelText(tr('partyKind')), tr('person'));
-    fireEvent.change(screen.getByLabelText(tr('partyName')),{target:{value:represented.name}});
+    changeField(screen.getByLabelText(tr('partyKind')),{target:{value:'person'}});
+    changeField(screen.getByLabelText(tr('partyName')),{target:{value:represented.name}});
     fireEvent.click(screen.getByRole('button',{name:tr('addParty')}));
     await waitFor(()=>expect(changes).toHaveBeenLastCalledWith(expect.objectContaining({partyId:represented.id,authorityId:undefined})));
     expect(api.directory).toHaveBeenCalledTimes(1);
