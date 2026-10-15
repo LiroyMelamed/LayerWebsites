@@ -66,6 +66,8 @@ export default function OfficeIntegrations({ embedded = false }) {
     }
     const button = (label, onClick, disabled = false, primary = false) => <button type="button" className={primary ? 'oi-primary' : ''} disabled={busy || disabled} onClick={onClick}>{tr(label)}</button>;
     const formatSyncDate = value => value ? new Date(value).toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }) : tr('notScheduled');
+    const price = data?.signup.pricing;
+    const money = value => new Intl.NumberFormat('he-IL', { style: 'currency', currency: price?.currency || 'ILS', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value);
     return <section className={`office-integrations ${embedded ? 'oi-embedded' : ''}`} dir="rtl">
         <header><h1>{tr('title')}</h1><p>{tr('intro')}</p></header>
         {error && <p role="alert" className="oi-error">{error}</p>}{notice && <p role="status" className="oi-notice">{notice}</p>}
@@ -90,9 +92,19 @@ export default function OfficeIntegrations({ embedded = false }) {
                     <p>{tr(data.signup.flow === 'business_app' ? 'qrHelp' : 'whatsappHelp')}</p>
                     {data.signup.flow === 'business_app' && <p className="oi-muted">{tr('qrPrerequisite')}</p>}
                     <p><strong>{tr('status')}: {t(`officeIntegrations.statuses.${data.whatsapp?.status || 'disconnected'}`)}</strong>{data.whatsapp?.displayPhone && <bdi className="oi-phone">{data.whatsapp.displayPhone}</bdi>}</p>
-                    {!data.signup.ready && <p className="oi-note">{tr(data.signup.demoOnly ? 'demoConnectionNotice' : 'platformSetup')}</p>}
+                    {price && <section className="oi-pricing" aria-label={tr('pricingTitle')}>
+                        <div className="oi-card-heading"><h3>{tr('pricingTitle')}</h3><span className="oi-badge">{tr('pricingPreview')}</span></div>
+                        <p className="oi-price"><bdi>{money(price.monthlyAmount)}</bdi><span>{tr('pricingPerMonth')}</span></p>
+                        <p className="oi-muted">{tr('pricingTaxExempt')}</p>
+                        <p>{tr('pricingIncludes')}</p>
+                        <dl><div><dt>{tr('pricingSetup')}</dt><dd><bdi>{money(price.setupAmount)}</bdi></dd></div>
+                            <div><dt>{tr('pricingMeta')}</dt><dd>{tr('pricingSeparate')}</dd></div></dl>
+                        <p className="oi-muted">{tr('pricingMetaHelp')} <a href="https://whatsappbusiness.com/products/platform-pricing/" target="_blank" rel="noreferrer">{tr('pricingMetaLink')}</a></p>
+                        <p className="oi-pricing-notice">{tr('pricingNoCharge')}</p>
+                    </section>}
+                    {!data.signup.ready && <p className="oi-note">{tr(data.signup.approvalPending ? 'metaApprovalPending' : data.signup.demoOnly ? 'demoConnectionNotice' : 'platformSetup')}</p>}
                     {data.signup.connectionOnly && <p className="oi-note">{tr('connectionOnlyNotice')}</p>}
-                    <div className="oi-actions">{data.signup.ready ? button(data.signup.flow === 'business_app' ? 'connectQr' : 'connect', connect, false, true)
+                    <div className="oi-actions">{data.signup.approvalPending ? button('connectQr', connect, true, true) : data.signup.ready ? button(data.signup.flow === 'business_app' ? 'connectQr' : 'connect', connect, false, true)
                         : <button type="button" className="oi-primary" disabled={busy} aria-expanded={setupOpen} onClick={() => setSetupOpen(!setupOpen)}>{tr(data.signup.demoOnly ? 'demoConnection' : 'connectionHelp')}</button>}
                         {data.whatsapp?.connected && <>{button(data.signup.connectionOnly || data.whatsapp.settings?.connectionType === 'business_app' ? 'checkAccountConnection' : 'checkConnection', () => action(() => api.checkWhatsapp()), data.signup.demoOnly)}
                         {button('disconnect', () => action(() => api.disconnect()))}</>}</div>

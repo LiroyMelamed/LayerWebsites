@@ -64,3 +64,11 @@ test('sync receipts retain only a known status and respect declined history', ()
     assert.equal(appSyncStatus('history', { history: [{ metadata: { progress: 10 } }] }), null);
     assert.equal(appSyncStatus('smb_app_state_sync', { contacts: ['private'] }), null);
 });
+test('known Meta onboarding rejection blocks signup; price preview is exempt and cannot activate billing', async () => {
+    const service = createIntegrationService({ pool: {}, provider: {}, env: { ...env, WHATSAPP_META_APPROVAL_PENDING: 'true', WHATSAPP_PRICING_PREVIEW: 'true' } });
+    const config = service.signupConfig();
+    assert.equal(config.configurationReady, true); assert.equal(config.ready, false); assert.equal(config.appId, null);
+    assert.equal(config.pricing.monthlyAmount, 99); assert.equal(config.pricing.vatMode, 'exempt');
+    assert.equal(config.pricing.setupAmount, 0); assert.equal(config.pricing.billingActive, false);
+    await assert.rejects(service.startSignup(null, 1), { errorCode: 'META_SETUP_REQUIRED' });
+});
