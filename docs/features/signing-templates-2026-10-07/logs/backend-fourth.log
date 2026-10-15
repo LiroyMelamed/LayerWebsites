@@ -1,0 +1,17 @@
+✔ workbook round-trip previews normalized recipients and does not import shared identities per row (39.038ms)
+✔ Excel formulas and incorrect column headers fail preview with actionable row errors (21.197083ms)
+✔ invalid archive, phone, channel and missing shared signer cannot become a dispatch (0.252208ms)
+✔ template round-trip retains exact fractional signature coordinates without live signer identity (1.0185ms)
+✔ template rejects unassigned roles, invalid coordinates and silently reused lawyer stamps (0.246333ms)
+✔ template rejects duplicate role and document identities (0.074959ms)
+✔ actual rotated/cropped page bounds govern field acceptance (0.113209ms)
+✔ idempotency fingerprint is stable across object key order and changes with content (0.236167ms)
+✔ templates, immutable bulk dispatch and manifest-bound shared OTP use the released signing engine (1131.182625ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1262.296167
