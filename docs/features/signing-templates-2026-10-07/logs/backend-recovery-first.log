@@ -1,0 +1,79 @@
+✔ workbook round-trip previews normalized recipients and does not import shared identities per row (41.160084ms)
+✔ Excel formulas and incorrect column headers fail preview with actionable row errors (26.1895ms)
+✔ invalid archive, phone, channel and missing shared signer cannot become a dispatch (0.2465ms)
+✔ template round-trip retains exact fractional signature coordinates without live signer identity (1.311541ms)
+✔ template rejects unassigned roles, invalid coordinates and silently reused lawyer stamps (0.321ms)
+✔ template rejects duplicate role and document identities (0.078292ms)
+✔ actual rotated/cropped page bounds govern field acceptance (0.121667ms)
+✔ idempotency fingerprint is stable across object key order and changes with content (0.238167ms)
+{"event":"auth_missing_token","method":"GET","path":"/api/signing-templates/c237fcc8-b4d0-4f78-b74d-6f9c10b838c2"}
+[signing] publicSignFileBatch ok {
+  signingFileId: 15,
+  count: 1,
+  remaining: 1,
+  timings: { uploadMs: 0, dbMs: 2, totalMs: 8 }
+}
+[signing] publicSignFileBatch ok {
+  signingFileId: 16,
+  count: 1,
+  remaining: 1,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 11 }
+}
+[signing] publicSignFileBatch ok {
+  signingFileId: 15,
+  count: 1,
+  remaining: 0,
+  timings: { uploadMs: 0, dbMs: 3, totalMs: 12 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=35 for file 15
+[signingFinalize] done { signingFileId: 15, ms: 370 }
+[signing] publicSignFileBatch ok {
+  signingFileId: 16,
+  count: 1,
+  remaining: 0,
+  timings: { uploadMs: 0, dbMs: 2, totalMs: 8 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=36 for file 16
+[signingFinalize] done { signingFileId: 16, ms: 18 }
+[signing] publicSignFileBatch ok {
+  signingFileId: 21,
+  count: 1,
+  remaining: 0,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 7 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=35 for file 21
+[signingFinalize] done { signingFileId: 21, ms: 23 }
+[signing] publicSignFileBatch ok {
+  signingFileId: 22,
+  count: 1,
+  remaining: 0,
+  timings: { uploadMs: 0, dbMs: 2, totalMs: 19 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=35 for file 22
+[signingFinalize] done { signingFileId: 22, ms: 39 }
+✔ templates, immutable bulk dispatch and manifest-bound shared OTP use the released signing engine (2994.661167ms)
+[signing] publicSignFileBatch ok {
+  signingFileId: 13,
+  count: 1,
+  remaining: 1,
+  timings: { uploadMs: 0, dbMs: 2, totalMs: 22 }
+}
+[signing] publicSignFileBatch ok {
+  signingFileId: 14,
+  count: 1,
+  remaining: 1,
+  timings: { uploadMs: 0, dbMs: 2, totalMs: 22 }
+}
+✔ batch turn notifications, mixed OTP, uncertain delivery and new-route permission boundaries (1266.471458ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3153.286292

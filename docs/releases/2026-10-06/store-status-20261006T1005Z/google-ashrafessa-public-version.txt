@@ -1,0 +1,26 @@
+Public listing: https://play.google.com/store/apps/details?id=com.melamedia.ashrafessa
+Extract excludes unrelated recommendations and account/device details.
+- dialog:
+  - heading "עו״ד אשרף עיסא - מעקב תיקים" [level=5]
+  - generic: מידע על האפליקציה הזו
+  - button "סגירה של תיבת הדו-שיח עם פרטי האפליקציה" [active]:
+    - generic: clear
+  - generic: מעקב תיקים משפטיים, חתימה דיגיטלית והתראות בזמן אמת ללקוחות המשרד
+  - generic: גרסה
+  - generic: 1.0.8
+  - generic: עדכון אחרון בתאריך
+  - generic: 6 באוק׳ 2026
+  - generic: נדרש Android
+  - generic: 7.0 ואילך
+  - generic: הורדות
+  - generic: +10 הורדות
+  - generic: סיווג תוכן
+  - text: PEGI 3
+  - link "למידע נוסף":
+    - /url: https://support.google.com/googleplay?p=appgame_ratings
+  - generic: הרשאות
+  - generic: הצגת הפרטים
+  - generic: תאריך הפרסום
+  - generic: 27 ביוני 2026
+  - generic: מוצע על ידי
+  - generic: MelaMedia

@@ -1,0 +1,30 @@
+- link "Apple.com":
+  - /url: http://www.apple.com
+- iframe [active] [id="aid-auth-widget-iFrame"] [name="aid-auth-widget"]:
+  - main "App Store Connect":
+    - img "App Store Connect Logo"
+    - heading "App Store Connect" [level=1]
+    - textbox "Email or Phone Number" [active]
+    - generic: Email or Phone Number
+    - textbox
+    - generic: Password
+    - paragraph:
+      - text: Your Apple Account information is used to allow you to sign in securely and access your data. Apple records certain data for security, support, and reporting purposes. If you agree, Apple may also use your Apple Account information to send you marketing emails and communications, including based on your use of Apple services.
+      - link "See how your data is managed... Opens in a new window.":
+        - /url: https://www.apple.com/legal/privacy/data/en/apple-id/
+        - text: See how your data is managed...
+        - generic: Opens in a new window.
+    - button "Continue" [disabled]:
+      - generic: Continue
+    - button "Sign in with Passkey":
+      - generic: Sign in with Passkey
+    - paragraph: Requires a device with iOS 17 or later.
+- contentinfo:
+  - navigation "footer":
+    - text: Copyright ©
+    - generic: "2026"
+    - text: Apple Inc. All rights reserved.
+    - link "Terms of Service":
+      - /url: https://appstoreconnect.apple.com/olympus/v1/terms/ASC
+    - link "Privacy Policy":
+      - /url: https://www.apple.com/legal/privacy/
