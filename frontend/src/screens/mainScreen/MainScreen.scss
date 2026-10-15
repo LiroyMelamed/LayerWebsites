@@ -1,0 +1,35 @@
+@use '../../styles/variables' as v;
+@use '../../styles/mixins' as m;
+
+.lw-mainScreen__chartWrap {
+    flex: 1;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    align-items: center;
+    justify-content: center;
+}
+
+.lw-mainScreen__comparisonCard {
+    inline-size: 100%;
+}
+
+.lw-mainScreen__cards {
+    flex-direction: column;
+    flex: 1;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+}
+
+.lw-mainScreen__row {
+    @include m.row(v.$space-4);
+    flex-wrap: wrap;
+}
+
+.lw-mainScreen__row--wrap {
+    flex-wrap: wrap;
+}
+
+.lw-mainScreen__row--full > * {
+    flex: 1;
+    inline-size: 100%;
+}
