@@ -191,6 +191,9 @@ function evaluatePackageChange({ current, next, usage } = {}) {
     const nxt = resolvePricingLineItems(next || {});
     const nextQuotas = quotasForPackage(nxt);
     const blocks = [];
+    if (!['site', 'app', 'site_app'].includes(next?.platformId)) {
+        blocks.push({ field: 'platformId', message: 'יש לבחור אתר, אפליקציה או אתר ואפליקציה. אין חבילה ללא פלטפורמה.' });
+    }
 
     if (platformRank(nxt.platformId) < platformRank(cur.platformId)) {
         blocks.push({

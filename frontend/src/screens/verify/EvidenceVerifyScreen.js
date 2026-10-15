@@ -69,7 +69,7 @@ export default function EvidenceVerifyScreen() {
                     <SimpleContainer className="lw-evidenceVerify__actions">
                         {!token ? (
                             <PrimaryButton onPress={goToLogin}>{t("verifyEvidence.actions.login")}</PrimaryButton>
-                        ) : role === AppRoles.Admin ? (
+                        ) : (role === AppRoles.Admin || role === AppRoles.Lawyer) ? (
                             <>
                                 <PrimaryButton onPress={goToEvidenceDocs}>{t("verifyEvidence.actions.openEvidence")}</PrimaryButton>
                                 <PrimaryButton onPress={goToAdmin}>{t("verifyEvidence.actions.openSigningManager")}</PrimaryButton>

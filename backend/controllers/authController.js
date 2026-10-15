@@ -101,7 +101,7 @@ function computeRefreshTokenExpiryDate() {
 function signAccessToken({ userid, role, phonenumber }) {
     // Admins get a longer-lived access token (ISO 27001 A.9.4 — session limits remain
     // enforced via refresh-token rotation and audit logging).
-    const ttl = role === 'Admin' ? ACCESS_TOKEN_TTL_ADMIN : ACCESS_TOKEN_TTL;
+    const ttl = (role === 'Admin' || role === 'Lawyer') ? ACCESS_TOKEN_TTL_ADMIN : ACCESS_TOKEN_TTL;
     return jwt.sign({ userid, phonenumber, role }, SECRET_KEY, { expiresIn: ttl });
 }
 

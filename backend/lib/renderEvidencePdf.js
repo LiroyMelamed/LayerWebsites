@@ -13,7 +13,22 @@ function loadFileAsDataUrl(filePath, mimeType) {
   return toDataUrl(fs.readFileSync(filePath), mimeType);
 }
 
-const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, otp, security }) => `
+function escapeEvidenceValues(value) {
+  if (typeof value === 'string') {
+    return value.replace(/[&<>"']/g, (char) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[char]);
+  }
+  if (Array.isArray(value)) return value.map(escapeEvidenceValues);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, escapeEvidenceValues(item)]));
+  }
+  return value;
+}
+
+const buildEvidenceHtml = (input) => {
+  const { meta, sender, signers, doc, qrUrl, brand, consent, otp, security } = escapeEvidenceValues(input);
+  return `
 <!doctype html>
 <html lang="he" dir="rtl">
 <head>
@@ -42,7 +57,7 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
     .page {
       position: relative;
       border: 0.125rem solid #1b3a57;
-      padding: 10mm;
+      padding: 8mm;
       background: #fff;
     }
 
@@ -96,7 +111,7 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
     }
 
     .section {
-      margin-top: 0.875rem;
+      margin-top: 0.625rem;
       z-index: 1;
       position: relative;
     }
@@ -112,7 +127,7 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0.625rem 1.125rem;
+      gap: 0.375rem 1.125rem;
     }
 
     .kv {
@@ -122,7 +137,13 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
       align-items: baseline;
     }
     .k { color: #4a5568; font-weight: 700; }
-    .v { color: #111827; word-break: break-word; }
+    .v {
+      color: #111827;
+      word-break: break-word;
+      direction: ltr;
+      unicode-bidi: plaintext;
+      text-align: start;
+    }
 
     table {
       width: 100%;
@@ -135,7 +156,11 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
       padding: 0.375rem 0.375rem;
       vertical-align: top;
       word-break: break-word;
+      direction: ltr;
+      text-align: left;
     }
+
+    tr { break-inside: avoid; }
 
     th {
       background: #f8fafc;
@@ -165,8 +190,8 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
     }
 
     .footer {
-      margin-top: 1.125rem;
-      padding-top: 0.75rem;
+      margin-top: 0.75rem;
+      padding-top: 0.5rem;
       border-top: 0.0625rem solid #e2e8f0;
       display: flex;
       align-items: flex-end;
@@ -191,6 +216,8 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
     .note {
       max-width: 70%;
       line-height: 1.35;
+      direction: ltr;
+      text-align: left;
     }
 
     .mono {
@@ -343,6 +370,7 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
 </body>
 </html>
 `;
+};
 
 function resolveHebrewFontPath() {
   const candidates = [
@@ -382,7 +410,22 @@ async function renderHtmlToPdf(html) {
 
   try {
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    // All certificate assets are embedded. Network-idle events can stall after
+    // document.write; wait for the resources needed by the PDF instead.
+    await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 15_000 });
+    await page.waitForFunction(
+      () => document.fonts.status === 'loaded'
+        && Array.from(document.images).every((image) => image.complete),
+      { timeout: 15_000 }
+    );
+    await page.evaluate(() => {
+      if (Array.from(document.fonts).some((font) => font.status !== 'loaded')) {
+        throw new Error('Evidence certificate font failed to load');
+      }
+      if (Array.from(document.images).some((image) => !image.naturalWidth)) {
+        throw new Error('Evidence certificate image failed to load');
+      }
+    });
 
     const pdfBuffer = await page.pdf({
       format: 'A4',

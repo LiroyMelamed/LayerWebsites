@@ -19,9 +19,12 @@ import './CaseFullView.scss';
 import useAutoHttpRequest from '../../../hooks/useAutoHttpRequest';
 import { useTranslation } from 'react-i18next';
 import { usePopup } from '../../../providers/PopUpProvider';
+import { useFirmPermissions } from '../../../providers/FirmPermissionsProvider';
 import ConfirmationDialog from '../popups/ConfirmationDialog';
 import ClientPopup from '../../../screens/mainScreen/components/ClientPopUp';
 import SimplePopUp from '../../simpleComponents/SimplePopUp';
+import CaseSigningFlow from '../../../screens/signingScreen/templates/CaseSigningFlow';
+import { useSigningV2Available } from '../../../screens/signingScreen/templates/SigningPackagesHub';
 
 function _buildInitialCaseData(caseDetails, initialDraft) {
     const source = caseDetails?.CaseId ? caseDetails : (initialDraft || caseDetails || {});
@@ -55,11 +58,19 @@ function _buildInitialCaseData(caseDetails, initialDraft) {
 export default function CaseFullView({ caseDetails, initialDraft, rePerformRequest, onFailureFunction, closePopUpFunction, onCaseCreated, style: _style }) {
     const { t } = useTranslation();
     const { openPopup: openConfirm, closePopup: closeConfirm } = usePopup();
+    const { canAction } = useFirmPermissions() || { canAction: () => true };
+    const canCreateCases = canAction('cases', 'create');
+    const canEditCases = canAction('cases', 'edit');
+    const canDeleteCases = canAction('cases', 'delete');
     const isEditingExisting = !!caseDetails?.CaseId;
+    const canSaveCase = isEditingExisting ? canEditCases : canCreateCases;
+    const caseFormReadOnly = isEditingExisting && !canEditCases;
     const [caseHasBeenChosen, setCaseHasBeenChosen] = useState(false)
     const [hasSubmitted, setHasSubmitted] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({});
     const [caseData, setCaseData] = useState(() => _buildInitialCaseData(caseDetails, initialDraft));
+    const [signingOpen, setSigningOpen] = useState(false);
+    const signingAvailable = useSigningV2Available();
 
     const seed = caseDetails?.CaseId ? caseDetails : (initialDraft || caseDetails);
     const [showLicenseExpiry, setShowLicenseExpiry] = useState(!!seed?.HasLicenseExpiry || !!seed?.LicenseExpiryDate);
@@ -420,9 +431,10 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
         }
     };
 
+    if (signingOpen) return <CaseSigningFlow caseId={caseDetails?.CaseId || caseData.CaseId} onBack={() => setSigningOpen(false)} />;
     return (
         <>
-        <SimpleContainer className="lw-caseFullView">
+        <SimpleContainer className={`lw-caseFullView${caseFormReadOnly ? ' lw-caseFullView--readOnly' : ''}`}>
             <SimpleScrollView>
                 <SimpleContainer className="lw-caseFullView__row">
                     {isEditingExisting ?
@@ -667,7 +679,11 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
                 </SimpleContainer>
 
                 <SimpleContainer className="lw-caseFullView__buttonsRow">
-                    {(isEditingExisting || caseHasBeenChosen) && (
+                    {signingAvailable && (caseDetails?.CaseId || caseData.CaseId) && canAction('signing', 'upload') && <SecondaryButton
+                        onPress={() => setSigningOpen(true)} size={buttonSizes.MEDIUM}>
+                        {t('signingV2.compose.context.open')}
+                    </SecondaryButton>}
+                    {(isEditingExisting || caseHasBeenChosen) && canDeleteCases && (
                         <SecondaryButton
                             onPress={handleDeleteCase}
                             isPerforming={isDeleting}
@@ -676,6 +692,7 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
                             {isDeleting ? t('common.deleting') : t('cases.deleteCase')}
                         </SecondaryButton>
                     )}
+                    {canSaveCase && (
                     <PrimaryButton
                         onPress={isEditingExisting ? handleUpdateCase : handleSaveCase}
                         isPerforming={isSaving}
@@ -683,6 +700,7 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
                     >
                         {isSaving ? t('common.saving') : isEditingExisting || caseHasBeenChosen ? t('cases.updateCase') : t('cases.saveCase')}
                     </PrimaryButton>
+                    )}
                     <SecondaryButton
                         onPress={() => closePopUpFunction?.()}
                         size={buttonSizes.MEDIUM}

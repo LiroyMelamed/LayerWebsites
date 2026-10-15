@@ -1800,3 +1800,26 @@
 @keyframes lw-signing-complete-mark {
     to { stroke-dashoffset: 0; }
 }
+
+/* Multi-document navigation reuses one original PDF viewer and signing pad. */
+.lw-signing-documentPicker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem 1rem;
+    padding: .75rem 1rem;
+    background: #fff;
+    border-block-end: 1px solid #e2e8f0;
+    select {
+        flex: 1 1 15rem;
+        min-inline-size: 0;
+        max-inline-size: 100%;
+        min-block-size: 2.75rem;
+        padding: .5rem;
+        color: inherit;
+        font: inherit;
+        border: 1px solid #cbd5e0;
+        border-radius: .5rem;
+        background: #fff;
+    }
+}

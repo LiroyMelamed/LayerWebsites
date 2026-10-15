@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const identities = require('./helpers/identityFixture').useTestIdentities();
 
 // Ensure tests are not flaky due to low rate limits.
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -16,7 +17,8 @@ const jwt = require('jsonwebtoken');
 const request = require('supertest');
 const { resetStore } = require('../utils/rateLimiter');
 
-function makeToken({ userid = 1, role = 'Admin' } = {}) {
+function makeToken({ userid, role = 'Admin' } = {}) {
+  userid ??= role === 'User' ? identities.client : identities.admin;
   return jwt.sign({ userid, role, phoneNumber: '0000000000' }, process.env.JWT_SECRET, {
     expiresIn: '1h',
   });

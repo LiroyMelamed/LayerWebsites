@@ -31,6 +31,7 @@ const chatbotRoutes = require("./routes/chatbotRoutes");
 const templateAttachmentRoutes = require("./routes/templateAttachmentRoutes"); const calendarRoutes = require('./routes/calendarRoutes');
 const platformRoutes = require('./routes/platformRoutes');
 const supportRoutes = require('./routes/supportRoutes');
+const staffRoutes = require('./routes/staffRoutes');
 const paymentWebhookRoutes = require('./routes/paymentWebhookRoutes');
 const publicSignupRoutes = require('./routes/publicSignupRoutes');
 const masterAdminRoutes = require('./routes/masterAdminRoutes');
@@ -64,6 +65,9 @@ app.use(helmet({
     xssFilter: true,
     // Prevent MIME sniffing, DNS prefetch control, etc. (helmet defaults)
 }));
+// A bounded 2MB workbook becomes up to 2.8MB when encoded for preview.
+app.use('/api/signing-batches/workbook', bodyParser.json({ limit: '3mb' }));
+app.use(/^\/api\/signing-v2\/templates\/[^/]+\/workbook$/, bodyParser.json({ limit: '3mb' }));
 app.use(bodyParser.json({ limit: API_JSON_LIMIT }));
 app.use(bodyParser.urlencoded({ limit: API_URLENCODED_LIMIT, extended: true }));
 app.use(compression({ threshold: 1024 }));
@@ -160,13 +164,14 @@ app.use(
     authRoutes
 );
 
-app.use(requireBillingAccess);
 
 app.use("/api/webhooks/payments", paymentWebhookRoutes);
 app.use("/api/public/signup", publicSignupRoutes);
+app.use('/api/business-control',require('./routes/businessControl'));
 app.use("/api/master-admin", masterAdminRoutes);
 
 app.use(resolveTenant);
+app.use(requireBillingAccess);
 
 app.use("/api/Customers", customerRoutes);
 app.use("/api/Cases", caseRoutes);
@@ -177,6 +182,11 @@ app.use("/api/Data", dataRoutes);
 app.use("/api/Notifications", notificationRoutes);
 app.use("/api/Files", filesRoutes);
 app.use("/api/SigningFiles", signingFileRoutes);
+app.use('/api/signing-templates', require('./routes/signingTemplateRoutes'));
+app.use('/api/signing-batches', require('./routes/signingBatchRoutes'));
+app.use('/api/signing-v2/public', require('./routes/signingV2PublicRoutes'));
+app.use('/api/signing-v2/client', require('./routes/signingV2ClientRoutes'));
+app.use('/api/signing-v2', require('./routes/signingV2Routes'));
 app.use("/api/billing", billingRoutes);
 app.use("/api/audit-events", auditEventsRoutes);
 app.use("/api/evidence-documents", evidenceDocumentsRoutes);
@@ -190,6 +200,7 @@ app.use("/api/template-attachments", templateAttachmentRoutes);
 app.use("/api/calendar", calendarRoutes);
 app.use("/api/platform/v1", platformRoutes);
 app.use("/api/support", supportRoutes);
+app.use("/api/staff", staffRoutes);
 
 // Lightweight health endpoint for prereq checks
 app.get("/health", (req, res) => {

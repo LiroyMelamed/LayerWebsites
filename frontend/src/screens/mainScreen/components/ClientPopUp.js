@@ -11,6 +11,9 @@ import useFieldState from "../../../hooks/useFieldState";
 import { HebrewCharsValidationWithNumbers } from "../../../functions/validation/HebrewCharsValidation";
 import emailValidation from "../../../functions/validation/EmailValidation";
 import IsraeliPhoneNumberValidation from "../../../functions/validation/IsraeliPhoneNumberValidation";
+import ClientSigningFlow from '../../signingScreen/templates/ClientSigningFlow';
+import { useSigningV2Available } from '../../signingScreen/templates/SigningPackagesHub';
+import { useFirmPermissions } from '../../../providers/FirmPermissionsProvider';
 import { useTranslation } from "react-i18next";
 import SimplePopUp from "../../../components/simpleComponents/SimplePopUp";
 import SearchInput from "../../../components/specializedComponents/containers/SearchInput";
@@ -30,6 +33,9 @@ export default function ClientPopup({
     style: _style,
 }) {
     const { t } = useTranslation();
+    const { canAction } = useFirmPermissions() || { canAction: () => false };
+    const signingAvailable = useSigningV2Available();
+    const [signingOpen, setSigningOpen] = useState(false);
     const [selectedClient, setSelectedClient] = useState(clientDetails || null);
     const [name, setName, nameError] = useFieldState(
         HebrewCharsValidationWithNumbers,
@@ -237,6 +243,9 @@ export default function ClientPopup({
         deleteClient(selectedClient.UserId || selectedClient.userid, { confirmLegalDelete: true });
     };
 
+    const persistedClientId = selectedClient?.UserId || selectedClient?.userid;
+    if (signingOpen) return <ClientSigningFlow clientId={persistedClientId} onBack={() => setSigningOpen(false)} />;
+
     return (
         <SimpleContainer className="lw-clientPopup">
             <SimplePopUp
@@ -336,6 +345,10 @@ export default function ClientPopup({
                     />
                 </SimpleContainer>
 
+                {persistedClientId && signingAvailable && canAction('signing', 'upload') && canAction('clients', 'view') && <SecondaryButton
+                    onPress={() => setSigningOpen(true)} disabled={isPerforming || isPerformingDeleteClient}>
+                    {t('signingV2.compose.clientContext.send')}
+                </SecondaryButton>}
                 <SimpleContainer className="lw-clientPopup__actions">
                     {selectedClient && (
                         <SecondaryButton
