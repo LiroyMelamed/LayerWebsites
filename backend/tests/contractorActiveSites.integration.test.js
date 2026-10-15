@@ -16,7 +16,12 @@ function loadModule(file, dependencies, env = {}) {
     return module.exports;
 }
 function application(pool) {
+    const tenantDependencies = {
+        '../lib/tenant/databaseScope': { enabled: () => false, cacheKey: () => 'legacy' },
+        '../lib/tenant/tenantContext': { isMultiTenantMode: () => false },
+    };
     const settings = loadModule('../services/settingsService.js', {
+        ...tenantDependencies,
         '../config/db': pool, '../lib/contractorMonitorPolicy': policy,
     }, { CM_ACTIVE_SITES_EMAIL_RECIPIENTS: 'env@example.invalid', FIRM_DISPLAY_NAME: 'MelamedLaw' });
     const noSend = () => { throw Error('Unexpected notification side effect'); };
@@ -29,6 +34,7 @@ function application(pool) {
         '../services/knowledgeDocService': new Proxy({}, { get: () => noSend }),
     });
     const admin = loadModule('../middlewares/requirePlatformAdmin.js', {
+        ...tenantDependencies,
         '../services/settingsService': settings, '../utils/errors.he': { getHebrewMessage: code => code },
         '../utils/appError': { createAppError: (code, status, message) => Object.assign(new Error(message), { code, status }) },
     }, { NODE_ENV: 'production' });
