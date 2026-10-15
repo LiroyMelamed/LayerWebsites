@@ -2,6 +2,9 @@ import SimpleScreen from '../../components/simpleComponents/SimpleScreen';
 import { useScreenSize } from '../../providers/ScreenSizeProvider';
 import useHttpRequest from '../../hooks/useHttpRequest';
 import { useCallback, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { RefreshCw, LayoutDashboard } from 'lucide-react';
+import SimpleButton from '../../components/simpleComponents/SimpleButton';
 import { useFirmPermissions } from '../../providers/FirmPermissionsProvider';
 import { images } from '../../assets/images/images';
 import SimpleContainer from '../../components/simpleComponents/SimpleContainer';
@@ -16,6 +19,8 @@ import { useNavigate } from 'react-router-dom';
 import AiBriefSection from './components/commandCenter/AiBriefSection';
 import CalendarWidget from './components/CalendarWidget';
 import FirmStatsPanel from './components/commandCenter/FirmStatsPanel';
+import TeamActivityPanel from './components/commandCenter/TeamActivityPanel';
+import { openAttentionModal } from './components/commandCenter/openAttentionModal';
 import CaseOperationsPanel from './components/commandCenter/CaseOperationsPanel';
 import SigningOperationsPanel from './components/commandCenter/SigningOperationsPanel';
 import PotentialClientsPanel from './components/commandCenter/PotentialClientsPanel';
@@ -31,6 +36,7 @@ import { useOfficeLogoNavigate } from '../../navigation/useOfficeLogoNavigate';
 
 import "./MainScreen.scss";
 import "./components/commandCenter/CommandCenter.scss";
+import "./BusinessHome.scss";
 
 export const MainScreenName = "/MainScreen";
 
@@ -40,6 +46,7 @@ function scrollToSection(id) {
 }
 
 export default function MainScreen() {
+    const { t, i18n } = useTranslation();
     const navigate = useNavigate();
     const { isSmallScreen } = useScreenSize();
     const { openPopup, closePopup, pushPopup, popPopup } = usePopup();
@@ -122,7 +129,7 @@ export default function MainScreen() {
             scrollToSection("manager-home-today");
             return;
         }
-        scrollToSection("manager-home-attention");
+        openAttentionModal({ attentionItems: managerHome?.attentionItems || [], openPopup, pushPopup, popPopup, closePopup, onDataChanged: handleRefresh });
     };
 
     useEffect(() => {
@@ -205,34 +212,41 @@ export default function MainScreen() {
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={logoNavigate} chosenNavKey="main" />}
 
             <SimpleScrollView>
-                <SimpleContainer className="lw-commandCenter">
-                    {calendarEnabled ? (
-                        <CalendarWidget
-                            events={calendarEvents}
-                            isPerforming={isLoadingCalendar}
-                            onEventPress={handleCalendarEventPress}
-                        />
-                    ) : null}
+                <SimpleContainer className="lw-commandCenter lw-commandCenter--business">
+                    <header className="lw-businessHome__header">
+                        <div><p className="lw-businessHome__eyebrow"><LayoutDashboard size={16} aria-hidden="true" />{t('managerHome.business.eyebrow')}</p>
+                            <h1>{t('managerHome.business.title')}</h1>
+                            <p>{new Intl.DateTimeFormat(i18n.language === 'en' ? 'en-GB' : 'he-IL', { timeZone: 'Asia/Jerusalem', weekday: 'long', day: 'numeric', month: 'long' }).format(new Date())}</p></div>
+                        <SimpleButton className="lw-businessHome__refresh" onPress={handleRefresh} disabled={isLoadingHome || isLoadingCalendar || isLoadingAiBrief}>
+                            <RefreshCw size={16} aria-hidden="true" />{t('managerHome.business.refresh')}
+                        </SimpleButton>
+                    </header>
 
                     {dashboardEnabled ? (
                         <>
-                            <AiBriefSection
-                                aiBrief={aiBrief}
-                                aiBriefEnabled={aiInsightsEnabled}
-                                aiBriefLoading={aiInsightsEnabled && isLoadingAiBrief}
-                                settingsLoaded={settingsLoaded}
-                                isPerforming={isLoadingHome}
-                            />
-
                             <SummaryStrip
                                 summary={managerHome?.summary}
                                 firmStats={managerHome?.firmStats}
                                 todayCount={todayEventCount}
+                                showSigning={signingDashboardEnabled}
                                 isPerforming={isLoadingHome || isLoadingCalendar}
                                 onNavigate={handleSummaryNavigate}
                             />
 
+                            <div className={`lw-businessHome__focus${aiInsightsEnabled ? '' : ' lw-businessHome__focus--single'}`}>
+                                <AiBriefSection
+                                    aiBrief={aiBrief}
+                                    aiBriefEnabled={aiInsightsEnabled}
+                                    aiBriefLoading={aiInsightsEnabled && isLoadingAiBrief}
+                                    settingsLoaded={settingsLoaded}
+                                    isPerforming={isLoadingHome}
+                                />
+                                <TeamActivityPanel activity={managerHome?.teamActivity} isPerforming={isLoadingHome} />
+                            </div>
+
                             <FirmStatsPanel
+                                showActivityLeader={false}
+                                showSigning={signingDashboardEnabled}
                                 firmStats={managerHome?.firmStats}
                                 drillDown={managerHome?.drillDown}
                                 signing={signingDashboardEnabled ? managerHome?.signing : null}
@@ -242,6 +256,10 @@ export default function MainScreen() {
                                 isPerforming={isLoadingHome}
                                 onDataChanged={handleRefresh}
                             />
+
+                            {calendarEnabled ? <section id="manager-home-today" className="lw-businessHome__calendar">
+                                <CalendarWidget events={calendarEvents} isPerforming={isLoadingCalendar} onEventPress={handleCalendarEventPress} />
+                            </section> : null}
 
                             <SimpleContainer className="lw-commandCenter__grid">
                                 <CaseOperationsPanel
@@ -275,6 +293,7 @@ export default function MainScreen() {
                             <Text14>לוח הבקרה זמין — אין הרשאת צפייה בתיקים לתצוגת נתונים מלאה.</Text14>
                         </SimpleContainer>
                     ) : null}
+                    {!dashboardEnabled && calendarEnabled ? <CalendarWidget events={calendarEvents} isPerforming={isLoadingCalendar} onEventPress={handleCalendarEventPress} /> : null}
                 </SimpleContainer>
             </SimpleScrollView>
         </SimpleScreen>

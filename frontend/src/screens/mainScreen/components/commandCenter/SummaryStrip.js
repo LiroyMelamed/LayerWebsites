@@ -2,10 +2,10 @@ import { useTranslation } from "react-i18next";
 import SimpleCard from "../../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../../components/simpleComponents/SimpleContainer";
 import Skeleton from "../../../../components/simpleComponents/Skeleton";
-import { Text12, TextBold14, TextBold20 } from "../../../../components/specializedComponents/text/AllTextKindFile";
+import { Text12, TextBold14, TextBold32 } from "../../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../../constant/colors";
 
-export default function SummaryStrip({ summary, firmStats, todayCount, isPerforming, onNavigate }) {
+export default function SummaryStrip({ summary, firmStats, todayCount, showSigning = true, isPerforming, onNavigate }) {
     const { t } = useTranslation();
 
     const chips = [
@@ -69,17 +69,25 @@ export default function SummaryStrip({ summary, firmStats, todayCount, isPerform
 
     return (
         <SimpleContainer className="lw-commandCenter__summaryStrip">
-            {chips.map((chip) => (
+            {chips.filter(chip => showSigning || chip.key !== 'signing').map((chip) => (
                 <SimpleCard
                     key={chip.key}
                     className="lw-commandCenter__summaryChip"
                     onPress={chip.onClick}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(event) => {
+                        if (!event.repeat && (event.key === 'Enter' || event.key === ' ')) {
+                            event.preventDefault();
+                            chip.onClick();
+                        }
+                    }}
                 >
                     {isPerforming ? (
                         <Skeleton width="100%" height={44} borderRadius={8} />
                     ) : (
                         <>
-                            <TextBold20 color={chip.accent}>{chip.value}</TextBold20>
+                            <TextBold32 color={chip.accent}>{chip.value}</TextBold32>
                             <TextBold14 numberOfLines={1}>{chip.label}</TextBold14>
                             {chip.key === "signing" && (summary?.signingExpired > 0) && (
                                 <Text12 color={colors.negative}>

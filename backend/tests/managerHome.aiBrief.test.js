@@ -469,3 +469,16 @@ test('generateAiMorningBrief cache key rotates hourly even when facts are unchan
         __testReset();
     }
 });
+
+
+test('business adviser receives aggregate periods without team identities and rejects invented financial figures', () => {
+    const facts = buildFactsSnapshot({ ...samplePayload, teamActivity: { periods: {
+        week: { casesOpened: 18, casesClosed: 9, leaders: [{managerName: 'Private leaderboard name'}] }
+    } } });
+    assert.deepEqual(facts.businessPerformance, { week: {casesOpened: 18, casesClosed: 9} });
+    assert.equal(JSON.stringify(facts).includes('Private leaderboard name'), false);
+    assert.equal(validateLinesAgainstFacts(['השבוע נפתחו 18 תיקים ונסגרו 9 תיקים'], facts), true);
+    assert.equal(validateLinesAgainstFacts(['השבוע נפתחו 18 תיקים', 'הכנסות המשרד הן 99999 שקלים'], facts), false);
+    assert.equal(validateLinesAgainstFacts(['הרווח בתיק הוא 18 ₪'], facts), false);
+    assert.equal(validateRecommendationsAgainstFacts(['יש לטפל ב-999 תיקים'], facts), false);
+});
