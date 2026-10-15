@@ -792,6 +792,11 @@
     "support": "תמיכה"
   },
   "support": {
+    "events": {
+      "created": "הפנייה נפתחה",
+      "statusChanged": "סטטוס הפנייה עודכן",
+      "updated": "הפנייה עודכנה"
+    },
     "eyebrow": "{{firm}} · תמיכה",
     "title": "פניות תמיכה",
     "subtitle": "פתיחת פנייה ומעקב סטטוס מול צוות MelaMedia.",
