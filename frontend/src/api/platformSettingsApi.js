@@ -1,0 +1,96 @@
+import ApiUtils from "./apiUtils";
+
+const base = "platform-settings";
+
+export const platformSettingsApi = {
+    /** Get all settings + notification channels */
+    getAll: async () => {
+        return await ApiUtils.get(base);
+    },
+
+    /** Bulk update settings */
+    updateSettings: async (settings) => {
+        return await ApiUtils.put(base, { settings });
+    },
+
+    /** Update a single setting */
+    updateSingle: async (category, key, value) => {
+        return await ApiUtils.put(`${base}/single`, { category, key, value });
+    },
+
+    /** Request an SMS sender change (stored as pending + emails the technical team) */
+    requestSmsSenderChange: async (phone) => {
+        return await ApiUtils.post(`${base}/sms-sender-request`, { phone });
+    },
+
+    /** Activate the pending SMS sender (after InforU verification) */
+    activateSmsSender: async () => {
+        return await ApiUtils.post(`${base}/sms-sender-activate`);
+    },
+
+    /** Get notification channels */
+    getChannels: async () => {
+        return await ApiUtils.get(`${base}/channels`);
+    },
+
+    /**
+     * Get the lawyer-readable allowlist of channels enabled per
+     * notification type. Returns `{ channels: [{ notification_type,
+     * push_enabled, email_enabled, sms_enabled }] }`.
+     */
+    getChannelsLite: async () => {
+        return await ApiUtils.get(`${base}/channels-lite`);
+    },
+
+    /** Update a notification channel */
+    updateChannel: async (type, data) => {
+        return await ApiUtils.put(`${base}/channels/${type}`, data);
+    },
+
+    /** List platform admins */
+    getAdmins: async () => {
+        return await ApiUtils.get(`${base}/admins`);
+    },
+
+    /** Add platform admin */
+    addAdmin: async (data) => {
+        return await ApiUtils.post(`${base}/admins`, data);
+    },
+
+    /** Remove platform admin */
+    removeAdmin: async (userId) => {
+        return await ApiUtils.delete(`${base}/admins/${userId}`);
+    },
+
+    /** Get email templates (read-only) */
+    getEmailTemplates: async () => {
+        return await ApiUtils.get(`${base}/email-templates`);
+    },
+
+    /** Update an email template */
+    updateEmailTemplate: async (templateKey, data) => {
+        return await ApiUtils.put(`${base}/email-templates/${templateKey}`, data);
+    },
+
+    /** List knowledge documents */
+    getKnowledgeDocs: async () => {
+        return await ApiUtils.get(`${base}/knowledge-docs`);
+    },
+
+    /** Upload a knowledge document (FormData with 'file' + optional 'title') */
+    uploadKnowledgeDoc: async (file, title) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        if (title) formData.append("title", title);
+        return await ApiUtils.post(`${base}/knowledge-docs`, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+    },
+
+    /** Delete a knowledge document */
+    deleteKnowledgeDoc: async (docId) => {
+        return await ApiUtils.delete(`${base}/knowledge-docs/${docId}`);
+    },
+};
+
+export default platformSettingsApi;
