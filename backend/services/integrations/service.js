@@ -66,7 +66,7 @@ function createIntegrationService({ pool, provider, env = process.env }) {
                 const existing = (await db.query('SELECT case_id FROM court_case_links WHERE law_firm_tenant_id IS NOT DISTINCT FROM $1 AND court_number=$2', [tenantId, number])).rows[0];
                 if (existing) { ids.push(existing.case_id); continue; }
                 const row = (await db.query(`INSERT INTO cases(casename,law_firm_tenant_id,integration_demo,currentstage,isclosed,createdat,updatedat) VALUES($1,$2,true,1,false,now(),now()) RETURNING caseid`, [`תיק הדגמה ${index + 1} — נט המשפט`, tenantId])).rows[0];
-                await db.query('INSERT INTO court_case_links(law_firm_tenant_id,case_id,court_number) VALUES($1,$2,$3)', [tenantId, row.caseid, number]);
+                await db.query('INSERT INTO court_case_links(law_firm_tenant_id,case_id,court_number,is_primary) VALUES($1,$2,$3,true)', [tenantId, row.caseid, number]);
                 ids.push(row.caseid);
             }
             return ids;
@@ -79,7 +79,11 @@ function createIntegrationService({ pool, provider, env = process.env }) {
             if (!c.enabled) fail('COURT_DISABLED', 'חיבור הדמה כבוי', 409);
             const target = (await db.query('SELECT caseid FROM cases WHERE caseid=$1 AND law_firm_tenant_id IS NOT DISTINCT FROM $2 AND integration_demo=true FOR UPDATE', [caseId, tenantId])).rows[0];
             if (!target) fail('DEMO_CASE_REQUIRED', 'בשלב זה ניתן לשייך רק לתיק הדגמה של המשרד', 404);
-            await db.query(`INSERT INTO court_case_links(law_firm_tenant_id,case_id,court_number) VALUES($1,$2,$3) ON CONFLICT(law_firm_tenant_id,court_number) DO UPDATE SET case_id=excluded.case_id`, [tenantId, caseId, number]);
+            const linked = await db.query(`INSERT INTO court_case_links(law_firm_tenant_id,case_id,court_number) VALUES($1,$2,$3)
+                ON CONFLICT(law_firm_tenant_id,court_number) DO UPDATE SET case_id=excluded.case_id
+                WHERE court_case_links.case_id=excluded.case_id RETURNING id`, [tenantId, caseId, number]);
+            if (!linked.rows.length) fail('COURT_NUMBER_IN_USE', 'מספר תיק בית המשפט כבר משויך לתיק אחר במשרד', 409);
+            await db.query('UPDATE court_case_links SET is_primary=true WHERE id=$1 AND NOT EXISTS(SELECT 1 FROM court_case_links WHERE case_id=$2 AND is_primary)', [linked.rows[0].id, caseId]);
             await db.query('UPDATE court_updates SET case_id=$3 WHERE law_firm_tenant_id IS NOT DISTINCT FROM $1 AND court_number=$2', [tenantId, number, caseId]);
         });
     }
@@ -88,8 +92,9 @@ function createIntegrationService({ pool, provider, env = process.env }) {
             const c = await ensure(db, tenantId, 'court_demo');
             if (!c.enabled) fail('COURT_DISABLED', 'חיבור הדמה כבוי', 409);
             for (const event of DEMO_UPDATES) await db.query(`INSERT INTO court_updates(law_firm_tenant_id,source_id,court_number,title,body,occurred_at,case_id)
-                VALUES($1,$2,$3,$4,$5,$6,(SELECT case_id FROM court_case_links WHERE law_firm_tenant_id IS NOT DISTINCT FROM $1 AND court_number=$3))
-                ON CONFLICT(law_firm_tenant_id,source_id) DO NOTHING`, [tenantId, event.source, event.number, event.title, event.body, event.date]);
+                VALUES($1,$2,$3,$4,$5,$6,(SELECT l.case_id FROM court_case_links l JOIN cases c ON c.caseid=l.case_id
+                    WHERE l.law_firm_tenant_id IS NOT DISTINCT FROM $1 AND c.law_firm_tenant_id IS NOT DISTINCT FROM $1 AND l.court_number=$3 AND (c.integration_demo OR $7)))
+                ON CONFLICT(law_firm_tenant_id,source_id) DO NOTHING`, [tenantId, event.source, event.number, event.title, event.body, event.date, env.WHATSAPP_DEMO_ONLY === 'true']);
             await db.query('UPDATE office_integrations SET last_synced_at=now(),updated_at=now() WHERE id=$1', [c.id]);
         });
     }

@@ -3,6 +3,7 @@ import { formatDisplayDate, formatDisplayDateTime } from "../../functions/date/f
 import { loadFirmSettings } from "../../services/firmSettings";
 import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from 'react-router-dom';
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
@@ -674,7 +675,14 @@ export default function PlatformSettingsScreen() {
     const { isSmallScreen } = useScreenSize();
     const { openPopup, closePopup } = usePopup();
 
-    const [activeTab, setActiveTab] = useState("messaging");
+    const [searchParams, setSearchParams] = useSearchParams();
+    const selectedTab = searchParams.get('tab');
+    const activeTab = CATEGORIES.some(category => category.key === selectedTab) ? selectedTab : 'messaging';
+    const setActiveTab = (tab) => setSearchParams(previous => {
+        const next = new URLSearchParams(previous);
+        next.set('tab', tab);
+        return next;
+    }, { replace: true });
     const [editedValues, setEditedValues] = useState({});
     const [editedChannels, setEditedChannels] = useState({});
     const [localChannels, setLocalChannels] = useState(null);

@@ -9,6 +9,7 @@ const { createGroupWorker } = require('../services/integrations/worker');
 const { createMetaProvider } = require('../services/integrations/metaProvider');
 const { phones, courtNumber } = require('../services/integrations/validation');
 const secrets = require('../services/integrations/secrets');
+const { saveCaseCourtNumber } = require('../services/integrations/courtCaseReference');
 const A = '11111111-1111-4111-8111-111111111111', B = '22222222-2222-4222-8222-222222222222';
 const env = { INTEGRATIONS_ENCRYPTION_KEY: 'ab'.repeat(32), WHATSAPP_META_APP_ID: '123456', WHATSAPP_META_APP_SECRET: 'app-secret', WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID: '987654', WHATSAPP_WEBHOOK_VERIFY_TOKEN: 'verify', WHATSAPP_LIVE_ENABLED: 'true' };
 async function fixture(t) {
@@ -18,6 +19,7 @@ async function fixture(t) {
         CREATE TABLE cases(caseid serial PRIMARY KEY,law_firm_tenant_id uuid REFERENCES law_firm_tenants(id),casename text,casemanagerid integer,currentstage integer,isclosed boolean,whatsappgrouplink text,createdat timestamptz,updatedat timestamptz);
         INSERT INTO law_firm_tenants(id,name) VALUES('${A}','Office A'),('${B}','Office B');`);
     await db.exec(fs.readFileSync(path.join(__dirname, '../migrations/2026-10-14_00_office_integrations.sql'), 'utf8'));
+    await db.exec(fs.readFileSync(path.join(__dirname, '../migrations/2026-10-15_00_case_court_reference.sql'), 'utf8'));
     // PGlite has one connection. Serialize leases like a pg pool with max=1.
     let tail = Promise.resolve();
     const lease = async () => { const prior = tail; let release; tail = new Promise(r => { release = r; }); await prior; return release; };
@@ -39,6 +41,54 @@ async function fixture(t) {
     return { db, pool, service, worker, provider, calls };
 }
 const policy = { enabled: true, mode: 'demo', recipients: ['0501234567'], templateName: '', templateLanguage: 'he' };
+test('case court reference is optional, office-scoped, editable and never steals another case number', async t => {
+    const { service, pool } = await fixture(t);
+    const create = async office => (await pool.query("INSERT INTO cases(law_firm_tenant_id,casename) VALUES($1,'Synthetic') RETURNING caseid", [office])).rows[0].caseid;
+    const first = await create(A), second = await create(A), otherOffice = await create(B);
+    const save = (caseId, office, value) => service.tx(db => saveCaseCourtNumber(db, caseId, office, value, {}));
+    await save(first, A, '090001–10–26'); await save(second, A, '90002-10-26'); await save(otherOffice, B, '90001-10-26');
+    const primary = async id => (await pool.query('SELECT court_number FROM court_case_links WHERE case_id=$1 AND is_primary', [id])).rows[0]?.court_number;
+    assert.equal(await primary(first), '90001-10-26');
+    await save(first, A, undefined); assert.equal(await primary(first), '90001-10-26');
+    await assert.rejects(save(first, A, '90002-10-26'), { errorCode: 'COURT_NUMBER_IN_USE' });
+    assert.equal(await primary(first), '90001-10-26'); assert.equal(await primary(second), '90002-10-26');
+    await assert.rejects(save(first, B, '90003-10-26'), { errorCode: 'CASE_NOT_FOUND' });
+    await assert.rejects(save(first, A, '123-13-26'), { errorCode: 'INVALID_COURT_NUMBER' });
+    await save(first, A, '90003-10-26'); assert.equal(await primary(first), '90003-10-26');
+    assert.equal((await pool.query('SELECT 1 FROM court_case_links WHERE law_firm_tenant_id=$1 AND court_number=$2', [A,'90001-10-26'])).rows.length, 0);
+    await save(first, A, ''); assert.equal(await primary(first), undefined);
+    assert.equal((await pool.query('SELECT 1 FROM office_integrations')).rows.length, 0, 'Recording a court reference needs no connection');
+});
+
+test('QA case form mapping routes demo updates, edits detach old updates, live cases cannot import synthetic updates', async t => {
+    const { service, pool, provider } = await fixture(t);
+    const caseId = (await pool.query("INSERT INTO cases(law_firm_tenant_id,casename) VALUES($1,'Synthetic QA form case') RETURNING caseid",[A])).rows[0].caseid;
+    await service.saveCourt(A,{enabled:true});
+    await service.tx(db=>saveCaseCourtNumber(db,caseId,A,'90001-10-26',{}));
+    await service.syncCourt(A);
+    assert.ok((await service.snapshot(A)).updates.every(u=>!u.case_id),'Synthetic feed must not attach to live cases');
+    const qaEnv = {...env,WHATSAPP_DEMO_ONLY:'true'};
+    await service.tx(db=>saveCaseCourtNumber(db,caseId,A,'90002-10-26',qaEnv));
+    assert.equal((await service.snapshot(A)).updates.find(u=>u.court_number==='90002-10-26').case_id,caseId);
+    await service.tx(db=>saveCaseCourtNumber(db,caseId,A,null,qaEnv));
+    assert.ok((await service.snapshot(A)).updates.every(u=>!u.case_id));
+    await pool.query('DELETE FROM court_updates');
+    await service.tx(db=>saveCaseCourtNumber(db,caseId,A,'90003-10-26',qaEnv));
+    const qaService=createIntegrationService({pool,provider,env:qaEnv});
+    await qaService.syncCourt(A); await qaService.syncCourt(A);
+    const updates=(await service.snapshot(A)).updates;
+    assert.equal(updates.length,3);assert.equal(updates.find(u=>u.court_number==='90003-10-26').case_id,caseId);
+});
+
+test('court reference migration keeps existing aliases and picks only one stable primary', async t => {
+    const { db, pool } = await fixture(t);
+    const id=(await pool.query("INSERT INTO cases(law_firm_tenant_id,casename) VALUES($1,'Existing alias case') RETURNING caseid",[A])).rows[0].caseid;
+    await pool.query("INSERT INTO court_case_links(law_firm_tenant_id,case_id,court_number,created_at) VALUES($1,$2,'77701-10-26','2026-10-01'),($1,$2,'77702-10-26','2026-10-02')",[A,id]);
+    const migration=fs.readFileSync(path.join(__dirname,'../migrations/2026-10-15_00_case_court_reference.sql'),'utf8');
+    await db.exec(migration);await db.exec(migration);
+    const rows=(await pool.query('SELECT court_number,is_primary FROM court_case_links WHERE case_id=$1 ORDER BY court_number',[id])).rows;
+    assert.deepEqual(rows,[{court_number:'77701-10-26',is_primary:true},{court_number:'77702-10-26',is_primary:false}]);
+});
 async function connect(service, officeId = A, phoneId = '123456789', wabaId = '987654321') {
     const start = await service.startSignup(officeId, 1);
     await service.completeSignup(officeId, 1, { state: start.state, code: 'test-code-value', phoneId, wabaId });
