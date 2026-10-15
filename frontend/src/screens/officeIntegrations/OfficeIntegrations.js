@@ -135,6 +135,7 @@ export default function OfficeIntegrations({ embedded = false }) {
                 </SimpleCard>
                 <SimpleCard className="lw-platformSettings__card oi-card oi-court" role="region" aria-labelledby="oi-court-title"><div className="oi-card-heading"><TextBold18 id="oi-court-title" role="heading" aria-level={embedded ? 3 : 2}>{tr('courtTitle')}</TextBold18><span className="oi-badge">{tr('demo')}</span></div>
                     <p>{tr('courtHelp')}</p>
+                    <div className="oi-note"><strong>{tr('courtLiveNotConnected')}</strong><p>{tr('courtAuthorizationHelp')}</p></div>
                     <fieldset disabled={busy || !data.canConfigurePolicy} className="oi-connection-fields">
                         <SimpleInput title={tr('connectionName')} aria-label={tr('connectionName')} value={court.label} maxLength={120} timeToWaitInMilli={0} disabled={busy || !data.canConfigurePolicy} onChange={e => setCourt({ ...court, label: e.target.value })} />
                         <div className="oi-setting-row"><SimpleCheckbox variant="toggle" title={tr('enableCourt')} checked={court.enabled} disabled={busy || !data.canConfigurePolicy} onChange={e => setCourt({ ...court, enabled: e.target.checked })} /></div>

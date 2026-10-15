@@ -19,8 +19,6 @@ import { clientPortalPath, formatPortalDate, hasPersonalSignature } from "../../
 import casesApi from "../../../api/casesApi";
 import clientPortalApi from "../../../api/clientPortalApi";
 import { images } from "../../../assets/images/images";
-import OpenCasesCard from "./components/OpenCasesCard";
-import ClosedCasesCard from "./components/ClosedCasesCard";
 import "./ClientMainScreen.scss";
 
 export const ClientMainScreenName = "/ClientMainScreen";
@@ -103,7 +101,6 @@ export default function ClientMainScreen() {
                 </header>
                 <nav className="lw-clientHome__quickAccess" aria-label={t("clientPortal.quickAccess")}>
                     <SecondaryButton style={BUTTON_STYLE} onPress={openDocuments}>{t("clientPortal.myDocuments")}</SecondaryButton>
-                    <SecondaryButton style={BUTTON_STYLE} onPress={openCasesPage}>{t("clientPortal.myCases")}</SecondaryButton>
                 </nav>
                 <div className="lw-clientHome__overview">
                     <div className="lw-clientHome__mainColumn">
@@ -172,17 +169,9 @@ export default function ClientMainScreen() {
                             <div><dt>{t("cases.openCases")}</dt><dd>{openCases.length}</dd></div>
                             <div><dt>{t("cases.closedCases")}</dt><dd>{closedCases.length}</dd></div>
                         </dl>}
-                        <TertiaryButton style={LINK_STYLE} onPress={openCasesPage}>{t("clientPortal.allCases")}</TertiaryButton>
+                        <div className="lw-clientHome__caseAction"><TertiaryButton style={LINK_STYLE} onPress={openCasesPage}>{t("clientPortal.allCases")}</TertiaryButton></div>
                     </aside>
                 </div>
-                {!casesError && <section className="lw-clientHome__cases" aria-labelledby="client-home-cases">
-                    <SectionHeading id="client-home-cases" title={t("clientPortal.myCases")}>
-                        <TertiaryButton style={LINK_STYLE} onPress={openCasesPage}>{t("clientPortal.allCases")}</TertiaryButton>
-                    </SectionHeading>
-                    <p className="lw-clientHome__intro">{t("clientPortal.caseDetailsIntro")}</p>
-                    <OpenCasesCard openCases={openCases} isPerforming={isLoadingCases} />
-                    <ClosedCasesCard closedCases={closedCases} isPerforming={isLoadingCases} />
-                </section>}
             </SimpleContainer>
         </SimpleScrollView>
     </SimpleScreen>;
