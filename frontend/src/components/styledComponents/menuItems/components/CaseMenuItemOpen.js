@@ -154,6 +154,8 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, alwaysExpanded = fa
     return (
         <SimpleContainer
             className={"lw-caseMenuItemOpen" + (isOpen ? " is-open" : "")}
+            aria-hidden={!(isOpen || alwaysExpanded)}
+            inert={!(isOpen || alwaysExpanded) ? '' : undefined}
         >
             <SimpleContainer className="lw-caseMenuItemOpen__card">
                 <SimpleContainer className="lw-caseMenuItemOpen__progressWrap">
@@ -168,13 +170,16 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, alwaysExpanded = fa
                         {!alwaysExpanded && (
                             <ImageButton
                                 src={icons.Button.DownArrow}
+                                aria-label={`${stagesExpanded ? 'סגירת שלבי התיק' : 'פתיחת שלבי התיק'}: ${fullCase.CaseName || ''}`}
+                                aria-expanded={stagesExpanded}
+                                alt=""
                                 className={"lw-caseMenuItemOpen__dropDownBtn" + (stagesExpanded ? " is-open" : "")}
                             />
                         )}
                         <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">{t("common.stages")}</TextBold12>
                     </SimpleContainer>
 
-                    <SimpleContainer className={`lw-caseMenuItemOpen__timelineWrap${stagesExpanded ? " is-open" : ""}`}>
+                    <SimpleContainer className={`lw-caseMenuItemOpen__timelineWrap${stagesExpanded ? " is-open" : ""}`} aria-hidden={!stagesExpanded} inert={!stagesExpanded ? '' : undefined}>
                         <CaseTimeline
                             stages={fullCase.Descriptions}
                             currentStage={fullCase.CurrentStage}

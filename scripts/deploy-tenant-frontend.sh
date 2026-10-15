@@ -17,6 +17,7 @@ if [[ "$TENANT" != "morlevy" && "$TENANT" != "ashrafessa" && "$TENANT" != "melam
   exit 1
 fi
 
+node "$ROOT/scripts/check-signing-release.cjs"
 cd "$ROOT/frontend"
 
 # Tenant logos live in separate paths so builds never overwrite each other.

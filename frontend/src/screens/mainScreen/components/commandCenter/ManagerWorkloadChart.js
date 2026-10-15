@@ -83,7 +83,8 @@ export default function ManagerWorkloadChart({ managers = [], onManagerPress }) 
         <SimpleContainer className="lw-commandCenter__managerChartWrap">
             <SimpleContainer className="lw-commandCenter__managerChartToggle" role="tablist" aria-label={t("managerHome.operations.viewModeLabel")}>
                 {VIEW_MODES.map((mode) => (
-                    <SimpleContainer
+                    <button
+                        type="button"
                         key={mode}
                         className={
                             mode === viewMode
@@ -92,10 +93,10 @@ export default function ManagerWorkloadChart({ managers = [], onManagerPress }) 
                         }
                         role="tab"
                         aria-selected={mode === viewMode}
-                        onPress={() => setViewModeSafe(mode)}
+                        onClick={() => setViewModeSafe(mode)}
                     >
                         <Text12>{viewModeLabels[mode]}</Text12>
-                    </SimpleContainer>
+                    </button>
                 ))}
             </SimpleContainer>
 
@@ -115,17 +116,17 @@ export default function ManagerWorkloadChart({ managers = [], onManagerPress }) 
                 {chartItems.map((item) => {
                     const pct = total > 0 ? Math.round((item.value / total) * 100) : 0;
                     return (
-                        <SimpleContainer
+                        <div
                             key={item.manager.managerId ?? item.label}
-                            className="lw-commandCenter__managerChartLegendItem"
                             role="listitem"
-                            onPress={() => onManagerPress?.(item.manager, viewMode)}
                         >
-                            <SimpleContainer
-                                className="lw-commandCenter__managerChartSwatch"
-                                style={{ backgroundColor: item.color }}
-                                aria-hidden
-                            />
+                        <button
+                            type="button"
+                            className="lw-commandCenter__managerChartLegendItem"
+                            onClick={() => onManagerPress?.(item.manager, viewMode)}
+                            style={{ '--manager-color': item.color }}
+                        >
+                            <span className="lw-businessHome__managerAvatar" aria-hidden="true">{item.label.slice(0, 1)}</span>
                             <SimpleContainer className="lw-commandCenter__managerChartLegendBody">
                                 <TextBold14 numberOfLines={1}>{item.label}</TextBold14>
                                 {item.sublabel && (
@@ -133,6 +134,7 @@ export default function ManagerWorkloadChart({ managers = [], onManagerPress }) 
                                         {item.sublabel}
                                     </Text12>
                                 )}
+                                <span className="lw-businessHome__managerShare" aria-hidden="true"><span style={{ width: `${pct}%` }} /></span>
                             </SimpleContainer>
                             <SimpleContainer className="lw-commandCenter__managerChartLegendMeta">
                                 <TextBold14>{item.value}</TextBold14>
@@ -142,7 +144,8 @@ export default function ManagerWorkloadChart({ managers = [], onManagerPress }) 
                                     </Text12>
                                 )}
                             </SimpleContainer>
-                        </SimpleContainer>
+                        </button>
+                        </div>
                     );
                 })}
             </SimpleContainer>

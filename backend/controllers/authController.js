@@ -16,7 +16,7 @@ async function resolveLoginPlatformAdminFlag(userid, role) {
     if (String(role || "").trim() !== "Admin") return false;
     if (await isPlatformAdminUser(userid)) return true;
     const envList = String(process.env.PLATFORM_ADMIN_USER_IDS || "").trim();
-    if (!envList && String(process.env.NODE_ENV || "").toLowerCase() !== "production") {
+    if (!isMultiTenantMode() && !envList && String(process.env.NODE_ENV || "").toLowerCase() !== "production") {
         return true;
     }
     return false;
@@ -308,6 +308,7 @@ const requestOtp = async (req, res) => {
 };
 
 const verifyOtp = async (req, res) => {
+    if (isMultiTenantMode() && !req.tenant?.id) return res.status(400).json({ error: 'TENANT_REQUIRED' });
     let { phoneNumber, email, otp, tenantSlug } = req.body;
     const emailNorm = String(email || "").trim().toLowerCase();
     const useEmail = !phoneNumber && !!emailNorm;
@@ -584,6 +585,7 @@ const logout = async (req, res) => {
 };
 
 const register = async (req, res) => {
+    if (isMultiTenantMode() && !req.tenant?.id) return res.status(400).json({ error: 'TENANT_REQUIRED' });
     try {
         let { name, phoneNumber } = req.body || {};
 

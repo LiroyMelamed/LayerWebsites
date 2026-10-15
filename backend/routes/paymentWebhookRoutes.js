@@ -12,10 +12,10 @@ async function handle(req, res) {
     ).trim();
 
     try {
-        const result = await billing.handleTakbullNotification({
+        const result = await require('../lib/tenant/databaseScope').withSystem(() => billing.handleTakbullNotification({
             uniqId,
             query: { ...req.query, ...req.body },
-        });
+        }));
         return res.status(200).json({ ok: true, ...result });
     } catch (e) {
         console.error('[takbull-webhook]', e?.message || e);

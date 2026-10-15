@@ -43,6 +43,7 @@ const errorHandler = require('./middlewares/errorHandler');
 const { sendError } = require('./utils/appError');
 
 const app = express();
+app.use((_req, _res, next) => require('./lib/tenant/databaseScope').withoutScope(next));
 
 // Only trust proxy headers when explicitly enabled (prevents spoofing x-forwarded-for)
 app.set('trust proxy', process.env.TRUST_PROXY === 'true');
@@ -68,6 +69,9 @@ app.use(helmet({
 // A bounded 2MB workbook becomes up to 2.8MB when encoded for preview.
 app.use('/api/signing-batches/workbook', bodyParser.json({ limit: '3mb' }));
 app.use(/^\/api\/signing-v2\/templates\/[^/]+\/workbook$/, bodyParser.json({ limit: '3mb' }));
+app.use('/api/public/signup/start', bodyParser.json({ limit: '3mb' }));
+// Signature verification needs the original bytes and must precede the JSON parser.
+app.use('/api/webhooks/whatsapp', require('./routes/whatsappWebhookRoutes'));
 app.use(bodyParser.json({ limit: API_JSON_LIMIT }));
 app.use(bodyParser.urlencoded({ limit: API_URLENCODED_LIMIT, extended: true }));
 app.use(compression({ threshold: 1024 }));
@@ -195,6 +199,7 @@ app.use("/api/notifications/orchestrator", notificationOrchestratorRoutes);
 app.use("/api/reminders", reminderRoutes);
 app.use("/api/compliance", complianceRoutes);
 app.use("/api/platform-settings", platformSettingsRoutes);
+app.use('/api/office-integrations', require('./routes/officeIntegrationsRoutes'));
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/template-attachments", templateAttachmentRoutes);
 app.use("/api/calendar", calendarRoutes);

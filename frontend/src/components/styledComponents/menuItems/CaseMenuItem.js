@@ -132,6 +132,9 @@ export default function CaseMenuItem({
                 {!alwaysExpanded && (
                     <ImageButton
                         src={icons.Button.DownArrow}
+                        aria-label={`${isExpanded ? 'סגירת פרטי התיק' : 'פתיחת פרטי התיק'}: ${rightTitle || fullCase.CaseName || ''}`}
+                        aria-expanded={isExpanded}
+                        alt=""
                         className={
                             "lw-caseMenuItem__toggle" + (isExpanded ? " is-open" : "")
                         }

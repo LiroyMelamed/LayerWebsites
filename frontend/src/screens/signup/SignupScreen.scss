@@ -2,17 +2,18 @@
 
 // Center signup body vertically between logo (top) and action button (bottom)
 .lw-loginSimpleScreen__layout:has(.lw-signup__content) {
-    flex: 1;
+    flex: 0 0 auto;
+    height: auto;
     min-height: 100%;
 }
 
 .lw-loginSimpleScreen__main:has(.lw-signup__content) {
-    flex: 1;
+    flex: 1 0 auto;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    min-height: 0;
+    min-height: auto;
     padding-block: v.$space-2;
 }
 
@@ -173,6 +174,7 @@
 }
 
 .lw-signup__footer {
+    position: relative;
     display: flex;
     gap: v.$space-3;
     justify-content: center;
@@ -182,4 +184,42 @@
     margin-inline: auto;
     padding-block: v.$space-3 v.$space-2;
     flex-shrink: 0;
+}
+
+// Keep feedback next to the pressed button, including when the parent page
+// scrolls a tall signup iframe. A viewport-top toast would be off screen there.
+.lw-signup__feedback {
+    position: absolute;
+    inset-block-end: calc(100% + 0.25rem);
+    inset-inline: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background: #fff;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+    border-radius: 0.75rem;
+    box-shadow: 0 6px 24px rgb(0 0 0 / 12%);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    z-index: 2;
+
+    span { flex: 1; }
+}
+
+.lw-signup__feedbackClose {
+    flex: 0 0 2.75rem;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 0;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 1.5rem;
+    cursor: pointer;
+
+    &:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 }

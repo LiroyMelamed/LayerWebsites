@@ -1,3 +1,7 @@
+const { validEmail } = require('./signupWelcomeTemplate');
+const { flushWelcome } = require('./signupWelcomeEmail');
+const { saveSignupLogo } = require('./signupLogo');
+const { assertSignupAvailable } = require('./signupAvailability');
 const crypto = require('node:crypto');
 const pool = require('../../config/db');
 const { formatPhoneNumber } = require('../../utils/phoneUtils');
@@ -43,6 +47,7 @@ function mapSignupRow(row) {
 }
 
 async function createSignupIntent(payload) {
+    assertSignupAvailable();
     if (payload.billingConsent !== true || payload.consentVersion !== CONSENT_VERSION) {
         throw Object.assign(new Error('יש לאשר חיוב שקל ושמירת כרטיס לחידוש לאחר שלושה חודשים'), { code: 'CONSENT_REQUIRED' });
     }
@@ -72,12 +77,14 @@ async function createSignupIntent(payload) {
         throw err;
     }
 
+    if (!validEmail(adminEmail)) throw Object.assign(new Error('נא להזין כתובת דוא״ל תקינה לקבלת פרטי החשבון'), {code:'INVALID_EMAIL'});
+
     const pkg = quoteSignup({ platformId, resourceId, signingId, billingInterval });
     const quoted = pkg.recurringAmountIls;
     if (Number(payload.expectedPriceIls) !== quoted) throw Object.assign(new Error('המחיר השתנה; יש לרענן ולאשר מחדש'), {code:'PRICE_CHANGED'});
     const id = String(payload.idempotencyKey || '');
     if (!/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(id)) throw Object.assign(new Error('INVALID_IDEMPOTENCY_KEY'), {code:'INVALID_IDEMPOTENCY_KEY'});
-    const requestHash = crypto.createHash('sha256').update(JSON.stringify({slug,firmName,adminName,adminPhone,adminEmail,platformId,resourceId,signingId,billingInterval,quoted})).digest('hex');
+    const requestHash = crypto.createHash('sha256').update(JSON.stringify({slug,firmName,adminName,adminPhone,adminEmail,platformId,resourceId,signingId,billingInterval,quoted,...(payload.logoDataUrl ? {logoSourceSha256:crypto.createHash('sha256').update(String(payload.logoDataUrl)).digest('hex')} : {})})).digest('hex');
     const c = await pool.connect();
     try {
     await c.query('BEGIN');
@@ -89,12 +96,13 @@ async function createSignupIntent(payload) {
         return mapSignupRow(previous);
     }
     if (!(await slugAvailable(slug))) throw Object.assign(new Error('כתובת המשרד כבר תפוסה'), {code:'SLUG_TAKEN'});
+    const logo = await saveSignupLogo(payload.logoDataUrl, id);
     const res = await c.query(
         `INSERT INTO signup_intents (
             id, request_hash, slug, firm_name, admin_name, admin_phone, admin_email,
             lawyer_count, practice_areas,
-            platform_id, resource_id, signing_id, billing_interval, price_monthly_ils, consent_version, consented_at, recurring_amount_ils, vat_percent
-         ) VALUES ($13,$14,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$15,now(),$16,$17)
+            platform_id, resource_id, signing_id, billing_interval, price_monthly_ils, consent_version, consented_at, recurring_amount_ils, vat_percent, logo
+         ) VALUES ($13,$14,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$15,now(),$16,$17,$18)
          RETURNING *`,
         [
             slug,
@@ -108,7 +116,7 @@ async function createSignupIntent(payload) {
             resourceId,
             signingId,
             billingInterval,
-            pkg.total, id, requestHash, CONSENT_VERSION, quoted, pkg.vatPercent,
+            pkg.total, id, requestHash, CONSENT_VERSION, quoted, pkg.vatPercent, logo,
         ]
     );
     await c.query('COMMIT');
@@ -135,6 +143,7 @@ function signupIpnUrl() {
 }
 
 async function createSignupCheckout(intentId) {
+    assertSignupAvailable();
     const creds = getTakbullCredentialsFromEnv();
     if (!creds || !getProviderSecretsKey()) throw Object.assign(new Error('ההרשמה בתשלום עדיין אינה זמינה'), { code: 'TAKBULL_NOT_CONFIGURED' });
     const c = await pool.connect();
@@ -162,6 +171,7 @@ async function createSignupCheckout(intentId) {
     } catch(e) { await c.query('ROLLBACK'); throw e; } finally { c.release(); }
     // Durable reservation precedes provider contact. An unknown result must never trigger another charge.
     const page = await createTakbullPaymentPage({credentials:creds,orderReference,amount:1,currency:'ILS',
+        returnMode:'redirect',
         redirectAddress:signupReturnUrl(intentId),cancelReturnAddress:signupCancelUrl(intentId),ipnAddress:signupIpnUrl(),
         purpose:'MelaMedia — אימות כרטיס ופתיחת משרד',saveToken:true,customerFullName:intent.adminName,customerPhone:intent.adminPhone,customerEmail:intent.adminEmail});
     await pool.query('UPDATE firm_payment_intents SET takbull_uniq_id=$2,updated_at=now() WHERE id=$1',[paymentIntentId,page.uniqId]);
@@ -169,6 +179,7 @@ async function createSignupCheckout(intentId) {
 }
 
 async function provisionTenantFromSignup(signupIntentId, { tokenInfo } = {}) {
+    assertSignupAvailable();
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
@@ -217,7 +228,7 @@ async function provisionTenantFromSignup(signupIntentId, { tokenInfo } = {}) {
                 signup.admin_email,
                 signup.practice_areas || [],
                 signup.lawyer_count,
-                { firmDisplayName: signup.firm_name },
+                { firmDisplayName: signup.firm_name, ...(signup.logo ? { logoUrl:signup.logo.url, logoAsset:signup.logo } : {}) },
             ]
         );
         const tenant = tenantRes.rows[0];
@@ -246,12 +257,12 @@ async function provisionTenantFromSignup(signupIntentId, { tokenInfo } = {}) {
             [signup.admin_name, signup.admin_phone, signup.admin_email, tenant.id]
         );
         const adminUserId = adminRes.rows[0].userid;
+        if (require('./databaseScope').enabled()) {
+            await client.query('UPDATE law_firm_tenants SET owner_user_id=$2 WHERE id=$1',[tenant.id,adminUserId]);
+            await require('./seedOfficeDefaults').seedOfficeDefaults(client,tenant);
+        }
 
-        await client.query(
-            `INSERT INTO platform_admins (user_id, is_active) VALUES ($1, true)
-             ON CONFLICT (user_id) DO UPDATE SET is_active = true`,
-            [adminUserId]
-        );
+        // An office owner is an Admin of this office, never a platform administrator.
 
         if (tokenInfo?.token) {
             await client.query(
@@ -281,7 +292,17 @@ async function provisionTenantFromSignup(signupIntentId, { tokenInfo } = {}) {
             [signupIntentId, tenant.id]
         );
 
+        const welcomeLogin = `${getFrontendBaseUrl()}/${tenant.slug}/LoginStack/LoginScreen`;
+        // Queue atomically with the paid account. Existing intents without an email
+        // may still complete, but never fabricate a recipient or notify other admins.
+        if (validEmail(signup.admin_email)) {
+            await client.query(`UPDATE signup_intents SET welcome_email=$2,welcome_email_status='pending',welcome_email_next_at=now(),welcome_email_updated_at=now() WHERE id=$1`,
+                [signupIntentId,{toEmail:signup.admin_email,adminName:signup.admin_name,firmName:signup.firm_name,adminPhone:signup.admin_phone,loginUrl:welcomeLogin,trialEndsAt:complimentaryUntil.toISOString(),
+                    recurringAmountIls:require('../billing/signupQuote').renewalAmount({price_monthly_ils:signup.price_monthly_ils,billing_interval:signup.billing_interval},signup),billingInterval:signup.billing_interval}]);
+        }
         await client.query('COMMIT');
+        // Delivery failure must not undo an already-created account; the worker retries safe failures.
+        try { await flushWelcome(signupIntentId); } catch (_) { console.error('[signup-welcome] queued delivery needs retry'); }
 
         const loginUrl = `${getFrontendBaseUrl()}/${tenant.slug}/admin`;
         try {
@@ -342,3 +363,9 @@ module.exports = {
     completeSignupWithoutPayment,
     mapSignupRow,
 };
+// These entry points operate on platform-owned signup intents; each validates its own
+// capability/payment before provisioning. Ordinary business controllers never use this scope.
+for (const name of ['createSignupIntent','getSignupIntent','createSignupCheckout','provisionTenantFromSignup','completeSignupFromPaymentIntent','syncSignup']) {
+    const fn=module.exports[name];
+    module.exports[name]=(...args)=>require('./databaseScope').withSystem(()=>fn(...args));
+}
