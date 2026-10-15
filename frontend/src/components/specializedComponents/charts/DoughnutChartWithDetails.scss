@@ -1,0 +1,58 @@
+@use '../../../styles/variables' as v;
+@use '../../../styles/mixins' as m;
+
+.lw-doughnutChartWithDetails {
+    flex-direction: column;
+    margin-block-start: v.$space-4;
+    align-items: center;
+    gap: v.$space-4;
+    width: 100%;
+    min-inline-size: 0;
+}
+
+.lw-doughnutChartWithDetails__chart {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: center;
+    inline-size: 100%;
+    max-inline-size: 100%;
+    min-inline-size: 0;
+}
+
+.lw-doughnutChartWithDetails__chart {
+    max-inline-size: 8.75rem; // 8.75rem
+}
+
+.lw-doughnutChartWithDetails__chart.is-compact {
+    max-inline-size: 10rem; // 10rem
+}
+
+.lw-doughnutChartWithDetails__legend {
+    flex: 1;
+    @include m.row(v.$space-2, wrap);
+    justify-content: center;
+    margin-block-start: v.$space-2;
+    width: 100%;
+    min-inline-size: 0;
+}
+
+.lw-doughnutChartWithDetails__legendItem {
+    @include m.row(v.$space-2, nowrap);
+    padding-block: v.$space-1;
+    padding-inline: v.$space-2;
+    border-radius: 624.9375rem;
+    background-color: var(--lw-color-secondary-highlighted);
+    border: 0.0625rem solid var(--lw-color-disabled);
+    min-inline-size: 0;
+}
+
+.lw-doughnutChartWithDetails__legendItem> :last-child {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+}
+
+.lw-doughnutChartWithDetails__swatch {
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 624.9375rem;
+}

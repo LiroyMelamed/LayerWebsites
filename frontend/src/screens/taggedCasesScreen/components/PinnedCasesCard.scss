@@ -1,0 +1,16 @@
+@use '../../../styles/variables' as v;
+
+.lw-pinnedCasesCard {
+  flex-direction: column;
+}
+
+.lw-pinnedCasesCard__list {
+  flex-direction: column;
+  margin-block-start: v.$space-4;
+  min-inline-size: 0;
+}
+
+.lw-pinnedCasesCard__item {
+  flex-direction: column;
+  min-inline-size: 0;
+}

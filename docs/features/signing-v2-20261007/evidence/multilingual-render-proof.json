@@ -1,0 +1,67 @@
+{
+  "sourceHash": "34f1a8a885a568542f19f29379fa6ba4c088cf1f8796326618001c88debc76d3",
+  "preparedHash": "1f92fdee81b65c7159601030f4fe957c6ea9f2ac6fc31a2ebdd9e1dfa3e5f7b9",
+  "rendererHash": "d04f7b1fa0f10d3995ff415a143b16abba2833a45a6233847a18e29aeb1b5475",
+  "secondHash": "3a14a9849a880ab2628ab25ed7d011548ac6a8b838c14d9023f20010e2f8b4b9",
+  "geometry": [
+    {
+      "width": 800,
+      "height": 1090.909090909091
+    },
+    {
+      "width": 800,
+      "height": 586.6666666666666
+    },
+    {
+      "width": 800,
+      "height": 1090.909090909091
+    },
+    {
+      "width": 800,
+      "height": 586.6666666666666
+    }
+  ],
+  "extracted": [
+    "SYNTHETIC SOURCE 0 00123   בדיקה   חבילת   -   עולם   שלום  00456   ر ﺎ ﺒ ﺘ ﺧ ا   ﺔ ﻣ ﺰ ﺣ   -   ﻢ ل ﺎ ﻌ ل ﺎ ﺑ   ﺎ ﺒ ﺣ ﺮ ﻣ  Synthetic   person   A   - 000789",
+    "SYNTHETIC SOURCE 90 00123   בדיקה   חבילת   -   עולם   שלום  00456   ر ﺎ ﺒ ﺘ ﺧ ا   ﺔ ﻣ ﺰ ﺣ   -   ﻢ ل ﺎ ﻌ ل ﺎ ﺑ   ﺎ ﺒ ﺣ ﺮ ﻣ  Synthetic   person   A   - 000789",
+    "SYNTHETIC SOURCE 180 00123   בדיקה   חבילת   -   עולם   שלום  00456   ر ﺎ ﺒ ﺘ ﺧ ا   ﺔ ﻣ ﺰ ﺣ   -   ﻢ ل ﺎ ﻌ ل ﺎ ﺑ   ﺎ ﺒ ﺣ ﺮ ﻣ  Synthetic   person   A   - 000789",
+    "SYNTHETIC SOURCE 270 00123   בדיקה   חבילת   -   עולם   שלום  00456   ر ﺎ ﺒ ﺘ ﺧ ا   ﺔ ﻣ ﺰ ﺣ   -   ﻢ ل ﺎ ﻌ ل ﺎ ﺑ   ﺎ ﺒ ﺣ ﺮ ﻣ  Synthetic   person   A   - 000789"
+  ],
+  "positions": [
+    {
+      "page": 1,
+      "x": 41.24999828125002,
+      "y": 276.7499884687366,
+      "expectedX": 41.25,
+      "deviationPt": 0.000001718749977897005,
+      "normalizedFontHeight": 23.99999900000068
+    },
+    {
+      "page": 2,
+      "x": 56.24999765625,
+      "y": 377.99998424998046,
+      "expectedX": 56.25,
+      "deviationPt": 0.0000023437499976353138,
+      "normalizedFontHeight": 23.999999000002727
+    },
+    {
+      "page": 3,
+      "x": 41.249998281254534,
+      "y": 276.74998846874996,
+      "expectedX": 41.25,
+      "deviationPt": 0.000001718745465950633,
+      "normalizedFontHeight": 23.999999
+    },
+    {
+      "page": 4,
+      "x": 56.24999765625,
+      "y": 377.9999842499915,
+      "expectedX": 56.25,
+      "deviationPt": 0.0000023437499976353138,
+      "normalizedFontHeight": 23.99999900000119
+    }
+  ],
+  "sourcePreserved": true,
+  "overflowBlocked": true,
+  "personalDataSeparated": true
+}
