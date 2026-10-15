@@ -1,0 +1,274 @@
+import React, { useState, useCallback, useMemo, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { usePopup } from "../../providers/PopUpProvider";
+import { useScreenSize } from "../../providers/ScreenSizeProvider";
+
+import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
+import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
+import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
+import SimpleCard from "../../components/simpleComponents/SimpleCard";
+import SimpleTable from "../../components/simpleComponents/SimpleTable";
+import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
+import { getNavBarData } from "../../components/navBars/data/NavBarData";
+import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
+import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
+import ChooseButton from "../../components/styledComponents/buttons/ChooseButton";
+import { Text14 } from "../../components/specializedComponents/text/AllTextKindFile";
+import ListPageTitle from "../../components/specializedComponents/text/ListPageTitle";
+import ReminderMenuItem from "../../components/specializedComponents/menuItems/ReminderMenuItem";
+import { images } from "../../assets/images/images";
+
+import remindersApi from "../../api/remindersApi";
+import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
+import useHttpRequest from "../../hooks/useHttpRequest";
+import ImportRemindersModal from "./components/ImportRemindersModal";
+import AddReminderModal from "./components/AddReminderModal";
+import ReminderDetailPopup from "./components/ReminderDetailPopup";
+import { formatDateTimeForInput } from "../../functions/date/formatDateForInput";
+import { AdminStackName } from "../../navigation/AdminStack";
+import { MainScreenName } from "../mainScreen/MainScreen";
+import { useFirmPermissions } from "../../providers/FirmPermissionsProvider";
+
+import "./RemindersScreen.scss";
+
+export const RemindersScreenName = "/RemindersScreen";
+
+const STATUS_FILTERS = [
+    { value: "PENDING", label: "pending" },
+    { value: "SENT", label: "sent" },
+    { value: "FAILED", label: "failed" },
+    { value: "CANCELLED", label: "cancelled" },
+];
+
+function formatDate(dateStr) {
+    return formatDateTimeForInput(dateStr) || "—";
+}
+
+export default function RemindersScreen() {
+    const { t } = useTranslation();
+    const { canAction } = useFirmPermissions() || { canAction: () => true };
+    const canManageReminders = canAction('reminders', 'manage');
+    const { openPopup, closePopup } = usePopup();
+    const { isSmallScreen } = useScreenSize();
+    const [statusFilter, setStatusFilter] = useState("ALL");
+    const [page, setPage] = useState(1);
+    const [templateLabelMap, setTemplateLabelMap] = useState({});
+    const limit = 25;
+
+    useEffect(() => {
+        remindersApi.getTemplates().then((res) => {
+            if (res?.status === 200 && res.data?.templates) {
+                const map = {};
+                res.data.templates.forEach((tpl) => { map[tpl.key] = tpl.label; });
+                setTemplateLabelMap(map);
+            }
+        }).catch((err) => {
+            console.error('[RemindersScreen] Failed to load reminder templates:', err?.message);
+        });
+    }, []);
+
+    const resolveTemplateLabel = useCallback((key) => {
+        const calendarLabels = { CALENDAR_APPOINTMENT: 'תזכורת לפגישה', CALENDAR_HEARING: 'תזכורת לדיון', CALENDAR_REMINDER: 'תזכורת יומן' };
+        if (calendarLabels[key]) return calendarLabels[key];
+        if (!key) return '—';
+        const i18nLabel = t(`reminders.col.templateKeys.${key}`, { defaultValue: '' });
+        return i18nLabel || templateLabelMap[key] || key;
+    }, [t, templateLabelMap]);
+
+    const fetchReminders = useCallback(async () => {
+        return await remindersApi.listReminders({
+            status: statusFilter === "ALL" ? undefined : statusFilter,
+            page,
+            limit,
+        });
+    }, [statusFilter, page]);
+
+    const { result, isPerforming, performRequest } = useAutoHttpRequest(fetchReminders, {
+        onSuccess: () => { },
+    });
+
+    useEffect(() => {
+        performRequest();
+    }, [statusFilter, page, performRequest]);
+
+    const reminders = useMemo(() => result?.reminders || [], [result]);
+    const total = result?.total || 0;
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    const { performRequest: cancelRequest } = useHttpRequest(
+        remindersApi.cancelReminder,
+        () => performRequest(),
+    );
+
+    const { performRequest: deleteRequest } = useHttpRequest(
+        remindersApi.deleteReminder,
+        () => performRequest(),
+    );
+
+    const handleFilterChange = useCallback((value) => {
+        setStatusFilter(value || "ALL");
+        setPage(1);
+    }, []);
+
+    const handleImport = useCallback(() => {
+        openPopup(
+            <ImportRemindersModal
+                closePopUpFunction={closePopup}
+                rePerformRequest={performRequest}
+            />
+        );
+    }, [openPopup, closePopup, performRequest]);
+
+    const handleAddReminder = useCallback(() => {
+        openPopup(
+            <AddReminderModal
+                closePopUpFunction={closePopup}
+                rePerformRequest={performRequest}
+            />
+        );
+    }, [openPopup, closePopup, performRequest]);
+
+    const handleRowClick = useCallback((_item, rowIndex) => {
+        const reminder = reminders[rowIndex];
+        if (!reminder) return;
+        openPopup(
+            <ReminderDetailPopup
+                reminder={reminder}
+                closePopUpFunction={closePopup}
+                onCancel={canManageReminders ? (id) => { cancelRequest(id); } : undefined}
+                onDelete={canManageReminders ? (id) => { deleteRequest(id); } : undefined}
+                readOnly={!canManageReminders}
+                onUpdated={() => performRequest()}
+                resolveTemplateLabel={resolveTemplateLabel}
+            />
+        );
+    }, [reminders, openPopup, closePopup, cancelRequest, deleteRequest, canManageReminders, performRequest, resolveTemplateLabel]);
+
+    // Responsive: fewer columns on small screens
+    const tableTitles = useMemo(() => {
+        if (isSmallScreen) {
+            return [
+                t("reminders.col.clientName"),
+                t("reminders.col.scheduledFor"),
+                t("reminders.col.status"),
+            ];
+        }
+        return [
+            t("reminders.col.clientName"),
+            t("reminders.col.email"),
+            t("reminders.col.template"),
+            t("reminders.col.scheduledFor"),
+            t("reminders.col.status"),
+            t("reminders.col.sentAt"),
+            t("reminders.col.actions"),
+        ];
+    }, [t, isSmallScreen]);
+
+    const tableData = useMemo(() => {
+        if (isSmallScreen) {
+            return reminders.map((r) => ({
+                Column0: r.client_name || "—",
+                Column1: <time dateTime={r.scheduled_for} dir="ltr">{formatDate(r.scheduled_for)}</time>,
+                Column2: (
+                    <SimpleContainer className={`lw-reminders__badge lw-reminders__badge--${(r.status || "").toLowerCase()}`}>
+                        <Text14>{t(`reminders.status.${(r.status || "").toLowerCase()}`)}</Text14>
+                    </SimpleContainer>
+                ),
+            }));
+        }
+        return reminders.map((r) => ({
+            Column0: r.client_name || "—",
+            Column1: r.to_email || "—",
+            Column2: resolveTemplateLabel(r.template_key),
+            Column3: formatDate(r.scheduled_for),
+            Column4: (
+                <SimpleContainer className={`lw-reminders__badge lw-reminders__badge--${(r.status || "").toLowerCase()}`}>
+                    <Text14>{t(`reminders.status.${(r.status || "").toLowerCase()}`)}</Text14>
+                </SimpleContainer>
+            ),
+            Column5: r.sent_at ? formatDate(r.sent_at) : "—",
+            Column6: canManageReminders && r.source !== "calendar" && r.status === "PENDING" ? (
+                <SecondaryButton onPress={(e) => { e?.stopPropagation?.(); cancelRequest(r.id); }}>
+                    {t("reminders.cancel")}
+                </SecondaryButton>
+            ) : null,
+        }));
+    }, [reminders, t, cancelRequest, isSmallScreen, canManageReminders, resolveTemplateLabel]);
+
+    return (
+        <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
+            {isSmallScreen && (
+                <TopToolBarSmallScreen
+                    LogoNavigate={AdminStackName + MainScreenName}
+                    GetNavBarData={getNavBarData}
+                    chosenNavKey="reminders"
+                />
+            )}
+
+            <SimpleScrollView>
+                <SimpleContainer className="lw-reminders__filtersRow">
+                    <ChooseButton
+                        buttonText={t("reminders.statusFilter")}
+                        items={STATUS_FILTERS.map((f) => ({
+                            value: f.value,
+                            label: t(`reminders.filter.${f.label}`),
+                        }))}
+                        OnPressChoiceFunction={handleFilterChange}
+                        className="lw-reminders__choose"
+                    />
+                </SimpleContainer>
+
+                <SimpleCard className={`lw-reminders__list${isSmallScreen ? ' lw-reminders__list--compact' : ''}`}>
+                    <ListPageTitle
+                        title={t("nav.reminders")}
+                        count={total}
+                        isLoading={isPerforming && !result}
+                        className="lw-reminders__pageTitle"
+                    />
+                    <SimpleTable
+                        titles={tableTitles}
+                        data={tableData}
+                        isLoading={isPerforming}
+                        noDataMessage={t("reminders.empty")}
+                        rePerformRequest={performRequest}
+                        onRowClick={handleRowClick}
+                        RowComponent={ReminderMenuItem}
+                        CellTextComponent={Text14}
+                    />
+
+                    {!isPerforming && totalPages > 1 && (
+                        <SimpleContainer className="lw-reminders__pagination">
+                            <SecondaryButton
+                                disabled={page <= 1}
+                                onPress={() => setPage((p) => Math.max(1, p - 1))}
+                            >
+                                {t("reminders.prev")}
+                            </SecondaryButton>
+                            <Text14>
+                                {t("reminders.pageInfo", { page, totalPages })}
+                            </Text14>
+                            <SecondaryButton
+                                disabled={page >= totalPages}
+                                onPress={() => setPage((p) => p + 1)}
+                            >
+                                {t("reminders.next")}
+                            </SecondaryButton>
+                        </SimpleContainer>
+                    )}
+                </SimpleCard>
+            </SimpleScrollView>
+
+            {canManageReminders && (
+            <SimpleContainer className="lw-reminders__footer">
+                <PrimaryButton onPress={handleAddReminder}>
+                    {t("reminders.add.button")}
+                </PrimaryButton>
+
+                <SecondaryButton onPress={handleImport}>
+                    {t("reminders.importButton")}
+                </SecondaryButton>
+            </SimpleContainer>
+            )}
+        </SimpleScreen>
+    );
+}
