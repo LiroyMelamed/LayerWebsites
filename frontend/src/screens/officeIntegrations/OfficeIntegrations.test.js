@@ -97,3 +97,12 @@ test('the screen respects denied policy access', async () => {
     expect(screen.queryByRole('button', { name: 'saveWhatsapp' })).not.toBeInTheDocument();
     expect(screen.getByLabelText('syncTime')).toBeDisabled();
 });
+test('connection-only QA offers the actual QR button and keeps automation in simulation', async () => {
+    api.snapshot.mockResolvedValue(state({ signup: { ready: true, flow: 'business_app', connectionOnly: true, appId: 'app', version: 'v26.0', liveEnabled: false, demoOnly: false } }));
+    render(<OfficeIntegrations />); await screen.findByDisplayValue('My office court');
+    await waitFor(() => expect(api.startSignup).toHaveBeenCalled());
+    expect(screen.getByText('connectionOnlyNotice')).toBeInTheDocument();
+    expect(screen.getByText('qrPrerequisite')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'connectQr' }));
+    expect(launchWhatsAppSignup).toHaveBeenCalledTimes(1);
+});

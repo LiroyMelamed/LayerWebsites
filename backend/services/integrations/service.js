@@ -3,6 +3,7 @@ const crypto = require('node:crypto');
 const { fail, courtNumber, phones, positiveId } = require('./validation');
 const secrets = require('./secrets');
 const { courtSchedule, scheduleNext, TIME_ZONE } = require('./courtSchedule');
+const { deliveryAllowed } = require('./deliveryPolicy');
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const DEMO_UPDATES = [
     { source: 'demo-decision-1', number: '90001-10-26', title: 'החלטת דמה', body: 'זהו עדכון סינתטי לבדיקת שיוך. אין לו משמעות משפטית.', date: '2026-10-14T09:00:00Z' },
@@ -40,7 +41,8 @@ function createIntegrationService({ pool, provider, env = process.env }) {
         const configurationReady = Object.values(requirements).every(Boolean);
         const ready = !demoOnly && configurationReady;
         return { ready, appId: ready ? env.WHATSAPP_META_APP_ID : null, configId: ready ? env.WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID : null,
-            version: env.WHATSAPP_GRAPH_VERSION || 'v25.0', liveEnabled: !demoOnly && env.WHATSAPP_LIVE_ENABLED === 'true',
+            version: env.WHATSAPP_GRAPH_VERSION || 'v26.0', liveEnabled: deliveryAllowed(env),
+            flow: env.WHATSAPP_SIGNUP_FLOW === 'business_app' ? 'business_app' : 'cloud', connectionOnly: env.WHATSAPP_CONNECT_ONLY === 'true',
             demoOnly, configurationReady, requirements };
     }
     async function settingsSnapshot(tenantId) {
@@ -118,7 +120,7 @@ function createIntegrationService({ pool, provider, env = process.env }) {
             for (const event of DEMO_UPDATES) await db.query(`INSERT INTO court_updates(law_firm_tenant_id,source_id,court_number,title,body,occurred_at,case_id)
                 VALUES($1,$2,$3,$4,$5,$6,(SELECT l.case_id FROM court_case_links l JOIN cases c ON c.caseid=l.case_id
                     WHERE l.law_firm_tenant_id IS NOT DISTINCT FROM $1 AND c.law_firm_tenant_id IS NOT DISTINCT FROM $1 AND l.court_number=$3 AND (c.integration_demo OR $7)))
-                ON CONFLICT(law_firm_tenant_id,source_id) DO NOTHING`, [tenantId, event.source, event.number, event.title, event.body, event.date, env.WHATSAPP_DEMO_ONLY === 'true']);
+                ON CONFLICT(law_firm_tenant_id,source_id) DO NOTHING`, [tenantId, event.source, event.number, event.title, event.body, event.date, env.COURT_DEMO_CASE_LINKING === 'true' || env.WHATSAPP_DEMO_ONLY === 'true']);
             await db.query('UPDATE office_integrations SET last_synced_at=$2,updated_at=now() WHERE id=$1', [c.id, scheduledAt || new Date()]);
             if (scheduledAt) await scheduleNext(db, c.id, true, c.settings, scheduledAt);
             return { synced: true };
@@ -137,11 +139,11 @@ function createIntegrationService({ pool, provider, env = process.env }) {
         return tx(async db => {
             const c = await ensure(db, tenantId, 'whatsapp');
             if (input.enabled && input.mode === 'live') {
-                if (!signupConfig().liveEnabled || !c.secret_ciphertext || c.status !== 'ready' || !templateName || (c.token_expires_at && new Date(c.token_expires_at) <= new Date())) fail('WHATSAPP_NOT_READY', 'יש לחבר מספר, לאמת זכאות לקבוצות ולאשר תבנית הזמנה לפני הפעלה', 409);
+                if (!signupConfig().liveEnabled || c.settings.connectionType === 'business_app' || !c.secret_ciphertext || c.status !== 'ready' || !templateName || (c.token_expires_at && new Date(c.token_expires_at) <= new Date())) fail('WHATSAPP_NOT_READY', 'יש לחבר מספר, לאמת זכאות לקבוצות ולאשר תבנית הזמנה לפני הפעלה', 409);
                 if (c.settings.templateName !== templateName || c.settings.templateLanguage !== templateLanguage || JSON.stringify(c.settings.templateParameters || []) !== JSON.stringify(templateParameters)) fail('TEMPLATE_CHECK_REQUIRED', 'יש לשמור את התבנית כשהאפשרות כבויה ולבדוק מוכנות לפני הפעלה', 409);
             }
             const changed = c.settings.templateName !== templateName || c.settings.templateLanguage !== templateLanguage || JSON.stringify(c.settings.templateParameters || []) !== JSON.stringify(templateParameters);
-            await db.query(`UPDATE office_integrations SET enabled=$2,settings=$3,status=$4,updated_at=now() WHERE id=$1`, [c.id, input.enabled, { mode: input.mode, recipients, includeCaseManager, templateName, templateLanguage, templateParameters }, changed && c.secret_ciphertext ? 'connected' : c.status]);
+            await db.query(`UPDATE office_integrations SET enabled=$2,settings=$3,status=$4,updated_at=now() WHERE id=$1`, [c.id, input.enabled, { ...c.settings, mode: input.mode, recipients, includeCaseManager, templateName, templateLanguage, templateParameters }, changed && c.secret_ciphertext ? 'connected' : c.status]);
             if (!input.enabled || c.settings.mode !== input.mode) await cancelPending(db, c.id);
         });
     }
@@ -174,14 +176,33 @@ function createIntegrationService({ pool, provider, env = process.env }) {
             if (c.phone_number_id && c.phone_number_id !== result.phoneId) fail('DISCONNECT_FIRST', 'יש לנתק את המספר הקודם לפני החלפתו', 409);
             const encrypted = secrets.seal(JSON.stringify({ token: result.token, pin: result.pin }), binding(c), env);
             try {
-                await db.query(`UPDATE office_integrations SET secret_ciphertext=$2,phone_number_id=$3,waba_id=$4,display_phone=$5,token_expires_at=$6,status=$7,enabled=false,last_checked_at=now(),updated_at=now() WHERE id=$1`, [c.id, encrypted, result.phoneId, result.wabaId, result.displayPhone, result.expiresAt, result.eligible ? 'connected' : 'oba_required']);
+                const settings = { ...c.settings, connectionType: result.connectionType || 'cloud', appSync: result.connectionType === 'business_app' ? 'pending' : null };
+                await db.query(`UPDATE office_integrations SET secret_ciphertext=$2,phone_number_id=$3,waba_id=$4,display_phone=$5,token_expires_at=$6,status=$7,settings=$8,enabled=false,last_checked_at=now(),updated_at=now() WHERE id=$1`, [c.id, encrypted, result.phoneId, result.wabaId, result.displayPhone, result.expiresAt, 'connected', settings]);
             } catch (e) { if (e.code === '23505') fail('PHONE_ALREADY_CONNECTED', 'המספר כבר מחובר למשרד אחר', 409); throw e; }
         });
+        if (result.connectionType === 'business_app') {
+            // Save the grant before requesting webhooks so callbacks can be scoped.
+            // Hold the connection lock to serialize disconnect/reconnect against this handshake.
+            await tx(async db => {
+                const c = await connection(db, tenantId, 'whatsapp', 'FOR UPDATE');
+                if (!c?.secret_ciphertext || c.phone_number_id !== result.phoneId || token(c) !== result.token) return;
+                let appSync = 'requested';
+                try { await provider.syncBusinessApp(c, result.token); }
+                catch { appSync = 'needs_attention'; } // Never hide a saved grant or retry uncertain POSTs blindly.
+                await db.query(`UPDATE office_integrations SET settings=jsonb_set(settings,'{appSync}',$2::jsonb),updated_at=now() WHERE id=$1`, [c.id, JSON.stringify(appSync)]);
+            });
+        }
     }
     async function checkWhatsapp(tenantId) {
         const c = await connection(pool, tenantId, 'whatsapp');
         if (!c?.secret_ciphertext) fail('WHATSAPP_DISCONNECTED', 'יש לחבר WhatsApp תחילה', 409);
         try {
+            if (signupConfig().connectionOnly || c.settings.connectionType === 'business_app') {
+                const health = await provider.connectionHealth(c, token(c));
+                const status = health.connected ? 'connected' : 'reauthorization_required';
+                await pool.query(`UPDATE office_integrations SET status=$2,last_checked_at=now() WHERE id=$1 AND secret_ciphertext=$3`, [c.id, status, c.secret_ciphertext]);
+                return { status };
+            }
             const ready = await provider.readiness(c, token(c));
             const status = !ready.eligible ? 'oba_required' : !ready.templateReady ? 'template_required' : 'ready';
             await pool.query(`UPDATE office_integrations SET status=$2,enabled=CASE WHEN $2='ready' THEN enabled ELSE false END,last_checked_at=now(),updated_at=now() WHERE id=$1 AND secret_ciphertext=$3 AND settings=$4`, [c.id, status, c.secret_ciphertext, c.settings]);
@@ -208,7 +229,7 @@ function createIntegrationService({ pool, provider, env = process.env }) {
         if (!record || record.whatsappgrouplink) return null;
         const mode = c.settings.mode;
         if (forceDemo && (!record.integration_demo || mode !== 'demo')) fail('DEMO_REQUIRED', 'בדיקת קבוצה זמינה רק במצב דמה ובתיק הדגמה', 409);
-        if (mode === 'live' && (record.integration_demo || !signupConfig().liveEnabled || c.status !== 'ready')) return null;
+        if (mode === 'live' && (record.integration_demo || !signupConfig().liveEnabled || c.settings.connectionType === 'business_app' || c.status !== 'ready')) return null;
         if (!['demo','live'].includes(mode)) return null;
         const recipients = phones(c.settings.recipients || []);
         let errorCode = null;

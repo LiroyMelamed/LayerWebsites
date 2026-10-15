@@ -87,13 +87,18 @@ export default function OfficeIntegrations({ embedded = false }) {
                     {data.court?.enabled && data.court?.settings?.dailySyncEnabled && !data.courtSchedulerRunning && <p className="oi-note">{tr('schedulerUnavailable')}</p>}
                 </section>
                 <section className="oi-card"><div className="oi-card-heading"><h2>WhatsApp Business</h2><span className="oi-badge">{tr('official')}</span></div>
-                    <p>{tr('whatsappHelp')}</p>
+                    <p>{tr(data.signup.flow === 'business_app' ? 'qrHelp' : 'whatsappHelp')}</p>
+                    {data.signup.flow === 'business_app' && <p className="oi-muted">{tr('qrPrerequisite')}</p>}
                     <p><strong>{tr('status')}: {t(`officeIntegrations.statuses.${data.whatsapp?.status || 'disconnected'}`)}</strong>{data.whatsapp?.displayPhone && <bdi className="oi-phone">{data.whatsapp.displayPhone}</bdi>}</p>
                     {!data.signup.ready && <p className="oi-note">{tr(data.signup.demoOnly ? 'demoConnectionNotice' : 'platformSetup')}</p>}
-                    <div className="oi-actions">{data.signup.ready ? button('connect', connect, false, true)
+                    {data.signup.connectionOnly && <p className="oi-note">{tr('connectionOnlyNotice')}</p>}
+                    <div className="oi-actions">{data.signup.ready ? button(data.signup.flow === 'business_app' ? 'connectQr' : 'connect', connect, false, true)
                         : <button type="button" className="oi-primary" disabled={busy} aria-expanded={setupOpen} onClick={() => setSetupOpen(!setupOpen)}>{tr(data.signup.demoOnly ? 'demoConnection' : 'connectionHelp')}</button>}
-                        {data.whatsapp?.connected && <>{button('checkConnection', () => action(() => api.checkWhatsapp()), data.signup.demoOnly)}
+                        {data.whatsapp?.connected && <>{button(data.signup.connectionOnly || data.whatsapp.settings?.connectionType === 'business_app' ? 'checkAccountConnection' : 'checkConnection', () => action(() => api.checkWhatsapp()), data.signup.demoOnly)}
                         {button('disconnect', () => action(() => api.disconnect()))}</>}</div>
+                    {data.signup.ready && data.signup.flow === 'business_app' && <ol className="oi-steps"><li>{tr('qrStepOpen')}</li><li>{tr('qrStepScan')}</li><li>{tr('qrStepFinish')}</li></ol>}
+                    {data.whatsapp?.connected && data.whatsapp.settings?.connectionType === 'business_app' && <p className="oi-muted">{tr(`appSync.${data.whatsapp.settings.appSync || 'pending'}`)}</p>}
+                    {data.whatsapp?.connected && data.whatsapp.settings?.connectionType === 'business_app' && <p className="oi-muted">{tr('qrDisconnectHelp')}</p>}
                     {setupOpen && <section className="oi-setup" aria-label={tr('connectionHelp')}>
                         <h3>{tr('connectionHelp')}</h3>
                         {data.signup.demoOnly && <p>{tr('demoWalkthrough')}</p>}

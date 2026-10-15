@@ -120,6 +120,8 @@ export default function LoginScreen() {
                 */}
                     <SimpleInput
                         title={t('auth.enterPhone')}
+                        aria-label={t('auth.enterPhone')}
+                        aria-invalid={Boolean(phoneNumberError)}
                         type="tel"
                         className="lw-loginScreen__input"
                         value={phoneNumber}

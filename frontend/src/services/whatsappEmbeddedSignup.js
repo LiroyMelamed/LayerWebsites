@@ -28,8 +28,11 @@ export function launchWhatsAppSignup(config, { onComplete, onError }) {
         let data;
         try { data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data; } catch { return; }
         if (data?.type !== 'WA_EMBEDDED_SIGNUP') return;
-        if (data.event === 'FINISH' && /^\d{5,30}$/.test(String(data.data?.waba_id)) && /^\d{5,30}$/.test(String(data.data?.phone_number_id))) {
-            assets = { wabaId: String(data.data.waba_id), phoneId: String(data.data.phone_number_id) }; finish();
+        const businessApp = config.flow === 'business_app' && data.event === 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING';
+        const phoneId = data.data?.phone_number_id;
+        if ((data.event === 'FINISH' || businessApp) && /^\d{5,30}$/.test(String(data.data?.waba_id)) &&
+            (/^\d{5,30}$/.test(String(phoneId)) || (businessApp && !phoneId))) {
+            assets = { wabaId: String(data.data.waba_id), ...(phoneId ? { phoneId: String(phoneId) } : {}) }; finish();
         } else if (['CANCEL', 'ERROR'].includes(data.event)) { cleanup(); onError(); }
     };
     const timeout = setTimeout(() => { if (!done) { cleanup(); onError(); } }, 180000);
@@ -39,7 +42,8 @@ export function launchWhatsAppSignup(config, { onComplete, onError }) {
             if (done) return;
             if (!response.authResponse?.code) { cleanup(); onError(); return; }
             code = response.authResponse.code; finish();
-        }, { config_id: config.configId, response_type: 'code', override_default_response_type: true, extras: { setup: {} } });
+        }, { config_id: config.configId, response_type: 'code', override_default_response_type: true,
+            extras: { setup: {}, version: 'v4', sessionInfoVersion: '3', ...(config.flow === 'business_app' ? { featureType: 'whatsapp_business_app_onboarding' } : {}) } });
     } catch { cleanup(); onError(); }
     return cleanup;
 }

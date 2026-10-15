@@ -36,6 +36,7 @@ function runtime(env) {
             if (name === './service') return { createIntegrationService: () => ({ syncCourt: async (...args) => courtCalls.push(args) }) };
             if (name === './metaProvider') return { createMetaProvider: () => ({}) };
             if (name === './worker') return { createGroupWorker: () => ({ processOffice: async (...args) => calls.push(args) }) };
+            if (name === './deliveryPolicy') return require('../services/integrations/deliveryPolicy');
             if (name.endsWith('/backgroundJobsEnabled')) return require('../lib/backgroundJobsEnabled');
             throw Error(`Unexpected dependency ${name}`);
         },
@@ -74,5 +75,11 @@ test('daily court demo worker runs independently without starting message delive
     assert.equal(fixture.courtCalls.length, 1);
     assert.equal(fixture.courtCalls[0][0], null);
     assert.ok(fixture.courtCalls[0][1].scheduledAt);
+    fixture.runtime.stop();
+});
+test('connection-only QA starts simulations and cannot start delivery even with live flags', async () => {
+    const fixture = runtime({ WHATSAPP_CONNECT_ONLY: 'true', WHATSAPP_DEMO_WORKER_ENABLED: 'true', WHATSAPP_LIVE_ENABLED: 'true', WHATSAPP_WORKER_ENABLED: 'true', BACKGROUND_JOBS_ENABLED: 'true' });
+    fixture.runtime.start(); assert.equal(fixture.intervals.length, 1);
+    await fixture.intervals[0](); assert.equal(fixture.calls[0][1].demoOnly, true);
     fixture.runtime.stop();
 });

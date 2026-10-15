@@ -109,3 +109,13 @@ test('webhook authenticates exact bytes and routes by both verified assets into 
     assert.equal(lifecycle.scope.tenantId, A);
     assert.equal(calls.find(c => c.name === 'query').scope.mode, 'system');
 });
+test('signed QR history receipt persists status only in the matching office and never stores chat content', async t => {
+    const { app, calls } = setup(t);
+    const payload = JSON.stringify({ object: 'whatsapp_business_account', entry: [{ id: '987654321', changes: [{ field: 'history', value: { metadata: { phone_number_id: '123456789' }, history: [{ metadata: { progress: 100 }, threads: [{ messages: [{ text: 'Private synthetic content' }] }] }] } }] }] });
+    const signature = 'sha256=' + crypto.createHmac('sha256', 'test-signature-secret').update(payload).digest('hex');
+    await request(app).post('/webhook').type('json').set('x-hub-signature-256', signature).send(payload).expect(200);
+    const writes = calls.filter(c => c.name === 'query' && c.sql.startsWith('UPDATE'));
+    assert.equal(writes.length, 1); assert.equal(writes[0].scope.tenantId, A);
+    assert.deepEqual(writes[0].args, ['connection-a', '123456789', '987654321', '"complete"', A]);
+    assert.ok(!JSON.stringify(calls).includes('Private synthetic content'));
+});
