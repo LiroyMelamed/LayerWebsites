@@ -1,0 +1,65 @@
+---
+description: Multi-tenant git/deploy workflow, QA gate, and branding isolation
+alwaysApply: true
+---
+
+# Tenant deploy workflow and branding isolation
+
+## Branch roles
+
+| Branch | Role |
+|--------|------|
+| `main` | Product code only — features and bug fixes |
+| `Melamedia` | QA / demo platform — **first deploy after `main`** |
+| `MelamedLaw` | Production client (independent branding + env) |
+| `MorLevi` / `AshrafEssa` / `Idm` | Other clients — same product code, own branding |
+
+MelamedLaw is a client deployment. Melamedia is the company QA platform. They must **never** share or merge icons, logos, or `public/` scratch files.
+
+## Deploy gate (required order)
+
+```
+main  →  commit + push
+      →  merge main into Melamedia
+      →  deploy Melamedia only (QA smoke on melamedia.mela-media.co.il)
+      →  if OK: merge main into MelamedLaw / MorLevi / AshrafEssa / Idm
+      →  build + deploy each tenant with its own branding
+      →  move prod tag on main after QA passes
+```
+
+Never deploy all production clients before Melamedia QA passes. Never build MelamedLaw from the Melamedia branch tip without merging `main` first.
+
+## Branding — where files live
+
+**Committed (per tenant):**
+
+- `frontend/public/tenants/<tenant>/` — index.html, manifest, favicons, firm-logo, logos/
+- `frontend/.env.production.<tenant>` — API URL for that tenant
+
+**Build scratch (do NOT commit):**
+
+- `frontend/public/index.html`, favicons, firm-logo.png, manifest.json, site.webmanifest
+- `frontend/src/assets/images/logos/*`
+
+`apply-tenant-branding.js` copies tenant → scratch before `react-scripts build`. Dirty `frontend/public/*` after a local build is expected.
+
+## Agent rules
+
+1. **Never** commit `frontend/public/*` root or `src/assets/images/logos/*` after a build.
+2. **Never** merge or copy branding between tenants (Melamedia icons ≠ MelamedLaw icons).
+3. Branding updates go only in `frontend/public/tenants/<tenant>/` on the relevant branch.
+4. After local builds, run `frontend/scripts/restore-public-baseline.sh` to clean the worktree.
+5. Product fixes: land on `main` first, then propagate via merge — not by copying files between tenant folders.
+
+## Build and deploy commands
+
+```bash
+cd frontend && npm run build:melamedia   # QA
+cd frontend && npm run build:melamedlaw  # client (after QA pass)
+
+./scripts/deploy-tenant-frontend.sh melamedia
+./scripts/deploy-tenant-frontend-melamedlaw.sh
+./scripts/deploy-tenant-backend.sh <tenant>
+```
+
+See [docs/DEPLOY_TENANTS_FROM_MAIN.md](../docs/DEPLOY_TENANTS_FROM_MAIN.md).
