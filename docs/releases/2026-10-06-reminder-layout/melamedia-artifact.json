@@ -1,0 +1,11 @@
+{
+  "tenant": "melamedia",
+  "sourceCommit": "f1b072dfb31f93c0fe70395cb714d6b017830250",
+  "build": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/reminder-layout-qa-20261006/frontend/build",
+  "archive": "melamedia.tar.gz",
+  "archiveSha256": "dfff92415216b9859c1b76d83cb21f9623914c90ee53aaa5bd1cc4fe4ad11ea8",
+  "manifest": "melamedia-files.json",
+  "manifestSha256": "8dc56045f00a5efad6330f1bd36c48907b364fd79e0d28d2877b58d2e6e098f1",
+  "files": 237,
+  "scope": "frontend only; no API, database, scheduling or native changes"
+}

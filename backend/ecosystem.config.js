@@ -1,0 +1,39 @@
+module.exports = {
+    apps: [
+        {
+            name: 'idm-api',
+            cwd: __dirname,
+            script: 'server.js',
+
+            // Env vars load via dotenv in app.js (backend/.env). Do NOT use PM2 env_file here —
+            // it can hang or mis-parse tenant .env files that contain Hebrew / special characters.
+            // Keep fork mode by default (safe with in-memory rate limiting/caching).
+            // If you later move shared state to Redis, you can switch to `exec_mode: 'cluster'`.
+            exec_mode: 'fork',
+            instances: 1,
+            autorestart: true,
+            watch: false,
+            max_memory_restart: '512M',
+            // Stop retrying a persistently broken startup (for example, a syntax error).
+            min_uptime: '10s',
+            max_restarts: 15,
+            restart_delay: 3000,
+            exp_backoff_restart_delay: 200,
+            time: true,
+
+            out_file: '/var/log/idm-api/out.log',
+            error_file: '/var/log/idm-api/err.log',
+            log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+            merge_logs: true,
+
+            // All tenant-specific values (DB creds, secrets, SMTP, R2) live in backend/.env
+            // (gitignored, root-owned on the server). Do NOT put real secrets here.
+            // Only non-secret, non-overriding defaults belong in env_production.
+            env_production: {
+                NODE_ENV: 'production',
+                IS_PRODUCTION: 'true',
+                TRUST_PROXY: 'true',
+            },
+        },
+    ],
+};
