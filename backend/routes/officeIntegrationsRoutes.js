@@ -25,15 +25,15 @@ router.get('/cases/:caseId', require('../middlewares/requireFirmAction')('cases'
     res.json({ updates: updates.rows, group: group.rows[0] || null });
 }));
 
-// Office owners may connect their number. Only platform administrators set the
-// automation policy and recipient list. A target office is accepted only after PA auth.
+// Platform Settings belongs to the office owner. Shared-deployment owners manage
+// their own connection and automation; only provider admins may target another office.
 router.use((req, res, next) => {
-    if (req.isOfficeOwner && req.firmTenantId) { req.integrationPolicyAdmin = false; return next(); }
+    if (req.isOfficeOwner && req.firmTenantId) { req.integrationPolicyAdmin = true; return next(); }
     requirePlatformAdmin(req, res, err => { if (err) return next(err); req.integrationPolicyAdmin = true; next(); });
 });
 router.get('/offices', wrap(async (req, res) => {
     const context = { ...productIdentity, demoOnly: process.env.WHATSAPP_DEMO_ONLY === 'true' };
-    if (req.firmTenantId) return res.json({ context, offices: [{ id: req.firmTenantId, name: req.tenant?.name || 'המשרד שלי' }], canConfigurePolicy: false });
+    if (req.firmTenantId) return res.json({ context, offices: [{ id: req.firmTenantId, name: req.tenant?.name || 'המשרד שלי' }], canConfigurePolicy: req.integrationPolicyAdmin });
     if (!isMultiTenantMode()) {
         const name = await require('../services/settingsService').getSetting('firm', 'LAW_FIRM_NAME', process.env.FIRM_DISPLAY_NAME || 'המשרד הנוכחי');
         return res.json({ context, offices: [{ id: 'dedicated', name }], canConfigurePolicy: true });
