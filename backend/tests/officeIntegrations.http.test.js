@@ -47,23 +47,36 @@ function setup(t, { multiTenantMode = true } = {}) {
     });
     return { app, calls };
 }
-test('only platform admin configures recipients; owner connects own office; staff and clients denied', async t => {
+test('office owner manages their own settings without selecting an office; foreign offices and staff are denied', async t => {
     const { app, calls } = setup(t);
     await request(app).get('/integrations').expect(401);
-    for (const who of ['staff', 'client']) await request(app).get('/integrations').set('x-test-identity', who).expect(403);
+    for (const who of ['staff', 'client']) {
+        await request(app).get('/integrations').set('x-test-identity', who).expect(403);
+        await request(app).put('/integrations/whatsapp').set('x-test-identity', who).send({ enabled: true }).expect(403);
+    }
     await request(app).get(`/integrations?officeId=${B}`).set('x-test-identity', 'owner').expect(403);
-    await request(app).put('/integrations/whatsapp').set('x-test-identity', 'owner').send({ enabled: true }).expect(403);
-    await request(app).put('/integrations/court').set('x-test-identity', 'owner').send({ enabled: true, syncTime: '08:00' }).expect(403);
-    await request(app).get('/integrations/settings').set('x-test-identity', 'owner').expect(200);
+    for (const path of ['/whatsapp', '/court']) {
+        await request(app).put(`/integrations${path}?officeId=${B}`).set('x-test-identity', 'owner').send({ enabled: true }).expect(403);
+    }
+    const ownSettings = await request(app).get('/integrations/settings').set('x-test-identity', 'owner').expect(200);
+    assert.equal(ownSettings.body.canConfigurePolicy, true);
+    assert.deepEqual(calls.find(c => c.name === 'settingsSnapshot').scope, { mode: 'office', tenantId: A });
+    await request(app).put('/integrations/whatsapp').set('x-test-identity', 'owner').send({ enabled: true }).expect(200);
+    await request(app).put('/integrations/court').set('x-test-identity', 'owner').send({ enabled: true, syncTime: '08:00' }).expect(200);
+    for (const name of ['saveWhatsapp', 'saveCourt']) {
+        const ownWrite = calls.find(c => c.name === name);
+        assert.equal(ownWrite.args[0], A); assert.equal(ownWrite.scope.tenantId, A);
+    }
     await request(app).put(`/integrations/court?officeId=${B}`).set('x-test-identity', 'platform').send({ enabled: true, syncTime: '09:30' }).expect(200);
-    assert.equal(calls.find(c => c.name === 'saveCourt').args[0], B);
+    assert.equal(calls.filter(c => c.name === 'saveCourt').at(-1).args[0], B);
     await request(app).post('/integrations/whatsapp/signup').set('x-test-identity', 'owner').expect(200);
     const signup = calls.find(c => c.name === 'startSignup');
     assert.deepEqual(signup.args, [A, 2]); assert.deepEqual(signup.scope, { mode: 'office', tenantId: A });
     await request(app).put(`/integrations/whatsapp?officeId=${B}`).set('x-test-identity', 'platform').send({ enabled: false }).expect(200);
-    assert.equal(calls.find(c => c.name === 'saveWhatsapp').args[0], B);
-    assert.equal(calls.find(c => c.name === 'saveWhatsapp').scope.tenantId, B);
+    assert.equal(calls.filter(c => c.name === 'saveWhatsapp').at(-1).args[0], B);
+    assert.equal(calls.filter(c => c.name === 'saveWhatsapp').at(-1).scope.tenantId, B);
     await request(app).get('/integrations').set('x-test-identity', 'platform').expect(400);
+    await request(app).get('/integrations/settings').set('x-test-identity', 'platform').expect(400);
     await request(app).get('/integrations/cases/1').set('x-test-identity', 'client').expect(403);
 });
 test('dedicated office can share the product name but foreign office selectors are rejected', async t => {
@@ -72,7 +85,7 @@ test('dedicated office can share the product name but foreign office selectors a
     assert.deepEqual(offices.body.context.organization, { key: 'melamedia', name: 'MelaMedia' });
     assert.deepEqual(offices.body.context.project, { key: 'melamedlaw', name: 'MelamedLaw' });
     assert.deepEqual(offices.body.offices, [{ id: 'dedicated', name: 'MelamedLaw' }]);
-    await request(app).get('/integrations/settings?officeId=dedicated').set('x-test-identity', 'platform').expect(200);
+    await request(app).get('/integrations/settings').set('x-test-identity', 'platform').expect(200);
     assert.equal(calls.find(c => c.name === 'settingsSnapshot').args[0], null);
     for (const officeId of [A, 'MelamedLaw', 'FitBase']) {
         await request(app).put('/integrations/whatsapp').query({ officeId }).set('x-test-identity', 'platform').send({ enabled: true }).expect(404);
