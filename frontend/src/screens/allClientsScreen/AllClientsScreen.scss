@@ -1,0 +1,26 @@
+@use '../../styles/mixins' as m;
+@use '../../styles/variables' as v;
+
+.lw-allClientsScreen__topRow {
+    @include m.row(v.$space-3, no-wrap);
+    justify-content: center;
+    max-width: 100%;
+    margin: 1rem 1rem 0.5rem;
+}
+
+.lw-allClientsScreen__search {
+    min-inline-size: 0;
+}
+
+.lw-allClientsScreen__footer {
+    display: flex;
+    justify-content: center;
+    align-self: center;
+    gap: 0.75rem;
+}
+
+.lw-allClientsScreen__footer>.lw-textButtonWithTwoOptionalIcons {
+    margin: 0.5rem 0;
+    align-self: center;
+    min-block-size: 2.75rem;
+}

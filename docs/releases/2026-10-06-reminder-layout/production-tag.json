@@ -1,0 +1,10 @@
+{
+  "tag": "PROD_06_10_2026_LIROY_REMINDER_LAYOUT",
+  "target": "9c0987bd8e9df7f88bd4c9c234068e63a12e6fcb",
+  "remoteVerified": true,
+  "refs": [
+    "27a7e1fb5bdec4af3841746278d7522be66247c7\trefs/tags/PROD_06_10_2026_LIROY_REMINDER_LAYOUT",
+    "9c0987bd8e9df7f88bd4c9c234068e63a12e6fcb\trefs/tags/PROD_06_10_2026_LIROY_REMINDER_LAYOUT^{}"
+  ],
+  "olderTagsUnchanged": true
+}

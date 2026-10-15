@@ -1,0 +1,25 @@
+.lw-signingTaskIssue {
+    &__dialog {
+        color: var(--lw-color-text, #303b4e);
+        background: #fff;
+        border: 1px solid #dce3ed;
+        border-radius: 20px;
+        padding: 24px;
+        width: min(560px, calc(100vw - 32px));
+        max-height: calc(100dvh - 32px);
+        overflow: auto;
+        box-sizing: border-box;
+        text-align: start;
+        &[dir="ltr"] { --lw-simpleTextArea-direction: ltr; }
+        &[dir="rtl"] { --lw-simpleTextArea-direction: rtl; }
+        &::backdrop { background: rgb(18 31 50 / 45%); }
+        h2 { margin: 0 0 16px; font-size: 22px; }
+        p, blockquote { overflow-wrap: anywhere; white-space: pre-wrap; }
+        blockquote { margin: 16px 0; padding-inline-start: 12px; border-inline-start: 3px solid #dce3ed; }
+        &[dir] .lw-simpleTextArea__field { direction: var(--lw-simpleTextArea-direction); text-align: start; min-height: 100px; }
+        button { min-height: 44px; }
+    }
+    &__buttons { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+    &__notice { text-align: start; padding: 16px; background: #f5f7fa; border-radius: 12px; overflow-wrap: anywhere; }
+    &__note { white-space: pre-wrap; overflow-wrap: anywhere; }
+}
