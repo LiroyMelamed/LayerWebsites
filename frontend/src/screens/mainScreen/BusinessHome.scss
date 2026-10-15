@@ -53,19 +53,14 @@
     .lw-businessHome__empty { padding: 1.25rem .25rem; font-size: .9rem; line-height: 1.8; color: var(--business-muted); }
 
     .lw-commandCenter__aiBriefSparkle { display: block; padding: 0; margin: 0; min-inline-size: 0; }
-    .lw-commandCenter__aiBriefSparkleRing { padding: 0; border-radius: 1rem; overflow: visible; &::before { content: none; animation: none; } }
+    .lw-commandCenter__aiBriefSparkleRing { border-radius: 1rem; }
     .lw-commandCenter__aiBriefCard.lw-simpleCard {
         padding: 1.5rem;
-        border: 1px solid var(--business-line);
-        border-block-start: 3px solid #547a83;
-        background: white;
-        box-shadow: 0 3px 12px #2a436507;
-        &:hover { box-shadow: 0 3px 12px #2a436507; }
-        .lw-businessHome__sectionTitle { padding-inline-end: 3rem; }
-    }
-    .lw-commandCenter__aiBriefSparkle .lw-commandCenter__aiBriefBadge {
-        top: 1.5rem; inset-inline-end: 1.5rem; inset-inline-start: auto;
-        transform: none; border: none; background: #edf5f5; color: #365f68; box-shadow: none;
+        border: none;
+        border-radius: .875rem;
+        background: linear-gradient(145deg, #ffffff 0%, #f8fbff 55%, #f7fafc 100%);
+        box-shadow: inset 0 1px 0 #ffffffd9;
+        &:hover { box-shadow: inset 0 1px 0 #ffffffd9; }
     }
     .lw-commandCenter__aiBriefCard .lw-commandCenter__aiBriefContent { gap: 1rem; }
     .lw-commandCenter__aiBriefContent > * { line-height: 1.85; }
@@ -76,8 +71,86 @@
     .lw-commandCenter__statTile { min-block-size: 5rem; padding: 1rem 1.25rem; gap: .3rem; }
     .lw-businessHome__calendar { min-inline-size: 0; }
     .lw-calendarWidget--home { margin: 0; padding: 1.5rem; }
-    .lw-commandCenter__grid { padding: 0; gap: 1.5rem; align-items: start; }
+    .lw-commandCenter__grid { padding: 0; gap: 1.5rem; align-items: stretch; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .lw-commandCenter__grid--single { grid-template-columns: 1fr; }
     .lw-commandCenter__section { margin: 0; padding: 1.5rem; }
+
+    .lw-businessHome__operations {
+        min-inline-size: 0;
+        &:hover { transform: none; }
+        .lw-commandCenter__sectionHeader { align-items: flex-start; flex-wrap: wrap; gap: .75rem; padding-block-end: 1.25rem; border-block-end: 1px solid var(--business-line); }
+        .lw-businessHome__sectionTitle { margin: 0; flex: 1; min-inline-size: 12rem; }
+        .lw-commandCenter__panelBody { gap: 1.25rem; }
+        button { font: inherit; color: inherit; text-align: start; cursor: pointer; }
+    }
+    .lw-businessHome__sectionLink {
+        display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+        margin-inline-start: auto; min-block-size: 36px; padding: .4rem .6rem;
+        border: 1px solid var(--business-line); border-radius: .6rem; background: white; font-size: .75rem !important; white-space: nowrap;
+        &:hover { background: #f1f5f9; }
+    }
+    .lw-commandCenter__managerChartToggle {
+        display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .25rem;
+        padding: .25rem; border-radius: .75rem; background: #f1f5f9;
+    }
+    .lw-commandCenter__managerChartToggleBtn {
+        display: flex; align-items: center; justify-content: center; min-block-size: 40px; padding: .5rem;
+        border: 1px solid transparent; border-radius: .55rem; background: transparent;
+        &--active { background: white; border-color: var(--business-line); box-shadow: 0 2px 4px #2a436509; font-weight: 700; }
+    }
+    .lw-commandCenter__managerChart { display: flex; flex-direction: column; align-items: stretch; gap: 1rem; }
+    .lw-commandCenter__managerChartDonut {
+        display: flex; justify-content: center; align-self: center; inline-size: 11rem; max-inline-size: 100%; padding-block: .25rem;
+    }
+    .lw-commandCenter__managerChartLegend { inline-size: 100%; gap: .5rem; }
+    .lw-commandCenter__managerChartLegendItem {
+        display: flex; align-items: center; gap: .75rem; inline-size: 100%; min-block-size: 68px;
+        padding: .8rem; background: #f8fafc; border: 1px solid transparent; border-radius: .75rem;
+        &:hover { background: #f1f5f9; border-color: var(--business-line); }
+    }
+    .lw-businessHome__managerAvatar {
+        display: grid; place-items: center; flex: 0 0 2.25rem; block-size: 2.25rem; border-radius: .75rem;
+        background: white; border: 2px solid var(--manager-color); font-weight: 700;
+    }
+    .lw-commandCenter__managerChartLegendBody { gap: .3rem; }
+    .lw-businessHome__managerShare {
+        display: block; inline-size: 100%; block-size: 4px; margin-block-start: .2rem; border-radius: 1rem; overflow: hidden; background: #e2e8f0;
+        > span { display: block; height: 100%; background: var(--manager-color); border-radius: inherit; }
+    }
+    .lw-commandCenter__managerChartLegendMeta { min-inline-size: 2.5rem; > :first-child { font-size: 1.125rem; } }
+    .lw-commandCenter__unassignedBanner {
+        display: flex; align-items: center; gap: .6rem; inline-size: 100%; border: 1px solid #f1d8d8; padding: .9rem; border-radius: .75rem;
+        color: #9b2c2c; background: #fff8f8;
+        .lw-businessHome__rowArrow { margin-inline-start: auto; }
+    }
+    .lw-commandCenter__signingStats { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; margin: 0; }
+    .lw-commandCenter__signingStat {
+        display: flex; align-items: flex-start; gap: .4rem; padding: .85rem .65rem; border-radius: .75rem;
+        background: #f8fafc; border: 1px solid var(--business-line);
+        svg { color: #64748b; }
+        > :nth-child(2) { font-size: 1.5rem; line-height: 1.25; font-variant-numeric: tabular-nums; }
+        &.is-signal-signing-expiring { background: #fffbf2; border-color: #f0e6ce; }
+        &.is-signal-signing-expired { background: #fff7f7; border-color: #efdddd; }
+    }
+    .lw-commandCenter__signingQueue { gap: .65rem; }
+    .lw-commandCenter__signingRow {
+        display: flex; flex-direction: row; align-items: center; gap: .75rem;
+        inline-size: 100%; padding: 1rem; border: 1px solid var(--business-line); border-radius: .8rem; background: white;
+        &:hover { background: #f8fafc; }
+    }
+    .lw-businessHome__fileIcon { display: grid; place-items: center; flex: 0 0 2.5rem; block-size: 2.75rem; border-radius: .65rem; background: #edf3f7; }
+    .lw-businessHome__signingDetails { display: flex; flex: 1; flex-direction: column; align-items: flex-start; min-inline-size: 0; gap: .3rem; > * { max-inline-size: 100%; } }
+    .lw-commandCenter__signingRowTop { inline-size: 100%; }
+    .lw-commandCenter__statusPill { display: inline-flex; font-size: .7rem; padding: .15rem .5rem; margin-block-start: .25rem; }
+    .lw-businessHome__rowArrow { flex-shrink: 0; color: var(--business-muted); }
+    .lw-commandCenter__signingRemindAll { padding-block-start: 1rem; border-block-start: 1px solid var(--business-line); }
+    .lw-businessHome__signingEmpty {
+        display: flex; flex-direction: column; align-items: center; gap: .8rem; padding: 2.5rem 1rem;
+        border: 1px dashed var(--business-line); border-radius: .8rem; color: var(--business-muted); font-size: .875rem; line-height: 1.7; text-align: center;
+        svg { color: #547a83; }
+    }
+    &[dir='ltr'] .lw-businessHome__rowArrow, &[dir='ltr'] .lw-businessHome__sectionLink svg,
+    :dir(ltr) .lw-businessHome__rowArrow, :dir(ltr) .lw-businessHome__sectionLink svg { transform: rotate(180deg); }
 
     .lw-teamActivity {
         display: flex; flex-direction: column; align-items: stretch; min-inline-size: 0; padding: 1.5rem;
@@ -103,7 +176,7 @@
     .lw-teamActivity__points { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; min-inline-size: 2rem; b { font-size: 1.25rem; font-variant-numeric: tabular-nums; } span { font-size: .7rem; color: var(--business-muted); } }
     .lw-teamActivity__rules { margin-block-start: 1rem; font-size: .8rem; color: var(--business-muted); summary { cursor: pointer; padding-block: .5rem; } p { line-height: 1.8; margin-block-start: .5rem; } }
 
-    @media (max-width: 1100px) { .lw-businessHome__focus { grid-template-columns: 1fr; } }
+    @media (max-width: 1100px) { .lw-businessHome__focus, .lw-commandCenter__grid { grid-template-columns: 1fr; } }
     @media (max-width: 600px) {
         padding: 1rem .75rem 2rem; gap: 1rem;
         .lw-businessHome__header { align-items: flex-start; gap: .5rem; }
@@ -112,7 +185,9 @@
         .lw-commandCenter__summaryChip { min-block-size: 6.25rem; padding: 1rem; }
         .lw-businessHome__focus, .lw-commandCenter__grid { gap: 1rem; }
         .lw-teamActivity, .lw-commandCenter__aiBriefCard.lw-simpleCard, .lw-calendarWidget--home, .lw-commandCenter__section { padding: 1rem; }
-        .lw-commandCenter__aiBriefSparkle .lw-commandCenter__aiBriefBadge { top: 1.2rem; inset-inline-end: 1rem; }
         .lw-commandCenter__statTile { padding: .9rem; }
+        .lw-commandCenter__signingStats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .lw-commandCenter__signingStat { display: grid; grid-template-columns: 1fr auto; gap: .4rem; > :last-child { grid-column: 1 / -1; } }
+        .lw-commandCenter__signingRow { padding: .8rem; gap: .6rem; }
     }
 }
