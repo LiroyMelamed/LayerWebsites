@@ -35,3 +35,13 @@ test('cancel, timeout and unmount clean up without completing a late login', () 
     launchWhatsAppSignup(config, { onComplete, onError }); jest.advanceTimersByTime(180000);
     expect(onError).toHaveBeenCalledTimes(2);
 });
+test('QR uses signup v4 and accepts the coexistence completion without an invented phone ID', () => {
+    const onComplete = jest.fn(), onError = jest.fn();
+    launchWhatsAppSignup({ ...config, flow: 'business_app' }, { onComplete, onError });
+    const [callback, options] = window.FB.login.mock.calls[0];
+    expect(options.extras).toMatchObject({ version: 'v4', sessionInfoVersion: '3', featureType: 'whatsapp_business_app_onboarding' });
+    message({ type: 'WA_EMBEDDED_SIGNUP', event: 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING', data: { waba_id: '123456789' } });
+    callback({ authResponse: { code: 'synthetic-code' } });
+    expect(onComplete).toHaveBeenCalledWith({ state: config.state, code: 'synthetic-code', wabaId: '123456789' });
+    expect(onError).not.toHaveBeenCalled();
+});

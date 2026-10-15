@@ -20,7 +20,7 @@ async function saveCaseCourtNumber(db, caseId, tenantId, value, env = process.en
         DO UPDATE SET is_primary=true WHERE court_case_links.case_id=excluded.case_id RETURNING id`, [tenantId, caseId, number]);
     if (!linked.rows.length) fail('COURT_NUMBER_IN_USE', 'מספר תיק בית המשפט כבר משויך לתיק אחר במשרד', 409);
     // Synthetic updates must never be attached to an ordinary live case.
-    if (target.integration_demo || env.WHATSAPP_DEMO_ONLY === 'true') {
+    if (target.integration_demo || env.COURT_DEMO_CASE_LINKING === 'true' || env.WHATSAPP_DEMO_ONLY === 'true') {
         await db.query('UPDATE court_updates SET case_id=$1 WHERE law_firm_tenant_id IS NOT DISTINCT FROM $2 AND court_number=$3 AND is_demo=true', [caseId, tenantId, number]);
     }
 }

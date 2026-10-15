@@ -1,11 +1,12 @@
 'use strict';
 const { inviteLink } = require('./validation');
+const { deliveryAllowed } = require('./deliveryPolicy');
 
 function createGroupWorker(service) {
     const { pool, tx, connection, provider, env } = service;
     function canDispatch(c, job) {
         return c?.enabled && c.settings.mode === job.mode && (job.mode === 'demo' ||
-            (env.WHATSAPP_DEMO_ONLY !== 'true' && env.WHATSAPP_LIVE_ENABLED === 'true' && c.status === 'ready' && c.secret_ciphertext &&
+            (deliveryAllowed(env) && c.settings.connectionType !== 'business_app' && c.status === 'ready' && c.secret_ciphertext &&
              c.phone_number_id === job.phone_number_id && c.waba_id === job.waba_id &&
              (!c.token_expires_at || new Date(c.token_expires_at) > new Date())));
     }

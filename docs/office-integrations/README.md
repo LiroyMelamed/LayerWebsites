@@ -1,6 +1,18 @@
 # Office connections: Net HaMishpat demo and official WhatsApp
 
-Implemented on `codex/office-integrations`, based on `main`, and deployed to Melamedia QA. Validation uses synthetic court data and fake WhatsApp providers; QA blocks real account onboarding and message delivery.
+Implemented on `codex/office-integrations`, based on `main`, and deployed to Melamedia QA. Validation uses synthetic court data and fake WhatsApp providers. Connection-only QA permits an explicitly authorized real WhatsApp signup while blocking all messages and group creation.
+
+## Official QR connection test (2026-10-15)
+
+The office-owner screen offers **Connect WhatsApp with QR**, using Embedded Signup **v4**, session information v3 and `featureType=whatsapp_business_app_onboarding`. This links a number already active in WhatsApp Business; a brand-new number must first be activated on the phone. The QR is issued by Meta inside its flow, subject to eligibility; it is not an unofficial linked-device session. Business verification for MelaMedia is currently **In review** and the Tech Provider/App Review prerequisites remain incomplete. Availability for the app's admin must be tested; external customer readiness is not claimed.
+
+QA flags: `WHATSAPP_DEMO_ONLY=false`, `WHATSAPP_CONNECT_ONLY=true`, `WHATSAPP_SIGNUP_FLOW=business_app`, `WHATSAPP_LIVE_ENABLED=false`, `WHATSAPP_WORKER_ENABLED=false`, `BACKGROUND_JOBS_ENABLED=false`, `QA_OUTBOUND_MODE=noop`, empty `QA_OUTBOUND_ALLOW`. Provider, enqueue and worker independently enforce the send restriction. The demo worker still runs simulations with `WHATSAPP_DEMO_WORKER_ENABLED=true`. `COURT_DEMO_CASE_LINKING=true` preserves synthetic court testing independently of WhatsApp authentication.
+
+Coexistence completion handles `FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING`, verifies the token's app/WABA grants and resolves an omitted phone ID only when exactly one verified app number exists. It never registers that phone again. The encrypted authorization is saved in the authenticated office before the required `smb_app_data` contacts/history handshake, with no blind POST retries. A handshake failure remains visible as `needs_attention`; checking connection does not retry it. Subscribe to `account_update`, `history`, `smb_app_state_sync` and `smb_message_echoes` before testing. Signed callbacks keep only synchronization status and discard contact/chat content; this is a connection test, not a conversation inbox. Decline history sharing in the Meta flow. Full conversation mirroring is outside this test.
+
+Connecting is separate from group eligibility. Coexistence accounts cannot enable the existing group API automation. Local disconnect deletes the saved grant; unlinking the Business app itself is done on the phone under Settings → Account → Business Platform. No office is connected until the person completes Meta's authorization on their phone.
+
+Official references: [Business app onboarding](https://developers.facebook.com/documentation/business-messaging/whatsapp/embedded-signup/onboarding-business-app-users), [Embedded Signup implementation](https://developers.facebook.com/documentation/business-messaging/whatsapp/embedded-signup/implementation).
 
 ## Company, product and customer identity
 

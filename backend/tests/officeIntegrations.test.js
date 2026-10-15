@@ -43,6 +43,35 @@ async function fixture(t) {
 }
 const policy = { enabled: true, mode: 'demo', recipients: ['0501234567'], templateName: '', templateLanguage: 'he' };
 
+test('QR authorization is saved per office before sync; a failed handshake is visible and cannot enable delivery', async t => {
+    const { pool, provider } = await fixture(t);
+    const config = { ...env, WHATSAPP_CONNECT_ONLY: 'true', WHATSAPP_SIGNUP_FLOW: 'business_app' };
+    const service = createIntegrationService({ pool, provider, env: config });
+    const original = provider.completeSignup;
+    provider.completeSignup = async input => ({ ...await original(input), connectionType: 'business_app' });
+    let syncCalls = 0;
+    provider.syncBusinessApp = async (c, token) => { syncCalls++; assert.ok(c.secret_ciphertext); assert.equal(c.law_firm_tenant_id, A); assert.equal(token, 'private-access-token'); throw Error('synthetic uncertain failure'); };
+    provider.connectionHealth = async () => ({ connected: true });
+    const session = await service.startSignup(A, 1);
+    assert.equal(session.flow, 'business_app'); assert.equal(session.liveEnabled, false);
+    await service.completeSignup(A, 1, { state: session.state, phoneId: '123456789', wabaId: '987654321' });
+    const snapshot = await service.settingsSnapshot(A);
+    assert.equal(snapshot.whatsapp.connected, true); assert.equal(snapshot.whatsapp.enabled, false);
+    assert.equal(snapshot.whatsapp.settings.appSync, 'needs_attention');
+    assert.equal((await service.settingsSnapshot(B)).whatsapp, null);
+    await service.saveWhatsapp(A, { ...policy, enabled: false });
+    assert.equal((await service.settingsSnapshot(A)).whatsapp.settings.connectionType, 'business_app');
+    assert.deepEqual(await service.checkWhatsapp(A), { status: 'connected' });
+    assert.equal(syncCalls, 1, 'Readiness checks must not retry uncertain sync requests');
+    await assert.rejects(service.saveWhatsapp(A, { ...policy, enabled: true, mode: 'live', templateName: 'invite' }), { errorCode: 'WHATSAPP_NOT_READY' });
+    const worker = createGroupWorker(service);
+    const c = await service.connection(pool, A, 'whatsapp');
+    await pool.query(`UPDATE office_integrations SET enabled=true,status='ready',settings=settings || '{"mode":"live"}'::jsonb WHERE id=$1`, [c.id]);
+    const caseId = (await pool.query(`INSERT INTO cases(law_firm_tenant_id,casename) VALUES($1,'Synthetic connection-only case') RETURNING caseid`, [A])).rows[0].caseid;
+    assert.equal(await service.tx(db => service.enqueueCase(db, caseId, A)), null);
+    await worker.processOffice(A);
+});
+
 test('daily court schedule runs once across concurrent ticks and restart, in the selected office only', async t => {
     const { service, pool, provider } = await fixture(t);
     const start = new Date('2026-10-15T04:00:00Z'), due = new Date('2026-10-15T05:00:00Z');
@@ -115,7 +144,7 @@ test('QA case form mapping routes demo updates, edits detach old updates, live c
     await service.tx(db=>saveCaseCourtNumber(db,caseId,A,'90001-10-26',{}));
     await service.syncCourt(A);
     assert.ok((await service.snapshot(A)).updates.every(u=>!u.case_id),'Synthetic feed must not attach to live cases');
-    const qaEnv = {...env,WHATSAPP_DEMO_ONLY:'true'};
+    const qaEnv = {...env,COURT_DEMO_CASE_LINKING:'true',WHATSAPP_CONNECT_ONLY:'true'};
     await service.tx(db=>saveCaseCourtNumber(db,caseId,A,'90002-10-26',qaEnv));
     assert.equal((await service.snapshot(A)).updates.find(u=>u.court_number==='90002-10-26').case_id,caseId);
     await service.tx(db=>saveCaseCourtNumber(db,caseId,A,null,qaEnv));
@@ -276,7 +305,7 @@ test('official Meta request contract uses groups + group_id template invitations
     const c = { phone_number_id: '123456789', settings: { templateParameters: ['Office'] } };
     await provider.createGroup(c, 'token', { subject: 'Case' });
     await provider.invite(c, 'token', { group_id: 'group', template_name: 'invite', template_language: 'he' }, '+972501234567');
-    assert.match(requests[0].url, /\/v25.0\/123456789\/groups$/);
+    assert.match(requests[0].url, /\/v26.0\/123456789\/groups$/);
     assert.equal(JSON.parse(requests[0].options.body).join_approval_mode, 'auto_approve');
     const invitation = JSON.parse(requests[1].options.body);
     assert.equal(invitation.template.components[0].parameters[0].group_id, 'group');
@@ -397,7 +426,7 @@ test('Meta onboarding verifies ownership, registers and subscribes; readiness us
         return { ok: true, status: 200, json: async () => data };
     } });
     const signup = await provider.completeSignup({ code: 'test-signup-code', phoneId: '123456789', wabaId: '987654321' });
-    assert.equal(signup.eligible, true); assert.equal(signup.token, 'private');
+    assert.equal(signup.connectionType, 'cloud'); assert.equal(signup.token, 'private');
     assert.ok(requests.includes('123456789/register')); assert.ok(requests.includes('987654321/subscribed_apps'));
     assert.deepEqual(await provider.readiness({ phone_number_id: '123456789', waba_id: '987654321', settings: { templateName: 'invite', templateLanguage: 'he' } }, signup.token), { eligible: true, templateReady: true });
 });
