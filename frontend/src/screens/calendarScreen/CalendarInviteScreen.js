@@ -60,6 +60,10 @@ export default function CalendarInviteScreen() {
         (async () => {
             try {
                 const res = await ApiUtils.get(`calendar/invite/${encodeURIComponent(token)}`);
+                if (res?.success === false || (res?.status && res.status !== 200)) {
+                    if (!cancelled) setError(res?.data?.code === "EVENT_CANCELLED" ? t("calendar.meetingCancelled") : res?.data?.message || t("calendar.inviteNotFound"));
+                    return;
+                }
                 const data = res?.data?.invite || res?.invite;
                 if (!cancelled) {
                     if (!data) setError(t("calendar.inviteNotFound"));
@@ -83,7 +87,16 @@ export default function CalendarInviteScreen() {
         setAnim(action === "accept" ? "accept" : "decline");
         try {
             const res = await ApiUtils.post(`calendar/invite/${encodeURIComponent(token)}`, { action });
-            const next = res?.data?.status || res?.status;
+            const next = res?.data?.status;
+            if (res?.success === false || !["accepted", "declined"].includes(next)) {
+                setAnim("");
+                if (res?.data?.code === "EVENT_CANCELLED") {
+                    setInvite(null);
+                    setError(t("calendar.meetingCancelled"));
+                }
+                toastError(res?.data?.message || t("calendar.inviteResponseError"));
+                return;
+            }
             await new Promise((r) => setTimeout(r, 480));
             if (next) setStatus(next);
             toastSuccess(action === "accept" ? t("calendar.inviteStatusAccepted") : t("calendar.inviteStatusDeclined"));

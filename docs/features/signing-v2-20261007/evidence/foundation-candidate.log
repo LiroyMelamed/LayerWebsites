@@ -1,0 +1,116 @@
+✔ A4 rotation 0: absolute rectangle and y-flip (0.565375ms)
+✔ rotation 0 on a 400x800 page: exact transform and rectangle (0.080375ms)
+✔ CropBox smaller than MediaBox with non-zero origin: origin is carried (0.309958ms)
+✔ rotation 90: axes swap and rectangle is exact (0.064041ms)
+✔ rotation 180: exact transform and rectangle (0.050208ms)
+✔ rotation 270: exact transform and rectangle (0.042625ms)
+✔ each rotation puts the PDF origin in the expected visual corner (0.077834ms)
+✔ reversed box coordinates are normalized before use (0.061875ms)
+✔ CropBox larger than MediaBox is clipped, not trusted (0.042834ms)
+✔ CropBox disjoint from or degenerate against MediaBox falls back to MediaBox (0.073333ms)
+✔ resolveViewBox and normalizeRect behave as documented (0.210083ms)
+✔ rotation is snapped exactly as pdfjs does (0.037125ms)
+✔ zero-area pages are rejected rather than producing Infinity (0.042333ms)
+✔ UserUnit does not affect the transform (locks the exclusion rationale) (0.0785ms)
+✔ visual -> pdf -> visual round-trips for every rotation and box shape (0.165208ms)
+✔ identical drop point yields identical 800-space coords at widths 800/1000/1400 (0.242583ms)
+✔ clientPointToVisual subtracts the page origin and rejects unmeasured widths (0.058625ms)
+✔ BASE_RENDER_WIDTH is the documented 800 (0.027791ms)
+✔ pdf-lib and pdfjs agree: A4 rotation 0 (238.061208ms)
+✔ pdf-lib and pdfjs agree: rotation 90 (3.783375ms)
+✔ pdf-lib and pdfjs agree: rotation 180 (4.356459ms)
+✔ pdf-lib and pdfjs agree: rotation 270 (1.153917ms)
+✔ pdf-lib and pdfjs agree: CropBox with non-zero origin (1.287875ms)
+✔ pdf-lib and pdfjs agree: inherited CropBox (1.985958ms)
+✔ pdf-lib and pdfjs agree: CropBox larger than MediaBox (1.313084ms)
+✔ pdf-lib and pdfjs agree: rotated page with CropBox (0.977917ms)
+✔ inherited CropBox is actually inherited, not silently defaulted (0.755875ms)
+✔ template round-trip retains exact fractional signature coordinates without live signer identity (2.544625ms)
+✔ template rejects unassigned roles, invalid coordinates and silently reused lawyer stamps (0.544375ms)
+✔ template rejects duplicate role and document identities (0.173084ms)
+✔ actual rotated/cropped page bounds govern field acceptance (0.303792ms)
+✔ idempotency fingerprint is stable across object key order and changes with content (0.438083ms)
+{"event":"auth_missing_token","method":"GET","path":"/api/signing-templates/f90270b2-6560-402e-af90-b2ba0d939164"}
+[signing] publicSignFileBatch ok {
+  signingFileId: 85,
+  count: 1,
+  remaining: 1,
+  timings: { uploadMs: 0, dbMs: 2, totalMs: 11 }
+}
+[signing] publicSignFileBatch ok {
+  signingFileId: 86,
+  count: 1,
+  remaining: 1,
+  timings: { uploadMs: 0, dbMs: 3, totalMs: 11 }
+}
+[signing] publicSignFileBatch ok {
+  signingFileId: 85,
+  count: 1,
+  remaining: 0,
+  timings: { uploadMs: 0, dbMs: 3, totalMs: 15 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=147 for file 85
+[signingFinalize] done { signingFileId: 85, ms: 105 }
+[signing] publicSignFileBatch ok {
+  signingFileId: 86,
+  count: 1,
+  remaining: 0,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 7 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=148 for file 86
+[signingFinalize] done { signingFileId: 86, ms: 14 }
+[signing] publicSignFileBatch ok {
+  signingFileId: 87,
+  count: 1,
+  remaining: 0,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 7 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=147 for file 87
+[signingFinalize] done { signingFileId: 87, ms: 15 }
+[signing] publicSignFileBatch ok {
+  signingFileId: 88,
+  count: 1,
+  remaining: 0,
+  timings: { uploadMs: 0, dbMs: 1, totalMs: 8 }
+}
+[signingFinalize] DOC_SIGNED attachments ready: count=2
+[signingFinalize] Notified signer userId=147 for file 88
+[signingFinalize] done { signingFileId: 88, ms: 23 }
+✔ templates, immutable bulk dispatch and manifest-bound shared OTP use the released signing engine (3252.361834ms)
+▶ v2 authoring versions, explicit identities, scoped lookup and frozen approval inputs
+  ✔ incomplete draft autosave uses compare-and-swap; published version cannot be edited (41.796875ms)
+  ✔ shared phone and email are two people until the office explicitly selects an existing person (17.389666ms)
+  ✔ all-firm viewing does not grant editing other owners templates (3.531875ms)
+  ✔ a changed person name after preview requires a new approval preview (13.559208ms)
+  ✔ legacy template APIs cannot reopen v2 templates (50.431583ms)
+  ✔ ready artifact checksum and object key cannot be replaced (6.499709ms)
+✔ v2 authoring versions, explicit identities, scoped lookup and frozen approval inputs (167.963625ms)
+✔ canonical snapshots are deterministic, reject lossy JSON and keep exact identifiers/decimal amounts (2.574708ms)
+✔ compiler creates immutable personalized snapshots and counts one task per document/participation, not spots (1.679916ms)
+✔ 200 employees support 600, 1200 and 2000 documents; technical budgets apply beyond the UI (202.421708ms)
+✔ unknown people, changed sources, overflow geometry and unknown data keys are blockers (0.964375ms)
+✔ optional role needs an authored inactive treatment; informational annex is never counted signed (1.625833ms)
+✔ two named corporate representatives need distinct verified people and current scoped authority (0.654333ms)
+▶ v2 set-based persistence, isolation, retry and durable worker fences
+  ✔ all 200 packages, 600 docs/tasks and 1200 jobs are durable at response; no sends or source reads (185.820084ms)
+  ✔ lost response retry returns same submission, conflicting payload rejects, new connection sees all children (10.634292ms)
+  ✔ quota failure rolls back everything and immutable versions reject edits (36.863959ms)
+  ✔ foreign office data cannot join a revision even through direct SQL (20.727875ms)
+  ✔ concurrent claims never duplicate a lease; expired worker cannot commit an artifact (23.9405ms)
+  ✔ dependencies block activation; interrupted provider dispatch is uncertain, never blindly retried (42.625291ms)
+✔ v2 set-based persistence, isolation, retry and durable worker fences (386.198209ms)
+ℹ {"workload":"200x3","elapsedMs":183.272125,"queries":20,"representativeInfrastructure":false,"sampleCount":1}
+✔ real worker PDF preparation persists verified artifacts and leaves later activation blocked until preflight (1677.823ms)
+✔ source cache shares only immutable verified source bytes and never mutable personal data (0.754875ms)
+✔ real Chromium text shaping/overflow and PDF geometry across Hebrew, Arabic, English and rotated crop boxes (1542.899375ms)
+ℹ tests 56
+ℹ suites 0
+ℹ pass 56
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3431.161625

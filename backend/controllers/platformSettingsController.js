@@ -16,6 +16,12 @@ const ACTIVE_SENDER_NUMBER_KEY = 'INFORU_SENDER_NUMBER'; // verified phone sende
 const PENDING_SENDER_KEY = 'INFORU_SENDER_PHONE_PENDING';
 const PENDING_AT_KEY = 'INFORU_SENDER_PHONE_PENDING_REQUESTED_AT';
 const PENDING_BY_KEY = 'INFORU_SENDER_PHONE_PENDING_REQUESTED_BY';
+const RETIRED_CONSENT_KEY = 'SHOW_PUBLIC_SIGNING_CONSENT';
+const isRetiredConsentSetting = (category, key) => category === 'signing' && key === RETIRED_CONSENT_KEY;
+const retiredConsentError = {
+    code: 'CONSENT_SETTING_RETIRED',
+    message: 'נדרש אישור מפורש לפני חתימה. לא ניתן לבטל את בקשת ההסכמה.',
+};
 
 /**
  * Validate a candidate InforU sender name.
@@ -41,7 +47,9 @@ const getAllSettings = async (req, res) => {
     try {
         const settings = await settingsService.getAllSettings();
         const channels = await settingsService.getNotificationChannels();
-        return res.json({ settings, channels });
+        const signing = Object.fromEntries(Object.entries(settings.signing || {})
+            .filter(([key]) => key !== RETIRED_CONSENT_KEY));
+        return res.json({ settings: { ...settings, signing }, channels });
     } catch (err) {
         console.error('[platformSettings] getAllSettings error:', err);
         return res.status(500).json({ message: 'שגיאה בטעינת הגדרות' });
@@ -58,6 +66,9 @@ const updateSettings = async (req, res) => {
 
         // Validate
         for (const s of settings) {
+            if (isRetiredConsentSetting(s.category, s.key)) {
+                return res.status(409).json(retiredConsentError);
+            }
             if (!s.category || !s.key) {
                 return res.status(400).json({ message: `הגדרה חסרה category או key` });
             }
@@ -128,6 +139,9 @@ const updateSettings = async (req, res) => {
 const updateSingleSetting = async (req, res) => {
     try {
         const { category, key, value } = req.body;
+        if (isRetiredConsentSetting(category, key)) {
+            return res.status(409).json(retiredConsentError);
+        }
         if (!category || !key) {
             return res.status(400).json({ message: 'נדרש category ו-key' });
         }
@@ -494,7 +508,6 @@ const PUBLIC_SETTINGS_KEYS = [
     'contact:OFFICE_PHONE',
     'contact:WHATSAPP_PHONE',
     'contact:SMS_PHONE',
-    'signing:SHOW_PUBLIC_SIGNING_CONSENT',
     'signing:SIGNING_OTP_ENABLED',
     'signing:SIGNING_REQUIRE_OTP_DEFAULT',
     'calendar:ENABLE_CALENDAR_MODULE',
@@ -506,7 +519,9 @@ const PUBLIC_SETTINGS_KEYS = [
 const getPublicSettings = async (_req, res) => {
     try {
         const all = await settingsService.getAllSettings();
-        const result = {};
+        // Older web clients still read this key. They must request real consent
+        // even when a legacy database row contains false.
+        const result = { SHOW_PUBLIC_SIGNING_CONSENT: true };
         for (const compoundKey of PUBLIC_SETTINGS_KEYS) {
             const [category, key] = compoundKey.split(':');
             const entry = all?.[category]?.[key];

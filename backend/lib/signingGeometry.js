@@ -336,6 +336,23 @@ function pageGeometryFromPdfLibPage(page, baseWidth = BASE_RENDER_WIDTH) {
     });
 }
 
+/** Upright local drawing coordinates (PDF points) -> native page coordinates. */
+function visualDrawingFrame(geometry, box) {
+    const { x, y, width, height } = readBox(box);
+    const origin = visualPointToPdf(geometry, x, y + height);
+    const right = visualPointToPdf(geometry, x + geometry.scale, y + height);
+    const up = visualPointToPdf(geometry, x, y + height - geometry.scale);
+    return {
+        width: width / geometry.scale,
+        height: height / geometry.scale,
+        transform: [
+            right.x - origin.x, right.y - origin.y,
+            up.x - origin.x, up.y - origin.y,
+            origin.x, origin.y,
+        ],
+    };
+}
+
 /** Build geometry for a pdfjs-dist PDFPageProxy. */
 function pageGeometryFromPdfjsPage(page, baseWidth = BASE_RENDER_WIDTH) {
     // page.view is already CropBox clipped to MediaBox and normalized.
@@ -361,5 +378,6 @@ module.exports = {
     pdfPointToVisual,
     resolveViewBox,
     visualBoxToPdfBox,
+    visualDrawingFrame,
     visualPointToPdf,
 };

@@ -10,6 +10,7 @@ export const AllCasesScreenName = "/AllCasesScreen";
 export const AllClientsScreenName = "/AllClientsScreen";
 export const MyCasesScreenName = "/MyCases";
 export const AllMangerScreenName = "/AllManger";
+export const FirmStaffRolesScreenName = "/FirmStaffRoles";
 export const AllCasesTypeScreenName = "/AllCasesType";
 export const SigningManagerScreenName = "/SigningManagerScreen";
 export const SigningSpotsPreviewScreenName = "/SigningSpotsPreview/:signingFileId";
@@ -27,6 +28,8 @@ export const ShortNavRedirectScreenName = "/n/:slug";
 
 export const ClientMainScreenName = "/ClientMainScreen";
 export const ClientCasesScreenName = "/ClientCasesScreen";
+export const ClientDocumentsScreenName = "/ClientDocumentsScreen";
+export const ClientSignedDocumentsScreenName = "/ClientSignedDocumentsScreen";
 export const SigningScreenName = "/SigningScreen";
 export const NotificationsScreenName = "/Notifications";
 export const ProfileScreenName = "/ProfileScreen";
@@ -35,6 +38,8 @@ export const ClientTicketScreenName = "/TicketScreen";
 export const LoginScreenName = "/LoginScreen";
 export const LoginOtpScreenName = "/LoginOtpScreen";
 
+export const BrowserSigningScreenName = "/ViewSignedDocument/Signing";
+export const BrowserSigningLinkScreenName = "/ViewSignedDocument/Link/:slug";
 export const PublicSignScreenName = "/PublicSignScreen";
 export const ShortSignRedirectScreenName = "/s/:slug";
 export const ViewSignedDocumentName = "/ViewSignedDocument";

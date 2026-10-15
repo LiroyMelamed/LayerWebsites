@@ -9,13 +9,13 @@ import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButt
 import { images } from "../../assets/images/images";
 import { LoginStackName } from "../../navigation/LoginStack";
 import { LoginScreenName } from "../loginScreen/LoginScreen";
-import { PublicSignScreenName, ViewSignedDocumentName } from "../../navigation/screenPaths";
+import { BrowserSigningScreenName, ViewSignedDocumentName } from "../../navigation/screenPaths";
 import signingFilesApi from "../../api/signingFilesApi";
 
 import "./PublicSigningScreen.scss";
 
 /**
- * Resolves /s/:slug → PublicSignScreen or ViewSignedDocument (browser only).
+ * Resolves both legacy and browser-only short links without launching an app.
  */
 export default function ShortSignRedirectScreen() {
     const { slug } = useParams();
@@ -46,7 +46,7 @@ export default function ShortSignRedirectScreen() {
                 const dest =
                     purpose === "view"
                         ? `${ViewSignedDocumentName}?token=${encodeURIComponent(nextToken)}`
-                        : `${PublicSignScreenName}?token=${encodeURIComponent(nextToken)}`;
+                        : `${BrowserSigningScreenName}?token=${encodeURIComponent(nextToken)}`;
                 navigate(dest, { replace: true });
             } catch {
                 if (!cancelled) setError(t("signing.invalidLinkTitle", { defaultValue: "קישור לא תקין" }));

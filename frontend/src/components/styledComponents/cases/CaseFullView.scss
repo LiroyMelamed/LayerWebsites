@@ -1,6 +1,24 @@
 @use '../../../styles/variables' as v;
 @use '../../../styles/mixins' as m;
 
+.lw-caseFullView--readOnly {
+  input,
+  textarea,
+  select,
+  button:not(.lw-cancelButton) {
+    pointer-events: none;
+  }
+
+  .lw-caseFullView__addStageRow,
+  .lw-caseFullView__addClientBtn,
+  .lw-caseFullView__chipRemove,
+  .lw-caseFullView__removeStageBtn,
+  .lw-caseFullView__dragHandle,
+  .lw-caseFullView__arrowBtn {
+    display: none;
+  }
+}
+
 .lw-caseFullView {
   display: flex;
   flex-direction: column;

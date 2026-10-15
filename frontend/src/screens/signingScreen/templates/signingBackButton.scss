@@ -1,0 +1,11 @@
+.lw-signingBack.lw-simpleButton {
+  color: var(--lw-color-primary, #2a4365);
+  width: fit-content;
+  font-size: .875rem;
+  font-weight: 500;
+  text-align: start;
+  .lw-textButtonWithTwoOptionalIcons__content { display: flex; flex-direction: row; align-items: center; gap: .5rem; }
+  svg { flex: 0 0 auto; }
+  &:hover:not(:disabled) span { text-decoration: underline; text-underline-offset: .2em; }
+  &:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+}

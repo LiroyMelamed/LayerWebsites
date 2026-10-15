@@ -1,0 +1,36 @@
+[
+  {
+    "page": 1,
+    "rotation": 90,
+    "expectedImageBounds": [
+      176.25,
+      206.75,
+      381.25,
+      268.25
+    ],
+    "actualImageBounds": [
+      176.25,
+      206.75,
+      381.25,
+      268.25
+    ],
+    "maxDifferencePdfPoints": 0.0
+  },
+  {
+    "page": 2,
+    "rotation": 0,
+    "expectedImageBounds": [
+      43.137499999999996,
+      89.25,
+      162.13750000000002,
+      124.95
+    ],
+    "actualImageBounds": [
+      43.13750076293945,
+      89.25001525878906,
+      162.1374969482422,
+      124.95001220703125
+    ],
+    "maxDifferencePdfPoints": 1.52587890625e-05
+  }
+]

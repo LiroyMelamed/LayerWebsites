@@ -1,0 +1,60 @@
+{
+  "tenant": "morlevy",
+  "sourceCommit": "074ce3f3c4df75035cb51add35f98b5aeca6cde4",
+  "status": "PASS_PUBLIC_RELEASE",
+  "completedUtc": "2026-10-06T12:48:05.039225+00:00",
+  "checks": {
+    "health": {
+      "status": 200
+    },
+    "publicSettings": {
+      "status": 200,
+      "jsonValid": true
+    },
+    "anonymousSigning": {
+      "status": 401
+    },
+    "frontendIndex": {
+      "status": 200,
+      "rawPublicSha256": "967faef88303b6856405c63282fe84b390ecd7a2437933e2c340dc91b011d391",
+      "candidateSha256": "d2c162f7e3f8dc7189ad6e134cc9a4466e823b18ccc852a289ba53db4b641a84",
+      "matchesCandidateAfterOnlyObservedCloudflareBeaconRemoval": true,
+      "hostInjectedBeaconCount": 1
+    },
+    "entryScripts": [
+      {
+        "path": "static/js/vendor-i18n.b91f3333.js",
+        "sha256": "abd29bafb2ed2736ad970ac5878d8c11108dde3fda629de022c94bd7e9da8257",
+        "status": 200
+      },
+      {
+        "path": "static/js/vendor-react.a74c0b3a.js",
+        "sha256": "a9c4eeec4baea064a509c837bb6d7a6b9bca2b4f8e388cf7bf18cd7dab759e64",
+        "status": 200
+      },
+      {
+        "path": "static/js/vendor.531fc9dd.js",
+        "sha256": "22b60449431bc296e346eeb89680ed7dfc56abea04e657a3ecaea556ba8d70da",
+        "status": 200
+      },
+      {
+        "path": "static/js/main.905b1e77.js",
+        "sha256": "82c2b555e25a360defef018e39c3d454d530dbb90ed1bf76519c2a2332d927e7",
+        "status": 200
+      }
+    ],
+    "reminderAssets": [
+      {
+        "path": "static/css/main.2f67e019.css",
+        "sha256": "58b1b922fd11f98e4c1d72377d7288f7d03379333bd566d86171e9f78079219f",
+        "status": 200
+      },
+      {
+        "path": "static/js/558.f9159fab.chunk.js",
+        "sha256": "422fb3797feaadd2d391a81995c9308c89cd34ecdb25000a8487f359fd58611a",
+        "status": 200
+      }
+    ]
+  },
+  "noCustomerWritesOrNotifications": true
+}
