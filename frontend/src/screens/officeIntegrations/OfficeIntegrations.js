@@ -2,6 +2,14 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { officeIntegrationsApi as api } from '../../api/officeIntegrationsApi';
 import { prepareWhatsAppSdk, launchWhatsAppSignup } from '../../services/whatsappEmbeddedSignup';
+import SimpleCard from '../../components/simpleComponents/SimpleCard';
+import SimpleInput from '../../components/simpleComponents/SimpleInput';
+import SimpleTextArea from '../../components/simpleComponents/SimpleTextArea';
+import SimpleCheckbox from '../../components/simpleComponents/SimpleCheckbox';
+import PrimaryButton from '../../components/styledComponents/buttons/PrimaryButton';
+import SecondaryButton from '../../components/styledComponents/buttons/SecondaryButton';
+import StatusNotice from '../../components/ui/StatusNotice';
+import { Text14, TextBold18 } from '../../components/specializedComponents/text/AllTextKindFile';
 import './OfficeIntegrations.scss';
 
 export default function OfficeIntegrations({ embedded = false }) {
@@ -64,50 +72,37 @@ export default function OfficeIntegrations({ embedded = false }) {
             onError: () => { if (current === generation.current) { setSignup(null); setBusy(false); setError(tr('connectionCancelled')); } },
         });
     }
-    const button = (label, onClick, disabled = false, primary = false) => <button type="button" className={primary ? 'oi-primary' : ''} disabled={busy || disabled} onClick={onClick}>{tr(label)}</button>;
+    const button = (label, onClick, disabled = false, primary = false) => {
+        const Button = primary ? PrimaryButton : SecondaryButton;
+        return <Button type="button" disabled={busy || disabled} onPress={onClick}>{tr(label)}</Button>;
+    };
     const formatSyncDate = value => value ? new Date(value).toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }) : tr('notScheduled');
     const price = data?.signup.pricing;
     const money = value => new Intl.NumberFormat('he-IL', { style: 'currency', currency: price?.currency || 'ILS', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value);
     return <section className={`office-integrations ${embedded ? 'oi-embedded' : ''}`} dir="rtl">
-        <header><h1>{tr('title')}</h1><p>{tr('intro')}</p></header>
-        {error && <p role="alert" className="oi-error">{error}</p>}{notice && <p role="status" className="oi-notice">{notice}</p>}
+        <header className="oi-header"><TextBold18 role="heading" aria-level={embedded ? 2 : 1}>{tr('title')}</TextBold18><Text14 className="oi-muted">{tr('intro')}</Text14></header>
+        {error && <StatusNotice embedded>{error}</StatusNotice>}{notice && <p role="status" className="oi-notice">{notice}</p>}
         {!data ? <p role="status">{error ? tr('loadFailed') : tr('loading')}</p> : <>
             <div className="oi-grid">
-                <section className="oi-card"><div className="oi-card-heading"><h2>{tr('courtTitle')}</h2><span className="oi-badge">{tr('demo')}</span></div>
-                    <p>{tr('courtHelp')}</p>
-                    <fieldset disabled={busy || !data.canConfigurePolicy} className="oi-connection-fields">
-                        <label>{tr('connectionName')}<input value={court.label} maxLength={120} onChange={e => setCourt({ ...court, label: e.target.value })} /></label>
-                        <label className="oi-toggle"><input type="checkbox" checked={court.enabled} onChange={e => setCourt({ ...court, enabled: e.target.checked })} />{tr('enableCourt')}</label>
-                        <label className="oi-toggle"><input type="checkbox" checked={court.dailySyncEnabled} onChange={e => setCourt({ ...court, dailySyncEnabled: e.target.checked })} />{tr('dailySync')}</label>
-                        <label>{tr('syncTime')}<input type="time" dir="ltr" value={court.syncTime} required disabled={!court.dailySyncEnabled} onChange={e => setCourt({ ...court, syncTime: e.target.value })} /></label>
-                        <p className="oi-muted">{tr('syncTimeHelp')}</p>
-                        {data.canConfigurePolicy && <div className="oi-actions">{button('saveCourt', () => action(() => api.saveCourt(undefined, court)), !/^([01]\d|2[0-3]):[0-5]\d$/.test(court.syncTime), true)}</div>}
-                    </fieldset>
-                    {!data.canConfigurePolicy && <p className="oi-muted">{tr('courtAdminPolicy')}</p>}
-                    <p className="oi-muted">{tr('lastSync')}: {data.court?.lastSyncedAt ? formatSyncDate(data.court.lastSyncedAt) : tr('never')}</p>
-                    <p className="oi-muted">{tr('nextSync')}: {formatSyncDate(data.court?.nextSyncAt)}</p>
-                    {data.court?.enabled && data.court?.settings?.dailySyncEnabled && !data.courtSchedulerRunning && <p className="oi-note">{tr('schedulerUnavailable')}</p>}
-                </section>
-                <section className="oi-card"><div className="oi-card-heading"><h2>WhatsApp Business</h2><span className="oi-badge">{tr('official')}</span></div>
+                <SimpleCard className="lw-platformSettings__card oi-card oi-whatsapp" role="region" aria-labelledby="oi-whatsapp-title"><div className="oi-card-heading"><TextBold18 id="oi-whatsapp-title" role="heading" aria-level={embedded ? 3 : 2}>WhatsApp Business</TextBold18><span className="oi-badge">{tr('official')}</span></div>
                     <p>{tr(data.signup.flow === 'business_app' ? 'qrHelp' : 'whatsappHelp')}</p>
                     {data.signup.flow === 'business_app' && <p className="oi-muted">{tr('qrPrerequisite')}</p>}
-                    <p><strong>{tr('status')}: {t(`officeIntegrations.statuses.${data.whatsapp?.status || 'disconnected'}`)}</strong>{data.whatsapp?.displayPhone && <bdi className="oi-phone">{data.whatsapp.displayPhone}</bdi>}</p>
+                    <div className="oi-connection-status"><span className={`oi-status-dot ${data.whatsapp?.connected ? 'is-connected' : ''}`} aria-hidden="true" /><span>{tr('status')}: <strong>{t(`officeIntegrations.statuses.${data.whatsapp?.status || 'disconnected'}`)}</strong></span>{data.whatsapp?.displayPhone && <bdi>{data.whatsapp.displayPhone}</bdi>}</div>
                     {price && <section className="oi-pricing" aria-label={tr('pricingTitle')}>
-                        <div className="oi-card-heading"><h3>{tr('pricingTitle')}</h3><span className="oi-badge">{tr('pricingPreview')}</span></div>
-                        <p className="oi-price"><bdi>{money(price.monthlyAmount)}</bdi><span>{tr('pricingPerMonth')}</span></p>
+                        <div className="oi-card-heading"><div><h3>{tr('pricingTitle')}</h3><p className="oi-muted">{tr('pricingPreview')}</p></div><p className="oi-price"><bdi>{money(price.monthlyAmount)}</bdi><span>{tr('pricingPerMonth')}</span></p></div>
                         <p className="oi-muted">{tr('pricingTaxExempt')}</p>
-                        <p>{tr('pricingIncludes')}</p>
                         <dl><div><dt>{tr('pricingSetup')}</dt><dd><bdi>{money(price.setupAmount)}</bdi></dd></div>
                             <div><dt>{tr('pricingMeta')}</dt><dd>{tr('pricingSeparate')}</dd></div></dl>
-                        <p className="oi-muted">{tr('pricingMetaHelp')} <a href="https://whatsappbusiness.com/products/platform-pricing/" target="_blank" rel="noreferrer">{tr('pricingMetaLink')}</a></p>
+                        <details className="oi-details"><summary>{tr('pricingDetails')}</summary><p>{tr('pricingIncludes')}</p><p className="oi-muted">{tr('pricingMetaHelp')} <a href="https://whatsappbusiness.com/products/platform-pricing/" target="_blank" rel="noreferrer">{tr('pricingMetaLink')}</a></p></details>
                         <p className="oi-pricing-notice">{tr('pricingNoCharge')}</p>
                     </section>}
-                    {!data.signup.ready && <p className="oi-note">{tr(data.signup.approvalPending ? 'metaApprovalPending' : data.signup.demoOnly ? 'demoConnectionNotice' : 'platformSetup')}</p>}
-                    {data.signup.connectionOnly && <p className="oi-note">{tr('connectionOnlyNotice')}</p>}
+                    {!data.signup.ready && <div className="oi-note"><strong>{tr(data.signup.approvalPending ? 'metaApprovalTitle' : 'connectionHelp')}</strong><p>{tr(data.signup.approvalPending ? 'metaApprovalPending' : data.signup.demoOnly ? 'demoConnectionNotice' : 'platformSetup')}</p></div>}
                     <div className="oi-actions">{data.signup.approvalPending ? button('connectQr', connect, true, true) : data.signup.ready ? button(data.signup.flow === 'business_app' ? 'connectQr' : 'connect', connect, false, true)
-                        : <button type="button" className="oi-primary" disabled={busy} aria-expanded={setupOpen} onClick={() => setSetupOpen(!setupOpen)}>{tr(data.signup.demoOnly ? 'demoConnection' : 'connectionHelp')}</button>}
+                        : <PrimaryButton type="button" disabled={busy} aria-expanded={setupOpen} onPress={() => setSetupOpen(!setupOpen)}>{tr(data.signup.demoOnly ? 'demoConnection' : 'connectionHelp')}</PrimaryButton>}
                         {data.whatsapp?.connected && <>{button(data.signup.connectionOnly || data.whatsapp.settings?.connectionType === 'business_app' ? 'checkAccountConnection' : 'checkConnection', () => action(() => api.checkWhatsapp()), data.signup.demoOnly)}
                         {button('disconnect', () => action(() => api.disconnect()))}</>}</div>
+                    {data.signup.connectionOnly && <p className="oi-muted oi-safe-note">{tr('connectionOnlyNotice')}</p>}
+                    {data.signup.connectionOnly && <nav className="oi-policy-links" aria-label={tr('privacyLinks')}><a href="/integrations/privacy.html" target="_blank" rel="noreferrer">{tr('privacyPolicy')}</a><a href="/integrations/data-deletion.html" target="_blank" rel="noreferrer">{tr('dataDeletion')}</a></nav>}
                     {data.signup.ready && data.signup.flow === 'business_app' && <ol className="oi-steps"><li>{tr('qrStepOpen')}</li><li>{tr('qrStepScan')}</li><li>{tr('qrStepFinish')}</li></ol>}
                     {data.whatsapp?.connected && data.whatsapp.settings?.connectionType === 'business_app' && <p className="oi-muted">{tr(`appSync.${data.whatsapp.settings.appSync || 'pending'}`)}</p>}
                     {data.whatsapp?.connected && data.whatsapp.settings?.connectionType === 'business_app' && <p className="oi-muted">{tr('qrDisconnectHelp')}</p>}
@@ -120,25 +115,38 @@ export default function OfficeIntegrations({ embedded = false }) {
                     <details className="oi-details"><summary>{tr('groupRequirements')}</summary><p>{tr('eligibility')}</p></details>
                     {data.whatsapp?.connected && <p className="oi-muted">{tr('paymentHelp')} <a href="https://business.facebook.com/wa/manage/home/" target="_blank" rel="noreferrer">{tr('manageMeta')}</a></p>}
                     {!data.canConfigurePolicy && <p>{tr('adminPolicy')}</p>}
-                    {data.canConfigurePolicy && <fieldset disabled={busy}>
-                        <legend>{tr('automation')}</legend>
+                    {data.canConfigurePolicy && <details className="oi-details oi-automation"><summary>{tr('automation')}</summary><fieldset disabled={busy} aria-label={tr('automation')}>
                         {whatsapp.mode === 'demo' && <p className="oi-muted">{tr('demoMode')}</p>}
-                        <label className="oi-toggle"><input type="checkbox" checked={whatsapp.enabled} onChange={e => setWhatsapp({ ...whatsapp, enabled: e.target.checked })} disabled={whatsapp.mode === 'live' && (!data.signup.liveEnabled || data.whatsapp?.status !== 'ready')} />{tr('autoCreate')}</label>
-                        <label>{tr('recipients')}<textarea dir="ltr" rows={4} value={whatsapp.recipients} onChange={e => setWhatsapp({ ...whatsapp, recipients: e.target.value })} placeholder="+972501234567" /></label>
+                        <div className="oi-setting-row"><SimpleCheckbox variant="toggle" title={tr('autoCreate')} checked={whatsapp.enabled} onChange={e => setWhatsapp({ ...whatsapp, enabled: e.target.checked })} disabled={busy || (whatsapp.mode === 'live' && (!data.signup.liveEnabled || data.whatsapp?.status !== 'ready'))} /></div>
+                        <SimpleTextArea className="oi-recipients" title={tr('recipients')} aria-label={tr('recipients')} rows={3} value={whatsapp.recipients} disabled={busy} onChange={value => setWhatsapp({ ...whatsapp, recipients: value })} placeholder="+972501234567" />
                         <p className="oi-muted">{tr(whatsapp.includeCaseManager ? 'recipientManagerHelp' : 'recipientHelp')}</p>
-                        <label className="oi-toggle"><input type="checkbox" checked={whatsapp.includeCaseManager} onChange={e => setWhatsapp({ ...whatsapp, includeCaseManager: e.target.checked })} />{tr('includeCaseManager')}</label>
+                        <div className="oi-setting-row"><SimpleCheckbox title={tr('includeCaseManager')} checked={whatsapp.includeCaseManager} disabled={busy} onChange={e => setWhatsapp({ ...whatsapp, includeCaseManager: e.target.checked })} /></div>
                         <p className="oi-muted">{tr('caseManagerHelp')}{whatsapp.mode === 'demo' && ` ${tr('demoManagerHelp')}`}</p>
                         {whatsapp.mode === 'live' && data.whatsapp?.connected && <details className="oi-details"><summary>{tr('advancedInvitations')}</summary>
-                            <label>{tr('template')}<input dir="ltr" value={whatsapp.templateName} onChange={e => setWhatsapp({ ...whatsapp, templateName: e.target.value, enabled: false })} /></label>
-                            <label>{tr('templateLanguage')}<input dir="ltr" value={whatsapp.templateLanguage} onChange={e => setWhatsapp({ ...whatsapp, templateLanguage: e.target.value, enabled: false })} /></label>
-                            <label>{tr('templateParameters')}<textarea rows={2} value={whatsapp.templateParameters} onChange={e => setWhatsapp({ ...whatsapp, templateParameters: e.target.value, enabled: false })} /></label>
+                            <SimpleInput title={tr('template')} aria-label={tr('template')} dir="ltr" value={whatsapp.templateName} timeToWaitInMilli={0} disabled={busy} onChange={e => setWhatsapp({ ...whatsapp, templateName: e.target.value, enabled: false })} />
+                            <SimpleInput title={tr('templateLanguage')} aria-label={tr('templateLanguage')} dir="ltr" value={whatsapp.templateLanguage} timeToWaitInMilli={0} disabled={busy} onChange={e => setWhatsapp({ ...whatsapp, templateLanguage: e.target.value, enabled: false })} />
+                            <SimpleTextArea title={tr('templateParameters')} aria-label={tr('templateParameters')} rows={2} value={whatsapp.templateParameters} disabled={busy} onChange={value => setWhatsapp({ ...whatsapp, templateParameters: value, enabled: false })} />
                             <p className="oi-muted">{tr('templateHelp')} <a href="https://business.facebook.com/wa/manage/template-library" target="_blank" rel="noreferrer">{tr('templateLibrary')}</a></p>
                             {!data.signup.liveEnabled && <p className="oi-note">{tr('liveNotEnabled')}</p>}
                         </details>}
                         <div className="oi-actions">{button('saveWhatsapp', () => action(() => api.saveWhatsapp(undefined, { ...whatsapp, recipients: whatsapp.recipients.split(/[\n,;]/).map(s => s.trim()).filter(Boolean), templateParameters: whatsapp.templateParameters.split('\n').filter(Boolean) })), false, true)}</div>
                         <p className="oi-muted">{tr('disableHelp')}</p>
-                    </fieldset>}
-                </section>
+                    </fieldset></details>}
+                </SimpleCard>
+                <SimpleCard className="lw-platformSettings__card oi-card oi-court" role="region" aria-labelledby="oi-court-title"><div className="oi-card-heading"><TextBold18 id="oi-court-title" role="heading" aria-level={embedded ? 3 : 2}>{tr('courtTitle')}</TextBold18><span className="oi-badge">{tr('demo')}</span></div>
+                    <p>{tr('courtHelp')}</p>
+                    <fieldset disabled={busy || !data.canConfigurePolicy} className="oi-connection-fields">
+                        <SimpleInput title={tr('connectionName')} aria-label={tr('connectionName')} value={court.label} maxLength={120} timeToWaitInMilli={0} disabled={busy || !data.canConfigurePolicy} onChange={e => setCourt({ ...court, label: e.target.value })} />
+                        <div className="oi-setting-row"><SimpleCheckbox variant="toggle" title={tr('enableCourt')} checked={court.enabled} disabled={busy || !data.canConfigurePolicy} onChange={e => setCourt({ ...court, enabled: e.target.checked })} /></div>
+                        <div className="oi-setting-row"><SimpleCheckbox variant="toggle" title={tr('dailySync')} checked={court.dailySyncEnabled} disabled={busy || !data.canConfigurePolicy} onChange={e => setCourt({ ...court, dailySyncEnabled: e.target.checked })} /></div>
+                        <SimpleInput title={tr('syncTime')} aria-label={tr('syncTime')} type="time" dir="ltr" value={court.syncTime} required timeToWaitInMilli={0} disabled={busy || !data.canConfigurePolicy || !court.dailySyncEnabled} onChange={e => setCourt({ ...court, syncTime: e.target.value })} />
+                        <p className="oi-muted">{tr('syncTimeHelp')}</p>
+                        {data.canConfigurePolicy && <div className="oi-actions">{button('saveCourt', () => action(() => api.saveCourt(undefined, court)), !/^([01]\d|2[0-3]):[0-5]\d$/.test(court.syncTime), true)}</div>}
+                    </fieldset>
+                    {!data.canConfigurePolicy && <p className="oi-muted">{tr('courtAdminPolicy')}</p>}
+                    <dl className="oi-sync"><div><dt>{tr('lastSync')}</dt><dd>{data.court?.lastSyncedAt ? formatSyncDate(data.court.lastSyncedAt) : tr('never')}</dd></div><div><dt>{tr('nextSync')}</dt><dd>{formatSyncDate(data.court?.nextSyncAt)}</dd></div></dl>
+                    {data.court?.enabled && data.court?.settings?.dailySyncEnabled && !data.courtSchedulerRunning && <p className="oi-note">{tr('schedulerUnavailable')}</p>}
+                </SimpleCard>
             </div>
         </>}
     </section>;
