@@ -13,7 +13,16 @@ const {
     factsFingerprint,
     invalidateAiBriefCache,
     __testReset,
+    sanitizeAiBriefLines,
+    sanitizeAiBriefRecommendations,
 } = require('../services/managerHome/aiBrief.service');
+
+test('insight copy rejects the removed label in model lines and recommendations', () => {
+    const input = ['מוקד בעדכון התהליך', 'החודש נפתחו 2 תיקים במוקד הפעילות', 'מוקדי עיכוב בתיקים', 'נפתחו 2 תיקים החודש'];
+    for (const sanitize of [sanitizeAiBriefLines, sanitizeAiBriefRecommendations]) {
+        assert.deepEqual(sanitize(input), ['נפתחו 2 תיקים החודש']);
+    }
+});
 const { buildOperationalInsights } = require('../services/managerHome/operationalInsights');
 const { buildBottleneckFacts } = require('../services/managerHome/bottlenecks');
 
