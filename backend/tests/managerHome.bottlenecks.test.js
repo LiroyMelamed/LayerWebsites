@@ -62,8 +62,22 @@ test('ranks affected cases, not document count, and never labels expired links a
 test('empty and recent portfolios do not manufacture a bottleneck or generic recommendations', () => {
     assert.match(buildBottleneckBrief(buildBottleneckFacts([])).lines[0], /אין כרגע תיקים פתוחים/);
     const brief = buildBottleneckBrief(buildBottleneckFacts([row(1)], { waiting_long_count: 0, waiting_long_case_count: 0 }));
-    assert.match(brief.lines[0], /לא זוהה מוקד עיכוב/);
+    assert.match(brief.lines[0], /לא זוהה עיכוב/);
     assert.deepEqual(brief.recommendations, []);
+});
+
+test('insight copy describes measured findings directly without the removed label', () => {
+    const findings = [
+        {kind:'assignment',caseCount:2},
+        {kind:'inactivity',caseType:'בדיקה',stage:2,caseCount:3,groupCaseCount:5,thresholdDays:90,oldestDays:93},
+        {kind:'stage_update',caseType:'בדיקה',stage:2,caseCount:3,groupCaseCount:5,thresholdDays:30,oldestDays:43},
+        {kind:'signing',caseCount:2,documentCount:4,thresholdDays:3,oldestDays:7},
+    ];
+    for (const finding of findings) {
+        const result = buildBottleneckBrief({openCases:5,casesWithActivityAge:5,findings:[finding]});
+        assert.doesNotMatch(JSON.stringify(result), /מוקד/);
+        assert.ok(result.lines[0].includes(String(finding.caseCount)));
+    }
 });
 
 test('actual signing aggregate covers more than the queue limit and excludes closed, orphan and completed documents', async () => {

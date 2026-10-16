@@ -159,6 +159,7 @@
         .lw-segmentedSwitch__option { border-radius: .55rem; min-block-size: 44px; }
     }
     .lw-teamActivity__range { color: var(--business-muted); font-size: .75rem; padding-block: .75rem; }
+    .lw-teamActivity__history { color: var(--business-muted); font-size: .8rem; line-height: 1.7; padding: .75rem; margin-block-end: .9rem; background: #f2f7f8; border-radius: .65rem; }
     .lw-teamActivity__momentum {
         display: flex; flex-wrap: wrap; gap: .5rem 1rem; padding-block-end: .9rem;
         span { display: inline-flex; align-items: center; gap: .35rem; color: var(--business-muted); font-size: .8rem; }

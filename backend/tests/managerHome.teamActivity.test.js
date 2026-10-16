@@ -14,6 +14,9 @@ async function database(t) {
             closed_at timestamptz, closed_by_userid int, casemanagerid int);
         CREATE TABLE casedescriptions(caseid int, timestamp timestamptz, updated_by_userid int);
         CREATE TABLE manager_case_activity(caseid int, occurred_at timestamptz, actor_id int, kind text DEFAULT 'update');
+        CREATE TABLE stage_files(uploaded_by int, caseid int, created_at timestamptz);
+        CREATE TABLE signingfiles(signingfileid int, caseid int, lawyerid int, createdat timestamptz);
+        CREATE TABLE audit_events(actor_userid int, signingfileid int, occurred_at_utc timestamptz, event_type text, actor_type text, success boolean);
         INSERT INTO users VALUES (1,'First','Admin'),(2,'Second','Lawyer'),(3,'Client','Client'),(4,'Assigned only','Lawyer');
     `);
     return db;

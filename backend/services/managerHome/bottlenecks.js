@@ -64,22 +64,22 @@ function describeFinding(finding) {
     switch (finding.kind) {
         case 'assignment':
             return {
-                line: `מוקד באחריות לתיקים: ${finding.caseCount} תיקים פתוחים אינם משויכים למנהל.`,
+                line: `${finding.caseCount} תיקים פתוחים אינם משויכים למנהל.`,
                 action: `נקודת ההתחלה היא שיוך ${finding.caseCount} התיקים ללא מנהל לאחראי שיקבע את הצעד הבא בכל תיק.`,
             };
         case 'inactivity':
             return {
-                line: `מוקד ללא התקדמות מתועדת ${location}: ${finding.caseCount} מתוך ${finding.groupCaseCount} תיקים ללא פעילות מתועדת לפחות ${finding.thresholdDays} ימים; בתיק הוותיק ביותר עברו ${finding.oldestDays} ימים מאז הפעילות האחרונה.`,
+                line: `${location}: ${finding.caseCount} מתוך ${finding.groupCaseCount} תיקים ללא פעילות מתועדת לפחות ${finding.thresholdDays} ימים; בתיק הוותיק ביותר עברו ${finding.oldestDays} ימים מאז הפעילות האחרונה.`,
                 action: `אפשר להתחיל ב־${finding.caseCount} התיקים ${location} ללא פעילות, ולתעד בכל אחד את הגורם שממתינים לו ואת האחראי לצעד הבא.`,
             };
         case 'stage_update':
             return {
-                line: `מוקד בעדכון התהליך ${location}: ב־${finding.caseCount} מתוך ${finding.groupCaseCount} תיקים אין עדכון מתועד לשלב הנוכחי לפחות ${finding.thresholdDays} ימים; הפער הארוך ביותר הוא ${finding.oldestDays} ימים.`,
+                line: `${location}: ב־${finding.caseCount} מתוך ${finding.groupCaseCount} תיקים אין עדכון מתועד לשלב הנוכחי לפחות ${finding.thresholdDays} ימים; הפער הארוך ביותר הוא ${finding.oldestDays} ימים.`,
                 action: `אפשר למקד את סקירת השלבים ב־${finding.caseCount} התיקים ${location}, ולוודא אם השלב הנוכחי משקף את העבודה שכבר בוצעה.`,
             };
         case 'signing':
             return {
-                line: `מוקד בהשלמת חתימות: ${finding.documentCount} מסמכים ב־${finding.caseCount} תיקים פתוחים ממתינים לחתימה לפחות ${finding.thresholdDays} ימים${finding.oldestDays == null ? '.' : `; ההמתנה הארוכה ביותר היא ${finding.oldestDays} ימים.`}`,
+                line: `השלמת חתימות: ${finding.documentCount} מסמכים ב־${finding.caseCount} תיקים פתוחים ממתינים לחתימה לפחות ${finding.thresholdDays} ימים${finding.oldestDays == null ? '.' : `; ההמתנה הארוכה ביותר היא ${finding.oldestDays} ימים.`}`,
                 action: `אפשר להתחיל ב־${finding.documentCount} המסמכים שממתינים לחתימה לפחות ${finding.thresholdDays} ימים, ולברר אם חסר אישור, תיקון למסמך או קישור תקף.`,
             };
         default: return null;
@@ -93,11 +93,11 @@ function buildBottleneckBrief(facts) {
         const missingAge = Math.max(0, facts.openCases - facts.casesWithActivityAge);
         return { lines: [facts.openCases === 0 ? 'אין כרגע תיקים פתוחים לניתוח צווארי בקבוק.'
             : missingAge > 0 ? `חסר תאריך פעילות ב־${missingAge} מתוך ${facts.openCases} תיקים פתוחים; אי אפשר לקבוע מהם היכן מרוכזת ההמתנה.`
-                : 'לא זוהה מוקד עיכוב במדדים שנבדקו. אין בכך אישור שכל התהליכים מתקדמים ללא עיכוב.'], recommendations: [] };
+                : 'לא זוהה עיכוב במדדים שנבדקו. אין בכך אישור שכל התהליכים מתקדמים ללא עיכוב.'], recommendations: [] };
     }
     const lines = descriptions.map(value => value.line);
     if (facts.findings.slice(0, 2).some(finding => finding.kind !== 'assignment')) {
-        lines.push('אלה מוקדים לבדיקה לפי התיעוד במערכת. הנתונים אינם מזהים את סיבת ההמתנה או מוכיחים שהטיפול המשפטי נעצר.');
+        lines.push('אלה נתונים לבדיקה לפי התיעוד במערכת. הנתונים אינם מזהים את סיבת ההמתנה או מוכיחים שהטיפול המשפטי נעצר.');
     }
     return { lines, recommendations: descriptions.map(value => value.action) };
 }

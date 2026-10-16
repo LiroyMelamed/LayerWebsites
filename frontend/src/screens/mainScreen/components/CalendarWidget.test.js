@@ -1,14 +1,30 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import CalendarWidget, { bucketEvents } from './CalendarWidget';
-jest.mock('react-router-dom', () => ({useNavigate:()=>jest.fn()}));
-jest.mock('../../../services/firmSettings', () => ({useCalendarModuleEnabled:()=>true}));
+const mockNavigate = jest.fn();
+let mockCalendarEnabled = true;
+jest.mock('react-router-dom', () => ({useNavigate:()=>mockNavigate}));
+jest.mock('../../../services/firmSettings', () => ({useCalendarModuleEnabled:()=>mockCalendarEnabled}));
 const mockT = (key, args={}) => key === 'calendar.openEventAria' ? `Open ${args.title} ${args.time}` : key;
 jest.mock('react-i18next',()=>({useTranslation:()=>({t:mockT,i18n:{language:'en'}})}));
-beforeEach(()=>{jest.useFakeTimers();jest.setSystemTime(new Date('2026-10-12T06:00Z'));});
+beforeEach(()=>{mockCalendarEnabled=true;mockNavigate.mockClear();jest.useFakeTimers();jest.setSystemTime(new Date('2026-10-12T06:00Z'));});
 afterEach(()=>jest.useRealTimers());
 const overnight = {id:1,title:'Overnight',startTime:'2026-10-11T23:30+03:00',endTime:'2026-10-12T00:30+03:00'};
 const leave={id:2,title:'Leave',eventType:'leave',ownerName:'Dana Levy',startTime:'2026-10-11T00:00+03:00',endTime:'2026-10-13T23:59+03:00'};
+
+test('empty calendar remains visible with its open-calendar action',()=>{
+ render(<CalendarWidget events={[]} isPerforming={false}/>);
+ expect(screen.getByText('calendar.widgetTitle')).toBeInTheDocument();
+ expect(screen.getByText('calendar.widgetEmpty')).toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'managerHome.actions.openCalendar'}));
+ expect(mockNavigate).toHaveBeenCalledWith('/AdminStack/CalendarScreen');
+});
+
+test('empty calendar still respects the office module setting',()=>{
+ mockCalendarEnabled=false;
+ const {container}=render(<CalendarWidget events={[]} isPerforming={false}/>);
+ expect(container).toBeEmptyDOMElement();
+});
 test('compact dashboard keeps overnight/multiday events and excludes cancelled and midnight-ended events',()=>{
  const cancelled={...overnight,id:3,eventStatus:'cancelled'};
  const ended={...overnight,id:4,endTime:'2026-10-12T00:00+03:00'};
