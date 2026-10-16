@@ -16,7 +16,30 @@ This supersedes the calendar and October scoring guidance in the 15 October rele
 
 Read-only evaluation of the candidate query on all five deployed tenant databases passed. MelamedLaw now produces a monthly ranking from actual historical signing activity, including documents without a case. Results contain only aggregate verification metadata in the local release evidence.
 
-Local evidence: `outputs/home-fix-20261016/`. Rollout receipt is recorded after the QA gate and tenant deployment complete.
+Local evidence: `outputs/home-fix-20261016/`. The [release record](2026-10-16-manager-home-fixes/release-record.json) contains verified tenant revisions, backups and rollout checks.
+
+## הנחיות שימוש לאחר העדכון
+
+- יש לרענן את דף הבית כדי לטעון את הגרסה החדשה. היומן מופיע ראשון גם כשאין אירועים קרובים, כל עוד מודול היומן מופעל ויש למשתמש הרשאה אליו.
+- בלוח ״המובילים בצוות״ בוחרים היום, השבוע או החודש. במהלך אוקטובר 2026 הדירוג כולל גם פעולות היסטוריות שניתן לשייך בוודאות לעובד: סגירות תיקים, העלאות קבצים ומסמכי חתימה, ופעולות חתימה מתועדות. מסמכי חתימה עצמאיים נכללים גם ללא שיוך לתיק.
+- נקודה ניתנת לכל שילוב של עובד, תיק או מסמך עצמאי, סוג פעולה ויום לפי שעון ישראל. פעולות חוזרות מאותו סוג באותו יום אינן מכפילות את הניקוד. יצירת מסמך חתימה ופעולת החתימה המתועדת עליו באותו יום אינן מזכות בנקודות כפולות.
+- מוצגת הבהרה שהניקוד מבוסס על ההיסטוריה הזמינה בלבד. היעדר ניקוד אינו אומר שהעובד לא עבד; לא כל פעולה ישנה נשמרה עם מבצע שאפשר לזהות.
+- ב־1 בנובמבר 2026 בחצות, לפי שעון ישראל, המעבר מתבצע אוטומטית לניקוד הרגיל מתוך יומן הפעולות החדש: עדכוני שלב וסגירות תיקים. אין פעולה נדרשת מצד מנהל המשרד.
+- היועץ העסקי מתאר ישירות את השלב או התהליך שבו זוהה עיכוב, בלי הכינוי שהוסר. התובנות נשענות על התיעוד הקיים ואינן משנות תיקים.
+
+## Completed rollout
+
+QA and all four customer environments are deployed. The authenticated QA browser showed the empty calendar first, the October notice and historical ranking, and the updated insight wording. The calendar was also checked at a 390-pixel mobile viewport; the temporary viewport override was restored afterwards. Production verification used read-only dashboard queries and exact public asset comparisons, including the lazy-loaded dashboard JavaScript and CSS.
+
+| Environment | Deployed revision |
+| --- | --- |
+| Melamedia QA | `139282cd2745` |
+| MelamedLaw | `80101cb312d9` |
+| MorLevi | `6d983d2703d4` |
+| AshrafEssa | `5949be7c236d` |
+| Idm | `20312f24c0bf` |
+
+Product commit: `f3533a242018143ee490cca4c0f0ce5df7682047`. Annotated release tag: `PROD_16_10_2026_LIROY_HOME_FIXES`, with a separate tag for each tenant branch. All six tags were pushed and their remote target revisions verified. Existing data counts, private configuration, platform settings and office integrations were preserved. No migrations or historical backfill were performed.
 
 ## Recovery
 
