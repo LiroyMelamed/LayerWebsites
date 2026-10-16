@@ -10,8 +10,9 @@ async function database(t) {
         CREATE TABLE users(userid int PRIMARY KEY,name text,role text,law_firm_tenant_id uuid);
         CREATE TABLE cases(caseid int PRIMARY KEY,createdat timestamptz,isclosed boolean DEFAULT false,closed_at timestamptz,closed_by_userid int,law_firm_tenant_id uuid);
         CREATE TABLE manager_case_activity(actor_id int,caseid int,occurred_at timestamptz,kind text);
+        CREATE TABLE manager_platform_activity(actor_id int,caseid int,occurred_at timestamptz,kind text,activity_key text,law_firm_tenant_id uuid);
         CREATE TABLE stage_files(uploaded_by int,caseid int,created_at timestamptz);
-        CREATE TABLE signingfiles(signingfileid int,caseid int,lawyerid int,createdat timestamptz);
+        CREATE TABLE signingfiles(signingfileid int,caseid int,lawyerid int,createdat timestamptz, signedat timestamptz, status text);
         CREATE TABLE audit_events(actor_userid int,signingfileid int,occurred_at_utc timestamptz,event_type text,actor_type text,success boolean);
         INSERT INTO users VALUES (1,'A','Lawyer','11111111-1111-4111-8111-111111111111'),(2,'B','Admin','11111111-1111-4111-8111-111111111111'),
             (3,'Client','Client','11111111-1111-4111-8111-111111111111'),(4,'Other office','Lawyer','22222222-2222-4222-8222-222222222222');
@@ -89,11 +90,11 @@ test('October history switches off at November 1 Israel midnight and never recur
     const db = await database(t);
     await db.exec("INSERT INTO stage_files VALUES(2,1,'2026-10-31T21:59:59Z'),(2,1,'2026-10-31T22:00:00Z'); INSERT INTO manager_case_activity VALUES(1,1,'2026-10-31T22:00:00Z','update')");
     assert.equal((await get(db,'2026-10-31T21:59:59Z')).periods.month.leaders[0].managerId, 2);
-    // November must not even query the historical tables.
-    await db.exec('DROP TABLE stage_files,audit_events,signingfiles');
+    // Only legacy closures expire; documented uploads and signing remain eligible.
+    await db.exec("UPDATE cases SET isclosed=true,closed_at='2026-10-31T22:00:00Z',closed_by_userid=2");
     const november = await get(db,'2026-10-31T22:00:00Z');
     assert.equal(november.historyMode, null);
-    assert.equal(november.scoringVersion, 'recorded-case-day-v1');
-    assert.deepEqual(november.periods.month.leaders.map(v => [v.managerId,v.points,v.documentUploads]), [[1,1,0]]);
+    assert.equal(november.scoringVersion, 'platform-day-v2');
+    assert.deepEqual(november.periods.month.leaders.map(v => [v.managerId,v.points,v.documentUploads]), [[1,1,0],[2,1,1]]);
     assert.deepEqual((await get(db,'2027-10-16T09:00:00Z')).periods.month.leaders, []);
 });
