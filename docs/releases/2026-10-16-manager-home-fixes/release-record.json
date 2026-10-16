@@ -1,0 +1,268 @@
+{
+  "releasedAt": "2026-10-16T08:29:54.030877+00:00",
+  "productSource": "f3533a242018143ee490cca4c0f0ce5df7682047",
+  "productionTag": "PROD_16_10_2026_LIROY_HOME_FIXES",
+  "remoteTagsVerified": true,
+  "tenants": [
+    {
+      "tenant": "melamedia",
+      "branch": "Melamedia",
+      "source": "139282cd27454b2cd9c15e24a76261dd250e8038",
+      "tag": "PROD_16_10_2026_LIROY_HOME_FIXES_Melamedia",
+      "previousSource": "d3660280731dca4e55cfea21cdec449a938fb39f",
+      "backendBackup": "/root/melamedia-home-release-backup-2026-10-16T08-17-34-622Z",
+      "frontendBackup": "/var/www/melamedia-home-release-backup-20261016T081940Z",
+      "remoteIndexBackup": null,
+      "mainAsset": "static/js/main.93fd6f6f.js",
+      "mainSha256": "d44cc742b2e1f555f9011c29766d1eaf3eb7745195aba77b18c0400b1cdc24f8",
+      "privateConfigsPreserved": 9,
+      "existingCountsUnchanged": true,
+      "platformSettingsUnchanged": true,
+      "officeIntegrationsUnchanged": true,
+      "otherProcessesUnchanged": true,
+      "migrations": [],
+      "backendReadOnlySmoke": {
+        "tenant": "melamedia",
+        "ok": true,
+        "historyMode": "october-2026",
+        "monthRankedStaff": 1,
+        "monthRankedPoints": 2,
+        "directInsightCopy": true,
+        "novemberRecordedOnly": true
+      },
+      "publicSmoke": {
+        "tenant": "melamedia",
+        "host": "melamedia.mela-media.co.il",
+        "health": 200,
+        "unauthenticatedDashboard": 401,
+        "assetsExact": [
+          "static/js/main.93fd6f6f.js",
+          "static/css/main.a4a05fd3.css",
+          "firm-logo.png",
+          "manifest.json",
+          "static/js/7952.971d88f5.chunk.js",
+          "static/css/7952.7b3fa739.chunk.css"
+        ],
+        "main": "static/js/main.93fd6f6f.js",
+        "checkedAt": "2026-10-16T08:22:39.081855+00:00"
+      }
+    },
+    {
+      "tenant": "melamedlaw",
+      "branch": "MelamedLaw",
+      "source": "80101cb312d92a6de2b487182fa45295168efd53",
+      "tag": "PROD_16_10_2026_LIROY_HOME_FIXES_MelamedLaw",
+      "previousSource": "d806dd88eba50a2a38e8546f12d9bbbfb40dfcb8",
+      "backendBackup": "/root/melamedlaw-home-release-backup-2026-10-16T08-22-44-257Z",
+      "frontendBackup": "C:\\Users\\Liroy\\Documents\\Codex\\2026-10-13\\melamedlaw-desktop\\outputs\\home-fix-20261016\\melamedlaw-frontend-backup-20261016T082348Z",
+      "remoteIndexBackup": "index.home-release-backup-20261016T082348Z.html",
+      "mainAsset": "static/js/main.87108d29.js",
+      "mainSha256": "1e72f2c1b3ce3d0af65d74ed318e72ec272e59e852c760e1ff7a3f4b7fed2fa6",
+      "privateConfigsPreserved": 9,
+      "existingCountsUnchanged": true,
+      "platformSettingsUnchanged": true,
+      "officeIntegrationsUnchanged": true,
+      "otherProcessesUnchanged": true,
+      "migrations": [],
+      "backendReadOnlySmoke": {
+        "tenant": "melamedlaw",
+        "ok": true,
+        "historyMode": "october-2026",
+        "monthRankedStaff": 5,
+        "monthRankedPoints": 24,
+        "directInsightCopy": true,
+        "novemberRecordedOnly": true
+      },
+      "publicSmoke": {
+        "tenant": "melamedlaw",
+        "host": "client.melamedlaw.co.il",
+        "health": 200,
+        "unauthenticatedDashboard": 401,
+        "assetsExact": [
+          "static/js/main.87108d29.js",
+          "static/css/main.a4a05fd3.css",
+          "firm-logo.png",
+          "manifest.json",
+          "static/js/7952.971d88f5.chunk.js",
+          "static/css/7952.7b3fa739.chunk.css"
+        ],
+        "main": "static/js/main.87108d29.js",
+        "checkedAt": "2026-10-16T08:25:05.615017+00:00"
+      }
+    },
+    {
+      "tenant": "morlevy",
+      "branch": "MorLevi",
+      "source": "6d983d2703d44f18274dd7fafd8263584506671a",
+      "tag": "PROD_16_10_2026_LIROY_HOME_FIXES_MorLevi",
+      "previousSource": "29dee3ae05bfd3b2b41f36c586fc48e90255197b",
+      "backendBackup": "/root/morlevy-home-release-backup-2026-10-16T08-25-12-128Z",
+      "frontendBackup": "/var/www/morlevy-home-release-backup-20261016T082536Z",
+      "remoteIndexBackup": null,
+      "mainAsset": "static/js/main.c8e7bf3b.js",
+      "mainSha256": "3137950faf8beceacd31748e32fd525387b0e78e399308c8c715b7d38a685e43",
+      "privateConfigsPreserved": 9,
+      "existingCountsUnchanged": true,
+      "platformSettingsUnchanged": true,
+      "officeIntegrationsUnchanged": true,
+      "otherProcessesUnchanged": true,
+      "migrations": [],
+      "backendReadOnlySmoke": {
+        "tenant": "morlevy",
+        "ok": true,
+        "historyMode": "october-2026",
+        "monthRankedStaff": 1,
+        "monthRankedPoints": 4,
+        "directInsightCopy": true,
+        "novemberRecordedOnly": true
+      },
+      "publicSmoke": {
+        "tenant": "morlevy",
+        "host": "morlevy.mela-media.co.il",
+        "health": 200,
+        "unauthenticatedDashboard": 401,
+        "assetsExact": [
+          "static/js/main.c8e7bf3b.js",
+          "static/css/main.ad3bf7b6.css",
+          "firm-logo.png",
+          "manifest.json",
+          "static/js/7952.971d88f5.chunk.js",
+          "static/css/7952.7b3fa739.chunk.css"
+        ],
+        "main": "static/js/main.c8e7bf3b.js",
+        "checkedAt": "2026-10-16T08:25:45.206244+00:00"
+      }
+    },
+    {
+      "tenant": "ashrafessa",
+      "branch": "AshrafEssa",
+      "source": "5949be7c236d792d60d18382e6d2bd29ee59de1e",
+      "tag": "PROD_16_10_2026_LIROY_HOME_FIXES_AshrafEssa",
+      "previousSource": "e77d4bf84e17ee0332d4e51840e5d73c930932db",
+      "backendBackup": "/root/ashrafessa-home-release-backup-2026-10-16T08-25-49-368Z",
+      "frontendBackup": "/var/www/ashrafessa-home-release-backup-20261016T082613Z",
+      "remoteIndexBackup": null,
+      "mainAsset": "static/js/main.d88e915c.js",
+      "mainSha256": "624993bc8c12761619257f42100a6d5841f29bd39a126ee9b0016e1886cc7ad2",
+      "privateConfigsPreserved": 9,
+      "existingCountsUnchanged": true,
+      "platformSettingsUnchanged": true,
+      "officeIntegrationsUnchanged": true,
+      "otherProcessesUnchanged": true,
+      "migrations": [],
+      "backendReadOnlySmoke": {
+        "tenant": "ashrafessa",
+        "ok": true,
+        "historyMode": "october-2026",
+        "monthRankedStaff": 0,
+        "monthRankedPoints": 0,
+        "directInsightCopy": true,
+        "novemberRecordedOnly": true
+      },
+      "publicSmoke": {
+        "tenant": "ashrafessa",
+        "host": "ashrafessa.mela-media.co.il",
+        "health": 200,
+        "unauthenticatedDashboard": 401,
+        "assetsExact": [
+          "static/js/main.d88e915c.js",
+          "static/css/main.ad3bf7b6.css",
+          "firm-logo.png",
+          "manifest.json",
+          "static/js/7952.971d88f5.chunk.js",
+          "static/css/7952.7b3fa739.chunk.css"
+        ],
+        "main": "static/js/main.d88e915c.js",
+        "checkedAt": "2026-10-16T08:26:22.863891+00:00"
+      }
+    },
+    {
+      "tenant": "idm",
+      "branch": "Idm",
+      "source": "20312f24c0bf41b2dde0ac1afbcc55a513c5f203",
+      "tag": "PROD_16_10_2026_LIROY_HOME_FIXES_Idm",
+      "previousSource": "5a0b58fb43a32909091fbb933002af0d8f48d362",
+      "backendBackup": "/root/idm-home-release-backup-2026-10-16T08-26-26-668Z",
+      "frontendBackup": "/var/www/idm-home-release-backup-20261016T082830Z",
+      "remoteIndexBackup": null,
+      "mainAsset": "static/js/main.46c3dbdf.js",
+      "mainSha256": "ece041a32885ee9c556fdb9db856d065b6825d05849d7787f97cd62e6c0a00f8",
+      "privateConfigsPreserved": 9,
+      "existingCountsUnchanged": true,
+      "platformSettingsUnchanged": true,
+      "officeIntegrationsUnchanged": true,
+      "otherProcessesUnchanged": true,
+      "migrations": [],
+      "backendReadOnlySmoke": {
+        "tenant": "idm",
+        "ok": true,
+        "historyMode": "october-2026",
+        "monthRankedStaff": 0,
+        "monthRankedPoints": 0,
+        "directInsightCopy": true,
+        "novemberRecordedOnly": true
+      },
+      "publicSmoke": {
+        "tenant": "idm",
+        "host": "idm.mela-media.co.il",
+        "health": 200,
+        "unauthenticatedDashboard": 401,
+        "assetsExact": [
+          "static/js/main.46c3dbdf.js",
+          "static/css/main.ad3bf7b6.css",
+          "firm-logo.png",
+          "manifest.json",
+          "static/js/7952.971d88f5.chunk.js",
+          "static/css/7952.7b3fa739.chunk.css"
+        ],
+        "main": "static/js/main.46c3dbdf.js",
+        "checkedAt": "2026-10-16T08:28:44.958867+00:00"
+      }
+    }
+  ],
+  "qaGate": {
+    "checkedAt": "2026-10-16T08:22:24.447389+00:00",
+    "candidate": "139282cd27454b2cd9c15e24a76261dd250e8038",
+    "backendReadOnlySmoke": true,
+    "frontendPublished": true,
+    "ui": {
+      "existingDemoLoginNoSms": true,
+      "emptyCalendarVisible": true,
+      "calendarFirst": true,
+      "viewportWidth": 706,
+      "monthlyHistoryRanking": true,
+      "partialHistoryNotice": true,
+      "insightCopyWithoutRemovedWord": true,
+      "mobileViewport390": {
+        "emptyCalendarVisible": true,
+        "calendarFirst": true,
+        "calendarHeight": 156
+      },
+      "temporaryViewportRestored": true
+    },
+    "tests": {
+      "backendScoring": 14,
+      "backendCopy": 4,
+      "frontendDelta": 5
+    }
+  },
+  "validation": {
+    "targetedPassed": 23,
+    "backendScoring": 14,
+    "backendInsights": 4,
+    "frontendRegressions": 5,
+    "tenantBuilds": 5,
+    "signingManifestFilesVerifiedPerCandidate": 103,
+    "unrelatedSuitesRepeated": false,
+    "realMessagesSentByValidation": false,
+    "authenticatedBrowserTenant": "melamedia",
+    "productionVerification": "Read-only dashboard queries and exact published assets, including lazy dashboard chunks."
+  },
+  "historicalScoring": {
+    "mode": "october-2026",
+    "partialHistory": true,
+    "endsAt": "2026-11-01T00:00:00+02:00",
+    "databaseBackfill": false
+  },
+  "localEvidence": "outputs/home-fix-20261016"
+}

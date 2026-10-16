@@ -39,6 +39,19 @@ test('October scoring notice disappears when November data replaces it', () => {
     expect(screen.queryByText(he.managerHome.team.historyRules)).not.toBeInTheDocument();
 });
 
+test('expanded scoring shows signatures, creation and calendar credit after October with clear outcome attribution', () => {
+    show(<TeamActivityPanel activity={{...activity,historyMode:null,periods:{...activity.periods,week:{...activity.periods.week,leaders:[{
+        ...leader(1,9),caseUpdates:1,casesClosed:1,documentUploads:1,signingActions:2,signingCompleted:2,casesCreated:1,calendarActions:1,
+    }]}}}} />);
+    const row=screen.getByText(/2 מסמכים שהושלמו/);
+    expect(row).toHaveTextContent('2 פעולות חתימה');
+    expect(row).toHaveTextContent('1 תיקים שנפתחו');
+    expect(row).toHaveTextContent('1 אירועי יומן שנוצרו');
+    expect(screen.getByText(he.managerHome.team.signingOutcomeRule)).toHaveTextContent('יוצר המסמך');
+    expect(screen.getByText(he.managerHome.team.periodRules)).toHaveTextContent('גם מנובמבר');
+    expect(screen.queryByRole('note')).not.toBeInTheDocument();
+});
+
 test('starts with the week; selecting month or day changes actual ranking and handles empty periods', () => {
     show(<TeamActivityPanel activity={activity} />);
     expect(screen.getByRole('radio', { name: 'השבוע' })).toHaveAttribute('aria-checked', 'true');

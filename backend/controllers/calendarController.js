@@ -1354,6 +1354,9 @@ const createEvent = async (req, res) => {
                 );
             }
             }
+            if (firstCreated) {
+                await require('../services/managerHome/platformActivity').recordCalendarCreated(dbClient, userId, firstCreated.id);
+            }
             await dbClient.query('COMMIT');
         } catch (txErr) {
             try { await dbClient.query('ROLLBACK'); } catch (_) { /* ignore */ }

@@ -39,6 +39,9 @@ export default function TeamActivityPanel({ activity, isPerforming }) {
                                     t('managerHome.team.breakdown', { updates: manager.caseUpdates, closed: manager.casesClosed }),
                                     manager.documentUploads > 0 ? t('managerHome.team.uploadsBreakdown', { count: manager.documentUploads }) : null,
                                     manager.signingActions > 0 ? t('managerHome.team.signingBreakdown', { count: manager.signingActions }) : null,
+                                    manager.signingCompleted > 0 ? t('managerHome.team.completedBreakdown', { count: manager.signingCompleted }) : null,
+                                    manager.casesCreated > 0 ? t('managerHome.team.createdBreakdown', { count: manager.casesCreated }) : null,
+                                    manager.calendarActions > 0 ? t('managerHome.team.calendarBreakdown', { count: manager.calendarActions }) : null,
                                 ].filter(Boolean).join(' · ')}</span></div>
                             <div className="lw-teamActivity__points"><b>{manager.points}</b><span>{t('managerHome.team.points')}</span></div>
                         </li>)}
@@ -46,6 +49,7 @@ export default function TeamActivityPanel({ activity, isPerforming }) {
                 </>}
         </div>
         <details className="lw-teamActivity__rules"><summary>{t('managerHome.team.rulesTitle')}</summary>
-            <p>{t('managerHome.team.rules')}</p>{includesHistory && <p>{t('managerHome.team.historyRules')}</p>}<p>{t('managerHome.team.periodRules')}</p></details>
+            <p>{t('managerHome.team.rules')}</p><p>{t('managerHome.team.creationRules')}</p>
+            <p>{t('managerHome.team.signingOutcomeRule')}</p>{includesHistory && <p>{t('managerHome.team.historyRules')}</p>}<p>{t('managerHome.team.periodRules')}</p></details>
     </SimpleCard>;
 }
