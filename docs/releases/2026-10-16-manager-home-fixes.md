@@ -2,6 +2,8 @@
 
 This supersedes the calendar and October scoring guidance in the 15 October release.
 
+Later update: [expanded platform scoring](2026-10-16-expanded-scoring.md) supersedes the scoring rules below. Document, signature and creation credit now continues after October.
+
 - The calendar remains the first dashboard section even when today and tomorrow have no events. Its existing empty state and open-calendar button stay visible; module and access permissions still apply.
 - Insights describe the measured process directly. The removed Hebrew label is absent from deterministic copy, rejected in generated narrative, and old AI cache entries are invalidated by a new cache version.
 - During October 2026 only, scoring combines the durable activity record with identified historical case closures, stage-file uploads, signing-document creation and recorded signing actions. Standalone signing documents qualify too. This is partial history, not proof of complete office activity.
