@@ -17,6 +17,28 @@ const activity = { periods: {
     month: { startsOn: '2026-10-01', casesOpened: 6, casesClosed: 4, leaders: [leader(2,14)] },
 } };
 
+test('October scoring explains partial history and separates uploads and signing actions', () => {
+    show(<TeamActivityPanel activity={{...activity,historyMode:'october-2026',periods:{...activity.periods,week:{...activity.periods.week,leaders:[{...leader(1,5),caseUpdates:1,casesClosed:1,documentUploads:2,signingActions:1}]}}}} />);
+    expect(screen.getByRole('note')).toHaveTextContent(he.managerHome.team.historyNotice);
+    expect(screen.getByText(/2 העלאות מסמכים/)).toHaveTextContent('1 פעולות חתימה');
+    expect(screen.getByText(he.managerHome.team.historyRules)).toBeInTheDocument();
+});
+
+test('October scoring empty history does not claim that the office did no work', () => {
+    show(<TeamActivityPanel activity={{...activity,historyMode:'october-2026'}} />);
+    fireEvent.click(screen.getByRole('radio',{name:'היום'}));
+    expect(screen.getByText(he.managerHome.team.historyEmpty)).toBeInTheDocument();
+    expect(screen.queryByText(he.managerHome.team.empty)).not.toBeInTheDocument();
+});
+
+test('October scoring notice disappears when November data replaces it', () => {
+    const {rerender}=show(<TeamActivityPanel activity={{...activity,historyMode:'october-2026'}} />);
+    expect(screen.getByRole('note')).toBeInTheDocument();
+    rerender(<I18nextProvider i18n={i18n}><TeamActivityPanel activity={{...activity,historyMode:null}} /></I18nextProvider>);
+    expect(screen.queryByRole('note')).not.toBeInTheDocument();
+    expect(screen.queryByText(he.managerHome.team.historyRules)).not.toBeInTheDocument();
+});
+
 test('starts with the week; selecting month or day changes actual ranking and handles empty periods', () => {
     show(<TeamActivityPanel activity={activity} />);
     expect(screen.getByRole('radio', { name: 'השבוע' })).toHaveAttribute('aria-checked', 'true');
