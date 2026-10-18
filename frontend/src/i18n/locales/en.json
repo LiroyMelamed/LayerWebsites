@@ -1411,7 +1411,7 @@
     },
     "team": {
       "title": "Team leaders",
-      "subtitle": "Every step forward counts. Who leads this period?",
+      "subtitle": "Ranking by recorded actions in the selected period.",
       "periodLabel": "Team ranking period",
       "today": "Today",
       "week": "This week",
@@ -1423,11 +1423,21 @@
       "rank": "Rank {{rank}}",
       "points": "points",
       "breakdown": "{{updates}} stage updates · {{closed}} closures",
-      "empty": "No qualifying activity yet in this period. Updating a stage or closing a case will update the ranking.",
+      "empty": "No eligible recorded activity was found for this period. Scoring includes case work, documents, signatures and calendar creation.",
       "unavailable": "Team activity is currently unavailable. Try refreshing.",
       "rulesTitle": "How are points calculated?",
-      "rules": "One point for updating a case stage, once per person per case per day, plus one for closing a case. Credit goes to the person who performed the action. The top five ranks are shown, with equal points sharing a rank. This measures recorded activity, not service quality or profitability.",
-      "periodRules": "Days start at midnight, weeks on Sunday, and months on their first day, in Israel time. Opening and closure counts cover the whole firm in the selected period. Points start when the new activity log is enabled; earlier actions are not reconstructed."
+      "rules": "One point for a stage update, case closure or case-file upload, per activity type, employee, case and Israel day. Preparing and handling a signing document earns one point per employee and document per day, including case-linked documents. Creation, link generation, signer contact changes and re-upload on the same day do not multiply credit for that document.",
+      "periodRules": "Days start at midnight, weeks on Sunday and months on their first day, in Israel time. The top five ranks include ties. This measures recorded activity, not quality or profitability. Office opening and closure totals include the whole office. Signatures, uploads and new creations continue to count after October.",
+      "historyNotice": "October includes available history with reliable employee attribution. Coverage is partial; case and calendar creation count from the update. Expanded scoring continues in subsequent months.",
+      "historyEmpty": "The available records for this period contain no qualifying actions that can be attributed to a staff member.",
+      "historyRules": "October also includes identified legacy closures, deduplicated against the new activity record. From November, closures and stage updates use that record alongside ongoing document, signature and creation credit. Old updates without reliable attribution are excluded.",
+      "uploadsBreakdown": "{{count}} document uploads",
+      "signingBreakdown": "{{count}} signing actions",
+      "creationRules": "One point for opening a case and one for creating an appointment, hearing or reminder, credited to its authenticated creator. A recurring series earns one point. These actions are recorded from the 16 October 2026 update; past actions are not attributed to the current assigned manager.",
+      "signingOutcomeRule": "A completed, signed document earns its creator an additional point at completion. This is outcome credit, not a claim that the creator signed it. Views, logins, failed attempts and automated deliveries earn no points. A recorded signing action is not proof of message delivery.",
+      "completedBreakdown": "{{count}} completed documents",
+      "createdBreakdown": "{{count}} cases created",
+      "calendarBreakdown": "{{count}} calendar events created"
     },
     "groups": {
       "unassigned_case": "{{count}} cases without a manager"
@@ -3220,5 +3230,4 @@
       "sent": "Sent"
     }
   }
-
 }

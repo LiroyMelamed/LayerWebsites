@@ -9,6 +9,7 @@ export default function TeamActivityPanel({ activity, isPerforming }) {
     const { t, i18n } = useTranslation();
     const [period, setPeriod] = useState('week');
     const selected = activity?.periods?.[period];
+    const includesHistory = activity?.historyMode === 'october-2026';
     const leaders = selected?.leaders || [];
     const date = selected?.startsOn && new Intl.DateTimeFormat(i18n.language === 'en' ? 'en-GB' : 'he-IL', {
         timeZone: 'Asia/Jerusalem', day: 'numeric', month: 'short',
@@ -25,6 +26,7 @@ export default function TeamActivityPanel({ activity, isPerforming }) {
             {isPerforming ? <Skeleton width="100%" height={230} borderRadius={12} /> : !selected ?
                 <p className="lw-businessHome__empty">{t('managerHome.team.unavailable')}</p> : <>
                     <p className="lw-teamActivity__range">{t('managerHome.team.range', { date })}</p>
+                    {includesHistory && <p className="lw-teamActivity__history" role="note">{t('managerHome.team.historyNotice')}</p>}
                     <div className="lw-teamActivity__momentum">
                         <span><ArrowUpRight size={16} aria-hidden="true" /><b>{selected.casesOpened}</b>{t('managerHome.team.opened')}</span>
                         <span><CheckCheck size={16} aria-hidden="true" /><b>{selected.casesClosed}</b>{t('managerHome.team.closed')}</span>
@@ -33,13 +35,21 @@ export default function TeamActivityPanel({ activity, isPerforming }) {
                         {leaders.map(manager => <li key={manager.managerId} className={manager.rank === 1 ? 'is-leading' : ''}>
                             <span className="lw-teamActivity__rank" aria-label={t('managerHome.team.rank', { rank: manager.rank })}>{manager.rank}</span>
                             <div className="lw-teamActivity__person"><strong>{manager.managerName}</strong>
-                                <span>{t('managerHome.team.breakdown', { updates: manager.caseUpdates, closed: manager.casesClosed })}</span></div>
+                                <span>{[
+                                    t('managerHome.team.breakdown', { updates: manager.caseUpdates, closed: manager.casesClosed }),
+                                    manager.documentUploads > 0 ? t('managerHome.team.uploadsBreakdown', { count: manager.documentUploads }) : null,
+                                    manager.signingActions > 0 ? t('managerHome.team.signingBreakdown', { count: manager.signingActions }) : null,
+                                    manager.signingCompleted > 0 ? t('managerHome.team.completedBreakdown', { count: manager.signingCompleted }) : null,
+                                    manager.casesCreated > 0 ? t('managerHome.team.createdBreakdown', { count: manager.casesCreated }) : null,
+                                    manager.calendarActions > 0 ? t('managerHome.team.calendarBreakdown', { count: manager.calendarActions }) : null,
+                                ].filter(Boolean).join(' · ')}</span></div>
                             <div className="lw-teamActivity__points"><b>{manager.points}</b><span>{t('managerHome.team.points')}</span></div>
                         </li>)}
-                    </ol> : <p className="lw-businessHome__empty">{t('managerHome.team.empty')}</p>}
+                    </ol> : <p className="lw-businessHome__empty">{t(includesHistory ? 'managerHome.team.historyEmpty' : 'managerHome.team.empty')}</p>}
                 </>}
         </div>
         <details className="lw-teamActivity__rules"><summary>{t('managerHome.team.rulesTitle')}</summary>
-            <p>{t('managerHome.team.rules')}</p><p>{t('managerHome.team.periodRules')}</p></details>
+            <p>{t('managerHome.team.rules')}</p><p>{t('managerHome.team.creationRules')}</p>
+            <p>{t('managerHome.team.signingOutcomeRule')}</p>{includesHistory && <p>{t('managerHome.team.historyRules')}</p>}<p>{t('managerHome.team.periodRules')}</p></details>
     </SimpleCard>;
 }

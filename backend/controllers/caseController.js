@@ -695,6 +695,7 @@ const addCase = async (req, res) => {
         // calls here: a WhatsApp failure must not turn a saved case into a retry.
         await saveCaseCourtNumber(client, caseId, req.firmTenantId || null, req.body.CourtCaseNumber);
         await require('../services/integrations/runtime').service.enqueueCase(client, caseId, req.firmTenantId || null);
+        await require('../services/managerHome/platformActivity').recordCaseOpened(client, req.user?.UserId, caseId);
         await client.query('COMMIT');
 
         // ── Notify linked users (ONE message per user, regardless of stage) ──

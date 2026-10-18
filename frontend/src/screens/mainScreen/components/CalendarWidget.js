@@ -115,8 +115,6 @@ export default function CalendarWidget({ events = [], isPerforming, onEventPress
 
     if (!calendarEnabled) return null;
 
-    if (!isPerforming && totalCount === 0) return null;
-
     const handleOpenCalendar = () => navigate(AdminStackName + CalendarScreenName);
 
     return (

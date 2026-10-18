@@ -26,7 +26,7 @@ function fixture() {
         preparing_count: 0, attention_count: 0, complete_count: 0, cancelled_count: 0 };
     const child = { id: 'package-1', name: 'Employee 001', workflow_state: 'active', accepted_count: 1, required_count: 9, match_reason: 'person' };
     const detail = {
-        capabilities: { send: true, manage: true }, issues: [],
+        capabilities: { send: true, manage: true, packageRemind: true, deliveryResend: true }, issues: [],
         package: { id: child.id, external_key: child.name, workflow_state: 'active', accepted_count: 1, required_count: 9, prepared_count: 3, document_count: 3 },
         documents: [{ id: 'doc-1', name: 'Employment agreement', state: 'ready', informational: false, final: false,
             spots: [{ id: 'sig', pageNum: 2, x: 30, y: 100, width: 200, height: 60, type: 'signature', required: true, signerName: 'Synthetic employee', signerIndex: 0 }] }],
