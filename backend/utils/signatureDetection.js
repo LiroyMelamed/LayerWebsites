@@ -1,404 +1,391 @@
-const fs = require("fs");
-const path = require("path");
-const { pathToFileURL } = require("url");
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
 const {
     BASE_RENDER_WIDTH: FRONTEND_PAGE_RENDER_WIDTH,
     pageGeometryFromPdfjsPage,
     pdfBoxToVisualBox,
-} = require("../lib/signingGeometry");
+} = require('../lib/signingGeometry');
 
-function isTruthyEnv(value) {
-    const v = String(value || "").trim().toLowerCase();
-    return v === "1" || v === "true" || v === "yes" || v === "on";
-}
-
-const SIG_DETECT_VERBOSE = isTruthyEnv(process.env.SIG_DETECT_VERBOSE);
-
-function sigDetectVerboseLog(...args) {
-    if (!SIG_DETECT_VERBOSE) return;
-    console.log(...args);
-}
-
-function resolvePdfjsStandardFontDataUrl() {
-    // Allow override (http(s)://... or file://...)
-    const env = process.env.PDFJS_STANDARD_FONT_DATA_URL;
-    if (env) return String(env);
-
-    try {
-        const pkgJsonPath = require.resolve("pdfjs-dist/package.json");
-        const pkgRoot = path.dirname(pkgJsonPath);
-        const standardFontsDir = path.join(pkgRoot, "standard_fonts");
-
-        if (!fs.existsSync(standardFontsDir)) return null;
-
-        // Ensure trailing slash so PDF.js can append filenames.
-        const url = pathToFileURL(standardFontsDir + path.sep).href;
-        return url;
-    } catch (e) {
-        return null;
-    }
-}
-
-const KEYWORDS = [
-    "חתימה",
-    "חתום כאן",
-    "חתימת",
-];
-
-
-// Matching thresholds, in PDF points. These size or match things; none of them
-// corrects a coordinate.
-const MIN_TEXT_UNDERLINE_CHARS = 6;
-const MIN_TEXT_UNDERLINE_WIDTH = 30;
-
-// Dimensions of a generated signature box, in PDF points.
+// These are discovery limits, not signing/upload limits. Fail rather than return
+// an apparently complete result when the whole document could not be inspected.
+const MAX_PAGES = 200;
+const MAX_ITEMS_PER_PAGE = 50000;
+const MAX_OPERATORS_PER_PAGE = 250000;
+const MAX_SIGNERS = 200;
+const MAX_FILE_BYTES = 50 * 1024 * 1024;
+const MIN_LINE_WIDTH = 30;
+const MAX_LINE_WIDTH = 320;
 const DEFAULT_SPOT_HEIGHT = 50;
+const MIN_SPOT_HEIGHT = 16;
+const SIGNATURE_ROW_GAP = 4;
 const MIN_SPOT_WIDTH = 120;
 const MAX_SPOT_WIDTH = 260;
 
-function normalizeHebrew(str) {
-    if (!str) return "";
-    return str
-        .replace(/\s+/g, " ")
-        .replace(/[״"״]/g, '"')  // normalize different quote marks
-        .replace(/\u202E/g, "")  // remove RTL override
-        .replace(/\u202D/g, "")  // remove LTR override
-        .trim();
+function detectionError(code, message) {
+    const error = new Error(message);
+    error.code = code;
+    return error;
 }
 
-function hasHebKeyword(text) {
-    const t = normalizeHebrew(text);
-    if (!t) return false;
+function normalizeText(text) {
+    return String(text || '').normalize('NFKC').toLowerCase()
+        .replace(/[\u0591-\u05bd\u05bf-\u05c7\u0610-\u061a\u064b-\u065f\u0670\u06d6-\u06ed\u0640]/gu, '')
+        .replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/gu, '')
+        .replace(/[^\p{L}\p{N}]+/gu, ' ').replace(/\s+/g, ' ').trim();
+}
 
-    // Only match if text is relatively short (likely a field label, not paragraph text)
-    // Field labels are typically under 100 characters
-    if (t.length > 100) return false;
-
-    // Check keywords in order (longest first to avoid substring matches)
-    // This prevents "בדיקה מסמכים" from matching "בדיקה מסמכים 2" or "בדיקה מסמכים 3"
-    for (const k of KEYWORDS) {
-        const normalized = normalizeHebrew(k);
-        // Match keyword as complete word or with colon/punctuation
-        // Create regex pattern that matches: "שם :", "שם", "ת.ז", "ת"ז" etc.
-        const patterns = [
-            normalized + "\\s*:",  // "שם :"
-            "^" + normalized + "$",  // exactly the word
-            normalized + "\\s*" + normalized,  // "שם ומשפחה" style
-        ];
-        if (patterns.some(p => new RegExp(p).test(t))) {
-            return true;
+function validateSigners(signers) {
+    if (signers == null) return [];
+    if (!Array.isArray(signers) || signers.length > MAX_SIGNERS) {
+        throw detectionError('INVALID_SIGNERS', 'Signers must be an array of at most 200 people');
+    }
+    return signers.map((signer, index) => {
+        if (typeof signer !== 'string' && (!signer || typeof signer !== 'object' || Array.isArray(signer))) {
+            throw detectionError('INVALID_SIGNERS', 'Each signer must have a valid name');
         }
-        // For short texts, allow substring match as fallback
-        if (t.length < 40 && t.includes(normalized)) {
-            return true;
+        const name = typeof signer === 'string' ? signer : signer.name ?? signer.Name;
+        const userId = typeof signer === 'string' ? null : signer.userId ?? signer.UserId ?? signer.id ?? null;
+        if (typeof name !== 'string' || name.length > 200 || !normalizeText(name)
+            || (userId != null && !((typeof userId === 'string' && userId.length <= 128 && userId.length > 0)
+                || (Number.isSafeInteger(userId) && userId > 0)))) {
+            throw detectionError('INVALID_SIGNERS', 'Each signer must have a bounded name and valid optional ID');
         }
-    }
-    return false;
-}
-
-function keywordType(text) {
-    const t = normalizeHebrew(text);
-    // Check in order (longest first) to avoid substring matches
-    if (t.includes("חתום כאן")) return "חתום כאן";
-    if (t.includes("חתימה") || t.includes("חתימת")) return "חתימה";
-    if (t.includes("שם") || t.includes("שם ומשפחה")) return "שם";
-    if (t.includes("ת.ז") || t.includes('ת"ז')) return 'ת"ז';
-    if (t.includes("תאריך")) return "תאריך";
-    return "חתימה";
-}
-
-function mapSignerName(kind) {
-    if (kind === "חתימה" || kind === "חתום כאן") return "חתימה ✍️";
-    if (kind === "שם") return "שם ✍️";
-    if (kind === 'ת"ז') return 'ת"ז ✍️';
-    if (kind === "תאריך") return "תאריך ✍️";
-    return "חתימה ✍️";
-}
-
-function normalizeTextItem(it) {
-    if (!it || !it.str) return null;
-
-    const str = normalizeHebrew(it.str);
-    if (!str) return null;  // Skip empty items
-
-    const t = it.transform || [1, 0, 0, 1, 0, 0];
-    const x = t[4] || 0;
-    const y = t[5] || 0;
-    const width = Math.abs(it.width || 0);
-    const height = Math.abs(t[3] || 10) || 10;
-
-    return { str, x, y, width, height };
-}
-
-function isUnderlineText(str) {
-    const s = (str || "").replace(/\s+/g, "");
-    if (s.length < MIN_TEXT_UNDERLINE_CHARS) return false;
-    if (/^_+$/.test(s)) return true;
-    if (/^[\-\u2014]+$/.test(s)) return true;
-    return false;
-}
-
-/**
- * Build a signature box for a detected underline, in PDF user space.
- *
- * Both coordinates are derived from the underline's own geometry, not from
- * tuned offsets:
- *  - horizontally, the box is centred on the underline;
- *  - vertically, the box's bottom edge sits on the underline baseline, so the
- *    signature rests on the line the way a person signs it.
- */
-function makeSpotFromLine(line, pageNum, signerName) {
-    const width = Math.min(Math.max(line.width, MIN_SPOT_WIDTH), MAX_SPOT_WIDTH);
-    const lineCentreX = line.x + ((line.width || 0) / 2);
-
-    return {
-        pageNum,
-        x: lineCentreX - (width / 2),
-        y: line.y,
-        width,
-        height: DEFAULT_SPOT_HEIGHT,
-        signerName,
-        isRequired: true,
-        confidence: line.source === "text-underline" ? 0.95 : 0.90,
-        source: line.source,
-    };
-}
-
-function clampToPage(spot, pageWidthPx, pageHeightPx) {
-    const x = Math.max(0, Math.min(spot.x, pageWidthPx - spot.width));
-    const y = Math.max(0, Math.min(spot.y, pageHeightPx - spot.height));
-    return { ...spot, x: Math.round(x), y: Math.round(y) };
-}
-
-function dedupe(spots, thresholdPx = 18) {
-    const out = [];
-    for (const s of spots) {
-        const exists = out.some(
-            (o) =>
-                o.pageNum === s.pageNum &&
-                Math.abs(o.x - s.x) <= thresholdPx &&
-                Math.abs(o.y - s.y) <= thresholdPx
-        );
-        if (!exists) out.push(s);
-    }
-    return out;
-}
-
-async function loadPdfjs() {
-    // works with pdfjs-dist@4.x in Node (ESM)
-    const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-    return pdfjs;
-}
-
-async function detectHebrewSignatureSpotsFromPdfBuffer(buffer, signers = null) {
-    if (!buffer || buffer.length === 0) {
-        throw new Error("Invalid PDF buffer: empty or null");
-    }
-
-    const pdfjs = await loadPdfjs();
-
-    const standardFontDataUrl = resolvePdfjsStandardFontDataUrl();
-    if (!standardFontDataUrl) {
-        console.warn('[sig-detect] pdfjs standardFontDataUrl is not set; standard font metrics may be degraded');
-    } else {
-        sigDetectVerboseLog('[sig-detect] pdfjs standardFontDataUrl enabled');
-    }
-
-    const loadingTask = pdfjs.getDocument({
-        data: new Uint8Array(buffer),
-        ...(standardFontDataUrl ? { standardFontDataUrl } : {}),
+        return { index, name: name.trim(), userId, normalized: normalizeText(name) };
     });
-    const pdf = await loadingTask.promise;
+}
 
-    const allSpots = [];
-    const allPageItems = [];
+// Explicit signature labels only. Name, date, ID, party names and generic form
+// blanks are deliberately not signature cues.
+function isSignatureCue(text) {
+    // Some embedded Arabic fonts map the lam glyph to U+029C in ToUnicode.
+    // Accept only this complete signature-label token, never repair person names.
+    const t = normalizeText(text).replace(/(?:^| )اʜتوقيع(?= |$)/gu, ' التوقيع').trim();
+    if (!t || t.length > 80 || t.split(' ').length > 10) return false;
+    if (/(?:no signature|not required|without signature|do not sign|ללא חתימה|אין צורך|بدون توقيع|لا يلزم)/u.test(t)) return false;
+    if (/(?:^| )(?:confirm|confirms|acknowledge|acknowledges|agree|agrees|מאשר|מאשרת|מסכים|يقر|يوافق)(?: |$)/u.test(t)) return false;
+    return /(?:^| )(?:חתימה|חתימת|חתום כאן|חתמו כאן|signature|sign here|signed by|توقيع|التوقيع|امضاء|إمضاء)(?: |$)/u.test(t);
+}
+function isOtherFieldCue(text) {
+    return /(?:^| )(?:תאריך|שם|ת ז|ח פ|date|name|id|phone|email|اسم|الاسم|تاريخ|التاريخ|هوية)(?: |$)/u.test(normalizeText(text))
+        && !isSignatureCue(text);
+}
 
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-        try {
-            const page = await pdf.getPage(pageNum);
-            // Canonical transform for this page: CropBox clipped to MediaBox,
-            // /Rotate honoured, normalised to the 800px visual grid.
-            const geometry = pageGeometryFromPdfjsPage(page, FRONTEND_PAGE_RENDER_WIDTH);
+function resolvePdfjsStandardFontDataUrl() {
+    // Do not let detection fetch a font URL: PDF parsing stays entirely local.
+    const root = path.dirname(require.resolve('pdfjs-dist/package.json'));
+    return path.join(root, 'standard_fonts') + path.sep;
+}
 
-            const textContent = await page.getTextContent();
-            const items = (textContent.items || [])
-                .map(normalizeTextItem)
-                .filter((it) => it !== null && it.str);
+function normalizeTextItem(item) {
+    if (!item || typeof item.str !== 'string' || !item.str.trim()) return null;
+    const t = item.transform || [];
+    const x = Number(t[4]), y = Number(t[5]);
+    const width = Math.abs(Number(item.width)), height = Math.hypot(Number(t[2]) || 0, Number(t[3]) || 0) || 10;
+    if (![x, y, width, height].every(Number.isFinite)) return null;
+    // Text rotated inside the page requires a different baseline model. Page
+    // /Rotate itself is supported by the canonical geometry conversion below.
+    if (Math.abs(Number(t[1]) || 0) > Math.abs(Number(t[0]) || 0) * 0.1) return null;
+    return { str: item.str, x, y, width, height, dir: item.dir };
+}
 
-            allPageItems.push(
-                ...items.map((it) => ({
-                    ...it,
-                    pageNum,
-                }))
-            );
+function splitTextUnderlines(items) {
+    const labels = [], lines = [];
+    for (const item of items) {
+        const onlyLine = /^[\s_\-\u2013\u2014\u2015]+$/u.test(item.str);
+        const matches = [...item.str.matchAll(onlyLine ? /[_\-\u2013\u2014\u2015]+/gu : /[_\-\u2013\u2014\u2015]{3,}/gu)];
+        if (!matches.length) { labels.push(item); continue; }
+        // Mixed label/underline extraction is common in Word PDFs. Keep each
+        // span's own x range instead of assigning the entire row one anchor.
+        const rtl = item.dir === 'rtl' || /[\u0590-\u08ff]/u.test(item.str);
+        let cursor = 0;
+        const addPart = (str, start, length, line) => {
+            if (!str.trim()) return;
+            const fraction = length / item.str.length;
+            const offset = rtl ? 1 - (start + length) / item.str.length : start / item.str.length;
+            const part = { ...item, str, x: item.x + item.width * offset, width: item.width * fraction };
+            if (line) lines.push({ ...part, source: 'text-underline', mixed: item.str.trim() !== str });
+            else labels.push(part);
+        };
+        for (const match of matches) {
+            addPart(item.str.slice(cursor, match.index), cursor, match.index - cursor, false);
+            addPart(match[0], match.index, match[0].length, true);
+            cursor = match.index + match[0].length;
+        }
+        addPart(item.str.slice(cursor), cursor, item.str.length - cursor, false);
+    }
+    return { labels, lines };
+}
 
-            const yMap = {};
-            for (const it of items) {
-                const y = Math.round(it.y * 2) / 2;
-                if (!yMap[y]) yMap[y] = [];
-                yMap[y].push(it);
+function mergeLines(lines) {
+    const merged = [];
+    for (const line of lines.slice().sort((a, b) => a.y - b.y || a.x - b.x)) {
+        const prev = merged.find(other => Math.abs(other.y - line.y) <= 2
+            && line.x <= other.x + other.width + 6 && line.x + line.width >= other.x - 6);
+        if (prev) {
+            const end = Math.max(prev.x + prev.width, line.x + line.width);
+            prev.x = Math.min(prev.x, line.x); prev.width = end - prev.x;
+            prev.mixed = prev.mixed || line.mixed;
+        } else merged.push({ ...line });
+    }
+    return merged.filter(line => line.width >= MIN_LINE_WIDTH && line.width <= MAX_LINE_WIDTH);
+}
+
+function textGroups(items) {
+    const rows = [];
+    for (const item of items.slice().sort((a, b) => a.y - b.y || a.x - b.x)) {
+        const previous = rows[rows.length - 1];
+        const row = previous && Math.abs(previous.y - item.y) <= Math.max(2, Math.min(4, item.height * 0.25)) ? previous : null;
+        if (row) row.items.push(item); else rows.push({ y: item.y, items: [item] });
+    }
+    const groups = [];
+    for (const row of rows) {
+        let run = [];
+        const finish = () => {
+            if (!run.length) return;
+            const x = run[0].x, end = Math.max(...run.map(item => item.x + item.width));
+            const variants = new Set();
+            for (const ordered of [run, run.slice().reverse()]) {
+                variants.add(ordered.map(item => item.str).join(' '));
+                // Join only touching fragments, so split letters work without
+                // collapsing physically separated names into one page-wide label.
+                variants.add(ordered.map((item, i) => {
+                    if (!i) return item.str;
+                    const prev = ordered[i - 1];
+                    const gap = Math.max(item.x, prev.x) - Math.min(item.x + item.width, prev.x + prev.width);
+                    return (gap <= 2 ? '' : ' ') + item.str;
+                }).join(''));
             }
+            groups.push({ x, y: row.y, width: end - x, height: Math.max(...run.map(item => item.height)), variants: [...variants], str: run.map(item => item.str).join(' ') });
+            run = [];
+        };
+        for (const item of row.items.sort((a, b) => a.x - b.x)) {
+            const prev = run[run.length - 1];
+            if (prev && item.x - (prev.x + prev.width) > Math.max(14, Math.min(24, item.height * 1.5))) finish();
+            run.push(item);
+        }
+        finish();
+    }
+    return groups;
+}
 
-            for (const yStr of Object.keys(yMap)) {
-                const y = parseFloat(yStr);
-                const itemsAtY = yMap[yStr];
+function horizontalGap(a, b) {
+    return Math.max(0, a.x - (b.x + b.width), b.x - (a.x + a.width));
+}
+function localDistance(line, label) {
+    const dy = Math.abs(line.y - label.y), gap = horizontalGap(line, label);
+    if (dy <= Math.max(3, label.height * 0.3)) return gap <= 100 ? gap + dy * 3 : Infinity;
+    const centre = line.x + line.width / 2;
+    const aligned = gap === 0 || (centre >= label.x - 30 && centre <= label.x + label.width + 30);
+    return dy <= 48 && aligned ? dy * 3 + gap + Math.abs(centre - (label.x + label.width / 2)) * 0.1 : Infinity;
+}
 
-                const hasKeyword = itemsAtY.some(it => hasHebKeyword(it.str));
-                const hasUnderline = itemsAtY.some(it => isUnderlineText(it.str) && (it.width || 0) >= MIN_TEXT_UNDERLINE_WIDTH);
-
-                const hasShortText = itemsAtY.some(it =>
-                    it.str && it.str.trim().length > 1 && it.str.trim().length < 100 &&
-                    /[\u0590-\u05FF]/.test(it.str)
-                );
-
-                if ((!hasKeyword && !hasShortText) || !hasUnderline) continue;
-
-                const keywordItems = itemsAtY.filter(it => hasHebKeyword(it.str));
-                const shortTextItems = itemsAtY.filter(it =>
-                    it.str && it.str.trim().length > 1 && it.str.trim().length < 100 &&
-                    /[\u0590-\u05FF]/.test(it.str)
-                );
-                const keywords = keywordItems.length > 0 ? keywordItems : shortTextItems;
-                const underlines = itemsAtY.filter(it => isUnderlineText(it.str) && (it.width || 0) >= MIN_TEXT_UNDERLINE_WIDTH);
-
-                sigDetectVerboseLog(`[sig-detect] page=${pageNum} found signature section at y=${y} with ${keywords.length} keywords and ${underlines.length} underlines`);
-
-                const usedKeywordIndices = new Set();
-
-                for (const ul of underlines) {
-                    let bestKeywordIdx = -1;
-                    let bestDistance = Infinity;
-
-                    for (let i = 0; i < keywords.length; i++) {
-                        if (usedKeywordIndices.has(i)) continue;
-
-                        const kw = keywords[i];
-                        const dx = Math.abs(ul.x + ul.width / 2 - (kw.x + kw.width / 2));
-                        if (dx < bestDistance) {
-                            bestDistance = dx;
-                            bestKeywordIdx = i;
-                        }
+// Only painted, straight, thin horizontal segments count. CTM/save/restore and
+// form transforms are tracked; rectangle borders/curves/filled shapes are not
+// assumed to be a signature line. An explicit nearby label is still required.
+function vectorUnderlines(list, pdfjs) {
+    const { OPS, Util } = pdfjs;
+    if (list.fnArray.length > MAX_OPERATORS_PER_PAGE) throw detectionError('DETECTION_LIMIT', 'PDF page is too complex for automatic detection');
+    let matrix = [1, 0, 0, 1, 0, 0], pending = [], width = 1;
+    const stack = [], lines = [];
+    const save = () => stack.push({ matrix: matrix.slice(), width });
+    const restore = () => { const value = stack.pop(); if (value) ({ matrix, width } = value); };
+    for (let i = 0; i < list.fnArray.length; i++) {
+        const op = list.fnArray[i], args = list.argsArray[i] || [];
+        if (op === OPS.save) save();
+        else if (op === OPS.restore) restore();
+        else if (op === OPS.transform) matrix = Util.transform(matrix, args);
+        else if (op === OPS.setLineWidth) width = Number(args[0]) || 1;
+        else if (op === OPS.paintFormXObjectBegin) { save(); if (args[0]) matrix = Util.transform(matrix, args[0]); }
+        else if (op === OPS.paintFormXObjectEnd) restore();
+        else if (op === OPS.constructPath) {
+            const [ops, values] = args;
+            let j = 0, point = null, subpathStart = pending.length;
+            for (const part of ops) {
+                if (part === OPS.moveTo) { point = [values[j++], values[j++]]; subpathStart = pending.length; }
+                else if (part === OPS.lineTo) {
+                    const next = [values[j++], values[j++]];
+                    if (point) {
+                        const a = Util.applyTransform(point, matrix), b = Util.applyTransform(next, matrix);
+                        const lineWidth = width * Math.max(Math.hypot(matrix[0], matrix[1]), Math.hypot(matrix[2], matrix[3]));
+                        if (Math.abs(a[1] - b[1]) <= 1 && lineWidth <= 2) pending.push({ x: Math.min(a[0], b[0]), y: (a[1] + b[1]) / 2, width: Math.abs(a[0] - b[0]), source: 'vector-underline' });
                     }
+                    point = next;
+                } else if (part === OPS.rectangle) { j += 4; point = null; }
+                else if (part === OPS.curveTo) { j += 6; point = null; }
+                else if (part === OPS.curveTo2 || part === OPS.curveTo3) { j += 4; point = null; }
+                else if (part === OPS.closePath) { pending.splice(subpathStart); point = null; }
+                else { point = null; }
+            }
+        } else if (op === OPS.stroke || op === OPS.closeStroke || op === OPS.fillStroke || op === OPS.eoFillStroke || op === OPS.closeFillStroke || op === OPS.closeEOFillStroke) {
+            lines.push(...pending); pending = [];
+        } else if (op === OPS.endPath || op === OPS.fill || op === OPS.eoFill) pending = [];
+    }
+    return lines;
+}
 
-                    if (bestKeywordIdx >= 0 && bestDistance < 150) {
-                        const bestKeyword = keywords[bestKeywordIdx];
-                        usedKeywordIndices.add(bestKeywordIdx);
+function candidateSpots(labels, lines, geometry, pageNum) {
+    const grouped = textGroups(labels);
+    const cues = grouped.filter(label => label.variants.some(isSignatureCue));
+    const others = grouped.filter(label => label.variants.some(isOtherFieldCue));
+    const proposals = [];
+    const usedCues = new Set();
+    for (const line of mergeLines(lines)) {
+        const options = cues.map((cue, index) => ({ cue, index, distance: localDistance(line, cue) }))
+            .filter(option => Number.isFinite(option.distance) && !usedCues.has(option.index)).sort((a, b) => a.distance - b.distance);
+        if (!options.length) continue;
+        const best = options[0];
+        if (others.some(label => localDistance(line, label) + 5 < best.distance)) continue;
+        // Two equally close labels need a person's decision, not an invented box.
+        if (options[1] && Math.abs(options[1].distance - best.distance) < 4) continue;
+        usedCues.add(best.index);
+        const width = Math.min(Math.max(line.width, MIN_SPOT_WIDTH), MAX_SPOT_WIDTH);
+        proposals.push({ line, cue: best.cue, x: line.x + line.width / 2 - width / 2, width });
+    }
+    const spots = [];
+    let crampedSignatureCount = 0;
+    for (const proposal of proposals) {
+        const { line, cue, x, width } = proposal;
+        const overlapsColumn = other => Math.min(x + width, other.x + other.width) - Math.max(x, other.x) > 2;
+        // PDF y grows upward. Keep the bottom on the detected line, and bound
+        // only this column's free space before canonical rotation/crop mapping.
+        // Separate columns must not shrink one another's signature areas.
+        let height = Math.min(DEFAULT_SPOT_HEIGHT, geometry.viewBox[3] - line.y);
+        for (const other of proposals) {
+            if (other !== proposal && other.line.y > line.y + 2 && overlapsColumn(other)) {
+                height = Math.min(height, other.line.y - line.y - SIGNATURE_ROW_GAP);
+            }
+        }
+        for (const label of grouped) {
+            if (label.y > line.y + 2 && overlapsColumn(label)) {
+                // Text extraction reports the baseline, not a glyph outline.
+                // Reserve a bounded descender allowance and a small gap; this
+                // is conservative discovery geometry, still requiring review.
+                const clearance = Math.max(SIGNATURE_ROW_GAP, label.height * 0.25 + 2);
+                height = Math.min(height, label.y - line.y - clearance);
+            }
+        }
+        if (height < MIN_SPOT_HEIGHT) { crampedSignatureCount++; continue; }
+        const pdfBox = { x, y: line.y, width, height };
+        const ui = pdfBoxToVisualBox(geometry, pdfBox);
+        const visualWidth = Math.min(Math.round(ui.width), geometry.visualWidth);
+        const visualHeight = Math.min(Math.round(ui.height), geometry.visualHeight);
+        spots.push({
+            pageNum,
+            x: Math.max(0, Math.min(Math.round(ui.x), geometry.visualWidth - visualWidth)),
+            y: Math.max(0, Math.min(Math.round(ui.y), geometry.visualHeight - visualHeight)),
+            width: visualWidth, height: visualHeight,
+            pdfX: pdfBox.x, pdfY: pdfBox.y, pdfWidth: width, pdfHeight: height,
+            pdfAnchorX: line.x + line.width / 2, pdfAnchorY: line.y,
+            signerName: cue.variants.find(isSignatureCue).trim().slice(0, 80),
+            isRequired: true, confidence: line.mixed ? 0.75 : 0.9, source: line.source,
+            assignmentStatus: 'unassigned',
+        });
+    }
+    return { spots, crampedSignatureCount };
+}
 
-                        let signerName = mapSignerName(keywordType(bestKeyword.str));
-                        if (!hasKeyword) {
-                            signerName = (bestKeyword.str || "חתימה").trim() + " ✍️";
-                        }
-
-                        const spotPdf = makeSpotFromLine(ul, pageNum, signerName);
-                        const spotUi = pdfBoxToVisualBox(geometry, spotPdf);
-
-                        const pageWidthPx = geometry.visualWidth;
-                        const pageHeightPx = geometry.visualHeight;
-
-                        const clamped = clampToPage(
-                            {
-                                pageNum,
-                                x: Math.round(spotUi.x),
-                                y: Math.round(spotUi.y),
-                                width: Math.round(spotUi.width),
-                                height: Math.round(spotUi.height),
-                                // Keep original PDF coordinates for accurate matching against PDF text items
-                                pdfX: spotPdf.x,
-                                pdfY: spotPdf.y,
-                                pdfWidth: spotPdf.width,
-                                pdfHeight: spotPdf.height,
-                                // Anchor at the underline position (before we shift the rect down).
-                                // This aligns with signer labels which are typically on the underline baseline.
-                                pdfAnchorX: ul.x + (ul.width || 0) / 2,
-                                pdfAnchorY: ul.y,
-                                signerName: spotPdf.signerName,
-                                isRequired: true,
-                                confidence: 0.95,
-                                source: "signature-section",
-                            },
-                            pageWidthPx,
-                            pageHeightPx
-                        );
-
-                        allSpots.push(clamped);
-                        sigDetectVerboseLog(`[sig-detect] page=${pageNum} added spot: "${clamped.signerName}" at (${clamped.x}, ${clamped.y})`);
-                    }
+function hasPhrase(text, phrase) {
+    return (` ${normalizeText(text)} `).includes(` ${phrase} `);
+}
+function assignSignersToSpots(spots, signers, pageItems = []) {
+    const people = validateSigners(signers);
+    const groupsByPage = new Map(), itemsByPage = new Map();
+    for (const item of pageItems) {
+        if (!itemsByPage.has(item.pageNum)) itemsByPage.set(item.pageNum, []);
+        itemsByPage.get(item.pageNum).push(item);
+    }
+    for (const [pageNum, items] of itemsByPage) groupsByPage.set(pageNum, textGroups(items));
+    return spots.map(spot => {
+        const clean = { ...spot, assignmentStatus: 'unassigned' };
+        delete clean.signerIndex; delete clean.signerUserId;
+        if (!people.length) return clean;
+        const line = {
+            x: Number.isFinite(spot.pdfX) ? spot.pdfX : spot.x,
+            y: Number.isFinite(spot.pdfAnchorY) ? spot.pdfAnchorY : spot.y,
+            width: Number.isFinite(spot.pdfWidth) ? spot.pdfWidth : spot.width,
+        };
+        const matches = [];
+        for (const group of groupsByPage.get(spot.pageNum) || []) {
+            // A signer label is local both vertically and horizontally. Do not
+            // steal a name from a neighbouring column on the same baseline.
+            const dy = Math.abs(group.y - line.y), gap = horizontalGap(line, group);
+            if (dy > 45 || gap > (dy <= 4 ? 75 : 25)) continue;
+            for (const person of people) {
+                if (group.variants.some(text => hasPhrase(text, person.normalized))) {
+                    matches.push({ person, score: dy * 3 + gap });
                 }
             }
-        } catch (e) {
-            console.error(`[sig-detect] page=${pageNum} processing error:`, e);
-            continue;
         }
-    }
-
-    let spots = dedupe(allSpots, 22);
-
-    const extractedChars = allPageItems.reduce((sum, it) => sum + String(it?.str || "").length, 0);
-    const pagesWithText = new Set(allPageItems.map((it) => it.pageNum)).size;
-    console.log(`[sig-detect] extracted text summary: pages=${pdf.numPages} pagesWithText=${pagesWithText} items=${allPageItems.length} chars=${extractedChars}`);
-
-    if (SIG_DETECT_VERBOSE) {
-        console.log('[sig-detect] ========== ALL EXTRACTED TEXT ITEMS ==========');
-        const itemsByPage = {};
-        for (const item of allPageItems) {
-            if (!itemsByPage[item.pageNum]) itemsByPage[item.pageNum] = [];
-            itemsByPage[item.pageNum].push(item);
+        const bestByPerson = new Map();
+        for (const match of matches) {
+            const previous = bestByPerson.get(match.person.index);
+            if (!previous || previous.score > match.score) bestByPerson.set(match.person.index, match);
         }
-        for (const page of Object.keys(itemsByPage).sort((a, b) => a - b)) {
-            console.log(`[sig-detect] PAGE ${page}:`);
-            itemsByPage[page].forEach(item => {
-                console.log(`[sig-detect]   "${item.str}" at x=${item.x.toFixed(2)}, y=${item.y.toFixed(2)}`);
-            });
-        }
-        console.log('[sig-detect] ================================================\n');
-    }
-
-    spots = spots
-        .sort(
-            (a, b) =>
-                (b.confidence || 0) - (a.confidence || 0) ||
-                a.pageNum - b.pageNum ||
-                b.y - a.y  // Descending Y: highest Y (top of page visually) comes first
-        );
-
-    const spotsByPageAndName = {};
-    spots.forEach(spot => {
-        const key = `${spot.pageNum}-${spot.signerName}`;
-        if (!spotsByPageAndName[key]) {
-            spotsByPageAndName[key] = [];
-        }
-        spotsByPageAndName[key].push(spot);
+        // Duplicate names or more than one locally plausible signer are left
+        // unassigned. There is intentionally no order/round-robin fallback.
+        if (bestByPerson.size !== 1) return clean;
+        const { person } = [...bestByPerson.values()][0];
+        return { ...clean, assignmentStatus: 'matched', signerIndex: person.index, signerName: person.name,
+            ...(person.userId != null ? { signerUserId: person.userId } : {}) };
     });
+}
 
-    spots = spots.map(spot => {
-        const key = `${spot.pageNum}-${spot.signerName}`;
-        const duplicates = spotsByPageAndName[key];
-        if (duplicates.length > 1) {
-            const sorted = duplicates.sort((a, b) => a.y - b.y);
-            const index = sorted.findIndex(s => s === spot);
-            if (index >= 0) {
-                return {
-                    ...spot,
-                    signerName: `${spot.signerName.replace(' ✍️', '')} ${index + 1} ✍️`,
-                };
-            }
+async function detectSignatureSpotsDetailed(buffer, signers = null) {
+    validateSigners(signers);
+    if (!buffer || !buffer.length || buffer.length > MAX_FILE_BYTES) throw detectionError('INVALID_PDF', 'Invalid or oversized PDF buffer');
+    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    const task = pdfjs.getDocument({ data: new Uint8Array(buffer), standardFontDataUrl: resolvePdfjsStandardFontDataUrl(), isEvalSupported: false, stopAtErrors: true });
+    let pdf;
+    const spots = [], pageItems = [], noTextPages = [];
+    let crampedSignatureCount = 0;
+    try {
+        pdf = await task.promise;
+        if (pdf.numPages > MAX_PAGES) throw detectionError('DETECTION_LIMIT', 'PDF has more than 200 pages');
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            let page;
+            try {
+                page = await pdf.getPage(pageNum);
+                const geometry = pageGeometryFromPdfjsPage(page, FRONTEND_PAGE_RENDER_WIDTH);
+                const content = await page.getTextContent();
+                if (content.items.length > MAX_ITEMS_PER_PAGE) throw detectionError('DETECTION_LIMIT', 'PDF page has too many text items');
+                const items = content.items.map(normalizeTextItem).filter(Boolean);
+                if (!items.length) noTextPages.push(pageNum);
+                pageItems.push(...items.map(item => ({ ...item, pageNum })));
+                const { labels, lines } = splitTextUnderlines(items);
+                // A scan cannot be understood without OCR. Vector extraction
+                // alone does not turn it into a readable signature document.
+                if (items.length) lines.push(...vectorUnderlines(await page.getOperatorList(), pdfjs));
+                const candidates = candidateSpots(labels, lines, geometry, pageNum);
+                spots.push(...candidates.spots);
+                crampedSignatureCount += candidates.crampedSignatureCount;
+            } catch (error) {
+                if (error.code === 'DETECTION_LIMIT') throw error;
+                throw detectionError('PDF_PAGE_FAILED', `Could not inspect PDF page ${pageNum}`);
+            } finally { if (page) page.cleanup(); }
         }
-        return spot;
-    });
-
-    if (signers && signers.length > 0) {
-        console.log(`[sig-detect] smart-match assignment start: signerCount=${signers.length} spotsBefore=${spots.length}`);
-        sigDetectVerboseLog('[sig-detect] ========== CALLING SMART MATCH ASSIGNMENT ==========');
-        sigDetectVerboseLog('[sig-detect] Signers passed to assignment:', signers.map(s => ({
-            name: typeof s === 'string' ? s : (s.name || s.Name || '?'),
-            userId: typeof s === 'string' ? null : (s.userId || s.UserId || null)
-        })));
-        spots = assignSignersToSpots(spots, signers, allPageItems);
-        console.log(`[sig-detect] smart-match assignment done: spotsAfter=${spots.length}`);
+        const unique = spots.filter((spot, i) => !spots.slice(0, i).some(other => other.pageNum === spot.pageNum
+            && Math.abs(other.pdfAnchorX - spot.pdfAnchorX) <= 8 && Math.abs(other.pdfAnchorY - spot.pdfAnchorY) <= 4));
+        const assigned = assignSignersToSpots(unique.sort((a, b) => a.pageNum - b.pageNum || a.y - b.y || a.x - b.x), signers, pageItems);
+        const warnings = [{ code: 'REVIEW_REQUIRED' }];
+        if (noTextPages.length) warnings.push({ code: 'NO_TEXT_LAYER', pages: noTextPages });
+        if (crampedSignatureCount) warnings.push({ code: 'INSUFFICIENT_SIGNATURE_SPACE', count: crampedSignatureCount });
+        if (!assigned.length && !crampedSignatureCount) warnings.push({ code: 'NO_SIGNATURE_CUES' });
+        const unassigned = assigned.filter(spot => spot.assignmentStatus === 'unassigned').length;
+        if (unassigned) warnings.push({ code: 'UNASSIGNED_SPOTS', count: unassigned });
+        return { spots: assigned, warnings, noTextPages, pagesChecked: pdf.numPages, crampedSignatureCount };
+    } catch (error) {
+        if (error.code) throw error;
+        throw detectionError('INVALID_PDF', 'PDF could not be inspected');
+    } finally {
+        if (pdf) await pdf.destroy(); else await task.destroy();
     }
+}
 
-    console.log(`[sig-detect] final result: ${spots.length} spots detected`);
-    return spots;
+// Compatibility for incumbent consumers; new callers use the detailed result.
+async function detectHebrewSignatureSpotsFromPdfBuffer(buffer, signers = null) {
+    return (await detectSignatureSpotsDetailed(buffer, signers)).spots;
 }
 
 function streamToBuffer(stream) {
@@ -460,349 +447,5 @@ function streamToBuffer(stream) {
     });
 }
 
-function assignSignersToSpots(spots, signers, pageItems = null) {
-    if (!signers || signers.length === 0) {
-        return spots;
-    }
 
-    if (pageItems && pageItems.length > 0) {
-        return assignSignersToSpotsSmartMatch(spots, signers, pageItems);
-    }
-
-    return assignSignersToSpotsRoundRobin(spots, signers);
-}
-
-/**
- * Smart matching: finds signer names near signature spots
- */
-function assignSignersToSpotsSmartMatch(spots, signers, pageItems) {
-    const smartMatchLog = (...args) => {
-        if (!SIG_DETECT_VERBOSE) return;
-        console.log(...args);
-    };
-
-    const normalizeText = (text) => {
-        if (!text) return "";
-        return text
-            .toLowerCase()
-            .replace(/\s+/g, " ")
-            .trim();
-    };
-
-    const signerNameMap = signers.map((signer, idx) => {
-        // Support both 'name' and 'Name' properties (frontend uses 'Name' from API)
-        const name = typeof signer === 'string' ? signer : (signer.name || signer.Name || '');
-        const parts = name
-            .split(/\s+/)
-            .map((p) => normalizeText(p))
-            .filter((p) => p.length > 0);
-
-        return {
-            index: idx,
-            signer,
-            name,
-            normalized: normalizeText(name),
-            parts,
-        };
-    });
-
-    // Build a set of unique tokens across signers (e.g., first names).
-    // This avoids matching on common tokens like "בדיקה" which appear in all names.
-    const tokenFrequency = {};
-    for (const s of signerNameMap) {
-        for (const part of s.parts) {
-            tokenFrequency[part] = (tokenFrequency[part] || 0) + 1;
-        }
-    }
-    const uniqueTokens = new Set(
-        Object.keys(tokenFrequency).filter((t) => tokenFrequency[t] === 1 && t.length > 1)
-    );
-
-    const tokenToSignerIndex = {};
-    for (const s of signerNameMap) {
-        for (const part of s.parts) {
-            if (uniqueTokens.has(part)) {
-                tokenToSignerIndex[part] = s.index;
-            }
-        }
-    }
-
-    // Precompute per-page candidates for signer labels found in the PDF text.
-    // PDFJS sometimes splits a single Hebrew name into multiple items (e.g., "ליא" + "ב").
-    // To handle that, we group items by (page, y) and join them (right-to-left by x).
-    const pageCandidates = {};
-    const itemsByPageAndLine = {};
-
-    const lineKey = (pageNum, y) => {
-        const yKey = Math.round((y || 0) * 2) / 2; // group by half-point
-        return `${pageNum}::${yKey}`;
-    };
-
-    for (const item of pageItems) {
-        if (!item || !item.str || !item.pageNum) continue;
-        const key = lineKey(item.pageNum, item.y);
-        if (!itemsByPageAndLine[key]) itemsByPageAndLine[key] = [];
-        itemsByPageAndLine[key].push(item);
-    }
-
-    for (const key of Object.keys(itemsByPageAndLine)) {
-        const items = itemsByPageAndLine[key];
-        if (!items || items.length === 0) continue;
-
-        const pageNum = items[0].pageNum;
-        const y = items[0].y || 0;
-
-        // Join fragments right-to-left to reconstruct Hebrew words.
-        const joined = normalizeText(
-            items
-                .slice()
-                .sort((a, b) => (b.x || 0) - (a.x || 0))
-                .map((it) => it.str)
-                .join('')
-        );
-
-        for (const token of uniqueTokens) {
-            if (!joined || !joined.includes(token)) continue;
-            const signerIndex = tokenToSignerIndex[token];
-            if (signerIndex === undefined) continue;
-
-            // Use the rightmost x as the label anchor.
-            const rightmostX = items.reduce((mx, it) => Math.max(mx, it.x || 0), 0);
-
-            if (!pageCandidates[pageNum]) pageCandidates[pageNum] = [];
-            pageCandidates[pageNum].push({
-                signerIndex,
-                token,
-                x: rightmostX,
-                y,
-                raw: joined,
-            });
-        }
-    }
-
-    smartMatchLog('[smart-match] ========== SMART MATCH START ==========');
-    smartMatchLog('[smart-match] Total spots to assign:', spots.length);
-    smartMatchLog('[smart-match] Unique tokens used for matching:', Array.from(uniqueTokens));
-    console.log(`[smart-match] summary: spots=${spots.length} uniqueTokens=${uniqueTokens.size} candidatePages=${Object.keys(pageCandidates).length}`);
-
-    const assignedSpots = spots.map((spot) => {
-        const spotPdfX = typeof spot.pdfAnchorX === 'number'
-            ? spot.pdfAnchorX
-            : (typeof spot.pdfX === 'number' ? spot.pdfX : (spot.x || 0));
-        const spotPdfY = typeof spot.pdfAnchorY === 'number'
-            ? spot.pdfAnchorY
-            : (typeof spot.pdfY === 'number' ? spot.pdfY : (spot.y || 0));
-
-        smartMatchLog(`\n[smart-match] === SPOT ${spots.indexOf(spot) + 1} === page ${spot.pageNum}, uiY=${(spot.y || 0).toFixed(2)}, pdfAnchorY=${spotPdfY.toFixed(2)}`);
-
-        // 1) Best path: match using signer label tokens found on the same page.
-        const candidates = pageCandidates[spot.pageNum] || [];
-        if (candidates.length > 0) {
-            let best = null;
-            for (const c of candidates) {
-                const vertDist = Math.abs((c.y || 0) - spotPdfY);
-                const horizDist = Math.abs((c.x || 0) - spotPdfX);
-                const score = vertDist * 10 + horizDist;
-
-                if (!best || score < best.score) {
-                    best = { ...c, score, vertDist, horizDist };
-                }
-            }
-
-            // If the closest label is reasonably close vertically, trust it.
-            if (best && best.vertDist < 60) {
-                const signer = signers[best.signerIndex];
-                const signerName = typeof signer === 'string' ? signer : (signer.name || signer.Name || '');
-                smartMatchLog(
-                    `[smart-match]   ✓ LABEL MATCH: token="${best.token}" ("${best.raw}") -> signer ${best.signerIndex} "${signerName}" (pdfVertDist=${best.vertDist.toFixed(
-                        1
-                    )}, pdfHorizDist=${best.horizDist.toFixed(1)})`
-                );
-
-                return {
-                    ...spot,
-                    signerIndex: best.signerIndex,
-                    signerName,
-                    signerUserId: typeof signer === 'string' ? null : (signer.userId || signer.UserId || null),
-                };
-            }
-        }
-
-        // FALLBACK: Try to match signer names from nearby text
-        const nearbyItems = pageItems.filter((item) => {
-            if (!item.str || item.pageNum !== spot.pageNum) return false;
-            const verticalDistance = Math.abs((item.y || 0) - spotPdfY);
-            return verticalDistance < 160;  // PDF-space: signer labels are close to their underline
-        });
-
-        smartMatchLog(`[smart-match] Found ${nearbyItems.length} nearby items (pdf vertical distance < 160):`);
-        nearbyItems.forEach(item => {
-            const vertDist = Math.abs((item.y || 0) - spotPdfY);
-            smartMatchLog(`[smart-match]   "${item.str}" at x=${item.x.toFixed(2)}, y=${item.y.toFixed(2)} (pdfVertDist=${vertDist.toFixed(2)})`);
-        });
-
-        // Strategy: Match signers based on which signer names appear in nearby text
-        // Build a map of which signer indices have names present in nearby items
-        const presentSigners = new Set();  // signerIndex values
-        const signerToClosestDist = {};  // signerIndex -> closest distance to their name
-
-        for (const item of nearbyItems) {
-            const itemText = normalizeText(item.str);
-            const vertDist = Math.abs((item.y || 0) - spotPdfY);
-            const horizDist = Math.abs((item.x || 0) - spotPdfX);
-            const totalDist = vertDist * 10 + horizDist;  // Strongly penalize vertical distance
-
-            for (const signerInfo of signerNameMap) {
-                // Check if this item contains parts of this signer's name  
-                // Prefer matching the first name (most distinctive part) over last name
-                let matched = false;
-                let matchScore = 0;  // Track quality of match: full name > first name > last name
-
-                for (let partIdx = 0; partIdx < signerInfo.parts.length; partIdx++) {
-                    const part = signerInfo.parts[partIdx];
-                    // Prefer unique tokens only; shared tokens (like last name) are allowed but lower quality
-                    if (part.length > 1 && itemText.includes(part)) {
-                        matched = true;
-                        const uniquenessBonus = uniqueTokens.has(part) ? 200 : 0;
-                        const positionScore = 100 / (partIdx + 1);
-                        matchScore = Math.max(matchScore, uniquenessBonus + positionScore);
-                    }
-                }
-
-                if (matched) {
-                    presentSigners.add(signerInfo.index);
-                    // Store the match score along with distance
-                    if (!signerToClosestDist[signerInfo.index]) {
-                        signerToClosestDist[signerInfo.index] = { totalDist, matchScore };
-                    } else {
-                        // Keep the match with better score, and if tied, better distance
-                        const existing = signerToClosestDist[signerInfo.index];
-                        if (matchScore > existing.matchScore ||
-                            (matchScore === existing.matchScore && totalDist < existing.totalDist)) {
-                            signerToClosestDist[signerInfo.index] = { totalDist, matchScore };
-                        }
-                    }
-
-                    const signerName = signers[signerInfo.index].name || signers[signerInfo.index].Name || signers[signerInfo.index];
-                    const matchPart = signerInfo.parts.find(p => p.length > 1 && itemText.includes(p));
-                    smartMatchLog(`[smart-match]     ✓ Matched signer ${signerInfo.index} "${signerName}" - found part "${matchPart}" (score=${matchScore.toFixed(0)}) in "${item.str}" at distance ${totalDist.toFixed(0)}pt`);
-                    break;  // Found a match for this signer in this item, move to next signer
-                }
-            }
-        }
-
-        // If we found exactly one signer name nearby, use it
-        if (presentSigners.size === 1) {
-            bestSignerIndex = Array.from(presentSigners)[0];
-            const signerName = signers[bestSignerIndex].name || signers[bestSignerIndex].Name || signers[bestSignerIndex];
-            const distInfo = signerToClosestDist[bestSignerIndex];
-            smartMatchLog(`[smart-match]   ✓ UNIQUE MATCH: signer ${bestSignerIndex} "${signerName}" (distance=${distInfo.totalDist.toFixed(2)}, score=${distInfo.matchScore.toFixed(0)})`);
-            return {
-                ...spot,
-                signerIndex: bestSignerIndex,
-                signerName: signerName,
-                signerUserId: typeof signers[bestSignerIndex] === 'string' ? null : (signers[bestSignerIndex].userId || signers[bestSignerIndex].UserId || null),
-            };
-        }
-
-        // If we found multiple signers, pick the one with the best match score, then closest distance
-        if (presentSigners.size > 1) {
-            const signerDistances = Array.from(presentSigners)
-                .map(idx => ({
-                    index: idx,
-                    name: signers[idx].name || signers[idx].Name || signers[idx],
-                    ...signerToClosestDist[idx]
-                }))
-                .sort((a, b) => {
-                    // Sort by match score DESC (higher is better), then by distance ASC (lower is better)
-                    if (b.matchScore !== a.matchScore) {
-                        return b.matchScore - a.matchScore;
-                    }
-                    return a.totalDist - b.totalDist;
-                });
-
-            bestSignerIndex = signerDistances[0].index;
-            smartMatchLog(`[smart-match]   Candidates: ${signerDistances.map(s => `signer ${s.index} (score=${s.matchScore.toFixed(0)}, dist=${s.totalDist.toFixed(0)}pt)`).join(', ')} -> chose signer ${bestSignerIndex}`);
-            const signerName = signers[bestSignerIndex].name || signers[bestSignerIndex].Name || signers[bestSignerIndex];
-            const distInfo = signerToClosestDist[bestSignerIndex];
-            smartMatchLog(`[smart-match]   ✓ CLOSEST MATCH: signer ${bestSignerIndex} "${signerName}" (score=${distInfo.matchScore.toFixed(0)}, distance=${distInfo.totalDist.toFixed(2)}, from ${presentSigners.size} present)`);
-            return {
-                ...spot,
-                signerIndex: bestSignerIndex,
-                signerName: signerName,
-                signerUserId: typeof signers[bestSignerIndex] === 'string' ? null : (signers[bestSignerIndex].userId || signers[bestSignerIndex].UserId || null),
-            };
-        }
-
-        // No signer name found
-        smartMatchLog(`[smart-match]   ❌ UNASSIGNED: spot page ${spot.pageNum} - NO SIGNER NAME FOUND`);
-        return { ...spot, _unassigned: true };
-    });
-
-    let signerIndex = 0;
-    const finalSpots = assignedSpots.map((spot) => {
-        if (spot._unassigned) {
-            const signer = signers[signerIndex % signers.length];
-            const signerName = typeof signer === 'string' ? signer : (signer.name || signer.Name || '');
-            const signerUserId = typeof signer === 'string' ? null : (signer.userId || signer.UserId || null);
-            smartMatchLog(`[smart-match]   (ROUND-ROBIN FALLBACK) page ${spot.pageNum} -> signer ${signerIndex % signers.length} "${signerName}"`);
-            const assignment = {
-                ...spot,
-                signerIndex: signerIndex % signers.length,
-                signerName: signerName,
-                signerUserId: signerUserId,
-            };
-            delete assignment._unassigned;
-            signerIndex++;
-            return assignment;
-        }
-        return spot;
-    });
-
-    return finalSpots;
-}
-
-/**
- * Simple round-robin assignment across signers
- */
-function assignSignersToSpotsRoundRobin(spots, signers) {
-    const spotsByPage = {};
-    for (const spot of spots) {
-        const pageNum = spot.pageNum || 1;
-        if (!spotsByPage[pageNum]) {
-            spotsByPage[pageNum] = [];
-        }
-        spotsByPage[pageNum].push(spot);
-    }
-
-    let signerIndex = 0;
-    const assignedSpots = [];
-
-    for (const pageNum of Object.keys(spotsByPage).sort((a, b) => a - b)) {
-        // Frontend coords: lower Y is higher on the page
-        const pageSpots = spotsByPage[pageNum].sort((a, b) => (a.y || 0) - (b.y || 0));
-
-        for (const spot of pageSpots) {
-            const signer = signers[signerIndex % signers.length];
-            const signerName = typeof signer === 'string' ? signer : (signer.name || signer.Name || '');
-            const signerUserId = typeof signer === 'string' ? null : (signer.userId || signer.id || null);
-
-            assignedSpots.push({
-                ...spot,
-                signerIndex: signerIndex % signers.length,
-                signerName: signerName,
-                signerUserId: signerUserId,
-            });
-            signerIndex++;
-        }
-    }
-
-    return assignedSpots;
-}
-
-module.exports = {
-    detectHebrewSignatureSpotsFromPdfBuffer,
-    streamToBuffer,
-    FRONTEND_PAGE_RENDER_WIDTH,
-    assignSignersToSpots,
-};
+module.exports = { detectHebrewSignatureSpotsFromPdfBuffer, detectSignatureSpotsDetailed, validateSigners, streamToBuffer, FRONTEND_PAGE_RENDER_WIDTH, assignSignersToSpots };

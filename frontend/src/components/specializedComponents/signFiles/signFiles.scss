@@ -685,6 +685,11 @@
     border: 0.0625rem solid var(--spot-border, var(--lw-color-primary, #2A4365));
     color: var(--spot-border, var(--lw-color-primary, #2A4365));
 
+    // PDF geometry must scale identically on every viewport. A CSS minimum
+    // enlarges only the visible field and separates it from the saved bounds.
+    min-width: 0;
+    min-height: 0;
+
     /* Labels/images must not become the touch target (iOS would scroll the PDF). */
     &.is-editable > *:not(.lw-signing-spotOverlay):not(.lw-signing-spotRemove):not(.lw-signing-spotResize) {
         pointer-events: none;
@@ -705,11 +710,6 @@
         overflow: hidden;
     }
 
-    // Ensure spots stay readable on small screens
-    @media (max-width: 30rem) {
-        min-width: 5.625rem !important;
-        min-height: 2.25rem !important;
-    }
 }
 
 .lw-signing-spotResize {

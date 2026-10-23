@@ -106,6 +106,70 @@
     min-inline-size: 0;
 }
 
+.lw-clientPopup__partyType {
+    margin-block-end: v.$space-4;
+}
+
+.lw-clientPopup__documentProfile {
+    margin-block: v.$space-4;
+    border-block: 0.0625rem solid #e2e8f0;
+    padding-block: v.$space-3;
+    min-inline-size: 0;
+
+    > summary {
+        color: #2a4365;
+        cursor: pointer;
+        font-weight: 600;
+        min-block-size: 2.75rem;
+        padding-block: 0.625rem;
+        overflow-wrap: anywhere;
+    }
+}
+
+.lw-clientPopup__profileHelp {
+    margin-block: 0 v.$space-4;
+    color: #4a5568;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.lw-clientPopup__profileGroup {
+    margin: 0;
+    padding: v.$space-3 0 0;
+    border: 0;
+    min-inline-size: 0;
+
+    + .lw-clientPopup__profileGroup {
+        border-block-start: 0.0625rem solid #e2e8f0;
+    }
+
+    > legend {
+        padding: 0;
+        color: #2d3748;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+}
+
+.lw-clientPopup__profileFields {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-inline-size: 0;
+}
+
+.lw-clientPopup__profileSelect {
+    display: flex;
+    flex-direction: column;
+    gap: v.$space-2;
+    margin-block-end: v.$space-4;
+    min-inline-size: 0;
+
+    .lw-signingSelect {
+        inline-size: 100%;
+    }
+}
+
 .lw-clientPopup__actions {
     @include m.row(v.$space-2, wrap, center, center);
     justify-content: center;

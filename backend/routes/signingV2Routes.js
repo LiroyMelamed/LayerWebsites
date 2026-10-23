@@ -37,6 +37,8 @@ router.use((req, res, next) => (process.env.SIGNING_V2_ENABLED === 'true' ? next
 router.use((req, res, next) => { res.set('Cache-Control', 'private, no-store'); next(); });
 router.use(auth, requireSigningEnabledForUser);
 
+router.use('/word', send, require('./signingWordRoutes')({ pool, actorScope }));
+
 const target = req => ({ packageId: req.params.id, personId: req.params.personId, purpose: req.body?.purpose, channel: req.body?.channel, renewLink: req.body?.renewLink });
 
 router.get('/submissions', view, run(async (req, res) => res.json(await management.listSubmissions(pool, await actorScope(pool, req, 'view'), req.query))));

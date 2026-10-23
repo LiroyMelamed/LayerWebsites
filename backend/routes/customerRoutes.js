@@ -27,6 +27,7 @@ const upload = multer({
 
 // Customer APIs
 router.get("/GetCustomers", authMiddleware, requireFirmAction('clients', 'view', { legacy: 'admin' }), customerController.getCustomers);
+router.get("/GetCustomer/:customerId", authMiddleware, requireFirmAction('clients', 'view', { legacy: 'admin' }), customerController.getCustomerById);
 router.post("/AddCustomer", authMiddleware, requireFirmAction('clients', 'edit', { legacy: 'admin' }), customerController.addCustomer);
 router.put("/UpdateCustomer/:customerId", authMiddleware, requireFirmAction('clients', 'edit', { legacy: 'admin' }), customerController.updateCustomerById);
 router.get("/GetCustomerByName", authMiddleware, requireFirmAction('clients', 'view', { legacy: 'admin' }), customerController.getCustomerByName);

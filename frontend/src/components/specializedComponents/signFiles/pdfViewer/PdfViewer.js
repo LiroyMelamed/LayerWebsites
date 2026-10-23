@@ -20,6 +20,7 @@ function LazyPdfPage({
     renderWidth,
     pdfProxy,
     spots,
+    suggestedSpots = [],
     onUpdateSpot,
     onRemoveSpot,
     onRequestRemove,
@@ -134,6 +135,13 @@ function LazyPdfPage({
                             selectedSpotIndex={selectedSpotIndex}
                             selectedSpotId={selectedSpotId}
                         />
+                        {suggestedSpots.map((spot, index) => Number(spot.pageNum) === pageNumber && (
+                            <div key={`suggestion-${index}`} aria-hidden="true" className="lw-detectedSignaturePreview"
+                                style={{ left: spot.x * overlayScale, top: spot.y * overlayScale,
+                                    width: spot.width * overlayScale, height: spot.height * overlayScale }}>
+                                {index + 1}
+                            </div>
+                        ))}
                     </SimpleContainer>
                 ) : (
                     <div
@@ -157,6 +165,7 @@ export default function PdfViewer({
     pdfFile,
     pdfSource = null,
     spots = [],
+    suggestedSpots = [],
     onUpdateSpot,
     onRemoveSpot,
     onRequestRemove,
@@ -362,6 +371,7 @@ export default function PdfViewer({
                             renderWidth={renderWidth}
                             pdfProxy={pdfProxy}
                             spots={spots}
+                            suggestedSpots={suggestedSpots}
                             onUpdateSpot={onUpdateSpot}
                             onRemoveSpot={onRemoveSpot}
                             onRequestRemove={onRequestRemove}

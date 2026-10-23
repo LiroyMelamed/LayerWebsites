@@ -13,7 +13,7 @@ const { buildSignedDocPushData, getAppScheme } = require("../utils/appDeepLinks"
 const { formatPhoneNumber } = require("../utils/phoneUtils");
 const { sendMessage, WEBSITE_DOMAIN } = require("../utils/sendMessage");
 const { sendEmailCampaign } = require("../utils/smooveEmailCampaignService");
-const { detectHebrewSignatureSpotsFromPdfBuffer, streamToBuffer } = require("../utils/signatureDetection");
+const { detectSignatureSpotsDetailed, validateSigners, streamToBuffer } = require("../utils/signatureDetection");
 const { renderTemplate } = require("../utils/templateRenderer");
 const { getSetting } = require("../services/settingsService");
 const { invalidateOperationalDashboardCaches } = require("../utils/operationalDashboardCache");
@@ -8543,7 +8543,8 @@ exports.getSigningFilePdf = async (req, res, next) => {
 
 exports.detectSignatureSpots = async (req, res, next) => {
     try {
-        const { fileKey, signers } = req.body;
+        const { fileKey, signers } = req.body || {};
+        validateSigners(signers);
 
         if (isSigningDebugEnabled()) {
             console.log('[signing] detectSignatureSpots', {
@@ -8580,18 +8581,19 @@ exports.detectSignatureSpots = async (req, res, next) => {
         const obj = await withTimeout(r2.send(cmd), SIGNING_PDF_OP_TIMEOUT_MS, 'R2 get timeout');
         const buffer = await withTimeout(streamToBuffer(obj.Body), SIGNING_PDF_OP_TIMEOUT_MS, 'PDF download timeout');
 
-        const spots = await withTimeout(
-            detectHebrewSignatureSpotsFromPdfBuffer(
-                buffer,
-                signers && Array.isArray(signers) ? signers : null
-            ),
+        const result = await withTimeout(
+            detectSignatureSpotsDetailed(buffer, signers),
             SIGNING_PDF_OP_TIMEOUT_MS,
             'Signature detection timeout'
         );
 
         if (req.__aborted) return;
-        return res.json({ spots, signerCount: signers?.length || 1 });
+        return res.json({ ...result, signerCount: Array.isArray(signers) ? signers.length : 0 });
     } catch (err) {
+        if (err?.code === 'INVALID_SIGNERS') return fail(next, 'INVALID_SIGNERS', 422);
+        if (['INVALID_PDF', 'PDF_PAGE_FAILED', 'DETECTION_LIMIT'].includes(err?.code)) {
+            return fail(next, 'SIGNATURE_DETECTION_FAILED', 422);
+        }
         const msg = String(err?.message || '');
         if (msg.toLowerCase().includes('timeout')) {
             return fail(next, 'REQUEST_TIMEOUT', 504);

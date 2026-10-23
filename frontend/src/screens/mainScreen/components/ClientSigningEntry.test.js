@@ -11,6 +11,10 @@ jest.mock('../../../providers/PopUpProvider', () => ({ usePopup: () => ({ openPo
 jest.mock('../../../providers/FirmPermissionsProvider', () => ({ useFirmPermissions: () => ({ canAction: (area, action) => (area === 'clients' && action === 'view') || (area === 'signing' && action === 'upload' && mockUpload) }) }));
 jest.mock('../../signingScreen/templates/SigningPackagesHub', () => ({ useSigningV2Available: () => mockAvailable }));
 jest.mock('../../../hooks/useHttpRequest', () => () => ({ result: [], isPerforming: false, performRequest: mockRequest }));
+jest.mock('../../../api/customersApi', () => ({ customersApi: {
+    getCustomerById: jest.fn(async id => ({ status: 200, data: { UserId: id, ClientProfile: {} } })),
+    getCustomersByName: jest.fn(async () => ({ status: 200, data: [] })),
+} }));
 jest.mock('../../signingScreen/templates/ClientSigningFlow', () => ({ clientId, onBack }) => <section aria-label={`Flow ${clientId}`}><button onClick={onBack}>Return to unchanged editor</button></section>);
 const client = { userid: 71, name: 'Synthetic client', email: 'stored@example.invalid', phonenumber: '', companyname: 'Synthetic' };
 async function mount(element) {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import SimpleInput from "../../../components/simpleComponents/SimpleInput";
 import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
@@ -8,7 +8,9 @@ import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import { customersApi } from "../../../api/customersApi";
 import useHttpRequest from "../../../hooks/useHttpRequest";
 import useFieldState from "../../../hooks/useFieldState";
-import { HebrewCharsValidationWithNumbers } from "../../../functions/validation/HebrewCharsValidation";
+import { clientDocumentProfile, clientDocumentProfileErrors, hasClientDocumentProfile, invalidClientText } from "../../../functions/validation/clientDocumentProfile";
+import SegmentedSwitch from "../../../components/styledComponents/SegmentedSwitch";
+import SigningSelect from "../../signingScreen/templates/SigningSelect";
 import emailValidation from "../../../functions/validation/EmailValidation";
 import IsraeliPhoneNumberValidation from "../../../functions/validation/IsraeliPhoneNumberValidation";
 import ClientSigningFlow from '../../signingScreen/templates/ClientSigningFlow';
@@ -32,28 +34,68 @@ export default function ClientPopup({
     closePopUpFunction,
     style: _style,
 }) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const direction = i18n.dir();
+    const profileText = key => t(`customers.documentProfile.${key}`);
+    const validateName = value => invalidClientText(value) ? profileText('invalidText') : null;
     const { canAction } = useFirmPermissions() || { canAction: () => false };
     const signingAvailable = useSigningV2Available();
     const [signingOpen, setSigningOpen] = useState(false);
     const [selectedClient, setSelectedClient] = useState(clientDetails || null);
     const [name, setName, nameError] = useFieldState(
-        HebrewCharsValidationWithNumbers,
-        clientDetails?.name || initialName || ""
+        validateName,
+        clientDetails?.Name || clientDetails?.name || initialName || ""
     );
     const [companyName, setCompanyName, companyNameError] = useFieldState(
-        HebrewCharsValidationWithNumbers,
-        clientDetails?.companyname || initialCompanyName || ""
+        validateName,
+        clientDetails?.CompanyName || clientDetails?.companyname || initialCompanyName || ""
     );
     const [email, setEmail, emailError] = useFieldState(
         emailValidation,
-        clientDetails?.email || initialEmail || ""
+        clientDetails?.Email || clientDetails?.email || initialEmail || ""
     );
     const [phoneNumber, setPhoneNumber, phoneNumberError] = useFieldState(
         IsraeliPhoneNumberValidation,
-        clientDetails?.phonenumber || initialPhone || ""
+        clientDetails?.PhoneNumber || clientDetails?.phonenumber || initialPhone || ""
     );
-    const [dateOfBirth, setDateOfBirth] = useState(clientDetails?.dateofbirth ? toNativeDateValue(clientDetails.dateofbirth) : "");
+    const [documentProfile, setDocumentProfile] = useState(() => clientDocumentProfile(clientDetails));
+    const [profileDirty, setProfileDirty] = useState(false);
+    const [profileLoaded, setProfileLoaded] = useState(() => !clientDetails || hasClientDocumentProfile(clientDetails));
+    const [profileLoadError, setProfileLoadError] = useState(false);
+    const profileLoadRequest = useRef(0);
+    const profileErrors = useMemo(() => clientDocumentProfileErrors(documentProfile), [documentProfile]);
+    const hasProfileError = Object.keys(profileErrors).length > 0;
+    const updateProfile = (section, key, value) => {
+        if (!profileLoaded) return;
+        setProfileDirty(true);
+        setDocumentProfile(previous => ({ ...previous, [section]: { ...previous[section], [key]: value } }));
+    };
+    const [dateOfBirth, setDateOfBirth] = useState((clientDetails?.DateOfBirth || clientDetails?.dateofbirth) ? toNativeDateValue(clientDetails.DateOfBirth || clientDetails.dateofbirth) : "");
+
+    useEffect(() => {
+        const request = ++profileLoadRequest.current;
+        const id = selectedClient?.UserId || selectedClient?.userid;
+        setProfileDirty(false);
+        setProfileLoadError(false);
+        if (!id || hasClientDocumentProfile(selectedClient)) {
+            setProfileLoaded(true);
+            setDocumentProfile(clientDocumentProfile(selectedClient));
+            return;
+        }
+        setProfileLoaded(false);
+        let cancelled = false;
+        Promise.resolve().then(() => customersApi.getCustomerById(id)).then(response => {
+            if (cancelled || request !== profileLoadRequest.current) return;
+            const customer = response?.data;
+            if (response?.status !== 200 || Number(customer?.UserId || customer?.userid) !== Number(id)
+                || !hasClientDocumentProfile(customer)) throw new Error('Profile unavailable');
+            setDocumentProfile(clientDocumentProfile(customer));
+            setProfileLoaded(true);
+        }).catch(() => {
+            if (!cancelled && request === profileLoadRequest.current) setProfileLoadError(true);
+        });
+        return () => { cancelled = true; };
+    }, [selectedClient]);
 
     const { result: customersByName, isPerforming: isPerformingCustomersByName, performRequest: searchCustomersByName } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
     const { result: companiesByName, isPerforming: isPerformingCompaniesByName, performRequest: searchCompaniesByName } = useHttpRequest(customersApi.getCompaniesByName, null, () => { });
@@ -104,6 +146,9 @@ export default function ClientPopup({
     const loadExistingClient = () => {
         if (!existingMatch) return;
         setSelectedClient(existingMatch);
+        setDocumentProfile(clientDocumentProfile(existingMatch));
+        setProfileDirty(false);
+        setProfileLoaded(hasClientDocumentProfile(existingMatch));
         setName(existingMatch.Name || existingMatch.name || "");
         setPhoneNumber(existingMatch.PhoneNumber || existingMatch.phonenumber || "");
         setEmail(existingMatch.Email || existingMatch.email || "");
@@ -114,6 +159,9 @@ export default function ClientPopup({
 
     const handleSelectCustomer = (_text, customer) => {
         setSelectedClient(customer);
+        setDocumentProfile(clientDocumentProfile(customer));
+        setProfileDirty(false);
+        setProfileLoaded(hasClientDocumentProfile(customer));
         setName(customer.Name || customer.name || "");
         setPhoneNumber(customer.PhoneNumber || customer.phonenumber || "");
         setEmail(customer.Email || customer.email || "");
@@ -161,12 +209,16 @@ export default function ClientPopup({
             setSaveDisabledReason(phoneNumberError);
         } else if (hasEmail && emailError) {
             setSaveDisabledReason(emailError);
+        } else if (documentProfile.partyType === 'organization' && !(companyName || '').trim()) {
+            setSaveDisabledReason(t('customers.documentProfile.requiredCompanyName'));
+        } else if (hasProfileError) {
+            setSaveDisabledReason(t('customers.documentProfile.invalidProfile'));
         } else if (fieldErrors) {
             setSaveDisabledReason(t('customers.saveBlockedInvalidFields', { defaultValue: 'נא לתקן את השדות המסומנים' }));
         } else {
             setSaveDisabledReason('');
         }
-    }, [name, phoneNumber, email, companyName, nameError, phoneNumberError, emailError, companyNameError, t]);
+    }, [name, phoneNumber, email, companyName, nameError, phoneNumberError, emailError, companyNameError, documentProfile.partyType, hasProfileError, t]);
 
     const { isPerforming, performRequest } = useHttpRequest(
         selectedClient ? customersApi.updateCustomerById : customersApi.addCustomer,
@@ -179,6 +231,8 @@ export default function ClientPopup({
                     Email: (email || '').trim() || null,
                     PhoneNumber: (phoneNumber || '').trim() || null,
                     CompanyName: (companyName || '').trim() || null,
+                    ...(data?.ClientProfile || profileLoaded ? { ClientProfile: data?.ClientProfile || documentProfile } : {}),
+                    DateOfBirth: parseDateInput(dateOfBirth) || null,
                 }
                 : {
                     UserId: data?.UserId,
@@ -186,6 +240,8 @@ export default function ClientPopup({
                     Email: data?.Email ?? ((email || '').trim() || null),
                     PhoneNumber: data?.PhoneNumber ?? ((phoneNumber || '').trim() || null),
                     CompanyName: data?.CompanyName ?? ((companyName || '').trim() || null),
+                    ClientProfile: data?.ClientProfile || documentProfile,
+                    DateOfBirth: data?.DateOfBirth || parseDateInput(dateOfBirth) || null,
                 };
             rePerformRequest?.(savedClient);
         },
@@ -224,6 +280,7 @@ export default function ClientPopup({
             phoneNumber: (phoneNumber || '').trim(),
             email: (email || '').trim(),
             companyName: (companyName || '').trim(),
+            ...(!selectedClient || (profileLoaded && profileDirty) ? { clientProfile: documentProfile } : {}),
             dateOfBirth: parseDateInput(dateOfBirth) || null
         };
 
@@ -243,11 +300,17 @@ export default function ClientPopup({
         deleteClient(selectedClient.UserId || selectedClient.userid, { confirmLegalDelete: true });
     };
 
+    const profileInput = (section, key, label, maxLength, inputDirection = direction) => <SimpleInput
+        className="lw-clientPopup__input" title={profileText(label)} aria-label={profileText(label)}
+        containerDir={inputDirection} value={documentProfile[section][key]} maxLength={maxLength} timeToWaitInMilli={0}
+        autoComplete="off" onChange={event => updateProfile(section, key, event.target.value)}
+        error={profileErrors[`${section}.${key}`] ? profileText('invalidText') : null} />;
+
     const persistedClientId = selectedClient?.UserId || selectedClient?.userid;
     if (signingOpen) return <ClientSigningFlow clientId={persistedClientId} onBack={() => setSigningOpen(false)} />;
 
     return (
-        <SimpleContainer className="lw-clientPopup">
+        <SimpleContainer className="lw-clientPopup" dir={direction}>
             <SimplePopUp
                 isOpen={isLegalDeleteConfirmOpen}
                 onClose={() => setIsLegalDeleteConfirmOpen(false)}
@@ -290,10 +353,20 @@ export default function ClientPopup({
                         </span>
                     </SimpleContainer>
                 )}
+                <SegmentedSwitch className="lw-clientPopup__partyType" title={profileText('partyType')}
+                    value={documentProfile.partyType} onChange={partyType => {
+                        if (!profileLoaded) return;
+                        setProfileDirty(true);
+                        setDocumentProfile(previous => ({ ...previous, partyType }));
+                    }}
+                    options={['person', 'organization'].map(value => ({ value, label: profileText(value), disabled: !profileLoaded }))} />
+                {!profileLoaded && <p role="status">{profileText(profileLoadError ? 'loadFailed' : 'loading')}</p>}
                 <SimpleContainer className="lw-clientPopup__row">
                     <SearchInput
                         className="lw-clientPopup__input"
-                        title={t("cases.customerName")}
+                        containerDir={direction}
+                        title={documentProfile.partyType === 'organization' ? profileText('contactName') : t("cases.customerName")}
+                        aria-label={documentProfile.partyType === 'organization' ? profileText('contactName') : t("cases.customerName")}
                         value={name}
                         onSearch={handleSearchCustomer}
                         isPerforming={isPerformingCustomersByName}
@@ -304,6 +377,7 @@ export default function ClientPopup({
                     />
                     <SimpleInput
                         className="lw-clientPopup__input"
+                        containerDir={direction}
                         title={t("cases.phoneNumber")}
                         type="tel"
                         value={phoneNumber}
@@ -315,6 +389,7 @@ export default function ClientPopup({
                 <SimpleContainer className="lw-clientPopup__row">
                     <SimpleInput
                         className="lw-clientPopup__input"
+                        containerDir={direction}
                         title={t("common.email")}
                         type="email"
                         value={email}
@@ -323,7 +398,9 @@ export default function ClientPopup({
                     />
                     <SearchInput
                         className="lw-clientPopup__input"
-                        title={t("customers.companyName")}
+                        containerDir={direction}
+                        title={documentProfile.partyType === 'organization' ? profileText('registeredName') : t("customers.companyName")}
+                        aria-label={documentProfile.partyType === 'organization' ? profileText('registeredName') : t("customers.companyName")}
                         value={companyName}
                         onSearch={handleSearchCompany}
                         isPerforming={isPerformingCompaniesByName}
@@ -338,12 +415,61 @@ export default function ClientPopup({
                 <SimpleContainer className="lw-clientPopup__row">
                     <SimpleInput
                         className="lw-clientPopup__input"
+                        containerDir={direction}
                         title={t("profile.dateOfBirth")}
                         type="date"
                         value={dateOfBirth || ""}
                         onChange={(e) => setDateOfBirth(e.target.value)}
                     />
                 </SimpleContainer>
+
+                <details className="lw-clientPopup__documentProfile" open={hasProfileError || undefined}>
+                    <summary>{profileText('title')}</summary>
+                    <p className="lw-clientPopup__profileHelp">{profileText('help')}</p>
+                    <fieldset className="lw-clientPopup__profileFields" disabled={!profileLoaded}>
+                    {documentProfile.partyType === 'organization' && <fieldset className="lw-clientPopup__profileGroup">
+                        <legend>{profileText('organizationIdentity')}</legend>
+                        <label className="lw-clientPopup__profileSelect">{profileText('registrationType')}
+                            <SigningSelect dir={direction} value={documentProfile.organization.registrationType}
+                                onChange={event => updateProfile('organization', 'registrationType', event.target.value)}>
+                                {['company', 'partnership', 'nonprofit', 'other'].map(value => <option key={value} value={value}>
+                                    {profileText({ company: 'registrationCompany', partnership: 'registrationPartnership', nonprofit: 'registrationNonprofit', other: 'registrationOther' }[value])}
+                                </option>)}
+                            </SigningSelect>
+                        </label>
+                        <SimpleContainer className="lw-clientPopup__row">
+                            {profileInput('organization', 'registrationNumber', 'registrationNumber', 40, 'ltr')}
+                            {profileInput('organization', 'registrationCountry', 'registrationCountry', 80)}
+                        </SimpleContainer>
+                    </fieldset>}
+                    <fieldset className="lw-clientPopup__profileGroup">
+                        <legend>{profileText(documentProfile.partyType === 'organization' ? 'contactIdentity' : 'personIdentity')}</legend>
+                        <label className="lw-clientPopup__profileSelect">{profileText('identityType')}
+                            <SigningSelect dir={direction} value={documentProfile.identity.type}
+                                onChange={event => updateProfile('identity', 'type', event.target.value)}>
+                                {['national_id', 'passport', 'other'].map(value => <option key={value} value={value}>{profileText(value)}</option>)}
+                            </SigningSelect>
+                        </label>
+                        <SimpleContainer className="lw-clientPopup__row">
+                            {profileInput('identity', 'number', 'identityNumber', 40, 'ltr')}
+                            {profileInput('identity', 'country', 'identityCountry', 80)}
+                        </SimpleContainer>
+                    </fieldset>
+                    <fieldset className="lw-clientPopup__profileGroup">
+                        <legend>{profileText('address')}</legend>
+                        <SimpleContainer className="lw-clientPopup__row">
+                            {profileInput('address', 'line1', 'line1', 250)}
+                            {profileInput('address', 'line2', 'line2', 250)}
+                        </SimpleContainer>
+                        <SimpleContainer className="lw-clientPopup__row">
+                            {profileInput('address', 'city', 'city', 100)}
+                            {profileInput('address', 'postalCode', 'postalCode', 24, 'ltr')}
+                            {profileInput('address', 'country', 'country', 80)}
+                        </SimpleContainer>
+                    </fieldset>
+                    </fieldset>
+                </details>
+                {saveDisabledReason && <p className="lw-clientPopup__saveBlockedHint" role="status">{saveDisabledReason}</p>}
 
                 {persistedClientId && signingAvailable && canAction('signing', 'upload') && canAction('clients', 'view') && <SecondaryButton
                     onPress={() => setSigningOpen(true)} disabled={isPerforming || isPerformingDeleteClient}>
@@ -363,7 +489,7 @@ export default function ClientPopup({
                         className="lw-clientPopup__actionButton"
                         size={buttonSizes.MEDIUM}
                         onPress={handleSaveClient}
-                        disabled={hasError}
+                        disabled={hasError || isPerforming || isPerformingDeleteClient}
                     >
                         {isPerforming
                             ? t("common.saving")

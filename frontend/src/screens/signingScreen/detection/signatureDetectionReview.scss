@@ -1,0 +1,31 @@
+@use '../../../styles/variables' as *;
+
+.lw-detectionReview {
+    padding-block: 16px;
+    border-block: 1px solid var(--lw-color-border, #dbe3eb);
+    color: var(--lw-color-text, #2d3748);
+
+    h4 { margin: 0 0 8px; font-size: 18px; }
+    p { margin: 8px 0; line-height: 1.6; }
+    &__list { list-style: none; padding: 0; margin: 12px 0; max-height: 360px; overflow: auto; }
+    &__list li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding-block: 12px; border-block-end: 1px solid #dbe3eb; }
+    &__include { display: flex; align-items: center; gap: 8px; min-height: 44px; overflow-wrap: anywhere; }
+    &__include input { width: 20px; height: 20px; flex-shrink: 0; accent-color: #2a4365; }
+    &__signer { display: grid; gap: 6px; min-width: 0; }
+    &__actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    @media (max-width: 600px) { &__list li { grid-template-columns: minmax(0, 1fr); gap: 8px; } }
+}
+
+.lw-detectedSignaturePreview {
+    position: absolute;
+    box-sizing: border-box;
+    border: 2px dashed #2a4365;
+    background: rgba(237, 242, 247, 0.65);
+    color: #2a4365;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 700;
+    z-index: 2;
+}

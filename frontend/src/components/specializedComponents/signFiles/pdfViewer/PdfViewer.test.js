@@ -61,6 +61,20 @@ async function finishLoading() {
     }));
 }
 
+test('proposed locations use the canonical page scale without becoming editable fields', async () => {
+    const onUpdateSpot = jest.fn();
+    const { container } = render(<PdfViewer pdfSource={source} spots={[]}
+        suggestedSpots={[{ pageNum: 1, x: 100, y: 200, width: 160, height: 50 }, { pageNum: 2, x: 100, y: 200, width: 160, height: 50 }]}
+        onUpdateSpot={onUpdateSpot} suppressLoadingUI />);
+    await finishLoading();
+    const boxes = container.querySelectorAll('.lw-detectedSignaturePreview');
+    expect(boxes).toHaveLength(1);
+    // The 600-point page is fitted into the incumbent 588px content width.
+    expect(boxes[0]).toHaveStyle({ left: '98px', top: '196px', width: '156.8px', height: '49px' });
+    expect(boxes[0]).toHaveAttribute('aria-hidden', 'true');
+    expect(onUpdateSpot).not.toHaveBeenCalled();
+});
+
 test.each(['Fail load', 'Fail source'])('%s can be retried without leaving the signing flow', async (failure) => {
     const onDocumentReady = jest.fn();
     render(<PdfViewer pdfSource={source} onDocumentReady={onDocumentReady} suppressLoadingUI />);

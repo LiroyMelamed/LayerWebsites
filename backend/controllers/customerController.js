@@ -15,6 +15,21 @@ const { getHebrewMessage } = require('../utils/errors.he');
 const { userHasLegalData } = require('../utils/legalData');
 const { insertAuditEvent, getRequestIp, getRequestUserAgent } = require('../utils/auditEvents');
 const { invalidateOperationalDashboardCaches } = require('../utils/operationalDashboardCache');
+const { clientProfilePatch, clientProfileResponse, normalizeClientProfile } = require('../utils/clientProfile');
+
+function profileError(res, error) {
+    if (error?.code !== 'INVALID_CLIENT_PROFILE') return false;
+    res.status(400).json({ message: 'נא לבדוק את פרטי הזיהוי והכתובת', code: error.code, field: error.field });
+    return true;
+}
+
+function organizationNameRequired(res, profile, companyName) {
+    if (!profile.present || profile.value.partyType !== 'organization') return false;
+    if (typeof companyName === 'string' && companyName.trim() && companyName.trim().length <= 200
+        && !/[\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069]/u.test(companyName)) return false;
+    res.status(400).json({ message: 'נא למלא שם חברה / גוף תקין', code: 'INVALID_CLIENT_PROFILE', field: 'companyName' });
+    return true;
+}
 
 function normalizePhoneDigits(phone) {
     const digits = String(phone ?? '').replace(/\D/g, '');
@@ -49,10 +64,33 @@ const getCustomers = async (req, res) => {
     }
 };
 
+const getCustomerById = async (req, res) => {
+    const customerId = requireInt(req, res, { source: 'params', name: 'customerId', max: 2147483647 });
+    if (customerId === null) return;
+    try {
+        // Exact reads repeat the DB-backed tenant binding; request/body tenant
+        // values cannot broaden this profile lookup to another office.
+        const result = await pool.query(`SELECT userid, name, email, phonenumber, companyname, dateofbirth, role, client_profile
+            FROM users WHERE userid=$1 AND law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid
+            AND role NOT IN ('Admin','Deleted')`, [customerId, req.firmTenantId || null]);
+        const row = result.rows[0];
+        if (!row) return res.status(404).json({ message: 'לקוח לא נמצא' });
+        res.setHeader('Cache-Control', 'no-store');
+        return res.json({ UserId: row.userid, Name: row.name, Email: row.email,
+            PhoneNumber: row.phonenumber, CompanyName: row.companyname,
+            DateOfBirth: row.dateofbirth, Role: row.role, ...clientProfileResponse(row) });
+    } catch (error) {
+        console.error('Error retrieving customer profile:', error?.code || 'UNKNOWN');
+        return res.status(500).json({ message: 'שגיאה בשליפת פרטי לקוח' });
+    }
+};
+
 const addCustomer = async (req, res) => {
     const { name, phoneNumber, email, companyName, dateOfBirth } = req.body;
 
     try {
+        const profile = clientProfilePatch(req.body);
+        if (organizationNameRequired(res, profile, companyName)) return;
         const phoneDigits = normalizePhoneDigits(phoneNumber);
         const emailNorm = String(email || "").trim().toLowerCase();
 
@@ -88,8 +126,9 @@ const addCustomer = async (req, res) => {
                 `SELECT userid, name, email, phonenumber, companyname, dateofbirth, role
                  FROM users
                  WHERE regexp_replace(phonenumber, '\\D', '', 'g') = $1
+                   AND law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid
                  LIMIT 1`,
-                [phoneDigits]
+                [phoneDigits, req.firmTenantId || null]
             );
             if (existing.rows.length > 0) {
                 const row = existing.rows[0];
@@ -112,8 +151,9 @@ const addCustomer = async (req, res) => {
                 `SELECT userid, name, email, phonenumber, companyname, dateofbirth, role
                  FROM users
                  WHERE LOWER(email) = $1
+                   AND law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid
                  LIMIT 1`,
-                [emailNorm]
+                [emailNorm, req.firmTenantId || null]
             );
             if (existingEmail.rows.length > 0) {
                 const row = existingEmail.rows[0];
@@ -136,11 +176,11 @@ const addCustomer = async (req, res) => {
 
         const insertResult = await pool.query(
             `
-            INSERT INTO users (name, email, phonenumber, passwordhash, role, companyname, dateofbirth, createdat)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            RETURNING userid, name, email, phonenumber, companyname, dateofbirth
+            INSERT INTO users (name, email, phonenumber, passwordhash, role, companyname, dateofbirth, createdat, client_profile, law_firm_tenant_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::uuid)
+            RETURNING userid, name, email, phonenumber, companyname, dateofbirth, client_profile
             `,
-            [name, emailNorm || null, phoneToStore, null, roleToCreate, companyName, parsedDob, new Date()]
+            [name, emailNorm || null, phoneToStore, null, roleToCreate, companyName, parsedDob, new Date(), JSON.stringify(profile.value || normalizeClientProfile(null)), req.firmTenantId || null]
         );
         const created = insertResult.rows[0] || {};
         const newUserId = created.userid;
@@ -189,10 +229,12 @@ const addCustomer = async (req, res) => {
             Email: created.email ?? email ?? null,
             PhoneNumber: created.phonenumber || phoneNumber,
             CompanyName: created.companyname ?? companyName ?? null,
+            ...clientProfileResponse(created),
             DateOfBirth: created.dateofbirth ?? parsedDob ?? null,
         });
 
     } catch (error) {
+        if (profileError(res, error)) return;
         console.error('Error adding customer:', error);
         if (error?.code === '23505') {
             return res.status(409).json({ message: "מספר פלאפון כבר קיים במערכת", code: 'PHONE_ALREADY_EXISTS' });
@@ -207,6 +249,12 @@ const updateCustomerById = async (req, res) => {
 
     const { name, email, phoneNumber, companyName, dateOfBirth } = req.body;
     try {
+        const profile = clientProfilePatch(req.body);
+        if (organizationNameRequired(res, profile, companyName)) return;
+        const target = await pool.query(`SELECT userid FROM users WHERE userid=$1
+            AND law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid AND role NOT IN ('Admin','Deleted')`,
+        [customerId, req.firmTenantId || null]);
+        if (!target.rows.length) return res.status(404).json({ message: 'לקוח לא נמצא' });
         const phoneDigits = normalizePhoneDigits(phoneNumber);
         const emailNorm = String(email || "").trim().toLowerCase();
 
@@ -239,8 +287,8 @@ const updateCustomerById = async (req, res) => {
 
         if (phoneDigits) {
             const existing = await pool.query(
-                `SELECT userid FROM users WHERE regexp_replace(phonenumber, '\\D', '', 'g') = $1 AND userid <> $2 LIMIT 1`,
-                [phoneDigits, customerId]
+                `SELECT userid FROM users WHERE regexp_replace(phonenumber, '\\D', '', 'g') = $1 AND userid <> $2 AND law_firm_tenant_id IS NOT DISTINCT FROM $3::uuid LIMIT 1`,
+                [phoneDigits, customerId, req.firmTenantId || null]
             );
             if (existing.rows.length > 0) {
                 return res.status(409).json({ message: "מספר פלאפון כבר קיים במערכת", code: 'PHONE_ALREADY_EXISTS' });
@@ -249,8 +297,8 @@ const updateCustomerById = async (req, res) => {
 
         if (emailNorm) {
             const existingEmail = await pool.query(
-                `SELECT userid FROM users WHERE LOWER(email) = $1 AND userid <> $2 LIMIT 1`,
-                [emailNorm, customerId]
+                `SELECT userid FROM users WHERE LOWER(email) = $1 AND userid <> $2 AND law_firm_tenant_id IS NOT DISTINCT FROM $3::uuid LIMIT 1`,
+                [emailNorm, customerId, req.firmTenantId || null]
             );
             if (existingEmail.rows.length > 0) {
                 return res.status(409).json({ message: "דוא״ל כבר קיים במערכת", code: 'EMAIL_ALREADY_EXISTS' });
@@ -269,21 +317,24 @@ const updateCustomerById = async (req, res) => {
                 phonenumber = $3,
                 companyname = $4,
                 dateofbirth = $5,
+                client_profile = CASE WHEN $8::boolean THEN $9::jsonb ELSE client_profile END,
                 role = CASE
                     WHEN role IN ('User', 'ExternalSigner') THEN $7
                     ELSE role
                 END
-            WHERE userid = $6
+            WHERE userid = $6 AND law_firm_tenant_id IS NOT DISTINCT FROM $10::uuid AND role NOT IN ('Admin','Deleted')
+            RETURNING userid, name, email, phonenumber, companyname, dateofbirth, client_profile
             `,
-            [name, emailNorm || null, phoneToStore, companyName, parsedDob, customerId, roleToSet]
+            [name, emailNorm || null, phoneToStore, companyName, parsedDob, customerId, roleToSet, profile.present, profile.present ? JSON.stringify(profile.value) : null, req.firmTenantId || null]
         );
 
         if (result.rowCount === 0) {
             return res.status(404).json({ message: "לקוח לא נמצא" });
         }
 
-        res.status(200).json({ message: "לקוח עודכן בהצלחה" });
+        res.status(200).json({ message: "לקוח עודכן בהצלחה", ...clientProfileResponse(result.rows?.[0]) });
     } catch (error) {
+        if (profileError(res, error)) return;
         console.error("Error updating customer by ID:", error);
         if (error?.code === '23505') {
             return res.status(409).json({ message: "מספר פלאפון כבר קיים במערכת", code: 'PHONE_ALREADY_EXISTS' });
@@ -444,6 +495,7 @@ const getCurrentCustomer = async (req, res) => {
                 email,
                 phonenumber,
                 companyname,
+                client_profile,
                 dateofbirth,
                 profilepicurl,
                 role
@@ -488,6 +540,7 @@ const getCurrentCustomer = async (req, res) => {
             Email: row.email,
             PhoneNumber: row.phonenumber,
             CompanyName: row.companyname,
+            ...clientProfileResponse(row),
             DateOfBirth: row.dateofbirth,
             ProfilePicUrl: row.profilepicurl,
             ProfilePicReadUrl: profilePicReadUrl,
@@ -514,6 +567,8 @@ const updateCurrentCustomer = async (req, res) => {
     } = req.body;
 
     try {
+        const profile = clientProfilePatch(req.body);
+        if (organizationNameRequired(res, profile, CompanyName)) return;
         const cur = await pool.query("SELECT profilepicurl FROM users WHERE userid = $1", [userId]);
         const oldKey = cur.rows?.[0]?.profilepicurl || null;
 
@@ -527,6 +582,10 @@ const updateCurrentCustomer = async (req, res) => {
     `;
         const params = [Name, Email, PhoneNumber, CompanyName, dateOfBirth ? new Date(dateOfBirth) : null];
         let i = params.length;
+        if (profile.present) {
+            i++; sql += `, client_profile=$${i}::jsonb`;
+            params.push(JSON.stringify(profile.value));
+        }
 
         if (PhotoKey !== undefined && PhotoKey !== null) {
             i++; sql += `, profilepicurl=$${i}`;
@@ -571,6 +630,7 @@ const updateCurrentCustomer = async (req, res) => {
             ProfilePicReadUrl: profilePicReadUrl,
         });
     } catch (error) {
+        if (profileError(res, error)) return;
         console.error("Error updating current customer profile:", error);
         return res.status(500).json({ message: "שגיאה בעדכון פרופיל לקוח" });
     }
@@ -975,6 +1035,7 @@ const importCustomers = async (req, res, next) => {
 
 module.exports = {
     getCustomers,
+    getCustomerById,
     addCustomer,
     updateCustomerById,
     getCustomerByName,
