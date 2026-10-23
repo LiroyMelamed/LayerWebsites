@@ -5,6 +5,8 @@ import signingTemplatesApi from '../../../api/signingTemplatesApi';
 import packagesApi from '../../../api/signingPackagesApi';
 import useSigningLocale from '../templates/useSigningLocale';
 
+const clientRoles = ['Client', 'User'];
+
 // Selection stores an opaque record ID; the UI only displays human-readable
 // names/contact details. The preview service is the sole profile-data reader.
 export default function WordRecordPicker({ kind = 'person', label, value, onChange, disabled }) {
@@ -44,13 +46,15 @@ export default function WordRecordPicker({ kind = 'person', label, value, onChan
                     ? await signingTemplatesApi.contacts(next.trim(), 'client') : await signingTemplatesApi.contacts(next.trim());
                 if (current !== generation.current) return;
                 const records = (kind === 'case' ? response?.cases : response?.contacts) || [];
-                setResults(kind === 'client' ? records.filter(item => item.role === 'Client') : records);
+                setResults(kind === 'client' ? records.filter(item => clientRoles.includes(item.role)) : records);
             } catch { if (current === generation.current) setFailed(true); }
             finally { if (current === generation.current) setBusy(false); }
         }, 180);
     };
+    const roleLabel = role => clientRoles.includes(role) ? 'contactClient' : ['Admin', 'Lawyer'].includes(role) ? 'contactManager'
+        : role === 'Staff' ? 'contactStaff' : role === 'ExternalSigner' ? 'contactExternal' : 'contactPerson';
     const display = item => kind === 'case' ? [item.name, item.company].filter(Boolean).join(' · ')
-        : [item.name, text(item.role === 'Client' ? 'contactClient' : ['Admin', 'Lawyer'].includes(item.role) ? 'contactManager' : 'contactStaff'), item.email || item.phone].filter(Boolean).join(' · ');
+        : [item.name, text(roleLabel(item.role)), item.email || item.phone].filter(Boolean).join(' · ');
     const manual = () => {
         if (latest.current.disabled) return;
         generation.current += 1; clearTimeout(timer.current); echo.current = null;

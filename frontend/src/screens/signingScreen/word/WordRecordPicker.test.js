@@ -24,6 +24,44 @@ beforeEach(() => {
     Object.defineProperty(globalThis, 'crypto', { configurable: true, value: { randomUUID: () => '4f7890f6-619b-4d94-b5ec-48d41be634d6' } });
 });
 
+test('primary client context accepts phone clients with User role and email clients without offering office or external roles', async () => {
+    templatesApi.contacts.mockResolvedValue({ contacts: [
+        { userId: 61, name: 'Phone client', role: 'User', phone: '0000000000' },
+        { userId: 62, name: 'Email client', role: 'Client', email: 'client@example.invalid' },
+        { userId: 63, name: 'Office manager', role: 'Admin' },
+        { userId: 64, name: 'Guest signer', role: 'ExternalSigner' },
+    ] });
+    const onChange = jest.fn();
+    render(<WordRecordPicker kind="client" label="Client" value={null} onChange={onChange} />);
+    fireEvent.change(screen.getByLabelText('Client'), { target: { value: 'client' } });
+    await waitFor(() => expect(screen.getByText('Phone client · contactClient · 0000000000')).toBeInTheDocument());
+    expect(screen.getByText('Email client · contactClient · client@example.invalid')).toBeInTheDocument();
+    expect(screen.queryByText(/Office manager/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Guest signer/)).not.toBeInTheDocument();
+    expect(templatesApi.contacts).toHaveBeenLastCalledWith('client', 'client');
+    fireEvent.click(screen.getByText('Phone client · contactClient · 0000000000'));
+    expect(onChange).toHaveBeenLastCalledWith({ id: 61, label: 'Phone client' });
+});
+
+test('ExternalSigner and unknown role labels do not claim office staff status', async () => {
+    templatesApi.contacts.mockResolvedValue({ contacts: [
+        { userId: 51, name: 'Guest signer', role: 'ExternalSigner' },
+        { userId: 52, name: 'Other person', role: 'UnrecognizedRole' },
+        { userId: 53, name: 'Office staff', role: 'Staff' },
+        { userId: 54, name: 'Office manager', role: 'Admin' },
+    ] });
+    const onChange = jest.fn();
+    render(<WordRecordPicker label="Person" value={null} onChange={onChange} />);
+    fireEvent.change(screen.getByLabelText('Person'), { target: { value: 'person' } });
+    await waitFor(() => expect(screen.getByText('Guest signer · contactExternal')).toBeInTheDocument());
+    expect(screen.getByText('Other person · contactPerson')).toBeInTheDocument();
+    expect(screen.getByText('Office staff · contactStaff')).toBeInTheDocument();
+    expect(screen.getByText('Office manager · contactManager')).toBeInTheDocument();
+    expect(screen.queryByText('Guest signer · contactStaff')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('Guest signer · contactExternal'));
+    expect(onChange).toHaveBeenLastCalledWith({ id: 51, label: 'Guest signer' });
+});
+
 test('primary context selects clients only while role selection includes managers clients staff and manual entry; clearing invalidates PDF', async () => {
     const contacts = [{ userId: 41, name: 'Office manager', role: 'Admin', email: 'manager@example.invalid' }, { userId: 42, name: 'Tenant client', role: 'Client', email: 'client@example.invalid' }, { userId: 43, name: 'Staff member', role: 'Staff', phone: '0000000000' }];
     templatesApi.contacts.mockResolvedValue({ contacts }); packagesApi.cases.mockResolvedValue({ cases: [] });
