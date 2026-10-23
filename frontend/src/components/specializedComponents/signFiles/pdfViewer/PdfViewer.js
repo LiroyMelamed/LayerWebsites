@@ -100,7 +100,6 @@ function LazyPdfPage({
 
     const placeholderHeight = Math.round(renderWidth * (pageAspect || FALLBACK_PAGE_ASPECT));
     const hasStableMeasure = measuredWidth >= 50;
-    const displayWidth = hasStableMeasure ? measuredWidth : renderWidth;
     const overlayScale = (hasStableMeasure ? spotSpaceScale(measuredWidth) : 0)
         || (renderWidth / BASE_RENDER_WIDTH);
 
@@ -110,7 +109,10 @@ function LazyPdfPage({
                 className="lw-signing-pageInner"
                 data-page-number={pageNumber}
                 data-measured-width={measuredWidth || undefined}
-                style={{ width: displayWidth, maxWidth: "100%" }}
+                // Layout must follow the available width. Feeding the measured
+                // canvas width back here traps a page at its first mobile size.
+                // Keep measurement exclusively for the overlay coordinate scale.
+                style={{ width: renderWidth, maxWidth: "100%" }}
             >
                 {visible ? (
                     <SimpleContainer className="lw-signing-pdfPage" ref={pageBoxRef}>
