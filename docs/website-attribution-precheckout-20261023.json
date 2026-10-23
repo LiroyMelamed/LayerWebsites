@@ -1,5 +1,5 @@
 {
-  "status": "BUILT_NOT_DEPLOYED",
+  "status": "DEPLOYED_LIVE_HTTP_VERIFIED",
   "baseCommit": "671487ff0a1c35fd13ef6dc23a01ad328729dd45",
   "oldMainJs": "/static/js/main.83566b8f.js",
   "newMainJs": "/static/js/main.1aecf536.js",
@@ -70,5 +70,154 @@
   },
   "buildWorkspace": "/tmp/legal-attribution-precheckout-20261023-9pl2xldm",
   "buildLog": "/Users/liroymelamed/.codex/private/legal-attribution-precheckout-20261023/candidate-build.log",
-  "testLog": "/Users/liroymelamed/.codex/private/legal-attribution-precheckout-20261023/candidate-jest.log"
+  "testLog": "/Users/liroymelamed/.codex/private/legal-attribution-precheckout-20261023/candidate-jest.log",
+  "buildCheckpointStatus": "BUILT_NOT_DEPLOYED",
+  "deployment": {
+    "utc": "2026-10-23T07:23:27.636238+00:00",
+    "candidateCommit": "62008971b69b09765f39897c1c1626c0c1367362",
+    "servingRoot": "/var/www/lawyer",
+    "payloadArchiveSha256": "693066f111482a52d4ce9ead049843fe5d3f3b57d47911b14aad1f1c097aebca",
+    "finalIndexSha256": "8ff47160d3d92988fb16df3fb911adb3edbab2e1a0b893b03a2598ad7d4fa293",
+    "finalAssetManifestSha256": "d0bc79650db2aa39f7d2223b303897fa338405916ea7cb82ab90df1a9195fed5",
+    "publishedFiles": {
+      "index.html": "8ff47160d3d92988fb16df3fb911adb3edbab2e1a0b893b03a2598ad7d4fa293",
+      "asset-manifest.json": "d0bc79650db2aa39f7d2223b303897fa338405916ea7cb82ab90df1a9195fed5",
+      "static/js/main.1aecf536.js.LICENSE.txt": "6716f83e3dd234d5c856f728162175c6bad4f4c1bf223b39e4d9a568be58380a",
+      "static/js/main.1aecf536.js": "a504147c4198762a5d5ee608f7feab67db6cd5bbe246d09d6d08b56a0b6f9361",
+      "static/js/main.1aecf536.js.map": "115ca91146bbf75eb37130a3199a3613017b7cb1eacc6ffefd8d167b9acfe2f3"
+    },
+    "protectedOldStaticFilesUnchanged": 417,
+    "completeInactiveRollbackCount": 4,
+    "newCompleteBackup": "/root/legal-attribution-precheckout-20261023/before-complete-static.tar.gz",
+    "newCompleteBackupSha256": "6ff770b08656605d9f581ff2702194b805e9a5c92d777f4018c89f87dec12ad6",
+    "priorCompleteRollbacks": {
+      "/opt/accessibility-deep-20261015/legal-lawyer": true,
+      "/root/signup-logo-release-20261012/legal-web/build": true,
+      "/root/website-attribution-20261023/legal-static-before/complete-static.tar.gz": true
+    },
+    "frontendProcessesBefore": 10,
+    "frontendProcessesAfter": 10,
+    "allProcessesOnlineBeforeAndAfter": true,
+    "processPidStateAndUptimesUnchanged": true,
+    "httpGetChecks": [
+      {
+        "mode": "public",
+        "url": "https://api-lawyer.mela-media.co.il/api/public/signup/config",
+        "status": 200,
+        "bytes": 95,
+        "sha256": "786ab4f12d866c54f17aa8593017f21c460c3d8d86dbcafa14d4e752fdae3eb8",
+        "signupAvailable": true
+      },
+      {
+        "mode": "origin",
+        "url": "https://lawyer.mela-media.co.il/static/js/main.1aecf536.js",
+        "status": 200,
+        "bytes": 2764891,
+        "sha256": "a504147c4198762a5d5ee608f7feab67db6cd5bbe246d09d6d08b56a0b6f9361"
+      },
+      {
+        "mode": "origin",
+        "url": "https://lawyer.mela-media.co.il/static/js/main.1aecf536.js",
+        "status": 200,
+        "bytes": 2764891,
+        "sha256": "a504147c4198762a5d5ee608f7feab67db6cd5bbe246d09d6d08b56a0b6f9361"
+      },
+      {
+        "mode": "origin",
+        "url": "https://lawyer.mela-media.co.il/static/css/main.0b9c0a10.css",
+        "status": 200,
+        "bytes": 294532,
+        "sha256": "6e76b9254d03038571b2634f0f15068f0d0305e56616df17d93c2606c5893d14"
+      },
+      {
+        "mode": "origin",
+        "url": "https://lawyer.mela-media.co.il/signup",
+        "status": 200,
+        "bytes": 3320,
+        "sha256": "8ff47160d3d92988fb16df3fb911adb3edbab2e1a0b893b03a2598ad7d4fa293"
+      },
+      {
+        "mode": "origin",
+        "url": "https://lawyer.mela-media.co.il/signup?embed=1&platformId=site_app&resourceId=pro&signingId=500&billingInterval=yearly",
+        "status": 200,
+        "bytes": 3320,
+        "sha256": "8ff47160d3d92988fb16df3fb911adb3edbab2e1a0b893b03a2598ad7d4fa293"
+      },
+      {
+        "mode": "origin",
+        "url": "https://lawyer.mela-media.co.il/signup/complete",
+        "status": 200,
+        "bytes": 3320,
+        "sha256": "8ff47160d3d92988fb16df3fb911adb3edbab2e1a0b893b03a2598ad7d4fa293"
+      },
+      {
+        "mode": "origin",
+        "url": "https://lawyer.mela-media.co.il/LoginStack/LoginScreen",
+        "status": 200,
+        "bytes": 3320,
+        "sha256": "8ff47160d3d92988fb16df3fb911adb3edbab2e1a0b893b03a2598ad7d4fa293"
+      },
+      {
+        "mode": "public",
+        "url": "https://lawyer.mela-media.co.il/static/js/main.1aecf536.js",
+        "status": 200,
+        "bytes": 2764891,
+        "sha256": "a504147c4198762a5d5ee608f7feab67db6cd5bbe246d09d6d08b56a0b6f9361"
+      },
+      {
+        "mode": "public",
+        "url": "https://lawyer.mela-media.co.il/static/css/main.0b9c0a10.css",
+        "status": 200,
+        "bytes": 294532,
+        "sha256": "6e76b9254d03038571b2634f0f15068f0d0305e56616df17d93c2606c5893d14"
+      },
+      {
+        "mode": "public",
+        "url": "https://lawyer.mela-media.co.il/signup",
+        "status": 200,
+        "bytes": 3320,
+        "sha256": "8ff47160d3d92988fb16df3fb911adb3edbab2e1a0b893b03a2598ad7d4fa293"
+      },
+      {
+        "mode": "public",
+        "url": "https://lawyer.mela-media.co.il/signup?embed=1&platformId=site_app&resourceId=pro&signingId=500&billingInterval=yearly",
+        "status": 200,
+        "bytes": 3320,
+        "sha256": "8ff47160d3d92988fb16df3fb911adb3edbab2e1a0b893b03a2598ad7d4fa293"
+      },
+      {
+        "mode": "public",
+        "url": "https://lawyer.mela-media.co.il/signup/complete",
+        "status": 200,
+        "bytes": 3320,
+        "sha256": "8ff47160d3d92988fb16df3fb911adb3edbab2e1a0b893b03a2598ad7d4fa293"
+      },
+      {
+        "mode": "public",
+        "url": "https://lawyer.mela-media.co.il/LoginStack/LoginScreen",
+        "status": 200,
+        "bytes": 3320,
+        "sha256": "8ff47160d3d92988fb16df3fb911adb3edbab2e1a0b893b03a2598ad7d4fa293"
+      },
+      {
+        "mode": "public",
+        "url": "https://api-lawyer.mela-media.co.il/api/public/signup/config",
+        "status": 200,
+        "bytes": 95,
+        "sha256": "786ab4f12d866c54f17aa8593017f21c460c3d8d86dbcafa14d4e752fdae3eb8",
+        "signupAvailable": true
+      }
+    ],
+    "maintenanceLeaseHeldThroughout": true,
+    "dependenciesPublishedBeforeAtomicIndexReplacement": true,
+    "automaticExactIndexManifestRollbackPrepared": true,
+    "automaticRollbackNeeded": false,
+    "messages": 0,
+    "charges": 0,
+    "customerDataWrites": 0,
+    "backendRestarts": 0,
+    "realProviderCheckoutPerformed": false,
+    "browserVerification": "Separate owner-thread observation; not asserted by these HTTP/Jest results",
+    "privateEvidence": "/Users/liroymelamed/.codex/private/legal-attribution-precheckout-20261023/live-verification.json"
+  }
 }
