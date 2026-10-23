@@ -16,7 +16,7 @@ const CASE_FIELDS = ['reference', 'title', 'address', 'amount', 'date'];
 const OFFICE_FIELDS = ['name', 'address', 'email', 'phone'];
 const ROLE_FIELDS = ['fullName', 'companyName', 'identityNumber', 'companyNumber', 'capacity', 'authority'];
 const positiveId = value => /^\d+$/.test(value) && Number.isSafeInteger(Number(value)) && Number(value) > 0;
-const uuid = () => globalThis.crypto.randomUUID();
+const uuid = () => window.crypto.randomUUID();
 
 export default function WordTemplatesWorkspace({ onBack, onContinue }) {
     const { t, direction, number } = useSigningLocale();
