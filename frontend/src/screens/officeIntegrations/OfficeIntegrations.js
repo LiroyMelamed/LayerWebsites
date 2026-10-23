@@ -13,7 +13,10 @@ import { Text14, TextBold18 } from '../../components/specializedComponents/text/
 import './OfficeIntegrations.scss';
 
 export default function OfficeIntegrations({ embedded = false }) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const language = String(i18n?.resolvedLanguage || i18n?.language || 'he').split('-')[0];
+    const locale = { he: 'he-IL', ar: 'ar-IL', en: 'en-GB' }[language] || 'he-IL';
+    const direction = language === 'en' ? 'ltr' : 'rtl';
     const tr = key => t(`officeIntegrations.${key}`);
     const [data, setData] = useState(null), [busy, setBusy] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState('');
     const [court, setCourt] = useState({ enabled: false, label: '', dailySyncEnabled: true, syncTime: '08:00' });
@@ -76,10 +79,12 @@ export default function OfficeIntegrations({ embedded = false }) {
         const Button = primary ? PrimaryButton : SecondaryButton;
         return <Button type="button" disabled={busy || disabled} onPress={onClick}>{tr(label)}</Button>;
     };
-    const formatSyncDate = value => value ? new Date(value).toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }) : tr('notScheduled');
+    const formatSyncDate = value => value ? new Date(value).toLocaleString(locale, { timeZone: 'Asia/Jerusalem' }) : tr('notScheduled');
     const price = data?.signup.pricing;
-    const money = value => new Intl.NumberFormat('he-IL', { style: 'currency', currency: price?.currency || 'ILS', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value);
-    return <section className={`office-integrations ${embedded ? 'oi-embedded' : ''}`} dir="rtl">
+    const money = value => new Intl.NumberFormat(locale, { style: 'currency', currency: price?.currency || 'ILS', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value);
+    const connected = data?.whatsapp?.connected === true;
+    const businessAppConnection = data?.whatsapp?.settings?.connectionType === 'business_app';
+    return <section className={`office-integrations ${embedded ? 'oi-embedded' : ''}`} dir={direction}>
         <header className="oi-header"><TextBold18 role="heading" aria-level={embedded ? 2 : 1}>{tr('title')}</TextBold18><Text14 className="oi-muted">{tr('intro')}</Text14></header>
         {error && <StatusNotice embedded>{error}</StatusNotice>}{notice && <p role="status" className="oi-notice">{notice}</p>}
         {!data ? <p role="status">{error ? tr('loadFailed') : tr('loading')}</p> : <>
@@ -115,7 +120,10 @@ export default function OfficeIntegrations({ embedded = false }) {
                     <details className="oi-details"><summary>{tr('groupRequirements')}</summary><p>{tr('eligibility')}</p></details>
                     {data.whatsapp?.connected && <p className="oi-muted">{tr('paymentHelp')} <a href="https://business.facebook.com/wa/manage/home/" target="_blank" rel="noreferrer">{tr('manageMeta')}</a></p>}
                     {!data.canConfigurePolicy && <p>{tr('adminPolicy')}</p>}
-                    {data.canConfigurePolicy && <details className="oi-details oi-automation"><summary>{tr('automation')}</summary><fieldset disabled={busy} aria-label={tr('automation')}>
+                    {data.canConfigurePolicy && !connected && <p className="oi-muted">{tr('connectBeforeAutomation')}</p>}
+                    {data.canConfigurePolicy && connected && <details className="oi-details oi-automation"><summary>{tr('automation')}</summary>
+                        {businessAppConnection ? <p role="status" className="oi-muted">{tr('qrGroupsUnavailable')}</p> : <fieldset disabled={busy} aria-label={tr('automation')}>
+                        <p className="oi-muted">{tr('automationHelp')}</p>
                         {whatsapp.mode === 'demo' && <p className="oi-muted">{tr('demoMode')}</p>}
                         <div className="oi-setting-row"><SimpleCheckbox variant="toggle" title={tr('autoCreate')} checked={whatsapp.enabled} onChange={e => setWhatsapp({ ...whatsapp, enabled: e.target.checked })} disabled={busy || (whatsapp.mode === 'live' && (!data.signup.liveEnabled || data.whatsapp?.status !== 'ready'))} /></div>
                         <SimpleTextArea className="oi-recipients" title={tr('recipientsTitle')} aria-label={tr('recipients')} rows={3} value={whatsapp.recipients} disabled={busy} onChange={value => setWhatsapp({ ...whatsapp, recipients: value })} placeholder="+972501234567" />
@@ -131,7 +139,7 @@ export default function OfficeIntegrations({ embedded = false }) {
                         </details>}
                         <div className="oi-actions">{button('saveWhatsapp', () => action(() => api.saveWhatsapp(undefined, { ...whatsapp, recipients: whatsapp.recipients.split(/[\n,;]/).map(s => s.trim()).filter(Boolean), templateParameters: whatsapp.templateParameters.split('\n').filter(Boolean) })), false, true)}</div>
                         <p className="oi-muted">{tr('disableHelp')}</p>
-                    </fieldset></details>}
+                    </fieldset>}</details>}
                 </SimpleCard>
                 <SimpleCard className="lw-platformSettings__card oi-card oi-court" role="region" aria-labelledby="oi-court-title"><div className="oi-card-heading"><TextBold18 id="oi-court-title" role="heading" aria-level={embedded ? 3 : 2}>{tr('courtTitle')}</TextBold18><span className="oi-badge">{tr('demo')}</span></div>
                     <p>{tr('courtHelp')}</p>

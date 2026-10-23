@@ -11,7 +11,7 @@ const { phones, courtNumber } = require('../services/integrations/validation');
 const secrets = require('../services/integrations/secrets');
 const { saveCaseCourtNumber } = require('../services/integrations/courtCaseReference');
 const A = '11111111-1111-4111-8111-111111111111', B = '22222222-2222-4222-8222-222222222222';
-const env = { INTEGRATIONS_ENCRYPTION_KEY: 'ab'.repeat(32), WHATSAPP_META_APP_ID: '123456', WHATSAPP_META_APP_SECRET: 'app-secret', WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID: '987654', WHATSAPP_WEBHOOK_VERIFY_TOKEN: 'verify', WHATSAPP_LIVE_ENABLED: 'true' };
+const env = { INTEGRATIONS_ENCRYPTION_KEY: 'ab'.repeat(32), WHATSAPP_META_APP_ID: '123456', WHATSAPP_META_APP_SECRET: 'app-secret', WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID: '987654', WHATSAPP_WEBHOOK_VERIFY_TOKEN: 'verify', WHATSAPP_WEBHOOK_CALLBACK_URL: 'https://synthetic-api.example.invalid/api/webhooks/whatsapp', WHATSAPP_LIVE_ENABLED: 'true' };
 async function fixture(t) {
     const db = new PGlite();
     await db.exec(`CREATE TABLE law_firm_tenants(id uuid PRIMARY KEY,name text,is_active boolean DEFAULT true);
@@ -410,17 +410,19 @@ test('default recipients merge with the assigned office manager once; missing/fo
 
 test('Meta onboarding verifies ownership, registers and subscribes; readiness uses documented OBA status endpoint', async () => {
     const requests = [], scopes = ['whatsapp_business_management', 'whatsapp_business_messaging'];
-    let connected = false;
+    let connected = false, subscribed = false;
     const provider = createMetaProvider({ env, fetchImpl: async (url, options) => {
         const endpoint = new URL(url).pathname.split('/').slice(2).join('/'); requests.push(endpoint);
         let data;
         if (endpoint === 'oauth/access_token') data = { access_token: 'private' };
         else if (endpoint === 'debug_token') data = { data: { is_valid: true, app_id: env.WHATSAPP_META_APP_ID, scopes, granular_scopes: scopes.map(scope => ({ scope, target_ids: ['987654321'] })), expires_at: 2000000000 } };
         else if (endpoint === '987654321/phone_numbers') data = { data: [{ id: '123456789' }] };
+        else if (endpoint === '123456789' && new URL(url).searchParams.get('fields') === 'webhook_configuration') data = { id: '123456789', webhook_configuration: { application: 'https://synthetic-app.example.invalid/webhook', ...(subscribed ? { whatsapp_business_account: env.WHATSAPP_WEBHOOK_CALLBACK_URL } : {}) } };
+        else if (endpoint === '123456789' && new URL(url).searchParams.get('fields') === 'official_business_account') data = { id: '123456789', official_business_account: { oba_status: 'APPROVED' } };
         else if (endpoint === '123456789') data = { id: '123456789', platform_type: 'CLOUD_API', status: connected ? 'CONNECTED' : 'PENDING', display_phone_number: '+972500000000' };
-        else if (endpoint === '123456789/official_business_account') data = { id: '123456789', oba_status: 'APPROVED' };
         else if (endpoint.endsWith('/register')) { assert.match(JSON.parse(options.body).pin, /^\d{6}$/); connected = true; data = { success: true }; }
-        else if (endpoint.endsWith('/subscribed_apps')) data = { success: true };
+        else if (endpoint.endsWith('/subscribed_apps') && options.method === 'GET') data = { data: subscribed ? [{ whatsapp_business_api_data: { id: env.WHATSAPP_META_APP_ID }, override_callback_uri: env.WHATSAPP_WEBHOOK_CALLBACK_URL }] : [] };
+        else if (endpoint.endsWith('/subscribed_apps')) { assert.deepEqual(JSON.parse(options.body), { override_callback_uri: env.WHATSAPP_WEBHOOK_CALLBACK_URL, verify_token: env.WHATSAPP_WEBHOOK_VERIFY_TOKEN }); subscribed = true; data = { success: true }; }
         else if (endpoint.endsWith('/message_templates')) data = { data: [{ name: 'invite', language: 'he', status: 'APPROVED' }] };
         else throw new Error('Unexpected endpoint');
         return { ok: true, status: 200, json: async () => data };
