@@ -171,7 +171,7 @@ function createIntegrationService({ pool, provider, env = process.env }) {
         const result = await provider.completeSignup(input);
         await tx(async db => {
             const c = await ensure(db, tenantId, 'whatsapp');
-            // Disconnect deletes outstanding sessions, even if Meta's response is
+            // Disconnect/revocation deletes outstanding sessions, even if Meta's response is
             // already on its way. Never restore a revoked connection afterwards.
             const active = await db.query('SELECT id FROM integration_signup_sessions WHERE id=$1 FOR UPDATE', [session.rows[0].id]);
             if (!active.rowCount) fail('INVALID_SIGNUP_STATE', 'החיבור בוטל. יש להתחיל שוב', 403);
@@ -222,6 +222,19 @@ function createIntegrationService({ pool, provider, env = process.env }) {
             await db.query('DELETE FROM integration_signup_sessions WHERE law_firm_tenant_id IS NOT DISTINCT FROM $1', [tenantId]);
         });
     }
+    async function revokeWhatsapp(tenantId, connectionId, wabaId) {
+        return tx(async db => {
+            // The system webhook lookup can become stale while reconnecting.
+            // Use the same connection -> signup-session lock order as signup and
+            // disconnect, and recheck the grant inside the conflicting lock.
+            const c = await connection(db, tenantId, 'whatsapp', 'FOR UPDATE');
+            if (!c?.secret_ciphertext || c.id !== connectionId || c.waba_id !== wabaId) return false;
+            await db.query(`UPDATE office_integrations SET enabled=false,status='reauthorization_required',secret_ciphertext=NULL,token_expires_at=NULL,updated_at=now() WHERE id=$1`, [c.id]);
+            await cancelPending(db, c.id);
+            await db.query('DELETE FROM integration_signup_sessions WHERE law_firm_tenant_id IS NOT DISTINCT FROM $1', [tenantId]);
+            return true;
+        });
+    }
     async function enqueueCase(db, caseId, tenantId, forceDemo = false) {
         const c = await connection(db, tenantId, 'whatsapp', 'FOR SHARE');
         if (!c?.enabled) { if (forceDemo) fail('WHATSAPP_DISABLED', 'יש להפעיל את יצירת קבוצות הדמה תחילה', 409); return null; }
@@ -254,7 +267,7 @@ function createIntegrationService({ pool, provider, env = process.env }) {
     async function previewGroup(tenantId, caseId) {
         return tx(db => enqueueCase(db, positiveId(caseId), tenantId, true));
     }
-    return { snapshot, settingsSnapshot, saveCourt, seedDemo, linkCourt, syncCourt, saveWhatsapp, startSignup, completeSignup, checkWhatsapp, disconnectWhatsapp, enqueueCase, previewGroup,
+    return { snapshot, settingsSnapshot, saveCourt, seedDemo, linkCourt, syncCourt, saveWhatsapp, startSignup, completeSignup, checkWhatsapp, disconnectWhatsapp, revokeWhatsapp, enqueueCase, previewGroup,
         tx, connection, token, binding, signupConfig, pool, env, provider };
 }
 module.exports = { createIntegrationService, DEMO_UPDATES };
