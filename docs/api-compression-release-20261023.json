@@ -1,0 +1,276 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "status": "production-verified",
+  "scope": "LawyerPlatform shared API only; no client-tenant API or frontend release",
+  "codeCommit": "ce3cb6a9058a2a3ec2dc1495796079cde90f6f51",
+  "baselineCommit": "84eebecee5bd0afb10a808bdddf82d3951a455ef",
+  "codeBackendTree": "fa28bcc0f00e1410a589ed864c0fa8caa94c8c3a",
+  "productionTag": "production-2026-10-23-legal-api-compression",
+  "releaseEvidenceCommitSemantics": "The production tag includes this evidence document. Backend tree must equal codeBackendTree; actual server Git HEAD at activation is codeCommit.",
+  "change": {
+    "compression": "1.8.1 -> exact1.8.2",
+    "sourceFiles": [
+      "backend/package.json",
+      "backend/package-lock.json",
+      "backend/tests/compression.lifecycle.test.js"
+    ],
+    "runtime": "Clone old compression directory; replace only LICENSE,index.js,package.json,README.md from SHA512-verified published archive; retain old HISTORY.md and all nested dependency bytes.",
+    "installedMetadata": "Only compression entry in node_modules/.package-lock.json updated; all other root metadata and package entries identical.",
+    "noInstall": true,
+    "otherDependencyVersionsChanged": 0
+  },
+  "runtime": {
+    "component": "/root/LawyerPlatform/backend",
+    "process": "lawyer-api",
+    "node": "v22.23.2",
+    "activatedAt": "2026-10-23T07:50:59.235785+00:00",
+    "compressionIndexSha256": "332fbd6dca91e7a8937398dabf967df2d66e53908a1174a648860346fff40c61",
+    "archiveSha256": "15e46c301ad6468d3838cfc0dbfca3024220ef12f8a43b8156846691011537a6",
+    "installedMetadataSha256": "9b60b206973f7e7c021b1bb4ad5867e2ce86b074c71303c4e7e25ce60b39fe36",
+    "dependencies": {
+      "bytes": {
+        "version": "3.1.2",
+        "lockKey": "node_modules/bytes"
+      },
+      "compressible": {
+        "version": "2.0.18",
+        "lockKey": "node_modules/compressible"
+      },
+      "debug": {
+        "version": "2.6.9",
+        "lockKey": "node_modules/debug"
+      },
+      "destroy": {
+        "version": "1.2.0",
+        "lockKey": "node_modules/destroy"
+      },
+      "negotiator": {
+        "version": "0.6.4",
+        "lockKey": "node_modules/compression/node_modules/negotiator"
+      },
+      "on-headers": {
+        "version": "1.1.0",
+        "lockKey": "node_modules/on-headers"
+      },
+      "safe-buffer": {
+        "version": "5.2.1",
+        "lockKey": "node_modules/safe-buffer"
+      },
+      "vary": {
+        "version": "1.1.2",
+        "lockKey": "node_modules/vary"
+      }
+    },
+    "dependencyResolutionAndBytesUnchanged": true,
+    "nestedNegotiator064Preserved": true
+  },
+  "verification": {
+    "localRegression": "Parent-owned exact dependency fixture:59/59pass, ce3cb6a9; evidence provided separately by root",
+    "stagedNativeTests": {
+      "tests": 11,
+      "pass": 11,
+      "fail": 0,
+      "log": "/root/legal-api-compression-20261023/staged-lifecycle.log",
+      "sha256": "3aa6e7d2095fa6a71d257098fb6e3b4c32a869045adb32e801ed971f2956d59b"
+    },
+    "installedNativeTests": {
+      "tests": 11,
+      "pass": 11,
+      "fail": 0,
+      "log": "/root/legal-api-compression-20261023/installed-lifecycle.log",
+      "sha256": "24372257fca1b5f3458964d477ede48f02032f9275a1b2af272adf343c661124"
+    },
+    "getSmokes": [
+      {
+        "url": "http://127.0.0.1:3005/health",
+        "status": 200,
+        "sha256": "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93",
+        "stableBodySha256": "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93",
+        "bytes": 11,
+        "cloudflareEmailFieldCount": 0
+      },
+      {
+        "url": "http://127.0.0.1:3005/api/public/signup/config",
+        "status": 200,
+        "sha256": "786ab4f12d866c54f17aa8593017f21c460c3d8d86dbcafa14d4e752fdae3eb8",
+        "stableBodySha256": "786ab4f12d866c54f17aa8593017f21c460c3d8d86dbcafa14d4e752fdae3eb8",
+        "bytes": 95,
+        "cloudflareEmailFieldCount": 0
+      },
+      {
+        "url": "https://api-lawyer.mela-media.co.il/api/public/signup/config",
+        "status": 200,
+        "sha256": "786ab4f12d866c54f17aa8593017f21c460c3d8d86dbcafa14d4e752fdae3eb8",
+        "stableBodySha256": "786ab4f12d866c54f17aa8593017f21c460c3d8d86dbcafa14d4e752fdae3eb8",
+        "bytes": 95,
+        "cloudflareEmailFieldCount": 0
+      },
+      {
+        "url": "https://lawyer.mela-media.co.il/",
+        "status": 200,
+        "sha256": "8ff47160d3d92988fb16df3fb911adb3edbab2e1a0b893b03a2598ad7d4fa293",
+        "stableBodySha256": "8ff47160d3d92988fb16df3fb911adb3edbab2e1a0b893b03a2598ad7d4fa293",
+        "bytes": 3320,
+        "cloudflareEmailFieldCount": 0
+      },
+      {
+        "url": "https://lawyer.mela-media.co.il/login",
+        "status": 200,
+        "sha256": "8ff47160d3d92988fb16df3fb911adb3edbab2e1a0b893b03a2598ad7d4fa293",
+        "stableBodySha256": "8ff47160d3d92988fb16df3fb911adb3edbab2e1a0b893b03a2598ad7d4fa293",
+        "bytes": 3320,
+        "cloudflareEmailFieldCount": 0
+      },
+      {
+        "url": "https://lawyer.mela-media.co.il/signup?embed=1&platformId=site&resourceId=basic&signingId=none&billingInterval=monthly",
+        "status": 200,
+        "sha256": "8ff47160d3d92988fb16df3fb911adb3edbab2e1a0b893b03a2598ad7d4fa293",
+        "stableBodySha256": "8ff47160d3d92988fb16df3fb911adb3edbab2e1a0b893b03a2598ad7d4fa293",
+        "bytes": 3320,
+        "cloudflareEmailFieldCount": 0
+      },
+      {
+        "url": "https://lawyer.mela-media.co.il/signup/complete",
+        "status": 200,
+        "sha256": "8ff47160d3d92988fb16df3fb911adb3edbab2e1a0b893b03a2598ad7d4fa293",
+        "stableBodySha256": "8ff47160d3d92988fb16df3fb911adb3edbab2e1a0b893b03a2598ad7d4fa293",
+        "bytes": 3320,
+        "cloudflareEmailFieldCount": 0
+      },
+      {
+        "url": "https://mela-media.co.il/platform/signup/?platformId=site&resourceId=basic&signingId=none&billingInterval=monthly",
+        "status": 200,
+        "sha256": "cffce44787c0d52d9e618ed7553fe0dce4f66e9385e8e489a0b549e8bf68b7f4",
+        "stableBodySha256": "bac1a933547b9a3d0b90041637f6b1c38a1d3f930c9f875342b600e0d78db96d",
+        "bytes": 40770,
+        "cloudflareEmailFieldCount": 2
+      },
+      {
+        "url": "https://mela-media.co.il/platform/pricing/",
+        "status": 200,
+        "sha256": "019829f85759ed2bcb7411b43d88c4384c79998a0529ccb3a118530af8a69825",
+        "stableBodySha256": "3842129118d97b6278735c337835405eab9ef0aa8251ee55d32ceb3b662129a7",
+        "bytes": 52730,
+        "cloudflareEmailFieldCount": 2
+      }
+    ],
+    "rawLegalFrontendAndApiBodiesUnchanged": true,
+    "marketingHtmlComparison": "Every byte unchanged after decoding ONLY Cloudflare /cdn-cgi/l/email-protection#hex and data-cfemail hex fields. Ordered decoded address hashes identical. Prices, trial terms, availability and other URLs remain unchanged. Raw response bodies retained privately.",
+    "stableReadinessSeconds": 10,
+    "all10ProcessesOnline": true,
+    "other9ProcessPidsAndUptimesUnchanged": true,
+    "noManualCustomerDbWriteOrCharge": true,
+    "noMigrations": true,
+    "noProviderCheckoutOrMessagingTest": true,
+    "unrelatedTrackedSourceUnchanged": true,
+    "environmentBytesUnchanged": true
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "outcome": "automatic scoped rollback",
+      "cause": "Strict raw marketing HTML checksum varied because Cloudflare regenerates email XOR masks per response; all GETs returned200 and API signup remained available.",
+      "rollback": "Owned source3paths/ref, old package directory and hidden lock restored byte-exact. Only lawyer-api restarted. Initial rollback health probe at2seconds saw transient connection refused; later readback confirmed healthy baseline84 and all10processesonline.",
+      "originalRawBodiesCaptured": false,
+      "originalBeforeHashesAndRollbackReceiptsPreserved": true
+    },
+    {
+      "attempt": 2,
+      "outcome": "production verified",
+      "correction": "Normalize only the two proven Cloudflare email fields; compare ordered decoded email hashes and every remaining byte. Capture raw public bodies. Readiness uses a bounded30second progressive retry, then10second stableprocessinterval.",
+      "installedNativeTests": "11/11pass",
+      "getSmokes": "9/9pass",
+      "lawyerPidBefore": 790720,
+      "lawyerPidAfter": 791157
+    }
+  ],
+  "restartAccounting": {
+    "totalLawyerApiRestarts": 3,
+    "sequence": [
+      "attempt-01 activation",
+      "attempt-01 rollback",
+      "attempt-02 activation"
+    ],
+    "otherProcessRestarts": 0
+  },
+  "recovery": {
+    "sharedMaintenanceLock": "/run/lock/melamedia-release-maintenance.lock",
+    "componentLock": "/run/lock/lawyer-api-compression.lock",
+    "snapshotsAreSameBaselineCopies": true,
+    "historicalDistinctVersionsClaimed": false,
+    "completeInactiveSnapshotCount": 3,
+    "snapshots": [
+      {
+        "baseline": "84eebecee5bd0afb10a808bdddf82d3951a455ef",
+        "copyNumber": 1,
+        "kind": "complete-restorable-copy-of-same-baseline-not-distinct-history",
+        "component": "LawyerPlatform/backend",
+        "archive": "/root/legal-api-compression-20261023/baseline-snapshot-01/backend-complete.tar.gz",
+        "sha256": "1da5a9bdb94e75a1288c0704532e694e322a1259b70824d6ada728fa2353d5b2",
+        "bytes": 144368071,
+        "contains": "entire backend including source, installed runtime, environments; root-only",
+        "readback": {
+          "members": 21928,
+          "regularFiles": 19172,
+          "uncompressedBytes": 587717586,
+          "allRegularFilesRead": true,
+          "requiredMembersPresent": true
+        }
+      },
+      {
+        "baseline": "84eebecee5bd0afb10a808bdddf82d3951a455ef",
+        "copyNumber": 2,
+        "kind": "complete-restorable-copy-of-same-baseline-not-distinct-history",
+        "component": "LawyerPlatform/backend",
+        "archive": "/root/legal-api-compression-20261023/baseline-snapshot-02/backend-complete.tar.gz",
+        "sha256": "1da5a9bdb94e75a1288c0704532e694e322a1259b70824d6ada728fa2353d5b2",
+        "bytes": 144368071,
+        "contains": "entire backend including source, installed runtime, environments; root-only",
+        "readback": {
+          "members": 21928,
+          "regularFiles": 19172,
+          "uncompressedBytes": 587717586,
+          "allRegularFilesRead": true,
+          "requiredMembersPresent": true
+        }
+      },
+      {
+        "baseline": "84eebecee5bd0afb10a808bdddf82d3951a455ef",
+        "copyNumber": 3,
+        "kind": "complete-restorable-copy-of-same-baseline-not-distinct-history",
+        "component": "LawyerPlatform/backend",
+        "archive": "/root/legal-api-compression-20261023/baseline-snapshot-03/backend-complete.tar.gz",
+        "sha256": "1da5a9bdb94e75a1288c0704532e694e322a1259b70824d6ada728fa2353d5b2",
+        "bytes": 144368071,
+        "contains": "entire backend including source, installed runtime, environments; root-only",
+        "readback": {
+          "members": 21928,
+          "regularFiles": 19172,
+          "uncompressedBytes": 587717586,
+          "allRegularFilesRead": true,
+          "requiredMembersPresent": true
+        }
+      }
+    ],
+    "protection": "Root-only snapshots, outside Git/webroot, include entire backend source, installed runtime and environment files; pinned for retention review2026-11-23. No existing release/data/env/source/archive was pruned.",
+    "oldCompressionDirectoryRetained": "/root/LawyerPlatform/backend/node_modules/.compression-candidate-20261023",
+    "automaticRollbackExercised": true,
+    "automaticRollbackScope": "Atomic directory exchange, exact installed metadata backup, only our3sourcepaths and guarded expected-old-value branch ref; no reset --hard or broad cleanup."
+  },
+  "privateEvidenceDirectory": "/Users/liroymelamed/.codex/private/legal-api-compression-20261023",
+  "remoteEvidenceDirectory": "/root/legal-api-compression-20261023",
+  "privateEvidenceSha256": {
+    "live-verification.json": "c4e603e74703e0a53965595c099085bb313021bf832a5058c9edf95aefb549c0",
+    "prepared.json": "ccb0eead9e4b3cb6fcd6124b2a9364722584f69ea20f1ec9a9319fb37c558fa7",
+    "staged-lifecycle.log": "3aa6e7d2095fa6a71d257098fb6e3b4c32a869045adb32e801ed971f2956d59b",
+    "installed-lifecycle.log": "24372257fca1b5f3458964d477ede48f02032f9275a1b2af272adf343c661124",
+    "cloudflare-email-proof.json": "af1b634c9f8f6eaf46cf4fc3abd322f2c9422be50cc959f7fe7fc4ab5f73415c"
+  },
+  "boundaries": [
+    "This release does not update any other dependency or resolve all repository-wide dependency alerts.",
+    "This patch only corrects compression stream resource cleanup.",
+    "Existing normal application startup/jobs resume after the authorized lawyer-api restart; no business registration/payment/customer mutation was issued by deployment QA.",
+    "No claim of real-card charging or end-to-end signup provider testing is made by these loopback native tests and GET checks."
+  ]
+}
