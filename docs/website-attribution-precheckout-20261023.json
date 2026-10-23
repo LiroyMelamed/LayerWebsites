@@ -1,0 +1,74 @@
+{
+  "status": "BUILT_NOT_DEPLOYED",
+  "baseCommit": "671487ff0a1c35fd13ef6dc23a01ad328729dd45",
+  "oldMainJs": "/static/js/main.83566b8f.js",
+  "newMainJs": "/static/js/main.1aecf536.js",
+  "mainCssUnchanged": "/static/css/main.0b9c0a10.css",
+  "payloadFiles": {
+    "index.html": "8ff47160d3d92988fb16df3fb911adb3edbab2e1a0b893b03a2598ad7d4fa293",
+    "asset-manifest.json": "d0bc79650db2aa39f7d2223b303897fa338405916ea7cb82ab90df1a9195fed5",
+    "static/js/main.1aecf536.js.LICENSE.txt": "6716f83e3dd234d5c856f728162175c6bad4f4c1bf223b39e4d9a568be58380a",
+    "static/js/main.1aecf536.js": "a504147c4198762a5d5ee608f7feab67db6cd5bbe246d09d6d08b56a0b6f9361",
+    "static/js/main.1aecf536.js.map": "115ca91146bbf75eb37130a3199a3613017b7cb1eacc6ffefd8d167b9acfe2f3"
+  },
+  "preflight": {
+    "indexSha256": "5d36eae439a8594158b579fd365a1b53f35da0f5b3bd160afc85b6c6bec387e2",
+    "assetManifestSha256": "a369513fe2aa57a775159d253be041511f1764a70a752e72307adee04e459419"
+  },
+  "preserved": {
+    "exactLiveHtmlExceptSingleMainJsReference": true,
+    "livePublicScriptsOrderAndBytes": true,
+    "allLiveBrandingAndNonBundlePublicAssets": true,
+    "oldContentHashedAssets": true,
+    "candidateStaticFilesAlreadyExactLive": 23,
+    "candidateExistingFilenameConflicts": 0
+  },
+  "moduleParity": {
+    "app": {
+      "oldCount": 378,
+      "newCount": 379,
+      "unchanged": 377,
+      "changed": [
+        "screens/signup/SignupScreen.js"
+      ],
+      "removed": [],
+      "added": [
+        "lib/signupAttribution.js"
+      ]
+    },
+    "dependencies": {
+      "oldCount": 323,
+      "newCount": 323,
+      "unchanged": 323,
+      "changed": [],
+      "removed": [],
+      "added": []
+    },
+    "vendorRuntime": {
+      "oldCount": 64,
+      "newCount": 64,
+      "unchanged": 64,
+      "changed": [],
+      "removed": [],
+      "added": []
+    },
+    "cssBytesUnchanged": true
+  },
+  "validation": {
+    "jestSuites": 2,
+    "jestTests": 11,
+    "jestResult": "PASS",
+    "buildResult": "PASS_WITH_EXISTING_WARNINGS",
+    "dependencyVersionRecords": 1581,
+    "dependencyVersionMismatches": 0,
+    "dependencyInstalls": 0,
+    "lockfileChanged": false,
+    "testSourceCommit": "fa006de6",
+    "messages": 0,
+    "charges": 0,
+    "customerDataWrites": 0
+  },
+  "buildWorkspace": "/tmp/legal-attribution-precheckout-20261023-9pl2xldm",
+  "buildLog": "/Users/liroymelamed/.codex/private/legal-attribution-precheckout-20261023/candidate-build.log",
+  "testLog": "/Users/liroymelamed/.codex/private/legal-attribution-precheckout-20261023/candidate-jest.log"
+}
