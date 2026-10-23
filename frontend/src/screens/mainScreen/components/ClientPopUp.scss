@@ -156,6 +156,16 @@
     padding: 0;
     border: 0;
     min-inline-size: 0;
+
+    .lw-simpleInput {
+        min-block-size: 2.75rem;
+        block-size: auto;
+    }
+
+    .lw-simpleInput__field {
+        min-block-size: 2.75rem;
+        box-sizing: border-box;
+    }
 }
 
 .lw-clientPopup__profileSelect {
@@ -179,6 +189,12 @@
 .lw-clientPopup__actions .lw-textButtonWithTwoOptionalIcons {
     min-block-size: 2.75rem;
     flex: 1 1 12rem;
+}
+
+@media (max-width: 30rem) {
+    .lw-clientPopup__documentProfile .lw-clientPopup__input {
+        flex-basis: 100%;
+    }
 }
 
 @media (max-width: v.$bp-narrow) {

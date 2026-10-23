@@ -13,6 +13,7 @@
     &__include input { width: 20px; height: 20px; flex-shrink: 0; accent-color: #2a4365; }
     &__signer { display: grid; gap: 6px; min-width: 0; }
     &__actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    &__actions > button { min-block-size: 2.75rem; }
     @media (max-width: 600px) { &__list li { grid-template-columns: minmax(0, 1fr); gap: 8px; } }
 }
 
