@@ -79,9 +79,15 @@ export default function CaseStageAutomationPanel({ caseId, canEdit = false, init
     const roles = (editor?.template?.roles || []).map(role => ({ ...role, audience: editor.roleAudience[role.key] || role.audience }));
     const activeRoles = roles.filter(role => !editor.omittedRoles.includes(role.key));
     const updatePerson = (roleKey, field, value) => {
-        const role = roles.find(item => item.key === roleKey);
-        if (role.audience === 'shared') invalidate({ ...editor, shared: { ...editor.shared, [roleKey]: changePerson(editor.shared[roleKey] || blankRole(role), field, value) } });
-        else invalidate({ ...editor, rows: [{ ...editor.rows[0], recipients: { ...editor.rows[0].recipients, [roleKey]: changePerson(editor.rows[0].recipients[roleKey] || blankRole(role), field, value) } }] });
+        generation.current += 1; setCheck(null); setSaved(false);
+        // Identity controls can emit a role link and occurrence in one event.
+        // Apply each change to the latest person instead of overwriting its peer.
+        setEditor(current => {
+            const role = current.template.roles.find(item => item.key === roleKey);
+            const audience = current.roleAudience[roleKey] || role.audience;
+            if (audience === 'shared') return { ...current, shared: { ...current.shared, [roleKey]: changePerson(current.shared[roleKey] || blankRole(role), field, value) } };
+            return { ...current, rows: [{ ...current.rows[0], recipients: { ...current.rows[0].recipients, [roleKey]: changePerson(current.rows[0].recipients[roleKey] || blankRole(role), field, value) } }] };
+        });
     };
     const body = () => ({ expectedVersion: editor.version, enabled: true, templateVersionId: editor.template.versionId, name: editor.name.trim(),
         ...(editor.template.approvalRequired ? { reviewerUserId: editor.reviewerUserId } : {}), roleAudience: editor.roleAudience,

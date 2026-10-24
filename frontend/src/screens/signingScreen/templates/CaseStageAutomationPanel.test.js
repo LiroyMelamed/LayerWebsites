@@ -231,3 +231,34 @@ test('the dependent ordinary composer suggestion still fills all contact values 
     expect(api.previewCreation.mock.calls[0][0].rows[0].recipients.tenant).toEqual({ name: contact.name, email: contact.email, phone: contact.phone, locale: 'en' });
     expect(api.create).not.toHaveBeenCalled();
 });
+
+test('switching a bound account to an explicit signing directory person removes the old account binding', async () => {
+    signingPackagesApi.directory.mockResolvedValue({ people: [{ id: 'new-directory-person', name: 'Synthetic directory signer', endpoints: { email: 'directory@example.invalid' } }], parties: [], canManageAuthority: false });
+    const { api, i18n } = await setup();
+    await configure(i18n);
+    selectCasePerson(i18n, 'Tenant', 501);
+    const tenant = within(screen.getByRole('group', { name: 'Tenant' }));
+    fireEvent.click(tenant.getByText(i18n.t('signingV2.authority.directoryTitle')));
+    changeField(tenant.getByLabelText(i18n.t('signingV2.authority.searchPerson')), { target: { value: 'Synthetic directory' } });
+    fireEvent.pointerDown(await screen.findByRole('button', { name: 'Synthetic directory signer · directory@example.invalid' }));
+    fireEvent.click(button(i18n, 'check'));
+    await screen.findByText(en.stageAutomation.reviewReady);
+    const person = api.preview.mock.calls[0][2].rows[0].recipients.tenant;
+    expect(person).toEqual(expect.objectContaining({ personId: 'new-directory-person', name: 'Synthetic directory signer', email: 'directory@example.invalid' }));
+    expect(person).not.toHaveProperty('contactUserId');
+    expect(api.save).not.toHaveBeenCalled();
+});
+
+test('the same person in two roles retains the role link after its occurrence update', async () => {
+    const { api, i18n } = await setup();
+    await configure(i18n);
+    selectCasePerson(i18n, 'Lawyer', 502);
+    const tenant = within(screen.getByRole('group', { name: 'Tenant' }));
+    changeField(tenant.getByRole('combobox', { name: i18n.t('signingV2.compose.identity.label') }), { target: { value: 'lawyer' } });
+    expect(tenant.queryByLabelText(i18n.t('signingV2.compose.fields.name'))).not.toBeInTheDocument();
+    fireEvent.click(button(i18n, 'check'));
+    await screen.findByText(en.stageAutomation.reviewReady);
+    expect(api.preview.mock.calls[0][2].rows[0].recipients.tenant).toEqual({ sameAsRole: 'lawyer' });
+    expect(api.preview.mock.calls[0][2].shared.lawyer).toEqual(expect.objectContaining({ contactUserId: 502 }));
+    expect(api.save).not.toHaveBeenCalled();
+});

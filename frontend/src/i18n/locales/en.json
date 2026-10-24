@@ -3387,7 +3387,7 @@
   },
   "stageAutomation": {
     "title": "Automatic documents by case stage",
-    "help": "Choose a template and people for each stage. Advancing to the stage creates one signing request through the existing queue. Returning to a stage does not send again.",
+    "help": "Choose a template and people for each stage. Advancing to the stage creates one signing request through the existing queue. Returning to a stage does not send again. Already-created requests are managed and cancelled separately by opening the signing request.",
     "savedStages": "These settings use saved stages. Save the case first after adding or changing stages. Creation, backward movement and closure do not trigger a send.",
     "stage": "Stage {{number}}",
     "active": "Active",
@@ -3396,7 +3396,7 @@
     "onceUsed": "Automation has already run for this stage. Editing the rule or re-entering will not create another send.",
     "configure": "Choose documents and signers",
     "edit": "Edit settings",
-    "pause": "Pause automatic send",
+    "pause": "Pause automation",
     "editor": "Stage send settings",
     "template": "Signing template",
     "chooseTemplate": "Choose a published template",
