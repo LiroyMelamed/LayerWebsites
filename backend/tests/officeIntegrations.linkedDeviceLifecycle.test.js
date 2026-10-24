@@ -349,6 +349,29 @@ test('only full verified fresh health marks connected; checks never enable deliv
     assert.equal(f.service.snapshot(forged).sessionStatus, 'failed');
 });
 
+test('paired snapshot requests a fresh check for missing readiness and reconnect only for invalid identity', async () => {
+    const f = fixture(); await f.service.start(null, ACK); await f.service.check(null);
+    const paired = f.row, calls = copy(f.calls);
+    for (const patch of [{ last_checked_at: null }, { last_checked_at: 'invalid-date' }, { status: 'reauthorization_required' }]) {
+        const result = f.service.snapshot({ ...paired, ...patch });
+        assert.equal(result.sessionStatus, 'failed');
+        assert.equal(result.lastError, 'CONNECTION_FAILED');
+        assert.equal(result.displayPhone, `+${PHONE}`);
+    }
+    for (const patch of [{ secret_ciphertext: 'invalid' }, { phone_number_id: '972501111111' }, { display_phone: null }]) {
+        const result = f.service.snapshot({ ...paired, last_checked_at: null, ...patch });
+        assert.equal(result.sessionStatus, 'failed');
+        assert.equal(result.lastError, 'RECONNECT_REQUIRED');
+    }
+    for (const [flag, error] of [['linkedDisconnectPending', 'DISCONNECT_UNKNOWN'], ['linkedStartUncertain', 'CONNECTION_START_UNKNOWN']]) {
+        const result = f.service.snapshot({ ...paired, last_checked_at: null, settings: { ...paired.settings, [flag]: true } });
+        assert.equal(result.sessionStatus, 'failed');
+        assert.equal(result.lastError, error);
+    }
+    assert.deepEqual(f.row, paired);
+    assert.deepEqual(f.calls, calls);
+});
+
 test('restrictions, unsupported probes, identity drift and cross-session phone reuse all block readiness', async () => {
     for (const patch of [{ restricted: true, ready: false }, { incompatibleVersion: true, ready: false },
         { phoneId: '972501111111' }, { displayPhone: null }, { ready: false }]) {

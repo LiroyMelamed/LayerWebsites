@@ -42,9 +42,12 @@ function createLinkedDeviceService({ pool, provider, env = process.env, tx, conn
         if (linked && c.secret_ciphertext && !active) { sessionStatus = 'failed'; lastError = 'RECONNECT_REQUIRED'; }
         if (active && c.settings.linkedDisconnectPending) { sessionStatus = 'failed'; lastError = 'DISCONNECT_UNKNOWN'; }
         else if (active && c.settings.linkedStartUncertain) { sessionStatus = 'failed'; lastError = 'CONNECTION_START_UNKNOWN'; }
-        if (sessionStatus === 'connected' && (!active || !displayPhone || c.phone_number_id !== displayPhone.slice(1) ||
-            c.status !== 'ready' || !c.last_checked_at || !Number.isFinite(new Date(c.last_checked_at).getTime()))) {
-            sessionStatus = 'failed'; lastError = 'RECONNECT_REQUIRED';
+        if (sessionStatus === 'connected') {
+            if (!active || !displayPhone || c.phone_number_id !== displayPhone.slice(1)) {
+                sessionStatus = 'failed'; lastError = 'RECONNECT_REQUIRED';
+            } else if (c.status !== 'ready' || !c.last_checked_at || !Number.isFinite(new Date(c.last_checked_at).getTime())) {
+                sessionStatus = 'failed'; lastError = 'CONNECTION_FAILED';
+            }
         }
         if (active && sessionStatus === 'disconnected') { sessionStatus = 'failed'; lastError ||= 'RECONNECT_REQUIRED'; }
         return { configured: configured(c), enabled: enabled(), provider: 'waha', sessionStatus,
