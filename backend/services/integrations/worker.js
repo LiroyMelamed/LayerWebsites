@@ -145,7 +145,7 @@ function createGroupWorker(service) {
         await db.query(`UPDATE case_whatsapp_groups SET status=$3,recipients=$4,error_code=$5,updated_at=now()
             WHERE id=$1 AND law_firm_tenant_id IS NOT DISTINCT FROM $2`, [job.id, tenantId, status, JSON.stringify(recipients), errorCode]);
     }
-    async function recoverAbandoned(tenantId) {
+    async function recoverAbandoned(tenantId, caseId) {
         // One case per transaction preserves connection -> case -> job ordering.
         await tx(async db => {
             const c = await connection(db, tenantId, 'whatsapp', 'FOR UPDATE');
@@ -153,17 +153,23 @@ function createGroupWorker(service) {
             const now = await dbNow(db), cutoff = new Date(new Date(now).getTime() - ABANDONED_MS);
             const claim = readClaim(c.dispatch_claim);
             if (c.dispatch_claim != null && !claim) {
+                if (caseId != null) return;
                 await db.query('UPDATE office_integrations SET safety_state=$2 WHERE id=$1', [c.id, pauseSafety(c.safety_state, 'INVALID_SAFETY_STATE', now)]);
                 return;
             }
             if (claim && Date.parse(claim.reservedAt) > cutoff.getTime()) return;
             const candidate = claim ? (await db.query(`SELECT id,case_id FROM case_whatsapp_groups
-                WHERE id=$1 AND connection_id=$2 AND law_firm_tenant_id IS NOT DISTINCT FROM $3`, [claim.jobId, c.id, tenantId])).rows[0] :
+                WHERE id=$1 AND connection_id=$2 AND law_firm_tenant_id IS NOT DISTINCT FROM $3
+                AND ($4::integer IS NULL OR case_id=$4)`, [claim.jobId, c.id, tenantId, caseId])).rows[0] :
                 (await db.query(`SELECT id,case_id FROM case_whatsapp_groups WHERE connection_id=$1
                 AND law_firm_tenant_id IS NOT DISTINCT FROM $2 AND mode='live' AND updated_at<=$3
+                AND ($4::integer IS NULL OR case_id=$4)
                 AND (status IN ('creating','awaiting_webhook') OR (status IN ('created','needs_attention')
                     AND EXISTS(SELECT 1 FROM jsonb_array_elements(recipients) r WHERE r->>'status'='sending')))
-                ORDER BY created_at LIMIT 1`, [c.id, tenantId, cutoff])).rows[0];
+                ORDER BY created_at LIMIT 1`, [c.id, tenantId, cutoff, caseId])).rows[0];
+            // A case-scoped pass cannot reconcile or release another case's
+            // connection-wide claim. It remains a dispatch blocker until handled.
+            if (claim && caseId != null && !candidate) return;
             const locked = await lockCaseJob(db, tenantId, candidate);
             let recovered = false;
             if (locked?.job.mode === 'live') {
@@ -183,7 +189,7 @@ function createGroupWorker(service) {
     }
     async function processOffice(tenantId, { demoOnly = false, caseId = null } = {}) {
         // A crashed/unknown remote mutation is never blindly retried.
-        await recoverAbandoned(tenantId);
+        await recoverAbandoned(tenantId, caseId);
         // A WORKING session can still be restricted. Each dispatch pass performs
         // fresh read-only health probes; it never restarts or pairs a session.
         if (!demoOnly && service.refreshLinkedDevice) await service.refreshLinkedDevice(tenantId);
@@ -195,9 +201,10 @@ function createGroupWorker(service) {
             const candidate = (await db.query(`SELECT j.id,j.case_id FROM case_whatsapp_groups j JOIN cases c
                 ON c.caseid=j.case_id AND c.law_firm_tenant_id IS NOT DISTINCT FROM j.law_firm_tenant_id
                 WHERE j.law_firm_tenant_id IS NOT DISTINCT FROM $1 AND j.status IN ('creating','awaiting_webhook','uncertain','created','needs_attention')
+                AND ($2::integer IS NULL OR j.case_id=$2)
                 AND COALESCE(btrim(c.whatsappgrouplink),'')<>'' AND btrim(c.whatsappgrouplink)<>COALESCE(j.invite_link,'')
                 AND EXISTS(SELECT 1 FROM jsonb_array_elements(j.recipients) r WHERE r->>'status'='pending')
-                ORDER BY j.created_at LIMIT 1`, [tenantId])).rows[0];
+                ORDER BY j.created_at LIMIT 1`, [tenantId, caseId])).rows[0];
             const locked = await lockCaseJob(db, tenantId, candidate);
             if (locked && ['creating','awaiting_webhook','uncertain','created','needs_attention'].includes(locked.job.status) && hasOtherLink(locked.record, locked.job.invite_link))
                 await cancelForCaseLink(db, tenantId, locked.job, null, ['creating','awaiting_webhook','uncertain'].includes(locked.job.status));
@@ -279,7 +286,8 @@ function createGroupWorker(service) {
             const c = await connection(db, tenantId, 'whatsapp', 'FOR UPDATE');
             if (!c?.enabled || paused(c)) return null;
             const candidate = (await db.query(`SELECT id,case_id FROM case_whatsapp_groups WHERE law_firm_tenant_id IS NOT DISTINCT FROM $1 AND mode='live' AND status='created'
-                AND (next_attempt_at IS NULL OR next_attempt_at<=now()) ORDER BY created_at LIMIT 1`, [tenantId])).rows[0];
+                AND ($2::integer IS NULL OR case_id=$2)
+                AND (next_attempt_at IS NULL OR next_attempt_at<=now()) ORDER BY created_at LIMIT 1`, [tenantId, caseId])).rows[0];
             const locked = await lockCaseJob(db, tenantId, candidate);
             if (!locked || locked.job.status !== 'created') return null;
             const { job, record } = locked;

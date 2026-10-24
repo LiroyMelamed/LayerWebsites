@@ -102,6 +102,58 @@ test('linked real-PG queue freezes device, persists direct group link, then pace
     assert.ok(sent.recipients[0].providerMessageId); assert.equal(sent.recipients[0].deliveredAt, undefined);
 });
 
+test('case-scoped linked worker leaves unrelated queue, invitations, manual links and abandoned jobs untouched', async t => {
+    const f = await fixture(t), queued = await f.createCase(), demo = await f.createCase(), invitation = await f.createCase(),
+        manual = await f.createCase(), abandoned = await f.createCase(), target = await f.createCase();
+    await f.pool.query("UPDATE case_whatsapp_groups SET mode='demo' WHERE case_id=$1", [demo]);
+    for (const id of [invitation, manual]) {
+        const link = `https://chat.whatsapp.com/SyntheticExisting${id}`;
+        await f.pool.query("UPDATE case_whatsapp_groups SET status='created',group_id=$2,invite_link=$3 WHERE case_id=$1", [id, `120363${String(id).padStart(12, '0')}@g.us`, link]);
+        await f.pool.query('UPDATE cases SET whatsappgrouplink=$2 WHERE caseid=$1', [id, id === manual ? 'https://chat.whatsapp.com/SyntheticManualReplacement' : link]);
+    }
+    await f.pool.query("UPDATE case_whatsapp_groups SET status='creating',updated_at=clock_timestamp()-interval '11 minutes' WHERE case_id=$1", [abandoned]);
+    const others = [queued, demo, invitation, manual, abandoned];
+    const jobsBefore = (await f.pool.query('SELECT * FROM case_whatsapp_groups WHERE case_id=ANY($1::integer[]) ORDER BY case_id', [others])).rows;
+    const casesBefore = (await f.pool.query('SELECT * FROM cases WHERE caseid=ANY($1::integer[]) ORDER BY caseid', [others])).rows;
+
+    await f.worker.processOffice(A, { caseId: target });
+    assert.equal((await f.job(target)).status, 'created');
+    assert.deepEqual(f.calls.map(call => [call.kind, call.jobId]), [['group', (await f.job(target)).id]]);
+    await f.elapse();
+    await f.otherWorker.processOffice(A, { caseId: target });
+    assert.equal((await f.job(target)).status, 'invitations_sent');
+    assert.deepEqual(f.calls.map(call => [call.kind, call.jobId]), [['group', (await f.job(target)).id], ['invite', (await f.job(target)).id]]);
+    assert.deepEqual((await f.pool.query('SELECT * FROM case_whatsapp_groups WHERE case_id=ANY($1::integer[]) ORDER BY case_id', [others])).rows, jobsBefore);
+    assert.deepEqual((await f.pool.query('SELECT * FROM cases WHERE caseid=ANY($1::integer[]) ORDER BY caseid', [others])).rows, casesBefore);
+});
+
+test('case-scoped linked worker preserves another case abandoned dispatch claim and cannot dispatch around it', async t => {
+    const f = await fixture(t), other = await f.createCase(), target = await f.createCase(), c = await f.connection();
+    const claim = { jobId: (await f.job(other)).id, kind: 'group', recipientHash: null, reservedAt: new Date(Date.now() - 11 * 60 * 1000).toISOString() };
+    await f.pool.query("UPDATE case_whatsapp_groups SET status='creating',updated_at=clock_timestamp()-interval '11 minutes' WHERE case_id=$1", [other]);
+    await f.pool.query('UPDATE office_integrations SET dispatch_claim=$2 WHERE id=$1', [c.id, claim]);
+    const before = await f.job(other), safety = (await f.connection()).safety_state;
+    await f.worker.processOffice(A, { caseId: target });
+    assert.equal(f.calls.length, 0);
+    assert.deepEqual(await f.job(other), before);
+    assert.deepEqual((await f.connection()).dispatch_claim, claim);
+    assert.deepEqual((await f.connection()).safety_state, safety);
+    assert.equal((await f.job(target)).status, 'queued');
+    assert.equal((await f.job(target)).error_code, 'DISPATCH_IN_PROGRESS');
+});
+
+test('case-scoped linked recovery marks only the requested abandoned case uncertain', async t => {
+    const f = await fixture(t), other = await f.createCase(), target = await f.createCase();
+    await f.pool.query("UPDATE case_whatsapp_groups SET status='creating',updated_at=clock_timestamp()-interval '11 minutes' WHERE case_id=ANY($1::integer[])", [[other, target]]);
+    const before = await f.job(other);
+    await f.worker.processOffice(A, { caseId: target });
+    assert.equal(f.calls.length, 0);
+    assert.deepEqual(await f.job(other), before);
+    assert.equal((await f.job(target)).status, 'uncertain');
+    assert.equal((await f.job(target)).error_code, 'RESULT_UNKNOWN');
+    assert.equal((await f.connection()).safety_state.paused, true);
+});
+
 test('missing client consent blocks entire group; only explicit current permission releases known-unsent review', async t => {
     const f = await fixture(t, { includeCaseClients: true }), caseId = await f.createCase({ clients: [2] });
     assert.equal((await f.job(caseId)).status, 'needs_attention');
