@@ -48,6 +48,21 @@
   .oi-details p { margin: v.$space-2 0; }
   .oi-automation { padding-top: v.$space-2; border-top: 1px solid var(--lw-color-disabled); }
   .oi-automation > summary { color: var(--lw-color-text); }
+  .oi-safety { margin-top: v.$space-4; padding-top: v.$space-4; border-top: 1px solid var(--lw-color-disabled); }
+  .oi-safety > p { margin: v.$space-2 0; }
+  .oi-safety-reason { font-weight: 500; }
+  .oi-safety .oi-safety-window { margin-bottom: v.$space-1; }
+  .oi-safety-usage { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: v.$space-3; margin: 0; }
+  .oi-safety-usage > div { padding: v.$space-2 v.$space-3; background: var(--lw-color-secondary-highlighted); border-radius: 0.5rem; }
+  .oi-safety-usage dt, .oi-safety-times dt { color: var(--lw-color-winter); font-size: 0.75rem; }
+  .oi-safety-usage dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .oi-safety-times { display: flex; flex-wrap: wrap; gap: v.$space-2 v.$space-5; margin: v.$space-3 0; }
+  .oi-safety-times dd { margin: 0; overflow-wrap: anywhere; }
+  .oi-safety-recovery > p { margin-bottom: 0; }
+  .oi-safety .oi-actions { margin-top: v.$space-2; }
+  .oi-safety .oi-safety-acknowledgement { direction: inherit; margin-top: v.$space-2; }
+  .oi-safety-acknowledgement .lw-simpleCheckbox__label { min-block-size: 2.75rem; }
+  .oi-safety-acknowledgement .lw-simpleCheckbox__text { font-size: 0.8125rem; }
   fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
   .oi-setting-row { display: flex; flex-direction: column; gap: v.$space-2; padding: v.$space-3 0; border-bottom: 1px solid var(--lw-color-secondary-highlighted); }
   .oi-setting-row .lw-simpleCheckbox { margin: 0; }

@@ -22,7 +22,7 @@ async function fixture(t) {
         CREATE TABLE users(userid serial PRIMARY KEY,law_firm_tenant_id uuid,phonenumber text);
         CREATE TABLE cases(caseid serial PRIMARY KEY,law_firm_tenant_id uuid REFERENCES law_firm_tenants(id),casename text,casemanagerid integer,currentstage integer,isclosed boolean,whatsappgrouplink text,createdat timestamptz,updatedat timestamptz);
         INSERT INTO law_firm_tenants(id,name) VALUES('${A}','Synthetic office A'),('${B}','Synthetic office B');`);
-    for (const migration of ['2026-10-14_00_office_integrations.sql', '2026-10-15_00_case_court_reference.sql', '2026-10-15_01_court_daily_sync.sql']) await db.exec(fs.readFileSync(path.join(__dirname, '../migrations', migration), 'utf8'));
+    for (const migration of ['2026-10-14_00_office_integrations.sql', '2026-10-15_00_case_court_reference.sql', '2026-10-15_01_court_daily_sync.sql', '2026-10-24_01_whatsapp_safety.sql']) await db.exec(fs.readFileSync(path.join(__dirname, '../migrations', migration), 'utf8'));
     // One leased PGlite connection. Pauses model committed inter-phase changes;
     // these tests do not claim real multi-session PostgreSQL contention proof.
     let tail = Promise.resolve();
@@ -37,6 +37,23 @@ async function fixture(t) {
     const pool = {
         query: async (...args) => { const release = await lease(); try { return await query(...args); } finally { release(); } },
         connect: async () => { const release = await lease(); return { query, release }; },
+    };
+    // These legacy lifecycle tests advance only the persisted safety clock
+    // between explicit delivery phases. Counts and circuit pauses remain intact;
+    // separate guard tests exercise pacing without advancing this fixture clock.
+    const elapseQuietPeriod = async (office = A) => {
+        const elapsedMs = 61 * 60 * 1000;
+        const shift = value => value === null ? null : new Date(Date.parse(value) - elapsedMs).toISOString();
+        const records = (await pool.query("SELECT id,safety_state FROM office_integrations WHERE provider='whatsapp' AND law_firm_tenant_id IS NOT DISTINCT FROM $1", [office])).rows;
+        for (const record of records) {
+            const state = record.safety_state;
+            if (!Object.keys(state).length) continue;
+            await pool.query('UPDATE office_integrations SET safety_state=$2 WHERE id=$1', [record.id, JSON.stringify({
+                ...state, groups: state.groups.map(shift), invites: state.invites.map(entry => ({ ...entry, at: shift(entry.at) })),
+                lastMutationAt: shift(state.lastMutationAt), lastObservedAt: shift(state.lastObservedAt), pausedAt: shift(state.pausedAt),
+            })]);
+        }
+        await pool.query("UPDATE case_whatsapp_groups SET next_attempt_at=next_attempt_at-interval '61 minutes' WHERE law_firm_tenant_id IS NOT DISTINCT FROM $1 AND next_attempt_at IS NOT NULL", [office]);
     };
     const provider = {
         completeSignup: async input => ({ token: 'synthetic-token', pin: '123456', phoneId: input.phoneId, wabaId: input.wabaId, displayPhone: '+972500000000', expiresAt: '2099-01-01T00:00:00Z' }),
@@ -93,7 +110,7 @@ async function fixture(t) {
         await db.close();
     });
     await connect(A, WABA, true);
-    return { pool, service, worker, provider, calls, hooks, trace, connect, createJob, job, lifecycle, revoke };
+    return { pool, service, worker, provider, calls, hooks, trace, connect, createJob, job, lifecycle, revoke, elapseQuietPeriod };
 }
 
 test('signed revocation permanently cancels old queued work and late invitations after same-assets reconnect', async t => {
@@ -137,12 +154,13 @@ test('signed revocation fences an old in-flight signup before it can restore a g
 
 test('revocation preserves sent and uncertain outcomes and recorded remote results without retrying', async t => {
     const f = await fixture(t), created = await f.createJob();
-    await f.worker.processOffice(A); await f.lifecycle(created); await f.worker.processOffice(A);
+    await f.worker.processOffice(A); await f.lifecycle(created);
+    await f.elapseQuietPeriod(); await f.worker.processOffice(A);
     const before = await f.job(created); before.recipients[1].status = 'sending';
     await f.pool.query('UPDATE case_whatsapp_groups SET recipients=$2 WHERE id=$1', [before.id, JSON.stringify(before.recipients)]);
     const unknown = await f.createJob();
     f.provider.createGroup = async (_c, _token, job) => { f.calls.push(['group-unknown', job.id]); throw Object.assign(Error('Synthetic timeout'), { uncertain: true }); };
-    await f.worker.processOffice(A, { caseId: unknown });
+    await f.elapseQuietPeriod(); await f.worker.processOffice(A, { caseId: unknown });
     await f.revoke();
     const sent = await f.job(created), unresolved = await f.job(unknown);
     assert.deepEqual(sent.recipients.map(r => r.status), ['sent', 'uncertain', 'cancelled', 'cancelled']);

@@ -4,6 +4,7 @@ const { fail, courtNumber, phones, positiveId } = require('./validation');
 const secrets = require('./secrets');
 const { courtSchedule, scheduleNext, TIME_ZONE } = require('./courtSchedule');
 const { deliveryAllowed } = require('./deliveryPolicy');
+const { publicSafety, pauseSafety, resumeSafety } = require('./whatsappSafety');
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const DEMO_UPDATES = [
     { source: 'demo-decision-1', number: '90001-10-26', title: 'החלטת דמה', body: 'זהו עדכון סינתטי לבדיקת שיוך. אין לו משמעות משפטית.', date: '2026-10-14T09:00:00Z' },
@@ -31,7 +32,8 @@ function createIntegrationService({ pool, provider, env = process.env }) {
         if (!c) return null;
         return { id: c.id, enabled: c.enabled, status: c.status, settings: c.settings, displayPhone: c.display_phone,
             connected: Boolean(c.secret_ciphertext), tokenExpiresAt: c.token_expires_at, lastCheckedAt: c.last_checked_at, lastSyncedAt: c.last_synced_at,
-            nextSyncAt: c.next_sync_at, syncTimeZone: TIME_ZONE };
+            nextSyncAt: c.next_sync_at, syncTimeZone: TIME_ZONE,
+            ...(c.provider === 'whatsapp' ? { safety: { ...publicSafety(c.safety_state), hasPendingDispatch: Boolean(c.dispatch_claim) } } : {}) };
     }
     function signupConfig() {
         const demoOnly = env.WHATSAPP_DEMO_ONLY === 'true';
@@ -196,18 +198,21 @@ function createIntegrationService({ pool, provider, env = process.env }) {
         }
     }
     async function checkWhatsapp(tenantId) {
+        // Finishing a check after a pause does not make a check STARTED before
+        // that pause fresh enough to authorize resuming.
+        const checkedAt = (await pool.query('SELECT clock_timestamp() AS safety_now')).rows[0].safety_now;
         const c = await connection(pool, tenantId, 'whatsapp');
         if (!c?.secret_ciphertext) fail('WHATSAPP_DISCONNECTED', 'יש לחבר WhatsApp תחילה', 409);
         try {
             if (signupConfig().connectionOnly || c.settings.connectionType === 'business_app') {
                 const health = await provider.connectionHealth(c, token(c));
                 const status = health.connected ? 'connected' : 'reauthorization_required';
-                await pool.query(`UPDATE office_integrations SET status=$2,last_checked_at=now() WHERE id=$1 AND secret_ciphertext=$3`, [c.id, status, c.secret_ciphertext]);
+                await pool.query(`UPDATE office_integrations SET status=$2,last_checked_at=$4 WHERE id=$1 AND secret_ciphertext=$3`, [c.id, status, c.secret_ciphertext, checkedAt]);
                 return { status };
             }
             const ready = await provider.readiness(c, token(c));
             const status = !ready.eligible ? 'oba_required' : !ready.templateReady ? 'template_required' : 'ready';
-            await pool.query(`UPDATE office_integrations SET status=$2,enabled=CASE WHEN $2='ready' THEN enabled ELSE false END,last_checked_at=now(),updated_at=now() WHERE id=$1 AND secret_ciphertext=$3 AND settings=$4`, [c.id, status, c.secret_ciphertext, c.settings]);
+            await pool.query(`UPDATE office_integrations SET status=$2,enabled=CASE WHEN $2='ready' THEN enabled ELSE false END,last_checked_at=$5,updated_at=now() WHERE id=$1 AND secret_ciphertext=$3 AND settings=$4`, [c.id, status, c.secret_ciphertext, c.settings, checkedAt]);
             return { status };
         } catch {
             await pool.query(`UPDATE office_integrations SET status='reauthorization_required',enabled=false,last_checked_at=now() WHERE id=$1 AND secret_ciphertext=$2`, [c.id, c.secret_ciphertext]);
@@ -220,6 +225,32 @@ function createIntegrationService({ pool, provider, env = process.env }) {
             await db.query(`UPDATE office_integrations SET enabled=false,status='disconnected',secret_ciphertext=NULL,phone_number_id=NULL,waba_id=NULL,display_phone=NULL,token_expires_at=NULL,updated_at=now() WHERE id=$1`, [c.id]);
             await cancelPending(db, c.id);
             await db.query('DELETE FROM integration_signup_sessions WHERE law_firm_tenant_id IS NOT DISTINCT FROM $1', [tenantId]);
+        });
+    }
+    async function pauseWhatsapp(tenantId) {
+        return tx(async db => {
+            const c = await ensure(db, tenantId, 'whatsapp');
+            const now = (await db.query('SELECT clock_timestamp() AS safety_now')).rows[0].safety_now;
+            await db.query('UPDATE office_integrations SET safety_state=$2,updated_at=now() WHERE id=$1', [c.id, pauseSafety(c.safety_state, 'MANUAL_PAUSE', now)]);
+        });
+    }
+    async function resumeWhatsapp(tenantId, input = {}) {
+        if (input.acknowledged !== true) fail('SAFETY_REVIEW_REQUIRED', 'יש לאשר שהחיבור והשליחות הממתינות נבדקו לפני חידוש הפעילות', 409);
+        return tx(async db => {
+            const c = await connection(db, tenantId, 'whatsapp', 'FOR UPDATE');
+            if (!c) fail('WHATSAPP_DISCONNECTED', 'יש לחבר WhatsApp תחילה', 409);
+            const now = (await db.query('SELECT clock_timestamp() AS safety_now')).rows[0].safety_now;
+            const safety = publicSafety(c.safety_state, now);
+            if (!safety.paused) return;
+            if (safety.reason === 'INVALID_SAFETY_STATE') fail('SAFETY_STATE_REPAIR_REQUIRED', 'נתוני ההגנה דורשים בדיקה של מנהל הפלטפורמה', 409);
+            if (c.dispatch_claim) fail('SAFETY_PENDING_RESULT', 'פעולה עדיין בטיפול. יש להמתין לתוצאה או לבירור שלה לפני חידוש הפעילות', 409);
+            if (!c.secret_ciphertext || c.status !== 'ready' || !c.last_checked_at ||
+                new Date(c.last_checked_at) <= new Date(safety.pausedAt) ||
+                (c.token_expires_at && new Date(c.token_expires_at) <= new Date(now)))
+                fail('SAFETY_HEALTH_CHECK_REQUIRED', 'יש לבדוק שוב את מוכנות החיבור לאחר ההשהיה ולפני חידוש הפעילות', 409);
+            // An explicit resume clears only the circuit. It never resets allowance,
+            // reconnects an account, enables delivery, or retries an unknown result.
+            await db.query('UPDATE office_integrations SET safety_state=$2,updated_at=now() WHERE id=$1', [c.id, resumeSafety(c.safety_state, now)]);
         });
     }
     async function revokeWhatsapp(tenantId, connectionId, wabaId) {
@@ -238,7 +269,7 @@ function createIntegrationService({ pool, provider, env = process.env }) {
     async function enqueueCase(db, caseId, tenantId, forceDemo = false) {
         const c = await connection(db, tenantId, 'whatsapp', 'FOR SHARE');
         if (!c?.enabled) { if (forceDemo) fail('WHATSAPP_DISABLED', 'יש להפעיל את יצירת קבוצות הדמה תחילה', 409); return null; }
-        const record = (await db.query(`SELECT c.caseid,c.casename,c.integration_demo,c.whatsappgrouplink,m.phonenumber AS manager_phone
+        const record = (await db.query(`SELECT c.caseid,c.casename,c.casemanagerid,c.integration_demo,c.whatsappgrouplink,m.phonenumber AS manager_phone
             FROM cases c LEFT JOIN users m ON m.userid=c.casemanagerid AND m.law_firm_tenant_id IS NOT DISTINCT FROM c.law_firm_tenant_id
             WHERE c.caseid=$1 AND c.law_firm_tenant_id IS NOT DISTINCT FROM $2`, [caseId, tenantId])).rows[0];
         if (!record || record.whatsappgrouplink) return null;
@@ -247,6 +278,7 @@ function createIntegrationService({ pool, provider, env = process.env }) {
         if (mode === 'live' && (record.integration_demo || !signupConfig().liveEnabled || c.settings.connectionType === 'business_app' || c.status !== 'ready')) return null;
         if (!['demo','live'].includes(mode)) return null;
         const recipients = phones(c.settings.recipients || []);
+        const fixedRecipients = new Set(recipients);
         let errorCode = null;
         if (c.settings.includeCaseManager) {
             // Demonstration cases have no real staff; this synthetic recipient is
@@ -261,13 +293,17 @@ function createIntegrationService({ pool, provider, env = process.env }) {
         if (recipients.length > 7) errorCode = 'GROUP_CAPACITY';
         if (!recipients.length && !errorCode) return null;
         const jobId = crypto.randomUUID(), subject = `תיק ${caseId} · ${jobId.slice(0, 8)}`;
+        const recipientSnapshot = recipients.map(phone => ({ phone, status: 'pending',
+            source: fixedRecipients.has(phone) ? 'office_default' : 'case_manager',
+            ...(fixedRecipients.has(phone) ? {} : { managerUserId: record.casemanagerid }),
+        }));
         return (await db.query(`INSERT INTO case_whatsapp_groups(id,law_firm_tenant_id,case_id,connection_id,mode,subject,recipients,template_name,template_language,phone_number_id,waba_id,template_parameters,status,error_code)
-            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) ON CONFLICT(case_id) DO NOTHING RETURNING id`, [jobId, tenantId, caseId, c.id, mode, subject, JSON.stringify(recipients.map(phone => ({ phone, status: 'pending' }))), c.settings.templateName, c.settings.templateLanguage, c.phone_number_id, c.waba_id, JSON.stringify(c.settings.templateParameters || []), errorCode ? 'needs_attention' : 'queued', errorCode])).rows[0]?.id || null;
+            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) ON CONFLICT(case_id) DO NOTHING RETURNING id`, [jobId, tenantId, caseId, c.id, mode, subject, JSON.stringify(recipientSnapshot), c.settings.templateName, c.settings.templateLanguage, c.phone_number_id, c.waba_id, JSON.stringify(c.settings.templateParameters || []), errorCode ? 'needs_attention' : 'queued', errorCode])).rows[0]?.id || null;
     }
     async function previewGroup(tenantId, caseId) {
         return tx(db => enqueueCase(db, positiveId(caseId), tenantId, true));
     }
-    return { snapshot, settingsSnapshot, saveCourt, seedDemo, linkCourt, syncCourt, saveWhatsapp, startSignup, completeSignup, checkWhatsapp, disconnectWhatsapp, revokeWhatsapp, enqueueCase, previewGroup,
+    return { snapshot, settingsSnapshot, saveCourt, seedDemo, linkCourt, syncCourt, saveWhatsapp, startSignup, completeSignup, checkWhatsapp, disconnectWhatsapp, revokeWhatsapp, pauseWhatsapp, resumeWhatsapp, enqueueCase, previewGroup,
         tx, connection, token, binding, signupConfig, pool, env, provider };
 }
 module.exports = { createIntegrationService, DEMO_UPDATES };

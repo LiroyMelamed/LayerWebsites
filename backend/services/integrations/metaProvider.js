@@ -25,6 +25,7 @@ function createMetaProvider({ env = process.env, fetchImpl = global.fetch } = {}
             // Never propagate URLs, tokens, user content, or raw provider errors to logs/UI.
             const error = new Error('META_REQUEST_FAILED');
             error.providerCode = Number(data?.error?.code) || 0;
+            error.providerStatus = response.status;
             error.uncertain = method !== 'GET' && response.status >= 500;
             throw error;
         }

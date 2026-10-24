@@ -10,6 +10,7 @@ import PrimaryButton from '../../components/styledComponents/buttons/PrimaryButt
 import SecondaryButton from '../../components/styledComponents/buttons/SecondaryButton';
 import StatusNotice from '../../components/ui/StatusNotice';
 import { Text14, TextBold18 } from '../../components/specializedComponents/text/AllTextKindFile';
+import WhatsappSafety from './WhatsappSafety';
 import './OfficeIntegrations.scss';
 
 export default function OfficeIntegrations({ embedded = false }) {
@@ -119,6 +120,10 @@ export default function OfficeIntegrations({ embedded = false }) {
                     </section>}
                     <details className="oi-details"><summary>{tr('groupRequirements')}</summary><p>{tr('eligibility')}</p></details>
                     {data.whatsapp?.connected && <p className="oi-muted">{tr('paymentHelp')} <a href="https://business.facebook.com/wa/manage/home/" target="_blank" rel="noreferrer">{tr('manageMeta')}</a></p>}
+                    <WhatsappSafety whatsapp={data.whatsapp} canManage={data.canConfigurePolicy} busy={busy}
+                        onPause={() => action(() => api.pauseWhatsappSafety())}
+                        onCheck={() => action(() => api.checkWhatsapp())}
+                        onResume={acknowledgement => action(() => api.resumeWhatsappSafety(undefined, acknowledgement))} />
                     {!data.canConfigurePolicy && <p>{tr('adminPolicy')}</p>}
                     {data.canConfigurePolicy && !connected && <p className="oi-muted">{tr('connectBeforeAutomation')}</p>}
                     {data.canConfigurePolicy && connected && <details className="oi-details oi-automation"><summary>{tr('automation')}</summary>

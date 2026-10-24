@@ -21,6 +21,7 @@ async function fixture(t) {
     await db.exec(fs.readFileSync(path.join(__dirname, '../migrations/2026-10-14_00_office_integrations.sql'), 'utf8'));
     await db.exec(fs.readFileSync(path.join(__dirname, '../migrations/2026-10-15_00_case_court_reference.sql'), 'utf8'));
     await db.exec(fs.readFileSync(path.join(__dirname, '../migrations/2026-10-15_01_court_daily_sync.sql'), 'utf8'));
+    await db.exec(fs.readFileSync(path.join(__dirname, '../migrations/2026-10-24_01_whatsapp_safety.sql'), 'utf8'));
     // PGlite has one connection. Serialize leases like a pg pool with max=1.
     let tail = Promise.resolve();
     const lease = async () => { const prior = tail; let release; tail = new Promise(r => { release = r; }); await prior; return release; };
@@ -28,6 +29,23 @@ async function fixture(t) {
     const pool = {
         query: async (...args) => { const release = await lease(); try { return await query(...args); } finally { release(); } },
         connect: async () => { const release = await lease(); return { query, release }; },
+    };
+    // These legacy lifecycle tests advance only the persisted safety clock
+    // between explicit delivery phases. Counts and circuit pauses remain intact;
+    // separate guard tests exercise pacing without advancing this fixture clock.
+    const elapseQuietPeriod = async (office = A) => {
+        const elapsedMs = 61 * 60 * 1000;
+        const shift = value => value === null ? null : new Date(Date.parse(value) - elapsedMs).toISOString();
+        const records = (await pool.query("SELECT id,safety_state FROM office_integrations WHERE provider='whatsapp' AND law_firm_tenant_id IS NOT DISTINCT FROM $1", [office])).rows;
+        for (const record of records) {
+            const state = record.safety_state;
+            if (!Object.keys(state).length) continue;
+            await pool.query('UPDATE office_integrations SET safety_state=$2 WHERE id=$1', [record.id, JSON.stringify({
+                ...state, groups: state.groups.map(shift), invites: state.invites.map(entry => ({ ...entry, at: shift(entry.at) })),
+                lastMutationAt: shift(state.lastMutationAt), lastObservedAt: shift(state.lastObservedAt), pausedAt: shift(state.pausedAt),
+            })]);
+        }
+        await pool.query("UPDATE case_whatsapp_groups SET next_attempt_at=next_attempt_at-interval '61 minutes' WHERE law_firm_tenant_id IS NOT DISTINCT FROM $1 AND next_attempt_at IS NOT NULL", [office]);
     };
     const calls = [];
     const provider = {
@@ -39,7 +57,7 @@ async function fixture(t) {
     const service = createIntegrationService({ pool, provider, env });
     const worker = createGroupWorker(service);
     t.after(() => db.close());
-    return { db, pool, service, worker, provider, calls };
+    return { db, pool, service, worker, provider, calls, elapseQuietPeriod };
 }
 const policy = { enabled: true, mode: 'demo', recipients: ['0501234567'], templateName: '', templateLanguage: 'he' };
 
@@ -261,7 +279,7 @@ test('same-named offices retain independent grants, defaults and disconnect stat
 });
 
 test('live group lifecycle is routed by office/phone/request, retries do not duplicate groups or invitations', async t => {
-    const { service, pool, worker, calls } = await fixture(t);
+    const { service, pool, worker, calls, elapseQuietPeriod } = await fixture(t);
     await connect(service);
     const config = { ...policy, enabled: false, mode: 'live', templateName: 'group_invite' };
     await service.saveWhatsapp(A, config); await service.checkWhatsapp(A); await service.saveWhatsapp(A, { ...config, enabled: true });
@@ -277,6 +295,7 @@ test('live group lifecycle is routed by office/phone/request, retries do not dup
     assert.equal((await service.snapshot(A)).groups[0].status, 'awaiting_webhook');
     await worker.receiveLifecycle(A, conn.id, '987654321', '123456789', [event]);
     await worker.receiveLifecycle(A, conn.id, '987654321', '123456789', [event]);
+    await elapseQuietPeriod();
     await worker.processOffice(A); await worker.processOffice(A);
     assert.equal(calls.filter(c => c[0] === 'invite').length, 1);
     assert.equal((await service.snapshot(A)).groups[0].status, 'invitations_sent');

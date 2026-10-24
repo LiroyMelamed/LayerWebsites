@@ -17,7 +17,7 @@ async function fixture(t, recipients = ['0501234567', '0521234567']) {
         CREATE TABLE users(userid serial PRIMARY KEY,law_firm_tenant_id uuid,phonenumber text);
         CREATE TABLE cases(caseid serial PRIMARY KEY,law_firm_tenant_id uuid REFERENCES law_firm_tenants(id),casename text,casemanagerid integer,currentstage integer,isclosed boolean,whatsappgrouplink text,createdat timestamptz,updatedat timestamptz);
         INSERT INTO law_firm_tenants(id,name) VALUES('${A}','Synthetic Office A'),('${B}','Synthetic Office B');`);
-    for (const migration of ['2026-10-14_00_office_integrations.sql', '2026-10-15_00_case_court_reference.sql', '2026-10-15_01_court_daily_sync.sql']) await db.exec(fs.readFileSync(path.join(__dirname, '../migrations', migration), 'utf8'));
+    for (const migration of ['2026-10-14_00_office_integrations.sql', '2026-10-15_00_case_court_reference.sql', '2026-10-15_01_court_daily_sync.sql', '2026-10-24_01_whatsapp_safety.sql']) await db.exec(fs.readFileSync(path.join(__dirname, '../migrations', migration), 'utf8'));
     // One PGlite connection, leased as a pool with max=1. Inter-phase edits are
     // committed deterministically; this does not claim real multi-session locking.
     let tail = Promise.resolve();
@@ -27,6 +27,23 @@ async function fixture(t, recipients = ['0501234567', '0521234567']) {
     const pool = {
         query: async (...args) => { const release = await lease(); try { return await query(...args); } finally { release(); } },
         connect: async () => { const release = await lease(); return { query, release }; },
+    };
+    // These legacy lifecycle tests advance only the persisted safety clock
+    // between explicit delivery phases. Counts and circuit pauses remain intact;
+    // separate guard tests exercise pacing without advancing this fixture clock.
+    const elapseQuietPeriod = async (office = A) => {
+        const elapsedMs = 61 * 60 * 1000;
+        const shift = value => value === null ? null : new Date(Date.parse(value) - elapsedMs).toISOString();
+        const records = (await pool.query("SELECT id,safety_state FROM office_integrations WHERE provider='whatsapp' AND law_firm_tenant_id IS NOT DISTINCT FROM $1", [office])).rows;
+        for (const record of records) {
+            const state = record.safety_state;
+            if (!Object.keys(state).length) continue;
+            await pool.query('UPDATE office_integrations SET safety_state=$2 WHERE id=$1', [record.id, JSON.stringify({
+                ...state, groups: state.groups.map(shift), invites: state.invites.map(entry => ({ ...entry, at: shift(entry.at) })),
+                lastMutationAt: shift(state.lastMutationAt), lastObservedAt: shift(state.lastObservedAt), pausedAt: shift(state.pausedAt),
+            })]);
+        }
+        await pool.query("UPDATE case_whatsapp_groups SET next_attempt_at=next_attempt_at-interval '61 minutes' WHERE law_firm_tenant_id IS NOT DISTINCT FROM $1 AND next_attempt_at IS NOT NULL", [office]);
     };
     const calls = [];
     const provider = {
@@ -57,7 +74,7 @@ async function fixture(t, recipients = ['0501234567', '0521234567']) {
     const afterTxWorker = hook => createGroupWorker({ ...service, tx: async action => { const value = await service.tx(action); await hook(value); return value; } });
     t.after(() => db.close());
     await connect();
-    return { pool, service, worker, calls, provider, createCase, enqueue, job, link, caseLink, lifecycle, afterTxWorker, connect, sqlTrace };
+    return { pool, service, worker, calls, provider, createCase, enqueue, job, link, caseLink, lifecycle, afterTxWorker, connect, sqlTrace, elapseQuietPeriod };
 }
 
 test('manual link after enqueue cancels unsent recipients before creation and stays final after clearing', async t => {
@@ -107,6 +124,7 @@ test('observed manual link revokes unresolved creation invitations permanently w
 
 test('manual link committed after invitation claim cancels that known-unsent claim before dispatch', async t => {
     const f = await fixture(t), id = await f.createCase(); await f.enqueue(id); await f.worker.processOffice(A); await f.lifecycle(id);
+    await f.elapseQuietPeriod();
     let changed = false;
     const worker = f.afterTxWorker(async value => { if (!changed && value?.phone) { changed = true; await f.link(id); } });
     await worker.processOffice(A); await f.worker.processOffice(A);
@@ -116,6 +134,7 @@ test('manual link committed after invitation claim cancels that known-unsent cla
 
 test('manual link after a sent invitation preserves sent outcome and cancels only remaining recipients', async t => {
     const f = await fixture(t), id = await f.createCase(); await f.enqueue(id); await f.worker.processOffice(A); await f.lifecycle(id);
+    await f.elapseQuietPeriod();
     await f.worker.processOffice(A); await f.link(id); await f.worker.processOffice(A); await f.worker.processOffice(A);
     const job = await f.job(id);
     assert.equal(job.status, 'needs_attention'); assert.deepEqual(job.recipients.map(r => r.status), ['sent', 'cancelled']);
@@ -126,7 +145,9 @@ test('manual link after a sent invitation preserves sent outcome and cancels onl
 test('same generated case link keeps valid continuation, duplicate callbacks do not duplicate delivery', async t => {
     const f = await fixture(t), id = await f.createCase(); await f.enqueue(id); await f.worker.processOffice(A);
     const generated = `https://chat.whatsapp.com/Generated${id}`; await f.link(id, generated);
-    await f.lifecycle(id); await f.lifecycle(id); await f.worker.processOffice(A); await f.worker.processOffice(A); await f.worker.processOffice(A);
+    await f.lifecycle(id); await f.lifecycle(id);
+    await f.elapseQuietPeriod(); await f.worker.processOffice(A);
+    await f.elapseQuietPeriod(); await f.worker.processOffice(A); await f.worker.processOffice(A);
     const job = await f.job(id); assert.equal(job.status, 'invitations_sent'); assert.deepEqual(job.recipients.map(r => r.status), ['sent', 'sent']);
     assert.equal(await f.caseLink(id), generated); assert.equal(f.calls.filter(call => call[0] === 'group').length, 1); assert.equal(f.calls.filter(call => call[0] === 'invite').length, 2);
 });
@@ -147,7 +168,8 @@ test('unknown creation remains non-retryable and late result is recorded without
 
 test('abandoned invitation claims remain uncertain, known sent statuses survive manual replacement', async t => {
     const f = await fixture(t, ['0501234567', '0521234567', '0531234567']), id = await f.createCase();
-    await f.enqueue(id); await f.worker.processOffice(A); await f.lifecycle(id); await f.worker.processOffice(A);
+    await f.enqueue(id); await f.worker.processOffice(A); await f.lifecycle(id);
+    await f.elapseQuietPeriod(); await f.worker.processOffice(A);
     const before = await f.job(id); before.recipients[1].status = 'sending';
     await f.pool.query("UPDATE case_whatsapp_groups SET recipients=$2,updated_at=now()-interval '20 minutes' WHERE id=$1", [before.id, JSON.stringify(before.recipients)]);
     await f.link(id); await f.worker.processOffice(A); await f.worker.processOffice(A);
@@ -158,6 +180,7 @@ test('abandoned invitation claims remain uncertain, known sent statuses survive 
 
 test('uncertain actual invitation is preserved and never retried after manual replacement', async t => {
     const f = await fixture(t), id = await f.createCase(); await f.enqueue(id); await f.worker.processOffice(A); await f.lifecycle(id);
+    await f.elapseQuietPeriod();
     f.provider.invite = async () => { f.calls.push(['invite-unknown']); throw Object.assign(new Error('synthetic timeout'), { uncertain: true }); };
     await f.worker.processOffice(A); await f.link(id); await f.worker.processOffice(A); await f.worker.processOffice(A);
     assert.deepEqual((await f.job(id)).recipients.map(r => r.status), ['uncertain', 'cancelled']);
@@ -170,23 +193,24 @@ test('foreign office ticks and lifecycle events cannot cancel, create or attach 
     assert.equal((await f.job(id)).status, 'queued'); assert.deepEqual(f.calls, []);
     await f.worker.processOffice(A); await f.lifecycle(id, {}, B);
     assert.equal((await f.job(id)).status, 'awaiting_webhook'); assert.equal(await f.caseLink(id), null);
-    await f.lifecycle(id); await f.worker.processOffice(A); await f.worker.processOffice(A);
+    await f.lifecycle(id); await f.elapseQuietPeriod(); await f.worker.processOffice(A);
+    await f.elapseQuietPeriod(); await f.worker.processOffice(A);
     assert.equal((await f.job(id)).status, 'invitations_sent'); assert.equal(await f.caseLink(foreignCase), MANUAL);
 });
 
 test('delivery phases and lifecycle batches lock connection then one tenant case then its job', async t => {
     const f = await fixture(t), one = await f.createCase(), two = await f.createCase();
     await f.enqueue(one); await f.enqueue(two); f.sqlTrace.length = 0;
-    await f.worker.processOffice(A); await f.worker.processOffice(A);
+    await f.worker.processOffice(A); await f.elapseQuietPeriod(); await f.worker.processOffice(A);
     const connection = await f.service.connection(f.pool, A, 'whatsapp');
     const events = [];
     for (const id of [two, one]) { const job = await f.job(id); events.push({ type: 'group_create', subject: job.subject, request_id: `request-${job.id}`, group_id: `synthetic-group-${id}`, invite_link: `https://chat.whatsapp.com/Generated${id}` }); }
     await f.worker.receiveLifecycle(A, connection.id, connection.waba_id, connection.phone_number_id, events);
-    await f.worker.processOffice(A);
+    await f.elapseQuietPeriod(); await f.worker.processOffice(A);
     let caseLocks = 0, locks = [];
     for (const sql of f.sqlTrace) {
         if (sql === 'BEGIN') locks = [];
-        if (sql.includes('FOR SHARE')) locks.push('connection');
+        if (sql.includes('FROM office_integrations') && /FOR (?:SHARE|UPDATE)/.test(sql)) locks.push('connection');
         if (sql.includes('FOR UPDATE') && sql.includes('FROM cases')) { locks.push('case'); caseLocks++; }
         if (sql.includes('FOR UPDATE') && sql.includes('FROM case_whatsapp_groups')) locks.push('job');
         if (sql === 'COMMIT' && locks.includes('job')) assert.deepEqual(locks, ['connection', 'case', 'job']);
@@ -210,7 +234,8 @@ test('queued live jobs with missing or invalid callback configuration never call
 
 test('invalid callback blocks future invitations without erasing known sent or uncertain outcomes', async t => {
     const f = await fixture(t, ['0501234567', '0521234567', '0531234567']), id = await f.createCase();
-    await f.enqueue(id); await f.worker.processOffice(A); await f.lifecycle(id); await f.worker.processOffice(A);
+    await f.enqueue(id); await f.worker.processOffice(A); await f.lifecycle(id);
+    await f.elapseQuietPeriod(); await f.worker.processOffice(A);
     const before = await f.job(id); before.recipients[1].status = 'uncertain';
     await f.pool.query('UPDATE case_whatsapp_groups SET recipients=$2 WHERE id=$1', [before.id, JSON.stringify(before.recipients)]);
     const worker = createGroupWorker({ ...f.service, env: { ...f.service.env, WHATSAPP_WEBHOOK_CALLBACK_URL: 'http://unsafe.example.invalid/webhook' } });
@@ -222,6 +247,7 @@ test('invalid callback blocks future invitations without erasing known sent or u
 
 test('callback removed after invitation claim is checked again before any external send', async t => {
     const f = await fixture(t), id = await f.createCase(); await f.enqueue(id); await f.worker.processOffice(A); await f.lifecycle(id);
+    await f.elapseQuietPeriod();
     const currentEnv = { ...f.service.env }; let removed = false;
     const worker = createGroupWorker({ ...f.service, env: currentEnv, tx: async action => {
         const value = await f.service.tx(action);

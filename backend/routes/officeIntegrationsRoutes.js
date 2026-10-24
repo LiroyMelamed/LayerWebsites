@@ -68,6 +68,8 @@ router.put('/whatsapp', policy, wrap(async (req, res) => { await service.saveWha
 router.post('/whatsapp/signup', wrap(async (req, res) => res.json(await service.startSignup(req.integrationOfficeId, req.user.UserId))));
 router.post('/whatsapp/signup/complete', wrap(async (req, res) => { await service.completeSignup(req.integrationOfficeId, req.user.UserId, req.body); res.json({ ok: true }); }));
 router.post('/whatsapp/check', wrap(async (req, res) => res.json(await service.checkWhatsapp(req.integrationOfficeId))));
+router.post('/whatsapp/safety/pause', policy, wrap(async (req, res) => { await service.pauseWhatsapp(req.integrationOfficeId); res.json({ ok: true }); }));
+router.post('/whatsapp/safety/resume', policy, wrap(async (req, res) => { await service.resumeWhatsapp(req.integrationOfficeId, req.body); res.json({ ok: true }); }));
 router.delete('/whatsapp', wrap(async (req, res) => { await service.disconnectWhatsapp(req.integrationOfficeId); res.json({ ok: true }); }));
 router.post('/whatsapp/demo/:caseId', policy, wrap(async (req, res) => {
     await service.previewGroup(req.integrationOfficeId, req.params.caseId);
