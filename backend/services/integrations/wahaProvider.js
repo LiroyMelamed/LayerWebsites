@@ -164,13 +164,15 @@ function createWahaProvider({ env = process.env, fetchImpl = global.fetch } = {}
             const type = response.headers.get('content-type')?.split(';')[0].trim().toLowerCase();
             const bytes = await readBytes(response, inviteCode ? 128 : qr ? MAX_QR_JSON_BYTES : MAX_RESPONSE_BYTES);
             if (inviteCode) {
-                // Nest sends a controller's primitive string as plain text.
-                // Only this exact resource may accept that transport; a text/html
-                // content type still requires a bare token, never HTML parsing.
+                // The pinned engine returns a primitive invite URL with a
+                // text/html content type. Only this exact resource may accept
+                // that transport; no HTML is parsed, rendered or followed.
                 const value = type === 'application/json' ? JSON.parse(bytes.toString('utf8')) :
                     ['text/plain', 'text/html'].includes(type) ? bytes.toString('utf8') : null;
-                if (typeof value !== 'string' || !/^[A-Za-z0-9_-]{10,128}$/.test(value)) throw providerError('WAHA_INVALID_INVITE_CODE');
-                return value;
+                if (typeof value === 'string' && /^[A-Za-z0-9_-]{10,128}$/.test(value)) return value;
+                const link = typeof value === 'string' && value.startsWith('https://chat.whatsapp.com/') && controlledLink(value);
+                if (!link) throw providerError('WAHA_INVALID_INVITE_CODE');
+                return new URL(link).pathname.slice(1);
             }
             if (qr && type === 'image/png') return { mimetype: type, data: bytes.toString('base64') };
             if (response.status === 204 && bytes.length === 0) return null;

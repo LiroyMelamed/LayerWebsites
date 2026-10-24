@@ -331,7 +331,7 @@ test('WORKING but restricted health disables delivery and requires fresh explici
     assert.equal(f.calls.filter(c => c.kind === 'start').length, 0, 'A provider restriction never causes restart or re-pair');
 });
 
-test('wire-level adapter and real PostgreSQL worker complete an empty group and a paced invitation with plain invite code', async t => {
+test('wire-level adapter and real PostgreSQL worker complete an empty group and a paced invitation with the pinned full invite URL', async t => {
     const f = await fixture(t), c = await f.connection(), requests = [];
     const session = c.settings.sessionName, groupId = '120363999000111@g.us', code = 'SyntheticWireInviteCode123';
     const json = body => new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json' } });
@@ -350,7 +350,7 @@ test('wire-level adapter and real PostgreSQL worker complete an empty group and 
             assert.deepEqual(body.participants, []);
             return json({ id: groupId });
         }
-        if (path.endsWith('/invite-code')) return new Response(code, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+        if (path.endsWith('/invite-code')) return new Response('https://chat.whatsapp.com/' + code, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
         if (path === '/api/sendText') return json({ id: 'synthetic-wire-accepted-id' });
         throw Error('Unexpected synthetic wire endpoint');
     } });

@@ -303,6 +303,18 @@ test('invite-code lookup accepts a bounded primitive Nest text response only for
     await assert.rejects(generalJson.provider.sessionStatus(SESSION), errorCode('WAHA_INVALID_RESPONSE'));
 });
 
+test('pinned runtime invite-code URL wire shape normalizes the controlled text/html URL without another POST', async () => {
+    assert.equal(Buffer.byteLength(LINK, 'utf8'), 48);
+    const f = fixture({ respond: call => call.path.endsWith('/invite-code')
+        ? new Response(LINK, { headers: { 'Content-Type': 'text/html; charset=utf-8' } }) : undefined });
+    assert.deepEqual(await f.provider.createGroup(connection(), null, job()), { groupId: GROUP, inviteLink: LINK });
+    assert.equal(f.requests.length, 2);
+    assert.deepEqual(f.requests.map(call => call.method), ['POST', 'GET']);
+    assert.equal(f.requests[1].path, `/api/${SESSION}/groups/${encodeURIComponent(GROUP)}/invite-code`);
+    const general = fixture({ respond: () => new Response(LINK, { headers: { 'Content-Type': 'text/html; charset=utf-8' } }) });
+    await assert.rejects(general.provider.sessionStatus(SESSION), errorCode('WAHA_INVALID_RESPONSE'));
+});
+
 test('invite-code text rejects HTML, controls, redirects and oversized responses while retaining partial group ownership', async () => {
     const responses = [
         () => new Response(`<html>${CODE}</html>`, { headers: { 'Content-Type': 'text/html' } }),
@@ -312,7 +324,11 @@ test('invite-code text rejects HTML, controls, redirects and oversized responses
         () => new Response(CODE, { headers: { 'Content-Type': 'text/plain', 'Content-Length': '129' } }),
         () => new Response('', { status: 302, headers: { Location: 'https://foreign.invalid/invite-code' } }),
         () => new Response(JSON.stringify({ code: CODE }), { headers: { 'Content-Type': 'application/json' } }),
-        () => new Response(`https://chat.whatsapp.com/${CODE}`, { headers: { 'Content-Type': 'text/html' } }),
+        ...[`https://foreign.invalid/${CODE}`, `https://chat.whatsapp.com.evil.invalid/${CODE}`,
+            `${LINK}?tracking=1`, `${LINK}#fragment`, `https://chat.whatsapp.com:444/${CODE}`,
+            `https://chat.whatsapp.com:443/${CODE}`, `https://user:pass@chat.whatsapp.com/${CODE}`,
+            `http://chat.whatsapp.com/${CODE}`, `<html>${LINK}</html>`]
+            .map(value => () => new Response(value, { headers: { 'Content-Type': 'text/html; charset=utf-8' } })),
     ];
     for (const response of responses) {
         const f = fixture({ respond: call => call.path.endsWith('/invite-code') ? response() : undefined });
