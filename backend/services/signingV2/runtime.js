@@ -58,8 +58,6 @@ function officeQuota({ checkFirmLimits }) {
 // Activation happens later than creation; the creator's current access decides, not the access at enqueue time.
 async function authorizeActivation(db, revision) {
     expect(process.env.SIGNING_V2_ENABLED === 'true', 'ACTIVATION_NOT_AUTHORIZED');
-    const stageOriginError = await require('./caseStageAutomation').originGuard(db,revision.owner_context_id,revision.package_id);
-    if(stageOriginError)fail(stageOriginError,403);
     if (revision.replaces_revision_id) {
         const { currentRevisionScope } = require('./followupScope');
         const { packageScopeSql, scopeParams } = require('./access');
@@ -68,6 +66,8 @@ async function authorizeActivation(db, revision) {
             [...scopeParams(scope), revision.package_id])).rowCount === 1, 'ACTIVATION_NOT_AUTHORIZED');
         return;
     }
+    const stageOriginError = await require('./caseStageAutomation').originGuard(db,revision.owner_context_id,revision.package_id);
+    if(stageOriginError)fail(stageOriginError,403);
     const owner = (await db.query(`SELECT u.role,u.firm_staff_role_id,r.permissions,r.is_active FROM signing_packages p
         JOIN users u ON u.userid=p.owner_userid LEFT JOIN firm_staff_roles r ON r.id=u.firm_staff_role_id
         WHERE p.owner_context_id=$1 AND p.id=$2`, [revision.owner_context_id, revision.package_id])).rows[0];

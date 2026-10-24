@@ -16,18 +16,21 @@ async function currentScope(db, contextId, userId, { edit = false } = {}) {
         FROM signing_owner_contexts c JOIN users u ON u.userid=$2 AND u.law_firm_tenant_id IS NOT DISTINCT FROM c.law_firm_tenant_id
         WHERE c.id=$1 FOR SHARE OF u`, [contextId,userId])).rows[0];
     if (!row || !['Admin','Lawyer','Staff'].includes(row.role)) return null;
-    const custom = !row.platform_admin && !!row.firm_staff_role_id;
+    // Match attachFirmPermissions: a historical platform-admin row never
+    // bypasses an office's custom role in shared multi-tenant mode.
+    const platformAdmin=row.platform_admin && !(require('../../lib/tenant/tenantContext').isMultiTenantMode() && row.law_firm_tenant_id);
+    const custom = !platformAdmin && !!row.firm_staff_role_id;
     if(row.firm_staff_role_id) Object.assign(row,(await db.query('SELECT permissions,is_active,law_firm_tenant_id AS role_tenant FROM firm_staff_roles WHERE id=$1 FOR SHARE',[row.firm_staff_role_id])).rows[0] || {});
     const permissions = normalizeRolePermissions(row.permissions);
     if (custom) {
         if (!row.is_active || String(row.role_tenant || '') !== String(row.law_firm_tenant_id || '')
             || !['view','upload'].every(action => hasAreaAction(permissions,'signing',action))
             || !hasAreaAction(permissions,'cases','view') || (edit && !hasAreaAction(permissions,'cases','edit'))) return null;
-    } else if (!row.platform_admin && (!['Admin','Lawyer'].includes(row.role) || (edit && row.role!=='Admin'))) return null;
+    } else if (!platformAdmin && (!['Admin','Lawyer'].includes(row.role) || (edit && row.role!=='Admin'))) return null;
     return { contextId,userId,tenantId:row.law_firm_tenant_id,all:!custom || getSigningDataScope(permissions)==='all_firm',
         assignedCases:custom && permissions.areas?.signing?.legacyCaseAssignment===true,
         caseView:true,caseAll:!custom || getCasesDataScope(permissions)==='all_firm',send:true,
-        clientView:custom ? hasAreaAction(permissions,'clients','view') : row.platform_admin || row.role==='Admin' };
+        clientView:custom ? hasAreaAction(permissions,'clients','view') : platformAdmin || row.role==='Admin' };
 }
 
 async function visibleCase(db, scope, id, lock = false) {
@@ -156,7 +159,7 @@ async function save(pool,scope,id,descriptionId,body) {
 async function stageIdentity(db,caseId,currentStage) {
     return (await db.query('SELECT descriptionid FROM casedescriptions WHERE caseid=$1 AND stage=$2 ORDER BY descriptionid LIMIT 1',[caseId,currentStage])).rows[0]?.descriptionid || null;
 }
-async function recordTransition(db,{caseId,oldDescriptionId,oldClosed,newClosed,actorId}) {
+async function recordTransition(db,{caseId,oldDescriptionId,oldCurrentStage,oldClosed,newClosed,actorId}) {
     if(process.env.SIGNING_V2_ENABLED!=='true')return [];
     const record=(await db.query('SELECT currentstage FROM cases WHERE caseid=$1',[caseId])).rows[0];
     const newDescriptionId=await stageIdentity(db,caseId,record?.currentstage);
@@ -167,8 +170,10 @@ async function recordTransition(db,{caseId,oldDescriptionId,oldClosed,newClosed,
         completed_at=clock_timestamp(),updated_at=clock_timestamp() WHERE n.case_id=$1 AND n.status IN ('queued','blocked')
         AND NOT EXISTS(SELECT 1 FROM casedescriptions d WHERE d.caseid=n.case_id AND d.descriptionid=n.description_id)`,[caseId]);
     if(oldClosed || newClosed || !oldDescriptionId || !newDescriptionId || oldDescriptionId===newDescriptionId)return [];
-    const oldStage=(await db.query('SELECT stage FROM casedescriptions WHERE caseid=$1 AND descriptionid=$2',[caseId,oldDescriptionId])).rows[0]?.stage;
-    if(!oldStage || Number(record.currentstage)<=Number(oldStage))return [];
+    // The original number comes from the locked pre-edit case, never from a
+    // description whose number may already have changed during reordering.
+    const before=Number(oldCurrentStage),after=Number(record.currentstage);
+    if(!Number.isInteger(before) || before<1 || !Number.isInteger(after) || after<=before)return [];
     const rows=(await db.query(`INSERT INTO signing_case_stage_runs(id,owner_context_id,rule_id,case_id,description_id,stage_title,rule_version,configured_by,transition_by,input,preview_hash,contact_hash,case_hash)
         SELECT gen_random_uuid(),r.owner_context_id,r.id,r.case_id,r.description_id,d.text,r.version,r.configured_by,$3,r.input,r.preview_hash,r.contact_hash,r.case_hash
         FROM signing_case_stage_rules r JOIN casedescriptions d ON d.caseid=r.case_id AND d.descriptionid=r.description_id

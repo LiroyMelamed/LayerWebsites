@@ -975,7 +975,7 @@ const updateCase = async (req, res) => {
             }
         }
 
-        await stageDocuments.recordTransition(client, { caseId, oldDescriptionId, oldClosed: Boolean(oldCase.isclosed),
+        await stageDocuments.recordTransition(client, { caseId, oldDescriptionId, oldCurrentStage: oldCase.currentstage, oldClosed: Boolean(oldCase.isclosed),
             newClosed: effectiveIsClosed, actorId });
         await client.query('COMMIT');
 
@@ -1257,7 +1257,7 @@ const updateStage = async (req, res) => {
             channelType = 'CASE_REOPENED';
         }
 
-        await stageDocuments.recordTransition(client, { caseId, oldDescriptionId, oldClosed: Boolean(currentlyClosed),
+        await stageDocuments.recordTransition(client, { caseId, oldDescriptionId, oldCurrentStage: currentStageValue, oldClosed: Boolean(currentlyClosed),
             newClosed: Boolean(IsClosed), actorId });
         await client.query('COMMIT');
         client.release();

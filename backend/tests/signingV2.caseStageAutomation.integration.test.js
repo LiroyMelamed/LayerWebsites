@@ -11,12 +11,16 @@ const {transaction}=require('../services/signingV2/transaction');
 const {digest}=require('../lib/signingV2/canonical');
 
 // Dedicated, socket-only synthetic PostgreSQL. No app dotenv or provider code.
-async function fixture(t) {
+async function fixture(t,{publicMode=false}={}) {
  assert.equal(process.env.STAGE_TEST_SOCKET,'/tmp/codex-stage-automation-55494');
- const schema='stage_'+randomUUID().replaceAll('-','');
- const pool=new Pool({host:process.env.STAGE_TEST_SOCKET,port:55494,database:'postgres',user:'stage_automation_test_owner',options:`-c search_path=${schema},public`,max:8});
- t.after(async()=>{await pool.query(`DROP SCHEMA ${schema} CASCADE`);await pool.end();});
- await pool.query(`CREATE SCHEMA ${schema}`);
+ const schema=publicMode?'public':'stage_'+randomUUID().replaceAll('-','');
+ const database=publicMode?'stageiso_'+randomUUID().replaceAll('-',''):'postgres';
+ let admin;
+ if(publicMode){admin=new Pool({host:process.env.STAGE_TEST_SOCKET,port:55494,database:'postgres',user:'stage_automation_test_owner'});await admin.query('CREATE DATABASE '+database);}
+ const cleanup=[];
+ const pool=new Pool({host:process.env.STAGE_TEST_SOCKET,port:55494,database,user:'stage_automation_test_owner',options:`-c search_path=${schema},public`,max:8});
+ t.after(async()=>{for(const fn of cleanup)await fn();if(!publicMode)await pool.query(`DROP SCHEMA ${schema} CASCADE`);await pool.end();if(admin){await admin.query('DROP DATABASE '+database);await admin.end();}});
+ if(!publicMode)await pool.query(`CREATE SCHEMA ${schema}`);
  await pool.query(`CREATE TABLE law_firm_tenants(id uuid PRIMARY KEY);CREATE TABLE users(userid serial PRIMARY KEY,name text,email text,phonenumber text,role text,passwordhash text,law_firm_tenant_id uuid,firm_staff_role_id uuid);
  CREATE TABLE platform_admins(user_id integer,is_active boolean);CREATE TABLE firm_staff_roles(id uuid PRIMARY KEY,law_firm_tenant_id uuid,permissions jsonb,is_active boolean DEFAULT true);
  CREATE TABLE cases(caseid serial PRIMARY KEY,casename text,currentstage integer,isclosed boolean DEFAULT false,userid integer,casemanagerid integer,law_firm_tenant_id uuid);
@@ -37,11 +41,11 @@ async function fixture(t) {
    const old=(await db.query('SELECT currentstage,isclosed FROM cases WHERE caseid=$1',[caseId])).rows[0];
    const oldDescriptionId=await stage.stageIdentity(db,caseId,old.currentstage);
    await db.query('UPDATE cases SET currentstage=$2,isclosed=$3 WHERE caseid=$1',[caseId,num,closed]);
-   const result=await stage.recordTransition(db,{caseId,oldDescriptionId,oldClosed:old.isclosed,newClosed:closed,actorId:scope.userId});
+   const result=await stage.recordTransition(db,{caseId,oldDescriptionId,oldCurrentStage:old.currentstage,oldClosed:old.isclosed,newClosed:closed,actorId:scope.userId});
    if(rollback)throw Error('synthetic rollback');return result;
  });}
  const workOne=options=>stage.processOne(pool,{reserveCapacity:async()=>{},...options});
- return{pool,schema,f,scope,caseId,stages,body,contact,move,process:workOne};
+ return{pool,schema,database,cleanup,f,scope,caseId,stages,body,contact,move,process:workOne};
 }
 process.env.SIGNING_V2_ENABLED='true';
 process.env.SIGNING_ENABLED='true';
@@ -101,7 +105,7 @@ test('stage runtime: changed contacts block without partial package, durable ded
 
 test('stable stage identity: reorder unchanged identity, skip only target, closure/creation/reopen and deletion cannot send accidentally',async t=>{
  const f=await fixture(t);await stage.save(f.pool,f.scope,f.caseId,f.stages[1].descriptionid,f.body);
- await transaction(f.pool,async db=>{const old=await stage.stageIdentity(db,f.caseId,1);await db.query('UPDATE casedescriptions SET stage=stage+1 WHERE caseid=$1',[f.caseId]);await db.query('UPDATE cases SET currentstage=2 WHERE caseid=$1',[f.caseId]);assert.deepEqual(await stage.recordTransition(db,{caseId:f.caseId,oldDescriptionId:old,oldClosed:false,newClosed:false,actorId:f.scope.userId}),[]);});
+ await transaction(f.pool,async db=>{const old=await stage.stageIdentity(db,f.caseId,1);await db.query('UPDATE casedescriptions SET stage=stage+1 WHERE caseid=$1',[f.caseId]);await db.query('UPDATE cases SET currentstage=2 WHERE caseid=$1',[f.caseId]);assert.deepEqual(await stage.recordTransition(db,{caseId:f.caseId,oldDescriptionId:old,oldCurrentStage:1,oldClosed:false,newClosed:false,actorId:f.scope.userId}),[]);});
  await f.move(4);assert.equal((await stage.list(f.pool,f.scope,f.caseId)).runs.length,0);
  await f.move(3,{closed:true});assert.equal((await stage.list(f.pool,f.scope,f.caseId)).runs.length,0);
  await f.move(3);assert.equal((await stage.list(f.pool,f.scope,f.caseId)).runs.length,0);
@@ -252,4 +256,123 @@ test('new stage operational failure reaches active-admin fake email summary with
  const event=(await f.pool.query('SELECT * FROM signing_error_alerts WHERE stage_run_id=$1',[run.id])).rows[0];
  assert.ok(alerts.buildAlertEmail([event],{origin:'https://qa.example.invalid',locale:'ar'}).htmlBody.includes('مستندات تلقائية حسب مرحلة الملف'));
  assert.ok(alerts.buildAlertEmail([event],{origin:'https://qa.example.invalid',locale:'en'}).htmlBody.includes('Automatic documents for a case stage'));
+});
+
+test('reorder-only current numeric stage stays unchanged and cannot enqueue a different logical target',async t=>{
+ const f=await fixture(t);await f.move(2);await stage.save(f.pool,f.scope,f.caseId,f.stages[0].descriptionid,f.body);
+ await transaction(f.pool,async db=>{
+  await db.query('SELECT caseid FROM cases WHERE caseid=$1 FOR UPDATE',[f.caseId]);
+  const before=(await db.query('SELECT currentstage FROM cases WHERE caseid=$1',[f.caseId])).rows[0].currentstage;
+  const oldDescriptionId=await stage.stageIdentity(db,f.caseId,before);
+  await db.query('UPDATE casedescriptions SET stage=CASE WHEN descriptionid=$2 THEN 1 WHEN descriptionid=$3 THEN 2 ELSE stage END WHERE caseid=$1',[f.caseId,f.stages[1].descriptionid,f.stages[0].descriptionid]);
+  assert.deepEqual(await stage.recordTransition(db,{caseId:f.caseId,oldDescriptionId,oldCurrentStage:before,oldClosed:false,newClosed:false,actorId:f.scope.userId}),[]);
+ });
+ assert.equal((await stage.list(f.pool,f.scope,f.caseId)).runs.length,0);
+ await f.move(1);await f.move(2);assert.equal((await stage.list(f.pool,f.scope,f.caseId)).runs.length,1,'a subsequent actual forward move can still activate the unconsumed rule');
+ await f.process();assert.equal((await stage.list(f.pool,f.scope,f.caseId)).runs[0].status,'created');
+});
+
+test('additive stage migration grants new DML to existing runtime writers only and never grants delete or PUBLIC',async t=>{
+ const f=await fixture(t);const suffix=randomUUID().replaceAll('-','');const runtimeRole='stage_runtime_'+suffix,otherRole='stage_other_'+suffix;
+ await f.pool.query(`CREATE ROLE ${runtimeRole} NOLOGIN;CREATE ROLE ${otherRole} NOLOGIN`);
+ f.cleanup.push(async()=>{await f.pool.query(`DROP OWNED BY ${runtimeRole};DROP OWNED BY ${otherRole};DROP ROLE ${runtimeRole};DROP ROLE ${otherRole}`);});
+ await f.pool.query(`GRANT USAGE ON SCHEMA ${f.schema} TO ${runtimeRole},${otherRole};GRANT INSERT ON signingfiles TO ${runtimeRole}`);
+ await f.pool.query(fs.readFileSync(path.join(__dirname,'../migrations/2026-10-24_00_case_stage_documents.sql'),'utf8'));
+ for(const table of ['signing_case_stage_rules','signing_case_stage_runs']) {
+  const qname=f.schema+'.'+table;
+  const rights=(await f.pool.query("SELECT has_table_privilege($1,$3,'SELECT,INSERT,UPDATE') AS allowed,has_table_privilege($1,$3,'DELETE') AS forbidden_delete,has_table_privilege($2,$3,'SELECT,INSERT,UPDATE') AS other_allowed,has_table_privilege('public',$3,'SELECT,INSERT,UPDATE') AS public_allowed",[runtimeRole,otherRole,qname])).rows[0];
+  assert.equal(rights.allowed,true);assert.equal(rights.forbidden_delete,false);assert.equal(rights.other_allowed,false);assert.equal(rights.public_allowed,false);
+ }
+ const connection=await f.pool.connect();try {
+  await connection.query(`SET ROLE ${runtimeRole}`);assert.equal((await connection.query('SELECT count(*)::int AS n FROM signing_case_stage_rules')).rows[0].n,0);
+  await assert.rejects(connection.query('DELETE FROM signing_case_stage_rules'),error=>error.code==='42501');
+ }finally {await connection.query('RESET ROLE');connection.release();}
+});
+
+test('new stage and Word tables inherit shared-office RLS, immutable owners and cross-office reference fences',async t=>{
+ const f=await fixture(t,{publicMode:true});
+ const other=await databaseFixture(f.pool,{documentCount:1});
+ const otherCase=(await f.pool.query("INSERT INTO cases(casename,currentstage,userid) VALUES('Other office',1,$1) RETURNING caseid",[other.scope.userId])).rows[0].caseid;
+ await stage.save(f.pool,f.scope,f.caseId,f.stages[1].descriptionid,f.body);
+ await f.move(2);
+ const role='stage_iso_'+randomUUID().replaceAll('-','');await f.pool.query(`CREATE ROLE ${role} NOLOGIN;GRANT USAGE ON SCHEMA public TO ${role};GRANT INSERT ON signingfiles TO ${role}`);
+ f.cleanup.push(async()=>{await f.pool.query(`DROP OWNED BY ${role};DROP ROLE ${role}`);});
+ await f.pool.query(fs.readFileSync(path.join(__dirname,'../migrations/2026-10-23_01_signing_word_sources.sql'),'utf8'));
+ const owners=[[f.f.contextId,f.scope.userId],[other.contextId,other.scope.userId]];
+ for(const [context,owner] of owners) {
+  const source=randomUUID();
+  await f.pool.query("INSERT INTO signing_word_sources(id,owner_context_id,created_by,source_sha256,object_key,bytes,name,bindings_hash) VALUES($1,$2,$3,$4,'synthetic/private.docx',10,'Synthetic',$5)",[source,context,owner,'c'.repeat(64),'d'.repeat(64)]);
+  await f.pool.query("INSERT INTO signing_word_source_versions(id,owner_context_id,source_id,version,name,bindings_hash,roles,bindings,created_by) VALUES($1,$2,$3,1,'Synthetic',$4,'[]','[]',$5)",[randomUUID(),context,source,'d'.repeat(64),owner]);
+  await f.pool.query("INSERT INTO signing_word_previews(id,owner_context_id,source_id,source_version,created_by,idempotency_key,inputs_hash,values_hash,source_sha256,bindings_hash,filled_docx_sha256,pdf_sha256,object_key,bytes,page_count) VALUES($1,$2,$3,1,$4,'synthetic',$5,$5,$5,$5,$5,$5,'synthetic/output.pdf',10,1)",[randomUUID(),context,source,owner,'d'.repeat(64)]);
+ }
+ const a=randomUUID(),b=randomUUID();await f.pool.query('INSERT INTO law_firm_tenants(id) VALUES($1),($2)',[a,b]);
+ await f.pool.query('UPDATE signing_owner_contexts SET law_firm_tenant_id=$2::uuid,scope_key=($2::uuid)::text WHERE id=$1',[f.f.contextId,a]);
+ await f.pool.query('UPDATE signing_owner_contexts SET law_firm_tenant_id=$2::uuid,scope_key=($2::uuid)::text WHERE id=$1',[other.contextId,b]);
+ await f.pool.query('UPDATE users SET law_firm_tenant_id=$2 WHERE userid=$1',[f.scope.userId,a]);await f.pool.query('UPDATE users SET law_firm_tenant_id=$2 WHERE userid=$1',[other.scope.userId,b]);
+ await f.pool.query('UPDATE cases SET law_firm_tenant_id=$2 WHERE caseid=$1',[f.caseId,a]);await f.pool.query('UPDATE cases SET law_firm_tenant_id=$2 WHERE caseid=$1',[otherCase,b]);
+ await f.pool.query('ALTER TABLE signing_error_alerts ADD COLUMN law_firm_tenant_id uuid;ALTER TABLE signing_template_versions ADD COLUMN law_firm_tenant_id uuid;BEGIN;ALTER TABLE signing_template_versions DISABLE TRIGGER signing_template_versions_immutable;UPDATE signing_template_versions v SET law_firm_tenant_id=c.law_firm_tenant_id FROM signing_owner_contexts c WHERE c.id=v.owner_context_id;ALTER TABLE signing_template_versions ENABLE TRIGGER signing_template_versions_immutable;COMMIT');
+ const installer=fs.readFileSync(path.join(__dirname,'../scripts/install-office-isolation.js'),'utf8');
+ for(const start of ['CREATE OR REPLACE FUNCTION public.office_scope_id()','CREATE OR REPLACE FUNCTION public.guard_office_owner()']) {
+  const index=installer.indexOf(start);assert.ok(index>0);await f.pool.query(installer.slice(index,installer.indexOf('`);',index)));
+ }
+ const tables=['signing_case_stage_rules','signing_case_stage_runs','signing_word_sources','signing_word_source_versions','signing_word_previews'];
+ const before={};for(const table of tables.slice(2))before[table]=(await f.pool.query(`SELECT to_jsonb(t)-'law_firm_tenant_id' AS payload FROM ${table} t ORDER BY id`)).rows;
+ await f.pool.query(fs.readFileSync(path.join(__dirname,'../migrations/2026-10-24_00_case_stage_documents.sql'),'utf8'));
+ for(const table of tables.slice(2))assert.deepEqual((await f.pool.query(`SELECT to_jsonb(t)-'law_firm_tenant_id' AS payload FROM ${table} t ORDER BY id`)).rows,before[table]);
+ const connection=await f.pool.connect();try {
+  await connection.query(`GRANT SELECT ON users,cases,signing_owner_contexts,signing_template_versions TO ${role}`);
+  await connection.query(`SET ROLE ${role}`);await connection.query("SELECT set_config('app.office_mode','office',false),set_config('app.office_id',$1,false)",[a]);
+  for(const table of tables)assert.equal((await connection.query(`SELECT count(*)::int AS n FROM ${table}`)).rows[0].n,1,table+' only officeA');
+  const scopedInventory={query:(sql,params)=>connection.query(sql.includes("c.relname AS name, c.relrowsecurity")?sql.replace("ORDER BY c.relname","AND c.relname IN ('"+tables.join("','")+"') ORDER BY c.relname"):sql,params)};
+  await require('../lib/tenant/isolationSchema').assertIsolationReady(scopedInventory);
+  await assert.rejects(connection.query('UPDATE signing_case_stage_rules SET law_firm_tenant_id=$1',[b]),e=>e.code==='42501');
+  await assert.rejects(connection.query('UPDATE signing_case_stage_rules SET case_id=$1',[otherCase]),e=>e.code==='42501');
+  await assert.rejects(connection.query('UPDATE signing_word_sources SET created_by=$1',[other.scope.userId]),e=>e.code==='42501'||e.code==='23514');
+  await assert.rejects(connection.query("UPDATE signing_word_source_versions SET name='Mutated'"),e=>e.code==='23514');
+  await assert.rejects(connection.query("UPDATE signing_word_previews SET object_key='Mutated'"),e=>e.code==='23514');
+  await connection.query("SELECT set_config('app.office_id',$1,false)",[b]);for(const table of tables.slice(2))assert.equal((await connection.query(`SELECT count(*)::int AS n FROM ${table}`)).rows[0].n,1,table+' only officeB');
+  assert.equal((await connection.query('SELECT count(*)::int AS n FROM signing_case_stage_rules')).rows[0].n,0);
+ }finally{await connection.query('RESET ROLE');connection.release();}
+});
+
+test('historical platform-admin row cannot bypass revoked office permissions in shared mode',async t=>{
+ const f=await fixture(t),id=f.stages[1].descriptionid;await stage.save(f.pool,f.scope,f.caseId,id,f.body);await f.move(2);
+ const tenant=randomUUID(),role=randomUUID();await f.pool.query('INSERT INTO law_firm_tenants(id) VALUES($1)',[tenant]);
+ await f.pool.query('UPDATE signing_owner_contexts SET law_firm_tenant_id=$2::uuid,scope_key=($2::uuid)::text WHERE id=$1',[f.scope.contextId,tenant]);
+ await f.pool.query("INSERT INTO firm_staff_roles(id,law_firm_tenant_id,permissions) VALUES($1,$2,'{}')",[role,tenant]);
+ await f.pool.query("UPDATE users SET law_firm_tenant_id=$2,role='Staff',firm_staff_role_id=$3 WHERE userid=$1",[f.scope.userId,tenant,role]);await f.pool.query('INSERT INTO platform_admins(user_id,is_active) VALUES($1,true)',[f.scope.userId]);
+ const previous=process.env.MULTI_TENANT_MODE;process.env.MULTI_TENANT_MODE='true';try {
+  assert.equal(await stage.currentScope(f.pool,f.scope.contextId,f.scope.userId,{edit:true}),null);
+  await f.process();const run=(await f.pool.query('SELECT * FROM signing_case_stage_runs')).rows[0];assert.equal(run.status,'blocked');assert.equal(run.error_code,'STAGE_PERMISSION_REVOKED');
+ }finally {if(previous==null)delete process.env.MULTI_TENANT_MODE;else process.env.MULTI_TENANT_MODE=previous;}
+});
+
+test('explicit reviewed replacement uses its own current author and contact, not obsolete original stage snapshot',async t=>{
+ const f=await fixture(t),id=f.stages[1].descriptionid;await stage.save(f.pool,f.scope,f.caseId,id,f.body);await f.move(2);await f.process();
+ const run=(await stage.list(f.pool,f.scope,f.caseId)).runs[0],pkg=(await f.pool.query('SELECT * FROM signing_packages WHERE submission_id=$1',[run.submissionId])).rows[0];
+ const newAuthor=(await f.pool.query("INSERT INTO users(name,email,role,passwordhash) VALUES('Explicit replacement author','replacement@example.invalid','Admin','synthetic') RETURNING userid")).rows[0].userid;
+ const scope={...f.scope,userId:newAuthor};await f.pool.query("UPDATE users SET email='reviewed-new@example.invalid' WHERE userid=$1",[f.contact.userid]);
+ const input={...structuredClone(f.body),caseId:f.caseId,idempotencyKey:randomUUID()};input.rows[0].recipients.employee.email='reviewed-new@example.invalid';
+ const preview=await creation.previewCreation(f.pool,scope,input);assert.equal(preview.valid,true);input.previewHash=preview.previewHash;
+ let revisionId;
+ await transaction(f.pool,async db=>{
+  await creation.createFromRowsInTransaction(db,scope,input,{reserveCapacity:async()=>{},persistRevision:async({packages,compiled})=>{
+   const submissions=require('../services/signingV2/submissions'),rows=submissions.buildRows(packages,compiled);rows.packages[0].id=pkg.id;rows.revisions[0].package_id=pkg.id;revisionId=rows.revisions[0].id;
+   await submissions.persistRevisionRows(db,scope,rows,{revisionNo:2,replacesRevisionId:pkg.active_revision_id,templateVersionId:f.f.versionId,authorizedBy:newAuthor});
+   await db.query("UPDATE signing_package_revisions SET workflow_state='superseded' WHERE id=$1",[pkg.active_revision_id]);await db.query('UPDATE signing_packages SET active_revision_id=$2 WHERE id=$1',[pkg.id,revisionId]);return {revisionId};
+  }});
+ });
+ await f.pool.query("UPDATE users SET role='User' WHERE userid=$1",[f.scope.userId]);
+ assert.equal(await stage.originGuard(f.pool,f.scope.contextId,pkg.id),'STAGE_PERMISSION_REVOKED','original automated intent would still be fenced');
+ const runtimeFile=fs.readFileSync(require.resolve('../services/signingV2/runtime'),'utf8'),permissions=require('../lib/firmRolePermissions'),errors=require('../lib/signingV2/errors');
+ const source=runtimeFile.slice(runtimeFile.indexOf('async function authorizeActivation('),runtimeFile.indexOf('\nconst MESSAGES ='));
+ const activation=require('node:vm').compileFunction(source+';return authorizeActivation;', ['require','expect','fail','hasAreaAction','normalizeRolePermissions'])(id=>require(path.join(__dirname,'../services/signingV2',id)),errors.expect,errors.fail,permissions.hasAreaAction,permissions.normalizeRolePermissions);
+ const revision=(await f.pool.query('SELECT * FROM signing_package_revisions WHERE id=$1',[revisionId])).rows[0];await activation(f.pool,revision);
+ await f.pool.query("UPDATE signing_package_revisions SET workflow_state='active' WHERE id=$1",[revisionId]);await f.pool.query("UPDATE signing_tasks SET state='ready' WHERE revision_id=$1",[revisionId]);
+ const profile=(await f.pool.query('SELECT * FROM signing_delivery_profiles WHERE revision_id=$1',[revisionId])).rows[0],grant=randomUUID();
+ await f.pool.query("INSERT INTO signing_public_grants(id,owner_context_id,person_id,purpose,token_hash,expires_at,encrypted_token) VALUES($1,$2,$3,'sign',$4,clock_timestamp()+interval '1 hour','{}')",[grant,f.scope.contextId,profile.person_id,digest({synthetic:grant})]);
+ const delivery=(await f.pool.query('UPDATE signing_deliveries SET grant_id=$2 WHERE profile_id=$1 RETURNING id',[profile.id,grant])).rows[0];
+ const job=(await f.pool.query("UPDATE signing_jobs SET state='running',leased_by='replacement-test',fencing_token=1,lease_until=clock_timestamp()+interval '1 minute' WHERE kind='dispatch_delivery' AND subject_id=$1 RETURNING *",[delivery.id])).rows[0];
+ const calls=[];const dispatch=require('../services/signingV2/delivery').createDeliveryService({pool:f.pool,provider:{send:async message=>{calls.push(message);return{providerId:'synthetic-accepted'};}},grantService:{tokenForDelivery:()=> 'synthetic-no-public-grant'},linkFor:()=> 'https://qa.example.invalid/synthetic'});
+ const result=await dispatch(job);assert.equal(result.state,'provider_accepted');assert.equal(calls.length,1);assert.equal(calls[0].endpoint,'reviewed-new@example.invalid');
 });

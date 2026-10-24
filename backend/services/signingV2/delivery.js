@@ -45,7 +45,7 @@ function createDeliveryService({ pool, grantService, provider, linkFor }) {
                     SELECT * FROM signing_deliveries WHERE owner_context_id=$1 AND id=$2 FOR UPDATE
                 )
                 SELECT d.*,dp.person_id,dp.revision_id,dp.version AS current_profile_version,
-                    dp.endpoints_snapshot,r.workflow_state,r.package_id,r.deadline,pk.active_revision_id,
+                    dp.endpoints_snapshot,r.workflow_state,r.package_id,r.replaces_revision_id,r.deadline,pk.active_revision_id,
                     g.id AS live_grant_id,g.encrypted_token,g.token_hash,g.purpose AS grant_purpose,g.person_id AS grant_person_id,
                     g.owner_context_id AS grant_context_id,
                     COALESCE(tc.ready,0) AS ready_tasks,COALESCE(tc.open_required,0) AS open_required
@@ -80,7 +80,7 @@ function createDeliveryService({ pool, grantService, provider, linkFor }) {
             if (delivery.active_revision_id !== delivery.revision_id || !(completedCopy ? ['complete'] : ['active', 'attention']).includes(delivery.workflow_state)) {
                 return skip('cancelled', 'REVISION_INACTIVE');
             }
-            if(delivery.purpose==='invitation') {
+            if(delivery.purpose==='invitation' && !delivery.replaces_revision_id) {
                 const stageOriginError=await require('./caseStageAutomation').originGuard(db,lease.owner_context_id,delivery.package_id,{recordFailure:true});
                 if(stageOriginError)return skip('failed',stageOriginError);
             }
