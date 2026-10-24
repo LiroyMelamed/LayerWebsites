@@ -41,9 +41,12 @@ async function tickCourt(now = new Date()) {
     } finally { courtRunning = false; }
 }
 function start() {
-    const demoOnly = (process.env.WHATSAPP_DEMO_ONLY === 'true' || process.env.WHATSAPP_CONNECT_ONLY === 'true') && process.env.WHATSAPP_DEMO_WORKER_ENABLED === 'true';
+    const demoWorker = (process.env.WHATSAPP_DEMO_ONLY === 'true' || process.env.WHATSAPP_CONNECT_ONLY === 'true') && process.env.WHATSAPP_DEMO_WORKER_ENABLED === 'true';
     const liveWorker = (deliveryAllowed(process.env) || linkedLiveEnabled(process.env)) && process.env.WHATSAPP_WORKER_ENABLED === 'true' && require('../../lib/backgroundJobsEnabled')(process.env);
-    if (!timer && (demoOnly || liveWorker)) {
+    if (!timer && (demoWorker || liveWorker)) {
+        // Meta's connection-only setting must not filter an independently
+        // authorized linked-device worker down to simulated jobs.
+        const demoOnly = !liveWorker;
         timer = setInterval(() => tick({ demoOnly }).catch(() => console.error('[office-integrations] worker unavailable')), 15000);
         timer.unref();
     }
