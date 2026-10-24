@@ -278,3 +278,44 @@ test('WORKING but restricted health disables delivery and requires fresh explici
     assert.equal((await f.connection()).safety_state.paused, true); assert.equal((await f.connection()).enabled, false);
     assert.equal(f.calls.filter(c => c.kind === 'start').length, 0, 'A provider restriction never causes restart or re-pair');
 });
+
+test('wire-level adapter and real PostgreSQL worker complete an empty group and a paced invitation with plain invite code', async t => {
+    const f = await fixture(t), c = await f.connection(), requests = [];
+    const session = c.settings.sessionName, groupId = '120363999000111@g.us', code = 'SyntheticWireInviteCode123';
+    const json = body => new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json' } });
+    const linked = require('../services/integrations/wahaProvider').createWahaProvider({ env, fetchImpl: async (url, options) => {
+        const path = new URL(url).pathname;
+        const body = options.body ? JSON.parse(options.body) : null;
+        requests.push({ path, method: options.method, body });
+        if (path === '/api/sessions/' + session) return json({ name: session, status: 'WORKING', me: { id: '972509999999@c.us' } });
+        if (path === '/api/sessions') return json([{ name: session, status: 'WORKING', me: { id: '972509999999@c.us' } }]);
+        if (path === '/api/sessions/' + session + '/me') return json({ id: '972509999999@c.us' });
+        if (path.endsWith('/timelock')) return json({ isActive: false, timeEnforcementEnds: null });
+        if (path.endsWith('/capping')) return json({ cappingStatus: 'NONE', cycleEnd: null });
+        if (path === '/api/' + session + '/groups') {
+            const claim = (await f.otherPool.query('SELECT dispatch_claim FROM office_integrations WHERE id=$1', [c.id])).rows[0].dispatch_claim;
+            assert.equal(claim.kind, 'group');
+            assert.deepEqual(body.participants, []);
+            return json({ id: groupId });
+        }
+        if (path.endsWith('/invite-code')) return new Response(code, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+        if (path === '/api/sendText') return json({ id: 'synthetic-wire-accepted-id' });
+        throw Error('Unexpected synthetic wire endpoint');
+    } });
+    const meta = { createGroup: () => { throw Error('Meta must not receive linked work'); }, invite: () => { throw Error('Meta must not receive linked work'); } };
+    const routed = require('../services/integrations/providerRouter').createProviderRouter(meta, linked);
+    const service = createIntegrationService({ pool: f.pool, provider: routed, linkedProvider: linked, env });
+    const worker = createGroupWorker(service), caseId = await f.createCase();
+    await worker.processOffice(A, { caseId });
+    assert.equal((await f.job(caseId)).status, 'created');
+    assert.equal((await f.job(caseId)).invite_link, 'https://chat.whatsapp.com/' + code);
+    await f.elapse(); await worker.processOffice(A, { caseId });
+    const final = await f.job(caseId);
+    assert.equal(final.status, 'invitations_sent'); assert.equal(final.recipients[0].providerMessageId, 'synthetic-wire-accepted-id');
+    const writes = requests.filter(r => r.method === 'POST');
+    assert.equal(writes.length, 2); assert.equal(writes[0].path, '/api/' + session + '/groups');
+    assert.equal(writes[1].path, '/api/sendText'); assert.equal(writes[1].body.session, session);
+    assert.equal(writes[1].body.chatId, '972501111111@c.us');
+    assert.ok(writes[1].body.text.includes('https://chat.whatsapp.com/' + code));
+    assert.equal((await f.pool.query('SELECT whatsappgrouplink FROM cases WHERE caseid=$1', [caseId])).rows[0].whatsappgrouplink, final.invite_link);
+});

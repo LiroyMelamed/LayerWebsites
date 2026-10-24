@@ -288,6 +288,43 @@ test('post-create invite lookup failures retain the verified group ID and never 
     }
 });
 
+test('invite-code lookup accepts a bounded primitive Nest text response only for the verified group resource', async () => {
+    for (const type of ['text/plain', 'text/html; charset=utf-8', 'application/json']) {
+        const f = fixture({ respond: call => call.path.endsWith('/invite-code')
+            ? new Response(type === 'application/json' ? JSON.stringify(CODE) : CODE, { headers: { 'Content-Type': type } }) : undefined });
+        assert.deepEqual(await f.provider.createGroup(connection(), null, job()), { groupId: GROUP, inviteLink: LINK });
+        assert.equal(f.requests.length, 2);
+        assert.equal(f.requests[1].method, 'GET');
+        assert.equal(f.requests[1].path, `/api/${SESSION}/groups/${encodeURIComponent(GROUP)}/invite-code`);
+        assert.equal(f.requests.filter(call => call.method === 'POST').length, 1);
+    }
+    const generalJson = fixture({ respond: () => new Response(JSON.stringify({ name: SESSION, status: 'WORKING' }),
+        { headers: { 'Content-Type': 'text/plain' } }) });
+    await assert.rejects(generalJson.provider.sessionStatus(SESSION), errorCode('WAHA_INVALID_RESPONSE'));
+});
+
+test('invite-code text rejects HTML, controls, redirects and oversized responses while retaining partial group ownership', async () => {
+    const responses = [
+        () => new Response(`<html>${CODE}</html>`, { headers: { 'Content-Type': 'text/html' } }),
+        () => new Response(`${CODE}\n`, { headers: { 'Content-Type': 'text/plain' } }),
+        () => new Response(`${CODE}\u0000`, { headers: { 'Content-Type': 'text/plain' } }),
+        () => new Response('A'.repeat(129), { headers: { 'Content-Type': 'text/plain' } }),
+        () => new Response(CODE, { headers: { 'Content-Type': 'text/plain', 'Content-Length': '129' } }),
+        () => new Response('', { status: 302, headers: { Location: 'https://foreign.invalid/invite-code' } }),
+        () => new Response(JSON.stringify({ code: CODE }), { headers: { 'Content-Type': 'application/json' } }),
+        () => new Response(`https://chat.whatsapp.com/${CODE}`, { headers: { 'Content-Type': 'text/html' } }),
+    ];
+    for (const response of responses) {
+        const f = fixture({ respond: call => call.path.endsWith('/invite-code') ? response() : undefined });
+        await assert.rejects(f.provider.createGroup(connection(), null, job()), errorCode('WAHA_GROUP_RESULT_UNKNOWN', {
+            uncertain: true, partialGroupId: GROUP,
+        }));
+        assert.equal(f.requests.length, 2);
+        assert.equal(f.requests.filter(call => call.method === 'POST').length, 1);
+        assert.equal(f.requests[1].redirect, 'error');
+    }
+});
+
 test('direct invitations send one controlled case identifier and opt-out message without arbitrary case content', async () => {
     const f = fixture(), input = { ...job(), case_name: 'private-case-name', template_parameters: ['secret-value'], body: 'untrusted message' };
     assert.deepEqual(await f.provider.invite(connection(), null, input, '+972509876543'), { messages: [{ id: `true_${PHONE}@c.us_SYNTHETIC` }] });

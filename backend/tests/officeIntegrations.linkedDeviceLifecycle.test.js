@@ -298,6 +298,26 @@ test('start requires both acknowledgements, encryption, configured gateway, offi
     assert.equal((await bound.service.start(tenant, ACK)).sessionStatus, 'starting');
 });
 
+test('start atomically replaces an enabled disconnected Meta demo flag without touching a provider grant', async () => {
+    const f = fixture({ row: { enabled: true, status: 'disconnected', secret_ciphertext: null, phone_number_id: null,
+        settings: { gateway: 'meta', mode: 'demo', recipients: ['+972509876543'] } } });
+    const result = await f.service.start(null, ACK);
+    assert.equal(result.sessionStatus, 'starting');
+    assert.equal(f.row.enabled, false);
+    assert.equal(f.row.settings.gateway, 'waha');
+    assert.equal(f.row.settings.mode, 'demo');
+    assert.equal(f.cancelled, 1);
+    assert.deepEqual(f.calls.map(call => call[0]), ['createSession']);
+    for (const patch of [{ settings: { gateway: 'meta', mode: 'live' } },
+        { status: 'connected' }, { secret_ciphertext: 'existing-meta-grant' }, { phone_number_id: '123456' }]) {
+        const blocked = fixture({ row: { enabled: true, status: 'disconnected', settings: { gateway: 'meta', mode: 'demo' }, ...patch } });
+        await assert.rejects(blocked.service.start(null, ACK), { errorCode: 'DISCONNECT_FIRST' });
+        assert.equal(blocked.calls.length, 0);
+        assert.equal(blocked.cancelled, 0);
+        assert.equal(blocked.row.enabled, true);
+    }
+});
+
 test('unknown create results remain durable, paused and visible without blind retries', async () => {
     const f = fixture({ provider: { createSession: async () => { throw Object.assign(new Error('synthetic timeout'), { uncertain: true }); } } });
     const result = await f.service.start(null, ACK);

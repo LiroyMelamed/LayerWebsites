@@ -134,7 +134,9 @@ function createWahaProvider({ env = process.env, fetchImpl = global.fetch } = {}
         } finally { reader.releaseLock(); }
         return Buffer.concat(chunks, size);
     }
-    async function request(path, { method = 'GET', body, qr = false } = {}) {
+    async function request(path, { method = 'GET', body, qr = false, inviteCode = false } = {}) {
+        if (inviteCode && (method !== 'GET' || !/^off_[a-f0-9]{32}_[a-f0-9]{16}\/groups\/\d{5,30}(?:-\d{5,20})?%40g\.us\/invite-code$/.test(path)))
+            throw providerError('WAHA_INVALID_INVITE_RESOURCE');
         const base = assertConfigured();
         let response;
         try {
@@ -160,7 +162,16 @@ function createWahaProvider({ env = process.env, fetchImpl = global.fetch } = {}
         }
         try {
             const type = response.headers.get('content-type')?.split(';')[0].trim().toLowerCase();
-            const bytes = await readBytes(response, qr ? MAX_QR_JSON_BYTES : MAX_RESPONSE_BYTES);
+            const bytes = await readBytes(response, inviteCode ? 128 : qr ? MAX_QR_JSON_BYTES : MAX_RESPONSE_BYTES);
+            if (inviteCode) {
+                // Nest sends a controller's primitive string as plain text.
+                // Only this exact resource may accept that transport; a text/html
+                // content type still requires a bare token, never HTML parsing.
+                const value = type === 'application/json' ? JSON.parse(bytes.toString('utf8')) :
+                    ['text/plain', 'text/html'].includes(type) ? bytes.toString('utf8') : null;
+                if (typeof value !== 'string' || !/^[A-Za-z0-9_-]{10,128}$/.test(value)) throw providerError('WAHA_INVALID_INVITE_CODE');
+                return value;
+            }
             if (qr && type === 'image/png') return { mimetype: type, data: bytes.toString('base64') };
             if (response.status === 204 && bytes.length === 0) return null;
             if (type !== 'application/json') throw providerError('WAHA_INVALID_RESPONSE');
@@ -272,7 +283,7 @@ function createWahaProvider({ env = process.env, fetchImpl = global.fetch } = {}
         try {
             id = groupId(result);
             if (!id) throw providerError('WAHA_INVALID_GROUP_RESPONSE');
-            const code = await request(`${name}/groups/${encodeURIComponent(id)}/invite-code`);
+            const code = await request(`${name}/groups/${encodeURIComponent(id)}/invite-code`, { inviteCode: true });
             if (typeof code !== 'string' || !/^[A-Za-z0-9_-]{10,128}$/.test(code)) throw providerError('WAHA_INVALID_INVITE_CODE');
             const link = controlledLink(`https://chat.whatsapp.com/${code}`);
             if (!link) throw providerError('WAHA_INVALID_INVITE_CODE');

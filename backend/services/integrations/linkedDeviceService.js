@@ -98,7 +98,9 @@ function createLinkedDeviceService({ pool, provider, env = process.env, tx, conn
         const prepared = await tx(async db => {
             const c = await ensure(db, tenantId, 'whatsapp');
             if (c.dispatch_claim) fail('SAFETY_PENDING_RESULT', 'יש לברר תחילה את הפעולה שעדיין בטיפול', 409);
-            if (!isLinkedDevice(c) && (c.secret_ciphertext || c.phone_number_id || c.enabled))
+            const replaceableDemo = c.status === 'disconnected' && c.settings?.mode === 'demo' &&
+                (c.settings.gateway == null || c.settings.gateway === 'meta');
+            if (!isLinkedDevice(c) && (c.secret_ciphertext || c.phone_number_id || c.enabled && !replaceableDemo))
                 fail('DISCONNECT_FIRST', 'יש לנתק את החיבור הקודם לפני חיבור מכשיר', 409);
             // An existing marker is a durable claim on exactly one session. A
             // duplicate click or crash cannot cause another session-create POST.
