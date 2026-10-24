@@ -1,6 +1,64 @@
-# Office connections: Net HaMishpat demo and official WhatsApp
+# Office connections: Net HaMishpat demo and WhatsApp providers
 
-Implemented on `codex/office-integrations`, based on `main`, and deployed to Melamedia QA. Validation uses synthetic court data and fake WhatsApp providers. Connection-only QA permits an explicitly authorized real WhatsApp signup while blocking all messages and group creation.
+The October 24 linked-device implementation is deployed to Melamedia QA only. Court imports remain synthetic. The current status and operating instructions below supersede the historical Meta-only validation notes; those notes and their limits are retained.
+
+## Net HaMishpat: current access and engineering handoff (2026-10-24)
+
+There is **no live court connector** in this implementation. `service.js` imports three fixed `DEMO_UPDATES`; `court_demo` scheduling, court-number mapping and duplicate suppression do not establish a court connection. The schema permits only demo court rows (`court_updates.is_demo CHECK (is_demo)`). There are no court API credentials, smart-card sessions or live authentication endpoints implemented. Signing into the court website with national identification does not connect this server. **Correction to the initial access report:** a separate mandatory software-house approval has not been established. The owner's report that no such approval is held is not proof that a separate approval is required.
+
+The judiciary's [official tender dated 3 June 2025, page 32, section 2.22.3.4](https://mr.gov.il/ilgstorefront/ar/p/attachment/005056BFAF4C1FE0908D18B5CFE9F2E9/%D7%97%D7%95%D7%91%D7%A8%D7%AA%20%D7%94%D7%9E%D7%9B%D7%A8%D7%96), read through the official procurement mirror, describes a software-house interface serving lawyers who represent parties in the cases. Page 21, section 2.19.1 also describes external-user smart-card/PIN authentication and access controls. The older direct `gov.il` PDF returned 403; it was not independently read in this check. Neither section establishes a separate vendor enrollment requirement. Official lawyer registration and office association are separate from an unproven vendor approval process.
+
+Deeper technical discovery found a [public authored implementation and WSDL mirror](https://github.com/zomer-g/net-hamishpat-api/tree/371f7d88fbfecc0abaeca85b14fbc1e7458acf3a), pinned to that exact commit. Its author reports smart-card SOAP reads in June 2026; those are the author's results, not our authenticated verification. Its copied WSDLs identify `DecisionSI.asmx`, `ProtocolListSI.asmx` and `DocumentSI.asmx` under `https://secure.court.gov.il/NGCS.SoftwareCompaniesInterfaces.SI/`. The copied service addresses use HTTP; this application must use HTTPS, validate the server and never downgrade or follow arbitrary redirects. Some inner XML structures remain documented only by the authored reference, so unsupported profiles must fail visibly rather than be inferred from synthetic tests.
+
+An actual unauthenticated TLS 1.2 diagnostic against `secure.court.gov.il:443` verified the server chain and observed an explicit client-certificate request accepting ComSign, PersonalID and government issuers; negotiation without a client certificate failed. No case request was sent. The current Mac reported zero valid SSL client identities. This establishes a concrete client-certificate transport requirement, not a successful lawyer login, case authorization or completed import. No PIN, private key or smart-card cache setting was read or changed. The next genuine check needs the authorized lawyer's card and their own case, with PIN entered by the owner in the card software. Evidence: `outputs/office-whatsapp-20261024/court-access/contract-discovery01.json`, `mirror-snapshot01.json`, `official-tls-capability03.json` and `local-certificate-capability01.json`.
+
+The judiciary IT service (`IT@court.gov.il` / `074-7481858`) can clarify the current specification and any additional vendor requirements. No request has been sent by this task.
+
+Local preparation is isolated in `backend/services/integrations/netHamishpatProtocol.js`: fixed HTTPS SOAP 1.1 request construction for the three documented read operations, plus bounded decision/process response profiles. It has no transport, card access, routes, scheduler, database import or UI activation. Its provenance explicitly says authentication and case binding are unverified. Protocol-list response parsing returns `UNVERIFIED_RESPONSE_PROFILE` because the public sources disagree; a fabricated fixture must not establish that missing contract. The 19 synthetic scenarios in `backend/tests/netHamishpatProtocol.test.js` passed on 24 October; run `node --test tests/netHamishpatProtocol.test.js` from an installed backend. This is codec verification, not a working court connection. The current QA's missing dependency directory was handled by a separate generated test cache containing the exact locked `saxes@5.0.1` and `xmlchars@2.2.0`; application package files were unchanged. The initial broken npm-cache attempt and isolated-cache recovery are retained with the test evidence.
+
+Prepared request, for owner review and sending:
+
+> שלום, אנחנו MelaMedia, מפתחים מערכת לניהול משרדי עורכי דין. אנו מבקשים את המפרט העדכני לממשק בתי התוכנה של נט המשפט לצורך קריאת עדכוני תיקים שבהם עורך הדין מייצג. האם נדרשת הרשמה או הרשאה נפרדת לבית התוכנה, נוסף להזדהות עורך הדין בכרטיס חכם? נבקש גם את דרישות האבטחה, פרטי סביבת הבדיקה ואיש הקשר הטכני. פרטי החברה ועורך הדין המורשה יימסרו בערוץ שתנחו אותנו אליו. תודה.
+
+Before implementing live imports:
+
+1. Verify the current transport and XML contract with the authorized lawyer's smart card and one case they represent. Check lawyer registration and office association. Confirm any additional vendor requirements if the judiciary specifies them; do not assume a separate approval is mandatory or infer API access from an ordinary website login.
+2. Add a separate real provider and office-bound authorization lifecycle, with read-only capabilities, expiry/revocation and a genuine readiness check. A non-exportable card's private key and PIN stay with its holder; do not upload them to the server or weaken card middleware settings. Preserve demo mode as a separate source.
+3. Migrate the demo-only schema to retain explicit provenance, stable external identifiers and synchronization cursors, preserving office isolation and existing rows. Commit imported updates and cursor advancement together; make failures visible without duplicating updates.
+4. Show source and occurrence time in the case UI, using the existing language preference. Check the imported result against the authorized source case before claiming live synchronization. Calendar creation, case-stage changes and customer messages are not implied by a successful import.
+
+Until those requirements are satisfied, keep the UI's demo badge and “live connection not configured” explanation. Existing flags `COURT_DEMO_SYNC_WORKER_ENABLED` and `COURT_DEMO_CASE_LINKING` operate synthetic data only.
+
+## Linked-device QR: current WAHA QA runbook (2026-10-24)
+
+This is an **unofficial linked-device connection**, separate from Meta Embedded Signup and its Cloud Groups API. It is selected by the saved office connection's `settings.gateway='waha'`; `providerRouter.js` dispatches to `wahaProvider.js`. Connecting does not enable automation. The owner acknowledges the connection type and permissions, scans the QR on their phone, then performs a health check. Readiness verifies the exact saved session, account identity and supported restriction/capping probes. A failed health check does not automatically restart or re-pair the account. No protection can guarantee that WhatsApp will never restrict a number.
+
+Apply `2026-10-24_01_whatsapp_safety.sql` and `2026-10-24_02_whatsapp_linked_device.sql` after the existing integration migrations. Retain the backed-up `INTEGRATIONS_ENCRYPTION_KEY`. The existing `officeIntegrations.env.example` documents the Meta/demo variables; the linked-device variables below must also be supplied in the protected server environment. Never commit populated secrets.
+
+| Variable | Purpose / restrictive QA state |
+| --- | --- |
+| `WHATSAPP_WAHA_ENABLED` | Enables this provider; `true` in paired QA. |
+| `WHATSAPP_WAHA_OFFICE_ID` | `dedicated` for this isolated deployment, or the exact allowed office UUID in shared mode. |
+| `WHATSAPP_WAHA_BASE_URL` | Trusted server endpoint; QA uses `http://127.0.0.1:3106`. Do not expose its API publicly. |
+| `WHATSAPP_WAHA_API_KEY` | Server-only gateway credential. |
+| `WHATSAPP_WAHA_WEBHOOK_URL` | This deployment's HTTPS `/api/webhooks/whatsapp-linked` URL. |
+| `WHATSAPP_WAHA_WEBHOOK_SECRET` | Server-only HMAC secret, at least 32 bytes; exact raw-body SHA-512 verification. |
+| `WHATSAPP_WAHA_DELIVERY_ENABLED` | `false` outside an explicitly authorized live test. |
+| `WHATSAPP_WAHA_CONNECT_ONLY` | `true` permits connection/health without group or invitation delivery. |
+| `WHATSAPP_WAHA_QA_PILOT_ENABLED` | `false` normally; required for a bounded real pilot while general QA outbound remains `noop`. |
+| `WHATSAPP_WAHA_PILOT_ALLOWLIST` | Empty normally; an authorized pilot must allowlist both the paired account and every frozen recipient. |
+
+Keep `QA_OUTBOUND_MODE=noop`, `QA_OUTBOUND_ALLOW` empty and `WHATSAPP_DEMO_ONLY=false` for connection-only QA. Retain Meta's own `WHATSAPP_LIVE_ENABLED=false`, `WHATSAPP_CONNECT_ONLY=true` and approval gate; these do not authorize WAHA delivery. `WHATSAPP_WORKER_ENABLED=false` and `BACKGROUND_JOBS_ENABLED=false` remain the normal QA worker state. Production-style live scheduling additionally requires both worker/background flags, the WAHA delivery gates and an explicitly enabled live office policy. `WHATSAPP_DEMO_ONLY=true` blocks both real providers. When an independently authorized WAHA live worker is active, Meta's connection-only setting must not force it into demo processing.
+
+The shared worker polls every 15 seconds and processes at most one group and one invitation per office per pass, subject to durable pacing. Group creation uses an empty participant list; the returned invitation link is attached to the exact case, then sent individually for voluntary joining. Staff policy needs an explicit current attestation; case-client invitations additionally require recorded individual permission. Contact changes, withdrawn permission, opt-out and manual group replacement are rechecked before dispatch. Signed linked-device callbacks retain connection state and recognized direct opt-outs, not a conversation inbox.
+
+Initial application budgets are 10 groups and 50 invitations per rolling 24 hours, at least five minutes between groups, 20 seconds between external mutations and one hour between invitations to the same recipient. These are conservative application limits, not provider guarantees. Persisted claims and consumed budgets survive crashes/disconnects. Unknown mutation outcomes pause delivery; do not reset budgets, retry unknown requests or create a replacement group through database edits. A verified known outcome requires explicit operator investigation; no general reconciliation UI is shipped.
+
+**Actual evidence on candidate `7ec2217e`:** the first owner-authorized QA case (305) created one real group, but invite-response parsing failed. A narrowly fixed parser and explicit reconciliation of that same known group preceded its one invitation. That historical cycle required manual repair and remains qualified as such.
+
+The additional authorized QA case (306, job `6c9e3cd7-cbbb-4db6-8a8f-9740b07ed9f0`) completed without repair: normal case-creation API → queued job → shipped `runtime.start()` automatic 15-second ticks → one group POST accepted (HTTP 201, 19:54:27 UTC) → one owner invitation POST accepted (HTTP 201, 19:54:57 UTC), with 29,996 ms real spacing. An additional automatic tick produced no duplicate. There were no manual worker triggers, database status repairs or time overrides. Native WhatsApp showed the exact group with “Only you” membership and the owner self-chat invitation at 21:54 with double blue checks; its invitation-link hash matched the stored result. This verifies an unassisted cycle **in an isolated scheduled process with a case-scoped query proxy**, not the globally enabled application scheduler, an external recipient/join, a physical phone or customer production readiness. A later SSH polling failure was recovered by reading the durable completion receipt; the cycle was not rerun. Evidence: task-relative `outputs/office-whatsapp-20261024/waha/unassisted01/actual-remote-result01.json`, `unassisted01/recovery03.json` and `browser/native-automatic306-verify01.json` under that same WAHA evidence directory. Cleanup restored the original environment byte-for-byte, stopped the isolated scheduler, disabled office automation, logged out only the test API refresh session and preserved pairing and consumed budgets (two groups/two invitations); other PM2 processes were unchanged. Court permission is still absent and its request remains unsent. Do not replay either pilot or send another invitation without current scoped authorization.
+
+Source-bound results, failures, current flags and the restricted-output incident are recorded in the task's `outputs/office-whatsapp-20261024/waha/FINAL-REPORT-HE.json` and both test ledgers. The sensitive receipt was removed from deliverable reports; an internal tool-output copy remains, so complete erasure or credential rotation is not claimed. Customer rollout, cross-deployment number ownership/offboarding and production readiness remain unapproved. Read the current ledgers before running only changed or missing verification.
 
 ## Local connection-policy refinement (2026-10-23)
 
@@ -112,7 +170,7 @@ For unattended QA of normal case creation, set both `WHATSAPP_DEMO_ONLY=true` an
 - “Invitations sent” means Meta accepted the send request, not delivered/read/joined. Delivery/participant tracking, retry/reconciliation UI and sending case updates into groups are outside this change.
 - The worker handles one group and one invitation per office per tick (15 seconds). Production performance, actual Meta availability, billing setup, account eligibility, template compatibility, and the deployed database schema still require authorized QA with real integration credentials.
 
-## Local verification
+## Local verification (historical commands; consult the current test ledger)
 
 Backend: `node --test tests/officeIntegrations.test.js tests/officeIntegrations.http.test.js` (15 tests, disposable PGlite PostgreSQL, no external database). Covers office boundaries including actual RLS, foreign references, encrypted grants, nonce replay/revocation, webhook signatures, transactional outbox, no duplicate delivery, disabling during creation, manager resolution/deduplication, and official request contracts with a fake Meta provider.
 
