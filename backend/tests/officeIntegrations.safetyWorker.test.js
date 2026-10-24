@@ -13,9 +13,11 @@ const { SAFETY_POLICY } = require('../services/integrations/whatsappSafety');
 // Deliberately require the isolated local cluster. Never consult DATABASE_URL,
 // project .env files, default PG hosts/users, or a deployed tenant database.
 const socket = process.env.SAFETY_TEST_PG_SOCKET;
-if (typeof socket !== 'string' || !/^\/tmp\/codex-whatsapp-safety-[A-Za-z0-9._-]+$/.test(socket) ||
-    process.env.SAFETY_TEST_PG_PORT !== '55502') {
-    throw Error('Safety worker tests require an isolated /tmp/codex-whatsapp-safety-* socket and port 55502');
+const testPort = Number(process.env.SAFETY_TEST_PG_PORT);
+const isolatedSocket = (testPort === 55502 && /^\/tmp\/codex-whatsapp-safety-[A-Za-z0-9._-]+$/.test(socket || '')) ||
+    (testPort === 55504 && socket === '/tmp/codex-whatsapp-waha-55504');
+if (typeof socket !== 'string' || !isolatedSocket) {
+    throw Error('Safety worker tests require an isolated /tmp/codex-whatsapp-safety-* socket and port 55502, or the exact owned WAHA socket on port 55504');
 }
 const A = '11111111-1111-4111-8111-111111111111';
 const B = '22222222-2222-4222-8222-222222222222';
@@ -29,10 +31,10 @@ const env = Object.freeze({
 const policy = Object.freeze({ enabled: true, mode: 'live', recipients: ['0501234567'],
     templateName: 'synthetic_group_invite', templateLanguage: 'he' });
 const migrations = ['2026-10-14_00_office_integrations.sql', '2026-10-15_00_case_court_reference.sql',
-    '2026-10-15_01_court_daily_sync.sql', '2026-10-24_01_whatsapp_safety.sql'];
+    '2026-10-15_01_court_daily_sync.sql', '2026-10-24_01_whatsapp_safety.sql', '2026-10-24_02_whatsapp_linked_device.sql'];
 const sqlFile = name => fs.readFileSync(path.join(__dirname, '../migrations', name), 'utf8');
 const localPool = (database, applicationName) => new Pool({
-    host: socket, port: 55502, user: 'whatsapp_safety_test_owner', password: 'synthetic-local-cluster-only', database,
+    host: socket, port: testPort, user: testPort === 55504 ? 'whatsapp_waha_test_owner' : 'whatsapp_safety_test_owner', password: 'synthetic-local-cluster-only', database,
     ssl: false, max: 6, connectionTimeoutMillis: 3000, idleTimeoutMillis: 1000,
     query_timeout: 10000, options: '-c search_path=public -c statement_timeout=8000',
     application_name: applicationName,

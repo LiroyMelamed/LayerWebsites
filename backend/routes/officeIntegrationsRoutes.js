@@ -64,7 +64,23 @@ router.put('/court', policy, wrap(async (req, res) => { await service.saveCourt(
 router.post('/court/demo-cases', wrap(async (req, res) => res.json({ caseIds: await service.seedDemo(req.integrationOfficeId) })));
 router.put('/court/mapping', wrap(async (req, res) => { await service.linkCourt(req.integrationOfficeId, req.body); res.json({ ok: true }); }));
 router.post('/court/sync', wrap(async (req, res) => { await service.syncCourt(req.integrationOfficeId); res.json({ ok: true }); }));
-router.put('/whatsapp', policy, wrap(async (req, res) => { await service.saveWhatsapp(req.integrationOfficeId, req.body); res.json({ ok: true }); }));
+router.put('/whatsapp', policy, wrap(async (req, res) => { await service.saveWhatsapp(req.integrationOfficeId, req.body, req.user.UserId); res.json({ ok: true }); }));
+router.post('/whatsapp/linked-device/start', policy, wrap(async (req, res) => {
+    res.set('Cache-Control', 'no-store').json(await service.startLinkedDevice(req.integrationOfficeId, req.body));
+}));
+router.get('/whatsapp/linked-device/qr', policy, wrap(async (req, res) => {
+    res.set('Cache-Control', 'no-store').json(await service.linkedDeviceQr(req.integrationOfficeId));
+}));
+router.post('/whatsapp/linked-device/check', policy, wrap(async (req, res) => {
+    res.set('Cache-Control', 'no-store').json(await service.checkLinkedDevice(req.integrationOfficeId));
+}));
+router.delete('/whatsapp/linked-device', policy, wrap(async (req, res) => {
+    await service.disconnectLinkedDevice(req.integrationOfficeId); res.json({ ok: true });
+}));
+router.post('/whatsapp/contacts/permission', policy, wrap(async (req, res) => {
+    res.json(await service.setWhatsappContactPermission(req.integrationOfficeId, req.body, req.user.UserId));
+}));
+router.post('/whatsapp/groups/recheck', policy, wrap(async (req, res) => res.json(await service.reviewWhatsappGroups(req.integrationOfficeId))));
 router.post('/whatsapp/signup', wrap(async (req, res) => res.json(await service.startSignup(req.integrationOfficeId, req.user.UserId))));
 router.post('/whatsapp/signup/complete', wrap(async (req, res) => { await service.completeSignup(req.integrationOfficeId, req.user.UserId, req.body); res.json({ ok: true }); }));
 router.post('/whatsapp/check', wrap(async (req, res) => res.json(await service.checkWhatsapp(req.integrationOfficeId))));

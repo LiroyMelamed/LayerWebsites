@@ -22,7 +22,7 @@ async function fixture(t) {
         CREATE TABLE users(userid serial PRIMARY KEY,law_firm_tenant_id uuid,phonenumber text);
         CREATE TABLE cases(caseid serial PRIMARY KEY,law_firm_tenant_id uuid REFERENCES law_firm_tenants(id),casename text,casemanagerid integer,currentstage integer,isclosed boolean,whatsappgrouplink text,createdat timestamptz,updatedat timestamptz);
         INSERT INTO law_firm_tenants(id,name) VALUES('${A}','Synthetic office A'),('${B}','Synthetic office B');`);
-    for (const migration of ['2026-10-14_00_office_integrations.sql', '2026-10-15_00_case_court_reference.sql', '2026-10-15_01_court_daily_sync.sql', '2026-10-24_01_whatsapp_safety.sql']) await db.exec(fs.readFileSync(path.join(__dirname, '../migrations', migration), 'utf8'));
+    for (const migration of ['2026-10-14_00_office_integrations.sql', '2026-10-15_00_case_court_reference.sql', '2026-10-15_01_court_daily_sync.sql', '2026-10-24_01_whatsapp_safety.sql', '2026-10-24_02_whatsapp_linked_device.sql']) await db.exec(fs.readFileSync(path.join(__dirname, '../migrations', migration), 'utf8'));
     // One leased PGlite connection. Pauses model committed inter-phase changes;
     // these tests do not claim real multi-session PostgreSQL contention proof.
     let tail = Promise.resolve();

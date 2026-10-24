@@ -2,6 +2,7 @@
 const { createHash } = require('node:crypto');
 const { inviteLink, phones } = require('./validation');
 const { deliveryAllowed } = require('./deliveryPolicy');
+const { isLinkedDevice, linkedDeliveryAllowed } = require('./linkedDevicePolicy');
 const { SAFETY_POLICY, reserveSafety, markDispatchSafety, pauseSafety, publicSafety, normalizeFailure } = require('./whatsappSafety');
 
 function createGroupWorker(service) {
@@ -30,9 +31,12 @@ function createGroupWorker(service) {
     }
     function canDispatch(c, job) {
         return c?.enabled && c.id === job.connection_id && c.settings.mode === job.mode && (job.mode === 'demo' ||
-            (deliveryAllowed(env) && c.settings.connectionType !== 'business_app' && c.status === 'ready' && c.secret_ciphertext &&
+            (isLinkedDevice(c) ? job.gateway === 'waha' && job.session_name === c.settings.sessionName &&
+                job.connection_generation === c.settings.connectionGeneration && linkedDeliveryAllowed(env, job, c) &&
+                c.status === 'ready' && c.secret_ciphertext :
+            ((job.gateway || 'meta') === 'meta' && deliveryAllowed(env) && c.settings.connectionType !== 'business_app' && c.status === 'ready' && c.secret_ciphertext &&
              c.phone_number_id === job.phone_number_id && c.waba_id === job.waba_id &&
-             (!c.token_expires_at || new Date(c.token_expires_at) > new Date())));
+             (!c.token_expires_at || new Date(c.token_expires_at) > new Date()))));
     }
     async function dbNow(db) {
         return (await db.query('SELECT clock_timestamp() AS safety_now')).rows[0].safety_now;
@@ -90,11 +94,35 @@ function createGroupWorker(service) {
         // Shrink the frozen recipient set when office settings or the assigned
         // manager change. A newly assigned person is never silently added.
         const { phone } = recipient;
+        if (isLinkedDevice(c)) {
+            const permission = await service.contactPermission(db, c.law_firm_tenant_id, phone, 'FOR SHARE');
+            if (permission.version != null && !permission.allowed) return false;
+            if (!service.recipientPolicyCurrent(c)) return false;
+            if (recipient.source === 'case_client') {
+                if (!c.settings.includeCaseClients || !permission.allowed) return false;
+                const ids = recipient.clientUserIds;
+                if (!Array.isArray(ids) || !ids.length || ids.some(id => !Number.isSafeInteger(id) || id < 1)) return false;
+                const clients = (await db.query(`SELECT u.userid,u.phonenumber FROM case_users cu JOIN users u ON u.userid=cu.userid
+                    WHERE cu.caseid=$1 AND cu.userid=ANY($2::integer[]) AND u.law_firm_tenant_id IS NOT DISTINCT FROM $3
+                    FOR SHARE OF cu,u`, [record.caseid, ids, c.law_firm_tenant_id])).rows;
+                try { return clients.length === ids.length && clients.every(client => phones([client.phonenumber]).includes(phone)); } catch { return false; }
+            }
+        }
         if (recipient.source !== 'case_manager') return (c.settings.recipients || []).includes(phone);
         if (!c.settings.includeCaseManager || !record?.casemanagerid || recipient.managerUserId !== record.casemanagerid) return false;
         const manager = (await db.query(`SELECT phonenumber FROM users
             WHERE userid=$1 AND law_firm_tenant_id IS NOT DISTINCT FROM $2 FOR SHARE`, [record.casemanagerid, c.law_firm_tenant_id])).rows[0];
         try { return phones([manager?.phonenumber]).includes(phone); } catch { return false; }
+    }
+    async function readyRecipients(db, c, job, record) {
+        if (!isLinkedDevice(c) || job.mode !== 'live') return true;
+        for (const recipient of job.recipients.filter(r => r.status === 'pending')) {
+            if (!await currentRecipient(db, c, record, recipient)) {
+                await db.query("UPDATE case_whatsapp_groups SET status='needs_attention',error_code='RECIPIENT_PERMISSION_REQUIRED',next_attempt_at=NULL,updated_at=now() WHERE id=$1", [job.id]);
+                return false;
+            }
+        }
+        return true;
     }
     function hasOtherLink(record, expectedLink) {
         if (!record) return true;
@@ -156,6 +184,9 @@ function createGroupWorker(service) {
     async function processOffice(tenantId, { demoOnly = false, caseId = null } = {}) {
         // A crashed/unknown remote mutation is never blindly retried.
         await recoverAbandoned(tenantId);
+        // A WORKING session can still be restricted. Each dispatch pass performs
+        // fresh read-only health probes; it never restarts or pairs a session.
+        if (!demoOnly && service.refreshLinkedDevice) await service.refreshLinkedDevice(tenantId);
         // A manual link also revokes invitations while remote creation is still
         // unresolved. Keep that remote status/request observable for its callback.
         await tx(async db => {
@@ -186,6 +217,7 @@ function createGroupWorker(service) {
             if (!canDispatch(c, job) || !job.recipients.some(r => r.status === 'pending')) {
                 await db.query(`UPDATE case_whatsapp_groups SET status='cancelled',error_code='CONNECTION_CHANGED',updated_at=now() WHERE id=$1`, [job.id]); return null;
             }
+            if (!await readyRecipients(db, c, job, record)) return null;
             const dispatchClaim = await reserve(db, c, job, 'group');
             if (!dispatchClaim) return null;
             await db.query(`UPDATE case_whatsapp_groups SET status='creating',updated_at=now() WHERE id=$1`, [job.id]);
@@ -207,6 +239,7 @@ function createGroupWorker(service) {
                 if (!canDispatch(c, job) || !job.recipients.some(r => r.status === 'pending')) {
                     await db.query(`UPDATE case_whatsapp_groups SET status='cancelled',updated_at=now() WHERE id=$1`, [job.id]); return;
                 }
+                if (!await readyRecipients(db, c, job, record)) return;
                 if (!live) {
                     await db.query(`UPDATE case_whatsapp_groups SET status='simulated',recipients=$2,updated_at=now() WHERE id=$1`, [job.id, JSON.stringify(job.recipients.map(r => ({ ...r, status: 'simulated' })))]);
                     return; // No fake WhatsApp URL and no external call.
@@ -217,12 +250,21 @@ function createGroupWorker(service) {
                 }
                 try {
                     const result = await provider.createGroup(c, service.token(c), job);
+                    if (isLinkedDevice(c)) {
+                        const link = inviteLink(result?.inviteLink);
+                        if (!link || typeof result?.groupId !== 'string' || !/^\d+(?:-\d+)?@g\.us$/.test(result.groupId))
+                            throw Object.assign(new Error('RESULT_UNKNOWN'), { uncertain: true });
+                        await db.query("UPDATE case_whatsapp_groups SET status='created',group_id=$2,invite_link=$3,error_code=NULL,updated_at=now() WHERE id=$1", [job.id, result.groupId, link]);
+                        await db.query(`UPDATE cases SET whatsappgrouplink=$2,updatedat=now() WHERE caseid=$1 AND law_firm_tenant_id IS NOT DISTINCT FROM $3 AND integration_demo=false AND COALESCE(whatsappgrouplink,'')=''`, [job.case_id, link, tenantId]);
+                        return;
+                    }
                     if (typeof result?.request_id !== 'string' || !result.request_id || result.request_id.length > 256)
                         throw Object.assign(new Error('RESULT_UNKNOWN'), { uncertain: true });
                     await db.query(`UPDATE case_whatsapp_groups SET status='awaiting_webhook',request_id=$2,updated_at=now() WHERE id=$1`, [job.id, result.request_id]);
                 } catch (e) {
                     const failure = await pauseConnection(db, c, e);
-                    await db.query(`UPDATE case_whatsapp_groups SET status=$2,error_code=$3,updated_at=now() WHERE id=$1`, [job.id, failure.uncertain ? 'uncertain' : 'failed', failure.reason]);
+                    const partialGroupId = isLinkedDevice(c) && typeof e.partialGroupId === 'string' && /^\d+(?:-\d+)?@g\.us$/.test(e.partialGroupId) ? e.partialGroupId : null;
+                    await db.query(`UPDATE case_whatsapp_groups SET status=$2,error_code=$3,group_id=COALESCE($4,group_id),updated_at=now() WHERE id=$1`, [job.id, failure.uncertain ? 'uncertain' : 'failed', failure.reason, partialGroupId]);
                 }
             } finally {
                 // Commit clears known-unsent/success/failed/unknown outcomes. A
@@ -312,7 +354,7 @@ function createGroupWorker(service) {
             if (event.type !== 'group_create' || typeof event.subject !== 'string') continue;
             await tx(async db => {
                 const c = await connection(db, tenantId, 'whatsapp', 'FOR UPDATE');
-                if (!c || c.id !== connectionId || c.phone_number_id !== phoneId || c.waba_id !== wabaId || !c.secret_ciphertext) return;
+                if (!c || isLinkedDevice(c) || c.id !== connectionId || c.phone_number_id !== phoneId || c.waba_id !== wabaId || !c.secret_ciphertext) return;
                 const candidate = (await db.query(`SELECT id,case_id FROM case_whatsapp_groups WHERE connection_id=$1 AND law_firm_tenant_id IS NOT DISTINCT FROM $2 AND subject=$3 AND mode='live' AND phone_number_id=$4 AND waba_id=$5`, [c.id, tenantId, event.subject, phoneId, wabaId])).rows[0];
                 const locked = await lockCaseJob(db, tenantId, candidate);
                 if (!locked || !['creating','awaiting_webhook','uncertain'].includes(locked.job.status)) return;

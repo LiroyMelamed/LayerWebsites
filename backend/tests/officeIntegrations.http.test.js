@@ -150,3 +150,32 @@ test('signed QR history receipt persists status only in the matching office and 
     assert.deepEqual(writes[0].args, ['connection-a', '123456789', '987654321', '"complete"', A]);
     assert.ok(!JSON.stringify(calls).includes('Private synthetic content'));
 });
+
+test('linked device and permission routes retain owner scope, exact acknowledgement and private QR responses', async t => {
+    const { app, calls } = setup(t);
+    const actions = [
+        ['post', '/whatsapp/linked-device/start', 'startLinkedDevice', { acknowledgeUnofficial: true, acknowledgePermissions: true }],
+        ['get', '/whatsapp/linked-device/qr', 'linkedDeviceQr', null],
+        ['post', '/whatsapp/linked-device/check', 'checkLinkedDevice', null],
+        ['delete', '/whatsapp/linked-device', 'disconnectLinkedDevice', null],
+        ['post', '/whatsapp/contacts/permission', 'setWhatsappContactPermission', { phone: '0501111111', allowed: false, evidence: 'Synthetic opt-out' }],
+        ['post', '/whatsapp/groups/recheck', 'reviewWhatsappGroups', null],
+    ];
+    for (const [method, path, name, body] of actions) {
+        const make = () => request(app)[method]('/integrations' + path);
+        await make().expect(401);
+        await make().set('x-test-identity', 'staff').expect(403);
+        await make().set('x-test-identity', 'client').expect(403);
+        await request(app)[method]('/integrations' + path + '?officeId=' + B).set('x-test-identity', 'owner').expect(403);
+        let pending = make().set('x-test-identity', 'owner');
+        if (body) pending = pending.send(body);
+        const response = await pending.expect(200);
+        const call = calls.filter(c => c.name === name).at(-1);
+        assert.equal(call.args[0], A); assert.deepEqual(call.scope, { mode: 'office', tenantId: A });
+        if (body) assert.deepEqual(call.args[1], body);
+        if (name === 'setWhatsappContactPermission') assert.equal(call.args[2], 2);
+        if (name === 'linkedDeviceQr' || name === 'startLinkedDevice' || name === 'checkLinkedDevice') assert.equal(response.headers['cache-control'], 'no-store');
+    }
+    await request(app).post('/integrations/whatsapp/linked-device/start').set('x-test-identity', 'owner').send({}).expect(200);
+    assert.deepEqual(calls.filter(c => c.name === 'startLinkedDevice').at(-1).args, [A, {}], 'Route never manufactures acknowledgement');
+});

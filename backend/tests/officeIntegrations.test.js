@@ -22,6 +22,7 @@ async function fixture(t) {
     await db.exec(fs.readFileSync(path.join(__dirname, '../migrations/2026-10-15_00_case_court_reference.sql'), 'utf8'));
     await db.exec(fs.readFileSync(path.join(__dirname, '../migrations/2026-10-15_01_court_daily_sync.sql'), 'utf8'));
     await db.exec(fs.readFileSync(path.join(__dirname, '../migrations/2026-10-24_01_whatsapp_safety.sql'), 'utf8'));
+    await db.exec(fs.readFileSync(path.join(__dirname, '../migrations/2026-10-24_02_whatsapp_linked_device.sql'), 'utf8'));
     // PGlite has one connection. Serialize leases like a pg pool with max=1.
     let tail = Promise.resolve();
     const lease = async () => { const prior = tail; let release; tail = new Promise(r => { release = r; }); await prior; return release; };

@@ -111,10 +111,15 @@ test('the screen respects denied policy access', async () => {
     expect(screen.getByLabelText('syncTime')).toBeDisabled();
 });
 test('connection-only QA offers the actual QR button and keeps automation in simulation', async () => {
+    let finishNonce;
+    api.startSignup.mockReturnValue(new Promise(resolve => { finishNonce = resolve; }));
     api.snapshot.mockResolvedValue(state({ signup: { ready: true, flow: 'business_app', connectionOnly: true, appId: 'app', version: 'v26.0', liveEnabled: false, demoOnly: false } }));
     render(<OfficeIntegrations />); await screen.findByDisplayValue('My office court');
     await waitFor(() => expect(api.startSignup).toHaveBeenCalled());
-    await act(async () => { await Promise.all([api.startSignup.mock.results[0].value, prepareWhatsAppSdk.mock.results[0].value]); });
+    await act(async () => {
+        finishNonce({ state: 'nonce', appId: 'app', configId: 'config' });
+        await Promise.all([api.startSignup.mock.results[0].value, prepareWhatsAppSdk.mock.results[0].value]);
+    });
     expect(screen.getByText('connectionOnlyNotice')).toBeInTheDocument();
     expect(screen.getByText('qrPrerequisite')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'connectQr' }));
@@ -157,11 +162,16 @@ test('a saved QR Business app connection explains the group limitation and has n
 });
 
 test('a successful Cloud connection reveals policy controls and disconnecting removes them again', async () => {
+    let finishNonce;
+    api.startSignup.mockReturnValue(new Promise(resolve => { finishNonce = resolve; }));
     const connected = state({ whatsapp: { connected: true, enabled: false, status: 'ready', settings: { connectionType: 'cloud', mode: 'live' } }, signup: { ready: true, appId: 'app', version: 'v26.0', liveEnabled: true, demoOnly: false } });
     api.snapshot.mockResolvedValueOnce(state({ signup: connected.signup })).mockResolvedValueOnce(connected).mockResolvedValue(state());
     render(<OfficeIntegrations />); await screen.findByDisplayValue('My office court');
     await waitFor(() => expect(api.startSignup).toHaveBeenCalled());
-    await act(async () => { await Promise.all([api.startSignup.mock.results[0].value, prepareWhatsAppSdk.mock.results[0].value]); });
+    await act(async () => {
+        finishNonce({ state: 'nonce', appId: 'app', configId: 'config' });
+        await Promise.all([api.startSignup.mock.results[0].value, prepareWhatsAppSdk.mock.results[0].value]);
+    });
     expect(screen.queryByLabelText('autoCreate')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'connect' }));
     await act(async () => launchWhatsAppSignup.mock.calls[0][1].onComplete({ state: 'nonce', code: 'test-code', wabaId: '12345', phoneId: '67890' }));
