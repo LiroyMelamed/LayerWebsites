@@ -72,6 +72,11 @@
   .oi-linked-device-qr { display: grid; place-items: center; min-block-size: 17rem; max-inline-size: 100%; padding: v.$space-2; border: 1px solid var(--lw-color-disabled); border-radius: 0.5rem; background: #fff; color: var(--lw-color-text); text-align: center; }
   .oi-linked-device-qr img { display: block; inline-size: 100%; max-inline-size: 16rem; block-size: auto; image-rendering: pixelated; }
   .oi-linked-device-error { color: var(--lw-color-negative, #b91c1c); }
+  .oi-linked-device-permissions {
+    .lw-simpleInput { min-block-size: calc(2.75rem + 2px); block-size: auto; box-sizing: border-box; }
+    .lw-simpleInput__field, .lw-simpleTextArea__field { min-block-size: 2.75rem; box-sizing: border-box; }
+    .lw-simpleTextArea { min-block-size: calc(2.75rem + 1.5rem + 2px); box-sizing: border-box; }
+  }
   .oi-whatsapp-policy .oi-safety { margin-top: 0; padding-top: 0; border-top: 0; }
   fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
   .oi-setting-row { display: flex; flex-direction: column; gap: v.$space-2; padding: v.$space-3 0; border-bottom: 1px solid var(--lw-color-secondary-highlighted); }
