@@ -64,7 +64,7 @@
   .oi-safety-acknowledgement .lw-simpleCheckbox__label { min-block-size: 2.75rem; }
   .oi-safety-acknowledgement .lw-simpleCheckbox__text { font-size: 0.8125rem; }
   .oi-linked-device-acknowledgement { direction: inherit; margin-top: v.$space-3; }
-  .oi-linked-device { --lw-simpleTextArea-direction: inherit; }
+  .oi-linked-device[dir="ltr"] { --lw-simpleTextArea-direction: ltr; }
   .oi-linked-device-acknowledgement .lw-simpleCheckbox__label { min-block-size: 2.75rem; align-items: flex-start; }
   .oi-linked-device-acknowledgement .lw-simpleCheckbox__text { font-size: 0.8125rem; }
   .oi-linked-device-pairing { display: grid; grid-template-columns: minmax(0, 1fr) minmax(12rem, 17rem); gap: v.$space-3 v.$space-5; align-items: center; margin-top: v.$space-3; }
