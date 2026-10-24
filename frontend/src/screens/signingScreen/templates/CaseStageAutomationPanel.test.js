@@ -279,7 +279,7 @@ test('editing a saved rule restores automatic channels and preserves explicit ch
     };
     const rows = [{ key: 'saved-case-row', data: { property: '000507' }, recipients }];
     const { api, i18n } = await setup({ data: state({ rules: [{ descriptionId: 'saved-stage-2', version: 7,
-        enabled: true, template: savedTemplate, templateVersionId: template.versionId, templateName: template.name, shared, rows }] }) });
+        enabled: true, alreadyTriggered: true, template: savedTemplate, templateVersionId: template.versionId, templateName: template.name, shared, rows }] }) });
     fireEvent.click(button(i18n, 'edit'));
     for (const [role, channels] of [['Tenant', ['auto']], ['Lawyer', ['auto']], ['Witnesses', ['auto', 'email', 'sms']], ['Office signers', ['auto', 'both']]]) {
         const groups = within(screen.getByRole('group', { name: role })).getAllByRole('radiogroup', { name: i18n.t('signingV2.compose.fields.channel') });
@@ -291,6 +291,9 @@ test('editing a saved rule restores automatic channels and preserves explicit ch
     }
     fireEvent.click(button(i18n, 'check'));
     await screen.findByText(en.stageAutomation.reviewReady);
+    expect(screen.getByRole('status')).toHaveTextContent(en.stageAutomation.reviewReady);
+    expect(screen.getByRole('note')).toHaveTextContent(en.stageAutomation.onceUsed);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(api.preview).toHaveBeenCalledWith(41, 'saved-stage-2', expect.objectContaining({ expectedVersion: 7, shared, rows }));
     fireEvent.click(button(i18n, 'save'));
     await screen.findByText(en.stageAutomation.saved);

@@ -188,13 +188,15 @@ export default function CaseStageAutomationPanel({ caseId, canEdit = false, init
                             onGroup={(key, index) => { const next = editor.groups.map(group => group.filter(item => item !== key)); (next[index] ||= []).push(key); invalidate({ ...editor, groups: next.filter(group => group.length) }); }} />
                         {editor.template.approvalRequired && <ApprovalReviewerField api={packagesApi} value={editor.reviewerUserId} soloAllowed={editor.template.soloApproval} onChange={reviewerUserId => invalidate({ ...editor, reviewerUserId })} />}
                         <p>{t('stageAutomation.contactHelp')}</p>
-                        {editor.alreadyTriggered && <StatusNotice embedded><p>{t('stageAutomation.onceUsed')}</p></StatusNotice>}
+                        {editor.alreadyTriggered && <p role="note">{t('stageAutomation.onceUsed')}</p>}
                     </>}
                 </fieldset>
-                {check && <StatusNotice embedded><p>{t(check.valid ? 'stageAutomation.reviewReady' : 'stageAutomation.reviewFailed')}</p>
-                    {!check.valid && <ul>{(check.errors || []).map((item, index) => <li key={index}><bdi>{validationLabel(item)}</bdi> · {errorMessage(item)}</li>)}</ul>}
-                    {check.valid && <p>{t('stageAutomation.confirmHelp')}</p>}
-                </StatusNotice>}
+                {check && (check.valid ? <>
+                    <p role="status">{t('stageAutomation.reviewReady')}</p>
+                    <p>{t('stageAutomation.confirmHelp')}</p>
+                </> : <StatusNotice embedded><p>{t('stageAutomation.reviewFailed')}</p>
+                    <ul>{(check.errors || []).map((item, index) => <li key={index}><bdi>{validationLabel(item)}</bdi> · {errorMessage(item)}</li>)}</ul>
+                </StatusNotice>)}
                 <div className="lw-stageAutomation__actions">
                     <SecondaryButton onPress={() => { generation.current += 1; setEditor(null); setCheck(null); }} disabled={!!busy}>{t('common.cancel')}</SecondaryButton>
                     <SecondaryButton onPress={preview} disabled={!!busy || !editor.template || !editor.name.trim()}>{t('stageAutomation.check')}</SecondaryButton>
