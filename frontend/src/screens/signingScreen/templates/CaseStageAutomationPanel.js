@@ -16,6 +16,13 @@ function boundPerson(person, language) {
     return { ...clean(person || {}, language), ...(person?.contactUserId && !person.sameAsRole ? { contactUserId: person.contactUserId } : {}) };
 }
 
+function hydratePerson(person) {
+    if (Array.isArray(person?.people)) return { ...person, people: person.people.map(hydratePerson) };
+    // Saved rules omit the automatic channel; the editor selects it with ''.
+    return { ...person, channel: person?.channel ?? '' };
+}
+const hydrateRoles = roles => Object.fromEntries(Object.entries(roles || {}).map(([key, person]) => [key, hydratePerson(person)]));
+
 export default function CaseStageAutomationPanel({ caseId, canEdit = false, initiallyOpen = false, initialRunId, api = signingStageAutomationApi, packagesApi = signingPackagesApi }) {
     const { t, direction, number, date, language, errorMessage } = useSigningLocale();
     const [open, setOpen] = useState(initiallyOpen);
@@ -60,8 +67,8 @@ export default function CaseStageAutomationPanel({ caseId, canEdit = false, init
         const ordering = rule?.signingOrder || templateOrder(template?.roles || []);
         invalidate({ descriptionId: stage.descriptionId, stageTitle: stage.title, stageNumber: stage.stage,
             version: rule?.version || 0, alreadyTriggered: !!rule?.alreadyTriggered,
-            template, name: rule?.name || template?.name || '', shared: rule?.shared || {}, roleAudience: rule?.roleAudience || {},
-            rows: [{ ...(rule?.rows?.[0] || {}), id: 'stage-row', key: rule?.rows?.[0]?.key || '', recipients: rule?.rows?.[0]?.recipients || {}, data: rule?.rows?.[0]?.data || {} }],
+            template, name: rule?.name || template?.name || '', shared: hydrateRoles(rule?.shared), roleAudience: rule?.roleAudience || {},
+            rows: [{ ...(rule?.rows?.[0] || {}), id: 'stage-row', key: rule?.rows?.[0]?.key || '', recipients: hydrateRoles(rule?.rows?.[0]?.recipients), data: rule?.rows?.[0]?.data || {} }],
             omittedRoles: rule?.omittedRoles || [], reviewerUserId: rule?.reviewerUserId || null,
             mode: ordering.mode || 'parallel', groups: ordering.groups || (ordering.roles || []).map(key => [key]),
             orderRoles: ordering.roles || ordering.groups?.flat() || template?.roles.map(role => role.key) || [] });

@@ -371,10 +371,10 @@ export default function SigningManagerScreen() {
         );
     };
 
-    if (panel === 'stage' && searchParams.get('caseId')) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView>
+    if (panel === 'stage' && searchParams.get('caseId')) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><div className="lw-stageAutomationPage">
         <SigningBackButton onPress={() => { const next = new URLSearchParams(searchParams); next.delete('caseId'); next.delete('stageRun'); next.delete('panel'); setSearchParams(next); }}>{t('common.back')}</SigningBackButton>
         {signingV2Available && canSignUpload ? <CaseStageAutomationPanel key={searchParams.get('caseId')} caseId={searchParams.get('caseId')} canEdit={canAction('cases', 'edit')} initiallyOpen initialRunId={searchParams.get('stageRun')} /> : <p>{t('stageAutomation.noAccess')}</p>}
-    </SimpleScrollView></SimpleScreen>;
+    </div></SimpleScrollView></SimpleScreen>;
     if (showTemplates) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><TemplatesWorkspace nativeAvailable={signingV2Available} onSendTemplate={signingV2Available ? template => {
         const next = new URLSearchParams(searchParams); next.set('panel', 'compose'); next.set('template', template.id); next.set('templateVersion', String(template.version)); setSearchParams(next);
     } : undefined} onWordContinue={preview => navigate(AdminStackName + uploadFileForSigningScreenName, { state: { wordPreviewId: preview.id } })}

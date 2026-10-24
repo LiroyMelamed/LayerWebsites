@@ -262,3 +262,38 @@ test('the same person in two roles retains the role link after its occurrence up
     expect(api.preview.mock.calls[0][2].shared.lawyer).toEqual(expect.objectContaining({ contactUserId: 502 }));
     expect(api.save).not.toHaveBeenCalled();
 });
+
+test('editing a saved rule restores automatic channels and preserves explicit channels and signer bindings', async () => {
+    const person = { name: 'Synthetic signer', email: 'signer@example.invalid', phone: '', locale: 'en' };
+    const savedTemplate = { ...template, roles: [...template.roles,
+        { key: 'witness', label: 'Witnesses', audience: 'each', min: 3, max: 3, capacity: 'personal' },
+        { key: 'office', label: 'Office signers', audience: 'shared', min: 3, max: 3, capacity: 'personal' },
+    ] };
+    const recipients = {
+        tenant: { ...person, contactUserId: 501 },
+        witness: { people: [{ ...person, contactUserId: 503 }, { ...person, channel: 'email' }, { ...person, channel: 'sms' }] },
+    };
+    const shared = {
+        lawyer: { ...person, personId: 'directory-lawyer', partyId: 'represented-party', authorityId: 'signing-authority' },
+        office: { people: [{ ...person, contactUserId: 502 }, { ...person, channel: 'both' }, { sameAsRole: 'witness', sameAsOccurrence: 1 }] },
+    };
+    const rows = [{ key: 'saved-case-row', data: { property: '000507' }, recipients }];
+    const { api, i18n } = await setup({ data: state({ rules: [{ descriptionId: 'saved-stage-2', version: 7,
+        enabled: true, template: savedTemplate, templateVersionId: template.versionId, templateName: template.name, shared, rows }] }) });
+    fireEvent.click(button(i18n, 'edit'));
+    for (const [role, channels] of [['Tenant', ['auto']], ['Lawyer', ['auto']], ['Witnesses', ['auto', 'email', 'sms']], ['Office signers', ['auto', 'both']]]) {
+        const groups = within(screen.getByRole('group', { name: role })).getAllByRole('radiogroup', { name: i18n.t('signingV2.compose.fields.channel') });
+        expect(groups).toHaveLength(channels.length);
+        groups.forEach((group, index) => {
+            expect(within(group).getAllByRole('radio', { checked: true })).toHaveLength(1);
+            expect(within(group).getByRole('radio', { name: i18n.t(`signingV2.compose.channel.${channels[index]}`) })).toHaveAttribute('aria-checked', 'true');
+        });
+    }
+    fireEvent.click(button(i18n, 'check'));
+    await screen.findByText(en.stageAutomation.reviewReady);
+    expect(api.preview).toHaveBeenCalledWith(41, 'saved-stage-2', expect.objectContaining({ expectedVersion: 7, shared, rows }));
+    fireEvent.click(button(i18n, 'save'));
+    await screen.findByText(en.stageAutomation.saved);
+    expect(api.save).toHaveBeenCalledWith(41, 'saved-stage-2', { ...api.preview.mock.calls[0][2], previewHash: 'review-token-1' });
+    expect(signingPackagesApi.create).not.toHaveBeenCalled();
+});

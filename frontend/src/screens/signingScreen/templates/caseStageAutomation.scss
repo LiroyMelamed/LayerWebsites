@@ -1,5 +1,13 @@
 @use '../../../styles/variables' as v;
 
+.lw-stageAutomationPage {
+  box-sizing: border-box;
+  inline-size: 100%;
+  max-inline-size: 1120px;
+  margin-inline: auto;
+  padding: v.$space-4;
+}
+
 .lw-stageAutomation {
   border-block-start: 1px solid var(--lw-border, #d8e0ea);
   margin-block: v.$space-4;
