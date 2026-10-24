@@ -80,6 +80,10 @@ function createDeliveryService({ pool, grantService, provider, linkFor }) {
             if (delivery.active_revision_id !== delivery.revision_id || !(completedCopy ? ['complete'] : ['active', 'attention']).includes(delivery.workflow_state)) {
                 return skip('cancelled', 'REVISION_INACTIVE');
             }
+            if(delivery.purpose==='invitation') {
+                const stageOriginError=await require('./caseStageAutomation').originGuard(db,lease.owner_context_id,delivery.package_id,{recordFailure:true});
+                if(stageOriginError)return skip('failed',stageOriginError);
+            }
             if (delivery.purpose !== 'invitation' && !await senderCanAccess(db,lease.owner_context_id,
                 delivery.target_snapshot.actorUserId,delivery.package_id,requiredDeliveryActions(delivery.purpose,renewLink))) return skip('cancelled','SENDER_ACCESS_CHANGED');
             if (delivery.deadline && !completedCopy && new Date(delivery.deadline) <= new Date()) return skip('cancelled','DEADLINE_EXPIRED');
