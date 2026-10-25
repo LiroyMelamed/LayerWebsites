@@ -7,6 +7,29 @@ only the original hash-bound packet in that task, after checking current state.
 No environment values, customer records, launch preimages or database dumps are
 included here. `SOURCE-HASHES.json` binds each copied source file.
 
+## Current release status — 25 October 2026, 18:37 UTC
+
+The prepared subscription/payment-message **OFF release is complete** for the
+three dedicated customers. Backend source and remote client branches match:
+AshrafEssa `ea7df270`, MelamedLaw `e3f62861`, MorLevi `cae9a045`.
+Each passed the 13 backend preservation predicates, exact frontend readback,
+protected branding and retained-chunk checks, public desktop/mobile bootstrap,
+and ordinary-browser public HTTPS health checks. All five active legal services
+were observed online with the expected source and HTTP 200 health responses.
+QA and shared signup source were unchanged by this three-customer release.
+
+`RELEASE-STATUS-20261025.json` is the sanitized, hash-bound receipt index.
+Original evidence and both ledgers remain in the protected task. The earlier
+MelamedLaw precondition stop and MorLevi SSH refusal are retained. A read-only
+diagnostic proved MorLevi publication had not started before its reviewed
+conditional retry succeeded. Do not replay completed deployment phases.
+
+Idm's mapped dedicated retirement is complete and it is excluded from releases.
+Capture and dispatch remain OFF. This release does not prove real delivery,
+authenticated customer workflows, native/store versions, or every product flow.
+Automatic Court transport/office synchronization and the separate manual-import
+QA remain unverified; the approved Court IT inquiry was already sent once.
+
 ## Historical operator02 checkpoint and holds — 25 October 2026
 
 Latest owner direction: retire Idm frontend/backend/database first, wait for
@@ -46,18 +69,17 @@ Both original operators and all failures remain preserved.
 
 **Historical maintenance coordination HOLD:** this applied to the earlier
 operator02 checkpoint. That hold cleared according to later actual receipts.
-The current rollout is ongoing under individually reviewed phases; the old
-packet is retained as history, not an instruction to replay it.
+Later reviewed phases completed the release described above; the old packet is
+retained as history, not an instruction to replay it.
 All capture/dispatch flags remain OFF. No migration, dependency installation,
 environment/key change, real test message, customer-data change or production tag is
 authorized by these scripts or by this archive.
 
-## Operator03 original PM2 policy preservation — rollout ongoing
+## Operator03 original PM2 policy preservation
 
-The live rollout is **ongoing**. AshrafEssa backend, static publication and
-limited public desktop/mobile smoke are complete; root is executing the
-MelamedLaw operator03 phases. Final customer status must come from the latest
-protected task receipts. The operator02 runtime descriptions above are historical.
+Operator03 completed MelamedLaw and MorLevi; AshrafEssa used the reviewed
+operator02 packet. Final customer evidence is indexed above. The operator02
+runtime descriptions in the historical section are earlier snapshots.
 
 A fresh read-only observation found that MelamedLaw originally has **no
 `min_uptime` property**, while MorLevi has an original numeric value of **10000**.

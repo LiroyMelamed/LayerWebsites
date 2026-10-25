@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-25T18:39:28.742357+00:00",
+  "result": "THREE_DEDICATED_CUSTOMER_WEB_API_OFF_RELEASE_COMPLETE",
+  "scope": "Prepared subscription/payment system-message OFF release on preserved dedicated customer source; not a wholesale shared/native release or all-features bug-free certification",
+  "originalConversation": {
+    "title": "MelamedLaw - מקבוק",
+    "threadId": "01a10c1d-80a2-74b0-b6db-5a7c0bf9d645"
+  },
+  "resumedConversation": "01a17442-11cc-7b01-acc1-51f4aefb00dd",
+  "productMainCommit": "7a9d36faad22d6eb058005ec016486cfeb5f07be",
+  "operatorRecoveryCommit": "fd88dd97a573adf5fe5b174fe9d84cecbca61707",
+  "tenants": {
+    "ashrafessa": {
+      "runtimeSourceCommit": "ea7df270d591aefa66acb81a73eac81f3aba9d6f",
+      "remoteClientBranchCommitVerified": "ea7df270d591aefa66acb81a73eac81f3aba9d6f",
+      "backend": {
+        "path": "outputs/legal-system-messages-20261025/ops-prod-off/ashrafessa-verify-20261025T181236082780Z.json",
+        "sha256": "838e12ccd20c16a8a543bf83f393f1973d122eaaa8c1ecdf5bb34f56022beaaa"
+      },
+      "frontend": {
+        "path": "outputs/legal-system-messages-20261025/customer-rollout/frontend/ashrafessa-publisher-verify-20261025T181430600410Z.json",
+        "sha256": "72629c841138aa0cb026cb12a215724f2d0b103535907771865bb24b8d1854ab"
+      },
+      "browser": {
+        "path": "outputs/legal-system-messages-20261025/resumed-20261025/ashrafessa-public-smoke02.json",
+        "sha256": "b786874f44bcdeddc8b0337f5bc6d42e49f1200d91452951c4ed879c006d2d1f"
+      },
+      "images": {
+        "desktop": {
+          "path": "outputs/legal-system-messages-20261025/resumed-20261025/ashrafessa-desktop.jpg",
+          "sha256": "ad06ed61ba69d11f856fdf42618d361809108894592f5632d709bbf2ac58e750"
+        },
+        "mobile": {
+          "path": "outputs/legal-system-messages-20261025/resumed-20261025/ashrafessa-mobile.jpg",
+          "sha256": "d56238e0b9a9e09638e4b768c9b6c7f382473b94612a690052aae0f7420cb7c0"
+        }
+      },
+      "namedBranch": "AshrafEssa",
+      "pidAtBackendVerification": 1414443,
+      "all13BackendPreservationPredicatesPassed": true,
+      "producerSchemaAbsent": {
+        "consentsExist": false,
+        "outboxExists": false,
+        "migrationCount": 0,
+        "signupColumns": 0
+      },
+      "protectedFrontendFilesPreserved": true,
+      "oldChunksDeleted": 0,
+      "publicDesktopAndMobileBootstrapPassed": true,
+      "authenticatedWorkflowRetested": false
+    },
+    "melamedlaw": {
+      "runtimeSourceCommit": "e3f62861135642cf6fe5278d1afbb7388a4c8180",
+      "remoteClientBranchCommitVerified": "e3f62861135642cf6fe5278d1afbb7388a4c8180",
+      "backend": {
+        "path": "outputs/legal-system-messages-20261025/ops-prod-off/melamedlaw-verify-20261025T182823269856Z.json",
+        "sha256": "95388ec1aa5e62404dea30a070d163cd5fb787b255c464d14db1e8e14d407351"
+      },
+      "frontend": {
+        "path": "outputs/legal-system-messages-20261025/customer-rollout/frontend/melamedlaw-publisher-verify-20261025T183044879733Z.json",
+        "sha256": "e144728e31379128ba246739ae3ce0808edff771b0635bf846121db70a3a411e"
+      },
+      "browser": {
+        "path": "outputs/legal-system-messages-20261025/resumed-20261025/melamedlaw-public-smoke.json",
+        "sha256": "2ae3138d73f8d61357996ee7888cadf9a4d113a8acf160662ada5928ba754e3b"
+      },
+      "images": {
+        "desktop": {
+          "path": "outputs/legal-system-messages-20261025/resumed-20261025/melamedlaw-desktop.jpg",
+          "sha256": "2d21528e970599a0946b6ae0b305045139f11f76c8ec11377edda889f7e64df1"
+        },
+        "mobile": {
+          "path": "outputs/legal-system-messages-20261025/resumed-20261025/melamedlaw-mobile.jpg",
+          "sha256": "0a1352b90e4ba0cee25c5fc2338606f3cf3069249209d202e7e912a161e6054d"
+        }
+      },
+      "namedBranch": "MelamedLaw",
+      "pidAtBackendVerification": 1417313,
+      "all13BackendPreservationPredicatesPassed": true,
+      "producerSchemaAbsent": {
+        "consentsExist": false,
+        "outboxExists": false,
+        "migrationCount": 0,
+        "signupColumns": 0
+      },
+      "protectedFrontendFilesPreserved": true,
+      "oldChunksDeleted": 0,
+      "publicDesktopAndMobileBootstrapPassed": true,
+      "authenticatedWorkflowRetested": false
+    },
+    "morlevy": {
+      "runtimeSourceCommit": "cae9a0456fabd1ae144da2b81751c06b2308dc91",
+      "remoteClientBranchCommitVerified": "cae9a0456fabd1ae144da2b81751c06b2308dc91",
+      "backend": {
+        "path": "outputs/legal-system-messages-20261025/ops-prod-off/morlevy-verify-20261025T183335001924Z.json",
+        "sha256": "efa4ea994cd3f4f423374a704c89f3e39792ae9060facc44396dc37b092addb1"
+      },
+      "frontend": {
+        "path": "outputs/legal-system-messages-20261025/customer-rollout/frontend/morlevy-publisher-verify-20261025T183617193936Z.json",
+        "sha256": "a0829c49aaf77663a578350c8c6f92c2a0a530255e956c1674ae1e61c6811aa6"
+      },
+      "browser": {
+        "path": "outputs/legal-system-messages-20261025/resumed-20261025/morlevy-public-smoke.json",
+        "sha256": "dece2cd29531c516d94723d4cc3b04f949f65085d9189584a84b697a45559eea"
+      },
+      "images": {
+        "desktop": {
+          "path": "outputs/legal-system-messages-20261025/resumed-20261025/morlevy-desktop.jpg",
+          "sha256": "1a6fff3bc36128206b0b60da3a77a40fd0c33ca39d1afe46957f8d93dd8e26d9"
+        },
+        "mobile": {
+          "path": "outputs/legal-system-messages-20261025/resumed-20261025/morlevy-mobile.jpg",
+          "sha256": "b4370165858084133425b6fb8715573017cf9a7f015defd04c5aa904cfd60f80"
+        }
+      },
+      "namedBranch": "MorLevi",
+      "pidAtBackendVerification": 1420738,
+      "all13BackendPreservationPredicatesPassed": true,
+      "producerSchemaAbsent": {
+        "consentsExist": false,
+        "outboxExists": false,
+        "migrationCount": 0,
+        "signupColumns": 0
+      },
+      "protectedFrontendFilesPreserved": true,
+      "oldChunksDeleted": 0,
+      "publicDesktopAndMobileBootstrapPassed": true,
+      "authenticatedWorkflowRetested": false
+    }
+  },
+  "activeFiveBackendVersionAndHealth": {
+    "path": "outputs/legal-system-messages-20261025/resumed-20261025/active-five-status-20261025T183643173930Z.json",
+    "sha256": "61cde3ff2b8e6ab57f4bb59f2748dc20edb7e874675bce334a905b72d296de8b"
+  },
+  "activeFivePassed": true,
+  "publicHttpsHealth": {
+    "path": "outputs/legal-system-messages-20261025/resumed-20261025/public-api-health01.json",
+    "sha256": "b3c9fbbb150ae9736f48955df9e81856cc43c9caa55f08d61accaacef0bba5a5"
+  },
+  "allThreePublicHttpsJsonOk": true,
+  "operatorCorrection": {
+    "reason": "MelamedLaw original min_uptime property absent; MorLevi original numeric10000; old5000-only gate stopped before mutation",
+    "settingsChanged": false,
+    "minimumMeasuredStableAgeMs": {
+      "melamedlaw": 5000,
+      "morlevy": 10000
+    },
+    "absoluteHealthDeadlineMs": 25000,
+    "focusedNewCases": 16,
+    "focusedTestReceipt": {
+      "path": "outputs/legal-system-messages-20261025/ops-prod-off/min-uptime-policy03-focused01.json",
+      "sha256": "6e3d6f31ff803e276719526582122bc7d83f092c26b60170592bea6af2391aef"
+    },
+    "independentCodeReview": {
+      "path": "outputs/legal-system-messages-20261025/resumed-20261025/backend03-independent-review01.json",
+      "sha256": "ef810864dc7cb8c1420ac81f73dcfd673d08d579b9b4047540e564741c4866f9"
+    }
+  },
+  "independentFinalAudit": {
+    "reviewer": "/root/frontend_rollout_recovery",
+    "result": "ALL_THREE_SCOPED_RECEIPT_AND_BROWSER_AUDITS_PASSED",
+    "materialIssues": [],
+    "scope": "Local actual receipt hashes/releasebindings/13 preservation predicates/manifest entrypoints and desktop-mobile records; no extra runtime tests"
+  },
+  "retainedFailureEvidence": [
+    {
+      "path": "outputs/legal-system-messages-20261025/ops-prod-off/melamedlaw-checkpoint-20261025T181503893881Z.json",
+      "sha256": "c43ae8ce677927d66e11c3a805911e916ce8e94a643a99c0d7c986e423eb24e2"
+    },
+    {
+      "path": "outputs/legal-system-messages-20261025/customer-rollout/frontend/morlevy-publisher-publish-20261025T183450578582Z.json",
+      "sha256": "443d0e881eca869529b2a3405998023d995a4db5d3ea3cb65514d1078193ff6a"
+    },
+    {
+      "path": "outputs/legal-system-messages-20261025/resumed-20261025/morlevy-publish-transport-diagnostic01.json",
+      "sha256": "96efe06c8e5fd2ee3982534dc990edb6ae99bb5e9ac751318e188c3ae37ec6b2"
+    }
+  ],
+  "idmRetirement": {
+    "path": "outputs/idm-retirement-20261025/IDM-CLOSEOUT21.json",
+    "sha256": "a89019b22bf588f74de846120c77430b867d7ed6956b350a30db799d01de92fa"
+  },
+  "idmExcludedAndMappedDedicatedRetirementComplete": true,
+  "producerCaptureEnabled": false,
+  "producerDispatchEnabled": false,
+  "producerSchemaOrEnvironmentChanged": false,
+  "realMessagesOrCharges": false,
+  "sharedQaAndNativeUpdatedByThisThreeCustomerRelease": false,
+  "unchangedActiveServices": {
+    "melamediaQa": "1161fd687db381833552db78a70723573792ab97",
+    "lawyerShared": "ce3cb6a9058a2a3ec2dc1495796079cde90f6f51"
+  },
+  "remainingSeparateWork": [
+    "Central deployment identities/HMAC/static portal mapping and real delivery remain unverified; producer remains OFF",
+    "Court automatic delegated transport and office synchronization remain unverified; approved Court IT inquiry sent once",
+    "Court manual-file import QA promotion was previously rolled back; no live import success inferred",
+    "Authenticated customer workflows and native/store versions were not newly tested by this release"
+  ],
+  "invalidation": "Source, environment, launch, schema, routing, provider, public-file or runtime drift invalidates corresponding point-in-time proof; retain earlier failures and both ledgers"
+}

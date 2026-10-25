@@ -12,5 +12,19 @@
     "run-backend-off03.py": "5ec80e3e2893ba7234f17a26ade789514e7c538f125bd9d8da599a1cbb1ba308",
     "min-uptime-policy03.test.cjs": "f782655e5ed5d8a5d8e6fe80623a2b106627f56df30a0a6b7e884e7e4036e904"
   },
-  "updatedAt": "2026-10-25T18:22:15.015033+00:00"
+  "updatedAt": "2026-10-25T18:40:34.729114+00:00",
+  "additionalSources": {
+    "active-five-status01.cjs": {
+      "originalProtectedTaskPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/legal-system-messages-20261025/resumed-20261025/active-five-status01.cjs",
+      "sha256": "3e24ed851e9ada5378d25e6a99da6fcec01fc835e1c9e1c567ba319c93d659d5"
+    },
+    "run-active-five-status01.py": {
+      "originalProtectedTaskPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/legal-system-messages-20261025/resumed-20261025/run-active-five-status01.py",
+      "sha256": "c814ccc1282f0314d0e0a815159388ad1238927653a9ccf90b89d9d22a99380d"
+    },
+    "RELEASE-STATUS-20261025.json": {
+      "originalProtectedTaskPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/legal-system-messages-20261025/resumed-20261025/ROOT-ROLLOUT-COMPLETE01.json",
+      "sha256": "968fe0ada620c0d70ab073ba0a4a25ab2b6441ab9a36595a102482b6b98bdf2f"
+    }
+  }
 }
