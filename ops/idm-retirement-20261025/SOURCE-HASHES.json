@@ -1,0 +1,30 @@
+{
+  "backend-remote05.py": {
+    "originalProtectedTaskPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/idm-retirement-20261025/backend/retire05.remote.py",
+    "sha256": "7e628f522d86300d6991ef227a777e2df0b04bdd1210e890c1ce4963ade54a9c"
+  },
+  "backend-runner05.py": {
+    "originalProtectedTaskPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/idm-retirement-20261025/backend/retire-reviewed05.py",
+    "sha256": "f167fb94060567c57fc8fc92a4449e0be3bc25fe85919e855b91bc870d2b5596"
+  },
+  "backend-offsite-verifier05.py": {
+    "originalProtectedTaskPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/idm-retirement-20261025/backend/verify-offsite05.py",
+    "sha256": "03110c2981b783e1e4d5c5a297e17fc5d69fe30e39e218fc5c33294e90931f52"
+  },
+  "backup-deregistration-installer05.py": {
+    "originalProtectedTaskPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/legal-system-messages-20261025/idm-retirement/installer05/installer.py",
+    "sha256": "e4ea05f25618b920c6127b23af548b9de340151b2cf3996ed8a7e4873e3d0724"
+  },
+  "retention-idm-history-exemption04.py": {
+    "originalProtectedTaskPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/legal-system-messages-20261025/idm-retirement/retention04/proposed-retention.py",
+    "sha256": "f2dc2352c70a831935546fe9fb4f007182b03f560a8e0541f2e81f342939027c"
+  },
+  "frontend-operator03.py": {
+    "originalProtectedTaskPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/legal-system-messages-20261025/idm-retirement/frontend/retire-reviewed03.py",
+    "sha256": "1e9893be7d2c559d9e8a1325cc1eebae421f582267573c2915d8bec0941d90bd"
+  },
+  "frontend-offsite-verifier02.py": {
+    "originalProtectedTaskPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/legal-system-messages-20261025/idm-retirement/frontend/verify-offsite02.py",
+    "sha256": "5becbe206cb95eb55f49f8da53c63b4ab6773e39dd5088afa43a4c601ff87400"
+  }
+}
