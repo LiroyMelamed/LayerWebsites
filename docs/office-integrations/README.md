@@ -265,6 +265,20 @@ result. The genuine example is case 67104-01-20, decision 21 October 2026,
 The PDF remains outside Git. Full live-QA import/download/replay evidence must be
 recorded separately; local parser or fixture results are not live-QA approval.
 
+**QA attempt outcome, 25 October:** candidate `b0553bde` and build03 passed their
+focused local checks. The actual backend activation stopped after restart because
+the nested PM2 launch-environment hash differed from its checkpoint. Source,
+the original environment-file prefix, existing safety fences, pairing and other
+process guards matched; complete launch-environment equivalence was not proven.
+No real PDF was imported and the new frontend was never published. The reviewed
+rollback restored backend `7ec2217e` and the exact original environment file;
+all 343 incumbent frontend files were verified unchanged. The empty additive
+schema and private recovery checkpoints remain. Retain the unresolved failure;
+do not label this candidate live-QA approved or automatically retry activation.
+Any next attempt needs a reviewed launch-environment baseline and the missing
+actual import, download, deduplication and responsive checks. Automatic court
+access remains a separate unresolved integration contract.
+
 For rollback, first disable the upload gate. Preserve original bytes and audit
 rows; do not blindly restore a whole database over other QA work. If rolling back
 to the old renderer that assumes all court rows are demo, quarantine only the
