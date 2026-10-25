@@ -3229,18 +3229,5 @@
       "sending": "Sending",
       "sent": "Sent"
     }
-  },
-  "systemMessages": {
-    "title": "Subscription updates on WhatsApp",
-    "consentLabel": "I agree to receive payment notices and subscription updates from MelaMedia on WhatsApp at my sign-in number.",
-    "consentHint": "This is optional. You can withdraw here at any time, or send STOP on WhatsApp.",
-    "recipientHint": "Updates are for the subscription owner’s number ending in {{last4}}.",
-    "loading": "Loading your message preference…",
-    "save": "Save preference",
-    "saved": "Your message preference has been saved.",
-    "saveError": "We couldn’t confirm whether your preference was saved. Your choice is still shown; try again.",
-    "loadError": "Your message preference could not be loaded. Other subscription actions remain available.",
-    "confirmationRequired": "To receive updates, confirm your choice again by selecting the option and saving.",
-    "withdrawPrevious": "Withdraw previous consent"
   }
 }
