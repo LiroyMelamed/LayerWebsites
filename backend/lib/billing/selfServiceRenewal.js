@@ -71,13 +71,10 @@ function createSignupRenewal({database=pool,charge=chargeTakbullToken,verify=ver
             const client=await database.connect();
             try {
                 await client.query('BEGIN');
-                await client.query('SELECT id FROM firm_billing WHERE law_firm_tenant_id=$1 FOR UPDATE',[tenantId]);
-                const settled=(await client.query("UPDATE firm_payment_intents SET status='succeeded',takbull_transaction_id=$2,settled_at=now(),updated_at=now(),error_message=null WHERE id=$1 AND law_firm_tenant_id=$3 AND status='pending' RETURNING *",[intent.id,result.transactionInternalNumber,tenantId])).rows[0];
-                if(!settled)throw Error('RENEWAL_RESERVATION_CHANGED');
+                await client.query("UPDATE firm_payment_intents SET status='succeeded',takbull_transaction_id=$2,settled_at=now(),updated_at=now(),error_message=null WHERE id=$1",[intent.id,result.transactionInternalNumber]);
                 const from=new Date(Math.max(now().getTime(),new Date(account.renews_at).getTime()));
                 const end=addIsraelCalendarMonths(from,account.billing_interval==='yearly'?12:1);
                 await client.query("UPDATE firm_billing SET status='active',last_paid_at=now(),renews_at=$2,last_payment_error=null,last_failed_at=null,grace_until=null,updated_at=now() WHERE law_firm_tenant_id=$1",[tenantId,end]);
-                await require('../systemMessages').enqueuePaymentReceived(client,{intent:settled});
                 await client.query('COMMIT');
             } catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
             return {handled:true,status:'succeeded'};
