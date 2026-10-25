@@ -3550,7 +3550,7 @@
     "loading": "Loading your message preference…",
     "save": "Save preference",
     "saved": "Your message preference has been saved.",
-    "saveError": "Your preference could not be saved. Your choice remains on this screen; please try again.",
+    "saveError": "We couldn’t confirm whether your preference was saved. Your choice is still shown; try again.",
     "loadError": "Your message preference could not be loaded. Other subscription actions remain available.",
     "confirmationRequired": "To receive updates, confirm your choice again by selecting the option and saving.",
     "withdrawPrevious": "Withdraw previous consent"
