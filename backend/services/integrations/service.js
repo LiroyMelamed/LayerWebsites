@@ -113,7 +113,7 @@ function createIntegrationService({ pool, provider, linkedProvider, env = proces
                 WHERE court_case_links.case_id=excluded.case_id RETURNING id`, [tenantId, caseId, number]);
             if (!linked.rows.length) fail('COURT_NUMBER_IN_USE', 'מספר תיק בית המשפט כבר משויך לתיק אחר במשרד', 409);
             await db.query('UPDATE court_case_links SET is_primary=true WHERE id=$1 AND NOT EXISTS(SELECT 1 FROM court_case_links WHERE case_id=$2 AND is_primary)', [linked.rows[0].id, caseId]);
-            await db.query('UPDATE court_updates SET case_id=$3 WHERE law_firm_tenant_id IS NOT DISTINCT FROM $1 AND court_number=$2', [tenantId, number, caseId]);
+            await db.query('UPDATE court_updates SET case_id=$3 WHERE law_firm_tenant_id IS NOT DISTINCT FROM $1 AND court_number=$2 AND is_demo=true', [tenantId, number, caseId]);
         });
     }
     async function syncCourt(tenantId, { scheduledAt } = {}) {

@@ -9,20 +9,44 @@ const pool = require('../config/db');
 const { service, worker, runOffice } = require('../services/integrations/runtime');
 const { positiveId } = require('../services/integrations/validation');
 const productIdentity = require('../config/productIdentity');
+const { createCourtOwnerImport, enabled: courtImportEnabled, MAX_BYTES: COURT_IMPORT_MAX_BYTES } = require('../services/integrations/courtOwnerImport');
+const courtImports = createCourtOwnerImport({ pool });
 const router = express.Router();
 const wrap = fn => (req, res, next) => Promise.resolve(fn(req, res)).catch(next);
 router.use(auth);
+const importOwnerPolicy = req => req.firmPermissionContextValidated === true && req.user?.Role === 'Admin' &&
+    (req.firmTenantId ? req.isOfficeOwner === true : req.isPlatformAdminUser === true);
+const caseReader = require('../middlewares/requireFirmAction')('cases', 'view', { legacy: 'lawyerOrAdmin' });
+async function readableCase(req) {
+    if (req.user.Role === 'User' || req.user.Role === 'Client') throw createAppError('FORBIDDEN', 403, 'אין הרשאה');
+    const caseId=positiveId(req.params.caseId);
+    const denied=await require('../lib/firmPermissions/caseAccess').assertCaseRecordAccess(req,caseId);
+    if(denied)throw denied;
+    return caseId;
+}
+
+router.get('/cases/:caseId/court-documents/:documentId', caseReader, wrap(async(req,res)=>{
+    const caseId=await readableCase(req);
+    const doc=await courtImports.document({officeId:req.firmTenantId || null,caseId,documentId:req.params.documentId});
+    res.set({'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Content-Type':'application/pdf',
+        'Content-Disposition':`attachment; filename="court-decision.pdf"; filename*=UTF-8''${encodeURIComponent(doc.filename)}`,
+        'Content-Length':String(doc.buffer.length),'X-Content-SHA256':doc.sha256}).send(doc.buffer);
+}));
 
 // Case readers retain the existing record permissions; clients cannot see internal imports.
-router.get('/cases/:caseId', require('../middlewares/requireFirmAction')('cases', 'view', { legacy: 'lawyerOrAdmin' }), wrap(async (req, res) => {
-    if (req.user.Role === 'User' || req.user.Role === 'Client') throw createAppError('FORBIDDEN', 403, 'אין הרשאה');
-    const caseId = positiveId(req.params.caseId);
-    const denied = await require('../lib/firmPermissions/caseAccess').assertCaseRecordAccess(req, caseId);
-    if (denied) throw denied;
+router.get('/cases/:caseId', caseReader, wrap(async (req, res) => {
+    const caseId = await readableCase(req);
     const officeId = req.firmTenantId || null;
-    const updates = await pool.query('SELECT id,title,body,occurred_at,is_demo FROM court_updates WHERE case_id=$1 AND law_firm_tenant_id IS NOT DISTINCT FROM $2 ORDER BY occurred_at DESC', [caseId, officeId]);
+    const updates = courtImportEnabled(process.env) ?
+        await pool.query(`SELECT u.id,u.title,u.body,u.occurred_at,u.is_demo,u.source_kind,u.court_number,u.document_id,
+            d.filename AS source_filename,d.sha256,d.issued_on::text AS issued_on FROM court_updates u
+            LEFT JOIN court_import_documents d ON d.id=u.document_id AND d.law_firm_tenant_id IS NOT DISTINCT FROM u.law_firm_tenant_id
+            WHERE u.case_id=$1 AND u.law_firm_tenant_id IS NOT DISTINCT FROM $2 ORDER BY u.occurred_at DESC`,[caseId,officeId]) :
+        await pool.query(`SELECT id,title,body,occurred_at,is_demo,CASE WHEN is_demo THEN 'demo' ELSE 'owner_file' END AS source_kind
+            FROM court_updates WHERE case_id=$1 AND law_firm_tenant_id IS NOT DISTINCT FROM $2 ORDER BY occurred_at DESC`, [caseId, officeId]);
     const group = await pool.query('SELECT mode,status,error_code,invite_link FROM case_whatsapp_groups WHERE case_id=$1 AND law_firm_tenant_id IS NOT DISTINCT FROM $2', [caseId, officeId]);
-    res.json({ updates: updates.rows, group: group.rows[0] || null });
+    const courtImport=await courtImports.capability({officeId,caseId,actorUserId:req.user.UserId,policyAllowed:importOwnerPolicy(req)});
+    res.json({ updates: updates.rows, group: group.rows[0] || null, courtImport });
 }));
 
 // Platform Settings belongs to the office owner. Shared-deployment owners manage
@@ -58,6 +82,19 @@ router.use((req, _res, next) => {
     })().catch(next);
 });
 const policy = (req, _res, next) => req.integrationPolicyAdmin ? next() : next(createAppError('FORBIDDEN', 403, 'רק מנהל הפלטפורמה רשאי לשנות את הגדרות הסנכרון והאוטומציה'));
+const courtFileUpload = require('multer')({storage:require('multer').memoryStorage(),limits:{fileSize:COURT_IMPORT_MAX_BYTES,files:1,fields:7,parts:8,fieldSize:2048}}).single('file');
+router.post('/court/import-file',policy,require('../middlewares/requireFirmAction')('cases','edit',{legacy:'admin'}),
+    (req,res,next)=>{
+        if(!importOwnerPolicy(req))return next(createAppError('FORBIDDEN',403,'רק בעל המשרד או מנהל הפלטפורמה רשאי לייבא קובץ'));
+        if(!courtImportEnabled(process.env))return next(createAppError('COURT_OWNER_IMPORT_DISABLED',503,'יבוא הקובץ זמין כעת בסביבת QA בלבד; סנכרון אוטומטי אינו מחובר'));
+        courtFileUpload(req,res,error=>next(error?createAppError(error.code==='LIMIT_FILE_SIZE'?'COURT_IMPORT_TOO_LARGE':'COURT_IMPORT_INVALID',error.code==='LIMIT_FILE_SIZE'?413:400,'קובץ היבוא או פרטיו אינם תקינים'):undefined));
+    },wrap(async(req,res)=>{
+        const caseId=positiveId(req.body.caseId);
+        const denied=await require('../lib/firmPermissions/caseAccess').assertCaseRecordAccess(req,caseId,'edit');
+        if(denied)throw denied;
+        const result=await courtImports.importFile({officeId:req.integrationOfficeId,actorUserId:req.user.UserId,input:req.body,file:req.file});
+        res.set('Cache-Control','no-store').status(result.imported?201:200).json(result);
+    }));
 router.get('/', wrap(async (req, res) => res.json({ ...await service.snapshot(req.integrationOfficeId), canConfigurePolicy: req.integrationPolicyAdmin })));
 router.get('/settings', wrap(async (req, res) => res.json({ ...await service.settingsSnapshot(req.integrationOfficeId), canConfigurePolicy: req.integrationPolicyAdmin })));
 router.put('/court', policy, wrap(async (req, res) => { await service.saveCourt(req.integrationOfficeId, req.body); res.json({ ok: true }); }));

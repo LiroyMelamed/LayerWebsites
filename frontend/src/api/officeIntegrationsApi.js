@@ -1,4 +1,11 @@
 import ApiUtils from './apiUtils';
+function courtResponse(response) {
+    if (!response?.success) throw Object.assign(new Error('COURT_IMPORT_REQUEST_FAILED'), {
+        code: response?.data?.errorCode || response?.data?.code,
+        status: response?.status,
+    });
+    return response.data;
+}
 async function request(method, path = '', officeId, body) {
     const options = { params: officeId && officeId !== 'dedicated' ? { officeId } : {} };
     const response = method === 'get' || method === 'delete'
@@ -28,5 +35,10 @@ export const officeIntegrationsApi = {
     resumeWhatsappSafety: (id, body) => request('post', '/whatsapp/safety/resume', id, body),
     disconnect: id => request('delete', '/whatsapp', id),
     previewGroup: (id, caseId) => request('post', `/whatsapp/demo/${caseId}`, id),
-    caseUpdates: caseId => request('get', `/cases/${caseId}`),
+    caseUpdates: async caseId => courtResponse(await ApiUtils.get(`office-integrations/cases/${encodeURIComponent(caseId)}`)),
+    importCourtFile: async body => courtResponse(await ApiUtils.post('office-integrations/court/import-file', body, { timeout: 30000 })),
+    courtDocument: async (caseId, documentId) => courtResponse(await ApiUtils.get(
+        `office-integrations/cases/${encodeURIComponent(caseId)}/court-documents/${encodeURIComponent(documentId)}`,
+        { responseType: 'blob', timeout: 30000 },
+    )),
 };

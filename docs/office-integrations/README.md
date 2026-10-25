@@ -199,3 +199,74 @@ change, sending or bulk download occurred. Evidence is recorded in the root QA
 workspace under `outputs/office-whatsapp-20261025/court-handoff/public-example06.json`.
 This is public browser-viewing proof only: private office-case authorization, a
 delegated API grant and automatic synchronization into this product remain unverified.
+
+
+### Owner-file QA pipeline — 25 October 2026
+
+This scoped QA candidate implements **manual import of an owner-provided court
+export**, not a court connection or an unattended synchronization grant. A normal
+anonymous public-site navigation received HTTP 403, while the owner's ordinary
+national-identity browser session could search the public example and download
+a fresh official original-copy PDF after signing in again. No credentials,
+cookies or SAML responses are transferred to the application server. An explicitly
+authorized request for a supported integration route was emailed to the court IT
+department; a reply or authorization is not inferred.
+
+The temporary source worktree is
+`/Users/liroymelamed/Projects/LayerWebsites/.worktrees/court-qa-import-20261025`,
+branch `codex/court-qa-import-20261025`, based on the protected QA state
+`1bca4eff6ef539cc2eeb2878dedf3e9c4cb178a3`. Root owns the candidate and exact QA
+verification. Preserve the original protected worktree. Retire the temporary copy
+only after verified Git preservation, consumer shutdown and evidence preservation.
+
+Apply `backend/migrations/2026-10-25_court_owner_import.sql` with the existing
+schema maintenance role before deploying these routes. It adds the document and
+action tables, classifies them for shared-office RLS, copies the existing court
+update owner/CRUD grants, and preserves all old demo rows. Real rows are permitted
+only with immutable `owner_file` provenance and an associated original document.
+The original PDF bytes, hash, uploader, attestation version, title and declared
+decision day are immutable. Declared metadata and a matching file hash are not
+cryptographic verification of a court signature or an automatic source feed.
+
+The upload requires both trusted runtime values:
+`COURT_OWNER_IMPORT_ENABLED=true` and `RUNTIME_TENANT=melamedia`. It is disabled
+by default and blocked for other customer deployments. Only a current validated
+office owner or the dedicated platform administrator with case-edit access can
+import; authorized case staff can download, and clients cannot. The public case
+reference must already be bound through the ordinary case form. A changed
+reference detaches old records; restoring the number does not silently reattach
+real data. A fresh explicit import is required.
+
+`POST /api/office-integrations/court/import-file` receives multipart
+`caseId,courtNumber,issuedOn,title,actionId,sourceConfirmed,file`. The original PDF
+is limited to 5 MiB / 50 pages, must be readable and unencrypted, and is rejected for
+unsupported active actions or embedded files. The owner must explicitly confirm
+that it was exported from the court website. A retry retains the same action UUID
+and exact request identity; changed bytes or metadata under that action return 409.
+The same PDF and metadata under a new action reuse the existing document/update.
+The file, update and action commit together; there are no notification, calendar
+or remote-provider calls in the importer.
+
+`GET /api/office-integrations/cases/:caseId/court-documents/:documentId` rechecks
+case/office/current court-reference access and the stored byte hash. It returns
+the exact bytes as a private, no-store PDF attachment. The document table stores
+bounded owner imports; it is not a bulk court-document archive.
+
+The case UI labels these records as manually imported, with their declared date
+and a protected original-file download. It never labels them as demonstration
+records or claims automatic connectivity. Existing demo schedules and WhatsApp
+configuration are unchanged.
+
+Root test evidence is in `outputs/court-sync-20261025/` in the protected task
+workspace. Backend and frontend handoffs bind every source hash and focused
+result. The genuine example is case 67104-01-20, decision 21 October 2026,
+521,507 bytes/SHA256
+`d4734463681ae2767094dd3b4d60af9c8c4ed02dc83094d98c76b5d673a3455c`.
+The PDF remains outside Git. Full live-QA import/download/replay evidence must be
+recorded separately; local parser or fixture results are not live-QA approval.
+
+For rollback, first disable the upload gate. Preserve original bytes and audit
+rows; do not blindly restore a whole database over other QA work. If rolling back
+to the old renderer that assumes all court rows are demo, quarantine only the
+exact owned QA update IDs under hash/binding guards before restoring old code.
+Keep all customer deployments and outbound-message fences unchanged.
