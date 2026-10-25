@@ -2,7 +2,6 @@ const { validEmail } = require('./signupWelcomeTemplate');
 const { flushWelcome } = require('./signupWelcomeEmail');
 const { saveSignupLogo } = require('./signupLogo');
 const { assertSignupAvailable } = require('./signupAvailability');
-const { captureSignupSystemConsent, provisionSignupSystemMessages } = require('./signupSystemMessages');
 const crypto = require('node:crypto');
 const pool = require('../../config/db');
 const { formatPhoneNumber } = require('../../utils/phoneUtils');
@@ -52,7 +51,6 @@ async function createSignupIntent(payload) {
     if (payload.billingConsent !== true || payload.consentVersion !== CONSENT_VERSION) {
         throw Object.assign(new Error('יש לאשר חיוב שקל ושמירת כרטיס לחידוש לאחר שלושה חודשים'), { code: 'CONSENT_REQUIRED' });
     }
-    const systemConsent = captureSignupSystemConsent(payload);
     if (!getTakbullCredentialsFromEnv() || !getProviderSecretsKey()) {
         throw Object.assign(new Error('ההרשמה בתשלום עדיין אינה זמינה'), { code: 'TAKBULL_NOT_CONFIGURED' });
     }
@@ -86,7 +84,7 @@ async function createSignupIntent(payload) {
     if (Number(payload.expectedPriceIls) !== quoted) throw Object.assign(new Error('המחיר השתנה; יש לרענן ולאשר מחדש'), {code:'PRICE_CHANGED'});
     const id = String(payload.idempotencyKey || '');
     if (!/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(id)) throw Object.assign(new Error('INVALID_IDEMPOTENCY_KEY'), {code:'INVALID_IDEMPOTENCY_KEY'});
-    const requestHash = crypto.createHash('sha256').update(JSON.stringify({slug,firmName,adminName,adminPhone,adminEmail,platformId,resourceId,signingId,billingInterval,quoted,...(payload.logoDataUrl ? {logoSourceSha256:crypto.createHash('sha256').update(String(payload.logoDataUrl)).digest('hex')} : {}),...(systemConsent ? {systemMessagesConsent:{optedIn:true,version:systemConsent.version}} : {})})).digest('hex');
+    const requestHash = crypto.createHash('sha256').update(JSON.stringify({slug,firmName,adminName,adminPhone,adminEmail,platformId,resourceId,signingId,billingInterval,quoted,...(payload.logoDataUrl ? {logoSourceSha256:crypto.createHash('sha256').update(String(payload.logoDataUrl)).digest('hex')} : {})})).digest('hex');
     const c = await pool.connect();
     try {
     await c.query('BEGIN');
@@ -121,9 +119,6 @@ async function createSignupIntent(payload) {
             pkg.total, id, requestHash, CONSENT_VERSION, quoted, pkg.vatPercent, logo,
         ]
     );
-    if (systemConsent) await c.query(`UPDATE signup_intents SET system_whatsapp_opted_in=true,
-        system_whatsapp_consent_version=$2,system_whatsapp_captured_at=$3 WHERE id=$1`,
-        [id,systemConsent.version,systemConsent.capturedAt]);
     await c.query('COMMIT');
     return mapSignupRow(res.rows[0]);
     } catch(e) {await c.query('ROLLBACK');throw e;} finally {c.release();}
@@ -305,7 +300,6 @@ async function provisionTenantFromSignup(signupIntentId, { tokenInfo } = {}) {
                 [signupIntentId,{toEmail:signup.admin_email,adminName:signup.admin_name,firmName:signup.firm_name,adminPhone:signup.admin_phone,loginUrl:welcomeLogin,trialEndsAt:complimentaryUntil.toISOString(),
                     recurringAmountIls:require('../billing/signupQuote').renewalAmount({price_monthly_ils:signup.price_monthly_ils,billing_interval:signup.billing_interval},signup),billingInterval:signup.billing_interval}]);
         }
-        await provisionSignupSystemMessages(client, { signup, tenant, adminUserId, complimentaryUntil });
         await client.query('COMMIT');
         // Delivery failure must not undo an already-created account; the worker retries safe failures.
         try { await flushWelcome(signupIntentId); } catch (_) { console.error('[signup-welcome] queued delivery needs retry'); }

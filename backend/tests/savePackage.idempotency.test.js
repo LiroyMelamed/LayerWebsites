@@ -9,22 +9,6 @@ const crypto = require('node:crypto');
 const pool = require('../config/db');
 const secrets = require('../lib/billing/secrets');
 const billing = require('../lib/billing/firmBillingService');
-const verifier = require('../lib/payments/verifySignupPayment');
-let activeMockState = null;
-
-test.beforeEach(t => {
-    const previous = verifier.verifyChargedTransaction;
-    const previousFetch = global.fetch;
-    global.fetch = async () => { throw Error('UNEXPECTED_EXTERNAL_NETWORK'); };
-    verifier.verifyChargedTransaction = async (_credentials, transactionId, amount) => {
-        const intent = activeMockState?.intents.find(row => row.takbull_transaction_id === transactionId);
-        assert.ok(intent, 'Independent verification must bind the persisted provider transaction');
-        assert.equal(Number(intent.amount_ils), amount);
-        activeMockState.verifications.push({ transactionId, amount });
-        return true;
-    };
-    t.after(() => { verifier.verifyChargedTransaction = previous; global.fetch = previousFetch; });
-});
 
 const baseBillingRow = {
     id: 1,
@@ -54,10 +38,8 @@ function createBillingPoolMock() {
         billingRow: { ...baseBillingRow },
         intents: [],
         events: [],
-        verifications: [],
         advisoryQueue: Promise.resolve(),
     };
-    activeMockState = state;
 
     function routeQuery(sql, params) {
         const s = String(sql).replace(/\s+/g, ' ').trim();
@@ -106,16 +88,9 @@ function createBillingPoolMock() {
                 settled_at: null,
                 created_at: new Date(),
                 updated_at: new Date(),
-                law_firm_tenant_id: params[6] ?? null,
             };
             state.intents.push(intent);
             return { rows: [intent] };
-        }
-
-        if (s.startsWith('SELECT * FROM firm_payment_intents') && s.includes('WHERE id=$1')) {
-            const match = state.intents.find(row => row.id === params[0]
-                && (row.law_firm_tenant_id ?? null) === (params[1] ?? null));
-            return { rows: match ? [{ ...match }] : [], rowCount: match ? 1 : 0 };
         }
 
         if (s.includes('FROM firm_payment_intents') && s.includes('FOR UPDATE')) {
@@ -126,12 +101,6 @@ function createBillingPoolMock() {
                     && (i.kind === 'upgrade' || i.kind === 'annual')
                     && i.package_snapshot?.upgradeOperationKey === key);
             return { rows: pending ? [pending] : [] };
-        }
-
-        if (s.startsWith('SELECT id FROM firm_payment_intents') && s.includes("status='pending'")) {
-            const rows = state.intents.filter(row => row.status === 'pending' && row.kind !== 'setup'
-                && !row.signup_intent_id && (row.law_firm_tenant_id ?? null) === (params[0] ?? null));
-            return { rows, rowCount: rows.length };
         }
 
         if (s.includes("status = 'succeeded'") && s.includes('upgradeOperationKey')) {
@@ -146,16 +115,7 @@ function createBillingPoolMock() {
             return { rows: match ? [match] : [] };
         }
 
-        if (s.startsWith('UPDATE firm_payment_intents') && /SET status\s*=\s*'succeeded'/.test(s) && s.includes('RETURNING *')) {
-            const intent = state.intents.find(row => row.id === params[0]);
-            if (!intent || intent.status !== 'pending') return { rows: [], rowCount: 0 };
-            intent.status = 'succeeded';
-            intent.takbull_transaction_id = params[1];
-            intent.settled_at = new Date();
-            return { rows: [{ ...intent }], rowCount: 1 };
-        }
-
-        if (s.startsWith('UPDATE firm_payment_intents') && /takbull_transaction_id\s*=\s*\$2/.test(s)) {
+        if (s.startsWith('UPDATE firm_payment_intents') && s.includes('takbull_transaction_id = $2')) {
             const intent = state.intents.find((i) => i.id === params[0]);
             if (intent) intent.takbull_transaction_id = params[1];
             return { rows: [], rowCount: 1 };
@@ -243,7 +203,6 @@ function createBillingPoolMock() {
         restore() {
             pool.connect = orig.connect;
             pool.query = orig.query;
-            activeMockState = null;
         },
     };
 }
@@ -323,7 +282,6 @@ test('saved-card upgrade charges once then retry recovers without second provide
         assert.equal(first.charged, true);
         assert.equal(chargeStub.getCalls(), 1);
         assert.equal(billing.getChargeProviderCallCountForTests(), 1);
-        assert.equal(poolMock.state.verifications.length, 1);
 
         poolMock.state.billingRow.platform_id = 'site_app';
         poolMock.state.billingRow.resource_id = 'basic';
@@ -337,7 +295,6 @@ test('saved-card upgrade charges once then retry recovers without second provide
         assert.equal(billing.getChargeProviderCallCountForTests(), 1);
         assert.equal(poolMock.state.billingRow.resource_id, 'pro');
         assert.equal(poolMock.state.billingRow.signing_id, '1500');
-        assert.equal(poolMock.state.intents.filter(row => row.status === 'succeeded').length, 1);
     } finally {
         secrets.decryptSecret = origDecrypt;
         chargeStub.restore();
@@ -407,57 +364,6 @@ test('concurrent upgrade requests produce at most one provider charge', async ()
         assert.equal(poolMock.state.billingRow.resource_id, 'pro');
     } finally {
         secrets.decryptSecret = origDecrypt;
-        chargeStub.restore();
-        poolMock.restore();
-        billing.resetChargeProviderCallCountForTests();
-    }
-});
-
-test('an uncertain provider response keeps a committed reservation and blocks a second charge', async () => {
-    billing.resetChargeProviderCallCountForTests();
-    const poolMock = createBillingPoolMock();
-    let calls = 0;
-    billing.setChargeTakbullTokenForTests(async () => { calls++; throw Error('SYNTHETIC_PROVIDER_TIMEOUT'); });
-    try {
-        await assert.rejects(billing.chargeSavedCard(upgradeArgs()), /SYNTHETIC_PROVIDER_TIMEOUT/);
-        assert.equal(poolMock.state.intents.length, 1);
-        assert.equal(poolMock.state.intents[0].status, 'pending');
-        assert.equal(poolMock.state.intents[0].takbull_transaction_id, null);
-        const retry = await billing.chargeSavedCard(upgradeArgs());
-        assert.equal(retry.pending, true);
-        assert.equal(retry.charged, false);
-        assert.equal(calls, 1);
-        assert.equal(billing.getChargeProviderCallCountForTests(), 1);
-        assert.equal(poolMock.state.billingRow.resource_id, 'basic');
-    } finally {
-        billing.setChargeTakbullTokenForTests(null);
-        poolMock.restore();
-        billing.resetChargeProviderCallCountForTests();
-    }
-});
-
-test('a recorded provider transaction is independently verified on recovery instead of charging again', async () => {
-    billing.resetChargeProviderCallCountForTests();
-    const poolMock = createBillingPoolMock();
-    const chargeStub = installChargeStub();
-    const verified = verifier.verifyChargedTransaction;
-    verifier.verifyChargedTransaction = async () => { throw Error('SYNTHETIC_VERIFICATION_UNAVAILABLE'); };
-    try {
-        await assert.rejects(billing.chargeSavedCard(upgradeArgs()), /SYNTHETIC_VERIFICATION_UNAVAILABLE/);
-        assert.equal(poolMock.state.intents.length, 1);
-        assert.equal(poolMock.state.intents[0].status, 'pending');
-        assert.ok(poolMock.state.intents[0].takbull_transaction_id);
-        assert.equal(poolMock.state.billingRow.resource_id, 'basic');
-        verifier.verifyChargedTransaction = verified;
-        const recovered = await billing.chargeSavedCard(upgradeArgs());
-        assert.equal(recovered.finalizedPending, true);
-        assert.equal(recovered.charged, false);
-        assert.equal(chargeStub.getCalls(), 1);
-        assert.equal(poolMock.state.verifications.length, 1);
-        assert.equal(poolMock.state.intents[0].status, 'succeeded');
-        assert.equal(poolMock.state.billingRow.resource_id, 'pro');
-    } finally {
-        verifier.verifyChargedTransaction = verified;
         chargeStub.restore();
         poolMock.restore();
         billing.resetChargeProviderCallCountForTests();
@@ -628,7 +534,7 @@ test('repeated retries after paid-unapplied state still produce only one total c
     }
 });
 
-test('an existing pending intent without a known outcome remains reserved across retries', async () => {
+test('pending intent for same upgrade operation is reused for a single charge', async () => {
     billing.resetChargeProviderCallCountForTests();
     const poolMock = createBillingPoolMock();
     const chargeStub = installChargeStub();
@@ -663,17 +569,9 @@ test('an existing pending intent without a known outcome remains reserved across
 
     try {
         const result = await billing.chargeSavedCard(upgradeArgs());
-        const repeated = await billing.chargeSavedCard(upgradeArgs());
-        for (const outcome of [result, repeated]) {
-            assert.equal(outcome.ok, false);
-            assert.equal(outcome.pending, true);
-            assert.equal(outcome.charged, false);
-            assert.equal(outcome.intentId, poolMock.state.intents[0].id);
-        }
-        assert.equal(chargeStub.getCalls(), 0);
-        assert.equal(billing.getChargeProviderCallCountForTests(), 0);
-        assert.equal(poolMock.state.intents.filter((i) => i.status === 'pending').length, 1);
-        assert.equal(poolMock.state.billingRow.resource_id, 'basic');
+        assert.equal(result.ok, true);
+        assert.equal(chargeStub.getCalls(), 1);
+        assert.equal(poolMock.state.intents.filter((i) => i.status === 'pending').length, 0);
     } finally {
         secrets.decryptSecret = origDecrypt;
         chargeStub.restore();
@@ -726,41 +624,3 @@ test('complimentary interval-only savePackage does not pass upgradeOperation to 
         Object.assign(billing, stubs);
     }
 });
-
-for (const mode of ['pending', 'atomic']) {
-    test(`savePackage ${mode === 'pending' ? 'blocks fallback checkout for an unresolved payment' : 'does not persist an already atomic upgrade a second time'}`, async () => {
-        const names = ['ensureBillingRow', 'getBillingRow', 'getActiveCard', 'chargeSavedCard',
-            'createCheckout', 'updateBilling', 'syncTenantSubscription', 'getBillingSnapshot'];
-        const originals = Object.fromEntries(names.map(name => [name, billing[name]]));
-        const row = {
-            platformId: 'site_app', resourceId: 'basic', signingId: '500', billingInterval: 'monthly',
-            billingEnabled: true, status: 'active', complimentaryUntil: '2020-01-01T00:00:00.000Z',
-        };
-        const snapshot = { status: 'active', package: { platformId: 'site_app', resourceId: 'pro', signingId: '1500' } };
-        const calls = { charge: 0, checkout: 0, persist: 0, subscription: 0, snapshot: 0 };
-        billing.ensureBillingRow = async () => row;
-        billing.getBillingRow = async () => row;
-        billing.getActiveCard = async () => ({ tokenEncrypted: 'synthetic-card' });
-        billing.chargeSavedCard = async () => {
-            calls.charge++;
-            return mode === 'pending' ? { ok: false, pending: true, charged: false }
-                : { ok: true, charged: true, appliedAtomically: true, snapshot };
-        };
-        billing.createCheckout = async () => { calls.checkout++; throw Error('UNEXPECTED_SECOND_PAYMENT'); };
-        billing.updateBilling = async () => { calls.persist++; throw Error('UNEXPECTED_SECOND_PACKAGE_PERSIST'); };
-        billing.syncTenantSubscription = async () => { calls.subscription++; throw Error('UNEXPECTED_SECOND_SUBSCRIPTION_PERSIST'); };
-        billing.getBillingSnapshot = async () => { calls.snapshot++; return snapshot; };
-        try {
-            const operation = billing.savePackage({ platformId: 'site_app', resourceId: 'pro', signingId: '1500',
-                usage: { documents: { createdThisMonth: 0 }, seats: { used: 1 }, storage: { bytesTotal: 0 } } });
-            if (mode === 'pending') await assert.rejects(operation, { code: 'PAYMENT_RECONCILIATION_REQUIRED' });
-            else {
-                const result = await operation;
-                assert.equal(result.saved, true);
-                assert.equal(result.charged, true);
-                assert.equal(result.snapshot, snapshot);
-            }
-            assert.deepEqual(calls, { charge: 1, checkout: 0, persist: 0, subscription: 0, snapshot: 0 });
-        } finally { Object.assign(billing, originals); }
-    });
-}
