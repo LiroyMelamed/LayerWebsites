@@ -7,8 +7,10 @@ and the Net HaMishpat integration. It never contacts a WhatsApp provider itself.
 ## Release scope and source
 
 The isolated implementation branch is `codex/legal-system-messages-20261025`,
-based on local main `fa006de6b68adbfca6feb3fe5d92bd6f89d97c91` (remote main was
-verified as its ancestor `ea73e4f3` on 25 October). Working copy:
+based on local main `fa006de6b68adbfca6feb3fe5d92bd6f89d97c91`. On resumption,
+remote main `ea73e4f3` was found to be a sibling containing an accessibility
+update, not an ancestor; it is explicitly merged into the main-based producer
+before main publication. Preserve that update and do not force-push. Working copy:
 `/Users/liroymelamed/Projects/LayerWebsites/.worktrees/legal-system-messages-20261025`.
 Root owns payment integration/release; the core worker owns the additive outbox.
 Retire this temporary copy only after the final changes reach verified Git,
