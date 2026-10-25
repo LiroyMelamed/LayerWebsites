@@ -13,6 +13,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+source "$ROOT/scripts/lib/tenant-retirement.sh"
 cd "$ROOT"
 
 DRY_RUN=false
@@ -29,7 +30,6 @@ branch_for_tenant() {
     melamedlaw) echo MelamedLaw ;;
     morlevy) echo MorLevi ;;
     ashrafessa) echo AshrafEssa ;;
-    idm) echo Idm ;;
     *) return 1 ;;
   esac
 }
@@ -53,8 +53,9 @@ if ((${#TENANTS[@]} == 0)); then
 fi
 
 for tenant in "${TENANTS[@]}"; do
+  require_active_tenant "$tenant"
   if ! branch_for_tenant "$tenant" >/dev/null; then
-    echo "Unknown tenant: $tenant (expected melamedia|melamedlaw|morlevy|ashrafessa|idm)" >&2
+    echo "Unknown tenant: $tenant (expected melamedia|melamedlaw|morlevy|ashrafessa)" >&2
     exit 1
   fi
 done

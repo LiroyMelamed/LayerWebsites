@@ -4,6 +4,11 @@
 
 **Melamedia** is the QA / sales-demo tenant (wipeable demo DB). **MelamedLaw** is a production client. They are independent — branding, icons, and env never merge between them.
 
+**25 October 2026 owner instruction:** Idm frontend/backend/database retirement
+is authorized. Idm is excluded from all future deployments. Historical source,
+branding and recovery material remain; this note is not a claim that live
+removal has already completed. Follow the retirement evidence before any cleanup.
+
 ## Flow (QA gate)
 
 ```
@@ -11,7 +16,7 @@ main  →  commit + push
       →  merge main into Melamedia
       →  build:melamedia + deploy Melamedia
       →  QA smoke on melamedia.mela-media.co.il
-      →  if OK: merge main into MelamedLaw / MorLevi / AshrafEssa / Idm
+      →  if OK: merge main into MelamedLaw / MorLevi / AshrafEssa
       →  apply-tenant-branding.js + tenant .env (per tenant)
       →  build + deploy each client
       →  prod tag on main
@@ -34,7 +39,7 @@ Example after landing a fix on `main`:
 git push origin main
 ./scripts/deploy-melamedia-qa.sh
 # smoke https://melamedia.mela-media.co.il
-./scripts/propagate-main-to-tenants.sh melamedlaw morlevy ashrafessa idm
+./scripts/propagate-main-to-tenants.sh melamedlaw morlevy ashrafessa
 ./scripts/deploy-all-tenants-prod.sh
 git tag PROD_DD_MM_YYYY_LIROY && git push origin PROD_DD_MM_YYYY_LIROY
 ```
@@ -64,7 +69,7 @@ cd frontend
 # Avoid .env.production.local overriding the tenant API (move aside if present)
 [ -f .env.production.local ] && mv .env.production.local .env.production.local.bak
 
-npm run build:melamedlaw   # or build:morlevy / build:ashrafessa / build:melamedia / build:idm
+npm run build:melamedlaw   # or build:morlevy / build:ashrafessa / build:melamedia
 ```
 
 `prebuild:*` runs `apply-tenant-branding.js` and copies the PDF worker.
@@ -72,8 +77,8 @@ npm run build:melamedlaw   # or build:morlevy / build:ashrafessa / build:melamed
 ## Deploy
 
 - **MelamedLaw frontend:** FTP to client host (see `frontend/.env.ftp.local`)
-- **MorLevi / AshrafEssa / Melamedia / Idm frontend:** `scripts/deploy-tenant-frontend.sh morlevy|ashrafessa|melamedia|idm` (SSH key; do not add new sshpass usage)
-- **Backend:** `scripts/deploy-tenant-backend.sh morlevy|ashrafessa|melamedia|idm` — never `pm2 restart all`
+- **MorLevi / AshrafEssa / Melamedia frontend:** `scripts/deploy-tenant-frontend.sh morlevy|ashrafessa|melamedia` (SSH key; do not add new sshpass usage)
+- **Backend:** `scripts/deploy-tenant-backend.sh morlevy|ashrafessa|melamedia` — never `pm2 restart all`
 
 ## Melamedia hosts
 
@@ -86,14 +91,17 @@ After Cloudflare A records point at those IPs, run `scripts/finalize-melamedia-d
 
 Demo login phones / seed notes: [DEMO_MELAMEDIA.md](./DEMO_MELAMEDIA.md).
 
-## Idm hosts
+## Idm retirement references
 
 | Role | Host | Notes |
 |------|------|--------|
 | SPA | `idm.mela-media.co.il` → `/var/www/idm` | Frontend VPS `84.46.253.85` |
 | API | `api-idm.mela-media.co.il` → PM2 `idm-api` :3004 | Backend VPS `37.60.230.148`, dir `/root/Idm` |
 
-After Cloudflare A records point at those IPs, run `scripts/finalize-idm-dns.sh` to expand TLS certs and redeploy the SPA. First Admin OTP: `0507299064`. Empty DB (no Melamedia seed).
+These are retirement/recovery references only. `finalize-idm-dns.sh` and the
+tenant deploy/propagation entry points now reject Idm before network/build
+commands. Do not recreate it from an old branch. Keep the verified recovery
+packet separate from Git; do not commit environments or customer data.
 
 ## Smoke after deploy
 

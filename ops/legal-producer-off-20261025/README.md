@@ -9,6 +9,13 @@ included here. `SOURCE-HASHES.json` binds each copied source file.
 
 ## Current state and holds — 25 October 2026
 
+Latest owner direction: retire Idm frontend/backend/database first, wait for
+server cleanup to finish, then release to the three remaining customers:
+MelamedLaw, MorLevi and AshrafEssa. The earlier four-target packets below are
+historical recovery evidence. Do not execute their Idm target. A new three-target
+publisher scope is prepared; live retirement and deployment completion require
+their own exact receipts. No live removal has been inferred from this source edit.
+
 Product source `7a9d36fa` is on main. Melamedia QA runs `1161fd68` with capture
 and dispatch OFF; its reviewed frontend is published. The four customer
 candidates are prepared, but the customer rollout is **not complete**.

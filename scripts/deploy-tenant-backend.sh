@@ -5,6 +5,10 @@
 set -euo pipefail
 
 TENANT="${1:-}"
+tenant_guard_scripts_dir="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=lib/tenant-retirement.sh
+source "$tenant_guard_scripts_dir/lib/tenant-retirement.sh"
+require_active_tenant "$TENANT"
 SSH_KEY="${SSH_KEY:-$HOME/.ssh/id_ed25519}"
 API_HOST="${API_HOST:-root@37.60.230.148}"
 CANDIDATE="${2:-}"
@@ -20,10 +24,9 @@ case "$TENANT" in
   morlevy)  DIR=/root/MorLevi;      BRANCH=MorLevi;    PM2=morlevy-api;      PORT=3001; DB=morlevy ;;
   ashrafessa) DIR=/root/AshrafEssa; BRANCH=AshrafEssa; PM2=ashrafessa-api; PORT=3002; DB=ashrafessa ;;
   melamedia) DIR=/root/Melamedia; BRANCH=Melamedia; PM2=melamedia-api; PORT=3003; DB=melamedia ;;
-  idm) DIR=/root/Idm; BRANCH=Idm; PM2=idm-api; PORT=3004; DB=idm ;;
   lawyer) DIR=/root/LawyerPlatform; BRANCH=Melamedia; PM2=lawyer-api; PORT=3005; DB=lawyer ;;
   *)
-    echo "Usage: $0 melamedlaw|morlevy|ashrafessa|melamedia|idm|lawyer" >&2
+    echo "Usage: $0 melamedlaw|morlevy|ashrafessa|melamedia|lawyer" >&2
     exit 1
     ;;
 esac

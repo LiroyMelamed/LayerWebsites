@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Deploy frontend build to 84.46.253.85 for morlevy, ashrafessa, melamedia, or idm.
-# Usage: ./scripts/deploy-tenant-frontend.sh morlevy|ashrafessa|melamedia|idm|lawyer
+# Deploy frontend build to 84.46.253.85 for active tenants.
+# Usage: ./scripts/deploy-tenant-frontend.sh morlevy|ashrafessa|melamedia|lawyer
 # Prefers SSH key (SSH_KEY, default ~/.ssh/id_ed25519). Do not add new sshpass usage.
 set -euo pipefail
 
@@ -8,12 +8,15 @@ TENANT="${1:-}"
 SSH_KEY="${SSH_KEY:-$HOME/.ssh/id_ed25519}"
 FRONTEND_HOST="${FRONTEND_HOST:-root@84.46.253.85}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=lib/tenant-retirement.sh
+source "$ROOT/scripts/lib/tenant-retirement.sh"
+require_active_tenant "$TENANT"
 # shellcheck source=lib/deploy-ssh-retry.sh
 source "$ROOT/scripts/lib/deploy-ssh-retry.sh"
 RSYNC_SSH="ssh -i ${SSH_KEY} -o BatchMode=yes"
 
-if [[ "$TENANT" != "morlevy" && "$TENANT" != "ashrafessa" && "$TENANT" != "melamedia" && "$TENANT" != "idm" && "$TENANT" != "lawyer" ]]; then
-  echo "Usage: $0 morlevy|ashrafessa|melamedia|idm|lawyer" >&2
+if [[ "$TENANT" != "morlevy" && "$TENANT" != "ashrafessa" && "$TENANT" != "melamedia" && "$TENANT" != "lawyer" ]]; then
+  echo "Usage: $0 morlevy|ashrafessa|melamedia|lawyer" >&2
   exit 1
 fi
 

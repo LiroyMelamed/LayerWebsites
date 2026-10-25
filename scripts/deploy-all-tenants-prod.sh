@@ -10,7 +10,7 @@
 # Prerequisites:
 #   - SSH key: ~/.ssh/id_ed25519 (or SSH_KEY)
 #   - MelamedLaw FTP: frontend/.env.ftp.local
-#   - All tenant branches pushed to origin (MelamedLaw, MorLevi, AshrafEssa, Melamedia, Idm)
+#   - Active tenant branches pushed to origin (MelamedLaw, MorLevi, AshrafEssa, Melamedia)
 #   - Never run `pm2 restart all`
 #
 set -euo pipefail
@@ -60,7 +60,7 @@ if $BACKEND; then
     echo "Set SIGNING_RELEASE_PLAN to the reviewed tenant-to-commit JSON before deployment." >&2
     exit 1
   fi
-  for tenant in melamedlaw morlevy ashrafessa melamedia idm; do
+  for tenant in melamedlaw morlevy ashrafessa melamedia; do
     candidate=$(node -e 'const p=require(require("path").resolve(process.argv[1])); const s=p[process.argv[2]]; if(!/^[a-f0-9]{40}$/.test(s||""))process.exit(1); process.stdout.write(s)' "$CANDIDATE_PLAN" "$tenant")
     node "$ROOT/scripts/check-signing-release.cjs" "$candidate"
   done
@@ -71,7 +71,6 @@ if $BACKEND; then
   run ./scripts/deploy-tenant-backend.sh morlevy "$(node -e 'const p=require(require("path").resolve(process.argv[1])); process.stdout.write(p[process.argv[2]])' "$CANDIDATE_PLAN" morlevy)"
   run ./scripts/deploy-tenant-backend.sh ashrafessa "$(node -e 'const p=require(require("path").resolve(process.argv[1])); process.stdout.write(p[process.argv[2]])' "$CANDIDATE_PLAN" ashrafessa)"
   run ./scripts/deploy-tenant-backend.sh melamedia "$(node -e 'const p=require(require("path").resolve(process.argv[1])); process.stdout.write(p[process.argv[2]])' "$CANDIDATE_PLAN" melamedia)"
-  run ./scripts/deploy-tenant-backend.sh idm "$(node -e 'const p=require(require("path").resolve(process.argv[1])); process.stdout.write(p[process.argv[2]])' "$CANDIDATE_PLAN" idm)"
   echo ""
   echo "# Each backend retains its exact tenant commit; no local source overlay."
 fi
@@ -96,7 +95,6 @@ if $FRONTEND; then
   if ! $DRY_RUN; then pause_between_frontend_deploys; fi
   run ./scripts/deploy-tenant-frontend.sh melamedia
   if ! $DRY_RUN; then pause_between_frontend_deploys; fi
-  run ./scripts/deploy-tenant-frontend.sh idm
 fi
 
 echo ""

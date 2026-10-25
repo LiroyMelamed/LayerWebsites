@@ -3,6 +3,9 @@
 # and redeploy SPA against the preferred API host.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# Historical recipe retained for recovery; it must never recreate a retired tenant.
+source "$ROOT/scripts/lib/tenant-retirement.sh"
+require_active_tenant idm
 SSH_KEY="${SSH_KEY:-$HOME/.ssh/id_ed25519}"
 
 # Issue FE cert
