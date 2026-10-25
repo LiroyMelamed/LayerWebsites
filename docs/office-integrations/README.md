@@ -181,3 +181,21 @@ Backend: `node --test tests/officeIntegrations.test.js tests/officeIntegrations.
 Frontend: `npm test -- --watch=false --runInBand --runTestsByPath src/services/whatsappEmbeddedSignup.test.js src/screens/officeIntegrations/OfficeIntegrations.test.js src/components/navBars/data/NavBarData.officeIsolation.test.js`. Covers authenticated-office settings, no customer-list fallback, manager checkbox persistence, live activation gating, direct signup, Meta origin validation, popup cancellation, and callback ordering.
 
 Build: `node node_modules/@craco/craco/dist/bin/craco.js build`. Browser preview uses the real built React screen with synthetic HTTP responses; it is not evidence of a real Meta or court connection.
+
+
+### Verified public example through national identity — 25 October 2026
+
+After the owner authorized finding an example, the ordinary government SSO session
+was reused without a smart card or another OTP. My Cases showed no items for
+1 January 2000–25 October 2026 with the court selector unselected; this does not
+establish absence of cases under all filters or access to office cases.
+
+The official public-decisions search returned case **67104-01-20**,
+מדינת ישראל נ׳ נתניהו ואח׳, District Court Jerusalem (also published in an
+[official court document](https://www.gov.il/BlobFolder/generalpage/files-general/he/file_22.02.2021_03.pdf)).
+The live list reported 1,101 decisions and a decision dated 21 October 2026 was
+opened and visibly rendered as one page in the official viewer. No filing, case
+change, sending or bulk download occurred. Evidence is recorded in the root QA
+workspace under `outputs/office-whatsapp-20261025/court-handoff/public-example06.json`.
+This is public browser-viewing proof only: private office-case authorization, a
+delegated API grant and automatic synchronization into this product remain unverified.
