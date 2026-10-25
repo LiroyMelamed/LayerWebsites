@@ -7,7 +7,7 @@ only the original hash-bound packet in that task, after checking current state.
 No environment values, customer records, launch preimages or database dumps are
 included here. `SOURCE-HASHES.json` binds each copied source file.
 
-## Current state and holds — 25 October 2026
+## Historical operator02 checkpoint and holds — 25 October 2026
 
 Latest owner direction: retire Idm frontend/backend/database first, wait for
 server cleanup to finish, then release to the three remaining customers:
@@ -44,12 +44,50 @@ one new preservation assertion are recorded separately with their exact source
 hashes in the two existing ledgers. Unchanged product tests were not repeated.
 Both original operators and all failures remain preserved.
 
-**Maintenance coordination HOLD is active.** No checkpoint, activation,
-publication or fresh remote-binding operation is running. Do not execute this
-packet until that coordination clears and root reviews the exact tenant phase.
+**Historical maintenance coordination HOLD:** this applied to the earlier
+operator02 checkpoint. That hold cleared according to later actual receipts.
+The current rollout is ongoing under individually reviewed phases; the old
+packet is retained as history, not an instruction to replay it.
 All capture/dispatch flags remain OFF. No migration, dependency installation,
 environment/key change, real test message, customer-data change or production tag is
 authorized by these scripts or by this archive.
+
+## Operator03 original PM2 policy preservation — rollout ongoing
+
+The live rollout is **ongoing**. AshrafEssa backend, static publication and
+limited public desktop/mobile smoke are complete; root is executing the
+MelamedLaw operator03 phases. Final customer status must come from the latest
+protected task receipts. The operator02 runtime descriptions above are historical.
+
+A fresh read-only observation found that MelamedLaw originally has **no
+`min_uptime` property**, while MorLevi has an original numeric value of **10000**.
+Operator03 binds the exact original presence, type and value in each reviewed
+contract. It checks that policy before stage creation and at every later state
+capture, including before restart and during verification/rollback. Both health
+snapshots must retain that exact policy. No PM2 setting is inferred or changed.
+
+The measured stable-age requirement is separate from PM2 policy: absent policy
+has an explicit 5000 ms observation floor; an original numeric policy requires
+`max(5000, original value)` milliseconds. Both snapshots must have the same PID
+and start timestamp. The original absolute 25-second deadline, bounded HTTP
+probes and final successful HTTP response remain. Existing source, environment,
+schema, office, other-process and forward-rollback guards remain in force.
+
+Sixteen new focused cases passed; independent source review approved the change.
+The independent review is recorded in the protected task at
+`outputs/legal-system-messages-20261025/resumed-20261025/backend03-independent-review01.json`,
+SHA256 `ef810864dc7cb8c1420ac81f73dcfd673d08d579b9b4047540e564741c4866f9`.
+That review covers the code packet and does not imply fresh server approval.
+The test evidence is in the protected task at
+`outputs/legal-system-messages-20261025/ops-prod-off/min-uptime-policy03-focused01.json`,
+SHA256 `6e3d6f31ff803e276719526582122bc7d83f092c26b60170592bea6af2391aef`.
+The original-policy observation is
+`outputs/legal-system-messages-20261025/resumed-20261025/selected-pm2-min-uptime01.json`,
+SHA256 `3873e8367f1d022d4a1c84ce65e762332a44b1e013a48e87290238b75b26b5c9`.
+Both ledgers record the actual cases and unchanged source hashes. These recovery
+copies were verified byte for byte; no tests were repeated merely for copying.
+Contracts, receipts and private payloads remain in the protected task and are
+not copied into this archive. Operator02 and its failure history are preserved.
 
 ## Authoritative continuation packet
 
@@ -65,8 +103,9 @@ Under `outputs/legal-system-messages-20261025/`, preserve:
 
 - `ops-prod-off/SEALED-OFF-PRODUCTION-CONTRACTS02.json`: exact scripts,
   tenant/source/rollback contracts and future phase commands. Observations are
-  historical CAS expectations, never fabricated fresh proof. Unknown current
-  `min_uptime` on the other tenants must pass the upfront numeric-5000 gate.
+  historical CAS expectations, never fabricated fresh proof. Its upfront
+  numeric-5000 policy gate is historical; MelamedLaw and MorLevi use the
+  separately reviewed operator03 exact-original-policy contracts.
 - `customer-rollout/frontend/PUBLISHER-V2-SEALED-HANDOFF01.json`: original
   artifact source remains labelled `46abb4e6`; new runtime `ea7df270` descends
   actual rollback `dc8f235d` and has the exact same full Git tree and build

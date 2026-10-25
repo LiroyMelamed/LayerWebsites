@@ -7,6 +7,10 @@
     "run-backend-off01.py": "c0c765922058efe207337097e2ec6144650880402e6e4531bc0e68900b0738c2",
     "backend-off02.cjs": "afedc42386fb7065ec3f7f9c7cd519084234d152c839c242c98002d9ec29f5d9",
     "run-backend-off02.py": "e476b1f3ee707b735d43f5a60accb40634d39f8113f9fdb243eda6e8fd8030ab",
-    "health-gate02.test.cjs": "e778b78cd19aa8e8ae1e724d6a2e284b0afb70746a6f9e72f73000d6c01a1374"
-  }
+    "health-gate02.test.cjs": "e778b78cd19aa8e8ae1e724d6a2e284b0afb70746a6f9e72f73000d6c01a1374",
+    "backend-off03.cjs": "62cd5d3b2c503a6cfc579942c25096d7cbd625128c52b815d85484dd64a9de54",
+    "run-backend-off03.py": "5ec80e3e2893ba7234f17a26ade789514e7c538f125bd9d8da599a1cbb1ba308",
+    "min-uptime-policy03.test.cjs": "f782655e5ed5d8a5d8e6fe80623a2b106627f56df30a0a6b7e884e7e4036e904"
+  },
+  "updatedAt": "2026-10-25T18:22:15.015033+00:00"
 }
