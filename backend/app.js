@@ -193,6 +193,7 @@ app.use('/api/signing-v2/public', require('./routes/signingV2PublicRoutes'));
 app.use('/api/signing-v2/client', require('./routes/signingV2ClientRoutes'));
 app.use('/api/signing-v2', require('./routes/signingV2Routes'));
 app.use("/api/billing", billingRoutes);
+app.use('/api/billing/system-message-consent', require('./routes/systemMessageConsentRoutes'));
 app.use("/api/audit-events", auditEventsRoutes);
 app.use("/api/evidence-documents", evidenceDocumentsRoutes);
 app.use("/api/email/campaign", emailCampaignRoutes);
