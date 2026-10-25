@@ -4,7 +4,6 @@ import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import TakbullCheckoutDialog from "../../components/billing/TakbullCheckoutDialog";
-import SystemMessageConsent from "../../components/billing/SystemMessageConsent";
 import { useBillingLock } from "../../providers/BillingLockProvider";
 
 import Skeleton from "../../components/simpleComponents/Skeleton";
@@ -506,8 +505,6 @@ export default function PlanUsageScreen() {
                                 )}
                             </SimpleContainer>
                         </SimpleCard>
-
-                        <SystemMessageConsent />
 
                         <SimpleCard className="lw-planUsageScreen__card">
                             <TextBold24>{t('planUsage.paymentsTitle')}</TextBold24>
