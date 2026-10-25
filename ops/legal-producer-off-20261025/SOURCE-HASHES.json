@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-25T16:02:12.406539+00:00",
+  "purpose": "Non-secret exact reviewed operator-source recovery copy; not deployment approval",
+  "sourceDirectory": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/legal-system-messages-20261025/ops-prod-off",
+  "files": {
+    "backend-off01.cjs": "4dc967b490704d4d3482d386d6999622ce53f4d56931d4e854000b03f853ea0f",
+    "run-backend-off01.py": "c0c765922058efe207337097e2ec6144650880402e6e4531bc0e68900b0738c2",
+    "backend-off02.cjs": "afedc42386fb7065ec3f7f9c7cd519084234d152c839c242c98002d9ec29f5d9",
+    "run-backend-off02.py": "e476b1f3ee707b735d43f5a60accb40634d39f8113f9fdb243eda6e8fd8030ab",
+    "health-gate02.test.cjs": "e778b78cd19aa8e8ae1e724d6a2e284b0afb70746a6f9e72f73000d6c01a1374"
+  }
+}
