@@ -3,6 +3,10 @@ import SignupScreen, { SignupCompleteScreen } from './SignupScreen';
 import ApiUtils from '../../api/apiUtils';
 
 const mockNavigate = jest.fn();
+jest.mock('react-i18next', () => ({ useTranslation: () => ({
+    t: key => key.split('.').reduce((value, part) => value?.[part], require('../../i18n/locales/he.json')) || key,
+    i18n: { dir: () => 'rtl' },
+}) }));
 jest.mock('react-router-dom', () => ({ useNavigate: () => mockNavigate }));
 jest.mock('../../api/apiUtils', () => ({ __esModule: true, default: { get: jest.fn(), post: jest.fn() } }));
 // Keep the real signup state, validation, pricing and attribution bridge. These
@@ -81,7 +85,7 @@ async function confirmSignup() {
     await waitFor(() => expect(screen.getByRole('button', { name: 'המשך' })).toBeEnabled());
     fireEvent.click(screen.getByRole('button', { name: 'המשך' }));
     fireEvent.click(screen.getByRole('button', { name: 'המשך' }));
-    fireEvent.click(screen.getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('checkbox', { name: /חיוב חד/ }));
     return screen.getByRole('button', { name: 'המשיכו לתשלום ₪1' });
 }
 const checkoutCalls = () => ApiUtils.post.mock.calls.filter(([path]) => path.endsWith('/checkout'));
@@ -184,4 +188,25 @@ test('return polling binds only confirmed completion and never starts a second c
     expect(ApiUtils.post.mock.calls).toEqual([[`/public/signup/${INTENT}/sync`]]);
     expect(ApiUtils.get.mock.calls).toEqual([[`/public/signup/${INTENT}/status`], [`/public/signup/${INTENT}/status`]]);
     expect(mockNavigate).toHaveBeenCalledWith('/synthetic-attribution/LoginStack/LoginScreen', { replace: true });
+});
+
+
+test('WhatsApp consent remains optional and unchecked when the separate service is available', async () => {
+    ApiUtils.get.mockResolvedValue({ data: { available: true, systemMessages: { available: true, consentVersion: 'melamedia-transactional-whatsapp-v1' } } });
+    const submit = await confirmSignup();
+    const optional = screen.getByRole('checkbox', { name: /MelaMedia/ });
+    expect(optional).not.toBeChecked();
+    fireEvent.click(submit);
+    await waitFor(() => expect(ApiUtils.post).toHaveBeenCalled());
+    expect(ApiUtils.post.mock.calls[0]).toEqual(['/public/signup/start', { ...START_BODY, systemMessagesConsent: false, systemMessagesConsentVersion: 'melamedia-transactional-whatsapp-v1' }]);
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/synthetic-attribution/LoginStack/LoginScreen', { replace: true }));
+});
+
+test('an explicit optional grant is sent separately from billing consent', async () => {
+    ApiUtils.get.mockResolvedValue({ data: { available: true, systemMessages: { available: true, consentVersion: 'melamedia-transactional-whatsapp-v1' } } });
+    const submit = await confirmSignup();
+    fireEvent.click(screen.getByRole('checkbox', { name: /MelaMedia/ })); fireEvent.click(submit);
+    await waitFor(() => expect(ApiUtils.post).toHaveBeenCalled());
+    expect(ApiUtils.post.mock.calls[0]).toEqual(['/public/signup/start', { ...START_BODY, systemMessagesConsent: true, systemMessagesConsentVersion: 'melamedia-transactional-whatsapp-v1' }]);
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/synthetic-attribution/LoginStack/LoginScreen', { replace: true }));
 });

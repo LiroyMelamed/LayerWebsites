@@ -69,6 +69,7 @@ const server = app.listen(PORT, HOST, async () => {
     startHebcalHolidaysScheduler();
     initBillingRenewalScheduler();
     require('./lib/tenant/signupWelcomeEmail').startWelcomeWorker();
+    require('./lib/systemMessages').startWorker();
 });
 
 // Hard timeouts at the Node server layer (useful behind Nginx).
@@ -91,6 +92,7 @@ let shuttingDown = false;
 
 async function gracefulShutdown(signal) {
     require('./services/integrations/runtime').stop();
+    require('./lib/systemMessages').stopWorker();
     if (shuttingDown) return;
     shuttingDown = true;
     console.log(`[shutdown] ${signal} received — closing server…`);
