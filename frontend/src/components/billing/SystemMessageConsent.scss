@@ -1,0 +1,29 @@
+@use '../../styles/variables' as v;
+
+.lw-systemMessageConsent,
+.lw-systemMessageConsent__choice,
+.lw-systemMessageConsent__feedback {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: v.$space-3;
+    min-inline-size: 0;
+    text-align: start;
+    overflow-wrap: anywhere;
+}
+
+.lw-systemMessageConsent__choice {
+    .lw-simpleCheckbox { direction: inherit; }
+    .lw-simpleCheckbox__label {
+        align-items: flex-start;
+        min-block-size: 2.75rem;
+        padding-block: v.$space-2;
+    }
+    .lw-simpleCheckbox__input { margin-block-start: v.$space-1; }
+    .lw-simpleCheckbox__text { min-inline-size: 0; }
+}
+
+.lw-systemMessageConsent .lw-simpleButton {
+    min-block-size: 2.75rem;
+    align-self: flex-start;
+}

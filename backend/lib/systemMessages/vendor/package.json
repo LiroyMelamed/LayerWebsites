@@ -1,0 +1,21 @@
+{
+  "name": "@central/system-messages-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dependency-free Node producer transport for Central transactional messages",
+  "main": "./index.cjs",
+  "types": "./index.d.cts",
+  "exports": {
+    ".": {
+      "types": "./index.d.cts",
+      "require": "./index.cjs",
+      "default": "./index.cjs"
+    }
+  },
+  "engines": { "node": ">=18.0.0" },
+  "scripts": {
+    "test": "node --test test/client.test.cjs",
+    "build": "node --check index.cjs",
+    "typecheck": "node --check index.cjs"
+  }
+}
