@@ -78,10 +78,8 @@ async function chargeSelfServiceUpgrade({ tenantId, target, interval, amount, ch
                 SELECT userid,$2,'active',now(),now(),now() FROM users WHERE law_firm_tenant_id=$1 AND role='Admin'
                 ORDER BY userid LIMIT 1 ON CONFLICT(tenant_id) DO UPDATE SET plan_key=EXCLUDED.plan_key,status='active',updated_at=now()`,
             [tenantId, quotasForPackage(priced).planKey]);
-            const settled=(await settle.query("UPDATE firm_payment_intents SET status='succeeded',settled_at=now(),error_message=null,updated_at=now() WHERE id=$1 AND law_firm_tenant_id=$2 AND status='pending' RETURNING *", [intent.id,tenantId])).rows[0];
-            if(!settled)throw Error('UPGRADE_RESERVATION_CHANGED');
+            await settle.query("UPDATE firm_payment_intents SET status='succeeded',settled_at=now(),error_message=null,updated_at=now() WHERE id=$1", [intent.id]);
             await settle.query("INSERT INTO firm_payment_events(intent_id,event_type,payload) VALUES($1,'payment_succeeded','{}'::jsonb)", [intent.id]);
-            await require('../systemMessages').enqueuePaymentReceived(settle,{intent:settled});
             await settle.query('COMMIT');
         } catch (error) { await settle.query('ROLLBACK'); throw error; }
         finally { settle.release(); }
