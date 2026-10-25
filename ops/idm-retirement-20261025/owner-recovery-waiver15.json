@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-25T17:39:06.189946+00:00",
+  "tenant": "idm",
+  "root": "/root/Idm",
+  "database": "idm",
+  "databaseOid": 83270,
+  "sourceCommit": "07e45cd63acc7e89ccfb677025d8b06652d08d5d",
+  "checkpointContractSha256": "d1ab28c37c394502205864e5ca8b6f3a8bd9d0b65a3b0afb575c51805d720c0e",
+  "directHumanInstruction": true,
+  "deleteWithoutVerifiedRestoreApproved": true,
+  "recoveryRequirementExplicitlyWaived": true,
+  "preserveOtherCustomersAndSharedDependencies": true,
+  "noOffsiteRestorePassClaimed": true,
+  "humanDirectives": [
+    "לא צריך גם שחזור שלו",
+    "תמחק את כל מה שקשור אליו"
+  ],
+  "authorizationSource": "Latest direct human override in parent chat",
+  "currentDeleteScope": [
+    "exact database idm",
+    "exact source root /root/Idm",
+    "exact own PM2 id6 and Idm entries in original primary/fallback dumps"
+  ],
+  "subsequentIdmOnlyBackupsLogsCloudDnsTlsRemovalRequiresSeparatelyBoundedInventory": true
+}

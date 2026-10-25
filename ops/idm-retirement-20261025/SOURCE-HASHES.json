@@ -26,5 +26,41 @@
   "frontend-offsite-verifier02.py": {
     "originalProtectedTaskPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/legal-system-messages-20261025/idm-retirement/frontend/verify-offsite02.py",
     "sha256": "5becbe206cb95eb55f49f8da53c63b4ab6773e39dd5088afa43a4c601ff87400"
+  },
+  "backend-delete-remote07.py": {
+    "originalProtectedTaskPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/idm-retirement-20261025/backend/retire07.remote.py",
+    "sha256": "7b6e516ca289b0c915495f7058d413d6c9ce3de61caddd2f7288cfa6ac198370"
+  },
+  "backend-delete-runner07.py": {
+    "originalProtectedTaskPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/idm-retirement-20261025/backend/retire-reviewed07.py",
+    "sha256": "fbca2be3b108bbc63c910103b1afe0def3b4e26c144f8e608ed50a7bd1561c0d"
+  },
+  "owner-recovery-waiver15.json": {
+    "originalProtectedTaskPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/idm-retirement-20261025/backend/OWNER-RECOVERY-WAIVER15.json",
+    "sha256": "483e080162201dde84ae8033dbf76f4ac2a6756788cd712f4c6a850fa356978f"
+  },
+  "remnants-purge-remote17.py": {
+    "originalProtectedTaskPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/legal-system-messages-20261025/idm-retirement/purge-idm-only17.remote.py",
+    "sha256": "8bfeaa09e09d035e0adae2da633022442232b49dd781f12eb00571a8d9774450"
+  },
+  "remnants-purge-driver17.py": {
+    "originalProtectedTaskPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/legal-system-messages-20261025/idm-retirement/purge-idm-only17.py",
+    "sha256": "ef83dc92205732d776a635105c82c30c12786e58100886b073b81f740525d790"
+  },
+  "cloud-idm-prefix-purge05.py": {
+    "originalProtectedTaskPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/idm-retirement-20261025/cloud/backup-prefix-purge-reviewed05.py",
+    "sha256": "dd1c3a3ed8cb7d4b2779e6a642b4f5617240260943e35a1b8e415a04ce7a7087"
+  },
+  "remnants-purge-remote20.py": {
+    "originalProtectedTaskPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/legal-system-messages-20261025/idm-retirement/purge-idm-only20.remote.py",
+    "sha256": "7c0f6171c8ad9ee643403c40c31ca1c9987e4cfff8f67883d164976f83f3bada"
+  },
+  "remnants-purge-driver20.py": {
+    "originalProtectedTaskPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/legal-system-messages-20261025/idm-retirement/purge-idm-only20.py",
+    "sha256": "9b109ddd1984b66d4709417970c5def831abfde7f2f88cf075beb6ddbbabda44"
+  },
+  "cloud-private-stage-removal06.py": {
+    "originalProtectedTaskPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/idm-retirement-20261025/cloud/remove-private-stage06.py",
+    "sha256": "a40f22e9a4670f27db34e001afa9436cb58c07f58cb607f60cbba3bdada7d2e2"
   }
 }
