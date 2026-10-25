@@ -123,6 +123,33 @@ test('editing metadata after a failed attempt creates a fresh explicit action', 
     expect(api.importCourtFile.mock.calls[1][0].get('title')).toBe('Corrected title');
 });
 
+test('a definite stale action requires fresh source confirmation and a new action without reposting automatically', async () => {
+    api.importCourtFile.mockRejectedValueOnce(Object.assign(Error('stale action'), { code: 'COURT_IMPORT_ACTION_STALE', status: 409 }));
+    render(<CaseIntegrationUpdates caseId={15} />);
+    const dialog = await openImport(); await fill(dialog);
+    await submit(dialog);
+    await within(dialog).findByText(tr('actionStale'));
+    expect(api.importCourtFile).toHaveBeenCalledTimes(1);
+    expect(within(dialog).getByRole('checkbox', { name: tr('confirmSource') })).not.toBeChecked();
+    expect(within(dialog).getByRole('button', { name: tr('submit') })).toBeDisabled();
+    expect(within(dialog).getByText('court-decision.pdf')).toBeInTheDocument();
+    expect(within(dialog).getByLabelText(tr('documentTitle'))).toHaveValue('Public decision');
+    expect(within(dialog).getByLabelText('calendar.dateSegmentDay')).toHaveValue('21');
+    expect(within(dialog).getByLabelText('calendar.dateSegmentMonth')).toHaveValue('10');
+    expect(within(dialog).getByLabelText('calendar.dateSegmentYear')).toHaveValue('2026');
+    await submit(dialog);
+    expect(api.importCourtFile).toHaveBeenCalledTimes(1);
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: tr('confirmSource') }));
+    expect(api.importCourtFile).toHaveBeenCalledTimes(1);
+    await submit(dialog);
+    await screen.findByText(tr('imported'));
+    const [first, second] = api.importCourtFile.mock.calls.map(([body]) => body);
+    expect(second.get('actionId')).not.toBe(first.get('actionId'));
+    for (const key of ['caseId', 'courtNumber', 'issuedOn', 'title', 'sourceConfirmed']) expect(second.get(key)).toBe(first.get(key));
+    expect(await readBytes(second.get('file'))).toBe(await readBytes(first.get('file')));
+    expect(window.crypto.randomUUID).toHaveBeenCalledTimes(2);
+});
+
 test('double submission is blocked while one import is pending', async () => {
     let finish;
     api.importCourtFile.mockImplementation(() => new Promise(resolve => { finish = resolve; }));

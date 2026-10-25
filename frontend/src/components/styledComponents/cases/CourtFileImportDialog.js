@@ -13,6 +13,7 @@ export function courtImportErrorKey(error) {
     if (error?.status === 413 || error?.code === 'LIMIT_FILE_SIZE') return 'fileTooLarge';
     if (error?.code === 'COURT_REFERENCE_CHANGED') return 'referenceChanged';
     if (error?.code === 'COURT_IMPORT_ACTION_CONFLICT') return 'actionConflict';
+    if (error?.code === 'COURT_IMPORT_ACTION_STALE') return 'actionStale';
     if (error?.code === 'COURT_IMPORT_PDF_INVALID') return 'invalidPdf';
     if (error?.code === 'COURT_IMPORT_SOURCE_CONFIRMATION_REQUIRED') return 'sourceConfirmationRequired';
     if (error?.code === 'COURT_OWNER_IMPORT_DISABLED') return 'unavailable';
@@ -60,7 +61,13 @@ export default function CourtFileImportDialog({ caseId, courtNumber, maxBytes = 
                 typeof result.imported !== 'boolean' || Number(result.caseId) !== Number(caseId) || result.courtNumber !== courtNumber) throw new Error('INVALID_IMPORT_RECEIPT');
             if (mounted.current) onImported(result);
         } catch (failure) {
-            if (mounted.current) setError(courtImportErrorKey(failure));
+            if (mounted.current) {
+                if (failure?.status === 409 && failure?.code === 'COURT_IMPORT_ACTION_STALE') {
+                    action.current = null;
+                    setConfirmed(false);
+                }
+                setError(courtImportErrorKey(failure));
+            }
         } finally {
             inFlight.current = false;
             if (mounted.current) setBusy(false);

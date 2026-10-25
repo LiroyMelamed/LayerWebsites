@@ -5,6 +5,7 @@
 const crypto = require('node:crypto');
 const { PDFDocument, PDFDict, PDFName, PDFArray } = require('pdf-lib');
 const { fail, courtNumber, positiveId } = require('./validation');
+const { normalizeRolePermissions, hasAreaAction, getCasesDataScope } = require('../../lib/firmRolePermissions');
 const MAX_BYTES = 5 * 1024 * 1024;
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 const OFFICE = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
@@ -76,14 +77,28 @@ function createCourtOwnerImport({pool,env=process.env,inspect=inspectPdf,randomU
     if (!pool) throw new Error('COURT_IMPORT_DATABASE_REQUIRED');
     async function actor(db, officeId, actorUserId) {
         office(officeId);
-        const row = officeId ? (await db.query(`SELECT u.userid FROM users u
+        const row = officeId ? (await db.query(`SELECT u.userid,u.firm_staff_role_id FROM users u
             JOIN law_firm_tenants t ON t.id=u.law_firm_tenant_id AND t.owner_user_id=u.userid
             WHERE u.userid=$1 AND u.role='Admin' AND t.id=$2 AND t.is_active FOR SHARE OF u,t`,
-        [positiveId(actorUserId),officeId])).rows[0] : (await db.query(`SELECT u.userid FROM users u
+        [positiveId(actorUserId),officeId])).rows[0] : (await db.query(`SELECT u.userid,u.firm_staff_role_id FROM users u
             JOIN platform_admins p ON p.user_id=u.userid AND p.is_active
             WHERE u.userid=$1 AND u.role='Admin' AND u.law_firm_tenant_id IS NULL FOR SHARE OF u,p`,
         [positiveId(actorUserId)])).rows[0];
         if (!row) fail('FORBIDDEN', 'רק בעל המשרד או מנהל הפלטפורמה רשאי לייבא קובץ', 403);
+        return row;
+    }
+    async function currentCaseScope(db, officeId, currentActor) {
+        // A shared-office owner can have a custom staff role. Reconstruct its
+        // CURRENT grant after PDF inspection; neither owner identity nor the
+        // request's earlier permission snapshot bypasses that role. Dedicated
+        // platform admins retain the incumbent global permission policy.
+        if (!officeId || !currentActor.firm_staff_role_id) return { assignedOnly:false };
+        const role = (await db.query(`SELECT permissions,is_active,law_firm_tenant_id FROM firm_staff_roles
+            WHERE id=$1 FOR SHARE`,[currentActor.firm_staff_role_id])).rows[0];
+        const permissions = normalizeRolePermissions(role?.permissions);
+        if (!role?.is_active || role.law_firm_tenant_id !== officeId || !hasAreaAction(permissions,'cases','edit'))
+            fail('FORBIDDEN','אין הרשאה לעריכת התיק',403);
+        return { assignedOnly:getCasesDataScope(permissions)!=='all_firm' };
     }
     async function capability({officeId=null,caseId,actorUserId,policyAllowed=false} = {}) {
         const gate = enabled(env);
@@ -106,18 +121,28 @@ function createCourtOwnerImport({pool,env=process.env,inspect=inspectPdf,randomU
         const db = await pool.connect();
         try {
             await db.query('BEGIN');
-            await actor(db,officeId,actorUserId);
+            const currentActor = await actor(db,officeId,actorUserId);
+            const caseScope = await currentCaseScope(db,officeId,currentActor);
             await db.query('SELECT pg_advisory_xact_lock(hashtext($1))',['court-owner-file:'+String(officeId)+':'+value.actionId]);
-            const target = (await db.query(`SELECT caseid FROM cases WHERE caseid=$1 AND law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid FOR UPDATE`,[value.caseId,office(officeId)])).rows[0];
+            const target = (await db.query(`SELECT caseid,casemanagerid FROM cases WHERE caseid=$1 AND law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid FOR UPDATE`,[value.caseId,office(officeId)])).rows[0];
             if (!target) fail('CASE_NOT_FOUND', 'התיק לא נמצא', 404);
+            if (caseScope.assignedOnly && target.casemanagerid!==currentActor.userid) {
+                const membership = (await db.query(`SELECT userid FROM case_users WHERE caseid=$1 AND userid=$2 FOR SHARE`,
+                    [value.caseId,currentActor.userid])).rows[0];
+                if (!membership) fail('FORBIDDEN','אין הרשאה לתיק',403);
+            }
             const mapping = (await db.query(`SELECT court_number FROM court_case_links WHERE case_id=$1
                 AND law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid AND is_primary FOR UPDATE`,[value.caseId,officeId])).rows[0];
             if (mapping?.court_number !== value.courtNumber) fail('COURT_REFERENCE_CHANGED', 'מספר תיק בית המשפט השתנה. יש לרענן את התיק לפני היבוא', 409);
-            const previous = (await db.query(`SELECT a.request_hash,d.id,d.update_id,d.sha256 FROM court_import_actions a
-                JOIN court_import_documents d ON d.id=a.document_id WHERE a.action_id=$1 AND a.law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid`,[value.actionId,officeId])).rows[0];
+            const previous = (await db.query(`SELECT a.request_hash,d.id,d.update_id,d.sha256,u.case_id AS bound_case_id FROM court_import_actions a
+                JOIN court_import_documents d ON d.id=a.document_id
+                LEFT JOIN court_updates u ON u.id=d.update_id AND u.document_id=d.id
+                    AND u.law_firm_tenant_id IS NOT DISTINCT FROM d.law_firm_tenant_id AND u.court_number=d.court_number
+                WHERE a.action_id=$1 AND a.law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid`,[value.actionId,officeId])).rows[0];
             let document, imported=false,replayed=false;
             if (previous) {
                 if (previous.request_hash !== requestHash) fail('COURT_IMPORT_ACTION_CONFLICT', 'פרטי בקשת יבוא קודמת השתנו. יש להתחיל בקשה חדשה', 409);
+                if (previous.bound_case_id!==value.caseId) fail('COURT_IMPORT_ACTION_STALE', 'השיוך לתיק השתנה מאז היבוא. יש לאשר מחדש ולהתחיל בקשת יבוא חדשה', 409);
                 document=previous; replayed=true;
             } else {
                 document=(await db.query(`SELECT *,issued_on::text AS issued_on FROM court_import_documents WHERE law_firm_tenant_id IS NOT DISTINCT FROM $1::uuid

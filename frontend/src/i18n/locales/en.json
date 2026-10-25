@@ -3409,6 +3409,7 @@
       "invalidPdf": "Choose a valid, nonempty PDF downloaded from the court service.",
       "referenceChanged": "The court case number changed. Close this window and refresh the case before importing.",
       "actionConflict": "The import request details changed. Close and reopen the import window.",
+      "actionStale": "The case link has changed since the request. Confirm the file source again and try again.",
       "unavailable": "Document import is currently unavailable in this environment. The file was not sent again.",
       "sourceConfirmationRequired": "Confirm that the file belongs to the displayed case and was downloaded from Net HaMishpat.",
       "downloadFailed": "The original document could not be downloaded. Please try again."

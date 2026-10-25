@@ -15,16 +15,18 @@ const error=code=>e=>e.errorCode===code;
 async function pdf(value='Synthetic owner-export QA') {
     const d=await PDFDocument.create();d.addPage([300,400]).drawText(value);return Buffer.from(await d.save());
 }
-async function fixture(t,{rls=false}={}) {
-    const db=new PGlite();
+async function fixture(t,{rls=false,inspect,db:providedDb,pool:providedPool}={}) {
+    const db=providedDb || new PGlite();
     await db.exec(`CREATE TABLE law_firm_tenants(id uuid PRIMARY KEY,owner_user_id integer,is_active boolean DEFAULT true);
-        CREATE TABLE users(userid integer PRIMARY KEY,role text,law_firm_tenant_id uuid);
+        CREATE TABLE users(userid integer PRIMARY KEY,role text,law_firm_tenant_id uuid,firm_staff_role_id uuid);
+        CREATE TABLE firm_staff_roles(id uuid PRIMARY KEY,permissions jsonb,is_active boolean DEFAULT true,law_firm_tenant_id uuid);
         CREATE TABLE platform_admins(user_id integer PRIMARY KEY,is_active boolean);
-        CREATE TABLE cases(caseid integer PRIMARY KEY,law_firm_tenant_id uuid,casename text);
+        CREATE TABLE cases(caseid integer PRIMARY KEY,law_firm_tenant_id uuid,casename text,casemanagerid integer);
+        CREATE TABLE case_users(caseid integer,userid integer,PRIMARY KEY(caseid,userid));
         INSERT INTO law_firm_tenants(id,owner_user_id) VALUES('${A}',11),('${B}',21);
-        INSERT INTO users VALUES(1,'Admin',null),(11,'Admin','${A}'),(12,'Lawyer','${A}'),(13,'Admin','${A}'),(21,'Admin','${B}');
+        INSERT INTO users(userid,role,law_firm_tenant_id) VALUES(1,'Admin',null),(11,'Admin','${A}'),(12,'Lawyer','${A}'),(13,'Admin','${A}'),(21,'Admin','${B}');
         INSERT INTO platform_admins VALUES(1,true);
-        INSERT INTO cases VALUES(101,'${A}','Synthetic A'),(102,'${A}','Synthetic A2'),(201,'${B}','Synthetic B'),(301,null,'Synthetic dedicated');`);
+        INSERT INTO cases(caseid,law_firm_tenant_id,casename) VALUES(101,'${A}','Synthetic A'),(102,'${A}','Synthetic A2'),(201,'${B}','Synthetic B'),(301,null,'Synthetic dedicated');`);
     if(rls)await db.exec(`CREATE FUNCTION public.office_scope_id() RETURNS uuid LANGUAGE sql AS $$ SELECT nullif(current_setting('app.office_id',true),'')::uuid $$;
         CREATE FUNCTION public.office_row_allowed(id uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT current_setting('app.office_mode',true)='system' OR (current_setting('app.office_mode',true)='office' AND id=public.office_scope_id()) OR (current_setting('app.office_mode',true)='legacy' AND id IS NULL) $$;
         CREATE FUNCTION public.guard_office_owner() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.law_firm_tenant_id IS DISTINCT FROM OLD.law_firm_tenant_id THEN RAISE EXCEPTION 'office changed'; END IF; RETURN NEW; END $$;
@@ -39,9 +41,9 @@ async function fixture(t,{rls=false}={}) {
     let tail=Promise.resolve(),fault=null;
     async function lease(){const previous=tail;let release;tail=new Promise(r=>{release=r;});await previous;return release;}
     async function query(sql,args){if(fault&&fault(sql,args))throw Error('SYNTHETIC_STORAGE_FAILURE');const r=await db.query(sql,args);return{...r,rowCount:r.rows.length||r.affectedRows||0};}
-    const pool={query:async(...args)=>{const release=await lease();try{return await query(...args);}finally{release();}},
+    const pool=providedPool || {query:async(...args)=>{const release=await lease();try{return await query(...args);}finally{release();}},
         connect:async()=>{const release=await lease();return{query,release};}};
-    const service=createCourtOwnerImport({pool,env});
+    const service=createCourtOwnerImport({pool,env,inspect});
     const bytes=await pdf();
     const input={caseId:'101',courtNumber:'67104-01-20',issuedOn:'2026-10-21',title:'Synthetic decision',actionId:crypto.randomUUID(),sourceConfirmed:'true'};
     const call=(patch={})=>service.importFile({officeId:A,actorUserId:11,input,...{file:{buffer:bytes,originalname:'Synthetic-source.pdf'}},...patch});
@@ -121,11 +123,70 @@ test('ordinary case-reference edits detach real imports and never attach them ag
     async function save(number){const c=await f.pool.connect();try{await c.query('BEGIN');await saveCaseCourtNumber(c,101,A,number,{});await c.query('COMMIT');}catch(e){await c.query('ROLLBACK');throw e;}finally{c.release();}}
     await save('12345-02-26');await save('67104-01-20');
     assert.equal((await f.pool.query('SELECT case_id FROM court_updates WHERE id=$1',[first.updateId])).rows[0].case_id,null);
+    await assert.rejects(f.call(),e=>e.errorCode==='COURT_IMPORT_ACTION_STALE' && e.httpStatus===409);
+    assert.equal((await f.pool.query('SELECT case_id FROM court_updates WHERE id=$1',[first.updateId])).rows[0].case_id,null);
+    assert.equal((await f.pool.query('SELECT * FROM court_import_actions')).rows.length,1);
     await assert.rejects(f.service.document({officeId:A,caseId:101,documentId:first.documentId}),error('COURT_DOCUMENT_NOT_FOUND'));
     const restored=await f.call({input:{...f.input,actionId:crypto.randomUUID()}});
     assert.equal(restored.imported,false);assert.equal(restored.documentId,first.documentId);
     assert.deepEqual((await f.service.document({officeId:A,caseId:101,documentId:first.documentId})).buffer,f.bytes);
     assert.equal((await f.pool.query('SELECT * FROM court_import_documents')).rows.length,1);
+    assert.equal((await f.pool.query('SELECT * FROM court_updates')).rows.length,1);
+    assert.equal((await f.pool.query('SELECT * FROM court_import_actions')).rows.length,2);
+});
+const ROLE='55555555-5555-4555-8555-555555555555';
+const casePermissions=(scope='all_firm',actions=['view','edit'])=>({areas:{cases:{visible:true,actions,dataScope:scope}}});
+async function customOwner(f,scope='all_firm') {
+    await f.pool.query('INSERT INTO firm_staff_roles(id,permissions,law_firm_tenant_id) VALUES($1,$2,$3)',[ROLE,casePermissions(scope),A]);
+    await f.pool.query('UPDATE users SET firm_staff_role_id=$1 WHERE userid=11',[ROLE]);
+}
+function barrier() {let resolve;const promise=new Promise(done=>{resolve=done;});return{promise,resolve};}
+for(const change of ['permission','membership','manager'])test(`current ${change} revocation during PDF inspection forbids import without writes`,async t=>{
+    const reached=barrier(),resume=barrier();
+    const f=await fixture(t,{inspect:async bytes=>{const value=await inspectPdf(bytes);reached.resolve();await resume.promise;return value;}});
+    await customOwner(f,change==='permission'?'all_firm':'assigned_only');
+    if(change==='membership')await f.pool.query('INSERT INTO case_users VALUES(101,11)');
+    if(change==='manager')await f.pool.query('UPDATE cases SET casemanagerid=11 WHERE caseid=101');
+    const pending=f.call();await reached.promise;
+    if(change==='permission')await f.pool.query('UPDATE firm_staff_roles SET permissions=$1 WHERE id=$2',[casePermissions('all_firm',['view']),ROLE]);
+    if(change==='membership')await f.pool.query('DELETE FROM case_users WHERE caseid=101 AND userid=11');
+    if(change==='manager')await f.pool.query('UPDATE cases SET casemanagerid=12 WHERE caseid=101');
+    resume.resolve();await assert.rejects(pending,e=>e.errorCode==='FORBIDDEN' && e.httpStatus===403);
+    for(const table of ['court_import_documents','court_import_actions','court_updates'])assert.equal((await f.pool.query('SELECT * FROM '+table)).rows.length,0);
+});
+test('current custom owner permissions allow only a currently assigned case',async t=>{
+    const f=await fixture(t);await customOwner(f,'assigned_only');
+    await assert.rejects(f.call(),error('FORBIDDEN'));
+    await f.pool.query('INSERT INTO case_users VALUES(101,11)');
+    const first=await f.call();assert.equal(first.imported,true);
+    await f.pool.query('DELETE FROM case_users WHERE caseid=101 AND userid=11');
+    await f.pool.query('UPDATE cases SET casemanagerid=11 WHERE caseid=101');
+    assert.equal((await f.call()).replayed,true);
+    assert.equal((await f.pool.query('SELECT * FROM court_import_documents')).rows.length,1);
+});
+test('current role user case and assignment grants remain locked until PostgreSQL import commit',{skip:!process.env.COURT_IMPORT_TEST_PG_SOCKET},async t=>{
+    const {Pool}=require('pg');
+    const pg=new Pool({host:process.env.COURT_IMPORT_TEST_PG_SOCKET,port:Number(process.env.COURT_IMPORT_TEST_PG_PORT||5432),database:'postgres',user:process.env.USER,max:8});
+    const reached=barrier(),resume=barrier();
+    const pool={query:(...args)=>pg.query(...args),connect:async()=>{const c=await pg.connect();return{release:()=>c.release(),query:async(sql,args)=>{
+        const result=await c.query(sql,args);
+        if(sql.startsWith('INSERT INTO court_import_documents')){reached.resolve();await resume.promise;}
+        return result;
+    }};}};
+    const f=await fixture(t,{db:{exec:sql=>pg.query(sql),query:(...args)=>pg.query(...args),close:()=>pg.end()},pool});
+    await customOwner(f,'assigned_only');await pg.query('INSERT INTO case_users VALUES(101,11)');
+    const pending=f.call();await reached.promise;
+    try {
+        for(const statement of ["UPDATE firm_staff_roles SET is_active=false",'UPDATE users SET firm_staff_role_id=null WHERE userid=11',
+            'UPDATE cases SET casemanagerid=12 WHERE caseid=101','DELETE FROM case_users WHERE caseid=101 AND userid=11']) {
+            const c=await pg.connect();try {
+                await c.query('BEGIN');await c.query("SET LOCAL lock_timeout='100ms'");
+                await assert.rejects(c.query(statement),e=>e.code==='55P03');
+            } finally {await c.query('ROLLBACK');c.release();}
+        }
+    } finally {resume.resolve();}
+    assert.equal((await pending).imported,true);
+    assert.equal((await pg.query('SELECT * FROM court_import_documents')).rows.length,1);
 });
 test('dedicated QA requires an active database platform administrator',async t=>{
     const f=await fixture(t);const out=await f.call({officeId:null,actorUserId:1,input:{...f.input,caseId:'301'}});
