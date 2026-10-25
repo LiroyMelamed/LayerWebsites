@@ -1,0 +1,10 @@
+{
+  "repository": "LiroyMelamed/central-platform",
+  "commit": "fe1f81df73892c767f9a411fad1a9a2cebc94ec6",
+  "directory": "packages/system-messages-client",
+  "files": {
+    "index.cjs": "f72d2f1ef9bf377e1abce522bfe061a573b0321d20f492e95142ccb075322247",
+    "index.d.cts": "b3f778be1b30eb65d6ea228a6f6ca23c924ca5b925807a7f4a849f6e4dab79aa",
+    "package.json": "a02edf93a8b5eba3ec363e5119ed2dae257cc7bea3016af76dd8e559b4f94269"
+  }
+}

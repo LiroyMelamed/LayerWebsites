@@ -13,6 +13,7 @@ import SecondaryButton from '../../components/styledComponents/buttons/Secondary
 import { Text14, TextBold14, TextBold24 } from '../../components/specializedComponents/text/AllTextKindFile';
 import MelaMediaLogo from '../../components/branding/MelaMediaLogo';
 import { isSignupEmbedded, navigateAfterSignup } from '../../lib/signupEmbed';
+import { SystemMessageConsentChoice, SYSTEM_MESSAGE_CONSENT_VERSION } from '../../components/billing/SystemMessageConsent';
 
 import LoginSimpleScreen from '../loginScreen/components/LoginSimpleScreen';
 import './SignupScreen.scss';
@@ -32,9 +33,15 @@ export default function SignupScreen() {
     const [step, setStep] = useState(0);
     const [loading, setLoading] = useState(false);
     const [signupAvailable, setSignupAvailable] = useState(null);
+    const [systemMessagesAvailable, setSystemMessagesAvailable] = useState(false);
     useEffect(() => {
         let active = true;
-        ApiUtils.get('/public/signup/config').then(({data}) => { if (active) setSignupAvailable(data?.available === true); }).catch(() => { if (active) setSignupAvailable(false); });
+        ApiUtils.get('/public/signup/config').then(({data}) => {
+            if (active) {
+                setSignupAvailable(data?.available === true);
+                setSystemMessagesAvailable(data?.systemMessages?.available === true && data.systemMessages.consentVersion === SYSTEM_MESSAGE_CONSENT_VERSION);
+            }
+        }).catch(() => { if (active) setSignupAvailable(false); });
         return () => { active = false; };
     }, []);
     const [error, setError] = useState('');
@@ -60,6 +67,7 @@ export default function SignupScreen() {
         });
     }, []);
     const [billingConsent, setBillingConsent] = useState(false);
+    const [systemMessagesConsent, setSystemMessagesConsent] = useState(false);
     const price = signupQuote(form);
     const recurringPrice = price.recurringAmountIls.toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const pricingLink = 'https://mela-media.co.il/platform/pricing/?' + new URLSearchParams({ platformId: form.platformId, resourceId: form.resourceId, signingId: form.signingId, billingInterval: form.billingInterval || 'monthly' }).toString();
@@ -70,6 +78,7 @@ export default function SignupScreen() {
     };
 
     const handlePhoneChange = (event) => {
+        setSystemMessagesConsent(false);
         const raw = event?.target?.value ?? '';
         const digitsOnly = String(raw).replace(/\D/g, '');
         let normalized = digitsOnly;
@@ -123,6 +132,7 @@ export default function SignupScreen() {
                 signingId: form.signingId,
                 billingInterval: form.billingInterval,
                 billingConsent: true, consentVersion: 'signup-1ils-3months-v2',
+                ...(systemMessagesAvailable ? {systemMessagesConsent, systemMessagesConsentVersion:SYSTEM_MESSAGE_CONSENT_VERSION} : {}),
                 idempotencyKey:key,expectedPriceIls:price.recurringAmountIls,
             });
             const intentId = res.data?.intentId;
@@ -274,6 +284,10 @@ export default function SignupScreen() {
                                 ))}
                             </ul>
                         </SimpleCard>
+
+                        {systemMessagesAvailable && <SystemMessageConsentChoice
+                            checked={systemMessagesConsent} disabled={loading}
+                            onChange={event => setSystemMessagesConsent(event.target.checked)} />}
 
                         <Text14>המשרד ייפתח לאחר אימות חיוב ₪1 ושמירת הכרטיס.</Text14>
 
