@@ -6,7 +6,11 @@ const { createIntegrationService } = require('./service');
 const { createMetaProvider } = require('./metaProvider');
 const { createGroupWorker } = require('./worker');
 const { deliveryAllowed } = require('./deliveryPolicy');
-const service = createIntegrationService({ pool, provider: createMetaProvider() });
+const { linkedLiveEnabled } = require('./linkedDevicePolicy');
+const { createWahaProvider } = require('./wahaProvider');
+const { createProviderRouter } = require('./providerRouter');
+const linkedProvider = createWahaProvider();
+const service = createIntegrationService({ pool, linkedProvider, provider: createProviderRouter(createMetaProvider(), linkedProvider) });
 const worker = createGroupWorker(service);
 const runOffice = (tenantId, fn) => tenantId ? scope.withOffice(tenantId, fn) : scope.withLegacyOffice(fn);
 let running = false, timer, courtRunning = false, courtTimer;
@@ -16,7 +20,7 @@ async function tick({ demoOnly = false } = {}) {
     try {
         const offices = isMultiTenantMode() ? await scope.withSystem(() => pool.query(`SELECT DISTINCT i.law_firm_tenant_id FROM office_integrations i JOIN law_firm_tenants t ON t.id=i.law_firm_tenant_id WHERE i.provider='whatsapp' AND i.enabled=true AND t.is_active=true`)) : { rows: [{ law_firm_tenant_id: null }] };
         for (const row of offices.rows) {
-            try { await runOffice(row.law_firm_tenant_id, () => worker.processOffice(row.law_firm_tenant_id, { demoOnly: demoOnly || !deliveryAllowed(process.env) })); }
+            try { await runOffice(row.law_firm_tenant_id, () => worker.processOffice(row.law_firm_tenant_id, { demoOnly: demoOnly || !(deliveryAllowed(process.env) || linkedLiveEnabled(process.env)) })); }
             catch { console.error('[office-integrations] worker failed; pending mutations retain their state'); }
         }
     } finally { running = false; }
@@ -37,9 +41,12 @@ async function tickCourt(now = new Date()) {
     } finally { courtRunning = false; }
 }
 function start() {
-    const demoOnly = (process.env.WHATSAPP_DEMO_ONLY === 'true' || process.env.WHATSAPP_CONNECT_ONLY === 'true') && process.env.WHATSAPP_DEMO_WORKER_ENABLED === 'true';
-    const liveWorker = deliveryAllowed(process.env) && process.env.WHATSAPP_WORKER_ENABLED === 'true' && require('../../lib/backgroundJobsEnabled')(process.env);
-    if (!timer && (demoOnly || liveWorker)) {
+    const demoWorker = (process.env.WHATSAPP_DEMO_ONLY === 'true' || process.env.WHATSAPP_CONNECT_ONLY === 'true') && process.env.WHATSAPP_DEMO_WORKER_ENABLED === 'true';
+    const liveWorker = (deliveryAllowed(process.env) || linkedLiveEnabled(process.env)) && process.env.WHATSAPP_WORKER_ENABLED === 'true' && require('../../lib/backgroundJobsEnabled')(process.env);
+    if (!timer && (demoWorker || liveWorker)) {
+        // Meta's connection-only setting must not filter an independently
+        // authorized linked-device worker down to simulated jobs.
+        const demoOnly = !liveWorker;
         timer = setInterval(() => tick({ demoOnly }).catch(() => console.error('[office-integrations] worker unavailable')), 15000);
         timer.unref();
     }
