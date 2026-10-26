@@ -4063,7 +4063,10 @@
     "withoutClient": "הזנת נתוני לקוח למסמך בלבד",
     "openFromCase": "מסמך Word לתיק",
     "openFromClient": "מסמך Word ללקוח",
-    "returnToWord": "חזרה לנתוני המסמך"
+    "returnToWord": "חזרה לנתוני המסמך",
+    "openReadablePreview": "פתיחת המסמך לתצוגה קריאה",
+    "readablePreviewHelp": "המסמך ייפתח בלשונית חדשה עם כלי ההגדלה של הדפדפן. לאחר הקריאה חוזרים לכאן כדי לאשר את הבדיקה ולהמשיך.",
+    "readablePreviewFailed": "לא ניתן לפתוח את התצוגה הקריאה. אפשר להמשיך לבדוק את המסמך כאן או לנסות לפתוח שוב."
   },
   "stageAutomation": {
     "title": "מסמכים אוטומטיים לפי שלב",

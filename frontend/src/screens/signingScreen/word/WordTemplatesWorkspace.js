@@ -234,6 +234,20 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
         if (lock.current || appliedContext.current !== nextContext || !preview || previewRef.current !== preview || !pdfReady || !acknowledged || dirty) return;
         onContinue?.(preview);
     }
+    function openReadablePreview() {
+        if (!alive.current || lock.current || busy || dirty || appliedContext.current !== nextContext ||
+            !preview || previewRef.current !== preview || !pdfReady || !preview.fileBlob || preview.url !== urlRef.current) return;
+        // Give the native viewer its own URL lifetime; the inline review stays mounted.
+        let readableUrl;
+        try {
+            readableUrl = URL.createObjectURL(preview.fileBlob);
+            window.open(readableUrl, '_blank', 'noopener,noreferrer');
+            window.setTimeout(() => URL.revokeObjectURL(readableUrl), 60_000);
+        } catch {
+            if (readableUrl) URL.revokeObjectURL(readableUrl);
+            setError('readablePreviewFailed');
+        }
+    }
 
     const manualInput = value => <SimpleInput key={value} title={fieldLabel(value)} aria-label={fieldLabel(value)}
         value={inputs.manualValues[value] || ''} maxLength={4000} disabled={busy} timeToWaitInMilli={0}
@@ -359,6 +373,9 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
             </section>
             {preview && <section className="lw-word__section" aria-label={text('finalPreview')}>
                 <h2 ref={previewHeading} tabIndex={-1}><TextBold18>{text('finalPreview')}</TextBold18></h2><Text14>{text('freshGeometry')}</Text14>
+                <div className="lw-word__actions"><SecondaryButton disabled={busy || !pdfReady || dirty} onPress={openReadablePreview}
+                    aria-describedby="word-readable-preview-help">{text('openReadablePreview')}</SecondaryButton></div>
+                <p id="word-readable-preview-help">{text('readablePreviewHelp')}</p>
                 <PdfViewer key={preview.url} pdfSource={preview.url} spots={[]} signers={[]} onDocumentReady={ready => { if (previewRef.current === preview) setPdfReady(ready); }} />
                 <label className="lw-word__check"><input type="checkbox" checked={acknowledged} disabled={!pdfReady || busy} onChange={event => setAcknowledged(event.target.checked)} />{text('previewAcknowledgement')}</label>
                 <div className="lw-word__actions"><PrimaryButton disabled={busy || !pdfReady || !acknowledged || dirty || !onContinue} onPress={continueToSigning}>{text('continue')}</PrimaryButton></div>
