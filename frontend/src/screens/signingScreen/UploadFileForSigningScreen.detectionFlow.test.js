@@ -91,6 +91,9 @@ const send = () => screen.getAllByRole('button', { name: 'signing.upload.sendToC
 
 beforeEach(() => {
     jest.clearAllMocks();
+    // CRA resets jest.fn implementations before each test; restore this owned popup fixture.
+    mockOpenPopup.mockImplementation(node => mockSetPopup(node));
+    mockClosePopup.mockImplementation(() => mockSetPopup(null));
     localStorage.clear();
     mockLocation = { state: null };
     mockPlan = { retention: { documentsCoreDays: 365, documentsPiiDays: 30 } };
