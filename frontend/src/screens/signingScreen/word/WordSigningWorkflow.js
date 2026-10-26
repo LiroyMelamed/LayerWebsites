@@ -1,3 +1,4 @@
+/* global globalThis */
 import React, { useEffect, useRef, useState } from 'react';
 import wordTemplatesApi from '../../../api/wordTemplatesApi';
 import NativeTemplateBuilder from '../templates/NativeTemplateBuilder';
