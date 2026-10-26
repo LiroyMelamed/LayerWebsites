@@ -3534,6 +3534,7 @@
     "nativeNotice": "Explicitly define roles and locations for signatures and recipient inputs here. Changing the Word data requires a new PDF and fresh field placement.",
     "nativeBack": "Back to filling the Word document",
     "nativeFailure": "The signing draft could not be opened. Return to the document and check that its version and preview are current.",
+    "savedContextFailure": "The saved Word document’s client and case could not be verified. Return to Word to review them and generate a new PDF, or choose another template.",
     "finalSigningFieldsHelp": "Map data to fill the Word document here. Signatures and recipient inputs are placed on the final PDF after filling, with explicit roles. A data role does not grant signing authority.",
     "authoringLoading": "Preparing the original pages for selection…",
     "authoringUnavailable": "The Word source could not be opened for selection. Retry or check that the file and version are still available.",

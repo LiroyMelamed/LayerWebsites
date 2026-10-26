@@ -1,0 +1,22 @@
+{
+  "status": "PASS_MERGED_QA_CONTEXT_REGRESSION_ONLY",
+  "at": "2026-10-26T23:05:45.230586+00:00",
+  "mainAncestor": "de7225f75784fab3412fa5b1703fbad6b1a989d3",
+  "qaBase": "d7f223340c3259ee8a44747e74dda09f8b09724e",
+  "scenarios": 107,
+  "suites": 8,
+  "receipt": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-ux-fix-20261026/frontend-regression-20261026T230455Z.json",
+    "sha256": "a28f1d294a63ee4d2ba33cd7be530b08c37ac54dc093f01c2da2bc79d83f6ab9"
+  },
+  "independentSourceReview": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/SAVED-WORD-CONTEXT-INDEPENDENT-REVIEW01.json",
+    "sha256": "76aa0a63a31c6767730adbedf0daded609d7518639220c9ab05f0d3b4300a9b3"
+  },
+  "sourceMatchesReceipt": true,
+  "protectedHashChanges": [
+    "frontend/src/screens/signingScreen/templates/PackageComposer.js"
+  ],
+  "other102QaHashesPreserved": true,
+  "limits": "No build/browser/live QA/deployment/provider/customer claim. Existing viewer QA guard bytes preserved."
+}

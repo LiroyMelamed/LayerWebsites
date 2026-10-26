@@ -58,6 +58,7 @@ const signingPackagesApi = {
     completionMark: id => signingRequest('get', `${root}/authoring/completion-marks/${encodeURIComponent(id)}`),
     registerTemplateSource: fileKey => signingRequest('post', `${root}/authoring/sources`, { fileKey }),
     templateDocument: (id, key) => signingRequest('get', `${root}/authoring/versions/${encodeURIComponent(id)}/documents/${encodeURIComponent(key)}`, null, { responseType: 'blob' }),
+    wordPreviewInfo: id => signingRequest('get', `${root}/word/previews/${encodeURIComponent(id)}`),
     cases: (q, config) => signingRequest('get', `${root}/creation/cases?${query({ q })}`, null, config),
     clientContext: (id, config) => signingRequest('get', `${root}/creation/clients/${encodeURIComponent(id)}`, null, config),
     caseContext: (id, config) => signingRequest('get', `${root}/creation/cases/${encodeURIComponent(id)}`, null, config),
