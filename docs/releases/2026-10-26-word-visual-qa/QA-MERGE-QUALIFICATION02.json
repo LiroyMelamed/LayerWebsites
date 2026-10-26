@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "status": "FINAL_MERGED_WORKING_SOURCE_QUALIFIED_NOT_DEPLOYED",
+  "mainAncestor": "2c5023abb85b30e4b967ab7cd5149cfc8adea190",
+  "qaParent": "88de32aea4ff64ade1ad6d844cee8f70e6debc7e",
+  "previousFullFrontend": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-ux-fix-20261026/frontend-regression-20261026T220451Z.json",
+    "sha256": "aeaa82f26bb3982b54329fef66410f9654beacb0d015f97a77eba9c9350a63d0",
+    "cases": 150
+  },
+  "finalViewer": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-ux-fix-20261026/frontend-regression-20261026T222633Z.json",
+    "sha256": "802ab52c40eca4500bd62c987000194262352b61bfc38c35bae152a8ddaeeffe",
+    "cases": 9,
+    "oneAdditionalScenario": true
+  },
+  "frontendDistinctCases": 151,
+  "frontendSuites": 13,
+  "sourceDriftSinceFullRun": [
+    "frontend/src/components/specializedComponents/signFiles/pdfViewer/PdfViewer.test.js"
+  ],
+  "runtimeViewerSha256": "6a908507016022adc765859cba4faa23e61d2e7dee5d8dfe5673645c50b7b645",
+  "qaGuardsRetained": true,
+  "protected103UnchangedSincePriorMerge": true,
+  "operatorTools": "Archived exact source and locally qualified fixed-QA gates; execution requires actual candidate-bound sealed contracts.",
+  "pending": [
+    "frozen build",
+    "backend/frontend QA deployment",
+    "actual desktop/mobile browser and finish review"
+  ]
+}
