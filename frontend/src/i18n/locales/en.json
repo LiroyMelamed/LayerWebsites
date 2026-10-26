@@ -3511,7 +3511,10 @@
     "withoutClient": "Enter client details for this document only",
     "openFromCase": "Create Word document for this case",
     "openFromClient": "Create Word document for this client",
-    "returnToWord": "Back to document details"
+    "returnToWord": "Back to document details",
+    "openReadablePreview": "Open document for easier reading",
+    "readablePreviewHelp": "Opens in a new tab with your browser's zoom controls. Return here after reading to confirm the review and continue.",
+    "readablePreviewFailed": "The reading view could not be opened. Review the document here or try opening it again."
   },
   "stageAutomation": {
     "title": "Automatic documents by case stage",
