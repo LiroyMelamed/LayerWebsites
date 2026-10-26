@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "scope": "ARCHIVED_EXACT_PREPARED_QA_TOOL_SOURCE_NOT_GENERIC_DEPLOY_COMMAND",
+  "files": {
+    "ops/word-visual-qa-20261026/qa-backend-observe02.py": "adced0030fbfc646182d3d44db25b2195f215b3f6c19b11aef3707420e96f2b7",
+    "ops/word-visual-qa-20261026/qa-backend-release02.py": "bf4369a26ec6284419bbc848ed4d3b9fb37a200e28d2638256322657e2f93dc3",
+    "ops/word-visual-qa-20261026/qa-backend-release02.local.test.py": "337a29d7164514cb0af421cb12d2311321a456d299304c906bdc562aa017dc0b",
+    "ops/word-visual-qa-20261026/history/qa-backend-observe01.py": "e239f938e7f322f0489973905cea05c704ae59598d36d8f9972429a0fdc142ac",
+    "ops/word-visual-qa-20261026/history/qa-backend-release01.py": "bbd460a5b0851ce802aa1182fe0f4dd9e9e582abe37d6ff5406b9233cbca4aab"
+  },
+  "activeEvidenceDirectory": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026",
+  "executionStatus": "No mutating backend release phase has executed at archival time. Observer01 failed before source mutation; Observer02 stable dedicated-QA metadata with detached HEAD. Operator01 review rejected its weak evidence gate; operator02 fixes it and has local synthetic qualification plus independent code approval.",
+  "instructions": [
+    "Do not replay historical contracts or execute these archive copies by default. Exact current source/build/permission/locks/state evidence and newly sealed contract are required.",
+    "Current active invocation uses the task evidence-directory copies so receipts remain outside the Git source checkout. Driver hashes are byte-identical.",
+    "Operator02 only targets root@37.60.230.148:/root/Melamedia, DBmelamedia, PM2id5/name melamedia-api. It preserves the current detached pin and dedicated-mode flags.",
+    "Hold shared maintenance and exclusive QA release locks; never use all-tenant scripts. No installs/environment/provider/credential changes, pm2save, source reset, automatic old-source rollback or DB restore.",
+    "A forward recovery must retain Word-native author-private provenance/context guards after any new Word-native writes. Checkpoints preserve current DB data/owners/ACL, source and env privately; no restore drill is claimed."
+  ],
+  "qualifications": [
+    {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/backend-operator-fixtures-20261026T221543164542Z.json",
+      "sha256": "b215625da9cf0cc2ebe0798b261473575057f032f1b2636e1a0123c7773cddf5"
+    },
+    {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/operator-qualification-20261026T222057738890Z.json",
+      "sha256": "596b46cbfd676f94d82355e7d1f8f65abba62c547111938e7c3768aed72b57f1"
+    }
+  ]
+}
