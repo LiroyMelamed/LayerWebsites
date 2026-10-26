@@ -1,3 +1,4 @@
+/* global globalThis */
 // The PDF layout is evidence for selecting a server anchor, never source authority.
 const HASH = /^[a-f0-9]{64}$/i;
 const finite = value => typeof value === 'number' && Number.isFinite(value);
