@@ -1,0 +1,25 @@
+{
+  "at": "2026-10-26T14:33:37.977930+00:00",
+  "tenant": "morlevy",
+  "result": "ACTUAL_TENANT_DEPLOYMENT_REMOTE_REF_AND_PRODUCTION_TAG_VERIFIED",
+  "branch": "MorLevi",
+  "before": "cae9a0456fabd1ae144da2b81751c06b2308dc91",
+  "candidateCommit": "a50afb3fccaaee17633328ef62b5695336d73090",
+  "productionTag": "PROD_26_10_2026_LIROY_WORD_STAGE_WHATSAPP_OFF_MorLevi",
+  "tagObject": "58e396f468c288840a0d440a25db68655d4efce9",
+  "remoteActual": {
+    "refs/heads/MorLevi": "a50afb3fccaaee17633328ef62b5695336d73090",
+    "refs/tags/PROD_26_10_2026_LIROY_WORD_STAGE_WHATSAPP_OFF_MorLevi": "58e396f468c288840a0d440a25db68655d4efce9",
+    "refs/tags/PROD_26_10_2026_LIROY_WORD_STAGE_WHATSAPP_OFF_MorLevi^{}": "a50afb3fccaaee17633328ef62b5695336d73090"
+  },
+  "remoteVerified": true,
+  "pushExitCode": 0,
+  "stdout": "",
+  "stderr": "remote: \nremote: GitHub found 26 vulnerabilities on LiroyMelamed/LayerWebsites's default branch (2 critical, 13 high, 8 moderate, 3 low). To find out more, visit:        \nremote:      https://github.com/LiroyMelamed/LayerWebsites/security/dependabot        \nremote: \nTo https://github.com/LiroyMelamed/LayerWebsites.git\n   cae9a045..a50afb3f  a50afb3fccaaee17633328ef62b5695336d73090 -> MorLevi\n * [new tag]           PROD_26_10_2026_LIROY_WORD_STAGE_WHATSAPP_OFF_MorLevi -> PROD_26_10_2026_LIROY_WORD_STAGE_WHATSAPP_OFF_MorLevi\n",
+  "noForce": true,
+  "frontendFinalEvidence": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/frontend/MORLEVY-PUBLICATION-AND-SMOKE05.json",
+    "sha256": "351dc8c689886d035e92a12cee7763e7a0b601522e124ba67d437773befdcc04"
+  },
+  "noNewTestsRun": true
+}

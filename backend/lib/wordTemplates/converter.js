@@ -25,6 +25,10 @@ function integerOption(value, fallback, min, max) {
 
 async function configuration(options) {
     if (!options || typeof options !== 'object' || Array.isArray(options)) throw error('WORD_CONVERSION_INVALID_CONFIG');
+    const configuredConcurrency = process.env.WORD_TEMPLATE_MAX_CONCURRENT;
+    if (configuredConcurrency !== undefined && configuredConcurrency !== '1' && configuredConcurrency !== '2') {
+        throw error('WORD_CONVERSION_INVALID_CONFIG');
+    }
     const executablePath = options.executablePath ?? process.env.WORD_TEMPLATE_SOFFICE_PATH;
     if (!executablePath) throw error('WORD_CONVERSION_NOT_CONFIGURED');
     if (typeof executablePath !== 'string' || !path.isAbsolute(executablePath) || executablePath.includes('\0')
@@ -34,6 +38,7 @@ async function configuration(options) {
         throw error('WORD_CONVERSION_INVALID_CONFIG');
     }
     const result = {
+        maxConcurrent: configuredConcurrency === undefined ? LIMITS.concurrent : Number(configuredConcurrency),
         timeoutMs: integerOption(options.timeoutMs, DEFAULTS.timeoutMs, 100, LIMITS.timeoutMs),
         maxOutputBytes: integerOption(options.maxOutputBytes, DEFAULTS.maxOutputBytes, 16, LIMITS.maxOutputBytes),
         maxPages: integerOption(options.maxPages, DEFAULTS.maxPages, 1, LIMITS.maxPages),
@@ -166,7 +171,8 @@ async function validatePdf(outputPath, config) {
 /**
  * Local-only, bounded DOCX -> PDF conversion. Deployment must explicitly supply
  * its managed soffice executable (option or WORD_TEMPLATE_SOFFICE_PATH); no
- * desktop/bundled executable is discovered. POSIX only, two active jobs/worker.
+ * desktop/bundled executable is discovered. POSIX only, at most two active jobs/worker.
+ * WORD_TEMPLATE_MAX_CONCURRENT optionally lowers admission to one; unset keeps two.
  * A dedicated restricted worker and egress policy remain deployment concerns;
  * subprocess isolation here is not an OS/network sandbox.
  *
@@ -182,7 +188,7 @@ async function convertDocxToPdf(input, options = {}) {
     let sourceHash;
     try { sourceHash = importDocx(source).sourceHash; }
     catch (_) { throw error('WORD_CONVERSION_INVALID_DOCX'); }
-    if (activeConversions >= LIMITS.concurrent) throw error('WORD_CONVERSION_BUSY');
+    if (activeConversions >= config.maxConcurrent) throw error('WORD_CONVERSION_BUSY');
     activeConversions += 1;
     let directory;
     let result;

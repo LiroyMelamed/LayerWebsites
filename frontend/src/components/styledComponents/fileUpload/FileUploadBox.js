@@ -35,6 +35,13 @@ export default function FileUploadBox({
         if (!disabled && !uploading) fileInputRef.current?.click();
     }, [disabled, uploading]);
 
+    const handleKeyDown = useCallback((event) => {
+        if (event.target !== event.currentTarget || !['Enter', ' '].includes(event.key)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        if (!event.repeat) handleClick();
+    }, [handleClick]);
+
     const handleChange = useCallback(
         (e) => {
             const file = e.target.files?.[0];
@@ -65,7 +72,13 @@ export default function FileUploadBox({
         <SimpleContainer className={`lw-fileUploadBox ${isDragActive ? "is-dragActive" : ""} ${disabled || uploading ? "is-disabled" : ""} ${className}`}>
             <div
                 className="lw-fileUploadBox__dropzone"
+                role="button"
+                tabIndex={disabled || uploading ? -1 : 0}
+                aria-label={effectiveLabel}
+                aria-disabled={disabled || uploading}
+                aria-busy={uploading || undefined}
                 onClick={handleClick}
+                onKeyDown={handleKeyDown}
                 onDragEnter={handleDragEnter}
                 onDragLeave={handleDragLeave}
                 onDragOver={handleDragOver}
@@ -76,6 +89,7 @@ export default function FileUploadBox({
                     type="file"
                     accept={accept}
                     onChange={handleChange}
+                    onClick={(event) => event.stopPropagation()}
                     className="lw-fileUploadBox__input"
                     disabled={disabled || uploading}
                 />

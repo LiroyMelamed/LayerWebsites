@@ -6,6 +6,8 @@ import ClientPopup from './ClientPopUp';
 import ClientsCard from './ClientsCard';
 import en from '../../../i18n/locales/en.json';
 const mockOpen = jest.fn(), mockClose = jest.fn(), mockRequest = jest.fn();
+const mockNavigate = jest.fn();
+jest.mock('react-router-dom', () => ({ ...jest.requireActual('react-router-dom'), useNavigate: () => mockNavigate }));
 let mockAvailable = true, mockUpload = true;
 jest.mock('../../../providers/PopUpProvider', () => ({ usePopup: () => ({ openPopup: mockOpen, closePopup: mockClose }) }));
 jest.mock('../../../providers/FirmPermissionsProvider', () => ({ useFirmPermissions: () => ({ canAction: (area, action) => (area === 'clients' && action === 'view') || (area === 'signing' && action === 'upload' && mockUpload) }) }));
@@ -22,7 +24,7 @@ async function mount(element) {
     await i18n.use(initReactI18next).init({ resources: { en: { translation: en } }, lng: 'en', interpolation: { escapeValue: false } });
     return render(<I18nextProvider i18n={i18n}>{element}</I18nextProvider>);
 }
-beforeEach(() => { mockOpen.mockClear(); mockRequest.mockClear(); mockAvailable = true; mockUpload = true; });
+beforeEach(() => { mockOpen.mockClear(); mockClose.mockClear(); mockRequest.mockClear(); mockNavigate.mockClear(); mockAvailable = true; mockUpload = true; });
 test('entering and returning uses persisted ID, preserves unsaved client edits, and never saves them implicitly', async () => {
     await mount(<ClientPopup clientDetails={client} closePopUpFunction={mockClose} />);
     const email = screen.getByDisplayValue('stored@example.invalid');
@@ -47,4 +49,21 @@ test.each(['disabled', 'noUpload', 'unsaved'])('unavailable %s entry is hidden',
     if (condition === 'noUpload') mockUpload = false;
     await mount(<ClientPopup clientDetails={condition === 'unsaved' ? null : client} closePopUpFunction={mockClose} />);
     expect(screen.queryByRole('button', { name: 'Send for signature' })).not.toBeInTheDocument();
+});
+
+test('Word client action passes only saved identity and keeps unsaved profile changes out of navigation', async () => {
+    await mount(<ClientPopup clientDetails={client} closePopUpFunction={mockClose} />);
+    const email = screen.getByDisplayValue('stored@example.invalid');
+    fireEvent.focus(email); fireEvent.change(email, { target: { value: 'unsaved@example.invalid' } }); fireEvent.blur(email);
+    fireEvent.click(screen.getByRole('button', { name: en.signingWord.openFromClient || 'signingWord.openFromClient' }));
+    expect(mockNavigate).toHaveBeenCalledWith('/AdminStack/SigningManagerScreen?panel=templates&mode=word', { state: { wordInitialContext: { clientRecord: { id: 71, label: 'Synthetic client' } } } });
+    expect(mockClose).toHaveBeenCalledTimes(1); expect(mockRequest).not.toHaveBeenCalled();
+});
+
+test.each(['disabled', 'noUpload', 'unsaved'])('Word client action respects the %s boundary', async condition => {
+    if (condition === 'disabled') mockAvailable = false;
+    if (condition === 'noUpload') mockUpload = false;
+    await mount(<ClientPopup clientDetails={condition === 'unsaved' ? null : client} closePopUpFunction={mockClose} />);
+    expect(screen.queryByRole('button', { name: en.signingWord.openFromClient || 'signingWord.openFromClient' })).not.toBeInTheDocument();
+    expect(mockNavigate).not.toHaveBeenCalled(); expect(mockRequest).not.toHaveBeenCalled();
 });

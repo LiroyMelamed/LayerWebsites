@@ -1,0 +1,75 @@
+{
+  "at": "2026-10-26T14:37:22.503081+00:00",
+  "status": "PREPARED_LOCAL_REVIEW_ONLY_NO_MARKER_WRITTEN",
+  "targets": [
+    "/opt/melamedia-qa-word-converter-20261023/.mela-retention-pin",
+    "/root/qa-new-features-20261023-converter/.mela-retention-pin"
+  ],
+  "noteId": "MELAMEDIA_PRODUCTION_CONVERTER_CONSUMERS_20261026",
+  "note": "\nBEGIN MELAMEDIA_PRODUCTION_CONVERTER_CONSUMERS_20261026\nActive production dependency: /opt/melamedia-qa-word-converter-20261023/managed-soffice.py.\nConsumers: /root/AshrafEssa/backend, /root/LayerWebsites/backend, /root/MorLevi/backend (WORD_TEMPLATE_MAX_CONCURRENT=1 each), and QA /root/Melamedia/backend (default 2).\nRetain this converter base and /root/qa-new-features-20261023-converter while any consumer environment references the managed path or the managed wrapper depends on these resources. A QA-style name does not authorize retirement.\nReview date: 2026-11-02; review only, no expiry. Retain until a reviewed replacement is active and all consumers/dependencies are verified migrated.\nThis note changes retention metadata only; no runtime/provider/permissions/install/rootfs/jobs/cleanup change is authorized.\nEND PRODUCTION_CONVERTER_CONSUMERS\n",
+  "noteSha256": "8a281d3a1f4b9e7a0c84f87c4149f71176b7f5cb7a2d28987e38f86b13c2e3a9",
+  "reviewDate": "2026-11-02",
+  "reviewDateIsNotExpiry": true,
+  "consumers": [
+    {
+      "root": "/root/AshrafEssa/backend",
+      "scope": "dedicated API",
+      "concurrency": 1
+    },
+    {
+      "root": "/root/LayerWebsites/backend",
+      "scope": "dedicated API",
+      "concurrency": 1
+    },
+    {
+      "root": "/root/MorLevi/backend",
+      "scope": "dedicated API",
+      "concurrency": 1
+    },
+    {
+      "root": "/root/Melamedia/backend",
+      "scope": "QA API",
+      "concurrency": 2
+    }
+  ],
+  "requiredParentsExistingAndSafe": true,
+  "existingPins": "Open nofollow, bounded64KiB; preserve exact bytes privately; exact preview hash/identity/UID/GID/mode CAS. Append unique fixed note via same-parent temporary file and atomic rename; retain every prior byte and original metadata. Locks coordinate reviewed writers; final identity/hash recheck precedes rename.",
+  "absentPins": "Preserve absence/parent identity privately; create only exact .mela-retention-pin with O_EXCL/no-follow and0600 under existing parent. No parent mkdir.",
+  "partialFailure": "Two pin replacements are sequential, not one filesystem transaction. The driver preserves old/absence preimages before append and records every actual attempt in both ledgers. Unknown/partial state stops with no automatic retry/rollback/cleanup. Any owned failed temporary is retained for review.",
+  "outOfScope": [
+    "parent creation",
+    "converter install or retirement",
+    "wrapper/runner/reaper/rootfs/job contents",
+    "environment/PM2/provider/service changes",
+    "permission changes to existing resources",
+    "global WORKSPACE edits",
+    "cleanup"
+  ],
+  "managed4052Tree": "Pins and temporary files sit outside rootfs and jobs. The packet does not write managed runtime source or requalify its4052 hashes.",
+  "runbookParagraph": "26 October 2026: /opt/melamedia-qa-word-converter-20261023/managed-soffice.py is an active production dependency for the APIs in /root/AshrafEssa/backend, /root/LayerWebsites/backend and /root/MorLevi/backend, each with WORD_TEMPLATE_MAX_CONCURRENT=1, and remains the QA converter for /root/Melamedia/backend with default concurrency 2. Preserve both /opt/melamedia-qa-word-converter-20261023 and /root/qa-new-features-20261023-converter, their recovery instructions and coordination material while any consumer environment references this managed path or the wrapper depends on these resources. Review on 2026-11-02; this date is a review trigger and never an expiry or retirement permission. Retirement requires a reviewed replacement and verified migration of every active consumer and wrapper dependency. The scoped action here appends retention metadata only; it does not change runtime configuration, provider controls, sandbox/rootfs/jobs, scripts, services or permissions, and authorizes no cleanup.",
+  "commands": {
+    "defaultLocalPlan": [
+      "python3",
+      "outputs/word-stage-candidate-20261026/ops/run-converter-retention01.py"
+    ],
+    "rootReviewedReadonlyPreview": [
+      "python3",
+      "outputs/word-stage-candidate-20261026/ops/run-converter-retention01.py",
+      "--mode",
+      "preview"
+    ],
+    "rootReviewedSingleAppendInvocation": [
+      "python3",
+      "outputs/word-stage-candidate-20261026/ops/run-converter-retention01.py",
+      "--mode",
+      "append",
+      "--contract",
+      "PRIVATE_PREVIEW_GENERATED_CONTRACT",
+      "--contract-sha",
+      "EXACT_REVIEWED_CONTRACT_SHA256",
+      "--execute-reviewed"
+    ]
+  },
+  "noRemoteCallsByPreparation": true,
+  "noTestsRunOrRequiredForThisMetadataPreparation": true
+}

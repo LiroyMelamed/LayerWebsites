@@ -100,3 +100,19 @@ sets `requiresPdfConversion` and `requiresFreshSigningGeometry` to true.
 Run only this module's focused tests with `node --test
 backend/tests/wordTemplates.test.js` from the repository root. Read and append
 the signing test ledger as required by the repository instructions.
+
+## Per-process converter admission
+
+`WORD_TEMPLATE_MAX_CONCURRENT` optionally caps active conversions in one Node
+process. Its only accepted values are the exact strings `1` and `2`; an unset
+variable preserves the incumbent default of two. Empty, padded or other values
+fail as `WORD_CONVERSION_INVALID_CONFIG` before a subprocess can start. A full
+worker rejects another request with the existing `WORD_CONVERSION_BUSY` error
+(HTTP 503); it does not queue or change message delivery.
+
+This cap leaves the managed executable, fixed argv, private directories, output
+validation, timeout and cleanup unchanged. It is not a global host limit: count
+all API instances, including QA, when reserving converter memory. The reviewed
+three-customer setting is one per customer process with QA retaining two, for
+five possible jobs at the existing per-job memory cap. Recheck current host
+headroom before activation and retain all outbound/provider flags.

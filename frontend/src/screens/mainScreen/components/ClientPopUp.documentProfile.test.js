@@ -1,5 +1,6 @@
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { createInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import ClientPopup from './ClientPopUp';
@@ -37,7 +38,7 @@ beforeEach(() => {
 async function mount(language, props) {
     i18n = createInstance();
     await i18n.use(initReactI18next).init({ resources, lng: language, fallbackLng: false, interpolation: { escapeValue: false } });
-    return render(<I18nextProvider i18n={i18n}><ClientPopup {...props} /></I18nextProvider>);
+    return render(<MemoryRouter><I18nextProvider i18n={i18n}><ClientPopup {...props} /></I18nextProvider></MemoryRouter>);
 }
 const text = key => i18n.t(`customers.documentProfile.${key}`);
 

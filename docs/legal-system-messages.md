@@ -38,9 +38,9 @@ Payment-due, cancellation, operational-support notices, marketing, case reminder
 and other product events require their own verified source transitions. They are
 not implied by the current contract supporting those message types.
 
-## Temporary QA integration — 25 October 2026
+## Historical QA integration — 25 October 2026
 
-The producer is being integrated separately onto the actual QA runtime
+The producer was integrated separately onto the actual QA runtime
 `7ec2217e3015706ef78bf1344ccefe0a3e224866`, in branch
 `codex/legal-system-messages-qa-20261025`, worktree
 `/Users/liroymelamed/Projects/LayerWebsites/.worktrees/legal-system-messages-qa-20261025`.
@@ -56,6 +56,13 @@ adds a separate consent-payload test instead of main-only attribution tests.
 Capture and dispatch remain OFF. Central keys and the additive tables are not
 required for a strictly OFF code deployment; both are required before activation.
 No activation, provider message or customer rollout is inferred from local tests.
+
+26 October 2026 Word UX merge: main `14f3df33` is merged into the
+Melamedia QA lineage rooted at `1161fd687db381833552db78a70723573792ab97`,
+preserving the QA-specific protections above. This Git reconciliation does not
+deploy the backend: the intended deployed QA backend remains `1161fd68`.
+The current Word UX publication scope is frontend-only; no provider, environment,
+schema, permissions or customer UX activation is implied.
 
 ## Defaults and trusted deployment configuration
 

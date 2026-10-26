@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-23",
+  "scope": "LAWYER_PLATFORM_RETURN_ATTRIBUTION_ONLY",
+  "status": "DEPLOYED_STATIC_LOADER_AND_IMMUTABLE_SCRIPT",
+  "deployedPublicScript": "mela-signup-attribution-1b60612ca2a4.js",
+  "publicScriptSha256": "1b60612ca2a40c952d6a60962bcbe66347e7e8329e9896b0728c7fc100ad5b40",
+  "deployedIndexBeforeSha256": "02f61c85b70ec655874edf72da74509750088b0a8dd2607c5628c2da52fbdacb",
+  "deployedIndexAfterSha256": "5d36eae439a8594158b579fd365a1b53f35da0f5b3bd160afc85b6c6bec387e2",
+  "unchangedPriorStaticFiles": 417,
+  "productionProcessRestarts": 0,
+  "beforeCheckoutHelperHooks": "SOURCE_ONLY_NOT_DEPLOYED",
+  "sourceOnlyFiles": [
+    "frontend/src/lib/signupAttribution.js",
+    "frontend/src/screens/signup/SignupScreen.js"
+  ],
+  "sourceTemplate": "frontend/public/index.html is future source template; live activation appended loader to existing deployed HTML only",
+  "coverage": "Legitimate provider return query with pre-existing consented child context can bind. No generic saved-intent fallback. Users who never return can remain unattributed. Client binding never asserts completed registration.",
+  "reason": "124/498 current backend frontend files differ from this checkout; do not rebuild unknown feature source for analytics",
+  "rollbackArchiveSha256": "9c84edcdc89768c41f25333a1b307d530b8657d9ab9268ded8bbf9444698b075",
+  "verifiedPriorCompleteStaticRollbacks": 2,
+  "newCompleteStaticRollbackRetained": true,
+  "otherRollbacksRemoved": 0,
+  "vmContractCases": 28,
+  "localHelperAndSignupBabel": "PASS",
+  "publicHttp": [
+    {
+      "host": "lawyer.mela-media.co.il",
+      "route": "/signup",
+      "mode": "origin",
+      "status": 200,
+      "bytes": 3320,
+      "sha256": "5d36eae439a8594158b579fd365a1b53f35da0f5b3bd160afc85b6c6bec387e2",
+      "loaderPresent": true,
+      "collectorAllowedByCsp": true
+    },
+    {
+      "host": "lawyer.mela-media.co.il",
+      "route": "/signup",
+      "mode": "public",
+      "status": 200,
+      "bytes": 3320,
+      "sha256": "5d36eae439a8594158b579fd365a1b53f35da0f5b3bd160afc85b6c6bec387e2",
+      "loaderPresent": true,
+      "collectorAllowedByCsp": true
+    },
+    {
+      "host": "lawyer.mela-media.co.il",
+      "route": "/mela-signup-attribution-1b60612ca2a4.js",
+      "mode": "origin",
+      "sha256": "1b60612ca2a40c952d6a60962bcbe66347e7e8329e9896b0728c7fc100ad5b40",
+      "status": 200
+    },
+    {
+      "host": "lawyer.mela-media.co.il",
+      "route": "/mela-signup-attribution-1b60612ca2a4.js",
+      "mode": "public",
+      "sha256": "1b60612ca2a40c952d6a60962bcbe66347e7e8329e9896b0728c7fc100ad5b40",
+      "status": 200
+    }
+  ],
+  "productionMessages": 0,
+  "productionCharges": 0,
+  "productionCustomerDataWrites": 0,
+  "privateEvidenceDirectory": "/Users/liroymelamed/.codex/private/signup-attribution-release-20261023",
+  "noDedicatedClientDeployment": true
+}
