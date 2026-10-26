@@ -117,7 +117,9 @@ function LazyPdfPage({
                 className="lw-signing-pageInner"
                 data-page-number={pageNumber}
                 data-measured-width={measuredWidth || undefined}
-                style={{ width: displayWidth, maxWidth: "100%" }}
+                // A measured narrow canvas must not constrain its next wider render.
+                // Keep measured width for overlays while layout follows available space.
+                style={{ width: renderWidth, maxWidth: "100%" }}
             >
                 {visible ? (
                     <SimpleContainer className="lw-signing-pdfPage" ref={pageBoxRef}>
