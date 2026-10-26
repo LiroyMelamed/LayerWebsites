@@ -51,7 +51,7 @@ export default function ParticipantDirectoryFields({ person = {}, capacity = 'pe
     };
     const pickPerson = next => {
         setSavedPerson(next); setAuthorities([]); setReason(''); setEvidence(null);
-        onChange({...person,personId:next.id,name:next.name,email:next.endpoints?.email || '',phone:next.endpoints?.phone || '',partyId:undefined,authorityId:undefined});
+        onChange({...person,personId:next.id,name:next.name,email:next.endpoints?.email || '',phone:next.endpoints?.phone || '',contactUserId:undefined,partyId:undefined,authorityId:undefined});
     };
     const selected = authorities.find(item => item.id === person.authorityId);
     const currentPerson = savedPerson || directory.people.find(item => item.id === person.personId);

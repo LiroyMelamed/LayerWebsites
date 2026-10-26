@@ -25,6 +25,7 @@ import ClientPopup from '../../../screens/mainScreen/components/ClientPopUp';
 import SimplePopUp from '../../simpleComponents/SimplePopUp';
 import CaseSigningFlow from '../../../screens/signingScreen/templates/CaseSigningFlow';
 import { useSigningV2Available } from '../../../screens/signingScreen/templates/SigningPackagesHub';
+import CaseStageAutomationPanel from '../../../screens/signingScreen/templates/CaseStageAutomationPanel';
 
 function _buildInitialCaseData(caseDetails, initialDraft) {
     const source = caseDetails?.CaseId ? caseDetails : (initialDraft || caseDetails || {});
@@ -684,6 +685,10 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
 
                     </SimpleContainer>
                 ))}
+
+                {signingAvailable && (caseDetails?.CaseId || caseData.CaseId) && canAction('signing', 'upload') && canEditCases && <CaseStageAutomationPanel
+                    key={caseDetails?.CaseId || caseData.CaseId}
+                    caseId={caseDetails?.CaseId || caseData.CaseId} canEdit />}
 
                 <SimpleContainer className="lw-caseFullView__addStageRow">
                     <SecondaryButton

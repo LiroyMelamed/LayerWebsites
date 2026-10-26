@@ -49,6 +49,8 @@ import "../calendarScreen/CalendarInviteScreen.scss";
 import RequestLoadError from '../../components/ui/RequestLoadError';
 import TemplatesWorkspace from './templates/TemplatesWorkspace';
 import SigningPackagesHub, { useSigningV2Available } from './templates/SigningPackagesHub';
+import CaseStageAutomationPanel from './templates/CaseStageAutomationPanel';
+import SigningBackButton from './templates/SigningBackButton';
 
 
 export const SigningManagerScreenName = "/SigningManagerScreen";
@@ -369,9 +371,14 @@ export default function SigningManagerScreen() {
         );
     };
 
+    if (panel === 'stage' && searchParams.get('caseId')) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><div className="lw-stageAutomationPage">
+        <SigningBackButton onPress={() => { const next = new URLSearchParams(searchParams); next.delete('caseId'); next.delete('stageRun'); next.delete('panel'); setSearchParams(next); }}>{t('common.back')}</SigningBackButton>
+        {signingV2Available && canSignUpload ? <CaseStageAutomationPanel key={searchParams.get('caseId')} caseId={searchParams.get('caseId')} canEdit={canAction('cases', 'edit')} initiallyOpen initialRunId={searchParams.get('stageRun')} /> : <p>{t('stageAutomation.noAccess')}</p>}
+    </div></SimpleScrollView></SimpleScreen>;
     if (showTemplates) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><TemplatesWorkspace nativeAvailable={signingV2Available} onSendTemplate={signingV2Available ? template => {
         const next = new URLSearchParams(searchParams); next.set('panel', 'compose'); next.set('template', template.id); next.set('templateVersion', String(template.version)); setSearchParams(next);
-    } : undefined} canUpload={canSignUpload} canManage={canSignManage} onClose={() => { setPanel(null); reloadFiles(); }} /></SimpleScrollView></SimpleScreen>;
+    } : undefined} onWordContinue={preview => navigate(AdminStackName + uploadFileForSigningScreenName, { state: { wordPreviewId: preview.id } })}
+        canUpload={canSignUpload} canManage={canSignManage} onClose={() => { setPanel(null); reloadFiles(); }} /></SimpleScrollView></SimpleScreen>;
     if (showRuns) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><SigningPackagesHub canCreate={canSignUpload} canManage={canSignManage} onClose={() => { setPanel(null); reloadFiles(); }} /></SimpleScrollView></SimpleScreen>;
 
     return (
