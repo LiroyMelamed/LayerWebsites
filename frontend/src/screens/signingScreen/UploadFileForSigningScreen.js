@@ -1,6 +1,6 @@
 // src/screens/signingScreen/UploadFileForSigningScreen.js
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
@@ -43,6 +43,8 @@ import { useTranslation } from "react-i18next";
 import IsraeliPhoneNumberValidation from "../../functions/validation/IsraeliPhoneNumberValidation";
 import { showAppToast } from "../../components/ui/showAppToast";
 import ApiUtils from "../../api/apiUtils";
+import useWordPreviewImport from './word/useWordPreviewImport';
+import { uploadCurrentSigningFile } from './word/uploadCurrentSigningFile';
 import {
     clampSpotSize,
     clampSpotToPage,
@@ -259,6 +261,8 @@ export default function UploadFileForSigningScreen() {
     const { t } = useTranslation();
     const { isSmallScreen } = useScreenSize();
     const navigate = useNavigate();
+    const location = useLocation();
+    const wordPreviewId = location.state?.wordPreviewId || null;
     const { openPopup, closePopup } = usePopup();
     const [otpFeatureEnabled, setOtpFeatureEnabled] = useState(false);
     const [otpDefaultRequire, setOtpDefaultRequire] = useState(true);
@@ -511,6 +515,12 @@ export default function UploadFileForSigningScreen() {
     const [manualSignerEmail, setManualSignerEmail] = useState("");
     const [manualSignerPhone, setManualSignerPhone] = useState("");
     const [selectedFile, setSelectedFile] = useState(null);
+    const currentFileRef = useRef(selectedFile);
+    currentFileRef.current = selectedFile;
+    const wordOrigin = useRef(null);
+    // Provenance belongs to these exact bytes, including when same-route
+    // history navigation removes the optional route state.
+    const fromWord = Boolean(selectedFile && selectedFile === wordOrigin.current?.file);
     const [documentName, setDocumentName] = useState("");
     const [completionEmail, setCompletionEmail] = useState("");
 
@@ -550,6 +560,53 @@ export default function UploadFileForSigningScreen() {
     const [detecting, setDetecting] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [showAddFieldPopup, setShowAddFieldPopup] = useState(false);
+    const submissionBusy = useRef(false);
+    const submissionMounted = useRef(true);
+    const cancelRetentionNotice = useRef(null);
+    const draftRef = useRef(null);
+    draftRef.current = [selectedFile, selectedSigners, signatureSpots, caseId, clientId, documentName,
+        completionEmail, notes, otpFeatureEnabled, otpPolicy, otpWaiverAck, signingOrder, wordPreviewId];
+
+    const wordImport = useWordPreviewImport({ previewId: wordPreviewId, onLoaded: useCallback((file, preview) => {
+        wordOrigin.current = { file, clientId: preview.clientId || null, caseId: preview.caseId || null };
+        currentFileRef.current = file;
+        setSelectedFile(file);
+        setDocumentName(file.name.replace(/\.pdf$/i, ''));
+        setUploadedFileKey(null);
+        setSignatureSpots([]);
+        setSelectedSigners([]);
+        setSelectedSignerId(null);
+        setNotes('');
+        setClientId(preview.clientId || '');
+        setCaseId(preview.caseId || '');
+        setSelectedCase(preview.caseId ? { CaseId: preview.caseId, CaseName: t('signingWord.linkedCase') } : null);
+        setCaseSearchQuery('');
+    }, [t]) });
+
+    useEffect(() => {
+        const origin = wordOrigin.current;
+        if (!fromWord || !origin?.caseId) return undefined;
+        let cancelled = false;
+        // Only enrich the visible label. Never replace the protected document's
+        // client/case context or infer a signer from the case response.
+        casesApi.getCaseById(origin.caseId).then(response => {
+            const item = response?.data ?? response;
+            if (cancelled || currentFileRef.current !== origin.file
+                || Number(item?.CaseId ?? item?.caseid) !== origin.caseId) return;
+            const name = String(item?.CaseName ?? item?.casename ?? '').trim();
+            if (name) setSelectedCase({ CaseId: origin.caseId, CaseName: name });
+        }).catch(() => { /* Keep the localized linked-case label. */ });
+        return () => { cancelled = true; };
+    }, [fromWord, selectedFile]);
+
+    useEffect(() => {
+        submissionMounted.current = true;
+        return () => {
+            submissionMounted.current = false;
+            currentFileRef.current = null;
+            cancelRetentionNotice.current?.();
+        };
+    }, []);
 
     useEffect(() => {
         if (otpFeatureEnabled) return;
@@ -638,7 +695,16 @@ export default function UploadFileForSigningScreen() {
                     ? t('signing.upload.retentionNotice.text', { coreDays, piiDays })
                     : t('signing.upload.retentionNotice.textFallback');
 
+            if (!submissionMounted.current) return false;
             return await new Promise((resolve) => {
+                const settle = value => {
+                    cancelRetentionNotice.current = null;
+                    resolve(value);
+                };
+                cancelRetentionNotice.current = () => {
+                    closePopup();
+                    settle(false);
+                };
                 openPopup(
                     <SimpleContainer className="lw-retentionNoticePopup">
                         <TextBold24>{t('signing.upload.retentionNotice.title')}</TextBold24>
@@ -649,7 +715,7 @@ export default function UploadFileForSigningScreen() {
                             <SecondaryButton
                                 onPress={() => {
                                     closePopup();
-                                    resolve(false);
+                                    settle(false);
                                 }}
                             >
                                 {t('common.cancel')}
@@ -662,17 +728,18 @@ export default function UploadFileForSigningScreen() {
                                         // ignore
                                     }
                                     closePopup();
-                                    resolve(true);
+                                    settle(true);
                                 }}
                             >
                                 {t('signing.upload.retentionNotice.ackButton')}
                             </PrimaryButton>
                         </SimpleContainer>
-                    </SimpleContainer>
+                    </SimpleContainer>,
+                    { preventClose: true }
                 );
             });
         } catch {
-            return true;
+            return submissionMounted.current;
         }
     };
 
@@ -844,6 +911,8 @@ export default function UploadFileForSigningScreen() {
     };
 
     const handleFileSelected = (file) => {
+        if (submissionBusy.current) return;
+        currentFileRef.current = file || null;
         resetFileState();
         setSelectedFile(file || null);
         if (file) setDocumentName(file.name.replace(/\.pdf$/i, ''));
@@ -880,6 +949,11 @@ export default function UploadFileForSigningScreen() {
     };
 
     const validateForm = () => {
+        if (fromWord && (Number(caseId || 0) !== Number(wordOrigin.current.caseId || 0)
+            || Number(clientId || 0) !== Number(wordOrigin.current.clientId || 0))) {
+            showAppToast({ type: 'error', text: t('signingWord.contextChanged') });
+            return false;
+        }
         if (!selectedFile) {
             showAppToast({ type: "error", text: t('signing.upload.validation.selectFile') });
             return false;
@@ -1236,16 +1310,8 @@ export default function UploadFileForSigningScreen() {
         setSeqOverIdx(null);
     }, [seqDragIdx, seqOverIdx, moveSignerOrder]);
 
-    const ensureUploadedKey = async () => {
-        if (uploadedFileKey) return uploadedFileKey;
-
-        const uploadRes = await uploadFileToR2(selectedFile);
-        const key = uploadRes?.key || uploadRes?.data?.key;
-        if (!key) throw new Error("missing key from uploadFileToR2");
-
-        setUploadedFileKey(key);
-        return key;
-    };
+    const ensureUploadedKey = () => uploadCurrentSigningFile({ file: selectedFile, fileKey: uploadedFileKey,
+        currentFile: () => currentFileRef.current, uploadFile: uploadFileToR2, onFileKey: setUploadedFileKey });
 
     const handleDetectSpots = async () => {
         if (!selectedFile) return;
@@ -1286,17 +1352,24 @@ export default function UploadFileForSigningScreen() {
     };
 
     const handleSubmit = async () => {
-        
-
+        if (submissionBusy.current) return;
         if (!validateForm()) return;
-
-        const retentionAck = await ensureRetentionNoticeAcknowledged();
-        if (!retentionAck) return;
-
+        submissionBusy.current = true;
+        setLoading(true);
+        const submittedDraft = draftRef.current;
+        const assertUnchangedDraft = () => {
+            if (!submissionMounted.current || !submittedDraft.every((value, index) => value === draftRef.current[index])) {
+                const error = new Error('Signing input changed');
+                error.code = 'STALE_SIGNING_INPUT';
+                throw error;
+            }
+        };
         try {
-            setLoading(true);
-
+            const retentionAck = await ensureRetentionNoticeAcknowledged();
+            if (!retentionAck) return;
+            assertUnchangedDraft();
             const key = await ensureUploadedKey();
+            assertUnchangedDraft();
 
             const signersPayload = (selectedSigners || []).map((s) => ({
                 userId: Number(s.UserId),
@@ -1311,7 +1384,7 @@ export default function UploadFileForSigningScreen() {
                 return { ...spot, signerIndex: idx };
             });
 
-            const primaryClientId = signersPayload?.[0]?.userId || Number(clientId) || null;
+            const primaryClientId = (fromWord ? Number(clientId) : null) || signersPayload?.[0]?.userId || Number(clientId) || null;
 
             const normalizedCaseId = caseId ? Number(caseId) : null;
 
@@ -1333,6 +1406,7 @@ export default function UploadFileForSigningScreen() {
                 signingOrder,
                 completionEmail: completionEmail.trim() || null,
             });
+            if (!submissionMounted.current) return;
             const sentCount = Number(uploadRes?.data?.sentCount || 0);
             const targetCount = Number(uploadRes?.data?.targetCount || selectedSigners.length || 0);
             const failedCount = Number(uploadRes?.data?.failedCount || Math.max(0, targetCount - sentCount));
@@ -1367,20 +1441,28 @@ export default function UploadFileForSigningScreen() {
             setCaseSearchQuery("");
             setSelectedSpotIndex(null);
         } catch (err) {
+            if (!submissionMounted.current) return;
+            if (err?.code === 'STALE_SIGNING_INPUT') {
+                showAppToast({ type: 'error', text: t('signing.upload.detect.inputChanged') });
+                return;
+            }
             console.error(err);
             const backendMessage = err?.data?.message || err?.message;
             showAppToast({ type: "error", text: backendMessage || t('signing.upload.errorSending') });
         } finally {
-            setLoading(false);
+            submissionBusy.current = false;
+            if (submissionMounted.current) setLoading(false);
         }
     };
 
     const handleSearch = (query) => {
+        if (fromWord) return;
         setCaseSearchQuery(query);
         SearchCaseByName(query);
     };
 
     const handleButtonPress = (query, result) => {
+        if (fromWord) return;
         const foundItem = result || casesByName.find(caseItem => caseItem.CaseName === query);
         setCaseId(foundItem?.CaseId || "");
         setSelectedCase(foundItem || null);
@@ -1400,6 +1482,7 @@ export default function UploadFileForSigningScreen() {
     };
 
     const handleRemoveSelectedCase = () => {
+        if (fromWord) return;
         setSelectedCase(null);
         setCaseId("");
         setClientId("");
@@ -1438,6 +1521,19 @@ export default function UploadFileForSigningScreen() {
         );
     };
 
+    if (wordImport.status === 'loading' || wordImport.status === 'error') return (
+        <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
+            <SimpleScrollView><SimpleContainer className="lw-uploadSigningScreen">
+                <TextBold24>{t('signingWord.title')}</TextBold24>
+                <p role={wordImport.status === 'error' ? 'alert' : 'status'}>
+                    {t(wordImport.status === 'error' ? 'signingWord.importFailed' : 'signingWord.importLoading')}
+                </p>
+                {wordImport.status === 'error' && <PrimaryButton onPress={wordImport.retry}>{t('common.retry')}</PrimaryButton>}
+                <SecondaryButton onPress={() => navigate(`${AdminStackName}${SigningManagerScreenName}?panel=templates`)}>{t('common.back')}</SecondaryButton>
+            </SimpleContainer></SimpleScrollView>
+        </SimpleScreen>
+    );
+
     return (
         <SimpleScreen
             imageBackgroundSource={images.Backgrounds.AppBackground}
@@ -1454,11 +1550,12 @@ export default function UploadFileForSigningScreen() {
                     <SimpleContainer className="lw-uploadSigningScreen__headerRow">
                         <TextBold24>{t('signing.upload.title')}</TextBold24>
                     </SimpleContainer>
+                    {fromWord && <><p role="status">{t('signingWord.freshFields')}</p><p>{t('signingWord.contextFrozen')}</p></>}
 
                     <SimpleContainer className="lw-uploadSigningScreen__formCard">
 
                         <SimpleContainer className="lw-uploadSigningScreen__searchRow">
-                            <SearchInput
+                            {!fromWord && <SearchInput
                                 onSearch={handleSearch}
                                 title={t('cases.searchCaseTitle')}
                                 titleFontSize={20}
@@ -1469,7 +1566,7 @@ export default function UploadFileForSigningScreen() {
                                 buttonPressFunction={handleButtonPress}
                                 value={caseSearchQuery}
                                 clearOnSelect
-                            />
+                            />}
 
                             <SearchInput
                                 onSearch={handleSearchSigner}
@@ -1543,7 +1640,7 @@ export default function UploadFileForSigningScreen() {
                                 <SimpleContainer className="lw-uploadSigningScreen__selectedSignersRow">
                                     <SimpleContainer className="lw-uploadSigningScreen__signerChip">
                                         <span className="lw-uploadSigningScreen__signerChipName">{selectedCase.CaseName}</span>
-                                        <button
+                                        {!fromWord && <button
                                             type="button"
                                             className="lw-uploadSigningScreen__signerChipRemove"
                                             onClick={handleRemoveSelectedCase}
@@ -1551,7 +1648,7 @@ export default function UploadFileForSigningScreen() {
                                             title={t('signing.upload.removeCaseAria', { name: selectedCase.CaseName })}
                                         >
                                             X
-                                        </button>
+                                        </button>}
                                     </SimpleContainer>
                                 </SimpleContainer>
                             </SimpleContainer>
@@ -1630,6 +1727,7 @@ export default function UploadFileForSigningScreen() {
                         <SimpleContainer className="lw-uploadSigningScreen__formGroup lw-uploadSigningScreen__fileGroup">
                             <FileUploadBox
                                 accept=".pdf"
+                                disabled={loading}
                                 onFileSelected={handleFileSelected}
                                 label={t('signing.upload.fileDropPrompt')}
                                 hint={t('signing.upload.fileHintPdfOnly')}
