@@ -1,4 +1,5 @@
 const { fail } = require('../../lib/signingV2/errors');
+const { assertCurrentWordOrigin } = require('./wordOrigin');
 
 // An imported revision must not resurrect an archived source template for a new send.
 // Existing packages keep their snapshots and remain readable/signable.
@@ -19,6 +20,7 @@ async function importedOrigins(db, scope) {
 }
 async function lockAvailableOrigin(db, scope, definition) {
     const origin = definition?.origin;
+    if (origin?.kind === 'word_preview') return assertCurrentWordOrigin(db, scope, origin);
     if (origin?.kind !== 'legacy_template') return;
     // The caller already holds the native head lock. Keep source availability
     // stable until this publication/creation transaction commits.

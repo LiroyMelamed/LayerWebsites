@@ -4,6 +4,7 @@ import PdfViewer from './PdfViewer';
 
 let mockDocumentProps;
 let mockMountCount = 0;
+let mockPageProps;
 
 jest.mock('react-i18next', () => ({
     useTranslation: () => ({ t: (key) => key }),
@@ -35,7 +36,7 @@ jest.mock('react-pdf', () => {
                 </div>
             );
         },
-        Page: ({ pageNumber }) => <canvas data-testid={`page-${pageNumber}`} />,
+        Page: props => { mockPageProps = props; return <canvas data-testid={`page-${props.pageNumber}`} />; },
     };
 });
 
@@ -95,4 +96,17 @@ test('switching PDFs resets document state while changing signature spots preser
     expect(screen.getByTestId('document').getAttribute('data-mount-id')).not.toBe(firstMount);
     await finishLoading();
     expect(screen.getByTestId('page-1')).toBeInTheDocument();
+});
+
+test('Word authoring text and overlays are opt-in; the incumbent signing viewer stays non-selectable', async () => {
+    const { rerender } = render(<PdfViewer pdfSource={source} />); await finishLoading();
+    expect(mockPageProps.renderTextLayer).toBe(false); expect(mockPageProps.onGetTextSuccess).toBeUndefined();
+    const onPageTextReady = jest.fn(); const content = { items: [{ str: 'original text' }] };
+    const authoringLayer = { onPageTextReady, renderPageOverlay: ({ pageNumber }) => <span>authoring-page-{pageNumber}</span> };
+    rerender(<PdfViewer pdfSource={source} authoringLayer={authoringLayer} />);
+    expect(mockPageProps.renderTextLayer).toBe(true); expect(screen.getByText('authoring-page-1')).toBeInTheDocument();
+    act(() => { mockPageProps.onGetTextSuccess(content); mockPageProps.onRenderTextLayerSuccess(); });
+    expect(onPageTextReady).toHaveBeenCalledWith(expect.objectContaining({ pageNumber: 1, content, host: expect.any(HTMLElement), pdfProxy: expect.any(Object) }));
+    rerender(<PdfViewer pdfSource={source} />); expect(mockPageProps.renderTextLayer).toBe(false);
+    expect(screen.queryByText('authoring-page-1')).not.toBeInTheDocument();
 });

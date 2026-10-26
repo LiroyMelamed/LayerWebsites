@@ -51,6 +51,7 @@ import TemplatesWorkspace from './templates/TemplatesWorkspace';
 import SigningPackagesHub, { useSigningV2Available } from './templates/SigningPackagesHub';
 import CaseStageAutomationPanel from './templates/CaseStageAutomationPanel';
 import SigningBackButton from './templates/SigningBackButton';
+import WordSigningWorkflow from './word/WordSigningWorkflow';
 
 
 export const SigningManagerScreenName = "/SigningManagerScreen";
@@ -90,21 +91,14 @@ export default function SigningManagerScreen() {
     const wordInitialContext = location.state?.wordInitialContext || null;
     const wordContextKey = `${wordInitialContext?.clientRecord?.id || ''}:${wordInitialContext?.caseRecord?.id || ''}`;
     const wordSession = useRef({ contextKey: wordContextKey, draft: draftForWordContext(location.state?.wordResumeDraft, wordInitialContext) });
+    const [wordSigning, setWordSigning] = useState(null);
+    useEffect(() => { setWordSigning(null); }, [wordContextKey]);
     // A different persisted record starts a new use; labels never authorize data.
     if (wordSession.current.contextKey !== wordContextKey) {
         wordSession.current = { contextKey: wordContextKey, draft: draftForWordContext(location.state?.wordResumeDraft, wordInitialContext) };
     }
     const rememberWordDraft = useCallback(draft => { wordSession.current.draft = draft; }, []);
-    const continueWord = preview => {
-        const draft = wordSession.current.draft;
-        const context = draft?.inputs ? {
-            clientRecord: draft.inputs.clientRecord || null,
-            caseRecord: draft.inputs.caseRecord || null,
-        } : wordInitialContext;
-        navigate(AdminStackName + uploadFileForSigningScreenName, { state: {
-            wordPreviewId: preview.id, wordReturnContext: context, wordResumeDraft: draft,
-        } });
-    };
+    const continueWord = preview => { setWordSigning(preview); };
     const signingV2Available = useSigningV2Available();
     const [scope, setScope] = useState("mine");
     useEffect(() => {
@@ -406,6 +400,12 @@ export default function SigningManagerScreen() {
         <SigningBackButton onPress={() => { const next = new URLSearchParams(searchParams); next.delete('caseId'); next.delete('stageRun'); next.delete('panel'); setSearchParams(next); }}>{t('common.back')}</SigningBackButton>
         {signingV2Available && canSignUpload ? <CaseStageAutomationPanel key={searchParams.get('caseId')} caseId={searchParams.get('caseId')} canEdit={canAction('cases', 'edit')} initiallyOpen initialRunId={searchParams.get('stageRun')} /> : <p>{t('stageAutomation.noAccess')}</p>}
     </div>);
+    if (showTemplates && wordSigning && signingV2Available && canSignUpload) return panelShell(<WordSigningWorkflow
+        key={`${wordSigning.id}:${wordSigning.pdfHash}`} preview={wordSigning} onBack={() => setWordSigning(null)}
+        onCreated={id => {
+            setWordSigning(null);
+            const next = new URLSearchParams(searchParams); next.set('panel', 'runs'); next.set('submission', id); next.delete('mode'); setSearchParams(next);
+        }} />);
     if (showTemplates) return panelShell(<TemplatesWorkspace nativeAvailable={signingV2Available} onSendTemplate={signingV2Available ? template => {
         const next = new URLSearchParams(searchParams); next.set('panel', 'compose'); next.set('template', template.id); next.set('templateVersion', String(template.version)); setSearchParams(next);
     } : undefined} onWordContinue={continueWord}

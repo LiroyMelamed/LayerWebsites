@@ -29,6 +29,7 @@ function LazyPdfPage({
     signers,
     selectedSpotIndex,
     selectedSpotId,
+    authoringLayer,
 }) {
     const wrapRef = useRef(null);
     const pageBoxRef = useRef(null);
@@ -36,6 +37,13 @@ function LazyPdfPage({
     const [measuredWidth, setMeasuredWidth] = useState(0);
     const [renderToken, setRenderToken] = useState(0);
     const [pageAspect, setPageAspect] = useState(0);
+    const textContentRef = useRef(null);
+    const authoringRef = useRef(authoringLayer); authoringRef.current = authoringLayer;
+    const getText = useCallback(content => { textContentRef.current = content; }, []);
+    const textRendered = useCallback(() => authoringRef.current?.onPageTextReady?.({
+        pageNumber, content: textContentRef.current, host: pageBoxRef.current, pdfProxy,
+    }), [pageNumber, pdfProxy]);
+    const textError = useCallback(() => authoringRef.current?.onPageError?.(pageNumber), [pageNumber]);
 
     useEffect(() => {
         if (visible) return undefined;
@@ -116,10 +124,15 @@ function LazyPdfPage({
                         <Page
                             pageNumber={pageNumber}
                             width={renderWidth}
-                            renderTextLayer={false}
+                            renderTextLayer={!!authoringLayer}
                             renderAnnotationLayer={false}
                             onRenderSuccess={() => setRenderToken((n) => n + 1)}
+                            onGetTextSuccess={authoringLayer ? getText : undefined}
+                            onRenderTextLayerSuccess={authoringLayer ? textRendered : undefined}
+                            onGetTextError={authoringLayer ? textError : undefined}
+                            onRenderTextLayerError={authoringLayer ? textError : undefined}
                         />
+                        {authoringLayer?.renderPageOverlay?.({ pageNumber, displayWidth, host: pageBoxRef.current })}
                         <SignatureSpotsLayer
                             pageNumber={pageNumber}
                             spots={spots}
@@ -170,6 +183,7 @@ export default function PdfViewer({
     selectedSpotIndex = null,
     selectedSpotId = null,
     suppressLoadingUI = false,
+    authoringLayer = null,
 }) {
     const { t } = useTranslation();
     const [numPages, setNumPages] = useState(0);
@@ -371,6 +385,7 @@ export default function PdfViewer({
                             signers={signers}
                             selectedSpotIndex={selectedSpotIndex}
                             selectedSpotId={selectedSpotId}
+                            authoringLayer={authoringLayer}
                         />
                     );
                 })}

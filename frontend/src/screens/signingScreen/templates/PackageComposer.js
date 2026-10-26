@@ -396,7 +396,7 @@ function templateOrder(roles) {
 // as an ordinary package. It never creates or submits an ordinary draft.
 export { RolePeople, DocumentDataFields, SigningOrderFields, changePerson, blankRole, clean, templateOrder };
 
-export default function PackageComposer({ api = signingPackagesApi, onBack, onCreated, initialTemplateId, initialTemplateVersion, initialCaseId, initialClientId, backLabel, replacementContext }) {
+export default function PackageComposer({ api = signingPackagesApi, onBack, onCreated, initialTemplateId, initialTemplateVersion, initialCaseId, initialClientId, backLabel, replacementContext, lockedDocumentContext = false }) {
     const { t, direction, number, language, errorMessage, locale } = useSigningLocale();
     const heading = useRef(null);
     const errorSummary = useRef(null);
@@ -760,11 +760,12 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         <Stepper step={['opening', 'replacementOpening'].includes(step) ? 'template' : step} />
         {!replacementSource && api.clientContext && (initialClientId || clientContext) && step !== 'done' && <SimpleCard className="lw-signingCompose__card lw-signingCompose__context" hidden={step === 'review'}>
             <ClientSendContext key={String(clientRestored)} api={api} initialClientId={clientRestored ? null : initialClientId} value={clientContext}
+                locked={lockedDocumentContext && !!initialClientId}
                 onPending={value => { setClientPending(value); if (value) invalidate(); }}
                 onChange={value => { setClientContext(value); invalidate(); }} />
         </SimpleCard>}
         {!replacementSource && api.caseContext && step !== 'done' && <SimpleCard className="lw-signingCompose__card lw-signingCompose__context" hidden={step === 'review'}>
-            <CaseContextPicker api={api} initialCaseId={caseRestored ? null : initialCaseId} value={caseContext} onPending={value => { setCasePending(value); if (value) invalidate(); }}
+            <CaseContextPicker api={api} initialCaseId={caseRestored ? null : initialCaseId} value={caseContext} locked={lockedDocumentContext && !!initialCaseId} onPending={value => { setCasePending(value); if (value) invalidate(); }}
                 onChange={value => { setCaseContext(value); invalidate(); }} />
         </SimpleCard>}
         {error && <StatusNotice><p>{t(`signingV2.compose.errors.${error.code}`, { defaultValue: errorMessage(error) })}</p></StatusNotice>}
