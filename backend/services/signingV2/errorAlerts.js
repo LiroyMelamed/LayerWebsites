@@ -30,22 +30,22 @@ const WORDS = {
         phase: 'שלב', code: 'קוד תקלה', state: 'מצב בעת התקלה', count: 'עבודות שהושפעו', open: 'פתיחת מסך החתימות',
         note: 'זהו דיווח על אירוע שנרשם. המצב הנוכחי עשוי להשתנות בעקבות התאוששות אוטומטית. משלוח שתוצאתו אינה ידועה אינו נשלח שוב אוטומטית.',
         states: { retry: 'ניסיון נוסף מתוכנן', needs_attention: 'נדרש טיפול', uncertain: 'תוצאת המשלוח אינה ידועה', failed: 'נכשל', request: 'שגיאת בקשה' },
-        phases: { case_stage_documents: 'מסמכים אוטומטיים לפי שלב תיק', prepare_document: 'הכנת מסמך', validate_package: 'בדיקת חבילה', activate_package: 'הפעלת חבילה', render_stage: 'הפקה לאחר חתימה', finalize_document: 'הפקת מסמך סופי', render_evidence: 'הפקת ראיות', dispatch_delivery: 'משלוח' } },
+        phases: { prepare_document: 'הכנת מסמך', validate_package: 'בדיקת חבילה', activate_package: 'הפעלת חבילה', render_stage: 'הפקה לאחר חתימה', finalize_document: 'הפקת מסמך סופי', render_evidence: 'הפקת ראיות', dispatch_delivery: 'משלוח' } },
     ar: { title: 'خطأ في عملية مستندات التوقيع', intro: 'تم تسجيل أخطاء تتطلب متابعة مسؤولي المنصة.',
         phase: 'المرحلة', code: 'رمز الخطأ', state: 'الحالة عند الخطأ', count: 'المهام المتأثرة', open: 'فتح شاشة التوقيعات',
         note: 'هذا تقرير عن حدث مسجّل. قد تتغير الحالة بعد الاسترداد التلقائي. لا تُعاد الرسائل ذات النتيجة غير المعروفة تلقائيًا.',
-        states: { retry: 'إعادة المحاولة مجدولة', needs_attention: 'يتطلب معالجة', uncertain: 'نتيجة الإرسال غير معروفة', failed: 'فشل', request: 'خطأ في الطلب' }, phases: { case_stage_documents: 'مستندات تلقائية حسب مرحلة الملف' } },
+        states: { retry: 'إعادة المحاولة مجدولة', needs_attention: 'يتطلب معالجة', uncertain: 'نتيجة الإرسال غير معروفة', failed: 'فشل', request: 'خطأ في الطلب' }, phases: {} },
     en: { title: 'Signing document workflow error', intro: 'Errors requiring platform administrator attention were recorded.',
         phase: 'Stage', code: 'Error code', state: 'State at failure', count: 'Affected work items', open: 'Open signing workspace',
         note: 'This reports a recorded event. Current status may change after automatic recovery. Messages with unknown outcomes are not resent automatically.',
-        states: { retry: 'Retry scheduled', needs_attention: 'Needs attention', uncertain: 'Unknown delivery outcome', failed: 'Failed', request: 'Request error' }, phases: { case_stage_documents: 'Automatic documents for a case stage' } },
+        states: { retry: 'Retry scheduled', needs_attention: 'Needs attention', uncertain: 'Unknown delivery outcome', failed: 'Failed', request: 'Request error' }, phases: {} },
 };
 
 function buildAlertEmail(events, { origin, locale = 'he' }) {
     const language = WORDS[locale] ? locale : 'he', words = WORDS[language];
     const groups = new Map();
     for (const event of events) {
-        const key = `${event.submission_id || ''}:${event.stage_run_id || ''}:${event.phase}:${event.error_code}:${event.severity}`;
+        const key = `${event.submission_id || ''}:${event.phase}:${event.error_code}:${event.severity}`;
         const group = groups.get(key) || { ...event, count: 0 };
         group.count++; groups.set(key, group);
     }
@@ -53,7 +53,6 @@ function buildAlertEmail(events, { origin, locale = 'he' }) {
     const rows = [...groups.values()].map(event => {
         const target = new URL(url);
         if (event.submission_id) target.searchParams.set('submission', event.submission_id);
-        if (event.stage_run_id) { target.searchParams.set('panel','stage');target.searchParams.set('caseId',String(event.case_id));target.searchParams.set('stageRun',event.stage_run_id); }
         return `<tr><td>${escape(words.phases[event.phase] || event.phase)}<br><a href="${escape(target.href)}">${words.open}</a></td><td dir="ltr">${escape(event.error_code)}</td><td>${escape(words.states[event.severity])}</td><td>${event.count}</td></tr>`;
     }).join('');
     return { subject: words.title, htmlBody: `<html lang="${language}" dir="${language === 'en' ? 'ltr' : 'rtl'}"><body style="font-family:Arial,sans-serif;color:#2A4365"><h2>${words.title}</h2><p>${words.intro}</p><p dir="ltr">${escape(new URL(origin).host)}</p><table cellpadding="10" style="border-collapse:collapse" border="1"><thead><tr><th>${words.phase}</th><th>${words.code}</th><th>${words.state}</th><th>${words.count}</th></tr></thead><tbody>${rows}</tbody></table><p>${words.note}</p><p><a href="${escape(url)}">${words.open}</a></p></body></html>` };
@@ -100,7 +99,7 @@ function createErrorAlerts({ pool, sendEmail, origin, locale = 'he', contextIds 
             await pool.query("UPDATE signing_error_emails SET state='cancelled',lease_until=NULL WHERE id=$1 AND claim_token=$2", [row.id, row.claim_token]);
             return;
         }
-        const events = (await pool.query('SELECT phase,error_code,severity,submission_id,stage_run_id,case_id FROM signing_error_alerts WHERE batch_id=$1 ORDER BY first_seen_at,id', [row.batch_id])).rows;
+        const events = (await pool.query('SELECT phase,error_code,severity,submission_id FROM signing_error_alerts WHERE batch_id=$1 ORDER BY first_seen_at,id', [row.batch_id])).rows;
         let outcome;
         try { outcome = await sendEmail({ toEmail: row.recipient_email, ...buildAlertEmail(events, { origin: site.origin, locale }), logLabel: 'SIGNING_ERROR_ALERT' }); }
         catch { outcome = { ok: false, errorCode: 'PROVIDER_OUTCOME_UNKNOWN' }; }

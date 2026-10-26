@@ -10,10 +10,9 @@ import useSigningLocale from './useSigningLocale';
 import { downloadBlobAsFile } from '../../../utils/downloadBlobAsFile';
 import SegmentedSwitch from '../../../components/styledComponents/SegmentedSwitch';
 import StatusNotice from '../../../components/ui/StatusNotice';
-import WordTemplatesWorkspace from '../word/WordTemplatesWorkspace';
 import './templates.scss';
 
-export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSendTemplate, onWordContinue, nativeAvailable = false, view = 'templates' }) {
+export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSendTemplate, nativeAvailable = false, view = 'templates' }) {
     const legacyRunsOnly = view === 'legacy-runs';
     const showBatches = legacyRunsOnly || !nativeAvailable;
     const { t, direction, number, date, errorMessage } = useSigningLocale();
@@ -126,7 +125,6 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSe
     const visibleLegacyTemplates = showArchived ? [] : templates.filter(template => !nativeAvailable || !migrated.some(origin =>
         origin.templateId === template.id && origin.version === template.version));
     const back = () => { setMode('list'); setError(null); refresh(); };
-    if (mode === 'word' && nativeAvailable && canUpload) return <WordTemplatesWorkspace onBack={back} onContinue={onWordContinue} />;
     if (mode === 'nativeBuilder') return <NativeTemplateBuilder version={current} onBack={back} onSaved={back} />;
     if (mode === 'builder') return <TemplateBuilder template={current} onBack={back} onSaved={back} />;
     if (mode === 'compose') return <BatchComposer template={current} onBack={back} onCreated={openBatch} />;
@@ -149,7 +147,6 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSe
             <div className="lw-templates__toolbar">
                 <h2>{text('officeTemplates')}</h2>
                 {canUpload && <button type="button" className="is-primary" onClick={() => { setCurrent(null); setMode(nativeAvailable ? 'nativeBuilder' : 'builder'); }}>{text('newTemplate')}</button>}
-                {nativeAvailable && canUpload && <button type="button" onClick={() => setMode('word')}>{t('signingWord.open')}</button>}
             </div>
             {nativeAvailable && <SegmentedSwitch value={showArchived ? 'archived' : 'active'} onChange={value => setShowArchived(value === 'archived')} ariaLabel={t('signingV2.authoring.library')}
                 options={['active', 'archived'].map(value => ({ value, label: t(`signingV2.authoring.${value}Templates`), disabled: busy }))} />}

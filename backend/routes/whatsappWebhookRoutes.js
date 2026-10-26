@@ -3,7 +3,7 @@ const express = require('express');
 const crypto = require('node:crypto');
 const scope = require('../lib/tenant/databaseScope');
 const pool = require('../config/db');
-const { service, worker, runOffice } = require('../services/integrations/runtime');
+const { worker, runOffice } = require('../services/integrations/runtime');
 const { appSyncStatus } = require('../services/integrations/appSyncStatus');
 const router = express.Router();
 function equals(a, b) {
@@ -28,7 +28,7 @@ router.post('/', express.raw({ type: 'application/json', limit: '20mb' }), async
             const value = change.value, phoneId = String(value?.metadata?.phone_number_id || ''), wabaId = String(entry.id || '');
             if (change?.field === 'account_update' && value?.event === 'PARTNER_REMOVED') {
                 const matches = await scope.withSystem(() => pool.query(`SELECT id,law_firm_tenant_id FROM office_integrations WHERE provider='whatsapp' AND waba_id=$1 AND secret_ciphertext IS NOT NULL`, [wabaId]));
-                for (const c of matches.rows) await runOffice(c.law_firm_tenant_id, () => service.revokeWhatsapp(c.law_firm_tenant_id, c.id, wabaId));
+                for (const c of matches.rows) await runOffice(c.law_firm_tenant_id, () => pool.query(`UPDATE office_integrations SET enabled=false,status='reauthorization_required',secret_ciphertext=NULL,updated_at=now() WHERE id=$1 AND waba_id=$2 AND law_firm_tenant_id IS NOT DISTINCT FROM $3`, [c.id, wabaId, c.law_firm_tenant_id]));
                 continue;
             }
             const sync = appSyncStatus(change?.field, value);

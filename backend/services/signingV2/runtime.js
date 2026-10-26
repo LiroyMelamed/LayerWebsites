@@ -66,8 +66,6 @@ async function authorizeActivation(db, revision) {
             [...scopeParams(scope), revision.package_id])).rowCount === 1, 'ACTIVATION_NOT_AUTHORIZED');
         return;
     }
-    const stageOriginError = await require('./caseStageAutomation').originGuard(db,revision.owner_context_id,revision.package_id);
-    if(stageOriginError)fail(stageOriginError,403);
     const owner = (await db.query(`SELECT u.role,u.firm_staff_role_id,r.permissions,r.is_active FROM signing_packages p
         JOIN users u ON u.userid=p.owner_userid LEFT JOIN firm_staff_roles r ON r.id=u.firm_staff_role_id
         WHERE p.owner_context_id=$1 AND p.id=$2`, [revision.owner_context_id, revision.package_id])).rows[0];
@@ -194,7 +192,7 @@ function createRuntime({ pool, env = process.env, storage, provider, renderer, a
                 const retired = await jobs.cancelObsolete(pool, [lease.owner_context_id]);
                 if (retired.rows.some(row=>row.id===lease.id)) return;
             }
-            try { await jobs.failed(pool, lease, { code, retryable: !code.startsWith('STAGE_') && !['REVISION_INACTIVE', 'ACTIVATION_NOT_AUTHORIZED', 'INVALID_SOURCE', 'REVISION_CHANGED'].includes(code) }); }
+            try { await jobs.failed(pool, lease, { code, retryable: !['REVISION_INACTIVE', 'ACTIVATION_NOT_AUTHORIZED', 'INVALID_SOURCE', 'REVISION_CHANGED'].includes(code) }); }
             catch (failure) { if (failure?.errorCode !== 'WORKER_LEASE_LOST') throw failure; }
             // Messages may carry personal data; only the class and the SQLSTATE are logged.
             const detail = String(error?.message || '').replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+/gi, '[email]').slice(0, 160);
@@ -208,14 +206,6 @@ function createRuntime({ pool, env = process.env, storage, provider, renderer, a
             const recover = Date.now() - recoveredAt > 30000;
             if (recover) recoveredAt = Date.now();
             await require('../../lib/tenant/officeJobs').forEachOffice(async () => {
-            // Stage-trigger creation is SQL-only and commits the package + run
-            // receipt together, before incumbent rendering/dispatch work.
-            const stageAutomation = require('./caseStageAutomation');
-            const reserveCapacity = officeQuota({checkFirmLimits:(...args)=>require('../../lib/limits/enforceFirmLimits').checkFirmLimitsOrNull(...args)});
-            for(let count=0;count<8;count++) {
-                if(!await stageAutomation.processOne(pool,{reserveCapacity,contextIds}))break;
-                processed++;
-            }
             await jobs.cancelObsolete(pool, contextIds);
             if (recover) {
                 await jobs.recoverExpired(pool);
