@@ -6,6 +6,7 @@ const limits = require('../../lib/signingV2/limits');
 const templates = require('./templates');
 const { transaction } = require('./transaction');
 const { availableOriginSql, importedOrigins } = require('./templateAvailability');
+const { assertWordDefinition, wordTemplateScopeSql, wordArtifactScopeSql, filterAvailableWordVersions } = require('./wordOrigin');
 
 function versionView(row) {
     return { id: row.id, templateId: row.template_id, version: row.version, editVersion: row.edit_version,
@@ -18,18 +19,22 @@ async function loadVersion(db, scope, id) {
     const row = (await db.query(`SELECT v.* FROM signing_template_versions v JOIN signing_templates t
         ON t.owner_context_id=v.owner_context_id AND t.id=v.template_id
         WHERE v.owner_context_id=$1 AND v.id=$2 AND NOT t.archived AND ($3::boolean OR t.owner_userid=$4)
-        AND (v.state='published' OR v.created_by=$4) AND ${availableOriginSql}`, [scope.contextId, id, scope.all, scope.userId])).rows[0];
+        AND (v.state='published' OR v.created_by=$4) AND ${availableOriginSql}
+        AND ${wordTemplateScopeSql('$4')}`, [scope.contextId, id, scope.all, scope.userId])).rows[0];
     if (!row) fail('NOT_FOUND', 404);
+    if (row.definition?.origin?.kind === 'word_preview') await assertWordDefinition(db, scope, row.definition);
     return row;
 }
 
 async function catalog(db, scope, { archived = false } = {}) {
-    const rows = (await db.query(`SELECT v.*,t.name AS template_name,t.owner_userid,t.archived,t.lifecycle_version,${availableOriginSql} AS source_available FROM signing_templates t
+    const candidates = (await db.query(`SELECT v.*,t.name AS template_name,t.owner_userid,t.archived,t.lifecycle_version,${availableOriginSql} AS source_available FROM signing_templates t
         JOIN LATERAL (SELECT * FROM signing_template_versions v WHERE v.owner_context_id=t.owner_context_id AND v.template_id=t.id
             AND ((v.state='draft' AND v.created_by=$3) OR (v.state='published' AND v.version=(SELECT max(p.version)
                 FROM signing_template_versions p WHERE p.owner_context_id=t.owner_context_id AND p.template_id=t.id AND p.state='published')))) v ON TRUE
         WHERE t.owner_context_id=$1 AND ($2::boolean OR t.owner_userid=$3) AND (t.archived OR NOT ${availableOriginSql})=$4
+        AND ${wordTemplateScopeSql('$3')}
         ORDER BY t.updated_at DESC,t.id,v.version DESC LIMIT 200`, [scope.contextId, scope.all, scope.userId, archived])).rows;
+    const rows = await filterAvailableWordVersions(db, scope, candidates);
     return { importedOrigins: await importedOrigins(db, scope), templates: rows.map(row => ({ ...versionView(row), archived: row.archived, sourceAvailable: row.source_available, lifecycleVersion: row.lifecycle_version, canArchive: scope.templateManage === true, canEdit: !row.archived && row.source_available && (row.state === 'draft' ? row.created_by === scope.userId : row.owner_userid === scope.userId || scope.manage) })) };
 }
 
@@ -42,18 +47,23 @@ async function assertSources(db, scope, definition) {
     const ids = [...new Set(documents.map(doc => doc?.sourceArtifactId))];
     expect(ids.every(id => typeof id === 'string' && UUID.test(id)), 'INVALID_SOURCE');
     await require('./completionMarks').assertAssets(db, scope, definition);
-    if (!ids.length) return;
-    const sources = (await db.query(`SELECT a.id,a.content_sha256 FROM signing_artifacts a
+    if (!ids.length) {
+        await assertWordDefinition(db, scope, definition, { sources: new Map() });
+        return;
+    }
+    const sources = (await db.query(`SELECT a.id,a.owner_context_id,a.created_by,a.content_sha256,a.metadata,a.kind,a.state FROM signing_artifacts a
         WHERE a.owner_context_id=$1 AND a.id=ANY($2::uuid[]) AND a.kind='source' AND a.state='ready'
         AND ($3::boolean OR a.created_by=$4 OR EXISTS (SELECT 1 FROM signing_templates t
             JOIN signing_template_versions v ON v.owner_context_id=t.owner_context_id AND v.template_id=t.id
             CROSS JOIN LATERAL jsonb_array_elements(COALESCE(v.definition->'documents','[]')) d
             WHERE t.owner_context_id=a.owner_context_id AND t.owner_userid=$4 AND NOT t.archived
-            AND (v.state='published' OR v.created_by=$4) AND d->>'sourceArtifactId'=a.id::text))`,
+            AND (v.state='published' OR v.created_by=$4) AND d->>'sourceArtifactId'=a.id::text))
+        AND ${wordArtifactScopeSql('$4')}`,
     [scope.contextId, ids, scope.all, scope.userId])).rows;
     if (sources.length !== ids.length) fail('NOT_FOUND', 404);
     const hashes = new Map(sources.map(source => [source.id, source.content_sha256]));
     for (const doc of documents) expect(hashes.get(doc.sourceArtifactId) === doc.sourceHash, 'SOURCE_CHANGED', doc.key);
+    await assertWordDefinition(db, scope, definition, { sources: new Map(sources.map(source => [source.id, source])) });
 }
 
 async function save(pool, scope, id, input) {

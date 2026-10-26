@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "status": "MERGED_WORKING_SOURCE_QUALIFIED_NOT_DEPLOYED",
+  "mainAncestor": "17225eddc158b72280125df57db549d254a80269",
+  "qaBase": "22e9ae71a5deb55781b408f6df53188fe568fa9f",
+  "frontend": {
+    "result": "PASS_SCOPED",
+    "tests": 150,
+    "suites": 13,
+    "receipt": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-ux-fix-20261026/frontend-regression-20261026T220451Z.json",
+    "sha256": "aeaa82f26bb3982b54329fef66410f9654beacb0d015f97a77eba9c9350a63d0",
+    "sourceHashesSha256": "9a0831c6e58d9f605363fa6765221fb45eaa7b8ce1ed70b7504db3ac6e5a19cf"
+  },
+  "protectedChanged": [
+    "frontend/src/components/specializedComponents/signFiles/pdfViewer/PdfViewer.js",
+    "frontend/src/screens/signingScreen/SigningManagerScreen.js",
+    "frontend/src/screens/signingScreen/templates/CaseContextPicker.js",
+    "frontend/src/screens/signingScreen/templates/ClientSendContext.js",
+    "frontend/src/screens/signingScreen/templates/PackageComposer.js"
+  ],
+  "protectedUnchanged": 98,
+  "preservedQaExtras": [
+    "customer profile/controller permissions",
+    "billing defaults",
+    "signature detection",
+    "native signing geometry/public/Upload guards",
+    "Arabic outside signingWord"
+  ],
+  "pending": [
+    "main viewer followup ancestry",
+    "frozen build",
+    "backend/frontend deployment",
+    "authenticated desktop/mobile QA",
+    "independent actual finish review"
+  ]
+}

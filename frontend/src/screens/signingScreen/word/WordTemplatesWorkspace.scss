@@ -36,6 +36,8 @@
   &__mappingForm { display: grid; gap: v.$space-4; min-inline-size: 0; > label:not(.lw-word__check) { display: grid; gap: v.$space-2; } }
   &__selected { padding: v.$space-3; background: var(--lw-color-secondary-highlighted, #edf2f7); min-block-size: 2.75rem; border-radius: .5rem; box-sizing: border-box; overflow-wrap: anywhere; white-space: pre-wrap; }
   &__advanced, &__overrides { > summary { cursor: pointer; min-block-size: 2.75rem; align-content: center; font-weight: 500; } > label { display: grid; gap: v.$space-2; margin-block: v.$space-3; } }
+  &__advanced > textarea { display: block; inline-size: 100%; box-sizing: border-box; min-block-size: 6rem; padding: v.$space-3; margin-block: v.$space-3;
+    border: 1px solid var(--lw-color-primary, #2a4365); border-radius: .25rem; color: inherit; background: var(--lw-color-white, #fff); }
   &__range, &__references, &__valueGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: v.$space-5 v.$space-6; margin-block: v.$space-4; align-items: start; }
   &__check { display: flex; align-items: center; gap: v.$space-3; min-block-size: 2.75rem; line-height: 1.5; margin-block: v.$space-3; input { inline-size: 1.125rem; block-size: 1.125rem; flex-shrink: 0; accent-color: var(--lw-color-primary, #2a4365); } }
   &__bindings { margin: v.$space-4 0; padding: 0; list-style: none; li { display: flex; gap: v.$space-4; justify-content: space-between; align-items: center; padding-block: v.$space-4; border-block-end: 1px solid var(--lw-color-secondary-highlighted, #edf2f7); > div { min-inline-size: 0; overflow-wrap: anywhere; } } }
@@ -44,6 +46,12 @@
   &__pickerHelp { font-size: .8125rem; }
   &__pickerSelection { overflow-wrap: anywhere; }
   &__notice { color: var(--lw-color-primary, #2a4365); padding-block: v.$space-3; }
+  &__visualRow { align-items: start; }
+  &__visualRow > &__mappingForm { flex: 0 0 18rem; max-inline-size: 22rem; padding: v.$space-4; }
+  &__dataPanel { display: grid; gap: v.$space-3; > label { display: grid; gap: v.$space-2; } .lw-addFieldPanel { inline-size: 100%; max-block-size: 25rem; overflow-y: auto; } }
+  &__selectedField { overflow-wrap: anywhere; }
+  &__review { min-inline-size: 0; }
+  &__review--readable { max-block-size: 80vh; overflow: auto; overscroll-behavior: contain; .lw-signing-pdfViewer { min-inline-size: 680px; } }
 
   @media (max-width: v.$bp-md) {
     padding-inline: v.$space-4;
@@ -53,5 +61,33 @@
     &__role > .lw-simpleInput { flex-basis: auto; }
     &__heading > .lw-simpleButton, &__actions > .lw-simpleButton { inline-size: 100%; }
     .lw-simpleInput { min-block-size: 2.75rem; }
+    &__visualRow { flex-direction: column; }
+    &__visualRow > &__mappingForm { flex: 0 0 auto; max-inline-size: none; inline-size: 100%; box-sizing: border-box; }
+    &__dataPanel .lw-addFieldPanel { max-block-size: 14rem; }
   }
+}
+
+// The incumbent signing viewer remains non-selectable. Only verified Word
+// authoring pages opt in to PDF.js' real text layer and native selection.
+.lw-word-source {
+  --react-pdf-text-layer: 1;
+  min-inline-size: 0;
+  .textLayer { position: absolute; text-align: initial; inset: 0; overflow: hidden; line-height: 1; text-size-adjust: none;
+    forced-color-adjust: none; transform-origin: 0 0; z-index: 2; pointer-events: none; user-select: none; }
+  .textLayer :is(span, br) { color: transparent; position: absolute; white-space: pre; cursor: text; margin: 0; transform-origin: 0 0; }
+  .textLayer span.markedContent { top: 0; height: 0; }
+  .textLayer[data-word-verified='true'] { pointer-events: auto; user-select: text; -webkit-user-select: text; }
+  .textLayer [data-word-item] { user-select: text; -webkit-user-select: text; }
+  .textLayer [data-word-readonly], .textLayer br { user-select: none; -webkit-user-select: none; }
+  .textLayer br::selection { background: transparent; }
+  .textLayer .endOfContent { display: block; position: absolute; inset: 100% 0 0; z-index: -1; cursor: default; user-select: none; }
+  .textLayer.selecting .endOfContent { top: 0; }
+  [data-main-rotation='90'] { transform: rotate(90deg) translateY(-100%); }
+  [data-main-rotation='180'] { transform: rotate(180deg) translate(-100%, -100%); }
+  [data-main-rotation='270'] { transform: rotate(270deg) translateX(-100%); }
+  &[data-disabled='true'] .textLayer { pointer-events: none; user-select: none; }
+  &__marks { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+  &__mark { position: absolute; border: 1px solid var(--lw-color-primary, #2a4365); box-sizing: border-box; }
+  &__chip { position: absolute; white-space: nowrap; max-inline-size: 16rem; overflow: hidden; text-overflow: ellipsis; font-size: .75rem; line-height: 1.4;
+    padding-inline: v.$space-2; border: 1px solid var(--lw-color-primary, #2a4365); border-radius: .25rem; background: var(--lw-color-white, #fff); color: var(--lw-color-primary, #2a4365); }
 }

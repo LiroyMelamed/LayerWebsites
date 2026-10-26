@@ -5,7 +5,10 @@ import api from '../../../api/wordTemplatesApi';
 import { uploadFileToR2 } from '../../../utils/fileUploadUtils';
 let mockPdfReadyCallbacks = [];
 
-jest.mock('../../../api/wordTemplatesApi', () => ({ __esModule: true, default: { list: jest.fn(), create: jest.fn(), load: jest.fn(), save: jest.fn(), preview: jest.fn(), pdf: jest.fn() } }));
+jest.mock('../../../api/wordTemplatesApi', () => ({ __esModule: true, default: { list: jest.fn(), create: jest.fn(), load: jest.fn(), save: jest.fn(), preview: jest.fn(), pdf: jest.fn(), authoringRender: jest.fn(), authoringPdf: jest.fn(), resolveSelection: jest.fn() } }));
+jest.mock('./wordAuthoringSelection', () => ({ ...jest.requireActual('./wordAuthoringSelection'), verifyPdfBlob: jest.fn(blob => Promise.resolve(blob)) }));
+jest.mock('./WordSourceViewer', () => ({ onSelect }) => <div data-testid="original-pdf"><button onClick={() => onSelect({ kind: 'range', start: { itemId: 'p1-i0', offset: 7 }, end: { itemId: 'p1-i0', offset: 13 } })}>chooseBlank</button></div>);
+jest.mock('./WordDataFieldPanel', () => ({ value, onChange, definitions }) => <label>field<select value={value} onChange={event => onChange(event.target.value)}>{definitions.map(item => <option key={item.key} value={item.key}>{item.key}</option>)}</select></label>);
 jest.mock('../../../utils/fileUploadUtils', () => ({ uploadFileToR2: jest.fn() }));
 jest.mock('../templates/useSigningLocale', () => () => ({ direction: 'rtl', number: String, t: (key, values = {}) => key.replace(/^signingWord\./, '') + (values.role ? ` ${values.role}` : '') + (values.field ? ` ${values.field}` : '') }));
 jest.mock('../templates/SigningBackButton', () => ({ onPress, children }) => <button onClick={onPress}>{children}</button>);
@@ -25,8 +28,8 @@ jest.mock('../../../components/ui/StatusNotice', () => ({ children }) => <div ro
 jest.mock('../../../components/simpleComponents/SimplePopUp', () => ({ children }) => <div role="dialog">{children}</div>);
 jest.mock('../../../components/styledComponents/popups/ConfirmationDialog', () => ({ title, onConfirm, onCancel, confirmText, cancelText }) => <div>{title}<button onClick={onConfirm}>{confirmText}</button><button onClick={onCancel}>{cancelText}</button></div>);
 
-const source = () => ({ id: 'source-a', name: 'Rental original', version: 3, sourceHash: 'source-sha', bindingsHash: 'bindings-sha', roles: [], bindings: [],
-    model: { parts: [{ name: 'word/document.xml', paragraphs: [{ id: 'p0', text: 'Tenant ______ <script>alert(1)</script>', editable: true, blanks: [{ start: 7, end: 13 }], selectionRanges: [{ start: 0, end: 39 }] }, { id: 'p1', text: 'Unsupported text', editable: false, blanks: [] }] }] } });
+const source = () => ({ id: 'source-a', name: 'Rental original', version: 3, sourceHash: 'a'.repeat(64), bindingsHash: 'b'.repeat(64), roles: [], bindings: [],
+    model: { parts: [{ name: 'word/document.xml', paragraphs: [{ id: 'p0', textHash: 'c'.repeat(64), text: 'Tenant ______ <script>alert(1)</script>', editable: true, blanks: [{ start: 7, end: 13 }], selectionRanges: [{ start: 0, end: 39 }] }, { id: 'p1', text: 'Unsupported text', editable: false, blanks: [] }] }] } });
 const binding = (field, id = field) => ({ id, part: 'word/document.xml', paragraphId: 'p0', start: 7, end: 13, field, required: true });
 const mapped = () => ({ ...source(), bindings: [binding('client.identityNumber')] });
 async function open(saved = source(), props = {}, manage = false) {
@@ -35,7 +38,7 @@ async function open(saved = source(), props = {}, manage = false) {
     await waitFor(() => expect(screen.getByRole('option', { name: saved.name })).toBeInTheDocument());
     fireEvent.change(screen.getByLabelText('library'), { target: { value: saved.id } });
     await waitFor(() => expect(screen.getByLabelText('clientId')).toBeInTheDocument());
-    if (manage) fireEvent.click(screen.getByText('manageTemplates'));
+    if (manage) { fireEvent.click(screen.getByText('manageTemplates')); await waitFor(() => expect(screen.getByText('chooseBlank')).toBeInTheDocument()); }
     return result;
 }
 const context = (client = 22, caseId = 31) => ({ clientRecord: { id: client, label: `Client ${client}` }, caseRecord: { id: caseId, label: `Case ${caseId}` } });
@@ -44,8 +47,18 @@ beforeEach(() => {
     mockPdfReadyCallbacks = [];
     URL.createObjectURL = jest.fn(() => 'blob:final-only'); URL.revokeObjectURL = jest.fn();
     Object.defineProperty(globalThis, 'crypto', { configurable: true, value: { randomUUID: jest.fn(() => 'b37c6948-af82-4af0-9e66-46c88180d511') } });
-    api.preview.mockResolvedValue({ preview: { id: 'preview-a', name: 'Filled', requiresFreshSigningGeometry: true } });
-    api.pdf.mockResolvedValue(new Blob(['pdf'], { type: 'application/pdf' }));
+    api.preview.mockResolvedValue({ preview: { id: 'preview-a', name: 'Filled', sourceId: 'source-a', sourceVersion: 3, pdfHash: 'd'.repeat(64), requiresFreshSigningGeometry: true } });
+    api.pdf.mockResolvedValue(new Blob(['%PDF-final'], { type: 'application/pdf' }));
+    api.authoringPdf.mockResolvedValue(new Blob(['%PDF-original'], { type: 'application/pdf' }));
+    api.authoringRender.mockImplementation(async (id, payload) => ({ authoring: { schemaVersion: 2, mapVersion: 1, offsetUnit: 'utf16', renderId: 'render-a',
+        sourceId: id, sourceVersion: payload.expectedVersion, renderSourceVersion: 3, sourceHash: payload.sourceHash, bindingsHash: 'b'.repeat(64),
+        pdfHash: 'd'.repeat(64), mapHash: 'e'.repeat(64), geometryTolerance: 0.01, textContentOptions: { disableNormalization: false, includeMarkedContent: false },
+        pages: [{ pageNum: 1, width: 600, height: 800, rotation: 0, userUnit: 1, viewBox: [0, 0, 600, 800], viewportTransform: [1, 0, 0, -1, 0, 800], textContentHash: 'f'.repeat(64),
+            items: [{ id: 'p1-i0', text: source().model.parts[0].paragraphs[0].text, dir: 'ltr', transform: [11, 0, 0, 11, 50, 700], width: 200, height: 11, hasEOL: true,
+                segments: [{ itemStart: 0, itemEnd: source().model.parts[0].paragraphs[0].text.length, part: 'word/document.xml', paragraphId: 'p0', sourceStart: 0,
+                    sourceEnd: source().model.parts[0].paragraphs[0].text.length, paragraphHash: 'c'.repeat(64) }] }] }] } }));
+    api.resolveSelection.mockImplementation(async (_id, _render, { selector }) => ({ selection: { kind: selector.kind, selector, selectedText: source().model.parts[0].paragraphs[0].text.slice(7, 13),
+        anchor: { part: 'word/document.xml', paragraphId: 'p0', start: 7, end: 13, sourceHash: 'a'.repeat(64), paragraphHash: 'c'.repeat(64) } } }));
 });
 afterEach(() => jest.restoreAllMocks());
 
@@ -68,14 +81,15 @@ test('explicit manage mode imports DOCX, safely maps a blank and saves version w
     uploadFileToR2.mockResolvedValue({ success: true, data: { key: 'private/original.docx' } }); api.create.mockResolvedValue({ source: source() });
     fireEvent.change(screen.getByLabelText('upload'), { target: { files: [new File(['docx'], 'Rental.docx')] } }); fireEvent.click(screen.getByText('import'));
     await waitFor(() => expect(api.create).toHaveBeenCalledWith({ fileKey: 'private/original.docx', name: 'Rental', roles: [] }));
-    await waitFor(() => expect(screen.getByText('Tenant ______ <script>alert(1)</script>')).toBeInTheDocument()); expect(document.querySelector('script')).toBeNull();
-    fireEvent.click(screen.getByText('chooseBlank')); fireEvent.click(screen.getByText('bind'));
+    await waitFor(() => expect(screen.getByTestId('original-pdf')).toBeInTheDocument()); expect(document.querySelector('script')).toBeNull();
+    fireEvent.click(screen.getByText('chooseBlank')); await waitFor(() => expect(screen.getByText('bind')).toBeEnabled()); fireEvent.click(screen.getByText('bind'));
     api.save.mockImplementation((id, payload) => Promise.resolve({ source: { ...source(), ...payload, id, version: 4 } })); fireEvent.click(screen.getByText('save'));
     await waitFor(() => expect(api.save).toHaveBeenCalled()); const [id, payload] = api.save.mock.calls[0];
-    expect(id).toBe('source-a'); expect(payload.expectedVersion).toBe(3); expect(payload.sourceHash).toBe('source-sha');
-    expect(payload.bindings).toEqual([expect.objectContaining({ start: 7, end: 13, field: 'client.fullName', required: true })]);
+    expect(id).toBe('source-a'); expect(payload.expectedVersion).toBe(3); expect(payload.sourceHash).toBe('a'.repeat(64));
+    expect(payload).toEqual(expect.objectContaining({ bindingSchemaVersion: 2, authoringRenderId: 'render-a', authoringMapHash: 'e'.repeat(64) }));
+    expect(payload.bindings).toEqual([expect.objectContaining({ selector: { kind: 'range', start: { itemId: 'p1-i0', offset: 7 }, end: { itemId: 'p1-i0', offset: 13 } }, field: 'client.fullName', required: true })]);
     expect(payload).not.toHaveProperty('inputs'); expect(payload).not.toHaveProperty('pdf');
-    expect(screen.getByText('advancedMapping')).toBeInTheDocument();
+    expect(screen.getByText('finalSigningFieldsHelp')).toBeInTheDocument();
 });
 
 test('preview sends explicit string overrides and references; final PDF load and review are both required', async () => {
@@ -85,7 +99,7 @@ test('preview sends explicit string overrides and references; final PDF load and
     fireEvent.change(screen.getByLabelText('fieldLabel fields.identityNumber'), { target: { value: '001234567' } });
     fireEvent.click(screen.getByText('preview')); fireEvent.click(screen.getByText('preview'));
     await waitFor(() => expect(screen.getByTestId('final-pdf')).toBeInTheDocument());
-    expect(api.preview).toHaveBeenCalledTimes(1); expect(api.preview).toHaveBeenCalledWith('source-a', { expectedVersion: 3, bindingsHash: 'bindings-sha', inputs: { clientId: 23, roleClientIds: {}, manualValues: { 'client.identityNumber': '001234567' } } }, expect.any(String));
+    expect(api.preview).toHaveBeenCalledTimes(1); expect(api.preview).toHaveBeenCalledWith('source-a', { expectedVersion: 3, bindingsHash: 'b'.repeat(64), inputs: { clientId: 23, roleClientIds: {}, manualValues: { 'client.identityNumber': '001234567' } } }, expect.any(String));
     expect(screen.getByTestId('final-pdf')).toHaveAttribute('data-spots', '0'); expect(screen.getByTestId('final-pdf')).toHaveAttribute('data-signers', '0');
     expect(screen.getByText('continue')).toBeDisabled(); fireEvent.click(screen.getByText('pdf-loaded')); expect(screen.getByText('continue')).toBeDisabled();
     fireEvent.click(screen.getByLabelText('previewAcknowledgement')); fireEvent.click(screen.getByText('continue'));
@@ -96,7 +110,7 @@ test('preview sends explicit string overrides and references; final PDF load and
 
 test('conflict preserves edits and switching out of manage confirms or discards unsaved template changes', async () => {
     const onDraftChange = jest.fn(); await open(source(), { onDraftChange }, true);
-    fireEvent.click(screen.getByText('chooseBlank')); fireEvent.click(screen.getByText('bind'));
+    fireEvent.click(screen.getByText('chooseBlank')); await waitFor(() => expect(screen.getByText('bind')).toBeEnabled()); fireEvent.click(screen.getByText('bind'));
     api.save.mockRejectedValue({ status: 409 }); fireEvent.click(screen.getByText('save'));
     await waitFor(() => expect(screen.getByText('conflict')).toBeInTheDocument()); expect(screen.getByText('removeBinding')).toBeInTheDocument();
     fireEvent.click(screen.getByText('useTemplates')); expect(screen.getByRole('dialog')).toBeInTheDocument(); fireEvent.click(screen.getByText('keepEditing'));
@@ -114,7 +128,7 @@ test('late preview response after unmount cannot create a URL or continue', asyn
 });
 
 test('overlapping mappings remain rejected and invalid record references cannot produce a preview', async () => {
-    await open(mapped(), {}, true); fireEvent.click(screen.getByText('chooseBlank')); fireEvent.click(screen.getByText('bind'));
+    await open(mapped(), {}, true); fireEvent.click(screen.getByText('chooseBlank')); await waitFor(() => expect(screen.getByText('bind')).toBeEnabled()); fireEvent.click(screen.getByText('bind'));
     expect(screen.getByText('selectionOverlap')).toBeInTheDocument(); fireEvent.click(screen.getByText('useTemplates'));
     fireEvent.change(screen.getByLabelText('clientId'), { target: { value: '1.5' } }); expect(screen.getByText('preview')).toBeDisabled(); expect(api.preview).not.toHaveBeenCalled();
 });
@@ -154,64 +168,51 @@ test('known unresolved required fields use document-only inputs; selected record
     expect(api.create).not.toHaveBeenCalled(); expect(api.save).not.toHaveBeenCalled();
 });
 
-test('readable view opens the loaded PDF in a protected native tab with separate cleanup and no review bypass', async () => {
+test('wide reading view stays inline, preserves review state and makes no native navigation or extra request', async () => {
     const onContinue = jest.fn(); const opened = jest.spyOn(window, 'open').mockReturnValue(null);
-    URL.createObjectURL.mockReturnValueOnce('blob:inline-review').mockReturnValueOnce('blob:readable-review');
-    await open(mapped(), { initialContext: context(), onContinue });
-    fireEvent.click(screen.getByRole('button', { name: 'preview' }));
+    await open(mapped(), { initialContext: context(), onContinue }); fireEvent.click(screen.getByText('preview'));
     await waitFor(() => expect(screen.getByTestId('final-pdf')).toBeInTheDocument());
-    const readableButton = screen.getByRole('button', { name: 'openReadablePreview' });
-    expect(readableButton).toBeDisabled(); fireEvent.click(readableButton); expect(opened).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByText('pdf-loaded')); expect(readableButton).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'continue' })).toBeDisabled();
-    let cleanup; const nativeTimeout = window.setTimeout.bind(window);
-    jest.spyOn(window, 'setTimeout').mockImplementation((callback, delay, ...args) => {
-        if (delay === 60_000) { cleanup = callback; return 0; }
-        return nativeTimeout(callback, delay, ...args);
-    });
-    fireEvent.click(readableButton);
-    expect(opened).toHaveBeenCalledWith('blob:readable-review', '_blank', 'noopener,noreferrer');
-    expect(URL.createObjectURL).toHaveBeenCalledTimes(2);
-    expect(URL.createObjectURL.mock.calls[1][0]).toBe(URL.createObjectURL.mock.calls[0][0]);
-    expect(api.preview).toHaveBeenCalledTimes(1); expect(api.pdf).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId('final-pdf')).toHaveAttribute('data-url', 'blob:inline-review');
-    expect(screen.getByLabelText('clientId')).toHaveValue('22'); expect(screen.getByLabelText('caseId')).toHaveValue('31');
-    expect(screen.getByLabelText('previewAcknowledgement')).not.toBeChecked(); expect(screen.getByRole('button', { name: 'continue' })).toBeDisabled();
-    fireEvent.click(screen.getByLabelText('previewAcknowledgement'));
-    expect(typeof cleanup).toBe('function'); cleanup();
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:readable-review'); expect(URL.revokeObjectURL).not.toHaveBeenCalledWith('blob:inline-review');
-    expect(screen.getByLabelText('previewAcknowledgement')).toBeChecked(); expect(screen.getByRole('button', { name: 'continue' })).toBeEnabled();
-    fireEvent.click(screen.getByRole('button', { name: 'continue' }));
-    expect(onContinue).toHaveBeenCalledWith(expect.objectContaining({ id: 'preview-a', url: 'blob:inline-review', fileBlob: URL.createObjectURL.mock.calls[0][0] }));
-    expect(api.create).not.toHaveBeenCalled(); expect(api.save).not.toHaveBeenCalled();
+    expect(screen.getByText('openReadablePreview')).toBeDisabled();
+    fireEvent.click(screen.getByText('pdf-loaded')); fireEvent.click(screen.getByText('openReadablePreview'));
+    expect(screen.getByTestId('final-pdf').closest('.lw-word__review')).toHaveClass('lw-word__review--readable');
+    expect(screen.getByLabelText('previewAcknowledgement')).not.toBeChecked(); expect(screen.getByText('continue')).toBeDisabled();
+    fireEvent.click(screen.getByLabelText('previewAcknowledgement')); fireEvent.click(screen.getByText('closeReadablePreview'));
+    expect(screen.getByTestId('final-pdf').closest('.lw-word__review')).not.toHaveClass('lw-word__review--readable');
+    expect(screen.getByLabelText('previewAcknowledgement')).toBeChecked(); expect(opened).not.toHaveBeenCalled();
+    expect(URL.createObjectURL).toHaveBeenCalledTimes(1); expect(api.pdf).toHaveBeenCalledTimes(1); expect(api.preview).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByText('continue')); expect(onContinue).toHaveBeenCalledWith(expect.objectContaining({ id: 'preview-a', fileBlob: expect.any(Blob) }));
 });
 
-test('readable action disappears on input/context changes and stale PDF-ready callbacks cannot unlock a new review', async () => {
+test('input and context changes close inline reading; stale ready callbacks cannot unlock a fresh preview', async () => {
     const opened = jest.spyOn(window, 'open').mockReturnValue(null); const props = { initialContext: context(), onContinue: jest.fn() };
-    const view = await open(mapped(), props); fireEvent.click(screen.getByRole('button', { name: 'preview' }));
+    const view = await open(mapped(), props); fireEvent.click(screen.getByText('preview'));
     await waitFor(() => expect(screen.getByTestId('final-pdf')).toBeInTheDocument()); const oldReady = mockPdfReadyCallbacks.at(-1);
-    fireEvent.click(screen.getByText('pdf-loaded')); fireEvent.click(screen.getByLabelText('previewAcknowledgement'));
+    fireEvent.click(screen.getByText('pdf-loaded')); fireEvent.click(screen.getByText('openReadablePreview')); fireEvent.click(screen.getByLabelText('previewAcknowledgement'));
     fireEvent.change(screen.getByLabelText('clientId'), { target: { value: '24' } });
-    expect(screen.queryByRole('button', { name: 'openReadablePreview' })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'preview' })); await waitFor(() => expect(screen.getByTestId('final-pdf')).toBeInTheDocument());
-    await act(async () => oldReady(true));
-    expect(screen.getByRole('button', { name: 'openReadablePreview' })).toBeDisabled();
-    expect(screen.getByLabelText('previewAcknowledgement')).not.toBeChecked(); expect(screen.getByRole('button', { name: 'continue' })).toBeDisabled();
-    fireEvent.click(screen.getByRole('button', { name: 'openReadablePreview' })); expect(opened).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('final-pdf')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('preview')); await waitFor(() => expect(screen.getByTestId('final-pdf')).toBeInTheDocument());
+    await act(async () => oldReady(true)); expect(screen.getByText('openReadablePreview')).toBeDisabled();
+    expect(screen.getByLabelText('previewAcknowledgement')).not.toBeChecked(); expect(screen.getByText('continue')).toBeDisabled();
+    expect(screen.getByTestId('final-pdf').closest('.lw-word__review')).not.toHaveClass('lw-word__review--readable');
     view.rerender(<WordTemplatesWorkspace {...props} initialContext={context(25, 32)} />);
-    expect(screen.queryByRole('button', { name: 'openReadablePreview' })).not.toBeInTheDocument();
-    expect(props.onContinue).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('final-pdf')).not.toBeInTheDocument(); expect(opened).not.toHaveBeenCalled(); expect(props.onContinue).not.toHaveBeenCalled();
 });
 
-test('native reading-view failure releases only its URL and preserves the inline review', async () => {
-    jest.spyOn(window, 'open').mockImplementation(() => { throw new Error('Native view unavailable'); });
-    URL.createObjectURL.mockReturnValueOnce('blob:inline-review').mockReturnValueOnce('blob:failed-reading-view');
-    await open(mapped(), { initialContext: context() }); fireEvent.click(screen.getByRole('button', { name: 'preview' }));
-    await waitFor(() => expect(screen.getByTestId('final-pdf')).toBeInTheDocument()); fireEvent.click(screen.getByText('pdf-loaded'));
-    fireEvent.click(screen.getByRole('button', { name: 'openReadablePreview' }));
-    expect(screen.getByText('readablePreviewFailed')).toBeInTheDocument();
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:failed-reading-view'); expect(URL.revokeObjectURL).not.toHaveBeenCalledWith('blob:inline-review');
-    expect(screen.getByTestId('final-pdf')).toHaveAttribute('data-url', 'blob:inline-review');
-    expect(screen.getByLabelText('previewAcknowledgement')).not.toBeChecked(); expect(screen.getByRole('button', { name: 'continue' })).toBeDisabled();
-    expect(api.preview).toHaveBeenCalledTimes(1); expect(api.pdf).toHaveBeenCalledTimes(1);
+test('a mismatched authoring source cannot expose selection or save; stale selection response cannot add a binding', async () => {
+    api.authoringRender.mockResolvedValueOnce({ authoring: { schemaVersion: 2 } });
+    await open(source()); fireEvent.click(screen.getByText('manageTemplates'));
+    await waitFor(() => expect(screen.getByText('authoringUnavailable')).toBeInTheDocument());
+    expect(screen.queryByTestId('original-pdf')).not.toBeInTheDocument(); expect(api.authoringPdf).not.toHaveBeenCalled(); expect(api.save).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText('retryAuthoring')); await waitFor(() => expect(screen.getByText('chooseBlank')).toBeInTheDocument());
+    let complete; api.resolveSelection.mockReturnValueOnce(new Promise(resolve => { complete = resolve; })); fireEvent.click(screen.getByText('chooseBlank'));
+    fireEvent.click(screen.getByText('useTemplates'));
+    await act(async () => complete({ selection: { kind: 'range' } })); expect(screen.queryByText('removeBinding')).not.toBeInTheDocument(); expect(api.save).not.toHaveBeenCalled();
+});
+
+test('catalog manual-only first name is never inferred from selected full name and is required explicitly', async () => {
+    const saved = { ...source(), bindings: [binding('client.firstName')], catalog: { fields: [{ key: 'client.firstName', phase: 'storedData', available: true, resolver: 'manual' }], roleFields: [] } };
+    await open(saved, { initialContext: context() }); expect(screen.getByLabelText('fieldLabel fields.firstName')).toHaveValue(''); expect(screen.getByText('preview')).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('fieldLabel fields.firstName'), { target: { value: 'Document-only name' } }); fireEvent.click(screen.getByText('preview'));
+    await waitFor(() => expect(api.preview).toHaveBeenCalled()); expect(api.preview.mock.calls[0][1].inputs.manualValues).toEqual({ 'client.firstName': 'Document-only name' });
+    expect(api.create).not.toHaveBeenCalled(); expect(api.save).not.toHaveBeenCalled();
 });

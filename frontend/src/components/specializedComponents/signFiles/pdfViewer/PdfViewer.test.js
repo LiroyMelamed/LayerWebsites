@@ -215,3 +215,19 @@ test('responsive PDF overlays follow the measured bitmap while a wider render is
     expect(inner).toHaveAttribute('data-measured-width', '680');
     expect(suggestion).toHaveStyle({ left: '340px', top: '340px' });
 });
+
+test('Word authoring text and overlays are opt-in; the incumbent signing viewer stays non-selectable', async () => {
+    const { rerender } = render(<PdfViewer pdfSource={source} />); await finishLoading();
+    expect(mockPageProps.get(1).renderTextLayer).toBe(false); expect(mockPageProps.get(1).onGetTextSuccess).toBeUndefined();
+    const onPageTextReady = jest.fn(); const content = { items: [{ str: 'original text' }] };
+    const renderPageOverlay = jest.fn(({ pageNumber }) => <span>authoring-page-{pageNumber}</span>);
+    const authoringLayer = { onPageTextReady, renderPageOverlay };
+    rerender(<PdfViewer pdfSource={source} authoringLayer={authoringLayer} />);
+    expect(mockPageProps.get(1).renderTextLayer).toBe(true); expect(screen.getByText('authoring-page-1')).toBeInTheDocument();
+    expect(renderPageOverlay).toHaveBeenLastCalledWith(expect.objectContaining({ pageNumber: 1,
+        displayWidth: mockPageProps.get(1).width, host: expect.any(HTMLElement) }));
+    act(() => { mockPageProps.get(1).onGetTextSuccess(content); mockPageProps.get(1).onRenderTextLayerSuccess(); });
+    expect(onPageTextReady).toHaveBeenCalledWith(expect.objectContaining({ pageNumber: 1, content, host: expect.any(HTMLElement), pdfProxy: expect.any(Object) }));
+    rerender(<PdfViewer pdfSource={source} />); expect(mockPageProps.get(1).renderTextLayer).toBe(false);
+    expect(screen.queryByText('authoring-page-1')).not.toBeInTheDocument();
+});

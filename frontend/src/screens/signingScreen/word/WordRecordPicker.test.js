@@ -9,6 +9,7 @@ import wordApi from '../../../api/wordTemplatesApi';
 jest.mock('../../../api/signingTemplatesApi', () => ({ __esModule: true, default: { contacts: jest.fn() } }));
 jest.mock('../../../api/signingPackagesApi', () => ({ __esModule: true, default: { cases: jest.fn() } }));
 jest.mock('../../../api/wordTemplatesApi', () => ({ __esModule: true, default: { list: jest.fn(), load: jest.fn(), preview: jest.fn(), pdf: jest.fn() } }));
+jest.mock('./wordAuthoringSelection', () => ({ ...jest.requireActual('./wordAuthoringSelection'), verifyPdfBlob: jest.fn(blob => Promise.resolve(blob)) }));
 jest.mock('../../../utils/fileUploadUtils', () => ({ uploadFileToR2: jest.fn() }));
 jest.mock('../templates/useSigningLocale', () => () => ({ direction: 'rtl', number: String, t: (key, values = {}) => key.replace(/^signingWord\./, '') + (values.role ? ` ${values.role}` : '') + (values.field ? ` ${values.field}` : '') }));
 jest.mock('../../../components/styledComponents/buttons/TertiaryButton', () => ({ children, onPress, disabled }) => <button disabled={disabled} onClick={onPress}>{children}</button>);
@@ -72,7 +73,7 @@ test('primary context selects clients only while role selection includes manager
             { id: 'role-b', field: 'role.tenant.fullName', required: true, part: 'word/document.xml', paragraphId: 'p', start: 2, end: 4 }],
         model: { parts: [{ name: 'word/document.xml', paragraphs: [{ id: 'p', text: '____', editable: true, blanks: [{ start: 0, end: 2 }, { start: 2, end: 4 }] }] }] } };
     wordApi.list.mockResolvedValue({ sources: [source], converterAvailable: true }); wordApi.load.mockResolvedValue({ source });
-    wordApi.preview.mockResolvedValue({ preview: { id: 'p', requiresFreshSigningGeometry: true } }); wordApi.pdf.mockResolvedValue(new Blob(['pdf'], { type: 'application/pdf' }));
+    wordApi.preview.mockResolvedValue({ preview: { id: 'p', sourceId: source.id, sourceVersion: source.version, pdfHash: 'f'.repeat(64), requiresFreshSigningGeometry: true } }); wordApi.pdf.mockResolvedValue(new Blob(['%PDF-final'], { type: 'application/pdf' }));
     render(<WordTemplatesWorkspace onBack={jest.fn()} onContinue={jest.fn()} />);
     await waitFor(() => expect(screen.getByRole('option', { name: 'Rental' })).toBeInTheDocument()); fireEvent.change(screen.getByLabelText('library'), { target: { value: 's' } });
     await waitFor(() => expect(screen.getByLabelText('clientId')).toBeInTheDocument());

@@ -15,6 +15,9 @@ import SimpleInput from '../../../components/simpleComponents/SimpleInput';
 import FileUploadBox from '../../../components/styledComponents/fileUpload/FileUploadBox';
 import { Text14, TextBold18, TextBold24 } from '../../../components/specializedComponents/text/AllTextKindFile';
 import WordRecordPicker from './WordRecordPicker';
+import WordSourceViewer from './WordSourceViewer';
+import WordDataFieldPanel from './WordDataFieldPanel';
+import { selectorForAnchor, validateAuthoring, verifyPdfBlob } from './wordAuthoringSelection';
 import './WordTemplatesWorkspace.scss';
 
 const CLIENT_FIELDS = ['fullName', 'companyName', 'identityNumber', 'companyNumber', 'address', 'email', 'phone'];
@@ -43,6 +46,12 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
     const [sources, setSources] = useState([]);
     const [listLoaded, setListLoaded] = useState(false);
     const [converterAvailable, setConverterAvailable] = useState(false);
+    const [catalog, setCatalog] = useState(null);
+    const [authoring, setAuthoring] = useState(null);
+    const [authoringLoading, setAuthoringLoading] = useState(false);
+    const [authoringError, setAuthoringError] = useState('');
+    const [authoringAttempt, setAuthoringAttempt] = useState(0);
+    const [readable, setReadable] = useState(false);
     const initialDraft = useRef(resumeDraft);
     const [source, setSource] = useState(() => initialDraft.current?.source || null);
     const [name, setName] = useState(() => initialDraft.current?.name || initialDraft.current?.source?.name || '');
@@ -75,21 +84,45 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
     const appliedContext = useRef(contextSignature(initialContext));
     const nextContext = contextSignature(initialContext);
     const previewHeading = useRef(null);
+    const authoringGeneration = useRef(0);
+    const selectionGeneration = useRef(0);
+    const authoringRef = useRef(null); authoringRef.current = authoring;
     latestDraft.current = { source, name, roles, bindings, inputs, selectedFile, dirty, mode };
 
     const clearPreview = useCallback(() => {
         generation.current += 1;
         if (urlRef.current) URL.revokeObjectURL(urlRef.current);
         urlRef.current = null; previewRef.current = null;
-        setPreview(null); setPdfReady(false); setAcknowledged(false);
+        setPreview(null); setPdfReady(false); setAcknowledged(false); setReadable(false);
     }, []);
     useEffect(() => {
         alive.current = true;
         let cancelled = false;
-        api.list().then(result => { if (!cancelled) { setSources(result.sources || []); setConverterAvailable(result.converterAvailable === true); setListLoaded(true); } })
+        api.list().then(result => { if (!cancelled) { setSources(result.sources || []); setCatalog(result.catalog || null); setConverterAvailable(result.converterAvailable === true); setListLoaded(true); } })
             .catch(() => { if (!cancelled) { setError('requestFailed'); setListLoaded(true); } });
         return () => { cancelled = true; alive.current = false; generation.current += 1; if (urlRef.current) URL.revokeObjectURL(urlRef.current); };
     }, []);
+    useEffect(() => {
+        const token = ++authoringGeneration.current; selectionGeneration.current += 1;
+        setAuthoring(null); setSelection(null); setAuthoringError('');
+        if (mode !== 'manage' || !source || !converterAvailable) { setAuthoringLoading(false); return undefined; }
+        let cancelled = false; setAuthoringLoading(true);
+        (async () => {
+            try {
+                const result = await api.authoringRender(source.id, { expectedVersion: source.version, sourceHash: source.sourceHash });
+                if (cancelled || token !== authoringGeneration.current) return;
+                const data = validateAuthoring(result.authoring, source);
+                const blob = await api.authoringPdf(data.renderId);
+                await verifyPdfBlob(blob, data.pdfHash);
+                if (!cancelled && token === authoringGeneration.current) {
+                    setAuthoring({ data, pdfFile: blob }); if (data.catalog) setCatalog(data.catalog);
+                }
+            } catch (err) {
+                if (!cancelled && token === authoringGeneration.current) setAuthoringError([409, 412].includes(err?.status) ? 'conflict' : 'authoringUnavailable');
+            } finally { if (!cancelled && token === authoringGeneration.current) setAuthoringLoading(false); }
+        })();
+        return () => { cancelled = true; authoringGeneration.current += 1; selectionGeneration.current += 1; };
+    }, [source, mode, converterAvailable, authoringAttempt]);
     useEffect(() => {
         if (!dirty) return undefined;
         const warn = event => { event.preventDefault(); event.returnValue = ''; };
@@ -132,6 +165,7 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
         setSelection(null); setInputs(previous => ({ ...emptyInputs(), clientId: previous.clientId, caseId: previous.caseId,
             clientRecord: previous.clientRecord, caseRecord: previous.caseRecord }));
         setSelectedFile(null); setDirty(false); setNotice(''); setError('');
+        if (next.catalog) setCatalog(next.catalog);
         setSources(previous => [next, ...previous.filter(item => item.id !== next.id)]);
     }
     async function run(operation) {
@@ -162,51 +196,83 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
         });
     }
     function saveSource() {
-        if (!source || !name.trim() || roles.some(role => !role.label.trim())) return;
+        if (!source || !name.trim() || roles.some(role => !role.label.trim()) || authoringLoading || authoringError) return;
         const snapshot = latestDraft.current;
+        let mapping;
+        try {
+            if (authoring) {
+                validateAuthoring(authoring.data, snapshot.source);
+                mapping = { bindingSchemaVersion: 2, authoringRenderId: authoring.data.renderId, authoringMapHash: authoring.data.mapHash,
+                    bindings: snapshot.bindings.map(binding => ({ id: binding.id, field: binding.field, required: binding.required,
+                        selector: binding.authoringRenderId === authoring.data.renderId ? binding.selector : selectorForAnchor(authoring.data, binding) })) };
+            } else {
+                if (snapshot.bindings.some(binding => binding.selector)) throw new Error('Missing authoring render');
+                mapping = { bindings: snapshot.bindings };
+            }
+        } catch { setError('authoringUnmapped'); return; }
         return run(async () => {
             const result = await api.save(snapshot.source.id, { expectedVersion: snapshot.source.version, sourceHash: snapshot.source.sourceHash,
-                name: snapshot.name.trim(), roles: snapshot.roles.map(role => ({ key: role.key, label: role.label.trim() })), bindings: snapshot.bindings });
+                name: snapshot.name.trim(), roles: snapshot.roles.map(role => ({ key: role.key, label: role.label.trim() })), ...mapping });
             if (!alive.current) return;
             // Saving mappings does not clear explicitly entered preview inputs.
             const savedInputs = snapshot.inputs;
             receive(result.source); setInputs(savedInputs); setNotice('saved');
         });
     }
-    function selectedText(event, part, paragraph) {
-        if (lock.current || !paragraph.editable) return;
-        const selectionObject = window.getSelection();
-        if (!selectionObject || selectionObject.isCollapsed || selectionObject.rangeCount !== 1) return;
-        const range = selectionObject.getRangeAt(0); const host = event.currentTarget;
-        if (!host.contains(range.startContainer) || !host.contains(range.endContainer)) return;
-        const prefix = range.cloneRange(); prefix.selectNodeContents(host); prefix.setEnd(range.startContainer, range.startOffset);
-        const start = prefix.toString().length; const end = start + range.toString().length;
-        setSelection({ part, paragraphId: paragraph.id, start, end });
+    async function resolveVisualSelection(selector) {
+        const current = authoringRef.current;
+        if (lock.current || !current || authoringLoading || authoringError) return;
+        const token = ++selectionGeneration.current; const renderToken = authoringGeneration.current;
+        setSelection(null); setError('');
+        try {
+            const result = await api.resolveSelection(source.id, current.data.renderId, { expectedVersion: source.version, sourceHash: source.sourceHash,
+                mapHash: current.data.mapHash, selector });
+            if (!alive.current || token !== selectionGeneration.current || renderToken !== authoringGeneration.current || current !== authoringRef.current) return;
+            const resolved = result.selection; const anchor = resolved?.anchor;
+            const paragraph = paragraphs.find(item => item.part === anchor?.part && item.id === anchor?.paragraphId);
+            if (!paragraph?.editable || anchor.sourceHash !== source.sourceHash || anchor.paragraphHash !== paragraph.textHash ||
+                !Number.isInteger(anchor.start) || !Number.isInteger(anchor.end) || anchor.start < 0 || anchor.end > paragraph.text.length ||
+                (resolved.kind === 'insert' ? anchor.start !== anchor.end : anchor.end <= anchor.start) ||
+                resolved.kind !== selector.kind || JSON.stringify(resolved.selector) !== JSON.stringify(selector) ||
+                resolved.selectedText !== paragraph.text.slice(anchor.start, anchor.end)) throw new Error('Invalid server selection');
+            setSelection({ ...resolved, renderId: current.data.renderId, mapHash: current.data.mapHash });
+        } catch (err) {
+            if (alive.current && token === selectionGeneration.current && renderToken === authoringGeneration.current) setError([409, 412].includes(err?.status) ? 'conflict' : 'selectionInvalid');
+        }
     }
     const paragraphs = (source?.model?.parts || []).flatMap(part => (part.paragraphs || []).map(paragraph => ({ ...paragraph, part: part.name })));
-    const selectedParagraph = paragraphs.find(item => item.part === selection?.part && item.id === selection?.paragraphId);
-    const fields = [...CLIENT_FIELDS.map(value => `client.${value}`), ...CASE_FIELDS.map(value => `case.${value}`), ...OFFICE_FIELDS.map(value => `office.${value}`),
-        ...roles.flatMap(role => ROLE_FIELDS.map(value => `role.${role.key}.${value}`))];
-    function fieldLabel(value) {
+    const legacyDefinitions = [...CLIENT_FIELDS.map(value => ({ key: `client.${value}`, resolver: 'client', requiresRecord: 'client' })),
+        ...CASE_FIELDS.map(value => ({ key: `case.${value}`, resolver: ['reference', 'title'].includes(value) ? 'case' : 'manual', requiresRecord: 'case' })),
+        ...OFFICE_FIELDS.map(value => ({ key: `office.${value}`, resolver: 'manual' }))].map(item => ({ ...item, phase: 'storedData', available: true }));
+    const definitions = [...(catalog?.fields || legacyDefinitions), ...roles.flatMap(role => (catalog?.roleFields || ROLE_FIELDS.map(property => ({ property,
+        phase: 'storedData', available: true, resolver: ['capacity', 'authority'].includes(property) ? 'manual' : 'role' })))
+        .map(item => ({ ...item, key: `role.${role.key}.${item.property}` })))].filter(item => item.phase === 'storedData' && item.available !== false);
+    const fields = definitions.map(item => item.key);
+    function fieldLabel(value, short = false) {
         const pieces = value.split('.');
-        return pieces[0] === 'role' ? text('roleField', { role: roles.find(role => role.key === pieces[1])?.label || pieces[1], field: text(`fields.${pieces[2]}`) })
-            : text('fieldLabel', { group: text(`groups.${pieces[0]}`), field: text(`fields.${pieces[1]}`) });
+        const property = pieces[0] === 'role' ? pieces[2] : pieces.slice(1).join('.');
+        const label = text(`fields.${property.replace(/\./g, '_')}`);
+        return short ? label : pieces[0] === 'role' ? text('roleField', { role: roles.find(role => role.key === pieces[1])?.label || pieces[1], field: label })
+            : text('fieldLabel', { group: text(`groups.${pieces[0]}`), field: label });
     }
     function addBinding() {
-        if (!selection || !selectedParagraph?.editable) return;
-        const { start, end } = selection;
-        if (!Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end <= start || end > selectedParagraph.text.length || !fields.includes(field)) { setError('selectionInvalid'); return; }
-        if (bindings.some(item => item.part === selection.part && item.paragraphId === selection.paragraphId && item.start < end && start < item.end)) { setError('selectionOverlap'); return; }
-        edit(() => setBindings(previous => [...previous, { id: uuid(), ...selection, field, required }])); setSelection(null); setError('');
+        if (!selection || !authoring || authoringError || selection.renderId !== authoring.data.renderId || selection.mapHash !== authoring.data.mapHash || !fields.includes(field)) return;
+        const { start, end, part, paragraphId } = selection.anchor;
+        if (bindings.some(item => item.part === part && item.paragraphId === paragraphId &&
+            (start === end || item.start === item.end ? start >= item.start && start <= item.end || item.start >= start && item.start <= end : item.start < end && start < item.end))) { setError('selectionOverlap'); return; }
+        edit(() => setBindings(previous => [...previous, { id: uuid(), ...selection.anchor, kind: selection.kind,
+            selector: selection.selector, authoringRenderId: authoring.data.renderId, field, required }])); setSelection(null); setError('');
     }
     const uniqueFields = [...new Set(bindings.map(binding => binding.field))];
     const neededRoles = roles.filter(role => bindings.some(binding => binding.field.startsWith(`role.${role.key}.`)));
     const referenceValues = [inputs.clientId, inputs.caseId, ...neededRoles.map(role => inputs.roleClientIds[role.key])];
     const validReferences = referenceValues.every(value => !value || positiveId(value));
     function needsManualValue(value) {
+        const definition = definitions.find(item => item.key === value);
+        if (definition?.resolver === 'manual') return true;
         const [group, key, roleField] = value.split('.');
         if (group === 'office') return true;
-        if (group === 'case') return !['reference', 'title'].includes(key) || !inputs.caseId;
+        if (group === 'case') return definition?.resolver === 'case' ? !inputs.caseId : !['reference', 'title'].includes(key) || !inputs.caseId;
         if (group === 'role') return !['fullName', 'companyName', 'identityNumber', 'companyNumber'].includes(roleField) || !inputs.roleClientIds[key];
         return group === 'client' && !inputs.clientId;
     }
@@ -214,7 +280,7 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
     const overrideFields = uniqueFields.filter(value => !requiredManualFields.includes(value));
     const missingManualFields = requiredManualFields.some(value => !String(inputs.manualValues[value] || '').trim());
     function generatePreview() {
-        if (!source || dirty || !validReferences || missingManualFields || !converterAvailable) return;
+        if (!source || dirty || !bindings.length || !validReferences || missingManualFields || !converterAvailable) return;
         clearPreview(); const token = generation.current; const snapshot = latestDraft.current;
         run(async () => {
             const payload = { expectedVersion: snapshot.source.version, bindingsHash: snapshot.source.bindingsHash, inputs: {
@@ -224,7 +290,10 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
             } };
             const result = await api.preview(snapshot.source.id, payload, uuid());
             if (!alive.current || token !== generation.current) return;
+            if (result.preview?.sourceId !== snapshot.source.id || result.preview.sourceVersion !== snapshot.source.version ||
+                result.preview.requiresFreshSigningGeometry !== true) throw new Error('Invalid preview provenance');
             const blob = await api.pdf(result.preview.id);
+            await verifyPdfBlob(blob, result.preview.pdfHash);
             if (!alive.current || token !== generation.current) return;
             const url = URL.createObjectURL(blob); urlRef.current = url;
             const next = { ...result.preview, fileBlob: blob, url }; previewRef.current = next; setPreview(next);
@@ -237,16 +306,7 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
     function openReadablePreview() {
         if (!alive.current || lock.current || busy || dirty || appliedContext.current !== nextContext ||
             !preview || previewRef.current !== preview || !pdfReady || !preview.fileBlob || preview.url !== urlRef.current) return;
-        // Give the native viewer its own URL lifetime; the inline review stays mounted.
-        let readableUrl;
-        try {
-            readableUrl = URL.createObjectURL(preview.fileBlob);
-            window.open(readableUrl, '_blank', 'noopener,noreferrer');
-            window.setTimeout(() => URL.revokeObjectURL(readableUrl), 60_000);
-        } catch {
-            if (readableUrl) URL.revokeObjectURL(readableUrl);
-            setError('readablePreviewFailed');
-        }
+        setReadable(value => !value);
     }
 
     const manualInput = value => <SimpleInput key={value} title={fieldLabel(value)} aria-label={fieldLabel(value)}
@@ -296,45 +356,35 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
                 </section>
                 <section className="lw-word__section" aria-label={text('mapping')}>
                     <h2><TextBold18>{text('mapping')}</TextBold18></h2><Text14>{text('mappingHelp')}</Text14>
-                    <div className="lw-word__mappingLayout">
-                        <div className="lw-word__document" aria-label={text('documentText')}>{paragraphs.map(paragraph => <div key={`${paragraph.part}:${paragraph.id}`} className="lw-word__paragraph">
-                            <p onMouseUp={event => selectedText(event, paragraph.part, paragraph)} onKeyUp={event => selectedText(event, paragraph.part, paragraph)}>{paragraph.text || text('emptyParagraph')}</p>
-                            {!paragraph.editable && <small>{text('unsupportedParagraph')}</small>}
-                            {paragraph.editable && <div className="lw-word__blanks">{(paragraph.blanks || []).map((blank, index) => <SecondaryButton key={index} disabled={busy}
-                                onPress={() => setSelection({ part: paragraph.part, paragraphId: paragraph.id, start: blank.start, end: blank.end })}>{text('chooseBlank', { number: number(index + 1) })}</SecondaryButton>)}</div>}
-                        </div>)}</div>
-                        <div className="lw-word__mappingForm">
-                            {selection ? <p className="lw-word__selected"><bdi>{selectedParagraph?.text.slice(selection.start, selection.end)}</bdi></p> : <Text14>{text('selectTextHelp')}</Text14>}
-                            <label>{text('field')}<SigningSelect value={field} disabled={busy} onChange={event => setField(event.target.value)}>
-                                {['client', 'case', 'office'].map(group => <optgroup key={group} label={text(`groups.${group}`)}>{fields.filter(value => value.startsWith(`${group}.`)).map(value => <option key={value} value={value}>{fieldLabel(value)}</option>)}</optgroup>)}
-                                {roles.map(role => <optgroup key={role.key} label={role.label}>{fields.filter(value => value.startsWith(`role.${role.key}.`)).map(value => <option key={value} value={value}>{fieldLabel(value)}</option>)}</optgroup>)}
-                            </SigningSelect></label>
-                            <label className="lw-word__check"><input type="checkbox" checked={required} disabled={busy} onChange={event => setRequired(event.target.checked)} />{text('required')}</label>
-                            <PrimaryButton disabled={busy || !selection} onPress={addBinding}>{text('bind')}</PrimaryButton>
-                            <details className="lw-word__advanced"><summary>{text('advancedMapping')}</summary>
-                                <p>{text('advancedMappingHelp')}</p>
-                                <label>{text('paragraph')}<SigningSelect value={selectedParagraph ? `${selectedParagraph.part}:${selectedParagraph.id}` : ''} disabled={busy} onChange={event => {
-                                    const paragraph = paragraphs.find(item => `${item.part}:${item.id}` === event.target.value);
-                                    if (paragraph) setSelection({ part: paragraph.part, paragraphId: paragraph.id, start: 0, end: paragraph.text.length });
-                                }}><option value="">{text('chooseParagraph')}</option>{paragraphs.filter(paragraph => paragraph.editable).map((paragraph, index) => <option key={`${paragraph.part}:${paragraph.id}`} value={`${paragraph.part}:${paragraph.id}`}>
-                                    {text('paragraphNumber', { number: number(index + 1) })}: {paragraph.text.slice(0, 70)}
-                                </option>)}</SigningSelect></label>
-                                {selection && <div className="lw-word__range">
-                                    <SimpleInput title={text('start')} aria-label={text('start')} type="number" min="0" max={selectedParagraph?.text.length || 0} value={selection.start} disabled={busy} timeToWaitInMilli={0}
-                                        onChange={event => setSelection(previous => ({ ...previous, start: Number(event.target.value) }))} />
-                                    <SimpleInput title={text('end')} aria-label={text('end')} type="number" min="0" max={selectedParagraph?.text.length || 0} value={selection.end} disabled={busy} timeToWaitInMilli={0}
-                                        onChange={event => setSelection(previous => ({ ...previous, end: Number(event.target.value) }))} />
-                                </div>}
-                            </details>
+                    <p>{text('finalSigningFieldsHelp')}</p>
+                    {authoringLoading && <p role="status">{text('authoringLoading')}</p>}
+                    {authoringError && <StatusNotice><p>{text(authoringError)}</p>
+                        <SecondaryButton disabled={authoringLoading || busy} onPress={() => setAuthoringAttempt(value => value + 1)}>{text('retryAuthoring')}</SecondaryButton>
+                    </StatusNotice>}
+                    {!converterAvailable && <StatusNotice><p>{text('converterUnavailable')}</p></StatusNotice>}
+                    {authoring && <div className="lw-signing-pdfViewerWrapper">
+                        <div className="lw-signing-pdfViewerRow lw-word__visualRow">
+                            <aside className="lw-word__mappingForm">
+                                <WordDataFieldPanel definitions={definitions} roles={roles} value={field} disabled={busy}
+                                    onChange={setField} fieldLabel={fieldLabel} text={text} />
+                                {selection ? <div className="lw-word__selected" role="status"><strong>{text(selection.kind === 'insert' ? 'insertionSelected' : 'textSelected')}</strong>
+                                    <p><bdi>{selection.selectedText || text('insertionSelected')}</bdi></p></div> : <p>{text('selectTextHelp')}</p>}
+                                <label className="lw-word__check"><input type="checkbox" checked={required} disabled={busy} onChange={event => setRequired(event.target.checked)} />{text('required')}</label>
+                                <PrimaryButton disabled={busy || !!authoringError || !selection || !fields.includes(field)} onPress={addBinding}>{text('bind')}</PrimaryButton>
+                            </aside>
+                            <div className="lw-signing-pdfViewerMain">
+                                <WordSourceViewer key={authoring.data.renderId} authoring={authoring.data} pdfFile={authoring.pdfFile} bindings={bindings}
+                                    disabled={busy || !!authoringError} onSelect={resolveVisualSelection} onError={message => { selectionGeneration.current += 1; setSelection(null); setAuthoringError(message); }} fieldLabel={fieldLabel} text={text} />
+                            </div>
                         </div>
-                    </div>
+                    </div>}
                     <ul className="lw-word__bindings" aria-label={text('bindings')}>{bindings.map(binding => <li key={binding.id}>
-                        <div><strong>{fieldLabel(binding.field)}</strong><p><bdi>{paragraphs.find(paragraph => paragraph.part === binding.part && paragraph.id === binding.paragraphId)?.text.slice(binding.start, binding.end)}</bdi> · {text(binding.required ? 'required' : 'optional')}</p></div>
+                        <div><strong>{fieldLabel(binding.field)}</strong><p><bdi>{binding.kind === 'insert' ? text('insertionSelected') : paragraphs.find(paragraph => paragraph.part === binding.part && paragraph.id === binding.paragraphId)?.text.slice(binding.start, binding.end)}</bdi> · {text(binding.required ? 'required' : 'optional')}</p></div>
                         <TertiaryButton disabled={busy} onPress={() => edit(() => setBindings(previous => previous.filter(item => item.id !== binding.id)))}>{text('removeBinding')}</TertiaryButton>
                     </li>)}</ul>
                 </section>
                 <div className="lw-word__actions">
-                    <PrimaryButton disabled={busy || !dirty || !name.trim() || roles.some(role => !role.label.trim())} onPress={saveSource}>{text('save')}</PrimaryButton>
+                    <PrimaryButton disabled={busy || authoringLoading || !!authoringError || !dirty || !name.trim() || roles.some(role => !role.label.trim())} onPress={saveSource}>{text('save')}</PrimaryButton>
                     <SecondaryButton disabled={busy} onPress={() => switchMode('use')}>{text('useThisTemplate')}</SecondaryButton>
                 </div><Text14>{text('privateHelp')}</Text14>
             </>}
@@ -368,15 +418,18 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
                 </details>}
                 {!converterAvailable && <StatusNotice><p>{text('converterUnavailable')}</p></StatusNotice>}
                 {dirty && <p>{text('saveFirst')}</p>}
+                {!bindings.length && <p>{text('noMappedFields')}</p>}
                 {missingManualFields && <p className="lw-word__muted">{text('completeRequiredValues')}</p>}
-                <div className="lw-word__actions"><PrimaryButton disabled={busy || dirty || !validReferences || missingManualFields || !converterAvailable} onPress={generatePreview}>{text('preview')}</PrimaryButton></div>
+                <div className="lw-word__actions"><PrimaryButton disabled={busy || dirty || !bindings.length || !validReferences || missingManualFields || !converterAvailable} onPress={generatePreview}>{text('preview')}</PrimaryButton></div>
             </section>
             {preview && <section className="lw-word__section" aria-label={text('finalPreview')}>
                 <h2 ref={previewHeading} tabIndex={-1}><TextBold18>{text('finalPreview')}</TextBold18></h2><Text14>{text('freshGeometry')}</Text14>
                 <div className="lw-word__actions"><SecondaryButton disabled={busy || !pdfReady || dirty} onPress={openReadablePreview}
-                    aria-describedby="word-readable-preview-help">{text('openReadablePreview')}</SecondaryButton></div>
+                    aria-expanded={readable} aria-describedby="word-readable-preview-help">{text(readable ? 'closeReadablePreview' : 'openReadablePreview')}</SecondaryButton></div>
                 <p id="word-readable-preview-help">{text('readablePreviewHelp')}</p>
-                <PdfViewer key={preview.url} pdfSource={preview.url} spots={[]} signers={[]} onDocumentReady={ready => { if (previewRef.current === preview) setPdfReady(ready); }} />
+                <div className={`lw-word__review${readable ? ' lw-word__review--readable' : ''}`}>
+                    <PdfViewer key={preview.url} pdfSource={preview.url} spots={[]} signers={[]} onDocumentReady={ready => { if (previewRef.current === preview) setPdfReady(ready); }} />
+                </div>
                 <label className="lw-word__check"><input type="checkbox" checked={acknowledged} disabled={!pdfReady || busy} onChange={event => setAcknowledged(event.target.checked)} />{text('previewAcknowledgement')}</label>
                 <div className="lw-word__actions"><PrimaryButton disabled={busy || !pdfReady || !acknowledged || dirty || !onContinue} onPress={continueToSigning}>{text('continue')}</PrimaryButton></div>
             </section>}
