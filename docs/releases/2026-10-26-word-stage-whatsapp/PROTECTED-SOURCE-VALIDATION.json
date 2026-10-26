@@ -1,0 +1,69 @@
+{
+  "at": "2026-10-26T11:46:15.318316+00:00",
+  "result": "SCOPED_SIX_SIGNING_INTEGRATION_CHANGES_REVIEWED_NOT_A_PRODUCTION_APPROVAL",
+  "baseCommit": "7a9d36faad22d6eb058005ec016486cfeb5f07be",
+  "origin": {
+    "path": "docs/signing-v2/release-baseline.json",
+    "firstGuardCommit": "5ed7612e526ebe5493383c06a295dd6f72174197",
+    "firstGuardDate": "2026-10-12",
+    "laterScopedUpdates": [
+      "a0d33bdcf427a743d3a169719b6bf826ff9414a2",
+      "61d0a2edf9b372d01e6b7d40c3f390b6dae975bd",
+      "4b7026dd4154b0179d5db73be6fa2b1cf35252e3"
+    ],
+    "quote": "Update changed hashes only with scoped regression evidence; never regenerate to bypass a failed gate.",
+    "guardMessage": "Unreviewed signing source: <path>. Revalidate the change and update the release manifest.",
+    "permanentUserByteFreezeEstablished": false
+  },
+  "changedProtectedFiles": {
+    "backend/routes/signingV2Routes.js": {
+      "before": "1d49f700899159927297a0c326b2901671f7af9a8350b63a7e24761dbcc4447c",
+      "after": "e3541a4f6902894a80724d190cecf514ce9028725fd96b5d8c4bc5e9cbfad003"
+    },
+    "frontend/src/screens/signingScreen/SigningManagerScreen.js": {
+      "before": "7e0a8109c8098c6e4bff42e1bb8d5e16707fed87fd856a0e854ae21a02fa279a",
+      "after": "66af00bcd6fa0cbfdcab34262708ee449a329c9b456902a5f12dff37a9e2df5e"
+    },
+    "frontend/src/screens/signingScreen/UploadFileForSigningScreen.js": {
+      "before": "23b3bac52a889d3a6973b8f02803dda5b14bf7aaaae37e21ad9d8eb11ac60810",
+      "after": "0696f8b37b7e9a545fdd7cfdd667ed9baa854716c1a496ad43eaa0570152aaea"
+    },
+    "frontend/src/screens/signingScreen/templates/PackageComposer.js": {
+      "before": "8cecb46387480ddee77e7ec5bef8e70dc343bb3ae6300a06c71f2a07a7bd87aa",
+      "after": "4fe70ead33055e1184074c8aab1fce92d540f0e86c014bde8c82e6d6400ddde9"
+    },
+    "frontend/src/screens/signingScreen/templates/ParticipantDirectoryFields.js": {
+      "before": "03df019d5d7e0133f22b4b74f716daf868c697b602ef5044a4d9f2249eac7618",
+      "after": "99be15dc96be66dbc4bf259535bb987407757f21803f0fd6305ff983ac7cb632"
+    },
+    "frontend/src/screens/signingScreen/templates/TemplatesWorkspace.js": {
+      "before": "9bbadd0c831f664b8cc66cde29a2b5245ee42527d13e39565ba6d2549c7a8306",
+      "after": "7b70f8b3ae3747a81cf392f924527688b99e8fe656088fe5c908ba3bf482b6e9"
+    }
+  },
+  "other97ProtectedFilesByteExact": true,
+  "preserved": [
+    "shipped required ancestor and all ordinary public signing/OTP/PDF stamping/completion source",
+    "normal PDF submission and field geometry",
+    "feature flag/auth/signing policy, Word upload scope, stage upload+case-edit current permissions",
+    "producer/payment/serverhooks, branding, other locale namespaces"
+  ],
+  "scope": [
+    "Word library entry and exact preview handoff/frozen provenance/fresh-fields/stale async rejection",
+    "saved-stage rule authoring, role source selection, route/manager navigation and case edit enforcement"
+  ],
+  "evidence": {
+    "word": "WORD-PORT-DELIVERY01.json",
+    "stage": "stage/PORT-FINAL02.json",
+    "entryRoutes": "feature-entry-routes01.json",
+    "independentReviewer": "/root/project_context: static review no material findings; sixsourcehashes stable"
+  },
+  "remainingCriticalGates": [
+    "current Word actual converter/service runtime bridge and fullapp/browser binding",
+    "four branded build/provenance proofs and three client delta bindings",
+    "QA and production migration/converter/headroom/recovery preservation",
+    "no real provider activation/messages; no production tag before completed verified rollout"
+  ],
+  "diffFile": "outputs/word-stage-candidate-20261026/SIX-PROTECTED-SCOPED-DIFF03.patch",
+  "diffSha256": "449f5d69600fb8b53ff2ebce0362e648755cc883122c4155ad0731ec65f81789"
+}
