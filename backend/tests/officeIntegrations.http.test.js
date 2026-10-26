@@ -93,37 +93,6 @@ test('dedicated office can share the product name but foreign office selectors a
     assert.equal(calls.filter(c => c.name === 'saveWhatsapp').length, 0);
 });
 
-test('safety controls enforce owner/platform policy and the current office before dispatching an action', async t => {
-    const { app, calls } = setup(t);
-    for (const operation of ['pause', 'resume']) {
-        const url = `/integrations/whatsapp/safety/${operation}`;
-        await request(app).post(url).send({ acknowledged: true }).expect(401);
-        for (const identity of ['staff', 'client'])
-            await request(app).post(url).set('x-test-identity', identity).send({ acknowledged: true }).expect(403);
-        await request(app).post(`${url}?officeId=${B}`).set('x-test-identity', 'owner').send({ acknowledged: true }).expect(403);
-        assert.equal(calls.filter(c => c.name === 'pauseWhatsapp' || c.name === 'resumeWhatsapp').length, operation === 'pause' ? 0 : 2);
-        await request(app).post(url).set('x-test-identity', 'owner').send({ acknowledged: true }).expect(200);
-        await request(app).post(`${url}?officeId=${B}`).set('x-test-identity', 'platform').send({ acknowledged: true }).expect(200);
-    }
-    for (const name of ['pauseWhatsapp', 'resumeWhatsapp']) {
-        const writes = calls.filter(c => c.name === name);
-        assert.deepEqual(writes.map(c => c.args[0]), [A, B]);
-        assert.deepEqual(writes.map(c => c.scope), [{ mode: 'office', tenantId: A }, { mode: 'office', tenantId: B }]);
-    }
-    assert.deepEqual(calls.find(c => c.name === 'resumeWhatsapp').args, [A, { acknowledged: true }]);
-});
-
-test('safety controls in dedicated deployments cannot select another office or silently add acknowledgement', async t => {
-    const { app, calls } = setup(t, { multiTenantMode: false });
-    for (const operation of ['pause', 'resume']) {
-        await request(app).post(`/integrations/whatsapp/safety/${operation}?officeId=${A}`).set('x-test-identity', 'platform').expect(404);
-        await request(app).post(`/integrations/whatsapp/safety/${operation}`).set('x-test-identity', 'platform').send({}).expect(200);
-    }
-    const pause = calls.find(c => c.name === 'pauseWhatsapp'), resume = calls.find(c => c.name === 'resumeWhatsapp');
-    assert.deepEqual(pause.args, [null]); assert.deepEqual(resume.args, [null, {}]);
-    assert.deepEqual(resume.scope, { mode: 'legacy', tenantId: '' });
-});
-
 test('webhook authenticates exact bytes and routes by both verified assets into office scope', async t => {
     const { app, calls } = setup(t);
     await request(app).get('/webhook').query({ 'hub.mode': 'subscribe', 'hub.verify_token': 'wrong', 'hub.challenge': 'challenge' }).expect(403);
@@ -149,33 +118,4 @@ test('signed QR history receipt persists status only in the matching office and 
     assert.equal(writes.length, 1); assert.equal(writes[0].scope.tenantId, A);
     assert.deepEqual(writes[0].args, ['connection-a', '123456789', '987654321', '"complete"', A]);
     assert.ok(!JSON.stringify(calls).includes('Private synthetic content'));
-});
-
-test('linked device and permission routes retain owner scope, exact acknowledgement and private QR responses', async t => {
-    const { app, calls } = setup(t);
-    const actions = [
-        ['post', '/whatsapp/linked-device/start', 'startLinkedDevice', { acknowledgeUnofficial: true, acknowledgePermissions: true }],
-        ['get', '/whatsapp/linked-device/qr', 'linkedDeviceQr', null],
-        ['post', '/whatsapp/linked-device/check', 'checkLinkedDevice', null],
-        ['delete', '/whatsapp/linked-device', 'disconnectLinkedDevice', null],
-        ['post', '/whatsapp/contacts/permission', 'setWhatsappContactPermission', { phone: '0501111111', allowed: false, evidence: 'Synthetic opt-out' }],
-        ['post', '/whatsapp/groups/recheck', 'reviewWhatsappGroups', null],
-    ];
-    for (const [method, path, name, body] of actions) {
-        const make = () => request(app)[method]('/integrations' + path);
-        await make().expect(401);
-        await make().set('x-test-identity', 'staff').expect(403);
-        await make().set('x-test-identity', 'client').expect(403);
-        await request(app)[method]('/integrations' + path + '?officeId=' + B).set('x-test-identity', 'owner').expect(403);
-        let pending = make().set('x-test-identity', 'owner');
-        if (body) pending = pending.send(body);
-        const response = await pending.expect(200);
-        const call = calls.filter(c => c.name === name).at(-1);
-        assert.equal(call.args[0], A); assert.deepEqual(call.scope, { mode: 'office', tenantId: A });
-        if (body) assert.deepEqual(call.args[1], body);
-        if (name === 'setWhatsappContactPermission') assert.equal(call.args[2], 2);
-        if (name === 'linkedDeviceQr' || name === 'startLinkedDevice' || name === 'checkLinkedDevice') assert.equal(response.headers['cache-control'], 'no-store');
-    }
-    await request(app).post('/integrations/whatsapp/linked-device/start').set('x-test-identity', 'owner').send({}).expect(200);
-    assert.deepEqual(calls.filter(c => c.name === 'startLinkedDevice').at(-1).args, [A, {}], 'Route never manufactures acknowledgement');
 });

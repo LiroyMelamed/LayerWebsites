@@ -74,13 +74,8 @@ function SuggestField({ id, label, value, error, errorText, dir, type, inputMode
     const [busy, setBusy] = useState(false);
     const timer = useRef(null);
     const searchGeneration = useRef(0);
-    const selectionEcho = useRef(null);
     useEffect(() => () => { searchGeneration.current += 1; clearTimeout(timer.current); }, []);
     const search = next => {
-        // SearchInput echoes the selected value after onPick in the same event.
-        // Do not turn that echo into a manual edit of the pre-selection person.
-        if (selectionEcho.current === next) { selectionEcho.current = null; return; }
-        selectionEcho.current = null;
         onValue(next);
         const generation = ++searchGeneration.current;
         setResults([]);
@@ -101,21 +96,17 @@ function SuggestField({ id, label, value, error, errorText, dir, type, inputMode
             acceptExternalValueWhileFocused isPerforming={busy} queryResult={results}
             getButtonTextFunction={item => [item.name, item.phone || item.email].filter(Boolean).join(' | ')}
             getSelectValueFunction={item => String(item[type === 'email' ? 'email' : type === 'tel' ? 'phone' : 'name'] || '')}
-            buttonPressFunction={(text, item) => { selectionEcho.current = text; searchGeneration.current += 1; clearTimeout(timer.current); onPick(item); setResults([]); setBusy(false); }} onSearch={search} />
+            buttonPressFunction={(_text, item) => { searchGeneration.current += 1; clearTimeout(timer.current); onPick(item); setResults([]); setBusy(false); }} onSearch={search} />
         {errorText && <small id={`${id}-error`} className="lw-signingCompose__srError">{errorText}</small>}
     </div>;
 }
 
-function PersonFields({ scope, roleKey, person, errors, onChange, compact, casePeople, peopleLabel, capacity, otherRoles = [], bindContacts = false }) {
+function PersonFields({ scope, roleKey, person, errors, onChange, compact, casePeople, peopleLabel, capacity, otherRoles = [] }) {
     const { t, direction, number } = useSigningLocale();
     const choices = otherRoles.flatMap(role => Array.from({ length: role.max ?? 1 }, (_, index) => ({ key: role.key, occurrence: index, value: role.max > 1 ? `${role.key}|${index}` : role.key, label: role.max > 1 ? `${role.label} · ${number(index + 1)}` : role.label })));
     const linkedValue = person.sameAsRole ? (person.sameAsOccurrence != null ? `${person.sameAsRole}|${person.sameAsOccurrence}` : person.sameAsRole) : '';
     const message = name => errors?.[name] ? t(`signingV2.compose.rowErrors.${errors[name]}`, { defaultValue: t('signingV2.compose.rowErrors.INVALID_ROW') }) : '';
     const pick = item => {
-        if (bindContacts) {
-            onChange(roleKey, '__person', { ...person, name: item?.name || '', email: item?.email || '', phone: item?.phone || '', contactUserId: item?.id ?? item?.userId, personId: undefined, partyId: undefined, authorityId: undefined });
-            return;
-        }
         onChange(roleKey, 'name', item?.name || '');
         onChange(roleKey, 'email', item?.email || '');
         onChange(roleKey, 'phone', item?.phone || '');
@@ -182,7 +173,7 @@ function changePerson(person, field, value) {
         const [, index, key] = field.split('.');
         return { people: groupPeople(person).map((item, position) => position === Number(index) ? changePerson(item, key, value) : item) };
     }
-    return { ...person, [field]: value, ...(['name', 'email', 'phone'].includes(field) && person?.contactUserId && value !== person[field] ? {contactUserId:undefined} : {}), ...(field === 'name' && person?.personId ? {personId:undefined,partyId:undefined,authorityId:undefined} : {}) };
+    return { ...person, [field]: value, ...(field === 'name' && person?.personId ? {personId:undefined,partyId:undefined,authorityId:undefined} : {}) };
 }
 
 function DocumentDataFields({ row, fields, errors, onChange }) {
@@ -391,10 +382,6 @@ function templateOrder(roles) {
         roles: ordered.map(role => role.key), groups,
     };
 }
-
-// Stage automation uses the same recipient, capacity and document-data controls
-// as an ordinary package. It never creates or submits an ordinary draft.
-export { RolePeople, DocumentDataFields, SigningOrderFields, changePerson, blankRole, clean, templateOrder };
 
 export default function PackageComposer({ api = signingPackagesApi, onBack, onCreated, initialTemplateId, initialTemplateVersion, initialCaseId, initialClientId, backLabel, replacementContext }) {
     const { t, direction, number, language, errorMessage, locale } = useSigningLocale();

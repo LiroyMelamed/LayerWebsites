@@ -11,7 +11,7 @@ const { phones, courtNumber } = require('../services/integrations/validation');
 const secrets = require('../services/integrations/secrets');
 const { saveCaseCourtNumber } = require('../services/integrations/courtCaseReference');
 const A = '11111111-1111-4111-8111-111111111111', B = '22222222-2222-4222-8222-222222222222';
-const env = { INTEGRATIONS_ENCRYPTION_KEY: 'ab'.repeat(32), WHATSAPP_META_APP_ID: '123456', WHATSAPP_META_APP_SECRET: 'app-secret', WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID: '987654', WHATSAPP_WEBHOOK_VERIFY_TOKEN: 'verify', WHATSAPP_WEBHOOK_CALLBACK_URL: 'https://synthetic-api.example.invalid/api/webhooks/whatsapp', WHATSAPP_LIVE_ENABLED: 'true' };
+const env = { INTEGRATIONS_ENCRYPTION_KEY: 'ab'.repeat(32), WHATSAPP_META_APP_ID: '123456', WHATSAPP_META_APP_SECRET: 'app-secret', WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID: '987654', WHATSAPP_WEBHOOK_VERIFY_TOKEN: 'verify', WHATSAPP_LIVE_ENABLED: 'true' };
 async function fixture(t) {
     const db = new PGlite();
     await db.exec(`CREATE TABLE law_firm_tenants(id uuid PRIMARY KEY,name text,is_active boolean DEFAULT true);
@@ -21,8 +21,6 @@ async function fixture(t) {
     await db.exec(fs.readFileSync(path.join(__dirname, '../migrations/2026-10-14_00_office_integrations.sql'), 'utf8'));
     await db.exec(fs.readFileSync(path.join(__dirname, '../migrations/2026-10-15_00_case_court_reference.sql'), 'utf8'));
     await db.exec(fs.readFileSync(path.join(__dirname, '../migrations/2026-10-15_01_court_daily_sync.sql'), 'utf8'));
-    await db.exec(fs.readFileSync(path.join(__dirname, '../migrations/2026-10-24_01_whatsapp_safety.sql'), 'utf8'));
-    await db.exec(fs.readFileSync(path.join(__dirname, '../migrations/2026-10-24_02_whatsapp_linked_device.sql'), 'utf8'));
     // PGlite has one connection. Serialize leases like a pg pool with max=1.
     let tail = Promise.resolve();
     const lease = async () => { const prior = tail; let release; tail = new Promise(r => { release = r; }); await prior; return release; };
@@ -30,23 +28,6 @@ async function fixture(t) {
     const pool = {
         query: async (...args) => { const release = await lease(); try { return await query(...args); } finally { release(); } },
         connect: async () => { const release = await lease(); return { query, release }; },
-    };
-    // These legacy lifecycle tests advance only the persisted safety clock
-    // between explicit delivery phases. Counts and circuit pauses remain intact;
-    // separate guard tests exercise pacing without advancing this fixture clock.
-    const elapseQuietPeriod = async (office = A) => {
-        const elapsedMs = 61 * 60 * 1000;
-        const shift = value => value === null ? null : new Date(Date.parse(value) - elapsedMs).toISOString();
-        const records = (await pool.query("SELECT id,safety_state FROM office_integrations WHERE provider='whatsapp' AND law_firm_tenant_id IS NOT DISTINCT FROM $1", [office])).rows;
-        for (const record of records) {
-            const state = record.safety_state;
-            if (!Object.keys(state).length) continue;
-            await pool.query('UPDATE office_integrations SET safety_state=$2 WHERE id=$1', [record.id, JSON.stringify({
-                ...state, groups: state.groups.map(shift), invites: state.invites.map(entry => ({ ...entry, at: shift(entry.at) })),
-                lastMutationAt: shift(state.lastMutationAt), lastObservedAt: shift(state.lastObservedAt), pausedAt: shift(state.pausedAt),
-            })]);
-        }
-        await pool.query("UPDATE case_whatsapp_groups SET next_attempt_at=next_attempt_at-interval '61 minutes' WHERE law_firm_tenant_id IS NOT DISTINCT FROM $1 AND next_attempt_at IS NOT NULL", [office]);
     };
     const calls = [];
     const provider = {
@@ -58,7 +39,7 @@ async function fixture(t) {
     const service = createIntegrationService({ pool, provider, env });
     const worker = createGroupWorker(service);
     t.after(() => db.close());
-    return { db, pool, service, worker, provider, calls, elapseQuietPeriod };
+    return { db, pool, service, worker, provider, calls };
 }
 const policy = { enabled: true, mode: 'demo', recipients: ['0501234567'], templateName: '', templateLanguage: 'he' };
 
@@ -280,7 +261,7 @@ test('same-named offices retain independent grants, defaults and disconnect stat
 });
 
 test('live group lifecycle is routed by office/phone/request, retries do not duplicate groups or invitations', async t => {
-    const { service, pool, worker, calls, elapseQuietPeriod } = await fixture(t);
+    const { service, pool, worker, calls } = await fixture(t);
     await connect(service);
     const config = { ...policy, enabled: false, mode: 'live', templateName: 'group_invite' };
     await service.saveWhatsapp(A, config); await service.checkWhatsapp(A); await service.saveWhatsapp(A, { ...config, enabled: true });
@@ -296,7 +277,6 @@ test('live group lifecycle is routed by office/phone/request, retries do not dup
     assert.equal((await service.snapshot(A)).groups[0].status, 'awaiting_webhook');
     await worker.receiveLifecycle(A, conn.id, '987654321', '123456789', [event]);
     await worker.receiveLifecycle(A, conn.id, '987654321', '123456789', [event]);
-    await elapseQuietPeriod();
     await worker.processOffice(A); await worker.processOffice(A);
     assert.equal(calls.filter(c => c[0] === 'invite').length, 1);
     assert.equal((await service.snapshot(A)).groups[0].status, 'invitations_sent');
@@ -430,19 +410,17 @@ test('default recipients merge with the assigned office manager once; missing/fo
 
 test('Meta onboarding verifies ownership, registers and subscribes; readiness uses documented OBA status endpoint', async () => {
     const requests = [], scopes = ['whatsapp_business_management', 'whatsapp_business_messaging'];
-    let connected = false, subscribed = false;
+    let connected = false;
     const provider = createMetaProvider({ env, fetchImpl: async (url, options) => {
         const endpoint = new URL(url).pathname.split('/').slice(2).join('/'); requests.push(endpoint);
         let data;
         if (endpoint === 'oauth/access_token') data = { access_token: 'private' };
         else if (endpoint === 'debug_token') data = { data: { is_valid: true, app_id: env.WHATSAPP_META_APP_ID, scopes, granular_scopes: scopes.map(scope => ({ scope, target_ids: ['987654321'] })), expires_at: 2000000000 } };
         else if (endpoint === '987654321/phone_numbers') data = { data: [{ id: '123456789' }] };
-        else if (endpoint === '123456789' && new URL(url).searchParams.get('fields') === 'webhook_configuration') data = { id: '123456789', webhook_configuration: { application: 'https://synthetic-app.example.invalid/webhook', ...(subscribed ? { whatsapp_business_account: env.WHATSAPP_WEBHOOK_CALLBACK_URL } : {}) } };
-        else if (endpoint === '123456789' && new URL(url).searchParams.get('fields') === 'official_business_account') data = { id: '123456789', official_business_account: { oba_status: 'APPROVED' } };
         else if (endpoint === '123456789') data = { id: '123456789', platform_type: 'CLOUD_API', status: connected ? 'CONNECTED' : 'PENDING', display_phone_number: '+972500000000' };
+        else if (endpoint === '123456789/official_business_account') data = { id: '123456789', oba_status: 'APPROVED' };
         else if (endpoint.endsWith('/register')) { assert.match(JSON.parse(options.body).pin, /^\d{6}$/); connected = true; data = { success: true }; }
-        else if (endpoint.endsWith('/subscribed_apps') && options.method === 'GET') data = { data: subscribed ? [{ whatsapp_business_api_data: { id: env.WHATSAPP_META_APP_ID }, override_callback_uri: env.WHATSAPP_WEBHOOK_CALLBACK_URL }] : [] };
-        else if (endpoint.endsWith('/subscribed_apps')) { assert.deepEqual(JSON.parse(options.body), { override_callback_uri: env.WHATSAPP_WEBHOOK_CALLBACK_URL, verify_token: env.WHATSAPP_WEBHOOK_VERIFY_TOKEN }); subscribed = true; data = { success: true }; }
+        else if (endpoint.endsWith('/subscribed_apps')) data = { success: true };
         else if (endpoint.endsWith('/message_templates')) data = { data: [{ name: 'invite', language: 'he', status: 'APPROVED' }] };
         else throw new Error('Unexpected endpoint');
         return { ok: true, status: 200, json: async () => data };
