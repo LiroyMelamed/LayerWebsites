@@ -38,12 +38,10 @@ async function caseHasLegalData(db, caseId) {
     if (!Number.isInteger(cid) || cid <= 0) return false;
 
     const calendarCaseLinkSupported = await hasColumn(db, { table: 'calendar_events', column: 'case_id' });
-    const stageAutomationSupported = await hasColumn(db, { table: 'signing_case_stage_rules', column: 'case_id' });
 
     const res = await db.query(
         `select
             exists (select 1 from stage_files where caseid = $1) as has_stage_files,
-            ${stageAutomationSupported ? 'exists (select 1 from signing_case_stage_rules where case_id = $1)' : 'false'} as has_stage_automation,
             exists (select 1 from signingfiles where caseid = $1) as has_signing_files,
             exists (select 1 from casedescriptions where caseid = $1) as has_descriptions,
             exists (select 1 from case_users where caseid = $1) as has_case_users,
@@ -57,7 +55,6 @@ async function caseHasLegalData(db, caseId) {
     const row = res.rows?.[0] || {};
     return Boolean(
         row.has_stage_files
-            || row.has_stage_automation
             || row.has_signing_files
             || row.has_descriptions
             || row.has_case_users

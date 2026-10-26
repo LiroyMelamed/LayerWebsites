@@ -37,19 +37,6 @@ router.use((req, res, next) => (process.env.SIGNING_V2_ENABLED === 'true' ? next
 router.use((req, res, next) => { res.set('Cache-Control', 'private, no-store'); next(); });
 router.use(auth, requireSigningEnabledForUser);
 
-router.use('/word', send, require('./signingWordRoutes')({ pool, actorScope }));
-
-const stageDocuments = require('../services/signingV2/caseStageAutomation');
-const editCaseForAutomation = requireFirmAction('cases','edit');
-router.get('/cases/:caseId/stage-automation', view, run(async (req,res) =>
-    res.json(await stageDocuments.list(pool,await actorScope(pool,req,'view'),req.params.caseId))));
-router.post('/cases/:caseId/stage-automation/:descriptionId/preview', send, editCaseForAutomation, run(async (req,res) =>
-    res.json(await stageDocuments.preview(pool,await actorScope(pool,req,'upload'),req.params.caseId,req.params.descriptionId,req.body || {}))));
-router.put('/cases/:caseId/stage-automation/:descriptionId', send, editCaseForAutomation, run(async (req,res) =>
-    res.json(await stageDocuments.save(pool,await actorScope(pool,req,'upload'),req.params.caseId,req.params.descriptionId,req.body || {}))));
-router.post('/cases/:caseId/stage-automation/runs/:runId/retry', send, editCaseForAutomation, run(async (req,res) =>
-    res.json(await stageDocuments.retry(pool,await actorScope(pool,req,'upload'),req.params.caseId,req.params.runId,req.body || {}))));
-
 const target = req => ({ packageId: req.params.id, personId: req.params.personId, purpose: req.body?.purpose, channel: req.body?.channel, renewLink: req.body?.renewLink });
 
 router.get('/submissions', view, run(async (req, res) => res.json(await management.listSubmissions(pool, await actorScope(pool, req, 'view'), req.query))));

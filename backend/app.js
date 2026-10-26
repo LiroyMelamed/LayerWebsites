@@ -72,7 +72,6 @@ app.use(/^\/api\/signing-v2\/templates\/[^/]+\/workbook$/, bodyParser.json({ lim
 app.use('/api/public/signup/start', bodyParser.json({ limit: '3mb' }));
 // Signature verification needs the original bytes and must precede the JSON parser.
 app.use('/api/webhooks/whatsapp', require('./routes/whatsappWebhookRoutes'));
-app.use('/api/webhooks/whatsapp-linked', require('./routes/whatsappLinkedWebhookRoutes').createWhatsappLinkedWebhookRouter());
 app.use(bodyParser.json({ limit: API_JSON_LIMIT }));
 app.use(bodyParser.urlencoded({ limit: API_URLENCODED_LIMIT, extended: true }));
 app.use(compression({ threshold: 1024 }));
