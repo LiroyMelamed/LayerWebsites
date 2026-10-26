@@ -35,9 +35,6 @@ function runtime(env) {
             if (name.endsWith('/tenantContext')) return { isMultiTenantMode: () => false };
             if (name === './service') return { createIntegrationService: () => ({ syncCourt: async (...args) => courtCalls.push(args) }) };
             if (name === './metaProvider') return { createMetaProvider: () => ({}) };
-            if (name === './wahaProvider') return { createWahaProvider: () => ({}) };
-            if (name === './providerRouter') return { createProviderRouter: () => ({}) };
-            if (name === './linkedDevicePolicy') return require('../services/integrations/linkedDevicePolicy');
             if (name === './worker') return { createGroupWorker: () => ({ processOffice: async (...args) => calls.push(args) }) };
             if (name === './deliveryPolicy') return require('../services/integrations/deliveryPolicy');
             if (name.endsWith('/backgroundJobsEnabled')) return require('../lib/backgroundJobsEnabled');
@@ -85,44 +82,4 @@ test('connection-only QA starts simulations and cannot start delivery even with 
     fixture.runtime.start(); assert.equal(fixture.intervals.length, 1);
     await fixture.intervals[0](); assert.equal(fixture.calls[0][1].demoOnly, true);
     fixture.runtime.stop();
-});
-
-test('linked device workers require their own delivery authorization plus ordinary background jobs', async () => {
-    const enabled = { WHATSAPP_WAHA_ENABLED: 'true', WHATSAPP_WAHA_DELIVERY_ENABLED: 'true', WHATSAPP_WORKER_ENABLED: 'true', BACKGROUND_JOBS_ENABLED: 'true' };
-    const active = runtime(enabled); active.runtime.start(); assert.equal(active.intervals.length, 1);
-    await active.intervals[0](); assert.equal(active.calls[0][1].demoOnly, false); active.runtime.stop();
-    for (const override of [{ BACKGROUND_JOBS_ENABLED: 'false' }, { WHATSAPP_WAHA_CONNECT_ONLY: 'true' }, { QA_OUTBOUND_MODE: 'noop' }, { WHATSAPP_WAHA_DELIVERY_ENABLED: 'false' }]) {
-        const inactive = runtime({ ...enabled, ...override }); inactive.runtime.start(); assert.equal(inactive.intervals.length, 0);
-    }
-});
-
-test('Meta connection-only simulations do not filter independently authorized linked-device delivery', async () => {
-    const enabled = {
-        WHATSAPP_CONNECT_ONLY: 'true', WHATSAPP_DEMO_WORKER_ENABLED: 'true', WHATSAPP_LIVE_ENABLED: 'true',
-        WHATSAPP_WAHA_ENABLED: 'true', WHATSAPP_WAHA_DELIVERY_ENABLED: 'true',
-        WHATSAPP_WORKER_ENABLED: 'true', BACKGROUND_JOBS_ENABLED: 'true',
-    };
-    const active = runtime(enabled);
-    active.runtime.start(); active.runtime.start();
-    assert.equal(active.intervals.length, 1);
-    await active.intervals[0]();
-    assert.equal(active.calls.length, 1);
-    assert.equal(active.calls[0][1].demoOnly, false);
-    assert.equal(require('../services/integrations/deliveryPolicy').deliveryAllowed(enabled), false);
-    active.runtime.stop();
-
-    for (const override of [
-        { BACKGROUND_JOBS_ENABLED: 'false' }, { WHATSAPP_WORKER_ENABLED: 'false' },
-        { WHATSAPP_WAHA_ENABLED: 'false' }, { WHATSAPP_WAHA_DELIVERY_ENABLED: 'false' },
-        { WHATSAPP_WAHA_CONNECT_ONLY: 'true' }, { QA_OUTBOUND_MODE: 'noop' },
-        { WHATSAPP_DEMO_ONLY: 'true' },
-    ]) {
-        const demo = runtime({ ...enabled, ...override });
-        demo.runtime.start();
-        assert.equal(demo.intervals.length, 1);
-        await demo.intervals[0]();
-        assert.equal(demo.calls.length, 1);
-        assert.equal(demo.calls[0][1].demoOnly, true);
-        demo.runtime.stop();
-    }
 });

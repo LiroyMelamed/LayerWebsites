@@ -2,12 +2,6 @@ const { createAppError, sendError, isProduction } = require('../utils/appError')
 const { getHebrewMessage } = require('../utils/errors.he');
 
 function mapKnownErrors(err) {
-    // Body-parser marks malformed JSON with this exact client-error type.
-    // Do not echo its body/message or reclassify unrelated SyntaxErrors.
-    if (err && err.type === 'entity.parse.failed' && err.status === 400) {
-        return createAppError('VALIDATION_ERROR', 400, getHebrewMessage('VALIDATION_ERROR'));
-    }
-
     // Body-parser / express payload too large
     if (err && (err.type === 'entity.too.large' || err.statusCode === 413)) {
         return createAppError('REQUEST_TOO_LARGE', 413, getHebrewMessage('REQUEST_TOO_LARGE'));

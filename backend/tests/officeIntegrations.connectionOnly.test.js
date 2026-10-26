@@ -5,10 +5,9 @@ const { createMetaProvider } = require('../services/integrations/metaProvider');
 const { createIntegrationService } = require('../services/integrations/service');
 const { appSyncStatus } = require('../services/integrations/appSyncStatus');
 const env = { WHATSAPP_CONNECT_ONLY: 'true', WHATSAPP_SIGNUP_FLOW: 'business_app', WHATSAPP_META_APP_ID: '111111',
-    WHATSAPP_META_APP_SECRET: 'synthetic', WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID: '222222', WHATSAPP_WEBHOOK_VERIFY_TOKEN: 'synthetic', WHATSAPP_WEBHOOK_CALLBACK_URL: 'https://synthetic-api.example.invalid/api/webhooks/whatsapp',
+    WHATSAPP_META_APP_SECRET: 'synthetic', WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID: '222222', WHATSAPP_WEBHOOK_VERIFY_TOKEN: 'synthetic',
     INTEGRATIONS_ENCRYPTION_KEY: 'ab'.repeat(32), WHATSAPP_LIVE_ENABLED: 'true' };
 function fixture({ phones = [{ id: '123456', is_on_biz_app: true }], bizApp = true } = {}) {
-    let subscribed = false;
     const requests = [], scopes = ['whatsapp_business_management', 'whatsapp_business_messaging'];
     const provider = createMetaProvider({ env, fetchImpl: async (url, options) => {
         const endpoint = new URL(url).pathname.split('/').slice(2).join('/');
@@ -17,10 +16,8 @@ function fixture({ phones = [{ id: '123456', is_on_biz_app: true }], bizApp = tr
         if (endpoint === 'oauth/access_token') data = { access_token: 'synthetic-token' };
         else if (endpoint === 'debug_token') data = { data: { is_valid: true, app_id: env.WHATSAPP_META_APP_ID, scopes, granular_scopes: scopes.map(scope => ({ scope, target_ids: ['654321'] })) } };
         else if (endpoint === '654321/phone_numbers') data = { data: phones };
-        else if (endpoint === '123456' && new URL(url).searchParams.get('fields') === 'webhook_configuration') data = { id: '123456', webhook_configuration: { application: 'https://synthetic-app.example.invalid/webhook', ...(subscribed ? { whatsapp_business_account: env.WHATSAPP_WEBHOOK_CALLBACK_URL } : {}) } };
         else if (endpoint === '123456') data = { id: '123456', is_on_biz_app: bizApp, platform_type: 'CLOUD_API', status: 'CONNECTED' };
-        else if (endpoint === '654321/subscribed_apps' && options.method === 'GET') data = { data: subscribed ? [{ whatsapp_business_api_data: { id: env.WHATSAPP_META_APP_ID }, override_callback_uri: env.WHATSAPP_WEBHOOK_CALLBACK_URL }] : [] };
-        else if (endpoint === '654321/subscribed_apps') { assert.deepEqual(JSON.parse(options.body), { override_callback_uri: env.WHATSAPP_WEBHOOK_CALLBACK_URL, verify_token: env.WHATSAPP_WEBHOOK_VERIFY_TOKEN }); subscribed = true; data = { success: true }; }
+        else if (endpoint === '654321/subscribed_apps') data = { success: true };
         else if (endpoint === '123456/smb_app_data') data = { request_id: 'synthetic-request' };
         else throw Error('Unexpected Meta request: ' + endpoint);
         return { ok: true, status: 200, json: async () => data };
