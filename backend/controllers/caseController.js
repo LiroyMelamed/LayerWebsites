@@ -16,6 +16,7 @@ const { assertCaseRecordAccess } = require("../lib/firmPermissions/caseAccess");
 const { getHebrewMessage } = require('../utils/errors.he');
 const { caseHasLegalData } = require('../utils/legalData');
 const { saveCaseCourtNumber } = require('../services/integrations/courtCaseReference');
+const stageDocuments = require('../services/signingV2/caseStageAutomation');
 
 function respondPermissionError(res, err) {
     if (!err) return false;
@@ -833,7 +834,7 @@ const updateCase = async (req, res) => {
                     estimatedcompletiondate::text AS estimatedcompletiondate,
                     licenseexpirydate::text AS licenseexpirydate,
                     closed_at, closed_by_userid, reopened_at, reopened_by_userid
-             FROM cases WHERE caseid = $1`,
+             FROM cases WHERE caseid = $1 FOR UPDATE`,
             [caseId]
         );
         if (oldCaseResult.rows.length === 0) {
@@ -841,6 +842,8 @@ const updateCase = async (req, res) => {
             return res.status(404).json({ message: "תיק לא נמצא" });
         }
         const oldCase = oldCaseResult.rows[0];
+        const oldDescriptionId = process.env.SIGNING_V2_ENABLED === 'true'
+            ? await stageDocuments.stageIdentity(client, caseId, oldCase.currentstage) : null;
 
         const toDateStr = (v) => v ? new Date(v).toISOString().slice(0, 10) : null;
         const oldManagerId = oldCase?.casemanagerid ? Number(oldCase.casemanagerid) : null;
@@ -972,6 +975,8 @@ const updateCase = async (req, res) => {
             }
         }
 
+        await stageDocuments.recordTransition(client, { caseId, oldDescriptionId, oldCurrentStage: oldCase.currentstage, oldClosed: Boolean(oldCase.isclosed),
+            newClosed: effectiveIsClosed, actorId });
         await client.query('COMMIT');
 
         // ── Notify linked users (ONE message per user with current stage) ──
@@ -1155,7 +1160,7 @@ const updateStage = async (req, res) => {
 
         const currentData = await client.query(
             `SELECT currentstage, isclosed, userid, closed_at, closed_by_userid, reopened_at, reopened_by_userid
-             FROM cases WHERE caseid = $1`,
+             FROM cases WHERE caseid = $1 FOR UPDATE`,
             [caseId]
         );
 
@@ -1165,6 +1170,8 @@ const updateStage = async (req, res) => {
         }
 
         const currentRow = currentData.rows[0];
+        const oldDescriptionId = process.env.SIGNING_V2_ENABLED === 'true'
+            ? await stageDocuments.stageIdentity(client, caseId, currentRow.currentstage) : null;
         const currentStageValue = currentRow?.currentstage;
         const currentlyClosed = currentRow?.isclosed;
         const caseUserId = currentRow?.userid;
@@ -1250,6 +1257,8 @@ const updateStage = async (req, res) => {
             channelType = 'CASE_REOPENED';
         }
 
+        await stageDocuments.recordTransition(client, { caseId, oldDescriptionId, oldCurrentStage: currentStageValue, oldClosed: Boolean(currentlyClosed),
+            newClosed: Boolean(IsClosed), actorId });
         await client.query('COMMIT');
         client.release();
         client = null;
