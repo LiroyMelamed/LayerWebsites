@@ -1,0 +1,25 @@
+{
+  "at": "2026-10-26T14:10:26.080290+00:00",
+  "tenant": "melamedlaw",
+  "result": "ACTUAL_TENANT_DEPLOYMENT_REMOTE_REF_AND_PRODUCTION_TAG_VERIFIED",
+  "branch": "MelamedLaw",
+  "before": "e3f62861135642cf6fe5278d1afbb7388a4c8180",
+  "candidateCommit": "0631caf7b1c829673887e12c1d2e3ffc36c1715b",
+  "productionTag": "PROD_26_10_2026_LIROY_WORD_STAGE_WHATSAPP_OFF_MelamedLaw",
+  "tagObject": "5412855df7d60734769372602868a96b0fb65da3",
+  "remoteActual": {
+    "refs/heads/MelamedLaw": "0631caf7b1c829673887e12c1d2e3ffc36c1715b",
+    "refs/tags/PROD_26_10_2026_LIROY_WORD_STAGE_WHATSAPP_OFF_MelamedLaw": "5412855df7d60734769372602868a96b0fb65da3",
+    "refs/tags/PROD_26_10_2026_LIROY_WORD_STAGE_WHATSAPP_OFF_MelamedLaw^{}": "0631caf7b1c829673887e12c1d2e3ffc36c1715b"
+  },
+  "remoteVerified": true,
+  "pushExitCode": 0,
+  "stdout": "",
+  "stderr": "remote: \nremote: GitHub found 26 vulnerabilities on LiroyMelamed/LayerWebsites's default branch (2 critical, 13 high, 8 moderate, 3 low). To find out more, visit:        \nremote:      https://github.com/LiroyMelamed/LayerWebsites/security/dependabot        \nremote: \nTo https://github.com/LiroyMelamed/LayerWebsites.git\n   e3f62861..0631caf7  0631caf7b1c829673887e12c1d2e3ffc36c1715b -> MelamedLaw\n * [new tag]           PROD_26_10_2026_LIROY_WORD_STAGE_WHATSAPP_OFF_MelamedLaw -> PROD_26_10_2026_LIROY_WORD_STAGE_WHATSAPP_OFF_MelamedLaw\n",
+  "noForce": true,
+  "frontendFinalEvidence": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/frontend/MELAMED-PUBLICATION-AND-SMOKE05.json",
+    "sha256": "b927eb0d864fd34b73cef99d13bbdd7f0c2fff6fb21dac5547ecb6a9b491153a"
+  },
+  "noNewTestsRun": true
+}

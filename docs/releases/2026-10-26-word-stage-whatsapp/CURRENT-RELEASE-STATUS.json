@@ -1,0 +1,10 @@
+{
+  "at": "2026-10-26T14:53:05.569047+00:00",
+  "result": "THREE_CUSTOMER_RELEASE_COMPLETE_VERIFIED_AND_TAGGED",
+  "authoritativeReport": "FINAL-ROLLOUT-COMPLETE06.json",
+  "reportSha256": "cc564b667ce3d0ec63d3e148ae04070f1198e147ca6be5ec77a014ade8f5bdde",
+  "priorLocalGatesMeaning": "LOCAL-GATES.json is a historical preparation snapshot. Actual completed source/runtime/build/browser/recovery/deployment evidence is in QA-CRITICAL-READY03.json and FINAL-ROLLOUT-COMPLETE06.json; existing unrelated ledger holds remain unchanged.",
+  "customerUpdate": "CUSTOMER-UPDATE-HE.txt is a draft only; not sent.",
+  "runtimeConsumerProtection": "Two exact retention pins now identify production3+QA dependence on the existing managed converter, without changing its software/jobs/config/permissions/services. Review2026-11-02 is not expiry.",
+  "closeout": "Temporary worktrees and cache/private recovery artifacts remain referenced by live rollback contracts and retention pins. Do not retire by age/name; preserve unique material and verify consumers first."
+}
