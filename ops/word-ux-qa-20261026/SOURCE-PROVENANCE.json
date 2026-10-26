@@ -1,0 +1,69 @@
+{
+  "scope": "WORD_UX_QA_FRONTEND_ONLY_PREP_PROVENANCE",
+  "sourceInspectionOnly": true,
+  "newTestsRun": false,
+  "remoteActions": false,
+  "sourceFiles": {
+    "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/frontend/publish-word-stage03.py": "45ef254fcc730b4fdc3fe039806b6d0345711faac26a9115ae4b44085ff236bf",
+    "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/court-sync-20261025/ops/frontend-promotion01.cjs": "b066e55ea1f2d56fc05aa199916fd488cf1cb898980bfbeb71a596b6e783ab67",
+    "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/frontend/PUBLISHER03-TRANSPORT-QUALIFICATION.json": "a97fa173cdaa1e3f454bd48c4d9b91cbb0bfcc8b164a2dbddc5fe8da9593f9a4",
+    "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/frontend/PUBLISHER-TRANSPORT-DELTA03-FINAL.json": "8032f2d314b71bcacdf1ab4d023aa59ff1b2242f5929845b283f6d31bd18c7d2",
+    "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/court-sync-20261025/ops/FINAL-QA-OPS-HANDOFF23.json": "b02956603d1d7eeba095a95e2580a0a3f54690aeba338f9597970b203097fce5",
+    "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/court-sync-20261025/ops/frontend-incumbent22.json": "49bca1600855c637b776cacbb49f8a5b106fbd4716e10b0f5732fb4c912992c1"
+  },
+  "unchangedHelperSource": {
+    "safe_path": {
+      "oldSourceSha256": "aa16d2ff2ac5b30a87b11669e90edcffba260a7e8e359d17f872ebc3fee5582c",
+      "newSourceSha256": "aa16d2ff2ac5b30a87b11669e90edcffba260a7e8e359d17f872ebc3fee5582c",
+      "byteExact": true
+    },
+    "check_archive": {
+      "oldSourceSha256": "88d8c42804aa0527d23f4d0c6693025963a049a0ad7d99e731ac0c7d4799ddc0",
+      "newSourceSha256": "88d8c42804aa0527d23f4d0c6693025963a049a0ad7d99e731ac0c7d4799ddc0",
+      "byteExact": true
+    },
+    "check_index": {
+      "oldSourceSha256": "f9eaf565d31bece9a015bc1a2cd3cff29510654a7f19b481be1ed637e6b0ddae",
+      "newSourceSha256": "f9eaf565d31bece9a015bc1a2cd3cff29510654a7f19b481be1ed637e6b0ddae",
+      "byteExact": true
+    },
+    "DiskPublic": {
+      "oldSourceSha256": "e0c5bd748a2106b7cf7531e62b737d6def97cfa17a0e1a40e2bc6ef15c876c36",
+      "newSourceSha256": "e0c5bd748a2106b7cf7531e62b737d6def97cfa17a0e1a40e2bc6ef15c876c36",
+      "byteExact": true
+    },
+    "check_chunks": {
+      "oldSourceSha256": "99b92e0e68d3c265854b66e5fe4b346a0799ce129204d10174bc1e7a3c1de570",
+      "newSourceSha256": "99b92e0e68d3c265854b66e5fe4b346a0799ce129204d10174bc1e7a3c1de570",
+      "byteExact": true
+    }
+  },
+  "narrowAdaptations": {
+    "PrivateStage": "Retention note text only; private journal/write/read/no-links preserved.",
+    "operation": "fresh_attestation(c) replaced with fixed qa_packet_guard(c); added check_public(adapter,c,current) before rollback journal/writes to reject metadata/unexpected-path drift without requiring healthy candidate chunks.",
+    "driverFraming": "ssh_transport_frame exact; bootstrap diagnostic __file__ renamed and operator SHA explicitly compared with config before exec.",
+    "QaDiskPublic": "Read-only scope extension for known incumbent tenants/, integrations/, templates/; writes still inherited static/two-entrypoint-only.",
+    "rollbackTrackingHeads": "Explicit rollback retains historical ancestry/publication/build/source/archive binding, while allowing legitimate later tracking-branch advancement. All forward phases retain exact tracking-ref equality."
+  },
+  "newLogicNeedsCoordinatedFocusedQualification": [
+    "full static tree inventory and metadata binding",
+    "fresh QA preimage and known path/size gates",
+    "main-first/QA ancestry and exact Git build source qualification",
+    "fixed QA target and phase receipt binding",
+    "nonblocking existing QA lock transport",
+    "historical rollback allowed after tracking heads advance; forward phases reject identical drift"
+  ],
+  "preparedFiles": {
+    "qa-static01.py": "2a0d147f10579bdb755f81a989414609ead7332444ebd8e30bb9840f714523d8",
+    "run-qa-static01.py": "65ae43a29d35258f96402255b3446f3eaec0b8a1ae9a04b156e82fbfd2dab57e",
+    "contract.example.json": "795c4bb5aa8a3937994aba307dacdf324d3918edf302b4a6faca397bc223b9c3",
+    "README.md": "cfdfaad5c85073308cf9ea631697ba5f11fc771071dc25b53ff9602b5cf964f8"
+  },
+  "notAClaim": [
+    "fresh server state",
+    "SSH permission or access",
+    "new frontend build",
+    "API/browser/auth/signing QA",
+    "deployment or rollback execution"
+  ]
+}
