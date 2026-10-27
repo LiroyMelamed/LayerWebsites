@@ -1,0 +1,28 @@
+{
+  "at": "2026-10-27T03:00:44.588018+00:00",
+  "scope": "Historical byte-exact code-only QA backendfix05 and static05 tooling archive; not a product/runtime candidate",
+  "productMain": "04bf0dff92bcefef555899aefb0cdddc4033463d",
+  "qaProductCandidate": "fb0d6c22640f8b01911a9c6491ec856c4f5ab71a",
+  "executedRemotely": false,
+  "files": {
+    "qa-backend-code-fix05.py": "08959037e0a386a045de812458de956ca0de34a6fedb0e260c9cc15331f23b7b",
+    "qa-backend-code-fix05.local.test.py": "b30af8b45644e4576283e3cf3a5da732a4170aa94e641b9fbfde2ab6570f098d",
+    "run-qa-static05.py": "88d2897c673802be64981d3896fc1020b2c9be9237f800b2112626b9a9759ef9",
+    "qa_static05_test.py": "6dd1ccf7f2ddc9a73f5af4a58abc13458d49eeceadc243d04827a222d54d59fb",
+    "QA-BACKEND-CODE-FIX05-PROTOCOL01.json": "43a258862c9655217b15a45a70fe3f60743b35230e759d7c9ad4de8ae0387b92"
+  },
+  "localQualification": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/ops05-local-qualification-20261027T024908789202Z.json",
+    "sha256": "1bcf275bb854115156cc5f982e27d2b59a4c0842634f086ecba05f1ec8224b17",
+    "methods": "8backendPASS+unchanged7staticPASSreused; historicalfailure5bc976...retained"
+  },
+  "review": "QA-FIX-RELEASE-READY-INDEPENDENT-REVIEW01.json SHA72a99dc...; underlyingbackend/static preparedcode independentlyapproved.",
+  "recovery": "Source preservation only. Active execution uses reviewed O copies and separate fresh exact sealed contracts; archive paths do not carry original evidence/contracts. Restore dependencies from earlier ops archives and revalidate hashes, current state, credentials and coordination before execution. Never infer runtime approval from this commit.",
+  "notIncluded": [
+    "Credentials/private keys/raw environment values",
+    "Database dumps/customer data",
+    "Private transport logs/checkpoints/current observation state",
+    "Frontend compiled caches"
+  ],
+  "refPolicy": "Backup branch only until currentexactmain/Qpublication completes; no push tomain/QA now."
+}

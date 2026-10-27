@@ -1,0 +1,163 @@
+{
+  "status": "PREPARED_NOT_EXECUTED_OR_TESTED",
+  "scope": "QA only; code FF + one id5 restart, no SQL/migration/env/dependency/provider/frontend actions",
+  "operator": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-code-fix05.py",
+    "sha256": "08959037e0a386a045de812458de956ca0de34a6fedb0e260c9cc15331f23b7b"
+  },
+  "fixtures": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-code-fix05.local.test.py",
+    "sha256": "b30af8b45644e4576283e3cf3a5da732a4170aa94e641b9fbfde2ab6570f098d",
+    "preparedMethods": 8
+  },
+  "baseCommit": "a1353eb410f797ebd49df851adccc80563ee0f1b",
+  "target": {
+    "host": "root@37.60.230.148",
+    "root": "/root/Melamedia",
+    "database": "melamedia",
+    "pm2Id": 5,
+    "pm2Name": "melamedia-api",
+    "branchState": "DETACHED"
+  },
+  "kind": "QA_ONLY_BACKEND_CODE_FIX",
+  "phase": "verify",
+  "result": "QA_BACKEND_CODE_FIX_VERIFY_DEDICATED_ONLY",
+  "fixedAfterHashes": {
+    "backend/services/signingV2/authoring.js": "b0a4b9517cc60d48032e5d1bff69c4607e4f46691a32cd086273c868beebf2ee",
+    "backend/tests/signingV2.wordOriginBoundary.test.js": "155f144184a16d49bbea0634ba14a4f91162a896251b281f5c7efe65d5ec485d"
+  },
+  "reviewEnvelopeKeys": [
+    "decision",
+    "scope",
+    "operatorSha256",
+    "sourceAdvanceOperatorSha256",
+    "recoveryOperatorSha256",
+    "originalOperatorSha256",
+    "observerSha256"
+  ],
+  "contractKeys": [
+    "schema",
+    "target",
+    "source",
+    "originalContract",
+    "previousSourceAdvanceVerification",
+    "currentObservation",
+    "mainThenQaPublication",
+    "seal"
+  ],
+  "sealKeys": [
+    "status",
+    "operatorSha256",
+    "sourceAdvanceOperatorSha256",
+    "recoveryOperatorSha256",
+    "originalOperatorSha256",
+    "observerSha256",
+    "evidenceBindings",
+    "rootReview"
+  ],
+  "successFlags": [
+    "sourceChanged",
+    "backendCodeChanged",
+    "runtimeRestarted",
+    "noMigrationOrEnvironmentOrDependencyChange"
+  ],
+  "remoteKindRequired": true,
+  "predicates": [
+    "environmentAndDependenciesPreserved",
+    "exactMigrationRecorded",
+    "healthJsonOk",
+    "memoryHeadroomVerified",
+    "nonQaProcessesPreserved",
+    "privateCheckpointVerified",
+    "protectedSource103Verified",
+    "schemaQualifiedDedicatedOnly",
+    "singleObservedForkWatchFalsePreserved",
+    "sourceAndDetachedStateVerified",
+    "unrelatedHistoryPreserved",
+    "uppercaseAppEffectiveEnvPreserved"
+  ],
+  "codeFixKeys": [
+    "fromCommit",
+    "toCommit",
+    "mainAncestor",
+    "backendFileCount",
+    "baselineBackendMapSha256",
+    "candidateBackendMapSha256",
+    "changedBackendFiles",
+    "previousSourceAdvanceVerification",
+    "currentObservation",
+    "gitFastForwardOnly",
+    "pm2RestartOnlyId"
+  ],
+  "runtimeTransitionKeys": [
+    "oldPid",
+    "oldRestarts",
+    "oldStartTicks",
+    "newPid",
+    "newRestarts",
+    "newStartTicks",
+    "restartCountDelta"
+  ],
+  "codeCheckpoint": {
+    "keys": [
+      "stage",
+      "artifacts"
+    ],
+    "stage": "/root/word-code-fix-qa-20261027-<contractSha256[:20]>",
+    "artifactNames": [
+      "contract.json",
+      "code-baseline.json",
+      "backend-source.tar",
+      ".mela-retention-pin"
+    ],
+    "descriptorKeys": [
+      "name",
+      "bytes",
+      "sha256"
+    ],
+    "maxArtifactBytes": 12582912,
+    "mode": "0700 stage, 0600 artifacts"
+  },
+  "restartIntent": {
+    "name": "restart.intent.json",
+    "descriptorKeys": [
+      "name",
+      "bytes",
+      "sha256"
+    ],
+    "maxBytes": 1048576
+  },
+  "unchangedState": "All whole-state fields equal prior04 except source.head/backendFiles/backendTreeSha256 and own+mirrored pid/restarts/startTicks/startMs/raw environSha256; backendFileCount stays807; backend.env SHA and full application-effective uppercase env remain EXACT.",
+  "history": "Original14-key interruptedApply at9af retained; original05 checkpoint/apply.intent/failure artifacts reverified; apply.result remains absent; prior04 journals reverified; no fictitious apply result.",
+  "chronology": "Prior04 verifiedAt <= fresh current02 observation.at <=05 verifiedAt; current02 observation age0..1800seconds; new verify freshness handled by frontend publisher.",
+  "failure": {
+    "result": "QA_CODE_FIX_FAILED_FORWARD_INSPECTION_REQUIRED",
+    "flags": [
+      "sourceChangeMayHaveOccurred",
+      "restartMayHaveOccurred",
+      "noMigrationOrEnvironmentOrDependencyWriteAttempted"
+    ],
+    "successFlagsOrPredicatesAbsent": true,
+    "retry": "STOP; preserve0700checkpoint/intent/failure journal, no repeated apply or automatic rollback"
+  },
+  "commands": {
+    "defaultPlan": "python3 /Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-code-fix05.py",
+    "fixtureRun": "python3 /Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-code-fix05.local.test.py",
+    "sealedPlan": "python3 /Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-code-fix05.py --contract <sealed.json> --contract-sha <sha256>",
+    "explicitExecute": "python3 /Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-code-fix05.py --contract <sealed.json> --contract-sha <sha256> --phase verify --execute"
+  },
+  "assembledSyntaxEntry": "n,raw,oldraw,base,recovery,req=module.load_contract(path); compile(module.payload(n,raw,oldraw,base,recovery,req),\"<qa-code-fix05>\",\"exec\"); never execute assembled code locally.",
+  "revision": 3,
+  "reviewCorrections": [
+    {
+      "previousOperatorSha256": "88c3894245409fc305f94ebcb5062afa14b0f480f92b58d4775497d8fb0d0066",
+      "finding": "P1 prepared candidate state retained old backendTreeSha256",
+      "correction": "Candidate source.backendTreeSha256 recomputed from canonical full807 map; fixtures prove correct postFF pre-restart state accepted, wrong digest blocks restart and records honest failure."
+    },
+    {
+      "previousFixtureSha256": "fa97fb3362438524fa31c68ed5e913c841c40a1045caffcf85f4145b5f168410",
+      "failureReceiptSha256": "5bc9762dc14735eadf437081df303f1f79ac8da024748011b11383ae9a6066b3",
+      "correction": "Fixture-only: simulate remote uid0 only for owned cache stage and assert non-root/mode rejection; inspect SQL assignment + actual peer arguments rather than SELECT substring matching metadata labels. Operator/private/noSQLwrite guards unchanged."
+    }
+  ]
+}
