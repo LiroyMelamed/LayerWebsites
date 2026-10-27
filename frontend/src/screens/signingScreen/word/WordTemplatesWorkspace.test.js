@@ -85,6 +85,28 @@ test('defaults to using saved templates and selection performs no writes; only b
     expect(api.create).not.toHaveBeenCalled(); expect(api.save).not.toHaveBeenCalled(); expect(api.preview).not.toHaveBeenCalled(); expect(uploadFileToR2).not.toHaveBeenCalled();
 });
 
+test('a fresh ordinary entry with explicit null context and no draft opens the library and accepts document-only input', async () => {
+    const saved = mapped(); const onDraftChange = jest.fn(); const onContinue = jest.fn();
+    api.list.mockResolvedValue({ sources: [saved], converterAvailable: true }); api.load.mockResolvedValue({ source: saved });
+    render(<WordTemplatesWorkspace initialContext={null} resumeDraft={null} onDraftChange={onDraftChange} onContinue={onContinue} />);
+    await screen.findByRole('option', { name: saved.name });
+    expect(screen.getByText('useIntro')).toBeInTheDocument(); expect(screen.getByLabelText('library')).toHaveValue('');
+    expect(api.load).not.toHaveBeenCalled();
+    expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ source: null, dirty: false,
+        inputs: { clientId: '', caseId: '', clientRecord: null, caseRecord: null, manualValues: {}, roleClientIds: {}, roleRecords: {} } }));
+    fireEvent.change(screen.getByLabelText('library'), { target: { value: saved.id } });
+    await waitFor(() => expect(screen.getByLabelText('clientId')).toBeInTheDocument());
+    expect(screen.getByLabelText('clientId')).toHaveValue(''); expect(screen.getByLabelText('caseId')).toHaveValue('');
+    expect(screen.getByText('preview')).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('fieldLabel fields.identityNumber'), { target: { value: '000031' } });
+    expect(screen.getByText('preview')).toBeEnabled();
+    expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: false, inputs: expect.objectContaining({
+        clientId: '', caseId: '', clientRecord: null, caseRecord: null, manualValues: { 'client.identityNumber': '000031' } }) }));
+    fireEvent.click(screen.getByText('manageTemplates')); await screen.findByTestId('original-pdf');
+    expect(api.authoringRender).toHaveBeenCalledWith(saved.id, { expectedVersion: saved.version, sourceHash: saved.sourceHash });
+    expect(api.create).not.toHaveBeenCalled(); expect(api.save).not.toHaveBeenCalled(); expect(api.preview).not.toHaveBeenCalled(); expect(onContinue).not.toHaveBeenCalled();
+});
+
 test('explicit manage mode imports DOCX, safely maps a blank and saves version without client data', async () => {
     render(<WordTemplatesWorkspace onBack={jest.fn()} />); fireEvent.click(screen.getByText('manageTemplates'));
     fireEvent.change(screen.getByLabelText('upload'), { target: { files: [new File(['x'], 'bad.pdf')] } });
