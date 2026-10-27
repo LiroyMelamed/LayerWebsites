@@ -1,0 +1,56 @@
+{
+  "decision": "APPROVE",
+  "scope": "MOBILE_NATIVE_TEMPLATE_APP_SOURCE_ONLY",
+  "reviewedAt": "2026-10-27T04:56:47.944343+00:00",
+  "baselineHead": "e1fcb822d6d17f7c8f07e35ab13beeaad876e92d",
+  "worktree": "/Users/liroymelamed/Projects/LayerWebsites/.worktrees/word-ux-qa-20261026",
+  "reviewedSourceHashes": {
+    "frontend/src/screens/signingScreen/templates/TemplateBuilder.js": "2e7c339518cdf012ab1d2f8d7daf088ae8ceef0cd865d6b358e6332fbd8a33ab",
+    "frontend/src/screens/signingScreen/templates/templates.scss": "7961e93ea83224d0675969de87459358f20d5347f23b942c2c27742585fbdf22",
+    "frontend/src/screens/signingScreen/templates/NativeTemplateBuilder.test.js": "b78e2dacf2d4da3def278a2799af2e11421521d2455c8d9365259145b691bbf4",
+    "frontend/src/components/specializedComponents/signFiles/signatureSpots/SignatureSpot.test.js": "64fe6162739811a28daa35753c8871f1a46a4aa86e19cd4b4e9bb00b96c7e3f3",
+    "frontend/src/i18n/locales/he.json": "f30443c48054d6206f8b9d506f1e473a4d20dfc7c917693c5e6174521a2c2b11",
+    "frontend/src/i18n/locales/ar.json": "e24a02fb0da344ebe46de512db247a07a6348ea15e55a51aeb63a4829f82d6e5",
+    "frontend/src/i18n/locales/en.json": "5eb21e0b6b15f5e47737c005ab7f2a7dd2343464d5f6d7c622afb78447d1c4d4"
+  },
+  "unchangedRuntimeHashes": {
+    "frontend/src/components/specializedComponents/signFiles/signatureSpots/SignatureSpot.js": "74a75dfd85b12a034ea534b4e17c8eaa57c98366d3eb6226ef1e3d32dacfd13a",
+    "frontend/src/components/specializedComponents/signFiles/signatureSpots/SignatureSpotsLayer.js": "9dd0e0d33fc421c949325bf9069642c1a4f76d5e18a9b6410d97832cde94ea7e",
+    "frontend/src/components/specializedComponents/signFiles/pdfViewer/PdfViewer.js": "74b729cf3d7c23b67c77417a6a3d3a9863fd965037399339996d104ba651081c",
+    "frontend/src/components/specializedComponents/signFiles/signFiles.scss": "bb0f168b4e0420937133f76cb0faa54627965cb6d4a1137a37fc661c84042290",
+    "frontend/src/screens/signingScreen/templates/nativeTemplateAdapter.js": "5a7ee5fdcd1db96906109744edc4bf805a370fc9c7d115c47f89c7ccec06d038",
+    "frontend/src/utils/signingSpotGeometry.js": "a0b23d9c4dba659e83df13c344ea6f24e3caf076c18c0ae818b46a59cb5e34cf"
+  },
+  "findings": [],
+  "evidence": {
+    "workerScopedRegression": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-ux-fix-20261026/frontend-regression-20261027T045342Z.json",
+      "sha256": "31d01d90eb2b73779f9c29bd1c99775c85dd24a21d777a2af5a46e7da4d30524",
+      "reportedResult": "PASS_SCOPED",
+      "reportedSuites": 5,
+      "reportedTests": 56,
+      "reportedSourceStable": true,
+      "logSha256": "50aacf175983a399545ef6376b19b40bef23858b6afb1a76f745bbfdea7bc461"
+    },
+    "workerMechanicalDetector": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-mobile-polish-20261027/IMPECCABLE-DETECTOR01.json",
+      "sha256": "18ac0147a09ff67b70d6097c9331d4dea8de1e4bb697633cf0c58b598ec37d6f",
+      "reportedExitCode": 0,
+      "reportedSourceStable": true
+    },
+    "bothRequiredLedgerEntriesRead": true
+  },
+  "checks": [
+    "Exactly six tracked frontend modifications plus the one new direct SignatureSpot test were reviewed. Locale changes add only the same14 builder keys in he/ar/en and preserve prior values.",
+    "Native-only compact field chrome and zero CSS minimum preserve the measured canonical field rectangle; other signing/legacy surfaces retain existing selectors. Sticky outside-PDF field choice/edit/move controls and inspector size buttons use44px targets.",
+    "Field choice preserves complete type/person occurrence/custom label/page/required labels. Chooser and actual overlay callbacks share original document.fields indices despite page filtering/sorting; selection does not change the insertion role/occurrence. Inspector role/slot changes remain explicit.",
+    "Nudge handlers use existing clampSpotToPage in canonical800-wide spot coordinates and reread the selected current document/page measurement. Resize handlers preserve x/y and the untouched dimension, bound only the changed dimension by the existing size limits and actual remaining page extent, and prevent small-checkbox shrink actions from enlarging it.",
+    "Movement and size controls require a real positive canvas measurement. Document/page/currentPDF-keyed effect observes asynchronous canvas/page size and measured-width changes, cleans observers/listener, binds cached measurement to document/page identity, and actions fail closed if measurement is unavailable.",
+    "Native saving/busy guards remain, common updateField retains metadata, and actual SignatureSpot/Layer/PdfViewer/signFiles stylesheet/native adapter/geometry runtime files equal baselineHEAD. Pointer, save/reopen, locale, checkbox-edge, legacy/select and PDF geometry fixture source and reported56-case log were read; no new backend guard or role semantics were introduced."
+  ],
+  "limits": [
+    "Frozen working-source correctness approval only; no tests, application/operator execution, browser, physical touch, server, deployment, Git ref mutation, manifest refresh or product source edit was performed by this reviewer.",
+    "Worker regression and mechanical detector evidence is local and source-bound. It does not establish rendered mobile browser behavior, physical gesture acceptance or deployment success.",
+    "Root-owned103-manifest refresh, main-first publication, exactQA807 preservation, newbuild, fresh augmented backend/static observation and concrete sealed packet review remain separate release requirements."
+  ]
+}

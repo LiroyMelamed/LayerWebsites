@@ -1,0 +1,287 @@
+{
+  "schemaVersion": 1,
+  "kind": "BYTE_EXACT_MOBILE_STATIC07_PREPARATION_ARCHIVE_NOT_PRODUCT_RELEASE",
+  "preparedAtUtc": "2026-10-27T05:11:11.098991+00:00",
+  "activePreparedDirectory": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-mobile-polish-20261027",
+  "files": {
+    "run-qa-static07.py": "a8826b5592b68550ced150579132dbaa5eda92ca78623931b49e4f5bb91065e8",
+    "qa_static07_test.py": "18375395f9d8aee92fbb83b09b455cab99652a2c13540de2a3162f2e1eaf5c01"
+  },
+  "sourceDistinction": {
+    "productMainCommit": "e00699b08eb957a33ba79e2feb90d8628e2d90f4",
+    "frontendQaCandidate": "0990866b749e44f3f64f6a8bbe85fbe006747e67",
+    "priorFrontendQaCandidate": "47e5ff40cc9e3ee42156e8895ef54ead9c69f424",
+    "verifiedBackendCommit": "fb0d6c22640f8b01911a9c6491ec856c4f5ab71a",
+    "backendPidAnchor": 1642213,
+    "backendRestartAnchor": 10,
+    "meaning": "Frontend-only candidate099/mainE006 changes nine approved frontend paths and two scoped release-manifest hashes. Backend807 bytes, Git HEADfb and runtime are separately anchored; this archive advances neither source refs nor runtime."
+  },
+  "qualifications": {
+    "static07Fixtures": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-mobile-polish-20261027/static07-local-fixtures-20261027T045010841101Z.json",
+      "sha256": "0707c6eb1de692b66b46bae668099ba1a06a63b317b38cefebf6645d63970841",
+      "result": "PASS_LOCAL_FIXTURES",
+      "methods": 7,
+      "scope": "Synthetic local Git/source/health/state mocks under deny-network; not product/live QA qualification."
+    },
+    "independentPreparedSourceReview": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-mobile-polish-20261027/QA-STATIC07-INDEPENDENT-REVIEW01.json",
+      "sha256": "d70f30a653c28f8dbc066b2b86b8fb3e36e0303b9da51e100a343084f055aff5"
+    },
+    "rootPreparedSourceReview": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-mobile-polish-20261027/QA-STATIC07-ROOT-REVIEW01.json",
+      "sha256": "7709185d85a5f440a3f87c3d38fd826d62347a7734df8562e599056eb8dd16a3"
+    },
+    "qaSourceFreeze": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-mobile-polish-20261027/QA-SOURCE-FREEZE10.json",
+      "sha256": "7b194bdf62655cb1c414fddaebbb79b6d4df02e231d45c648e9ba6b3cbf790d0"
+    },
+    "sourceQualification": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-mobile-polish-20261027/SOURCE-QUALIFICATION10.json",
+      "sha256": "0080764ca64d320035130bc79d1f6ec30316c4eb90fbf563275182390d801d2c"
+    },
+    "rootConcretePacketPlan": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-mobile-polish-20261027/QA-STATIC07-ROOT-PACKET-REVIEW13.json",
+      "sha256": "5f7bbdd57e1800e482b0858127a69fd7657e98f2daa14726195856ebb5a4100a"
+    }
+  },
+  "preparedPublication": {
+    "contract": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-mobile-polish-20261027/qa-static-forward-contract13.json",
+      "sha256": "0a3f6cbad2fec95bb05aefd3d56b74181cc37b3b5e0bf4983fc83f4312cdc7cb"
+    },
+    "status": "ROOT_STATIC13_EXECUTION_AND_BROWSER_VERIFICATION_NOT_CLAIMED_BY_ARCHIVE",
+    "buildReceipt": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/build/melamedia-word-mobile-qa01/build.json",
+      "sha256": "3f8cae6bf4080fba1891f3786b84247ad7e490ce1c2864683706b678d46a1ebb"
+    },
+    "mainFirstPublication": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-mobile-polish-20261027/MAIN-THEN-QA-PUBLICATION09.json",
+      "sha256": "844dbb948e47a4781b3f99ef45ac0d0b5ca2aaedd440a8a69650c61223c6a86d"
+    },
+    "protectedPublicFileCount": 2165,
+    "publicationArtifactCount": 209,
+    "actualBackendVerification": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-code-fix-verify-20261027T032524569993Z-617af7cc.json",
+      "sha256": "9f9bc215f56f0e573cecea9352bb43991d30c31e1527c97bab245790ce86a0fa"
+    },
+    "freshAugmentedBackendObservation": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-observe03-20261027T050405218711Z-f1e63355.json",
+      "sha256": "7b694588ade7bda53456692f34a707a38a0c1c7dd74b3d5eb69c01ed281ea7af"
+    },
+    "freshStaticPreimage": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-ux-fix-20261026/qa-static/observe-20261027T050405220585Z.json",
+      "sha256": "81d2b6ed4f440735a1a25b69d66b1c795400c0b92698c4625386b474f82d15e4"
+    }
+  },
+  "qaProtectedManifest": {
+    "semantics": "Validate currentQA candidate Git objects locally against the fixed release checker and baselineFBmanifest. Preserve exactly103 paths and required ancestor; allow only TemplateBuilder.js and templates.scss hash refreshes tied to the approved frontend delta. This is separate from root product regression/sourcegate evidence.",
+    "binding": {
+      "manifestSha256": "603dc6bd42b46be045327d2418be27f0e430fec559c91726af2b935959427c51",
+      "guardScriptSha256": "d237e0cff7dd67bac0214044649c592376e945e1333086dd3217b893ae2b2436",
+      "protectedFileCount": 103,
+      "changedProtectedFiles": {
+        "frontend/src/screens/signingScreen/templates/TemplateBuilder.js": {
+          "before": "fe4cf3c7acd16478ee4521f21583248ea78bd7e18d42632cb7207d789e695e8d",
+          "after": "2e7c339518cdf012ab1d2f8d7daf088ae8ceef0cd865d6b358e6332fbd8a33ab"
+        },
+        "frontend/src/screens/signingScreen/templates/templates.scss": {
+          "before": "71a43d2b8e6fb15cd0fae3bd74c2e67898b03ec2eb26183aa59f483eee357b99",
+          "after": "7961e93ea83224d0675969de87459358f20d5347f23b942c2c27742585fbdf22"
+        }
+      }
+    },
+    "includedInReleaseIdentity": true,
+    "guardScriptPath": "scripts/check-signing-release.cjs",
+    "baselineManifestPath": "docs/signing-v2/release-baseline.json",
+    "baselineFbManifestSha256": "cbb1fc75feb9429c78b4d5774be730a9832bf8be1ea99285b61ff5b1d74c31ac"
+  },
+  "frontendDelta": {
+    "exactPathCount": 9,
+    "paths": [
+      "frontend/src/components/specializedComponents/signFiles/signatureSpots/SignatureSpot.test.js",
+      "frontend/src/i18n/locales/ar.json",
+      "frontend/src/i18n/locales/en.json",
+      "frontend/src/i18n/locales/he.json",
+      "frontend/src/screens/signingScreen/templates/NativeTemplateBuilder.test.js",
+      "frontend/src/screens/signingScreen/templates/TemplateBuilder.js",
+      "frontend/src/screens/signingScreen/templates/templates.scss",
+      "frontend/src/screens/signingScreen/word/WordTemplatesWorkspace.js",
+      "frontend/src/screens/signingScreen/word/WordTemplatesWorkspace.test.js"
+    ],
+    "soleAddition": {
+      "path": "frontend/src/components/specializedComponents/signFiles/signatureSpots/SignatureSpot.test.js",
+      "before": null,
+      "kind": "test_only_regular_blob"
+    },
+    "allOtherEightPathsRequireFbPreimages": true,
+    "backendFileCount": 807,
+    "backendMapSha256": "bfe0624242ff3ef089b7e0cbb570bf85ffa59b3da85bf859d22504249684fd53"
+  },
+  "dependencies": [
+    {
+      "versionedPath": "ops/word-visual-qa-20261026/qa-backend-observe02.py",
+      "sha256": "adced0030fbfc646182d3d44db25b2195f215b3f6c19b11aef3707420e96f2b7",
+      "restorePath": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-observe02.py",
+      "alreadyVersionedAtMain": "e00699b08eb957a33ba79e2feb90d8628e2d90f4"
+    },
+    {
+      "versionedPath": "ops/word-visual-qa-20261026/qa-backend-release02.py",
+      "sha256": "bf4369a26ec6284419bbc848ed4d3b9fb37a200e28d2638256322657e2f93dc3",
+      "restorePath": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-release02.py",
+      "alreadyVersionedAtMain": "e00699b08eb957a33ba79e2feb90d8628e2d90f4"
+    },
+    {
+      "versionedPath": "ops/word-visual-qa-20261026/frontend-continuity06/qa-backend-observe03.py",
+      "sha256": "6856888d7820f2f2026f51833dc5021379db63932ff53af8f9fc4b47d965f491",
+      "restorePath": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-observe03.py",
+      "alreadyVersionedAtMain": "e00699b08eb957a33ba79e2feb90d8628e2d90f4"
+    },
+    {
+      "versionedPath": "ops/word-visual-qa-20261026/frontend-continuity06/qa_backend_observe03_test.py",
+      "sha256": "f66deb9d9b35d862f54c5d5f032ffba31e9e48f77dd16c62fd125511a94fbc49",
+      "restorePath": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa_backend_observe03_test.py",
+      "alreadyVersionedAtMain": "e00699b08eb957a33ba79e2feb90d8628e2d90f4"
+    },
+    {
+      "versionedPath": "ops/word-visual-qa-20261026/frontend-continuity06/run-qa-static06.py",
+      "sha256": "32e640d1b2d1c73d7e1b5cdbfaef0a63dc7f4ac768ff2371daac8a0331c86a53",
+      "restorePath": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/run-qa-static06.py",
+      "alreadyVersionedAtMain": "e00699b08eb957a33ba79e2feb90d8628e2d90f4"
+    },
+    {
+      "versionedPath": "ops/word-visual-qa-20261026/frontend-continuity06/qa_static06_test.py",
+      "sha256": "34c365bd8a2ec72429581ed937e89657d6deae74c0ae995db77212df853fb492",
+      "restorePath": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa_static06_test.py",
+      "alreadyVersionedAtMain": "e00699b08eb957a33ba79e2feb90d8628e2d90f4"
+    },
+    {
+      "versionedPath": "ops/word-visual-qa-20261026/code-fix05/qa-backend-code-fix05.py",
+      "sha256": "4b13519dde9fe2c675224f0c0083b1399b2357b14e4d795ef9a375da6dbcfabc",
+      "restorePath": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-code-fix05.py",
+      "alreadyVersionedAtMain": "e00699b08eb957a33ba79e2feb90d8628e2d90f4"
+    },
+    {
+      "versionedPath": "ops/word-visual-qa-20261026/code-fix05/qa-backend-code-fix05.local.test.py",
+      "sha256": "c6594935c95be9bcc1788da258ff96fef9fd1eb22eb506d64db1f8204c50abf6",
+      "restorePath": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-code-fix05.local.test.py",
+      "alreadyVersionedAtMain": "e00699b08eb957a33ba79e2feb90d8628e2d90f4"
+    },
+    {
+      "versionedPath": "ops/word-visual-qa-20261026/code-fix05/run-qa-static05.py",
+      "sha256": "b96c5531b990d29d2e2f273604f0de7872c9a238c935d3ddaddc2ae2d6137a13",
+      "restorePath": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/run-qa-static05.py",
+      "alreadyVersionedAtMain": "e00699b08eb957a33ba79e2feb90d8628e2d90f4"
+    },
+    {
+      "versionedPath": "ops/word-visual-qa-20261026/code-fix05/qa_static05_test.py",
+      "sha256": "b168c7bbdb8bf0056c862b770b875d2070a5c35357c3912ff113aa0041938b4c",
+      "restorePath": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa_static05_test.py",
+      "alreadyVersionedAtMain": "e00699b08eb957a33ba79e2feb90d8628e2d90f4"
+    },
+    {
+      "versionedPath": "ops/word-visual-qa-20261026/source-advance04/qa-source-advance04.py",
+      "sha256": "8f53890e49b8481e0621d45e5b587810621c21eb5b47db38cb416f386fb0addc",
+      "restorePath": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-source-advance04.py",
+      "alreadyVersionedAtMain": "e00699b08eb957a33ba79e2feb90d8628e2d90f4"
+    },
+    {
+      "versionedPath": "ops/word-visual-qa-20261026/source-advance04/qa-source-advance04.local.test.py",
+      "sha256": "1484eeb06fc8f29b016e8081074193f87bd86429330feed4cd5352344a4685e1",
+      "restorePath": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-source-advance04.local.test.py",
+      "alreadyVersionedAtMain": "e00699b08eb957a33ba79e2feb90d8628e2d90f4"
+    },
+    {
+      "versionedPath": "ops/word-visual-qa-20261026/source-advance04/run-qa-static04.py",
+      "sha256": "14172e82773b736a0e187ef03825789e5361734fbed422c9946fab675dc51316",
+      "restorePath": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/run-qa-static04.py",
+      "alreadyVersionedAtMain": "e00699b08eb957a33ba79e2feb90d8628e2d90f4"
+    },
+    {
+      "versionedPath": "ops/word-visual-qa-20261026/source-advance04/qa_static04_test.py",
+      "sha256": "203ffb7fcb8183807fa4150393de2bf1e2e0e246e99b802a1ab6c3fc77f41d4e",
+      "restorePath": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa_static04_test.py",
+      "alreadyVersionedAtMain": "e00699b08eb957a33ba79e2feb90d8628e2d90f4"
+    },
+    {
+      "versionedPath": "ops/word-visual-qa-20261026/recovery03/qa-backend-recovery03.py",
+      "sha256": "f794387a462ab0ec573624d57f05130413ff92af288914a96fab256e50b4364d",
+      "restorePath": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-recovery03.py",
+      "alreadyVersionedAtMain": "e00699b08eb957a33ba79e2feb90d8628e2d90f4"
+    },
+    {
+      "versionedPath": "ops/word-visual-qa-20261026/recovery03/qa-backend-recovery03.local.test.py",
+      "sha256": "2acb5f9aab0f198164af41be5209cf8f8e27c242567b6a9d22700c60fd7c21f3",
+      "restorePath": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-recovery03.local.test.py",
+      "alreadyVersionedAtMain": "e00699b08eb957a33ba79e2feb90d8628e2d90f4"
+    },
+    {
+      "versionedPath": "ops/word-visual-qa-20261026/recovery03/run-qa-static03.py",
+      "sha256": "202ac8420b87d7d8c67c3d10989aeda5bba39c39362c0f6b129da2c60a4f0842",
+      "restorePath": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/run-qa-static03.py",
+      "alreadyVersionedAtMain": "e00699b08eb957a33ba79e2feb90d8628e2d90f4"
+    },
+    {
+      "versionedPath": "ops/word-visual-qa-20261026/recovery03/qa_static03_test.py",
+      "sha256": "39c40262c6f39f28395cb73badc402bb746c640f8217738a1543cf55feaf30f5",
+      "restorePath": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa_static03_test.py",
+      "alreadyVersionedAtMain": "e00699b08eb957a33ba79e2feb90d8628e2d90f4"
+    },
+    {
+      "versionedPath": "ops/word-ux-qa-20261026/qa-static01.py",
+      "sha256": "2a0d147f10579bdb755f81a989414609ead7332444ebd8e30bb9840f714523d8",
+      "restorePath": "/Users/liroymelamed/Projects/LayerWebsites/.worktrees/word-ux-melamedia-qa-20261026/ops/word-ux-qa-20261026/qa-static01.py",
+      "alreadyVersionedAtMain": "e00699b08eb957a33ba79e2feb90d8628e2d90f4"
+    },
+    {
+      "versionedPath": "ops/word-ux-qa-20261026/qa_static01_test.py",
+      "sha256": "5d61bfaeedb7ad65b212025c8849697089a3d48addcfd47c8448fe990ae3cbd3",
+      "restorePath": "/Users/liroymelamed/Projects/LayerWebsites/.worktrees/word-ux-melamedia-qa-20261026/ops/word-ux-qa-20261026/qa_static01_test.py",
+      "alreadyVersionedAtMain": "e00699b08eb957a33ba79e2feb90d8628e2d90f4"
+    }
+  ],
+  "restoreNotes": [
+    "These exact files preserve reviewed tooling source, not replay authority. Keep old archives and all current private recovery artifacts intact.",
+    "Restore the two07 files to the original activePreparedDirectory before any future requalification; never patch paths or pins merely to run an archived copy.",
+    "Restore03/06/05/04/recovery03 scripts and fixture helpers from their versioned subfolders to their recorded flatO restorePath layout. Observer03 selects only pinned observer02 plus release02 read-only augmentation helpers.",
+    "The static07 production helper is the exact2a0 qa-static01.py at the fixed Q worktree path, separately versioned in ops/word-ux-qa-20261026. Original fixture helper qa_static01_test.py also resolves there.",
+    "Bound receipts, contracts, safe state observations, private server checkpoints and transport logs are not copied into this archive. Preserve them separately; the source files alone cannot reconstruct or authorize a runtime action.",
+    "Future publication needs current authorization, nonblocking maintenance/per-QA coordination, exact main-first QA refs/build/807 backend identity/full fresh augmented03 observation/current static preimage/new sealed contract plus root and independent reviews. Do not replay completed contracts or infer fresh approval from seven local fixtures.",
+    "BackendFB is retained by design; no source FF, migration, environment/dependency change or PM2 restart is part of this frontend publication mode. Static rollback retains known old entrypoints/chunks and historical provenance without requiring current remote-tracking heads unchanged.",
+    "This preparation deliberately leaves WmainE006 andQ099 fixed. Root alone may commit/push these untracked archive files after static13 is complete."
+  ],
+  "archiveOperation": {
+    "byteExactCopies": true,
+    "testsRun": false,
+    "remoteActions": false,
+    "gitCommitOrPush": false,
+    "refsChanged": false,
+    "productFilesChanged": false,
+    "preparedAsUntrackedDirectory": "ops/word-visual-qa-20261026/mobile-field07"
+  },
+  "excluded": [
+    "Raw process/state observations",
+    "Environment values, credentials and keys",
+    "Customer or application records",
+    "Transport logs",
+    "Database dumps/private server checkpoints",
+    "Compiled artifacts and caches"
+  ],
+  "limitations": "Prepared source archive and copy/hash readback only; no new fixture, product, live runtime, browser, deployment or recovery execution claim.",
+  "completedExecution": {
+    "frontendVerify": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-ux-fix-20261026/qa-static/verify-20261027T051238551860Z.json",
+      "sha256": "1ac4d5fd6cbc527276dcacb9969493b2ea7b6b6e2d4da479d451b7c3f4db96b5"
+    },
+    "backendReadOnly": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-observe03-20261027T050405218711Z-f1e63355.json",
+      "sha256": "7b694588ade7bda53456692f34a707a38a0c1c7dd74b3d5eb69c01ed281ea7af"
+    },
+    "browser": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-mobile-polish-20261027/ACTUAL-MOBILE-QA11.json",
+      "sha256": "c681d27f47367b52e20bf198e59324b3e3c31067ec9b5ce33fa8dcea740f3977"
+    },
+    "allOwnLeasesReleasedAt": "2026-10-27T05:13:09.417994+00:00",
+    "replayAuthorized": false
+  }
+}
