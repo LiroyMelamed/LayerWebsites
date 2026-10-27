@@ -93,11 +93,30 @@ export function tagVerifiedTextLayer(host, page) {
 
 const safeBoundary = (text, offset) => Number.isInteger(offset) && offset >= 0 && offset <= text.length &&
     !(offset > 0 && offset < text.length && /[\uD800-\uDBFF]/u.test(text[offset - 1]) && /[\uDC00-\uDFFF]/u.test(text[offset]));
+function mappedCaretAffinity(item, offset, affinity) {
+    if (!item?.text || !item.segments.length || item.readOnlyReason) fail();
+    const adjacent = side => item.segments.filter(segment => side === 'before'
+        ? segment.itemStart < offset && offset <= segment.itemEnd
+        : segment.itemStart <= offset && offset < segment.itemEnd);
+    const requested = adjacent(affinity);
+    if (requested.length === 1) return affinity;
+    if (requested.length) fail();
+    const inside = affinity === 'before' ? 'after' : 'before';
+    const available = adjacent(inside);
+    const edge = item.segments.reduce((current, segment) => affinity === 'before'
+        ? Math.min(current, segment.itemStart) : Math.max(current, segment.itemEnd), affinity === 'before' ? Infinity : -Infinity);
+    // Only the outside of a uniquely mapped text extent has an implicit inside.
+    // Gaps and ambiguous/atomic mappings must still reach no guessed anchor.
+    if (offset !== edge || available.length !== 1 ||
+        available[0].itemEnd - available[0].itemStart !== available[0].sourceEnd - available[0].sourceStart) fail();
+    return inside;
+}
 export function selectorForTextItem(authoring, itemId, start, end, kind = 'range', affinity = 'after') {
     const item = authoring.pages.flatMap(page => page.items).find(item => item.id === itemId);
     if (!item || !item.segments.length || item.readOnlyReason || !safeBoundary(item.text, start) || !safeBoundary(item.text, end) ||
         end < start || !['range', 'insert'].includes(kind) || !['before', 'after'].includes(affinity)) fail();
-    if (kind === 'insert') return { kind, start: { itemId, offset: affinity === 'before' ? start : end }, affinity };
+    if (kind === 'insert') return { kind, start: { itemId, offset: affinity === 'before' ? start : end },
+        affinity: start === end ? mappedCaretAffinity(item, start, affinity) : affinity === 'before' ? 'after' : 'before' };
     if (start === end) fail();
     return { kind, start: { itemId, offset: start }, end: { itemId, offset: end } };
 }
@@ -110,7 +129,7 @@ function endpoint(container, node, offset) {
 }
 
 export function selectorFromDom(container, selection, authoring, kind = 'range', affinity = 'after') {
-    if (!selection || selection.rangeCount !== 1 || !['range', 'insert'].includes(kind)) fail();
+    if (!selection || selection.rangeCount !== 1 || !['range', 'insert'].includes(kind) || !['before', 'after'].includes(affinity)) fail();
     const range = selection.getRangeAt(0);
     if (kind === 'range' && range.collapsed) fail();
     const start = endpoint(container, range.startContainer, range.startOffset);
@@ -122,7 +141,13 @@ export function selectorFromDom(container, selection, authoring, kind = 'range',
     }
     const point = value => ({ itemId: value.itemId, offset: value.offset });
     // Browser Range is document ordered even when the user drags backwards in RTL.
-    if (kind === 'insert') return { kind, start: point(affinity === 'before' ? start : end), affinity };
+    // UI before/after selects the edge of a range. Canonical affinity selects
+    // the adjacent Word run, which is inside that selected range at either edge.
+    // A collapsed caret preserves canonical affinity except at an unambiguous
+    // outer mapped edge, where only the adjacent inside Word run is available.
+    if (kind === 'insert') return { kind, start: point(affinity === 'before' ? start : end),
+        affinity: range.collapsed ? mappedCaretAffinity(items.find(item => item.id === start.itemId), start.offset, affinity)
+            : affinity === 'before' ? 'after' : 'before' };
     const from = items.findIndex(item => item.id === start.itemId); const to = items.findIndex(item => item.id === end.itemId);
     if (from < 0 || to < from || items.slice(from, to + 1).some(item => item.text && (!item.segments.length || item.readOnlyReason))) fail();
     return { kind, start: point(start), end: point(end) };

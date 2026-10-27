@@ -1,4 +1,4 @@
-import { itemTuple, selectorForAnchor, selectorFromDom, sha256Bytes, tagVerifiedTextLayer, validateAuthoring, verifyPageItems, verifyPdfBlob } from './wordAuthoringSelection';
+import { itemTuple, selectorForAnchor, selectorForTextItem, selectorFromDom, sha256Bytes, tagVerifiedTextLayer, validateAuthoring, verifyPageItems, verifyPdfBlob } from './wordAuthoringSelection';
 
 const { TextEncoder } = require('util');
 const hash = value => require('crypto').createHash('sha256').update(value).digest('hex');
@@ -72,9 +72,37 @@ test('backward RTL selection and wrapped spans use normalized Range endpoints in
 
 test('insertion selects an explicit text boundary and affinity, never a PDF coordinate', () => {
     const data = model(); const { host, spans } = dom(data);
-    expect(selectorFromDom(host, selection(spans[0], 2, spans[1], 8), data, 'insert', 'after')).toEqual({ kind: 'insert', start: { itemId: 'p1-i1', offset: 8 }, affinity: 'after' });
+    expect(selectorFromDom(host, selection(spans[0], 2, spans[1], 8), data, 'insert', 'after')).toEqual({ kind: 'insert', start: { itemId: 'p1-i1', offset: 8 }, affinity: 'before' });
     expect(selectorFromDom(host, selection(spans[0], 2), data, 'insert', 'before')).toEqual({ kind: 'insert', start: { itemId: 'p1-i0', offset: 2 }, affinity: 'before' });
     expect(() => selectorFromDom(host, selection(spans[0], 2), data)).toThrow();
+});
+
+test.each(['before', 'after'])('an interior caret preserves its explicitly requested %s affinity in DOM and fallback', affinity => {
+    const data = model(); const { host, spans } = dom(data);
+    const expected = { kind: 'insert', start: { itemId: 'p1-i0', offset: 4 }, affinity };
+    expect(selectorFromDom(host, selection(spans[0], 4), data, 'insert', affinity)).toEqual(expected);
+    expect(selectorForTextItem(data, 'p1-i0', 4, 4, 'insert', affinity)).toEqual(expected);
+});
+
+test('collapsed caret normalization never guesses across unmapped gaps, ambiguous/atomic mappings or readonly text', () => {
+    const check = (data, offset, affinity) => {
+        const { host, spans } = dom(data);
+        expect(() => selectorFromDom(host, selection(spans[0], offset), data, 'insert', affinity)).toThrow();
+        expect(() => selectorForTextItem(data, 'p1-i0', offset, offset, 'insert', affinity)).toThrow();
+    };
+    const gap = model(); const segment = gap.pages[0].items[0].segments[0];
+    gap.pages[0].items[0].segments = [{ ...segment, itemEnd: 3, sourceEnd: 3 }, { ...segment, itemStart: 7, sourceStart: 7 }];
+    check(gap, 3, 'after'); check(gap, 7, 'before'); check(gap, 5, 'after');
+    const ambiguous = model(); ambiguous.pages[0].items[0].segments.push({ ...ambiguous.pages[0].items[0].segments[0] });
+    check(ambiguous, 10, 'after'); check(ambiguous, 4, 'before');
+    const atomic = model(); atomic.pages[0].items[0].segments[0].sourceEnd = 11;
+    check(atomic, 10, 'after');
+    const readonly = model(); readonly.pages[0].items[0].readOnlyReason = 'unsupported'; check(readonly, 10, 'after');
+    const unmapped = model(); unmapped.pages[0].items[0].segments = []; check(unmapped, 10, 'after');
+    const empty = model(); empty.pages[0].items[0].text = ''; empty.pages[0].items[0].segments = [];
+    expect(() => selectorForTextItem(empty, 'p1-i0', 0, 0, 'insert', 'after')).toThrow();
+    const astral = model(); astral.pages[0].items[0].text = 'א😀ב'; astral.pages[0].items[0].segments[0].itemEnd = 4;
+    check(astral, 2, 'after');
 });
 
 test('unknown, changed, unverified, readonly and surrogate-splitting selections fail closed', () => {
@@ -117,4 +145,44 @@ test('supported paragraph-edge insertion affinities survive canonical save/reope
     expect(selectorForAnchor(data, { ...anchor, affinity: 'before', start: 20, end: 20 })).toEqual({ kind: 'insert', start: { itemId: 'p1-i1', offset: 10 }, affinity: 'before' });
     expect(() => selectorForAnchor(data, { ...anchor, affinity: 'before', start: 0, end: 0 })).toThrow();
     expect(() => selectorForAnchor(data, { ...anchor, affinity: 'after', start: 20, end: 20 })).toThrow();
+});
+
+test.each([
+    ['before', 'range at start', 0, 4, 0, 'after'],
+    ['after', 'range at end', 60, 64, 64, 'before'],
+    ['before', 'collapsed caret at start', 0, 0, 0, 'after'],
+    ['after', 'collapsed caret at end', 64, 64, 64, 'before'],
+])('UI %s a real %s survives actual backend resolution, DOCX fill and canonical reopen', (side, _description, from, to, offset, affinity) => {
+    // Real production backend modules are read-only imports. No PDF worker,
+    // converter, DB, storage, provider or application server is started.
+    const core = require('../../../../../backend/lib/wordTemplates');
+    const visual = require('../../../../../backend/lib/wordTemplates/visual');
+    const { writeZip, readZip } = require('../../../../../backend/lib/wordTemplates/zip');
+    const text = `HEAD${'x'.repeat(56)}FORM`;
+    const contents = {
+        '[Content_Types].xml': '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>',
+        '_rels/.rels': '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="r1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
+        'word/document.xml': `<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:rPr><w:b/></w:rPr><w:t>${text}</w:t></w:r></w:p></w:body></w:document>`,
+    };
+    const docx = writeZip(new Map(Object.entries(contents).map(([name, value]) => [name, { name, data: Buffer.from(value), changed: true }])));
+    const imported = core.importDocx(docx);
+    const page = model().pages[0];
+    const data = visual.buildAuthoringMap(imported, [{ ...page, items: [{ ...page.items[0], id: 'p1_i0', text, width: 384 }] }]);
+    const { host, spans } = dom(data);
+    const selector = selectorFromDom(host, selection(spans[0], from, spans[0], to), data, 'insert', side);
+    const fallback = selectorForTextItem(data, 'p1_i0', from, to, 'insert', side);
+    expect(selector).toEqual({ kind: 'insert', start: { itemId: 'p1_i0', offset }, affinity });
+    expect(fallback).toEqual(selector);
+    const resolved = visual.resolveSelection(data, selector);
+    expect(resolved).toMatchObject({ kind: 'insert', selectedText: '', anchor: { kind: 'insert', start: offset, end: offset, affinity } });
+    const savedBinding = JSON.parse(JSON.stringify({ ...resolved.anchor, id: 'edge', field: 'client.firstName' }));
+    const reopenedSelector = selectorForAnchor(data, savedBinding);
+    expect(reopenedSelector).toEqual(selector);
+    expect(visual.resolveSelection(data, reopenedSelector).anchor).toEqual(resolved.anchor);
+    const filled = core.materializeDocx(docx, { sourceHash: imported.sourceHash, bindings: [savedBinding], values: { 'client.firstName': 'SYNTHETIC_EDGE' } });
+    expect(core.importDocx(filled.buffer).parts[0].paragraphs[0].text).toBe(side === 'before' ? `SYNTHETIC_EDGE${text}` : `${text}SYNTHETIC_EDGE`);
+    expect(readZip(filled.buffer).get('word/document.xml').data.toString()).toContain('<w:b/>');
+    expect(() => selectorForTextItem(data, 'p1_i0', offset, offset, 'range')).toThrow();
+    expect(selectorForTextItem(data, 'p1_i0', offset, offset, 'insert', affinity)).toEqual(selector);
+    expect(() => visual.resolveSelection(data, { ...selector, affinity: side })).toThrow();
 });
