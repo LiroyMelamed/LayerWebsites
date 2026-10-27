@@ -105,6 +105,24 @@
 .lw-templates__roleButton { max-width: 100%; border-inline-start: .35rem solid var(--spot-signature-border, var(--template-accent)) !important; .lw-textButtonWithTwoOptionalIcons__inner { overflow-wrap: anywhere; } }
 .lw-templates__roleButton[aria-pressed="true"] { box-shadow: 0 0 0 .125rem var(--spot-signature-border, var(--template-accent)); }
 .lw-templates__editSelected { margin-block-start: .75rem; }
+.lw-templates__canvas--native .lw-templates__roleToolbar { inline-size: 100%; max-inline-size: 42rem; }
+.lw-templates__selectedFieldTools { display: grid; gap: .65rem; margin-block-start: .8rem; padding-block-start: .8rem; border-block-start: 1px solid #d9e0e9; }
+.lw-templates__selectedFieldActions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; > button { flex: 1 1 7rem; min-block-size: 2.75rem; block-size: auto !important; padding: .5rem .65rem !important; } }
+.lw-templates__fieldMove { display: flex; flex: 0 0 auto; gap: .25rem; }
+.lw-templates .lw-templates__fieldMoveButton { min-inline-size: 2.75rem; inline-size: 2.75rem; min-block-size: 2.75rem; block-size: 2.75rem !important; padding: .35rem !important; .lw-textButtonWithTwoOptionalIcons__inner { justify-content: center; } }
+.lw-templates__fieldMoveIcon { display: block; flex: 0 0 auto; &.is-right { transform: rotate(180deg); } &.is-up { transform: rotate(90deg); } &.is-down { transform: rotate(-90deg); } }
+.lw-templates__fieldSize { border-block-start: 1px solid #d9e0e9; padding-block-start: .5rem; }
+.lw-templates__fieldSizeButtons { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .5rem; margin-block: .75rem; > button { min-block-size: 2.75rem; block-size: auto !important; padding: .5rem .65rem !important; } }
+@media (max-width: 48rem) {
+  // Authoring controls have usable targets outside the PDF; the field itself
+  // keeps its measured canonical rectangle, including the smallest checkboxes.
+  .lw-templates__canvas--native {
+    .lw-signing-spot { min-width: 0 !important; min-height: 0 !important; }
+    .lw-signing-spotMeta, .lw-signing-spotRequired, .lw-signing-spotRemove, .lw-signing-spotResize { display: none !important; }
+    .lw-signing-spotLabel { overflow: hidden; }
+    .lw-signing-spotLabelText { font-size: .625rem; line-height: 1; }
+  }
+}
 .lw-templates__fieldDialog { padding: 0; fieldset { display: flex; flex-direction: column; gap: .8rem; } > button { margin-block-start: 1rem; } }
 .lw-templates__canvas .lw-floatingAddField {
   // The incumbent office sidebar remains on the right in every locale.

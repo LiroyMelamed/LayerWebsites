@@ -88,7 +88,7 @@
     "frontend/src/screens/signingScreen/templates/TaskIssueDialog.js": "92d60395a381db2a52ec132cd3361f258ec2d12e2ceb95235ce982522c3be088",
     "frontend/src/screens/signingScreen/templates/TaskIssues.scss": "101f833ea357a857b22792681be6abc1a144e2d5982a08d2919387f00473227f",
     "frontend/src/screens/signingScreen/templates/TemplateArchiveConfirmation.js": "cf2c56560a0fcc5a505e7e5ccca9360f278450666f3d91d03df11373afcae57b",
-    "frontend/src/screens/signingScreen/templates/TemplateBuilder.js": "fe4cf3c7acd16478ee4521f21583248ea78bd7e18d42632cb7207d789e695e8d",
+    "frontend/src/screens/signingScreen/templates/TemplateBuilder.js": "2e7c339518cdf012ab1d2f8d7daf088ae8ceef0cd865d6b358e6332fbd8a33ab",
     "frontend/src/screens/signingScreen/templates/TemplateDataKeys.js": "a72e61546e168580a04d5222a8be0681aecf3a4ecf1b491523a2628efd5b1ba9",
     "frontend/src/screens/signingScreen/templates/TemplateDataValueInput.js": "dca1ab5b68aa1ff254109a0ea112159baf55f1c35200e903e390f562403b90ca",
     "frontend/src/screens/signingScreen/templates/TemplateDocumentCondition.js": "02d89ec6a8dc46668c6b8751993da5baadec8f26adda0b0d9d8a56c8a7810e79",
@@ -103,7 +103,7 @@
     "frontend/src/screens/signingScreen/templates/signingPackages.scss": "7939ed098ac5a19a9cbb7b32fbe3bd3aee585d8fbe6d252af692a7a4a4fcd471",
     "frontend/src/screens/signingScreen/templates/signingSelect.scss": "3b8fc5ffb04426440a7a8e2b2bfb2b9e7571be5430aa6ff5ea7d0f0cbb275644",
     "frontend/src/screens/signingScreen/templates/templateConditions.js": "d8e765f65e62f5a6919aafae38470888cf515afc9ecfc91c234850c9939147bd",
-    "frontend/src/screens/signingScreen/templates/templates.scss": "71a43d2b8e6fb15cd0fae3bd74c2e67898b03ec2eb26183aa59f483eee357b99",
+    "frontend/src/screens/signingScreen/templates/templates.scss": "7961e93ea83224d0675969de87459358f20d5347f23b942c2c27742585fbdf22",
     "frontend/src/screens/signingScreen/templates/useSigningDraft.js": "9b0c88adbb2e13181efe4588b5fd33107728a3d58fe16252588ad42711b7a31f",
     "frontend/src/screens/signingScreen/templates/useSigningLocale.js": "dc6464889dab401ff9c3d10c5408dfef698e7f3f94c0fc9bd168775c5a31227e",
     "frontend/src/utils/signingSpotGeometry.js": "a0b23d9c4dba659e83df13c344ea6f24e3caf076c18c0ae818b46a59cb5e34cf"
