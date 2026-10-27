@@ -29,7 +29,7 @@ const uuid = () => window.crypto.randomUUID();
 const record = value => value && positiveId(String(value.id)) && typeof value.label === 'string'
     ? { id: Number(value.id), label: value.label } : null;
 const emptyInputs = (context = {}) => {
-    const clientRecord = record(context.clientRecord); const caseRecord = record(context.caseRecord);
+    const clientRecord = record(context?.clientRecord); const caseRecord = record(context?.caseRecord);
     return { clientId: clientRecord ? String(clientRecord.id) : '', caseId: caseRecord ? String(caseRecord.id) : '',
         roleClientIds: {}, manualValues: {}, clientRecord, caseRecord, roleRecords: {} };
 };
