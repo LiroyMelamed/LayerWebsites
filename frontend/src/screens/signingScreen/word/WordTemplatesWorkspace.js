@@ -160,9 +160,10 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
     }
     function leave(action) { if (lock.current) return; if (dirty) setLeaveAction(() => () => { discardTemplateChanges(); action?.(); }); else action?.(); }
     function switchMode(next) { leave(() => setMode(next)); }
-    function receive(next) {
+    function receive(next, { preserveDocumentInputs = false } = {}) {
+        const sameSource = preserveDocumentInputs && latestDraft.current.source?.id === next.id;
         clearPreview(); setSource(next); setName(next.name); setRoles(next.roles || []); setBindings(next.bindings || []);
-        setSelection(null); setInputs(previous => ({ ...emptyInputs(), clientId: previous.clientId, caseId: previous.caseId,
+        setSelection(null); setInputs(previous => sameSource ? previous : ({ ...emptyInputs(), clientId: previous.clientId, caseId: previous.caseId,
             clientRecord: previous.clientRecord, caseRecord: previous.caseRecord }));
         setSelectedFile(null); setDirty(false); setNotice(''); setError('');
         if (next.catalog) setCatalog(next.catalog);
@@ -175,9 +176,12 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
         catch (err) { if (alive.current) { setError([409, 412].includes(err?.status) ? 'conflict' : err?.status === 503 ? 'converterUnavailable' : err?.status === 422 ? 'missingValues' : 'requestFailed'); if (err?.status === 422) setShowOverrides(true); } }
         finally { lock.current = false; if (alive.current) setBusy(false); }
     }
-    function openSource(id) {
+    function openSource(id, { preserveDocumentInputs = false } = {}) {
         if (!id) return;
-        leave(() => run(async () => { const result = await api.load(id); if (alive.current) receive(result.source); }));
+        leave(() => run(async () => {
+            const result = await api.load(id);
+            if (alive.current) { receive(result.source, { preserveDocumentInputs }); setAuthoringAttempt(value => value + 1); }
+        }));
     }
     function chooseFile(file) {
         if (!file || lock.current) return;
@@ -359,7 +363,7 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
                     <p>{text('finalSigningFieldsHelp')}</p>
                     {authoringLoading && <p role="status">{text('authoringLoading')}</p>}
                     {authoringError && <StatusNotice><p>{text(authoringError)}</p>
-                        <SecondaryButton disabled={authoringLoading || busy} onPress={() => setAuthoringAttempt(value => value + 1)}>{text('retryAuthoring')}</SecondaryButton>
+                        <SecondaryButton disabled={authoringLoading || busy} onPress={() => openSource(source.id, { preserveDocumentInputs: true })}>{text('retryAuthoring')}</SecondaryButton>
                     </StatusNotice>}
                     {!converterAvailable && <StatusNotice><p>{text('converterUnavailable')}</p></StatusNotice>}
                     {authoring && <div className="lw-signing-pdfViewerWrapper">

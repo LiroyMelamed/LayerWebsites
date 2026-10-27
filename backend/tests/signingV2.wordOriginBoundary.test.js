@@ -3,6 +3,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { randomUUID } = require('node:crypto');
 const { PGlite } = require('@electric-sql/pglite');
+const { PDFDocument } = require('pdf-lib');
+const { bytesHash } = require('../lib/signingV2/canonical');
 const gate = require('../services/signingV2/wordOrigin');
 const templates = require('../services/signingV2/templates');
 const authoring = require('../services/signingV2/authoring');
@@ -64,6 +66,100 @@ async function fixture(t, withWord = true) {
     const pool = { query: (...args) => pg.query(...args), connect: async () => ({ query: (...args) => pg.query(...args), release() {} }) };
     return { pg, pool };
 }
+
+async function documentFixture(t, withWord = true) {
+    const { pool } = await fixture(t, withWord);
+    const objects = new Map();
+    const pdfHashes = {};
+    for (const [id, key, word] of [[genericSourceId, 'synthetic-generic.pdf', false],
+        ...(withWord ? [[sourceId, 'synthetic-word.pdf', true]] : [])]) {
+        const pdf = await PDFDocument.create(); pdf.addPage([word ? 600 : 601, 800]);
+        const bytes = Buffer.from(await pdf.save());
+        const hash = bytesHash(bytes); pdfHashes[word ? 'word' : 'generic'] = hash;
+        objects.set(key, bytes);
+        const metadata = { pages: [{ width: word ? 600 : 601, height: 800 }],
+            ...(word ? { wordOrigin: { ...origin, pdfHash: hash } } : {}) };
+        await pool.query('UPDATE signing_artifacts SET content_sha256=$2,metadata=$3,bytes=$4 WHERE id=$1',
+            [id, hash, metadata, bytes.length]);
+        if (word) await pool.query('UPDATE signing_word_previews SET pdf_sha256=$2 WHERE id=$1', [origin.previewId, hash]);
+    }
+    const pdfDefinition = (word = withWord) => {
+        const value = definition(word);
+        if (word) value.origin.pdfHash = pdfHashes.word;
+        value.documents[0].sourceHash = pdfHashes[word ? 'word' : 'generic'];
+        return value;
+    };
+    const reads = [];
+    const storage = { async read(key, maxBytes) {
+        const bytes = objects.get(key); assert.ok(bytes, 'only fixture-owned PDF objects may be read');
+        assert.equal(maxBytes, bytes.length); reads.push(key); return bytes;
+    } };
+    return { pool, objects, pdfDefinition, reads, storage };
+}
+
+test('native document files retain full Word provenance for the Word PDF and ordinary PDFs in a mixed draft', async t => {
+    const { pool, objects, pdfDefinition, reads, storage } = await documentFixture(t);
+    const mixed = pdfDefinition();
+    mixed.documents.push({ ...pdfDefinition(false).documents[0], key: 'ordinary',
+        fields: [{ ...pdfDefinition(false).documents[0].fields[0], id: 'ordinary-signature' }] });
+    const draft = await templates.createDraft(pool, scope, { definition: mixed });
+    const view = { ...scope, send: false, manage: false, templateManage: false };
+    assert.deepEqual((await authoring.documentFile(pool, view, draft.id, 'document', storage)).bytes, objects.get('synthetic-word.pdf'));
+    assert.deepEqual((await authoring.documentFile(pool, view, draft.id, 'ordinary', storage)).bytes, objects.get('synthetic-generic.pdf'));
+    assert.deepEqual(reads, ['synthetic-word.pdf', 'synthetic-generic.pdf']);
+});
+
+test('native document files reject missing, forged and mismatched stored Word provenance before reading bytes', async t => {
+    const { pool, pdfDefinition, reads, storage } = await documentFixture(t);
+    const valid = pdfDefinition();
+    const draft = await templates.createDraft(pool, scope, { definition: valid });
+    for (const [change, code] of [
+        [value => { delete value.origin; }, 'WORD_ORIGIN_REQUIRED'],
+        [value => { value.origin.kind = 'ordinary'; }, 'WORD_ORIGIN_REQUIRED'],
+        [value => { value.origin.injected = true; }, 'INVALID_WORD_ORIGIN'],
+        [value => { value.origin.inputsHash = '9'.repeat(64); }, 'WORD_ORIGIN_CHANGED'],
+        [value => { value.documents[0].sourceHash = '9'.repeat(64); }, 'WORD_ORIGIN_CHANGED']
+    ]) {
+        const changed = clone(valid); change(changed);
+        await pool.query('UPDATE signing_template_versions SET definition=$2 WHERE id=$1', [draft.id, changed]);
+        await rejects(authoring.documentFile(pool, scope, draft.id, 'document', storage), code);
+    }
+    assert.deepEqual(reads, []);
+});
+
+test('native Word PDF reads recheck actor, context, record access and current mapping before storage', async t => {
+    const { pool, pdfDefinition, reads, storage } = await documentFixture(t);
+    await pool.query(`INSERT INTO users(userid,name,role) VALUES(31,'Synthetic selected client','Client'),(32,'Synthetic role client','Client')`);
+    await pool.query(`INSERT INTO cases(caseid,casename) VALUES(41,'Synthetic case')`);
+    await pool.query('INSERT INTO case_users VALUES(41,11)');
+    await pool.query(`UPDATE signing_word_previews SET client_id=31,case_id=41,
+        converter='{"accessRefs":{"roleClientIds":{"tenant":32}}}' WHERE id=$1`, [origin.previewId]);
+    const draft = await templates.createDraft(pool, scope, { definition: pdfDefinition() });
+    const view = { ...scope, send: false, caseAll: false };
+    for (const actor of [other, { ...view, contextId: randomUUID() }, { ...view, clientView: false }, { ...view, caseView: false }]) {
+        await rejects(authoring.documentFile(pool, actor, draft.id, 'document', storage), 'NOT_FOUND');
+    }
+    await rejects(authoring.documentFile(pool, view, draft.id, 'missing', storage), 'NOT_FOUND');
+    await pool.query('DELETE FROM case_users WHERE caseid=41');
+    await rejects(authoring.documentFile(pool, view, draft.id, 'document', storage), 'NOT_FOUND');
+    await pool.query('INSERT INTO case_users VALUES(41,11)');
+    await pool.query("UPDATE users SET role='Deleted' WHERE userid=32");
+    await rejects(authoring.documentFile(pool, view, draft.id, 'document', storage), 'NOT_FOUND');
+    await pool.query("UPDATE users SET role='Client' WHERE userid=32");
+    await pool.query('UPDATE signing_word_previews SET inputs_hash=$2 WHERE id=$1', [origin.previewId, '9'.repeat(64)]);
+    await rejects(authoring.documentFile(pool, view, draft.id, 'document', storage), 'WORD_SOURCE_CHANGED');
+    await pool.query('UPDATE signing_word_previews SET inputs_hash=$2 WHERE id=$1', [origin.previewId, origin.inputsHash]);
+    await pool.query('UPDATE signing_word_sources SET version=3 WHERE id=$1', [origin.sourceId]);
+    await rejects(authoring.documentFile(pool, view, draft.id, 'document', storage), 'WORD_SOURCE_CHANGED');
+    assert.deepEqual(reads, []);
+});
+
+test('native PDF reads preserve ordinary non-Word access and reject corrupt stored PDF bytes', async t => {
+    const { pool, objects, pdfDefinition, storage } = await documentFixture(t, false);
+    const draft = await templates.createDraft(pool, scope, { definition: pdfDefinition(false) });
+    assert.deepEqual((await authoring.documentFile(pool, scope, draft.id, 'document', storage)).bytes, objects.get('synthetic-generic.pdf'));
+    await rejects(authoring.documentFile(pool, scope, draft.id, 'document', { async read() { return Buffer.from('corrupt PDF'); } }), 'ARTIFACT_HASH_MISMATCH');
+});
 
 test('Word origin uses actual native draft/source SQL and remains author-private despite all-firm management', async t => {
     const { pool } = await fixture(t);
