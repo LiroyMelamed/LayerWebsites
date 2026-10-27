@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import WordTemplatesWorkspace from './WordTemplatesWorkspace';
 import api from '../../../api/wordTemplatesApi';
 import { uploadFileToR2 } from '../../../utils/fileUploadUtils';
@@ -7,7 +7,18 @@ let mockPdfReadyCallbacks = [];
 
 jest.mock('../../../api/wordTemplatesApi', () => ({ __esModule: true, default: { list: jest.fn(), create: jest.fn(), load: jest.fn(), save: jest.fn(), preview: jest.fn(), pdf: jest.fn(), authoringRender: jest.fn(), authoringPdf: jest.fn(), resolveSelection: jest.fn() } }));
 jest.mock('./wordAuthoringSelection', () => ({ ...jest.requireActual('./wordAuthoringSelection'), verifyPdfBlob: jest.fn(blob => Promise.resolve(blob)) }));
-jest.mock('./WordSourceViewer', () => ({ onSelect }) => <div data-testid="original-pdf"><button onClick={() => onSelect({ kind: 'range', start: { itemId: 'p1-i0', offset: 7 }, end: { itemId: 'p1-i0', offset: 13 } })}>chooseBlank</button></div>);
+jest.mock('./WordSourceViewer', () => ({ onSelect, authoring }) => <div data-testid="original-pdf">
+    <button onClick={() => onSelect({ kind: 'range', start: { itemId: 'p1-i0', offset: 7 }, end: { itemId: 'p1-i0', offset: 13 } })}>chooseBlank</button>
+    <button onClick={() => onSelect({ kind: 'insert', start: { itemId: authoring.pages[0].items[0].id,
+        offset: authoring.pages[0].items[0].text.length }, affinity: 'before' })}>chooseEndInsertion</button>
+    <button onClick={() => onSelect(jest.requireActual('./wordAuthoringSelection').selectorForTextItem(authoring,
+        authoring.pages[0].items[0].id, 0, 0, 'insert', 'before'))}>chooseStartCaret</button>
+    <button onClick={() => {
+        const item = authoring.pages[0].items[0];
+        onSelect(jest.requireActual('./wordAuthoringSelection').selectorForTextItem(authoring, item.id,
+            item.text.length, item.text.length, 'insert', 'after'));
+    }}>chooseEndCaret</button>
+</div>);
 jest.mock('./WordDataFieldPanel', () => ({ value, onChange, definitions }) => <label>field<select value={value} onChange={event => onChange(event.target.value)}>{definitions.map(item => <option key={item.key} value={item.key}>{item.key}</option>)}</select></label>);
 jest.mock('../../../utils/fileUploadUtils', () => ({ uploadFileToR2: jest.fn() }));
 jest.mock('../templates/useSigningLocale', () => () => ({ direction: 'rtl', number: String, t: (key, values = {}) => key.replace(/^signingWord\./, '') + (values.role ? ` ${values.role}` : '') + (values.field ? ` ${values.field}` : '') }));
@@ -215,4 +226,36 @@ test('catalog manual-only first name is never inferred from selected full name a
     fireEvent.change(screen.getByLabelText('fieldLabel fields.firstName'), { target: { value: 'Document-only name' } }); fireEvent.click(screen.getByText('preview'));
     await waitFor(() => expect(api.preview).toHaveBeenCalled()); expect(api.preview.mock.calls[0][1].inputs.manualValues).toEqual({ 'client.firstName': 'Document-only name' });
     expect(api.create).not.toHaveBeenCalled(); expect(api.save).not.toHaveBeenCalled();
+});
+
+test.each([
+    ['canonical end insertion', 'chooseEndInsertion', null, 'before'],
+    ['collapsed start caret', 'chooseStartCaret', 0, 'after'],
+    ['collapsed end caret', 'chooseEndCaret', null, 'before'],
+])('a %s is accepted, saved intact and reopened with neutral insertion labeling', async (_description, control, position, affinity) => {
+    const original = source(); const offset = position ?? original.model.parts[0].paragraphs[0].text.length;
+    const anchor = { kind: 'insert', affinity, part: 'word/document.xml', paragraphId: 'p0', start: offset, end: offset,
+        sourceHash: original.sourceHash, paragraphHash: 'c'.repeat(64) };
+    api.resolveSelection.mockImplementation(async (_source, _render, { selector }) => ({ selection: {
+        kind: 'insert', selector, anchor, selectedText: '' } }));
+    let persisted;
+    api.save.mockImplementation(async (_id, payload) => {
+        persisted = { ...source(), version: 4, bindings: payload.bindings.map(item => ({ ...anchor, id: item.id, field: item.field, required: item.required })) };
+        return { source: persisted };
+    });
+    await open(original, {}, true);
+    fireEvent.click(screen.getByText(control));
+    await waitFor(() => expect(screen.getByText('bind')).toBeEnabled());
+    fireEvent.click(screen.getByText('bind')); fireEvent.click(screen.getByText('save'));
+    await waitFor(() => expect(api.save).toHaveBeenCalledTimes(1));
+    expect(api.save.mock.calls[0][1].bindings[0].selector).toEqual({ kind: 'insert', start: { itemId: 'p1-i0', offset }, affinity });
+    await screen.findByText('saved');
+    api.load.mockResolvedValue({ source: persisted });
+    fireEvent.change(screen.getByLabelText('library'), { target: { value: original.id } });
+    await waitFor(() => expect(api.load).toHaveBeenCalledTimes(2));
+    const list = screen.getByRole('list', { name: 'bindings' });
+    expect(within(list).getByText(/insertionSelected/)).toBeInTheDocument();
+    expect(within(list).queryByText('beforeSelection')).not.toBeInTheDocument();
+    expect(within(list).queryByText('afterSelection')).not.toBeInTheDocument();
+    expect(api.preview).not.toHaveBeenCalled();
 });
