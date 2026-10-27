@@ -3,11 +3,11 @@
   "scope": "QA only; code FF + one id5 restart, no SQL/migration/env/dependency/provider/frontend actions",
   "operator": {
     "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-code-fix05.py",
-    "sha256": "08959037e0a386a045de812458de956ca0de34a6fedb0e260c9cc15331f23b7b"
+    "sha256": "4b13519dde9fe2c675224f0c0083b1399b2357b14e4d795ef9a375da6dbcfabc"
   },
   "fixtures": {
     "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-code-fix05.local.test.py",
-    "sha256": "b30af8b45644e4576283e3cf3a5da732a4170aa94e641b9fbfde2ab6570f098d",
+    "sha256": "c6594935c95be9bcc1788da258ff96fef9fd1eb22eb506d64db1f8204c50abf6",
     "preparedMethods": 8
   },
   "baseCommit": "a1353eb410f797ebd49df851adccc80563ee0f1b",
@@ -147,7 +147,7 @@
     "explicitExecute": "python3 /Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-code-fix05.py --contract <sealed.json> --contract-sha <sha256> --phase verify --execute"
   },
   "assembledSyntaxEntry": "n,raw,oldraw,base,recovery,req=module.load_contract(path); compile(module.payload(n,raw,oldraw,base,recovery,req),\"<qa-code-fix05>\",\"exec\"); never execute assembled code locally.",
-  "revision": 3,
+  "revision": 4,
   "reviewCorrections": [
     {
       "previousOperatorSha256": "88c3894245409fc305f94ebcb5062afa14b0f480f92b58d4775497d8fb0d0066",
@@ -158,6 +158,11 @@
       "previousFixtureSha256": "fa97fb3362438524fa31c68ed5e913c841c40a1045caffcf85f4145b5f168410",
       "failureReceiptSha256": "5bc9762dc14735eadf437081df303f1f79ac8da024748011b11383ae9a6066b3",
       "correction": "Fixture-only: simulate remote uid0 only for owned cache stage and assert non-root/mode rejection; inspect SQL assignment + actual peer arguments rather than SELECT substring matching metadata labels. Operator/private/noSQLwrite guards unchanged."
+    },
+    {
+      "previousOperatorSha256": "08959037e0a386a045de812458de956ca0de34a6fedb0e260c9cc15331f23b7b",
+      "previousFixtureSha256": "b30af8b45644e4576283e3cf3a5da732a4170aa94e641b9fbfde2ab6570f098d",
+      "correction": "Both local Git frontend/backend full inventories use ls-tree -z and UTF-8 splitNUL, preserving Unicode PDF filenames. Regression mock reproduces default Git octal UTF-8 quoted names without -z; full exact set/hash requirements unchanged. Remote payload/runtime guards unchanged."
     }
   ]
 }

@@ -82,7 +82,7 @@ class QAStaticCodeFixFixtures(unittest.TestCase):
             'observation': {'before': copy.deepcopy(old), 'after': copy.deepcopy(old), 'stateStable': True,
                             'health': health, 'resources': {'meetsConservativeAvailableMemoryGate': True}}}
         state = copy.deepcopy(old)
-        # Match089590's actual post-FF source observation: the derived tree digest
+        # Match4b1351's actual post-FF source observation: the derived tree digest
         # changes with the candidate map before any restart can be qualified.
         state['source'].update(head=self.candidate, backendFiles=dict(self.after_files), backendTreeSha256=digest(self.after_files))
         transition = {'oldPid': 1610075, 'oldRestarts': 9, 'oldStartTicks': '72611127', 'newPid': 2610075,

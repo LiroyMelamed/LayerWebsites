@@ -93,8 +93,9 @@ class Fixtures(unittest.TestCase):
    self.contract['currentObservation']=self.put('changed-observation.json',ob);self.write()
    with self.subTest(field=field),self.assertRaises(ValueError):self.validated()
  def test_new_build_source_review_and_actual_git_maps_are_required(self):
-  files={'frontend/package.json':b'{}','frontend/app.js':b'synthetic','scripts/prepare-public-env.cjs':b'synthetic'}
-  backend={'backend/app.js':b'synthetic backend'};hashes={p:sha(b) for p,b in files.items()}
+  files={'frontend/package.json':b'{}','frontend/app.js':b'synthetic','scripts/prepare-public-env.cjs':b'synthetic',
+   'frontend/public/templates/תבנית.pdf':b'synthetic frontend PDF'}
+  backend={'backend/app.js':b'synthetic backend','backend/templates/חוזה.pdf':b'synthetic backend PDF'};hashes={p:sha(b) for p,b in files.items()}
   source={**self.source,'candidateBackendHashes':{p:sha(b) for p,b in backend.items()}}
   build={'result':'PASS_COMPILE_SOURCE_STABLE_REVIEW_ARTIFACT_NOT_PUBLISHED','candidateCommit':self.candidate,'headAtFinish':self.candidate,
    'tenant':'melamedia','exitCode':0,'sourceStable':True,'dependencyStable':True,'publicAssetsRestoredAfterBuild':True,'localPublicEnvironmentScratchRestored':True,
@@ -103,15 +104,28 @@ class Fixtures(unittest.TestCase):
   q={'result':'PASS_QA_SOURCE_AND_EVIDENCE_BINDING','candidateCommit':self.candidate,'mainCommit':self.main,'candidateBackendHashes':source['candidateBackendHashes'],
    'frontendSourceHashes':hashes,'sourceClean':True,'backendEvidenceValid':True,'frontendEvidenceValid':True,'mainFirst':True}
   evidence={'backend_tests':None,'frontend_tests':None,'frontend_build':build,'source_qualification':q,'independent_review':self.review}
+  inventory_calls=[]
+  def quoted_git_path(name):
+   raw=name.encode('utf-8')
+   if raw.isascii():return raw
+   # Git core.quotePath's default non-ASCII UTF-8 byte quoting, not a mock
+   # that incorrectly returns raw Unicode paths for newline-delimited output.
+   return b'"'+b''.join(bytes([byte]) if 32<=byte<127 and byte not in (34,92) else ('\\%03o'%byte).encode() for byte in raw)+b'"'
   def git(repo,*args):
    if args in [('rev-parse','HEAD'),('rev-parse','refs/remotes/origin/Melamedia')]:return (self.candidate+'\n').encode()
    if args==('rev-parse','refs/remotes/origin/main'):return (self.main+'\n').encode()
    if args[0]=='status':return b''
-   if args[0]=='ls-tree':return ('\n'.join(backend if args[-1]=='backend' else files)+'\n').encode()
+   if args[0]=='ls-tree':
+    inventory_calls.append(args);names=backend if args[-1]=='backend' else files
+    if '-z' in args:return b'\0'.join(name.encode('utf-8') for name in names)+b'\0'
+    return b'\n'.join(quoted_git_path(name) for name in names)+b'\n'
    if args[0]=='show':return {**files,**backend}[args[1].split(':',1)[1]]
    raise AssertionError(args)
   with mock.patch.object(self.m,'localgit',side_effect=git),mock.patch.object(self.m.subprocess,'run',return_value=types.SimpleNamespace(returncode=0)):
+   quoted=git(self.dir,'ls-tree','-r','--name-only',self.candidate,'frontend','scripts/prepare-public-env.cjs')
+   self.assertIn(b'\\327',quoted);self.assertNotEqual(set(quoted.decode().splitlines()),set(files));inventory_calls.clear()
    self.m.validate_new_evidence(evidence,source,self.review['operatorSha256'])
+   self.assertEqual(len(inventory_calls),2);self.assertTrue(all('-z' in args for args in inventory_calls))
    for field,value in [('candidateCommit','0'*40),('exitCode',1),('sourceStable',False),('installedManifestSha256After','0'*64)]:
     changed=copy.deepcopy(evidence);changed['frontend_build'][field]=value
     with self.subTest(field=field),self.assertRaises(ValueError):self.m.validate_new_evidence(changed,source,self.review['operatorSha256'])

@@ -79,11 +79,11 @@ def validate_new_evidence(evidence,source,operator_sha):
  for ancestor in [BASE,source['mainAncestor']]:
   require(subprocess.run(['git','merge-base','--is-ancestor',ancestor,source['candidateCommit']],cwd=repo,
    stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode==0,'NEW_QA_ANCESTRY_REQUIRED')
- expected=set(localgit(repo,'ls-tree','-r','--name-only',source['candidateCommit'],'frontend','scripts/prepare-public-env.cjs').decode().splitlines())
+ expected=set(p for p in localgit(repo,'ls-tree','-r','-z','--name-only',source['candidateCommit'],'frontend','scripts/prepare-public-env.cjs').decode('utf-8').split('\0') if p)
  require(set(front)==expected,'FULL_NEW_FRONTEND_SOURCE_SCOPE_REQUIRED')
  for path,h in front.items():require(sha(localgit(repo,'show',source['candidateCommit']+':'+path))==h,'NEW_BUILD_GIT_OBJECT_MISMATCH')
  backend=source['candidateBackendHashes']
- require(set(localgit(repo,'ls-tree','-r','--name-only',source['candidateCommit'],'backend').decode().splitlines())==set(backend),'FULL807_GIT_BACKEND_SCOPE_REQUIRED')
+ require(set(p for p in localgit(repo,'ls-tree','-r','-z','--name-only',source['candidateCommit'],'backend').decode('utf-8').split('\0') if p)==set(backend),'FULL807_GIT_BACKEND_SCOPE_REQUIRED')
  for path,h in backend.items():require(sha(localgit(repo,'show',source['candidateCommit']+':'+path))==h,'CANDIDATE_BACKEND_GIT_OBJECT_MISMATCH')
  return build
 
