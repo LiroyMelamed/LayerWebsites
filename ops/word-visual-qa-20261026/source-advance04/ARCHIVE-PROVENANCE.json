@@ -1,0 +1,27 @@
+{
+  "kind": "IMMUTABLE_QA_SOURCE_ADVANCE_TOOLING_ARCHIVE_NOT_PRODUCT_CANDIDATE",
+  "at": "2026-10-27T00:46:52.385226+00:00",
+  "frozenProductCandidate": "a1353eb410f797ebd49df851adccc80563ee0f1b",
+  "productMainAncestor": "02084e799ae6e67152aa54b251af29ecae71a7de",
+  "runtimeBase": "9afc07adde83eae7ead026315dc9291851892cdf",
+  "activePreparedDirectory": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026",
+  "files": {
+    "qa-source-advance04.py": "8f53890e49b8481e0621d45e5b587810621c21eb5b47db38cb416f386fb0addc",
+    "qa-source-advance04.local.test.py": "1484eeb06fc8f29b016e8081074193f87bd86429330feed4cd5352344a4685e1",
+    "run-qa-static04.py": "14172e82773b736a0e187ef03825789e5361734fbed422c9946fab675dc51316",
+    "qa_static04_test.py": "203ffb7fcb8183807fa4150393de2bf1e2e0e246e99b802a1ab6c3fc77f41d4e",
+    "qa-shared-lease01.py": "cceeb95465595a4a0f93503fc1e3a28fd3b2d758977308cc9b50ef61a340fcc5"
+  },
+  "tests": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/sourceadvance-static-local-qualification-20261027T003040731756Z.json",
+    "sha256": "6fa649dc8714ee7d8c2e5473597dac813badcbb0ce3744fde4633c3a5d8a52fa",
+    "scope": "6sourceadvance+8staticlocalfixtures; assembledremotecompilednotexecuted"
+  },
+  "reviews": {
+    "sourceAdvance": "c966662d7db5a006fab664622b902c2e2c6b5dd7a32be7214da748aca1d52adc",
+    "static": "cae59020169d812446d6b00c5c4c732fa4c98c13481ea9175bfc9b859c3e564f",
+    "packet08": "4a36ae2377de7faf4ee904069bff2123a3ea51cbc6afd3152937b4a74dbe421b"
+  },
+  "execution": "Historical exact-byte archive, not a portable replay command. ActiveOtools dependonpinned02/03helpers, originalprivatecheckpoint/failure and sealedexactcontracts. Do not editpins or manufactureoldapply.result. Sourceadvancepermitsonlyexplicit807backend-byte-identicalGitFF withunchangedPID/env/deps/schema andnewbuild. Static04requiresactual04proof+freshCASpreimage. SharedleaseholdscoordinationSHonly,max1800s,explicitrelease; noappmutation. Restore/reviewallboundinputsandcurrentstate beforefutureexecution.",
+  "publicationPolicy": "Backuponexistingfeaturetoolingbranchduringhold; keepremote main0208/Melamediaa135 exactuntilcurrentQApublicationdone. No source/migration/env/PM2/provider/customer/runtimeactionbythisarchive."
+}
