@@ -220,6 +220,124 @@ test('a mismatched authoring source cannot expose selection or save; stale selec
     await act(async () => complete({ selection: { kind: 'range' } })); expect(screen.queryByText('removeBinding')).not.toBeInTheDocument(); expect(api.save).not.toHaveBeenCalled();
 });
 
+test('reopening a412 conflict loads the current saved source before rendering and retains the chosen client/case', async () => {
+    const onDraftChange = jest.fn();
+    const latest = { ...mapped(), name: 'Current saved rental', version: 4, bindingsHash: '7'.repeat(64),
+        bindings: [binding('client.companyName'), binding('client.identityNumber')] };
+    const renderAuthoring = api.authoringRender.getMockImplementation();
+    api.authoringRender.mockImplementation(async (id, payload) => {
+        if (payload.expectedVersion === 3) throw { status: 412 };
+        const result = await renderAuthoring(id, payload);
+        return { authoring: { ...result.authoring, bindingsHash: latest.bindingsHash } };
+    });
+    await open(mapped(), { initialContext: context(), onDraftChange });
+    fireEvent.change(screen.getByLabelText('clientId'), { target: { value: '23' } });
+    fireEvent.change(screen.getByLabelText('caseId'), { target: { value: '32' } });
+    fireEvent.click(screen.getByText('manageTemplates'));
+    await screen.findByText('conflict'); expect(screen.queryByTestId('original-pdf')).not.toBeInTheDocument();
+    api.load.mockResolvedValue({ source: latest });
+    fireEvent.click(screen.getByText('retryAuthoring'));
+    await waitFor(() => expect(screen.getByTestId('original-pdf')).toBeInTheDocument());
+    expect(api.load).toHaveBeenCalledTimes(2); expect(api.load).toHaveBeenLastCalledWith(latest.id);
+    expect(api.authoringRender).toHaveBeenLastCalledWith(latest.id, { expectedVersion: 4, sourceHash: latest.sourceHash });
+    expect(screen.queryByText('conflict')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('name')).toHaveValue(latest.name);
+    expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ source: latest, bindings: latest.bindings, dirty: false,
+        inputs: expect.objectContaining({ clientId: '23', caseId: '32', clientRecord: { id: '23', label: 'Selected 23' }, caseRecord: { id: '32', label: 'Selected 32' } }) }));
+    fireEvent.click(screen.getByText('useTemplates'));
+    expect(screen.getByLabelText('clientId')).toHaveValue('23'); expect(screen.getByLabelText('caseId')).toHaveValue('32');
+    expect(api.save).not.toHaveBeenCalled(); expect(api.preview).not.toHaveBeenCalled(); expect(api.create).not.toHaveBeenCalled();
+});
+
+test('reopen confirms before discarding dirty edits and cancellation preserves edits and context', async () => {
+    const onDraftChange = jest.fn(); const latest = { ...mapped(), name: 'Saved version four', version: 4 };
+    api.authoringRender.mockRejectedValueOnce({ status: 412 });
+    await open(mapped(), { initialContext: context(), onDraftChange });
+    fireEvent.click(screen.getByText('manageTemplates')); await screen.findByText('conflict');
+    fireEvent.change(screen.getByLabelText('name'), { target: { value: 'Unsaved local name' } });
+    api.load.mockResolvedValue({ source: latest });
+    fireEvent.click(screen.getByText('retryAuthoring'));
+    expect(screen.getByRole('dialog')).toBeInTheDocument(); expect(api.load).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByText('keepEditing'));
+    expect(screen.getByLabelText('name')).toHaveValue('Unsaved local name'); expect(api.load).toHaveBeenCalledTimes(1);
+    expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: true, name: 'Unsaved local name',
+        inputs: expect.objectContaining({ clientId: '22', caseId: '31' }) }));
+    fireEvent.click(screen.getByText('retryAuthoring')); fireEvent.click(screen.getByText('discard'));
+    await waitFor(() => expect(screen.getByTestId('original-pdf')).toBeInTheDocument());
+    expect(api.load).toHaveBeenCalledTimes(2); expect(screen.getByLabelText('name')).toHaveValue(latest.name);
+    expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ source: latest, dirty: false,
+        inputs: expect.objectContaining({ clientId: '22', caseId: '31' }) }));
+    expect(api.save).not.toHaveBeenCalled();
+});
+
+test('same-source reopen retains manual values and role selections plus context updated while the load is pending', async () => {
+    const saved = { ...source(), roles: [{ key: 'landlord', label: 'Landlord' }, { key: 'oldRole', label: 'Old role' }],
+        bindings: ['office.name', 'office.address', 'role.landlord.fullName', 'role.oldRole.fullName'].map(value => binding(value)) };
+    const latest = { ...saved, version: 4, bindings: saved.bindings.filter(item => !['office.address', 'role.oldRole.fullName'].includes(item.field)) };
+    const onDraftChange = jest.fn(); const props = { initialContext: context(), onDraftChange };
+    const view = await open(saved, props);
+    fireEvent.change(screen.getByLabelText('fieldLabel fields.name'), { target: { value: 'Document-only office' } });
+    fireEvent.change(screen.getByLabelText('fieldLabel fields.address'), { target: { value: 'Old mapped address' } });
+    fireEvent.change(screen.getByLabelText('roleClientId Landlord'), { target: { value: '77' } });
+    fireEvent.change(screen.getByLabelText('roleClientId Old role'), { target: { value: '88' } });
+    api.authoringRender.mockRejectedValueOnce({ status: 412 });
+    fireEvent.click(screen.getByText('manageTemplates')); await screen.findByText('conflict');
+    let complete; api.load.mockReturnValueOnce(new Promise(resolve => { complete = resolve; }));
+    fireEvent.click(screen.getByText('retryAuthoring')); await waitFor(() => expect(api.load).toHaveBeenCalledTimes(2));
+    // Editing controls are locked during reload, but a legitimate parent context
+    // update can still arrive. Reopen must use current state, not a start snapshot.
+    view.rerender(<WordTemplatesWorkspace {...props} initialContext={context(24, 32)} />);
+    await waitFor(() => expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({
+        inputs: expect.objectContaining({ clientId: '24', caseId: '32' }) })));
+    await act(async () => complete({ source: latest }));
+    await waitFor(() => expect(screen.getByTestId('original-pdf')).toBeInTheDocument());
+    expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ source: latest, dirty: false, inputs: expect.objectContaining({
+        clientId: '24', caseId: '32', clientRecord: { id: 24, label: 'Client 24' }, caseRecord: { id: 32, label: 'Case 32' },
+        manualValues: { 'office.name': 'Document-only office', 'office.address': 'Old mapped address' },
+        roleClientIds: { landlord: '77', oldRole: '88' },
+        roleRecords: { landlord: { id: '77', label: 'Selected 77' }, oldRole: { id: '88', label: 'Selected 88' } },
+    }) }));
+    fireEvent.click(screen.getByText('useTemplates'));
+    expect(screen.getByLabelText('fieldLabel fields.name')).toHaveValue('Document-only office');
+    expect(screen.getByLabelText('roleClientId Landlord')).toHaveValue('77');
+    expect(screen.queryByLabelText('roleClientId Old role')).not.toBeInTheDocument();
+    api.preview.mockResolvedValue({ preview: { id: 'preview-a', sourceId: saved.id, sourceVersion: 4, pdfHash: 'd'.repeat(64), requiresFreshSigningGeometry: true } });
+    fireEvent.click(screen.getByText('preview')); await screen.findByTestId('final-pdf');
+    expect(api.preview.mock.calls[0][1].inputs).toEqual({ clientId: 24, caseId: 32,
+        manualValues: { 'office.name': 'Document-only office' }, roleClientIds: { landlord: 77 } });
+    expect(api.save).not.toHaveBeenCalled(); expect(api.create).not.toHaveBeenCalled();
+});
+
+test('ordinary source switching still clears document-only values and role choices while retaining case/client context', async () => {
+    const saved = { ...source(), roles: [{ key: 'landlord', label: 'Landlord' }], bindings: [binding('office.name'), binding('role.landlord.fullName')] };
+    const other = { ...saved, id: 'source-b', name: 'Other synthetic source' };
+    api.list.mockResolvedValue({ sources: [saved, other], converterAvailable: true }); api.load.mockResolvedValue({ source: other });
+    const onDraftChange = jest.fn();
+    render(<WordTemplatesWorkspace initialContext={context()} onDraftChange={onDraftChange} resumeDraft={{ source: saved, name: saved.name,
+        roles: saved.roles, bindings: saved.bindings, mode: 'use', dirty: false,
+        inputs: { clientId: '22', caseId: '31', clientRecord: context().clientRecord, caseRecord: context().caseRecord,
+            manualValues: { 'office.name': 'Previous document value' }, roleClientIds: { landlord: '77' },
+            roleRecords: { landlord: { id: '77', label: 'Selected 77' } } } }} />);
+    await screen.findByRole('option', { name: other.name });
+    fireEvent.change(screen.getByLabelText('library'), { target: { value: other.id } });
+    await waitFor(() => expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ source: other,
+        inputs: expect.objectContaining({ clientId: '22', caseId: '31', manualValues: {}, roleClientIds: {}, roleRecords: {} }) })));
+    expect(screen.getByLabelText('fieldLabel fields.name')).toHaveValue(''); expect(screen.getByLabelText('roleClientId Landlord')).toHaveValue('');
+    expect(api.save).not.toHaveBeenCalled(); expect(api.preview).not.toHaveBeenCalled();
+});
+
+test('a late reopen load after unmount cannot replace the draft or start another render', async () => {
+    const onDraftChange = jest.fn(); api.authoringRender.mockRejectedValueOnce({ status: 412 });
+    const view = await open(mapped(), { onDraftChange });
+    fireEvent.click(screen.getByText('manageTemplates')); await screen.findByText('conflict');
+    let complete; api.load.mockReturnValueOnce(new Promise(resolve => { complete = resolve; }));
+    fireEvent.click(screen.getByText('retryAuthoring')); await waitFor(() => expect(api.load).toHaveBeenCalledTimes(2));
+    const notifications = onDraftChange.mock.calls.length; view.unmount();
+    await act(async () => complete({ source: { ...mapped(), version: 4 } }));
+    expect(onDraftChange).toHaveBeenCalledTimes(notifications);
+    expect(api.authoringRender).toHaveBeenCalledTimes(1); expect(api.authoringPdf).not.toHaveBeenCalled();
+});
+
 test('catalog manual-only first name is never inferred from selected full name and is required explicitly', async () => {
     const saved = { ...source(), bindings: [binding('client.firstName')], catalog: { fields: [{ key: 'client.firstName', phase: 'storedData', available: true, resolver: 'manual' }], roleFields: [] } };
     await open(saved, { initialContext: context() }); expect(screen.getByLabelText('fieldLabel fields.firstName')).toHaveValue(''); expect(screen.getByText('preview')).toBeDisabled();

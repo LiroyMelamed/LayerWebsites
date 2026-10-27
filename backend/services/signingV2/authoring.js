@@ -120,7 +120,7 @@ async function documentFile(pool, scope, id, documentKey, storage) {
     const version = await loadVersion(pool, scope, id);
     const doc = version.definition.documents?.find(item => item.key === documentKey);
     if (!doc) fail('NOT_FOUND', 404);
-    await assertSources(pool, scope, { schemaVersion: 2, documents: [doc] });
+    await assertSources(pool, scope, version.definition);
     const source = (await pool.query("SELECT * FROM signing_artifacts WHERE owner_context_id=$1 AND id=$2 AND kind='source' AND state='ready'", [scope.contextId, doc.sourceArtifactId])).rows[0];
     const bytes = await storage.read(source.object_key, Number(source.bytes));
     expect(bytesHash(bytes) === doc.sourceHash, 'ARTIFACT_HASH_MISMATCH');

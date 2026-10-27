@@ -1,0 +1,63 @@
+{
+  "at": "2026-10-27T02:30:21.711819+00:00",
+  "scope": "Melamedia QA only; actual browser-discovered Word reload and native PDF reading fixes",
+  "status": "LOCAL_SOURCE_REVIEW_AND_SCOPED_TESTS_PASS_NOT_BUILT_OR_DEPLOYED",
+  "testedWorkingBase": "be06b6c0a2980505422fa0ed9878ad1d520e971c",
+  "sourceFiles": {
+    "backend/services/signingV2/authoring.js": "b0a4b9517cc60d48032e5d1bff69c4607e4f46691a32cd086273c868beebf2ee",
+    "backend/tests/signingV2.wordOriginBoundary.test.js": "155f144184a16d49bbea0634ba14a4f91162a896251b281f5c7efe65d5ec485d",
+    "frontend/src/screens/signingScreen/word/WordTemplatesWorkspace.js": "e983f1a548a65807dac50cf4270458cc65e65d252c07eaab6092f0eb852f66e2",
+    "frontend/src/screens/signingScreen/word/WordTemplatesWorkspace.test.js": "28c5bbef7a2ca2bf4f2f9eaca03f70c2c51398ff5cfec2e84b47bb17aecb30a7"
+  },
+  "fixes": [
+    "Retry source authoring fetches saved source through guarded dirty-discard flow, preserving latest same-source document values, role selections and client/case context. Ordinary source selection/import clears values as before.",
+    "Native template PDF file reading validates the complete server-loaded definition, retaining Word origin/reference/ownership/current-context/hash checks and mixed Word/ordinary document support."
+  ],
+  "frontend": {
+    "passed": 40,
+    "suites": 2,
+    "receipt": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-ux-fix-20261026/frontend-regression-20261027T022306Z.json",
+      "sha256": "4e7a06ed15c15da61659412e9e6fc8703d936317e0935a53a42b19024e2abf26"
+    },
+    "review": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/WORD-REOPEN-INDEPENDENT-REVIEW02.json",
+      "sha256": "29a2441bbe645356324e78dd4f616d98190e21919a3a61f2d028f6a971d6d7f0"
+    }
+  },
+  "backend": {
+    "passed": 10,
+    "suites": 1,
+    "receipt": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/backend-units-20261027T022746602276Z.json",
+      "sha256": "9a2e1f9f125de21eb89080aa9f7a21151e46a73179692573c808a617783b6d47"
+    },
+    "review": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/NATIVE-WORD-PDF-LOAD-INDEPENDENT-REVIEW01.json",
+      "sha256": "08f9dd05af2b1bae11146ebeba010aeb97d86784007df387f51a23662c533882"
+    }
+  },
+  "protected103": "No touched path belongs to the protected103; manifest and guard code unchanged. A committed source gate remains required.",
+  "browserBaseline": {
+    "sourceRetest": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/BROWSER-SOURCE-RETEST03.json",
+      "sha256": "16e7622b153454bb014f3f746f4ea88499f6c21d489c6fa6314d7e03dff7e0d3"
+    },
+    "finalPdf": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/BROWSER-FINAL-PDF04.json",
+      "sha256": "e84f20d891d37b3d98a6cd73eee647893014bf70fcb7485d9f226c1274e63012"
+    },
+    "nativeFailure": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/BROWSER-NATIVE-RUN05.json",
+      "sha256": "c293c1905e73b1dbdbe58a05e602290555778d22aca53f7b4018ccdc6c64b85c"
+    },
+    "actualBrowserCandidate": "a1353eb410f797ebd49df851adccc80563ee0f1b",
+    "bundle": "main.78b1a545.js"
+  },
+  "limitations": [
+    "Tests ran against exact working hashes on be06, not yet against a new committed QA candidate.",
+    "Build, backend own-process restart, frontend publication and actual browser recovery require separate receipts.",
+    "No migrations, dependency/env/provider changes or customer deployments are part of these source fixes.",
+    "Native fields/publish/Composer geometry remain blocked on the currently deployed backend. Fresh synthetic upload remains tool-permission blocked."
+  ]
+}
