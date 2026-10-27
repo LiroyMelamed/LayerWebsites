@@ -13,9 +13,15 @@ import en from '../../../i18n/locales/en.json';
 // The incumbent platform popup itself is covered in SigningSelect.test.js and browser evidence.
 jest.mock('./SigningSelect', () => props => <select {...props} />);
 
+let mockPdfMeasurement = { width: 315, height: 445.5 };
+beforeEach(() => { mockPdfMeasurement = { width: 315, height: 445.5 }; });
 jest.mock('../../../components/specializedComponents/signFiles/pdfViewer/PdfViewer', () => {
     const Spot = require('../../../components/specializedComponents/signFiles/signatureSpots/SignatureSpot').default;
+    const measure = element => { if (element) element.getBoundingClientRect = () => ({ ...mockPdfMeasurement, left: 0, top: 0, right: mockPdfMeasurement.width, bottom: mockPdfMeasurement.height }); };
     return props => <div>
+    {[1,2].map(page => <div key={page} className="lw-signing-pageInner" data-page-number={page} ref={measure}>
+        <canvas ref={measure} />
+    </div>)}
     {props.spots.map((spot,index) => <Spot key={index} spot={spot} index={index} signerName={spot.signerName} />)}
     <button onClick={() => props.onSelectSpot(props.spots.length - 1)}>Select last PDF field</button>
     <button onClick={() => props.onUpdateSpot(0, { x: 111.25, y: 231.75 })}>Move first PDF field</button>
@@ -40,6 +46,133 @@ function fakeApi() {
         publishTemplateDraft:jest.fn().mockResolvedValue({version:{id:'new-published',templateId:'template-1',state:'published'}}),
     };
 }
+test.each(['he','ar','en'])('outside-PDF field controls select the actual signer, clamp physical movement and preserve metadata through save/reopen in %s', async language => {
+    const i18n = await setup(language), api = fakeApi(), input = version();
+    const t = key => i18n.t(`signingV2.builder.${key}`);
+    input.definition.roles[1] = { ...input.definition.roles[1], label: 'Full seller role label without truncation', max: 2 };
+    Object.assign(input.definition.documents[0].fields[1], { occurrence: 1, x: 2, y: 3, label: 'Full recipient label without truncation' });
+    const originalField = input.definition.documents[0].fields[1];
+    const view = render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={input} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
+    fireEvent.click(screen.getByRole('button', { name: t('next') }));
+    const chooser = await screen.findByLabelText(t('chooseField'));
+    const option = within(chooser).getAllByRole('option')[2];
+    expect(option).toHaveTextContent('Full seller role label without truncation');
+    expect(option).toHaveTextContent(originalField.label);
+    expect(option).toHaveTextContent(i18n.t('signingV2.builder.fieldPage', { page: new Intl.NumberFormat({ he: 'he-IL', ar: 'ar-IL', en: 'en-GB' }[language]).format(2) }));
+    changeField(chooser, { target: { value: '1' } });
+    await waitFor(() => expect(screen.getByRole('button', { name: t('moveFieldLeft') })).toBeEnabled());
+    // In RTL as well as LTR, left/up decrease the physical PDF axes. These
+    // near-edge coordinates verify clamping rather than merely a fixed delta.
+    fireEvent.click(screen.getByRole('button', { name: t('moveFieldLeft') }));
+    fireEvent.click(screen.getByRole('button', { name: t('moveFieldUp') }));
+    fireEvent.click(screen.getByRole('button', { name: t('moveFieldRight') }));
+    fireEvent.click(screen.getByRole('button', { name: t('moveFieldDown') }));
+    fireEvent.click(screen.getByRole('button', { name: t('selectedField') }));
+    const editor = screen.getByRole('dialog', { name: t('selectedField') });
+    expect(within(editor).getByLabelText(t('signer'))).toHaveValue('seller');
+    expect(within(editor).getByLabelText(t('label'))).toHaveValue(originalField.label);
+    expect(within(editor).getByLabelText(t('required'))).toBeChecked();
+    fireEvent.click(within(editor).getAllByRole('button', { name: i18n.t('common.close') }).at(-1));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.authoring.saveDraft') }));
+    await screen.findByText(i18n.t('signingV2.authoring.saved'));
+    const definitionSaved = api.saveTemplateDraft.mock.calls[0][1].definition;
+    expect(definitionSaved.documents[0].fields[1]).toEqual({ ...originalField, x: 8, y: 8 });
+    expect(definitionSaved.documents[0].fields[0]).toEqual({ ...input.definition.documents[0].fields[0], label: '' });
+    expect(input.definition.documents[0].fields[1]).toEqual(originalField);
+    view.unmount();
+    render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={{ ...input, state: 'draft', editVersion: 1, definition: definitionSaved }} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
+    fireEvent.click(screen.getByRole('button', { name: t('next') }));
+    changeField(screen.getByLabelText(t('chooseField')), { target: { value: '1' } });
+    expect(within(screen.getByLabelText(t('chooseField'))).getAllByRole('option')[2]).toHaveTextContent(originalField.label);
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.authoring.saveDraft') }));
+    await waitFor(() => expect(api.saveTemplateDraft).toHaveBeenCalledTimes(2));
+    expect(api.saveTemplateDraft.mock.calls[1][1].definition.documents[0].fields).toEqual(definitionSaved.documents[0].fields);
+    expect(api.publishTemplateDraft).not.toHaveBeenCalled();
+});
+
+test('field movement stays disabled until its own PDF page has an honest rendered measurement', async () => {
+    mockPdfMeasurement = { width: 0, height: 0 };
+    const i18n = await setup('en'), api = fakeApi(), input = version();
+    const t = key => i18n.t(`signingV2.builder.${key}`);
+    render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={input} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
+    fireEvent.click(screen.getByRole('button', { name: t('next') }));
+    changeField(await screen.findByLabelText(t('chooseField')), { target: { value: '0' } });
+    for (const move of ['Left', 'Right', 'Up', 'Down']) expect(screen.getByRole('button', { name: t(`moveField${move}`) })).toBeDisabled();
+    await screen.findByRole('button', { name: 'Select last PDF field' });
+    mockPdfMeasurement = { width: 315, height: 445.5 };
+    act(() => window.dispatchEvent(new Event('resize')));
+    await waitFor(() => expect(screen.getByRole('button', { name: t('moveFieldRight') })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: t('moveFieldRight') }));
+    mockPdfMeasurement = { width: 0, height: 0 };
+    act(() => window.dispatchEvent(new Event('resize')));
+    await waitFor(() => expect(screen.getByRole('button', { name: t('moveFieldRight') })).toBeDisabled());
+    fireEvent.click(screen.getByRole('button', { name: t('moveFieldRight') }));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.authoring.saveDraft') }));
+    await screen.findByText(i18n.t('signingV2.authoring.saved'));
+    expect(api.saveTemplateDraft.mock.calls[0][1].definition.documents[0].fields[0]).toMatchObject({ x: 108, y: 200, width: 160.25, height: 55.75, roleKey: 'buyer', occurrence: 0 });
+});
+
+test.each([[596, 396, 'fieldWider', 'fieldTaller', 600, 400], [84, 40, 'fieldNarrower', 'fieldShorter', 80, 36]])('outside size controls preserve position and metadata through save/reopen, clamping %s×%s to the standard limits', async (width, height, horizontalAction, verticalAction, savedWidth, savedHeight) => {
+    const i18n = await setup('en'), api = fakeApi(), input = version();
+    const t = key => i18n.t(`signingV2.builder.${key}`);
+    Object.assign(input.definition.documents[0].fields[1], { x: 100, y: 200, width, height, label: 'Seller signature label' });
+    const view = render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={input} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
+    fireEvent.click(screen.getByRole('button', { name: t('next') }));
+    changeField(await screen.findByLabelText(t('chooseField')), { target: { value: '1' } });
+    await waitFor(() => expect(screen.getByRole('button', { name: t('moveFieldRight') })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: t('selectedField') }));
+    const editor = screen.getByRole('dialog', { name: t('selectedField') });
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(within(editor).getByText(t('fieldSize'), { selector: 'summary' }).parentElement).not.toHaveAttribute('open');
+    fireEvent.click(within(editor).getByText(t('fieldSize'), { selector: 'summary' }));
+    fireEvent.click(within(editor).getByRole('button', { name: t(horizontalAction) }));
+    fireEvent.click(within(editor).getByRole('button', { name: t(verticalAction) }));
+    fireEvent.click(within(editor).getAllByRole('button', { name: i18n.t('common.close') }).at(-1));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.authoring.saveDraft') }));
+    await screen.findByText(i18n.t('signingV2.authoring.saved'));
+    const savedDefinition = api.saveTemplateDraft.mock.calls[0][1].definition;
+    expect(savedDefinition.documents[0].fields[1]).toEqual({ ...input.definition.documents[0].fields[1], width: savedWidth, height: savedHeight });
+    view.unmount();
+    render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={{ ...input, state: 'draft', editVersion: 1, definition: savedDefinition }} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
+    fireEvent.click(screen.getByRole('button', { name: t('next') }));
+    changeField(screen.getByLabelText(t('chooseField')), { target: { value: '1' } });
+    fireEvent.click(screen.getByRole('button', { name: t('selectedField') }));
+    const reopenedEditor = screen.getByRole('dialog', { name: t('selectedField') });
+    expect(within(reopenedEditor).getByLabelText(t('label'))).toHaveValue('Seller signature label');
+    expect(within(reopenedEditor).getByLabelText(t('signer'))).toHaveValue('seller');
+    fireEvent.click(within(reopenedEditor).getAllByRole('button', { name: i18n.t('common.close') }).at(-1));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.authoring.saveDraft') }));
+    await waitFor(() => expect(api.saveTemplateDraft).toHaveBeenCalledTimes(2));
+    expect(api.saveTemplateDraft.mock.calls[1][1].definition.documents[0].fields).toEqual(savedDefinition.documents[0].fields);
+});
+
+test('small checkbox size actions keep the untouched axis and anchor, and cannot cross a measured page edge', async () => {
+    const i18n = await setup('en'), api = fakeApi(), input = version();
+    const t = key => i18n.t(`signingV2.builder.${key}`);
+    const field = { ...input.definition.documents[0].fields[0], type: 'checkbox', x: 776, y: 1099, width: 24, height: 24, label: 'Small checkbox at page edge' };
+    input.definition.documents[0].fields[0] = field;
+    render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={input} api={api} onBack={jest.fn()} onSaved={jest.fn()}/></I18nextProvider>);
+    fireEvent.click(screen.getByRole('button', { name: t('next') }));
+    changeField(await screen.findByLabelText(t('chooseField')), { target: { value: '0' } });
+    await waitFor(() => expect(screen.getByRole('button', { name: t('moveFieldLeft') })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: t('selectedField') }));
+    const editor = screen.getByRole('dialog', { name: t('selectedField') });
+    fireEvent.click(within(editor).getByText(t('fieldSize'), { selector: 'summary' }));
+    fireEvent.click(within(editor).getByRole('button', { name: t('fieldNarrower') }));
+    fireEvent.click(within(editor).getByRole('button', { name: t('fieldShorter') }));
+    fireEvent.click(within(editor).getByRole('button', { name: t('fieldWider') }));
+    fireEvent.click(within(editor).getByRole('button', { name: t('fieldTaller') }));
+    fireEvent.click(within(editor).getAllByRole('button', { name: i18n.t('common.close') }).at(-1));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.authoring.saveDraft') }));
+    await screen.findByText(i18n.t('signingV2.authoring.saved'));
+    const savedField = api.saveTemplateDraft.mock.calls[0][1].definition.documents[0].fields[0];
+    expect(savedField).toEqual({ ...field, height: expect.any(Number) });
+    expect(savedField.height).toBeCloseTo(445.5 * 800 / 315 - field.y, 8);
+    expect(savedField.width).toBe(24);
+    expect(savedField.x + savedField.width).toBe(800);
+    expect(savedField.height).toBeGreaterThan(field.height);
+});
+
 test.each(['he','ar','en'])('incumbent native editor authors a data overlay, keeps stage groups and explicitly saves then publishes in %s', async language => {
     const i18n=await setup(language),api=fakeApi(),saved=jest.fn();
     render(<I18nextProvider i18n={i18n}><NativeTemplateBuilder version={version()} api={api} onBack={jest.fn()} onSaved={saved}/></I18nextProvider>);

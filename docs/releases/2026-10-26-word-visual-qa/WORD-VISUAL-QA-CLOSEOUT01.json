@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-27T04:24:13.322788+00:00",
+  "status": "QA_AVAILABLE_WITH_EXPLICIT_ACCEPTANCE_LIMITS",
+  "scope": "Melamedia QA only; no real sends or customer deployments",
+  "applicationSources": {
+    "main": "c684b862e9fbbfbea4e1af593ede44d280b31a0c",
+    "frontendCompiledQa": "47e5ff40cc9e3ee42156e8895ef54ead9c69f424",
+    "backendRuntime": "fb0d6c22640f8b01911a9c6491ec856c4f5ab71a",
+    "bundle": "main.760c7a99.js",
+    "indexSha256": "f0cdcb41af7682e147f1922a6f68373e961d37a856a43434f8d99ee39a834c4d"
+  },
+  "fixes": [
+    "The native PDF route now asserts the full Word-origin version definition, so an authorized final PDF loads without the generic error.",
+    "Reopen reloads the latest Word source while preserving document inputs for that same source, with dirty-edit and generation guards.",
+    "An ordinary fresh Word entry now accepts an explicit null initial context without crashing."
+  ],
+  "currentQualification": {
+    "frontend46ActualBfeWithExact47ByteRebind": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-ux-fix-20261026/frontend-regression-20261027T040027Z.json",
+      "sha256": "16c0d538c0f4c2248b91b9f3b616330a334c4f4758fb462a96e7f7bfff352ae8"
+    },
+    "mainAndQa103AndFull807BE834FEIdentityGate": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/FRESH-ENTRY-SOURCE-GATE11.json",
+      "sha256": "7452fcc8db2763c1bf910ca3b4bb6b32cd69f4f22a200f3ee1b00077de38c99d"
+    },
+    "frozenCompileQa02": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/build/melamedia-word-fresh-entry-qa02/build.json",
+      "sha256": "aba7165e791ed4d568cdd7f4022f15dca6bdbacad4ab15f5ed2d36c4ed212035"
+    },
+    "backend10HistoricalUnchanged807Bytes": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/backend-units-20261027T023536628357Z.json",
+      "sha256": "12b7ea912a8a1fe3b11dcc52533d09890588a96594f37f4b7774dd4a7cf39f35"
+    },
+    "backendActualCodeFix05": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-code-fix-verify-20261027T032524569993Z-617af7cc.json",
+      "sha256": "9f9bc215f56f0e573cecea9352bb43991d30c31e1527c97bab245790ce86a0fa"
+    },
+    "backendFreshReadOnlyContinuity": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-observe03-20261027T041401256926Z-b4506c56.json",
+      "sha256": "43aec891ba469ec04622b8ba67cbfc70bfba8ef5b59f408975fdba0c3eaf8a9f"
+    },
+    "frontendStatic11": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-ux-fix-20261026/qa-static/verify-20261027T041852555187Z.json",
+      "sha256": "ec20d18308d64479b35bad361c34d9f85dba2617375e0127c73ef773ada71669"
+    },
+    "packet11Review": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/QA-STATIC-PACKET-REVIEW11.json",
+      "sha256": "44f34180aac19fa48d0674acc696cb42019b96f6d1dc16d5c12d5cb75638ee97"
+    }
+  },
+  "browserOutcomes": {
+    "native06": "Actual PDF load, two explicit personal roles, four fresh required signature/text fields, save, library reopen, labels retained, internal publish as version 1, and Composer with the original synthetic case, blank recipients and draft recovery. These detailed actions ran on 81f; their native frontend files and backend bytes remain unchanged for 760.",
+    "fresh08": "On 760, entry with no draft or context opens. A private synthetic source renamed in a second tab triggers the stale-source alert in the first tab. Reopen loads the new name and three canvases with no alert, preserves the exact manual value, and leaves all record selectors blank. The peer restored the source name.",
+    "composer09": "A full reload on 760 retains the saved draft name, template and original case, with two blank names, emails and phones. No package or send action occurred."
+  },
+  "portableProofFiles": {
+    "docs/releases/2026-10-26-word-visual-qa/proof-20261027/BROWSER-NATIVE-RETEST06.json": "3314e98a425d27c7f0c37feb9257d2e5a615065326881d44a3ce13baf9f1ee09",
+    "docs/releases/2026-10-26-word-visual-qa/proof-20261027/BROWSER-FRESH-TAB-FAIL07.json": "a2174acf426a8007366bdbfe2975ceb3bb217869476da7bb74bc1074d6651d82",
+    "docs/releases/2026-10-26-word-visual-qa/proof-20261027/BROWSER-FRESH-REOPEN08.json": "21adc02187b24e6c01cd6601a2c6fa97ec3255a4273cd7c39df6bcbb68748dfe",
+    "docs/releases/2026-10-26-word-visual-qa/proof-20261027/BROWSER-COMPOSER-SMOKE09.json": "4b39e4f7e21ee009e87039d5af0ccf11342b6801618f73d3ce8e0d18961fda92",
+    "docs/releases/2026-10-26-word-visual-qa/proof-20261027/ACTUAL-NATIVE-VISUAL-REVIEW02.json": "7c5a2074c2e0d4453e0a9d28fbd70a0950f2070b7ae71533ea87a7dfea3010a9",
+    "docs/releases/2026-10-26-word-visual-qa/proof-20261027/ACTUAL-PUBLICATION-CONTEXT-VISUAL-REVIEW03.json": "e3ae7413532911240181a2c40759da49efa650bb2a3343e740c428701ccd3ad9",
+    "docs/releases/2026-10-26-word-visual-qa/proof-20261027/FRESH-WORD-ENTRY-INDEPENDENT-REVIEW01.json": "b4d4a228dbdb2234f1fee278b23279d80901970a22d61257ab6f890eb385a57b",
+    "docs/releases/2026-10-26-word-visual-qa/proof-20261027/native-four-fields-desktop06.png": "0aa86e41b3ca2fda2cf19293e480bab101f3e343f1aec52f4026c29201210fdf",
+    "docs/releases/2026-10-26-word-visual-qa/proof-20261027/word-source-reopened-preserved08.png": "1d19b5df1b739e752ba2f42cec7cc8927377adb293fb0bd9e1edbe8270b290da",
+    "docs/releases/2026-10-26-word-visual-qa/proof-20261027/composer-final760-09.png": "99baaec2d673787455caecfe16ed7cfcc63dfec2b77f9698143d77666d91aab8",
+    "docs/releases/2026-10-26-word-visual-qa/proof-20261027/ACTUAL-FINAL-BROWSER-REVIEW04.json": "6bb6ce29091cd811d4dbe2c13aee6235ba19c0e02e2cdb466fb48ae90eb44198"
+  },
+  "operationalState": {
+    "backendPid": 1642213,
+    "backendRestarts": 10,
+    "freshHealthLocalAndPublic200": true,
+    "newFrontendOnlyPublicationRestartedBackend": false,
+    "staticProtectedPreimageFiles": 2163,
+    "staticPublicationArtifacts": 209,
+    "oldChunksDeleted": 0,
+    "protectedPublicFilesAndMetadataPreserved": true,
+    "ownSharedLeasesReleasedAt": "2026-10-27T04:19:17.401818+00:00",
+    "ownActiveSshSessions": 0,
+    "viewportOverrideReset": true
+  },
+  "acceptanceLimits": [
+    "Fresh DOCX upload remains blocked pending the human-controlled Chrome ChatGPT extension permission Allow access to file URLs. No bypass or inferred consent.",
+    "Mobile field rectangles scale stably. Badges and handles crowd small overlays; full role and text labels were verified in the inspector. Physical touch was not tested.",
+    "This run does not qualify package creation, sends, OTP, consent, a real provider, or customer production.",
+    "Previously untested bulk signing of three packages, shared-lawyer Arabic-digit OTP, admin downloads, remote Excel creation, crash/dedupe, native deep links, real providers and the 30-second preparation target remain unclaimed."
+  ],
+  "recovery": "The backend code-fix05 and frontend static11 operations are complete. Do not replay them. Operator sources and restoration dependencies are versioned under ops/word-visual-qa-20261026; the bound external evidence identifies private checkpoints and receipts. Any future operation needs a fresh state check, current credentials, coordination and a new reviewed contract."
+}
