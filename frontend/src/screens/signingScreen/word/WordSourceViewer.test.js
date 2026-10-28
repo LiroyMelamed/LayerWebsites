@@ -16,7 +16,7 @@ jest.mock('../../../components/specializedComponents/signFiles/pdfViewer/PdfView
         }, []);
         return <div data-page-number="1"><div ref={host} data-testid="source-page"><div className="textLayer">
             {mockContent.items.map((item, index) => <React.Fragment key={index}><span role="presentation">{item.str}</span>{item.hasEOL && <br role="presentation" />}</React.Fragment>)}
-        </div></div></div>;
+        </div>{authoringLayer.renderPageOverlay({ pageNumber: 1, host: host.current, displayWidth: 600 })}</div></div>;
     };
 });
 jest.mock('../../../components/styledComponents/buttons/SecondaryButton', () => ({ children, onPress, ...props }) => <button onClick={onPress} {...props}>{children}</button>);
@@ -29,6 +29,7 @@ const create = () => {
         viewBox: [0, 0, 600, 800], viewportTransform: [1, 0, 0, -1, 0, 800], textContentHash: hash(JSON.stringify(tuples)), items }] };
 };
 beforeEach(() => {
+    Range.prototype.getClientRects = jest.fn(() => [{ left: 25, top: 50, width: 70, height: 12 }]);
     mockPageCount = 1;
     Object.defineProperty(globalThis, 'crypto', { configurable: true, value: require('crypto').webcrypto }); globalThis.TextEncoder = TextEncoder;
 });
@@ -77,4 +78,21 @@ test('an immediate cached-child page-count failure is retained before parent pas
     const onError = jest.fn(); render(<WordSourceViewer authoring={authoring} pdfFile={new Blob(['%PDF'])} bindings={[]} onSelect={jest.fn()} onError={onError} fieldLabel={value => value} text={value => value} />);
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('authoringMismatch'));
     expect(onError).toHaveBeenCalledWith('authoringMismatch'); expect(screen.getByLabelText('selectExcerptText')).toBeDisabled();
+});
+
+
+test('confirmed selection remains highlighted on the document after the native selection is lost', async () => {
+    const authoring = create(); mockContent = { items: authoring.pages[0].items.map(({ text, ...rest }) => ({ ...rest, str: text })) };
+    const props = { authoring, pdfFile: new Blob(['%PDF']), bindings: [], onSelect: jest.fn(), fieldLabel: value => value, text: value => value };
+    const view = render(<WordSourceViewer {...props} />);
+    await waitFor(() => expect(screen.getByTestId('source-page').querySelectorAll('[data-word-item]')).toHaveLength(2));
+    const selection = { kind: 'range', anchor: { part: 'word/document.xml', paragraphId: 'p0', start: 3, end: 8 } };
+    view.rerender(<WordSourceViewer {...props} selection={selection} />);
+    await screen.findByText('selectedLocation');
+    window.getSelection().removeAllRanges();
+    expect(view.container.querySelector('.lw-word-source__mark.is-pending')).toBeInTheDocument();
+    view.rerender(<WordSourceViewer {...props} selection={null} bindings={[{ ...selection.anchor, id: 'bound', kind: 'range', field: 'client.fullName' }]} />);
+    await screen.findByText('client.fullName');
+    expect(screen.queryByText('selectedLocation')).not.toBeInTheDocument();
+    expect(view.container.querySelector('.lw-word-source__mark')).toBeInTheDocument();
 });
