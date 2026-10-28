@@ -1,0 +1,38 @@
+{
+  "utc": "2026-10-28T12:12:02.056626+00:00",
+  "candidate": "87e8eaa58830ee9b42772c1619e01814143dc28e",
+  "result": "FRONTEND_PUBLISHED_STATIC_VERIFIED",
+  "merge": {
+    "oldIndexSha256": "fdc2b248851e640e7b8895129e957cdcd989d172813fc62329ad0553fc2112e9",
+    "newIndexSha256": "f86b0e58c0d274e2482c303a31b6e7c45c28d35a5f82c49b2019352a760bbc9d",
+    "entrypointMap": {
+      "static/js/vendor-pdf.f63c2819.js": "static/js/vendor-pdf.f63c2819.js",
+      "static/js/vendor-i18n.40936357.js": "static/js/vendor-i18n.40936357.js",
+      "static/js/vendor-react.094da8d9.js": "static/js/vendor-react.094da8d9.js",
+      "static/js/vendor.b7c31171.js": "static/js/vendor.2a0dc768.js",
+      "static/css/main.7d733676.css": "static/css/main.98088501.css",
+      "static/js/main.0fd18d40.js": "static/js/main.e622d4e3.js"
+    },
+    "referenceCounts": {
+      "static/js/vendor-pdf.f63c2819.js": 1,
+      "static/js/vendor-i18n.40936357.js": 1,
+      "static/js/vendor-react.094da8d9.js": 1,
+      "static/js/vendor.b7c31171.js": 1,
+      "static/css/main.7d733676.css": 1,
+      "static/js/main.0fd18d40.js": 1
+    },
+    "inverseRestoresEveryOriginalByte": true,
+    "otherInlineBootstrapMetaSeoNativeHtmlBytesUnchanged": true,
+    "publicAssetsToReplace": [
+      "index.html",
+      "asset-manifest.json"
+    ],
+    "newStaticChunksAddedWithoutDeletingOldChunks": true
+  },
+  "manifestOldHash": "0a805f64a44bbd9575dd1a5e04b6ba7d7861fe89da9b110a62fcd4a01686d7cc",
+  "addedStaticCount": 116,
+  "oldChunksPreserved": true,
+  "rootAssetsPreserved": true,
+  "checkpoint": "/var/lib/melamedia-releases/ashraf-update-20261028",
+  "protectedRootAssetCount": 137
+}

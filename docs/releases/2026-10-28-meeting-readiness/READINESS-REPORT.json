@@ -1,0 +1,99 @@
+{
+  "at": "2026-10-28T11:18:57.206491+00:00",
+  "status": "PARTIAL_READINESS_VERIFIED_CUSTOMER_VERSION_GAP_AND_AUTHENTICATED_BROWSER_HOLD",
+  "purpose": "General system readiness before Ashraf meeting at 16:00 on 2026-10-28",
+  "source": {
+    "main": "bc1d1fc081cdcd48d2ca8ec5d20737b9734116c2",
+    "qaTested": "0990866b749e44f3f64f6a8bbe85fbe006747e67",
+    "qaBackendObserved": "fb0d6c22640f8b01911a9c6491ec856c4f5ab71a",
+    "ashrafBackendObserved": "596aa5b7eb9b40f8cd5f6927132955ff6caf2175",
+    "qaBrowserBundle": "main.e03a8128.js",
+    "ashrafBrowserBundle": "main.0fd18d40.js"
+  },
+  "automated": {
+    "frontend": {
+      "passed": 855,
+      "failed": 0,
+      "skipped": 0,
+      "suites": 104,
+      "scope": "All 104 existing frontend test files in QA checkout; not all possible application behavior."
+    },
+    "backend": {
+      "passedUnique": 299,
+      "skipped": 4,
+      "initialPassed": 297,
+      "initialFailed": 2,
+      "resolvedFailures": "Both auth HTTP cases required local listening; first fully-network-denied run and second fixed-port preload attempt failed. Final ordinary supertest with outbound restricted to localhost passed both unchanged product/test assertions. Original attempts retained.",
+      "skippedDetails": [
+        "Real Chromium multilingual shaping/overflow",
+        "Repeated font resource reuse across 40 PDFs",
+        "Sparse overlays on rotated pages",
+        "Actual externally configured Word converter"
+      ],
+      "scope": "34 selected test files, mocked services/in-memory SQL, no live provider/production DB operations."
+    },
+    "totalPassedUnique": 1154,
+    "productSourcesStable": true
+  },
+  "live": {
+    "loginPages": "Both visually loaded. Ashraf branding correct; no horizontal overflow at measured901 viewport. No fresh mobile authenticated acceptance.",
+    "apiHealth": "Both /health visible in real browser: ok:true",
+    "server": "Ashraf and QA PM2 online; nginx/postgresql active; tracked backend sources clean; about39.4GB disk free and5.76GB available RAM",
+    "qaPid": 1642213,
+    "qaRestarts": 10,
+    "ashrafPid": 1537349,
+    "ashrafRestarts": 107,
+    "backup": "Existing report timestamp2026-10-28T10:41:49Z: healthy true, zero failures, eight checks verified_readback; includes Ashraf and QA generations from20261028T023923Z. No new restore/readback performed.",
+    "frontendServerInspection": "Shared maintenance lock busy, respected; no inspection under bypass. Actual browser asset URLs used instead.",
+    "shellHttp": "Unauthenticated urllib returned403 for both web andAPI. Browser successfully loaded both websites/health; no outage inferred."
+  },
+  "open": [
+    "Ashraf remains at26October source and lacks later visual Word/native mobile-field improvements deployed toQA. Not fully up to date with main.",
+    "Authenticated browser sessions expired: both login screens. User asked to log into QA; no completed login yet. Current full navigation/create/sign/send flow unverified.",
+    "Prior confirmed primary Word client search excludes ExternalSigner while card entry and autofill work. Not fixed by this test-only task.",
+    "4 external renderer/converter cases skipped, not counted as passing.",
+    "No real SMS/email/WhatsApp/OTP send or legal signature performed; no new broad live bulk/crash/dedupe/performance/native-deeplink acceptance."
+  ],
+  "historicalOnly": "27October actual QA A/B saved profiles automatically filled name/ID/company/address/roles, override/revert/missing data/native PDF handoff passed. Today code/bundle identity anchored, but not a fresh authenticated browser repeat.",
+  "actions": {
+    "deployments": 0,
+    "customerDataWrites": 0,
+    "providerSends": 0,
+    "productCodeChanges": 0,
+    "newTests": 0
+  },
+  "evidence": [
+    {
+      "name": "frontend-regression-20261028T111111Z.json",
+      "sha256": "f0fc40208e07dda7be5ae9dad19b27c2135214db3b1231719090cad2dd83f052"
+    },
+    {
+      "name": "backend-units-20261028T111210781178Z.json",
+      "sha256": "6c74c5921722a18a6dd9042922bff1d0160a99cdccdcfed678509e2bff02590c"
+    },
+    {
+      "name": "backend-units-20261028T111421800067Z.json",
+      "sha256": "60992f3fb2fcdc647053fb79c974a28c5a938eb34e23bc82cdfa36337fbd83df"
+    },
+    {
+      "name": "backend-units-20261028T111519222015Z.json",
+      "sha256": "59ebc36fc4ebffcd8ed81cef20f7c20fae6fd4ffed191c81dbf2916a6d2109db"
+    },
+    {
+      "name": "READ-ONLY-SERVERS01.json",
+      "sha256": "2d9601b12829aca39577bbd02661f0791d047fbb8b35d3235697750d85789925"
+    },
+    {
+      "name": "PUBLIC-HEALTH02.json",
+      "sha256": "8c408032ce4e95b1612e12122d55a0ddb27b7b0ff54e9e0e264f3fdd38c47f27"
+    },
+    {
+      "name": "BROWSER-PUBLIC03.json",
+      "sha256": "c89a0592b906926bf6b17ffff15243a1c7eec8eca164c46b510dae538a029136"
+    },
+    {
+      "name": "BACKUP-HEALTH06.json",
+      "sha256": "9e4ce00a603913aadc3fd5a14cfd2aac5b956db1e61861c04d56cbc2113c37aa"
+    }
+  ]
+}

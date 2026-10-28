@@ -1,0 +1,60 @@
+{
+  "decision": "APPROVE",
+  "scope": "WORD_UX_QA_FRONTEND_SOURCE_REBIND",
+  "reviewedAt": "2026-10-27T05:02:14.758608+00:00",
+  "mainCommit": "e00699b08eb957a33ba79e2feb90d8628e2d90f4",
+  "qaCommit": "0990866b749e44f3f64f6a8bbe85fbe006747e67",
+  "priorQaCommit": "47e5ff40cc9e3ee42156e8895ef54ead9c69f424",
+  "backendRuntimeCommit": "fb0d6c22640f8b01911a9c6491ec856c4f5ab71a",
+  "appSourceReview": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-mobile-polish-20261027/MOBILE-APP-INDEPENDENT-REVIEW01.json",
+    "sha256": "a0e3c00b0811bbc430bda8bd2afa0f28da893375c47cfff01f9b337708660b42"
+  },
+  "sourceGate": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-mobile-polish-20261027/QA-SOURCE-GATE12.json",
+    "sha256": "3f84a45785aac6144d77f084bc73d2bfffeb267faf8cc4563939e5661c640fa0"
+  },
+  "qaRegression": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-ux-fix-20261026/frontend-regression-20261027T045807Z.json",
+    "sha256": "2ba8a713e3069d0e565dc1d86da184a9992c140cc22ab3f66abda4574ce921c2",
+    "reportedSuites": 8,
+    "reportedTests": 106,
+    "reportedSourceStable": true,
+    "logSha256": "14a94f0e6d5f893342b0a71015f1229a6ac0042965bd280f36f10c7790eb8028"
+  },
+  "preservedAttempt": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-mobile-polish-20261027/QA-SOURCE-GATE12-ATTEMPT01.json",
+    "sha256": "4e543c3a490a1d22b8ccae8b2a09fbdb0b31475ae9d060d7215c37d81a741cbf"
+  },
+  "reviewedQaHashes": {
+    "frontend/src/screens/signingScreen/templates/TemplateBuilder.js": "2e7c339518cdf012ab1d2f8d7daf088ae8ceef0cd865d6b358e6332fbd8a33ab",
+    "frontend/src/screens/signingScreen/templates/templates.scss": "7961e93ea83224d0675969de87459358f20d5347f23b942c2c27742585fbdf22",
+    "frontend/src/screens/signingScreen/templates/NativeTemplateBuilder.test.js": "b78e2dacf2d4da3def278a2799af2e11421521d2455c8d9365259145b691bbf4",
+    "frontend/src/components/specializedComponents/signFiles/signatureSpots/SignatureSpot.test.js": "64fe6162739811a28daa35753c8871f1a46a4aa86e19cd4b4e9bb00b96c7e3f3",
+    "frontend/src/i18n/locales/he.json": "7ee39590baf9a3bb4c482ab21c4f6e93edec433449a264ed1d643991a6414a98",
+    "frontend/src/i18n/locales/ar.json": "61ef4faad7468482b173ed374d89930bb66ba37eb264068eac4d249ec5aecc85",
+    "frontend/src/i18n/locales/en.json": "5476b653cc0e0ce42b131faa03d57b4f18d03ac96f6b132c5bfae2e655ec645e"
+  },
+  "protectedManifests": {
+    "mainSha256": "91fd27bf1c355d35dfbd3dfa4a49af8ecd01ff00ee3fffddbf354af745d1d60e",
+    "qaSha256": "603dc6bd42b46be045327d2418be27f0e430fec559c91726af2b935959427c51",
+    "guardSha256": "d237e0cff7dd67bac0214044649c592376e945e1333086dd3217b893ae2b2436",
+    "protectedFileCount": 103,
+    "refreshedPaths": [
+      "frontend/src/screens/signingScreen/templates/TemplateBuilder.js",
+      "frontend/src/screens/signingScreen/templates/templates.scss"
+    ]
+  },
+  "findings": [],
+  "checks": [
+    "Exact immutableQA099 vs priorQA47 frontend/prepare-script delta contains only the seven reviewed app/test/locale paths; candidate frontend inventory835 and backend inventory807 are bound by gate12. Four JS/SCSS/test blobs exactly match approved working source and main.",
+    "Each QA locale equals its own priorQA47 JSON plus only the same14 newly added builder keys, with exact approved main values. All other existing QA values remain unchanged; three complete locale files intentionally retain their QA variants and are not claimed byte-identical to main.",
+    "QA backend Git tree equals actual deployedFB backend tree, including path/type/mode identity. Gate807 backend content map also equals actual05 verification state backendFiles exactly. No backend source advance/restart/migration or security-guard replacement is implied.",
+    "Main and QA protected manifests retain103 paths, other101 digests and their existing required ancestor; exactly TemplateBuilder.js and templates.scss refresh to approved blob digests. Guard bytes remain pinnedd237; both release ancestors and main ancestry inQA independently read as present.",
+    "Gate12 reports both103 checks PASS/clean. ActualQA regression receipt binds099, current sevenQA hashes, exit0/sourceStable and verified106-case/eight-suite log; both required ledger entries were read. The earlier whole-locale-equality qualification failure remains separately preserved and is not relabeled as source defect or success."
+  ],
+  "limits": [
+    "Bounded local committed-source/manifest/evidence rebind approval only; reviewer ran no tests, source or application code, browser, server, SSH, build, deployment, manifest edit or Git mutation.",
+    "Root test/guard runs are source-bound local evidence. New build, pushed main-first proof, fresh augmented backend and static observations, exact final packet approval and mobile browser acceptance remain separate requirements."
+  ]
+}

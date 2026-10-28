@@ -1,0 +1,24 @@
+{
+  "utc": "2026-10-28T12:14:44.939863+00:00",
+  "candidate": "87e8eaa58830ee9b42772c1619e01814143dc28e",
+  "frontendMain": "main.e622d4e3.js",
+  "backendAndFrontendDeployed": true,
+  "tests": {
+    "frontendPassed": 808,
+    "backendPassed": 276,
+    "externalPdfSkipped": 4
+  },
+  "sourceGuardFiles": 103,
+  "emailDelivered": 2,
+  "smsReceivedConfirmedByOwner": 1,
+  "logoCorrectionVerified": true,
+  "actualAshrafAutoFillDocument": "NOT_RUN_EMPTY_CLIENT_AND_TEMPLATE_LIBRARY",
+  "priorQaAutoFill": "Passed actual browser two saved synthetic profiles, override/revert, missing profile, native step; see previous 2026-10-27 release evidence",
+  "privateEvidenceDirectory": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/ashraf-update-20261028",
+  "limits": [
+    "No WhatsApp test",
+    "No real signature/package creation",
+    "No full-product acceptance claim",
+    "Four external PDF tests skipped in this automated batch"
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-27T08:31:46.697353+00:00",
+  "status": "AUTOMATIC_PROFILE_FILL_VERIFIED_WITH_OPEN_CLIENT_SEARCH_UX_FINDING",
+  "scope": "User-requested automatic client name/identity and related profile/role fill. SyntheticMelamediaQA only. No welcome/customer writes/signature sends/providers/production deployments.",
+  "localQualification": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/AUTO-FILL-LOCAL-REGRESSIONS01.json",
+    "sha256": "7d72c9424a09041f20da479f349dcf2dcc5c6f9e8cb644226ba8495401b03f37"
+  },
+  "localCounts": {
+    "backend": 71,
+    "frontend": 89,
+    "total": 160,
+    "skipped": 0,
+    "newAutomaticSqlCases": 8
+  },
+  "actualUiQualification": {
+    "firstSavedClientEightAutomaticValues": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/ACTUAL-AUTO-A15.json",
+      "sha256": "d1dcc1ec93e73188103d3c2ef4da3abc2611f715bb57f61b79c107be0230649d"
+    },
+    "explicitOverrideRestoreAndMissingProfile": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/ACTUAL-AUTO-NEGATIVE16.json",
+      "sha256": "3bfba62c8ef120f31670528f12060c86493d9f4f3ca048207ea14f38bc70fba5"
+    },
+    "secondSavedClientEightAutomaticValues": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/ACTUAL-AUTO-B17.json",
+      "sha256": "e63649d27a1489ca713356daff5646d3b0d977699b5662cfd356e2fc24d89888"
+    },
+    "nativeHandoffAndUnchangedCard": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/ACTUAL-AUTO-NATIVE18.json",
+      "sha256": "60c5baff1e9cc26968a4e58fd97bb0cdffa0d3d6c0718f09492031fcb277fc1b"
+    },
+    "independentVisualReview": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/ACTUAL-AUTOFILL-VISUAL-REVIEW01.json",
+      "sha256": "f4da91e398b6f656bf5b573fc4d6da2a343ec15eebf15f279bbc3b32cd4cc3ad"
+    }
+  },
+  "valuesActuallySeen": {
+    "A": {
+      "fullName": "QA-NF-20261023-R2 tenant Updated",
+      "identityNumber": "000000009",
+      "companyName": "QA-NF-20261023-R2 Company 0",
+      "companyNumber": "005123450",
+      "address": "1 QA Street — UI, Unit 2, QA City, 00100, IL"
+    },
+    "B": {
+      "fullName": "QA-NF-20261023-R2 landlord",
+      "identityNumber": "001234561",
+      "companyName": "QA-NF-20261023-R2 Company 1",
+      "companyNumber": "005123451",
+      "address": "1 QA Street, Unit 2, QA City, 00100, IL"
+    },
+    "roles": "IndependentTenantA/LandlordB/Lawyer record values visiblypreserved in both PDFs and Bnative."
+  },
+  "automaticVsManual": "All8mappedclient/role overridesoff in initialA/B. OnlyindependentcustomfirstNameinlinefieldQA-AUTO-2710[-B] intentionallymanual. Fullname never split. ExplicitIDoverride testedseparately, thenoffrestoredcardvalue.",
+  "negativeChecks": "Client/search/inputchanges remove oldPDF+review; missingprofileUser03 rejects withgenericerror and no olddata. No inference of specificmissingfield fromgenericerror. LocalactualQSQL tests separately prove missingID/permissions/type/idempotency cases.",
+  "openFinding": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/CONTACT-SEARCH-CONSISTENCY18.json",
+    "sha256": "0dc0a3d2a1fb0439043cf8f1c74a919c1b85e6f990297f5c2909c4d5f52541c4"
+  },
+  "notClaimed": [
+    "No globalfull-app/signingprovider/send/OTP/signature/customer production acceptance.",
+    "No new physicaltouch/mobile qualification in this run. Prior mobile11 remains separatelybound.",
+    "ExactlivegeneratedDOCX remains unavailable through current supportedexport; actualrenderedPDFs qualified, local160 inspectgenuineDOCXconverterinput separately.",
+    "No freshbackendSSHhash/runtimeobservation. BackendlastknownFB05:04, actualQ099modulehashes testedlocally; currentloadedFEbundleE03observed.",
+    "Secondsuccessfulclient usedseparatecardentry; sameformswitchto missingprofiletestedlive, successfulA→BswitchtestedlocalSQL."
+  ],
+  "sourceState": {
+    "mainBeforeTests": "7bc016e19dbc117b988c367333f9a72868c386ef",
+    "qaLocalSource": "0990866b749e44f3f64f6a8bbe85fbe006747e67",
+    "actualBrowserBundle": "main.e03a8128.js",
+    "productChanges": [],
+    "newTestOnly": "backend/tests/wordTemplates.autoFillAcceptance.test.js"
+  },
+  "operations": {
+    "newClients": 0,
+    "clientProfileWrites": 0,
+    "sourceMappingWrites": 0,
+    "templateExplicitSavesOrPublishes": 0,
+    "signaturePackageCreatesOrSends": 0,
+    "serverDeploymentsOrSSH": 0,
+    "libraryUploads": 0,
+    "ownServerLeases": 0,
+    "viewportReset": true,
+    "deliverableTab": "894427437; nativePDFB"
+  },
+  "continuation": "CONTACT-SEARCH-CONSISTENCY18.json remainsopen; preserveevidence/currentQA, no unreviewedfilter/accesschange. No furtherautomatedproductchange inferred from testrequest."
+}

@@ -2,16 +2,19 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import PdfViewer from '../../../components/specializedComponents/signFiles/pdfViewer/PdfViewer';
 import StatusNotice from '../../../components/ui/StatusNotice';
 import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
+import SimpleTextArea from '../../../components/simpleComponents/SimpleTextArea';
+import SegmentedSwitch from '../../../components/styledComponents/SegmentedSwitch';
 import SigningSelect from '../templates/SigningSelect';
 import { itemTuple, selectorForTextItem, selectorFromDom, sha256Bytes, tagVerifiedTextLayer, verifyPageGeometry, verifyPageItems } from './wordAuthoringSelection';
 
-function PageMarks({ host, page, bindings, fieldLabel, revision, displayWidth }) {
+function PageMarks({ host, page, bindings, selection, fieldLabel, text, revision, displayWidth }) {
     const [marks, setMarks] = useState([]);
     useEffect(() => {
         if (!host || !page || !revision) { setMarks([]); return undefined; }
         const measure = () => {
             const origin = host.getBoundingClientRect(); const next = [];
-            bindings.forEach(binding => {
+            const visibleMarks = selection ? [...bindings, { ...selection.anchor, id: 'pending-selection', kind: selection.kind, pending: true }] : bindings;
+            visibleMarks.forEach(binding => {
                 const boxes = [];
                 page.items.forEach(item => {
                     const span = Array.from(host.querySelectorAll('[data-word-item]')).find(node => node.dataset.wordItem === item.id);
@@ -31,20 +34,20 @@ function PageMarks({ host, page, bindings, fieldLabel, revision, displayWidth })
                         });
                     });
                 });
-                if (boxes.length) next.push({ id: binding.id, label: fieldLabel(binding.field), boxes });
+                if (boxes.length) next.push({ id: binding.id, label: binding.pending ? text('selectedLocation') : fieldLabel(binding.field), pending: binding.pending, boxes });
             });
             setMarks(next);
         };
         measure(); const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
         observer?.observe(host); return () => observer?.disconnect();
-    }, [host, page, bindings, fieldLabel, revision, displayWidth]);
+    }, [host, page, bindings, selection, fieldLabel, text, revision, displayWidth]);
     return <div className="lw-word-source__marks" aria-hidden="true">{marks.map(mark => <React.Fragment key={mark.id}>
-        {mark.boxes.map((box, index) => <span key={index} className="lw-word-source__mark" style={box} />)}
-        <span className="lw-word-source__chip" style={{ left: mark.boxes[0].left, top: Math.max(0, mark.boxes[0].top - 23) }}>{mark.label}</span>
+        {mark.boxes.map((box, index) => <span key={index} className={`lw-word-source__mark${mark.pending ? ' is-pending' : ''}`} style={box} />)}
+        <span className={`lw-word-source__chip${mark.pending ? ' is-pending' : ''}`} style={{ left: Math.max(0, Math.min(mark.boxes[0].left, (displayWidth || 600) - 150)), top: Math.max(0, mark.boxes[0].top - 23) }}>{mark.label}</span>
     </React.Fragment>)}</div>;
 }
 
-export default function WordSourceViewer({ authoring, pdfFile, bindings, disabled, onSelect, onError, fieldLabel, text }) {
+export default function WordSourceViewer({ authoring, pdfFile, bindings, selection, disabled, onSelect, onError, fieldLabel, text }) {
     const root = useRef(null); const generation = useRef(0); const callbacks = useRef({ onSelect, onError });
     callbacks.current = { onSelect, onError };
     const identity = `${authoring.renderId}:${authoring.mapHash}`;
@@ -111,9 +114,9 @@ export default function WordSourceViewer({ authoring, pdfFile, bindings, disable
     }, [readSelection]);
     const layer = useMemo(() => ({ onPageTextReady: verifyLayer, onPageError: pageError,
         renderPageOverlay: ({ pageNumber, host, displayWidth }) => <PageMarks host={host}
-            page={authoring.pages.find(page => page.pageNum === pageNumber)} bindings={bindings} fieldLabel={fieldLabel}
+            page={authoring.pages.find(page => page.pageNum === pageNumber)} bindings={bindings} selection={selection} fieldLabel={fieldLabel} text={text}
             revision={pageStates[pageNumber] === 'verified' ? identity : null} displayWidth={displayWidth} />,
-    }), [verifyLayer, pageError, authoring.pages, bindings, fieldLabel, pageStates, identity]);
+    }), [verifyLayer, pageError, authoring.pages, bindings, selection, fieldLabel, text, pageStates, identity]);
     const accessibleItems = authoring.pages.filter(page => pageStates[page.pageNum] === 'verified').flatMap(page =>
         page.items.filter(item => item.text && item.segments.length && !item.readOnlyReason).map(item => ({ ...item, pageNum: page.pageNum })));
     const accessibleItem = accessibleItems.find(item => item.id === accessibleItemId) || accessibleItems[0];
@@ -128,11 +131,11 @@ export default function WordSourceViewer({ authoring, pdfFile, bindings, disable
     return <div className="lw-word-source" ref={root} data-disabled={disabled ? 'true' : undefined}
         onMouseUp={readSelection} onKeyUp={readSelection} onTouchEnd={readSelection}>
         <div className="lw-word__actions" role="group" aria-label={text('selectionMode')}>
-            <SecondaryButton disabled={disabled} aria-pressed={selectionMode === 'range'} onPress={() => setSelectionMode('range')}>{text('replaceSelection')}</SecondaryButton>
-            <SecondaryButton disabled={disabled} aria-pressed={selectionMode === 'insert'} onPress={() => setSelectionMode('insert')}>{text('insertAtBoundary')}</SecondaryButton>
-            {selectionMode === 'insert' && <label>{text('insertionAffinity')}<select value={affinity} disabled={disabled} onChange={event => setAffinity(event.target.value)}>
+            <SegmentedSwitch ariaLabel={text('selectionMode')} value={selectionMode} onChange={setSelectionMode}
+                options={[{ value: 'range', label: text('replaceSelection'), disabled }, { value: 'insert', label: text('insertAtBoundary'), disabled }]} />
+            {selectionMode === 'insert' && <label>{text('insertionAffinity')}<SigningSelect aria-label={text('insertionAffinity')} value={affinity} disabled={disabled} onChange={event => setAffinity(event.target.value)}>
                 <option value="before">{text('beforeSelection')}</option><option value="after">{text('afterSelection')}</option>
-            </select></label>}
+            </SigningSelect></label>}
         </div>
         <p>{text(selectionMode === 'insert' ? 'insertionHelp' : 'visualSelectionHelp')}</p>
         {authoring.diagnostics?.length > 0 && <p>{text('partiallySupportedSource')}</p>}
@@ -144,7 +147,7 @@ export default function WordSourceViewer({ authoring, pdfFile, bindings, disable
                 {!accessibleItems.length && <option value="">{text('authoringLoading')}</option>}
                 {accessibleItems.map((item, index) => <option key={item.id} value={item.id}>{text('pageExcerpt', { page: item.pageNum, number: index + 1 })}: {item.text.slice(0, 80)}</option>)}
             </SigningSelect></label>
-            <textarea ref={accessibleText} key={accessibleItem?.id} readOnly aria-label={text('selectExcerptText')} value={accessibleItem?.text || ''} disabled={disabled || !accessibleItem} />
+            <SimpleTextArea textareaRef={accessibleText} title={text('selectExcerptText')} key={accessibleItem?.id} readOnly aria-label={text('selectExcerptText')} value={accessibleItem?.text || ''} disabled={disabled || !accessibleItem} />
             <SecondaryButton disabled={disabled || !accessibleItem} onPress={chooseAccessibleRange}>{text('confirmTextSelection')}</SecondaryButton>
         </details>
         <PdfViewer pdfFile={pdfFile} spots={[]} signers={[]} authoringLayer={layer} />

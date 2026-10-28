@@ -1,0 +1,71 @@
+{
+  "utc": "2026-10-28T11:50:59.536819+00:00",
+  "base": "596aa5b7eb9b40f8cd5f6927132955ff6caf2175",
+  "candidate": "87e8eaa58830ee9b42772c1619e01814143dc28e",
+  "envHash": "8956b57218c8a0f1378707d9013164e03628724d6f17753bc9ae4bdb6003b7a7",
+  "ownPid": 1537349,
+  "others": [
+    {
+      "id": 0,
+      "pid": 948119,
+      "status": "online",
+      "restarts": 0
+    },
+    {
+      "id": 1,
+      "pid": 1543429,
+      "status": "online",
+      "restarts": 3
+    },
+    {
+      "id": 2,
+      "pid": 948131,
+      "status": "online",
+      "restarts": 0
+    },
+    {
+      "id": 4,
+      "pid": 1550031,
+      "status": "online",
+      "restarts": 101
+    },
+    {
+      "id": 5,
+      "pid": 1642213,
+      "status": "online",
+      "restarts": 10
+    },
+    {
+      "id": 7,
+      "pid": 1145299,
+      "status": "online",
+      "restarts": 1
+    },
+    {
+      "id": 8,
+      "pid": 1386163,
+      "status": "online",
+      "restarts": 0
+    },
+    {
+      "id": 9,
+      "pid": 1038544,
+      "status": "online",
+      "restarts": 0
+    }
+  ],
+  "backupUtc": "2026-10-28T11:41:04.995705+00:00",
+  "result": "BACKEND_UPDATED_HEALTHY",
+  "sourceGuard": {
+    "commit": "87e8eaa58830ee9b42772c1619e01814143dc28e",
+    "files": 103
+  },
+  "newPid": 1896404,
+  "schemaApplied": "2026-10-26_01_signing_word_authoring_renders.sql",
+  "health": {
+    "ok": true
+  },
+  "checkpoint": "/var/lib/melamedia-releases/ashraf-update-20261028",
+  "envPreserved": true,
+  "otherProcessesPreserved": true
+}
