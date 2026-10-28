@@ -39,6 +39,7 @@
   &__advanced, &__overrides { > summary { cursor: pointer; min-block-size: 2.75rem; align-content: center; font-weight: 500; } > label { display: grid; gap: v.$space-2; margin-block: v.$space-3; } }
   &__advanced > .lw-simpleTextArea { inline-size: 100%; margin-block: v.$space-3; }
   &__loading { position: sticky; inset-block-start: v.$space-3; z-index: 5; display: flex; align-items: center; gap: v.$space-3; padding: v.$space-4; margin-block: v.$space-3; background: var(--lw-color-secondary-highlighted, #edf2f7); border-radius: v.$space-2; }
+  &__loading > .lw-simpleLoader { flex: 0 0 auto; inline-size: auto; block-size: auto; z-index: auto; }
   &__range, &__references, &__valueGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: v.$space-5 v.$space-6; margin-block: v.$space-4; align-items: start; }
   &__check { display: flex; align-items: center; gap: v.$space-3; min-block-size: 2.75rem; line-height: 1.5; margin-block: v.$space-3; input { inline-size: 1.125rem; block-size: 1.125rem; flex-shrink: 0; accent-color: var(--lw-color-primary, #2a4365); } }
   &__bindings { margin: v.$space-4 0; padding: 0; list-style: none; li { display: flex; gap: v.$space-4; justify-content: space-between; align-items: center; padding-block: v.$space-4; border-block-end: 1px solid var(--lw-color-secondary-highlighted, #edf2f7); > div { min-inline-size: 0; overflow-wrap: anywhere; } } }
