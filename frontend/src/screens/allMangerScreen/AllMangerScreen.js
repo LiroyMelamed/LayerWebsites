@@ -39,8 +39,8 @@ function mapOfficeUserToRow(u) {
 
 export default function AllMangerScreen() {
     const { t } = useTranslation();
-    const { permissionMode, canAction, scope } = useFirmPermissions() || {};
-    const canManageOfficeUsers = permissionMode !== 'role' || Boolean(canAction?.('officeUsers', 'manage'));
+    const { canAction, scope, loaded, error } = useFirmPermissions() || {};
+    const canManageOfficeUsers = Boolean(loaded && !error && scope && canAction?.('officeUsers', 'manage'));
     const isPlatformAdminSession =
         scope?.isOfficeOwner === true || (typeof window !== "undefined" && localStorage.getItem("isPlatformAdmin") === "true");
 
@@ -131,7 +131,7 @@ export default function AllMangerScreen() {
                 />
             </SimpleScrollView>
 
-            {!isPlatformAdminSession && canManageOfficeUsers && (
+            {canManageOfficeUsers && (
                 <SimpleContainer className="lw-allMangerScreen__footer">
                     <PrimaryButton
                         onPress={() =>
