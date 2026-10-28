@@ -34,7 +34,16 @@ function PageMarks({ host, page, bindings, selection, fieldLabel, text, revision
                         });
                     });
                 });
-                if (boxes.length) next.push({ id: binding.id, label: binding.pending ? text('selectedLocation') : fieldLabel(binding.field), pending: binding.pending, boxes });
+                if (boxes.length) {
+                    const first = boxes[0]; const pageWidth = displayWidth || 600;
+                    const leftRoom = first.left - 6; const rightEdge = first.left + first.width + 6;
+                    const labelStyle = leftRoom >= 120
+                        ? { left: leftRoom, top: first.top, transform: 'translateX(-100%)', maxWidth: leftRoom }
+                        : pageWidth - rightEdge >= 120
+                            ? { left: rightEdge, top: first.top, maxWidth: pageWidth - rightEdge }
+                            : { left: Math.max(0, Math.min(first.left, pageWidth - 150)), top: Math.max(0, first.top - 23) };
+                    next.push({ id: binding.id, label: binding.pending ? text(binding.kind === 'insert' ? 'insertionSelected' : 'selectedLocation') : fieldLabel(binding.field), pending: binding.pending, boxes, labelStyle });
+                }
             });
             setMarks(next);
         };
@@ -43,7 +52,7 @@ function PageMarks({ host, page, bindings, selection, fieldLabel, text, revision
     }, [host, page, bindings, selection, fieldLabel, text, revision, displayWidth]);
     return <div className="lw-word-source__marks" aria-hidden="true">{marks.map(mark => <React.Fragment key={mark.id}>
         {mark.boxes.map((box, index) => <span key={index} className={`lw-word-source__mark${mark.pending ? ' is-pending' : ''}`} style={box} />)}
-        <span className={`lw-word-source__chip${mark.pending ? ' is-pending' : ''}`} style={{ left: Math.max(0, Math.min(mark.boxes[0].left, (displayWidth || 600) - 150)), top: Math.max(0, mark.boxes[0].top - 23) }}>{mark.label}</span>
+        <span className={`lw-word-source__chip${mark.pending ? ' is-pending' : ''}`} style={mark.labelStyle}>{mark.label}</span>
     </React.Fragment>)}</div>;
 }
 
@@ -52,6 +61,7 @@ export default function WordSourceViewer({ authoring, pdfFile, bindings, selecti
     callbacks.current = { onSelect, onError };
     const identity = `${authoring.renderId}:${authoring.mapHash}`;
     const [pageState, setPageState] = useState(() => ({ identity, pages: {} }));
+    const [pageRevisions, setPageRevisions] = useState({});
     const pageStates = pageState.identity === identity ? pageState.pages : {};
     const [selectionMode, setSelectionMode] = useState('range');
     const [affinity, setAffinity] = useState('after');
@@ -91,6 +101,7 @@ export default function WordSourceViewer({ authoring, pdfFile, bindings, selecti
             verifyPageGeometry(page, proxy, authoring.geometryTolerance);
             if (token !== generation.current || !root.current?.contains(host)) return;
             tagVerifiedTextLayer(host, page);
+            setPageRevisions(previous => ({ ...previous, [pageNumber]: (previous[pageNumber] || 0) + 1 }));
             setPageStates(previous => previous[pageNumber] === 'verified' ? previous : ({ ...previous, [pageNumber]: 'verified' }));
         } catch { if (token === generation.current && root.current?.contains(host)) pageError(pageNumber); }
     }, [authoring, pageError, setPageStates]);
@@ -115,8 +126,8 @@ export default function WordSourceViewer({ authoring, pdfFile, bindings, selecti
     const layer = useMemo(() => ({ onPageTextReady: verifyLayer, onPageError: pageError,
         renderPageOverlay: ({ pageNumber, host, displayWidth }) => <PageMarks host={host}
             page={authoring.pages.find(page => page.pageNum === pageNumber)} bindings={bindings} selection={selection} fieldLabel={fieldLabel} text={text}
-            revision={pageStates[pageNumber] === 'verified' ? identity : null} displayWidth={displayWidth} />,
-    }), [verifyLayer, pageError, authoring.pages, bindings, selection, fieldLabel, text, pageStates, identity]);
+            revision={pageStates[pageNumber] === 'verified' ? `${identity}:${pageRevisions[pageNumber] || 0}` : null} displayWidth={displayWidth} />,
+    }), [verifyLayer, pageError, authoring.pages, bindings, selection, fieldLabel, text, pageStates, pageRevisions, identity]);
     const accessibleItems = authoring.pages.filter(page => pageStates[page.pageNum] === 'verified').flatMap(page =>
         page.items.filter(item => item.text && item.segments.length && !item.readOnlyReason).map(item => ({ ...item, pageNum: page.pageNum })));
     const accessibleItem = accessibleItems.find(item => item.id === accessibleItemId) || accessibleItems[0];
