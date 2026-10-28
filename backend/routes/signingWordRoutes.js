@@ -1,9 +1,6 @@
 const { createAppError } = require('../utils/appError');
 
 function conversionStatus(code) {
-    if (code === 'WORD_AUTHORING_BUSY') return 503;
-    if (code === 'WORD_AUTHORING_EXTRACTION_TIMEOUT') return 504;
-    if (code === 'WORD_AUTHORING_EXTRACTION_FAILED') return 500;
     if (/^WORD_CONVERSION_(NOT_CONFIGURED|EXECUTABLE_UNAVAILABLE|BUSY)$/.test(code)) return 503;
     if (code === 'WORD_CONVERSION_TIMEOUT') return 504;
     if (code === 'WORD_CONVERSION_INVALID_DOCX') return 400;
@@ -47,7 +44,7 @@ function createWordStorage() {
 
 // Mounted after the incumbent v2 feature/auth/signing.upload middleware.
 // Dependencies are injectable for focused route and fake-transport tests.
-function createSigningWordRouter({ pool, actorScope, service, storage, convertDocxToPdf, signingBridge, Router } = {}) {
+function createSigningWordRouter({ pool, actorScope, service, storage, convertDocxToPdf, Router } = {}) {
     const router = (Router || require('express').Router)();
     const word = service || require('../services/signingV2/wordTemplates');
     const convert = convertDocxToPdf || require('../lib/wordTemplates/converter').convertDocxToPdf;
@@ -61,7 +58,6 @@ function createSigningWordRouter({ pool, actorScope, service, storage, convertDo
     };
 
     router.get('/', run(async (_req, res, scope) => res.json(await word.list(pool, scope))));
-    router.get('/catalog', run(async (_req, res) => res.json({ catalog: word.fieldCatalog() })));
     router.post('/', run(async (req, res, scope) => res.status(201).json({ source: await word.importSource(pool, scope, req.body || {}, { storage: store() }) })));
     // Fixed routes precede the source identifier route.
     router.get('/previews/:id', run(async (req, res, scope) => res.json({ preview: await word.previewInfo(pool, scope, req.params.id, { storage: store() }) })));
@@ -69,21 +65,8 @@ function createSigningWordRouter({ pool, actorScope, service, storage, convertDo
         const file = await word.previewPdf(pool, scope, req.params.id, { storage: store() });
         res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': 'inline; filename="document.pdf"' }).send(file.bytes);
     }));
-    router.post('/previews/:id/native-draft', run(async (req, res, scope) => {
-        const bridge = signingBridge || require('../services/signingV2/wordSigning');
-        const createDraft = typeof bridge === 'function' ? bridge : bridge.createDraft;
-        res.status(201).json(await createDraft(pool, scope, req.params.id,
-            { ...(req.body || {}), idempotencyKey: req.get('Idempotency-Key') }, { storage: store() }));
-    }));
-    router.get('/authoring-renders/:id', run(async (req, res, scope) => res.json({ authoring: await word.authoringInfo(pool, scope, req.params.id, { storage: store() }) })));
-    router.get('/authoring-renders/:id/pdf', run(async (req, res, scope) => {
-        const result = await word.authoringPdf(pool, scope, req.params.id, { storage: store() });
-        res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': 'inline; filename="word-source.pdf"' }).send(result.bytes);
-    }));
     router.get('/:id', run(async (req, res, scope) => res.json({ source: await word.load(pool, scope, req.params.id, { storage: store() }) })));
     router.put('/:id', run(async (req, res, scope) => res.json({ source: await word.save(pool, scope, req.params.id, req.body || {}, { storage: store() }) })));
-    router.post('/:id/authoring-renders', run(async (req, res, scope) => res.status(201).json({ authoring: await word.authoringRender(pool, scope, req.params.id, req.body || {}, { storage: store(), convertDocxToPdf: convert }) })));
-    router.post('/:id/authoring-renders/:renderId/selections', run(async (req, res, scope) => res.json({ selection: await word.authoringSelection(pool, scope, req.params.id, req.params.renderId, req.body || {}, { storage: store() }) })));
     router.post('/:id/archive', run(async (req, res, scope) => res.json(await word.archive(pool, scope, req.params.id, req.body || {}))));
     router.post('/:id/previews', run(async (req, res, scope) => res.status(201).json({ preview: await word.preview(pool, scope, req.params.id,
         { ...(req.body || {}), idempotencyKey: req.get('Idempotency-Key') }, { storage: store(), convertDocxToPdf: convert }) })));

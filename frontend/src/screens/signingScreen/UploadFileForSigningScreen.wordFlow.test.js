@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import UploadFileForSigningScreen from './UploadFileForSigningScreen';
 import billingApi from '../../api/billingApi';
 import signingFilesApi from '../../api/signingFilesApi';
@@ -247,24 +247,3 @@ test('leaving after dispatch started does not navigate or announce success when 
     expect(mockOpenPopup).not.toHaveBeenCalled();
 });
 
-
-test.each(['inline', 'sticky'])('Word Back %s returns the same ephemeral inputs instead of restarting generic upload', async placement => {
-    const view = await openWordPreview();
-    const context = { clientRecord: { id: 22, label: 'Saved client' }, caseRecord: { id: 12, label: 'Saved case' } };
-    const resumeDraft = { source: { id: 'source' }, name: 'Rental', roles: [], bindings: [], inputs: { clientId: '22', caseId: '12', ...context } };
-    mockLocation = { state: { ...mockLocation.state, wordReturnContext: context, wordResumeDraft: resumeDraft } };
-    view.rerender(<Harness />);
-    const bar = view.container.querySelector(placement === 'sticky' ? '.lw-uploadSigningScreen__stickySendBar' : '.lw-uploadSigningScreen__actionsRow--inline');
-    fireEvent.click(within(bar).getByRole('button', { name: 'signingWord.returnToWord' }));
-    expect(mockNavigate).toHaveBeenCalledWith('/AdminStack/SigningManagerScreen?panel=templates&mode=word', { state: { wordInitialContext: context, wordResumeDraft: resumeDraft } });
-    expect(uploadFileToR2).not.toHaveBeenCalled(); expect(signingFilesApi.uploadFileForSigning).not.toHaveBeenCalled();
-});
-
-test.each(['inline', 'sticky'])('generic PDF Back %s keeps the incumbent manager destination', async placement => {
-    const view = render(<Harness />); await act(async () => {});
-    fireEvent.change(screen.getByLabelText('Choose PDF'), { target: { files: [new File(['%PDF-synthetic'], 'synthetic.pdf', { type: 'application/pdf' })] } });
-    const bar = view.container.querySelector(placement === 'sticky' ? '.lw-uploadSigningScreen__stickySendBar' : '.lw-uploadSigningScreen__actionsRow--inline');
-    fireEvent.click(within(bar).getByRole('button', { name: 'common.back' }));
-    expect(mockNavigate).toHaveBeenCalledWith('/AdminStack/SigningManagerScreen');
-    expect(uploadFileToR2).not.toHaveBeenCalled(); expect(signingFilesApi.uploadFileForSigning).not.toHaveBeenCalled();
-});

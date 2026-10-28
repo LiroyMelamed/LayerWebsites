@@ -10,11 +10,5 @@ const wordTemplatesApi = {
         { headers: { 'Idempotency-Key': idempotencyKey } }),
     pdf: id => signingRequest('get', `${root}/previews/${encodeURIComponent(id)}/pdf`, null, { responseType: 'blob' }),
     previewInfo: id => signingRequest('get', `${root}/previews/${encodeURIComponent(id)}`),
-    authoringRender: (id, payload) => signingRequest('post', `${root}/${encodeURIComponent(id)}/authoring-renders`, payload),
-    authoringInfo: id => signingRequest('get', `${root}/authoring-renders/${encodeURIComponent(id)}`),
-    authoringPdf: id => signingRequest('get', `${root}/authoring-renders/${encodeURIComponent(id)}/pdf`, null, { responseType: 'blob' }),
-    resolveSelection: (id, renderId, payload) => signingRequest('post', `${root}/${encodeURIComponent(id)}/authoring-renders/${encodeURIComponent(renderId)}/selections`, payload),
-    nativeDraft: (id, payload, idempotencyKey) => signingRequest('post', `${root}/previews/${encodeURIComponent(id)}/native-draft`, payload,
-        { headers: { 'Idempotency-Key': idempotencyKey } }),
 };
 export default wordTemplatesApi;

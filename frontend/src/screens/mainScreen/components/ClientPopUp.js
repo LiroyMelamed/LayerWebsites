@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from 'react-router-dom';
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import SimpleInput from "../../../components/simpleComponents/SimpleInput";
 import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
@@ -21,7 +20,6 @@ import SearchInput from "../../../components/specializedComponents/containers/Se
 
 import { parseDateInput, toNativeDateValue } from "../../../functions/date/formatDateForInput";
 import "./ClientPopUp.scss";
-import { AdminStackName, SigningManagerScreenName } from '../../../navigation/screenPaths';
 
 export default function ClientPopup({
     clientDetails,
@@ -35,7 +33,6 @@ export default function ClientPopup({
     style: _style,
 }) {
     const { t } = useTranslation();
-    const navigate = useNavigate();
     const { canAction } = useFirmPermissions() || { canAction: () => false };
     const signingAvailable = useSigningV2Available();
     const [signingOpen, setSigningOpen] = useState(false);
@@ -247,14 +244,6 @@ export default function ClientPopup({
     };
 
     const persistedClientId = selectedClient?.UserId || selectedClient?.userid;
-    const openWordDocument = () => {
-        const id = Number(persistedClientId);
-        if (!Number.isSafeInteger(id) || id <= 0) return;
-        // Selected identity is persisted; current unsaved profile fields are not copied.
-        const initialContext = { clientRecord: { id, label: String(selectedClient?.name || selectedClient?.Name || '') } };
-        closePopUpFunction?.();
-        navigate(`${AdminStackName}${SigningManagerScreenName}?panel=templates&mode=word`, { state: { wordInitialContext: initialContext } });
-    };
     if (signingOpen) return <ClientSigningFlow clientId={persistedClientId} onBack={() => setSigningOpen(false)} />;
 
     return (
@@ -359,10 +348,6 @@ export default function ClientPopup({
                 {persistedClientId && signingAvailable && canAction('signing', 'upload') && canAction('clients', 'view') && <SecondaryButton
                     onPress={() => setSigningOpen(true)} disabled={isPerforming || isPerformingDeleteClient}>
                     {t('signingV2.compose.clientContext.send')}
-                </SecondaryButton>}
-                {persistedClientId && signingAvailable && canAction('signing', 'upload') && canAction('clients', 'view') && <SecondaryButton
-                    onPress={openWordDocument} disabled={isPerforming || isPerformingDeleteClient}>
-                    {t('signingWord.openFromClient')}
                 </SecondaryButton>}
                 <SimpleContainer className="lw-clientPopup__actions">
                     {selectedClient && (

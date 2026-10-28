@@ -9,11 +9,8 @@ import wordApi from '../../../api/wordTemplatesApi';
 jest.mock('../../../api/signingTemplatesApi', () => ({ __esModule: true, default: { contacts: jest.fn() } }));
 jest.mock('../../../api/signingPackagesApi', () => ({ __esModule: true, default: { cases: jest.fn() } }));
 jest.mock('../../../api/wordTemplatesApi', () => ({ __esModule: true, default: { list: jest.fn(), load: jest.fn(), preview: jest.fn(), pdf: jest.fn() } }));
-jest.mock('./wordAuthoringSelection', () => ({ ...jest.requireActual('./wordAuthoringSelection'), verifyPdfBlob: jest.fn(blob => Promise.resolve(blob)) }));
 jest.mock('../../../utils/fileUploadUtils', () => ({ uploadFileToR2: jest.fn() }));
-jest.mock('../templates/useSigningLocale', () => () => ({ direction: 'rtl', number: String, t: (key, values = {}) => key.replace(/^signingWord\./, '') + (values.role ? ` ${values.role}` : '') + (values.field ? ` ${values.field}` : '') }));
-jest.mock('../../../components/styledComponents/buttons/TertiaryButton', () => ({ children, onPress, disabled }) => <button disabled={disabled} onClick={onPress}>{children}</button>);
-jest.mock('../../../components/simpleComponents/SimpleInput', () => ({ title, value, onChange, disabled }) => <label>{title}<input value={value} disabled={disabled} onChange={onChange} /></label>);
+jest.mock('../templates/useSigningLocale', () => () => ({ direction: 'rtl', number: String, t: (key, values = {}) => key.replace(/^signingWord\./, '') + (values.role ? ` ${values.role}` : '') }));
 jest.mock('../../../components/ui/StatusNotice', () => ({ children }) => <div role="alert">{children}</div>);
 jest.mock('../../../components/simpleComponents/SimplePopUp', () => ({ children }) => <div role="dialog">{children}</div>);
 jest.mock('../../../components/styledComponents/popups/ConfirmationDialog', () => () => null);
@@ -69,11 +66,10 @@ test('primary context selects clients only while role selection includes manager
     const contacts = [{ userId: 41, name: 'Office manager', role: 'Admin', email: 'manager@example.invalid' }, { userId: 42, name: 'Tenant client', role: 'Client', email: 'client@example.invalid' }, { userId: 43, name: 'Staff member', role: 'Staff', phone: '0000000000' }];
     templatesApi.contacts.mockResolvedValue({ contacts }); packagesApi.cases.mockResolvedValue({ cases: [] });
     const source = { id: 's', name: 'Rental', version: 1, sourceHash: 'sourcehash', bindingsHash: 'mappinghash', roles: [{ key: 'tenant', label: 'Tenant' }],
-        bindings: [{ id: 'b', field: 'client.fullName', required: true, part: 'word/document.xml', paragraphId: 'p', start: 0, end: 2 },
-            { id: 'role-b', field: 'role.tenant.fullName', required: true, part: 'word/document.xml', paragraphId: 'p', start: 2, end: 4 }],
-        model: { parts: [{ name: 'word/document.xml', paragraphs: [{ id: 'p', text: '____', editable: true, blanks: [{ start: 0, end: 2 }, { start: 2, end: 4 }] }] }] } };
+        bindings: [{ id: 'b', field: 'client.fullName', required: true, part: 'word/document.xml', paragraphId: 'p', start: 0, end: 2 }],
+        model: { parts: [{ name: 'word/document.xml', paragraphs: [{ id: 'p', text: '__', editable: true, blanks: [{ start: 0, end: 2 }] }] }] } };
     wordApi.list.mockResolvedValue({ sources: [source], converterAvailable: true }); wordApi.load.mockResolvedValue({ source });
-    wordApi.preview.mockResolvedValue({ preview: { id: 'p', sourceId: source.id, sourceVersion: source.version, pdfHash: 'f'.repeat(64), requiresFreshSigningGeometry: true } }); wordApi.pdf.mockResolvedValue(new Blob(['%PDF-final'], { type: 'application/pdf' }));
+    wordApi.preview.mockResolvedValue({ preview: { id: 'p', requiresFreshSigningGeometry: true } }); wordApi.pdf.mockResolvedValue(new Blob(['pdf'], { type: 'application/pdf' }));
     render(<WordTemplatesWorkspace onBack={jest.fn()} onContinue={jest.fn()} />);
     await waitFor(() => expect(screen.getByRole('option', { name: 'Rental' })).toBeInTheDocument()); fireEvent.change(screen.getByLabelText('library'), { target: { value: 's' } });
     await waitFor(() => expect(screen.getByLabelText('clientId')).toBeInTheDocument());
@@ -86,18 +82,15 @@ test('primary context selects clients only while role selection includes manager
     await waitFor(() => expect(screen.getByText(/Office manager · contactManager/)).toBeInTheDocument());
     expect(screen.getByText(/Tenant client · contactClient/)).toBeInTheDocument(); expect(screen.getByText(/Staff member · contactStaff/)).toBeInTheDocument();
     expect(templatesApi.contacts).toHaveBeenLastCalledWith('Office'); fireEvent.click(screen.getByText(/Office manager · contactManager/));
-    fireEvent.click(screen.getByRole('button', { name: 'preview' })); await waitFor(() => expect(screen.getByTestId('final-pdf')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('preview')); await waitFor(() => expect(screen.getByTestId('final-pdf')).toBeInTheDocument());
     expect(wordApi.preview).toHaveBeenLastCalledWith('s', expect.objectContaining({ inputs: { clientId: 42, roleClientIds: { tenant: 41 }, manualValues: {} } }), expect.any(String));
     fireEvent.change(screen.getByLabelText('clientId'), { target: { value: 'New external person' } });
     expect(screen.getByLabelText('clientId')).toHaveValue('New external person'); expect(screen.queryByTestId('final-pdf')).not.toBeInTheDocument(); expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:human-selection');
     // Explicit manual mode clears the query and saved ID without creating a DB contact.
-    fireEvent.click(screen.getByText('withoutClient')); expect(screen.getByLabelText('clientId')).toHaveValue('');
-    expect(screen.getByRole('button', { name: 'preview' })).toBeDisabled();
-    fireEvent.change(screen.getByLabelText('fieldLabel fields.fullName'), { target: { value: 'Document-only client' } });
-    fireEvent.click(screen.getByRole('button', { name: 'preview' })); await waitFor(() => expect(wordApi.preview).toHaveBeenCalledTimes(2));
+    fireEvent.click(screen.getAllByText('manualPerson')[0]); expect(screen.getByLabelText('clientId')).toHaveValue('');
+    fireEvent.click(screen.getByText('preview')); await waitFor(() => expect(wordApi.preview).toHaveBeenCalledTimes(2));
     expect(wordApi.preview.mock.calls[1][1].inputs).not.toHaveProperty('clientId');
     expect(wordApi.preview.mock.calls[1][1].inputs.roleClientIds).toEqual({ tenant: 41 });
-    expect(wordApi.preview.mock.calls[1][1].inputs.manualValues).toEqual({ 'client.fullName': 'Document-only client' });
 });
 
 test('human case search shows names without numeric IDs, preserves the selection echo and ignores stale results after clearing', async () => {

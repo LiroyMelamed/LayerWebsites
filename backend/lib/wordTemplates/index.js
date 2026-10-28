@@ -12,7 +12,11 @@ const CONTENT = 'http://schemas.openxmlformats.org/package/2006/content-types';
 const MAIN_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml';
 const STORY = /^word\/(?:document|header[1-9][0-9]*|footer[1-9][0-9]*)\.xml$/u;
 const MAX_BINDINGS = 1000;
-const FIELD_NAMES = Object.freeze(require('./catalog').DATA_FIELDS.map(field => field.key));
+const FIELD_NAMES = Object.freeze([
+    'client.fullName', 'client.companyName', 'client.identityNumber', 'client.companyNumber', 'client.address', 'client.email', 'client.phone',
+    'case.reference', 'case.title', 'case.address', 'case.amount', 'case.date',
+    'office.name', 'office.address', 'office.email', 'office.phone',
+]);
 const UNSUPPORTED = new Set(['ins', 'del', 'moveFrom', 'moveTo', 'fldSimple', 'fldChar', 'instrText', 'sdt', 'txbxContent', 'altChunk', 'object']);
 const hash = data => crypto.createHash('sha256').update(data).digest('hex');
 const xmlEscape = value => value.replace(/&/gu, '&amp;').replace(/</gu, '&lt;').replace(/>/gu, '&gt;').replace(/"/gu, '&quot;').replace(/'/gu, '&apos;');
@@ -176,30 +180,10 @@ function createBinding(model, spec) {
     if (!spec || !/^[A-Za-z0-9_-]{1,64}$/u.test(spec.id || '') || !validField(spec.field)
         || (spec.required !== undefined && typeof spec.required !== 'boolean')) reject('INVALID_BINDING');
     const p = findParagraph(model, spec.part, spec.paragraphId);
-    if (spec.kind === 'insert') {
-        const offset = spec.start;
-        if (!Number.isInteger(offset) || spec.end !== offset || offset < 0 || offset > p.text.length || !p.text.length
-            || !['before', 'after'].includes(spec.affinity)) reject('INVALID_INSERTION_ANCHOR');
-        const spans = p.spans ? p.spans.filter(s => s.editable) : p.selectionRanges;
-        const span = insertionSpan(spans, offset, spec.affinity);
-        if (!span) reject('UNSUPPORTED_INSERTION_ANCHOR');
-        // Reuse the range boundary/surrogate checks without accepting an empty
-        // paragraph or inventing a location from a PDF rectangle.
-        if (offset && /[\uD800-\uDBFF]/u.test(p.text[offset - 1]) && /[\uDC00-\uDFFF]/u.test(p.text[offset] || '')) reject('INVALID_INSERTION_ANCHOR');
-        return { id: spec.id, kind: 'insert', affinity: spec.affinity, sourceHash: model.sourceHash, part: spec.part,
-            paragraphId: p.id, paragraphHash: p.textHash, start: offset, end: offset,
-            selectedTextHash: hash(''), field: spec.field, required: spec.required !== false };
-    }
-    if (spec.kind !== undefined && spec.kind !== 'range') reject('INVALID_BINDING');
     rangeValid(p, spec.start, spec.end);
     return { id: spec.id, sourceHash: model.sourceHash, part: spec.part, paragraphId: p.id,
         paragraphHash: p.textHash, start: spec.start, end: spec.end,
         selectedTextHash: hash(p.text.slice(spec.start, spec.end)), field: spec.field, required: spec.required !== false };
-}
-function insertionSpan(spans, offset, affinity) {
-    const candidates = spans.filter(span => span.start <= offset && offset <= span.end);
-    if (affinity === 'before') return [...candidates].reverse().find(span => span.start < offset);
-    return candidates.find(span => span.end > offset);
 }
 function materializeDocx(buffer, options) {
     const { entries, model } = load(buffer);
@@ -218,9 +202,7 @@ function materializeDocx(buffer, options) {
         const p = findParagraph(model, binding.part, binding.paragraphId);
         const key = `${binding.part}:${p.id}`;
         const occupied = ranges.get(key) || [];
-        if (occupied.some(r => binding.kind === 'insert' || r.kind === 'insert'
-            ? binding.start <= r.end && binding.end >= r.start
-            : binding.start < r.end && binding.end > r.start)) reject('OVERLAPPING_BINDINGS');
+        if (occupied.some(r => binding.start < r.end && binding.end > r.start)) reject('OVERLAPPING_BINDINGS');
         occupied.push(binding); ranges.set(key, occupied);
         const supplied = Object.hasOwn(values, binding.field) ? values[binding.field] : undefined;
         if (supplied === undefined || supplied === null || (typeof supplied === 'string' && !supplied.trim())) {
@@ -230,14 +212,6 @@ function materializeDocx(buffer, options) {
         if (value.length > 10000 || /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\r\n\t]/u.test(value)
             || /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/u.test(value)) reject('INVALID_FIELD_VALUE', { bindingId: binding.id });
         const edits = replacements.get(binding.part) || [];
-        if (binding.kind === 'insert') {
-            const span = insertionSpan(p.spans.filter(s => s.editable), binding.start, binding.affinity);
-            if (!span) reject('UNSUPPORTED_INSERTION_ANCHOR');
-            edits.push({ span, from: binding.start - span.start, to: binding.start - span.start, value });
-            replacements.set(binding.part, edits);
-            manifest.push({ bindingId: binding.id, field: binding.field, valueHash: hash(value), kind: 'insert' });
-            continue;
-        }
         let first = true;
         for (const span of p.spans.filter(s => s.editable && binding.start < s.end && binding.end > s.start)) {
             edits.push({ span, from: Math.max(binding.start, span.start) - span.start,

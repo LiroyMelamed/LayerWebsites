@@ -3,7 +3,7 @@ import TertiaryButton from '../../../components/styledComponents/buttons/Tertiar
 import StatusNotice from '../../../components/ui/StatusNotice';
 import useSigningLocale from './useSigningLocale';
 
-export default function ClientSendContext({ api, initialClientId, value, onChange, onPending, locked = false }) {
+export default function ClientSendContext({ api, initialClientId, value, onChange, onPending }) {
     const { t, errorMessage } = useSigningLocale();
     const [busy, setBusy] = useState(!!initialClientId);
     const [error, setError] = useState(null);
@@ -36,9 +36,9 @@ export default function ClientSendContext({ api, initialClientId, value, onChang
         {busy && <p role="status">{t('signingV2.compose.clientContext.loading')}</p>}
         {value && <><p><strong>{t('signingV2.compose.clientContext.selected')}</strong> <bdi>{value.name}</bdi></p>
             <p className="lw-signingCompose__hintLine">{t('signingV2.compose.clientContext.help')}</p>
-            {!locked && <TertiaryButton onPress={clear}>{t('signingV2.compose.clientContext.remove')}</TertiaryButton>}</>}
+            <TertiaryButton onPress={clear}>{t('signingV2.compose.clientContext.remove')}</TertiaryButton></>}
         {error && <StatusNotice embedded><p>{errorMessage(error)}</p>
             <TertiaryButton onPress={load}>{t('common.retry')}</TertiaryButton>
-            {!locked && <TertiaryButton onPress={clear}>{t('signingV2.compose.clientContext.without')}</TertiaryButton>}</StatusNotice>}
+            <TertiaryButton onPress={clear}>{t('signingV2.compose.clientContext.without')}</TertiaryButton></StatusNotice>}
     </div>;
 }
