@@ -7,7 +7,8 @@ let mockPdfReadyCallbacks = [];
 
 jest.mock('../../../api/wordTemplatesApi', () => ({ __esModule: true, default: { list: jest.fn(), create: jest.fn(), load: jest.fn(), save: jest.fn(), preview: jest.fn(), pdf: jest.fn(), authoringRender: jest.fn(), authoringPdf: jest.fn(), resolveSelection: jest.fn() } }));
 jest.mock('./wordAuthoringSelection', () => ({ ...jest.requireActual('./wordAuthoringSelection'), verifyPdfBlob: jest.fn(blob => Promise.resolve(blob)) }));
-jest.mock('./WordSourceViewer', () => ({ onSelect, authoring }) => <div data-testid="original-pdf">
+jest.mock('./WordSourceViewer', () => ({ onSelect, onError, authoring }) => <div data-testid="original-pdf">
+    <button onClick={() => onError('authoringMismatch')}>failPage</button>
     <button onClick={() => onSelect({ kind: 'range', start: { itemId: 'p1-i0', offset: 7 }, end: { itemId: 'p1-i0', offset: 13 } })}>chooseBlank</button>
     <button onClick={() => onSelect({ kind: 'insert', start: { itemId: authoring.pages[0].items[0].id,
         offset: authoring.pages[0].items[0].text.length }, affinity: 'before' })}>chooseEndInsertion</button>
@@ -19,7 +20,7 @@ jest.mock('./WordSourceViewer', () => ({ onSelect, authoring }) => <div data-tes
             item.text.length, item.text.length, 'insert', 'after'));
     }}>chooseEndCaret</button>
 </div>);
-jest.mock('./WordDataFieldPanel', () => ({ value, onChange, definitions }) => <label>field<select value={value} onChange={event => onChange(event.target.value)}>{definitions.map(item => <option key={item.key} value={item.key}>{item.key}</option>)}</select></label>);
+jest.mock('./WordDataFieldPanel', () => ({ value, onChange, definitions, disabled }) => <label>field<select disabled={disabled} value={value} onChange={event => onChange(event.target.value)}>{definitions.map(item => <option key={item.key} value={item.key}>{item.key}</option>)}</select></label>);
 jest.mock('../../../utils/fileUploadUtils', () => ({ uploadFileToR2: jest.fn() }));
 jest.mock('../templates/useSigningLocale', () => () => ({ direction: 'rtl', number: String, t: (key, values = {}) => key.replace(/^signingWord\./, '') + (values.role ? ` ${values.role}` : '') + (values.field ? ` ${values.field}` : '') }));
 jest.mock('../templates/SigningBackButton', () => ({ onPress, children }) => <button onClick={onPress}>{children}</button>);
@@ -398,4 +399,58 @@ test.each([
     expect(within(list).queryByText('beforeSelection')).not.toBeInTheDocument();
     expect(within(list).queryByText('afterSelection')).not.toBeInTheDocument();
     expect(api.preview).not.toHaveBeenCalled();
+});
+
+test('a data-field click adds the chosen field to the verified selection in one action', async () => {
+    const onDraftChange = jest.fn(); await open(source(), { onDraftChange }, true);
+    fireEvent.click(screen.getByText('chooseBlank'));
+    await waitFor(() => expect(screen.getByText('bind')).toBeEnabled());
+    fireEvent.change(screen.getByLabelText('field'), { target: { value: 'client.identityNumber' } });
+    expect(screen.getByText('fieldAdded')).toBeInTheDocument();
+    expect(screen.getByText('bind')).toBeDisabled();
+    expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: true,
+        bindings: [expect.objectContaining({ field: 'client.identityNumber', start: 7, end: 13, authoringRenderId: 'render-a' })] }));
+    expect(api.save).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText('field'), { target: { value: 'client.fullName' } });
+    expect(screen.getByText('selectLocationFirst')).toBeInTheDocument();
+    expect(screen.getAllByText('removeBinding')).toHaveLength(1);
+});
+
+test('opening a slow template keeps a visible loading status through source loading and authoring', async () => {
+    let loaded, prepared;
+    api.list.mockResolvedValue({ sources: [source()], converterAvailable: true });
+    api.load.mockImplementation(() => new Promise(resolve => { loaded = resolve; }));
+    const prepare = api.authoringRender.getMockImplementation();
+    api.authoringRender.mockImplementation((...args) => new Promise(resolve => { prepared = async () => resolve(await prepare(...args)); }));
+    render(<WordTemplatesWorkspace />); fireEvent.click(screen.getByText('manageTemplates'));
+    await screen.findByRole('option', { name: source().name });
+    fireEvent.change(screen.getByLabelText('library'), { target: { value: source().id } });
+    expect(screen.getByRole('status')).toHaveTextContent('loadingSource');
+    expect(screen.getByRole('status')).toHaveAttribute('aria-busy', 'true');
+    await act(async () => loaded({ source: source() }));
+    expect(screen.getByRole('status')).toHaveTextContent('authoringLoading');
+    await act(async () => prepared());
+    await screen.findByTestId('original-pdf');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+});
+
+
+test('field controls wait for verified selection and a page error cancels the pending selection status', async () => {
+    let resolve;
+    const implementation = api.resolveSelection.getMockImplementation();
+    api.resolveSelection.mockImplementation((...args) => new Promise(done => { resolve = async () => done(await implementation(...args)); }));
+    await open(source(), {}, true);
+    fireEvent.click(screen.getByText('chooseBlank'));
+    expect(screen.getByText('resolvingSelection')).toBeInTheDocument();
+    expect(screen.getByLabelText('field')).toBeDisabled();
+    await act(async () => resolve());
+    expect(screen.getByLabelText('field')).toBeEnabled();
+    expect(screen.queryByText('resolvingSelection')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('chooseBlank'));
+    fireEvent.click(screen.getByText('failPage'));
+    expect(screen.queryByText('resolvingSelection')).not.toBeInTheDocument();
+    await act(async () => resolve());
+    expect(screen.getByText('bind')).toBeDisabled();
+    expect(screen.getByLabelText('field')).toBeDisabled();
+    expect(screen.queryByText('removeBinding')).not.toBeInTheDocument();
 });

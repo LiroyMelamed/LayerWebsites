@@ -28,6 +28,7 @@
   &__library { display: grid; gap: v.$space-3; max-inline-size: 42rem; > label { display: grid; gap: v.$space-2; } }
   &__section { border-block-start: 1px solid var(--lw-color-secondary-highlighted, #edf2f7); margin-block-start: v.$space-8; padding-block-start: v.$space-6; min-inline-size: 0; > .lw-simpleInput, > .lw-fileUploadBox { max-inline-size: 42rem; margin-block: v.$space-4; } }
   &__role, &__actions { display: flex; align-items: end; flex-wrap: wrap; gap: v.$space-3; margin-block: v.$space-4; }
+  &__actions > label { display: grid; gap: v.$space-2; min-inline-size: 12rem; }
   &__role > .lw-simpleInput { flex: 1 1 16rem; }
   &__mappingLayout { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(16rem, 1fr); gap: v.$space-6; margin-block: v.$space-4; align-items: start; }
   &__document { min-inline-size: 0; max-block-size: 36rem; overflow-y: auto; scrollbar-color: var(--lw-color-primary, #2a4365) var(--lw-color-secondary-highlighted, #edf2f7); border: 1px solid var(--lw-color-secondary-highlighted, #edf2f7); border-radius: .5rem; padding: v.$space-4; background: var(--lw-color-white, #fff); }
@@ -36,8 +37,9 @@
   &__mappingForm { display: grid; gap: v.$space-4; min-inline-size: 0; > label:not(.lw-word__check) { display: grid; gap: v.$space-2; } }
   &__selected { padding: v.$space-3; background: var(--lw-color-secondary-highlighted, #edf2f7); min-block-size: 2.75rem; border-radius: .5rem; box-sizing: border-box; overflow-wrap: anywhere; white-space: pre-wrap; }
   &__advanced, &__overrides { > summary { cursor: pointer; min-block-size: 2.75rem; align-content: center; font-weight: 500; } > label { display: grid; gap: v.$space-2; margin-block: v.$space-3; } }
-  &__advanced > textarea { display: block; inline-size: 100%; box-sizing: border-box; min-block-size: 6rem; padding: v.$space-3; margin-block: v.$space-3;
-    border: 1px solid var(--lw-color-primary, #2a4365); border-radius: .25rem; color: inherit; background: var(--lw-color-white, #fff); }
+  &__advanced > .lw-simpleTextArea { inline-size: 100%; margin-block: v.$space-3; }
+  &__loading { position: sticky; inset-block-start: v.$space-3; z-index: 5; display: flex; align-items: center; gap: v.$space-3; padding: v.$space-4; margin-block: v.$space-3; background: var(--lw-color-secondary-highlighted, #edf2f7); border-radius: v.$space-2; }
+  &__loading > .lw-simpleLoader { flex: 0 0 auto; inline-size: auto; block-size: auto; z-index: auto; }
   &__range, &__references, &__valueGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: v.$space-5 v.$space-6; margin-block: v.$space-4; align-items: start; }
   &__check { display: flex; align-items: center; gap: v.$space-3; min-block-size: 2.75rem; line-height: 1.5; margin-block: v.$space-3; input { inline-size: 1.125rem; block-size: 1.125rem; flex-shrink: 0; accent-color: var(--lw-color-primary, #2a4365); } }
   &__bindings { margin: v.$space-4 0; padding: 0; list-style: none; li { display: flex; gap: v.$space-4; justify-content: space-between; align-items: center; padding-block: v.$space-4; border-block-end: 1px solid var(--lw-color-secondary-highlighted, #edf2f7); > div { min-inline-size: 0; overflow-wrap: anywhere; } } }
@@ -87,7 +89,7 @@
   [data-main-rotation='270'] { transform: rotate(270deg) translateX(-100%); }
   &[data-disabled='true'] .textLayer { pointer-events: none; user-select: none; }
   &__marks { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
-  &__mark { position: absolute; border: 1px solid var(--lw-color-primary, #2a4365); box-sizing: border-box; }
+  &__mark { position: absolute; border: 1px solid var(--lw-color-primary, #2a4365); box-sizing: border-box; background: color-mix(in srgb, var(--lw-color-primary, #2a4365) 18%, transparent); min-inline-size: 3px; &.is-pending { border-style: dashed; background: color-mix(in srgb, var(--lw-color-primary, #2a4365) 28%, transparent); } }
   &__chip { position: absolute; white-space: nowrap; max-inline-size: 16rem; overflow: hidden; text-overflow: ellipsis; font-size: .75rem; line-height: 1.4;
-    padding-inline: v.$space-2; border: 1px solid var(--lw-color-primary, #2a4365); border-radius: .25rem; background: var(--lw-color-white, #fff); color: var(--lw-color-primary, #2a4365); }
+    padding-inline: v.$space-2; border: 1px solid var(--lw-color-primary, #2a4365); border-radius: .25rem; background: var(--lw-color-primary, #2a4365); color: var(--lw-color-white, #fff); }
 }
