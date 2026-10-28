@@ -1,0 +1,97 @@
+{
+  "at": "2026-10-27T04:56:15.754522+00:00",
+  "status": "LOCAL_SOURCE_QUALIFIED_NOT_PUBLISHED_OR_BROWSER_VERIFIED",
+  "head": "e1fcb822d6d17f7c8f07e35ab13beeaad876e92d",
+  "files": {
+    "frontend/src/screens/signingScreen/templates/TemplateBuilder.js": "2e7c339518cdf012ab1d2f8d7daf088ae8ceef0cd865d6b358e6332fbd8a33ab",
+    "frontend/src/screens/signingScreen/templates/templates.scss": "7961e93ea83224d0675969de87459358f20d5347f23b942c2c27742585fbdf22",
+    "frontend/src/screens/signingScreen/templates/NativeTemplateBuilder.test.js": "b78e2dacf2d4da3def278a2799af2e11421521d2455c8d9365259145b691bbf4",
+    "frontend/src/components/specializedComponents/signFiles/signatureSpots/SignatureSpot.test.js": "64fe6162739811a28daa35753c8871f1a46a4aa86e19cd4b4e9bb00b96c7e3f3",
+    "frontend/src/i18n/locales/he.json": "f30443c48054d6206f8b9d506f1e473a4d20dfc7c917693c5e6174521a2c2b11",
+    "frontend/src/i18n/locales/ar.json": "e24a02fb0da344ebe46de512db247a07a6348ea15e55a51aeb63a4829f82d6e5",
+    "frontend/src/i18n/locales/en.json": "5eb21e0b6b15f5e47737c005ab7f2a7dd2343464d5f6d7c622afb78447d1c4d4"
+  },
+  "testReceipt": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-ux-fix-20261026/frontend-regression-20261027T045342Z.json",
+    "sha256": "31d01d90eb2b73779f9c29bd1c99775c85dd24a21d777a2af5a46e7da4d30524",
+    "testsPassed": 56,
+    "suitesPassed": 5,
+    "sourceStable": true
+  },
+  "mechanicalDetector": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-mobile-polish-20261027/IMPECCABLE-DETECTOR01.json",
+    "sha256": "18ac0147a09ff67b70d6097c9331d4dea8de1e4bb697633cf0c58b598ec37d6f",
+    "exitCode": 0,
+    "findings": []
+  },
+  "localeKeysAdded": {
+    "he": [
+      "chooseField",
+      "chooseFieldPlaceholder",
+      "fieldNarrower",
+      "fieldPage",
+      "fieldShorter",
+      "fieldSize",
+      "fieldSizeHelp",
+      "fieldTaller",
+      "fieldWider",
+      "moveField",
+      "moveFieldDown",
+      "moveFieldLeft",
+      "moveFieldRight",
+      "moveFieldUp"
+    ],
+    "ar": [
+      "chooseField",
+      "chooseFieldPlaceholder",
+      "fieldNarrower",
+      "fieldPage",
+      "fieldShorter",
+      "fieldSize",
+      "fieldSizeHelp",
+      "fieldTaller",
+      "fieldWider",
+      "moveField",
+      "moveFieldDown",
+      "moveFieldLeft",
+      "moveFieldRight",
+      "moveFieldUp"
+    ],
+    "en": [
+      "chooseField",
+      "chooseFieldPlaceholder",
+      "fieldNarrower",
+      "fieldPage",
+      "fieldShorter",
+      "fieldSize",
+      "fieldSizeHelp",
+      "fieldTaller",
+      "fieldWider",
+      "moveField",
+      "moveFieldDown",
+      "moveFieldLeft",
+      "moveFieldRight",
+      "moveFieldUp"
+    ]
+  },
+  "implementation": [
+    "Native-only full field selector and Edit action in incumbent sticky role toolbar; full role/slot/type/custom label/page/required information uses actual selected field.",
+    "Four44px platform SVG-arrow buttons move8 canonical units with fresh measured-page clamp; left/right remain physical in RTL. Disabled without honest rendered canvas.",
+    "Narrow native canvas hides overlapping badges/remove/resize chrome and neutralizes only native inherited CSS minimum; exact field rectangle/role color/body drag/selected outline retained.",
+    "Collapsed field-size controls in existing inspector retain width/height editing through44px platform buttons, legacy size bounds where page room permits; each action preserves the other axis and anchor; minus never grows below-standard small dimensions.",
+    "All non-native controls, pointer/drag/resize production handlers, adapter, PdfViewer, signFiles.scss, geometry and manifests unchanged."
+  ],
+  "tests": [
+    "Full selected role/slot/label and physical nudge/clamp/save/reopen in he/ar/en",
+    "Honest PDF measurement missing/lost/recovered disables movement",
+    "Standard min/max size bounds with metadata and save/reopen retention",
+    "Small24unitcheckbox edge: orthogonal axis/anchor unchanged, minus never increases, page edge wins",
+    "Four direct SignatureSpot actual-handler pointer/tap/resize/remove cases",
+    "Incumbent PdfViewer, legacy TemplateBuilder and platform SigningSelect suites"
+  ],
+  "limits": [
+    "Working-source qualification only. Root owns protected103 manifest, commits, source rebind, independent review, build/deploy and actual browser verification.",
+    "Mouse/pointer and synthetic measured fixtures are not physical-touch acceptance.",
+    "Test logs retain incumbent React act deprecation/asynchronous PDF-loading warnings; no warning-free claim."
+  ]
+}

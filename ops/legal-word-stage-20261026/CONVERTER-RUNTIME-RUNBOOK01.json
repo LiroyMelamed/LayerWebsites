@@ -1,0 +1,7 @@
+{
+  "at": "2026-10-26T14:37:22.503081+00:00",
+  "status": "CURRENT_FOUR_CONSUMER_RETENTION_RUNBOOK",
+  "paragraph": "26 October 2026: /opt/melamedia-qa-word-converter-20261023/managed-soffice.py is an active production dependency for the APIs in /root/AshrafEssa/backend, /root/LayerWebsites/backend and /root/MorLevi/backend, each with WORD_TEMPLATE_MAX_CONCURRENT=1, and remains the QA converter for /root/Melamedia/backend with default concurrency 2. Preserve both /opt/melamedia-qa-word-converter-20261023 and /root/qa-new-features-20261023-converter, their recovery instructions and coordination material while any consumer environment references this managed path or the wrapper depends on these resources. Review on 2026-11-02; this date is a review trigger and never an expiry or retirement permission. Retirement requires a reviewed replacement and verified migration of every active consumer and wrapper dependency. The scoped action here appends retention metadata only; it does not change runtime configuration, provider controls, sandbox/rootfs/jobs, scripts, services or permissions, and authorizes no cleanup.",
+  "scope": "Current source/ops preservation instructions only. No marker append or remote mutation claimed.",
+  "retentionPacket": "CONVERTER-RETENTION-PACKET01.json"
+}

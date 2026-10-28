@@ -1,0 +1,41 @@
+{
+  "at": "2026-10-27T08:23:46.121038+00:00",
+  "result": "PASS_ACTUAL_SECOND_SAVED_PROFILE_EIGHT_AUTOMATIC_VALUES",
+  "qaSource": "0990866b749e44f3f64f6a8bbe85fbe006747e67",
+  "bundle": "main.e03a8128.js",
+  "backendRuntime": "fb0d6c22640f8b01911a9c6491ec856c4f5ab71a",
+  "entry": "Second synthetic card→Word, separate session; no claim successfulA→Bprimaryswitch in sameform (that is covered locally; actualsameform change to missingUser03 separately).",
+  "cardExpected": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/AUTO-B-CARD-EXPECTED17.json",
+    "sha256": "9da4db4438a9e5ea161372e6f276f59c6d6295a7644e97ffdf9c13231b69637c"
+  },
+  "preInput": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/AUTO-B-PREVIEW-INPUT17.txt",
+    "sha256": "68fe0004d8367231e0e9b65b24289b4d584eae4bf63c8e3221d729797fa3d1ca"
+  },
+  "resultDom": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/AUTO-B-RESULT-DOM17.txt",
+    "sha256": "4d88ca190b6c2128bce0c10e05ff47f5af00f229236b8b0684b7c5b86ae8c2c1"
+  },
+  "screenshot": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/auto-B-pdf-complete17.png",
+    "sha256": "316210aa9bc3779fcaa4658378302e7a76e3562dc19568d195808bb154513cba"
+  },
+  "matches": {
+    "fullName": "QA-NF-20261023-R2 landlord",
+    "identity": "001234561",
+    "companyName": "QA-NF-20261023-R2 Company 1",
+    "companyNumber": "005123451",
+    "address": "1 QA Street, Unit 2, QA City, 00100, IL",
+    "Tenant": "QA-NF-20261023-R2 tenant Updated",
+    "Landlord": "QA-NF-20261023-R2 landlord",
+    "Lawyer": "QA-NF-20261023-R2 lawyer"
+  },
+  "checkedManualOverrides": 0,
+  "onlyManualValue": {
+    "client.firstName": "QA-AUTO-2710-B"
+  },
+  "profileWrites": 0,
+  "newClients": 0,
+  "packagesOrSends": 0
+}

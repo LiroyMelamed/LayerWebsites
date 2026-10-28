@@ -1,0 +1,28 @@
+{
+  "at": "2026-10-27T08:31:46.697353+00:00",
+  "result": "OPEN_CONFIRMED_SEARCH_CARD_UX_INCONSISTENCY_ACCESS_INTENT_UNRESOLVED",
+  "scope": "Not an automatic-value substitution failure; no authorization bypass demonstrated.",
+  "qaSourceCommit": "0990866b749e44f3f64f6a8bbe85fbe006747e67",
+  "observed": "SameQA-NF query: primary-client search onlyreturnsUser03client; role search returns the3R2ExternalSigner records as well. ThoseR2cards appear inAllClients and card→Word resolves their profile successfully.",
+  "primarySearch": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/PRIMARY-CLIENT-SEARCH18.txt",
+    "sha256": "6cd46fbdfc6357d9bbb1bc7254d6d8347e0cbcba2ba72c811372db675243d511"
+  },
+  "roleSearch": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/ROLE-PERSON-SEARCH18.txt",
+    "sha256": "fa6d3673816e1c7890919c143501995000d65a1ee03b80fa860e0f5fea08be38"
+  },
+  "sourceBindings": {
+    "frontend/src/screens/signingScreen/word/WordRecordPicker.js": "74ba2fc9829ba8137e7325e4f6e4efe5ce003c60f985fd57a62dbd5f929d44d0",
+    "backend/routes/signingBatchRoutes.js": "f18b46b3c00183669e2c8bf8d5936a3422fd150166076e4f6fbe8cb7f64c39d3",
+    "backend/controllers/customerController.js": "01ccea1dc35c6a7c6bb56150852a4ad464773427f2501082cdaca28fb81fbed6"
+  },
+  "codeFacts": [
+    "WordRecordPicker clientRoles and contacts?clients=1 SQL deliberately restrict toClient/User.",
+    "StandardAddCustomer assigns email-only recordExternalSigner; allcustomercreation attempts welcome notification, so no newcustomer was created in this test.",
+    "Card→Word persists recordID in entrycontext; Word service currently accepts same-tenantExternalSigner through normal tenant/access/deletion guards."
+  ],
+  "inference": "Ordinary email-only customers created by standardUI can share the excludedrole. No new welcome notification/customer-creation run was performed to prove that creation path live.",
+  "workaroundVerified": "Open existing card → מסמך Word ללקוח; automaticvalues work.",
+  "resolution": "OPEN. Product/access-intent decision and scoped regression/fix still required; no role/filter/authorization change made during testing."
+}

@@ -25,6 +25,7 @@ import CaseContextPicker from './CaseContextPicker';
 import ClientSendContext from './ClientSendContext';
 import useSigningDraft from './useSigningDraft';
 import DraftRecoveryList from './DraftRecoveryList';
+import resolveWordTemplateContext, { isWordTemplate } from '../word/resolveWordTemplateContext';
 import './signingPackages.scss';
 import './signingCompose.scss';
 
@@ -396,12 +397,13 @@ function templateOrder(roles) {
 // as an ordinary package. It never creates or submits an ordinary draft.
 export { RolePeople, DocumentDataFields, SigningOrderFields, changePerson, blankRole, clean, templateOrder };
 
-export default function PackageComposer({ api = signingPackagesApi, onBack, onCreated, initialTemplateId, initialTemplateVersion, initialCaseId, initialClientId, backLabel, replacementContext }) {
+export default function PackageComposer({ api = signingPackagesApi, onBack, onCreated, initialTemplateId, initialTemplateVersion, initialCaseId, initialClientId, backLabel, replacementContext, lockedDocumentContext = false }) {
     const { t, direction, number, language, errorMessage, locale } = useSigningLocale();
     const heading = useRef(null);
     const errorSummary = useRef(null);
     const [step, setStep] = useState(replacementContext ? 'replacementOpening' : initialTemplateId ? 'opening' : 'template');
     const [replacementSource, setReplacementSource] = useState(replacementContext || null);
+    const [replacementOpenAttempt, setReplacementOpenAttempt] = useState(0);
     const [replacementConfirmed, setReplacementConfirmed] = useState(false);
     const [replacement, setReplacement] = useState(null);
     const [template, setTemplate] = useState(null);
@@ -427,6 +429,14 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const [clientContext, setClientContext] = useState(null);
     const [clientPending, setClientPending] = useState(!!initialClientId);
     const [clientRestored, setClientRestored] = useState(false);
+    const [wordContext, setWordContext] = useState({ status: 'idle' });
+    const wordContextModel = useRef({ status: 'idle' });
+    const wordContextGeneration = useRef(0);
+    const hydrateWordContextRef = useRef(null);
+    const wordContextRetry = useRef(null);
+    useEffect(() => () => { wordContextGeneration.current += 1; }, []);
+    const contextBlocked = wordContext.status === 'pending' || wordContext.status === 'error'
+        || (isWordTemplate(template) && (wordContext.status !== 'ready' || wordContext.versionId !== template.versionId));
     const contextPeople = useMemo(() => [...new Map([...(caseContext?.people || []), ...(clientContext ? [clientContext] : [])].map(person => [person.id, person])).values()], [caseContext, clientContext]);
     const peopleLabel = clientContext ? t('signingV2.compose.clientContext.fill') : undefined;
     const createKey = useRef(null);
@@ -434,15 +444,41 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const checking = useRef(false);
     const inputGeneration = useRef(0);
     const replacementDraftApi = useMemo(() => replacementContext ? { ...api, draft: undefined, saveDraft: undefined, submitDraft: undefined } : api, [api, replacementContext]);
+    const entryDraftApi = useMemo(() => {
+        if (!initialTemplateId || !replacementDraftApi.draft) return replacementDraftApi;
+        return { ...replacementDraftApi, draft: async id => {
+            const saved = await replacementDraftApi.draft(id);
+            // A URL recovery pointer must not replace the document explicitly
+            // selected by this entry. Resolve read-only; never import a source.
+            const catalog = await replacementDraftApi.templates();
+            const native = catalog.templates.filter(item => item.versionId === initialTemplateId || String(item.templateId) === String(initialTemplateId));
+            const candidates = native.length ? native : catalog.templates.filter(item => String(item.origin?.templateId) === String(initialTemplateId));
+            const selected = [...candidates].sort((a, b) => native.length ? b.version - a.version : (b.origin?.version || b.version) - (a.origin?.version || a.version))[0];
+            const legacy = (catalog.legacy || []).find(item => String(item.id) === String(initialTemplateId));
+            const version = legacy?.version ?? (native.length ? selected?.version : selected?.origin?.version ?? selected?.version);
+            if (!selected || selected.versionId !== saved.payload?.request?.templateVersionId
+                || (initialTemplateVersion != null && String(initialTemplateVersion) !== String(version))
+                || (legacy && selected.origin?.version !== legacy.version)) {
+                throw Object.assign(new Error('DRAFT_TEMPLATE_CHANGED'), { code: 'DRAFT_TEMPLATE_CHANGED' });
+            }
+            return saved;
+        } };
+    }, [replacementDraftApi, initialTemplateId, initialTemplateVersion]);
     useEffect(() => {
         if (!replacementContext) return undefined;
         let current = true;
         const open = async () => {
             try {
+                setError(null);
                 const content = replacementContext.content;
                 const selected = replacementContext.template || (await api.templates()).templates.find(item => item.versionId === content?.templateVersionId);
                 if (!selected || !Array.isArray(content?.rows) || content.rows.length !== 1) throw Object.assign(new Error('Replacement unavailable'), { code: 'REPLACEMENT_UNAVAILABLE' });
                 if (!current) return;
+                if (isWordTemplate(selected)) {
+                    setTemplate(selected);
+                    const resolved = await hydrateWordContextRef.current(selected, { caseId: content.caseId, clientId: content.clientId }, () => current);
+                    if (!resolved || !current) return;
+                }
                 const ordering = content.signingOrder || templateOrder(selected.roles);
                 const fallbackOrder = templateOrder(selected.roles);
                 setTemplate(selected); setName(content.name || selected.name); setShared(content.shared || {});
@@ -456,7 +492,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         };
         open();
         return () => { current = false; };
-    }, [api, replacementContext]);
+    }, [api, replacementContext, replacementOpenAttempt]);
 
     // Stable arrays keep memoized rows from re-rendering on every keystroke with 200 rows.
     const sendRoles = useMemo(() => (template?.roles || []).map(role => ({ ...role, audience: Object.hasOwn(roleAudience, role.key) ? roleAudience[role.key] : role.audience })), [template, roleAudience]);
@@ -479,6 +515,39 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     }, [rows]);
     const invalidate = () => { inputGeneration.current += 1; setCheck(null); setReplacementConfirmed(false); createKey.current = null; };
 
+    const updateWordContext = value => { wordContextModel.current = value; setWordContext(value); };
+    const cancelWordContext = () => {
+        wordContextGeneration.current += 1;
+        wordContextRetry.current = null;
+        const current = wordContextModel.current;
+        if (current.lockedClientId && !initialClientId) { setClientContext(null); setClientPending(false); }
+        if (current.lockedCaseId && !initialCaseId) { setCaseContext(null); setCasePending(false); }
+        updateWordContext({ status: 'idle' });
+    };
+    const hydrateWordContext = async (selected, explicit, isCurrent = () => true, additionalCaller = {}) => {
+        const generation = ++wordContextGeneration.current;
+        const previous = wordContextModel.current;
+        const caller = explicit || {
+            clientId: initialClientId ?? (previous.lockedClientId ? null : clientContext?.id),
+            caseId: initialCaseId ?? (previous.lockedCaseId ? null : caseContext?.id),
+        };
+        wordContextRetry.current = { selected, caller, isCurrent, additionalCaller };
+        updateWordContext({ ...previous, status: 'pending', versionId: selected.versionId });
+        invalidate();
+        try {
+            const resolved = await resolveWordTemplateContext(api, selected, caller, additionalCaller);
+            if (generation !== wordContextGeneration.current || !isCurrent()) return null;
+            setClientContext(resolved.clientContext); setClientPending(false); setClientRestored(true);
+            setCaseContext(resolved.caseContext); setCasePending(false); setCaseRestored(true);
+            updateWordContext({ status: 'ready', versionId: selected.versionId, ...resolved });
+            return resolved;
+        } catch (failure) {
+            if (generation === wordContextGeneration.current && isCurrent()) updateWordContext({ ...previous, status: 'error', versionId: selected.versionId, error: failure });
+            throw failure;
+        }
+    };
+    hydrateWordContextRef.current = hydrateWordContext;
+
     const applyTemplate = selected => {
         if (selected.versionId === template?.versionId) return;
         const roles = selected.roles.filter(role => role.audience !== 'shared');
@@ -492,6 +561,8 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         setOrderRoles(order.roles); setOrderGroups(order.groups);
         setName(current => current || selected.name);
         setImportNote(null); invalidate();
+        if (isWordTemplate(selected)) hydrateWordContext(selected).catch(() => {});
+        else cancelWordContext();
     };
     const chooseTemplate = selected => {
         if (selected.versionId === template?.versionId) return;
@@ -612,13 +683,14 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             },
         };
     };
-    const draftPayload = template ? { request: payload().body, editor: {
+    const draftPayload = template && !contextBlocked ? { request: payload().body, editor: {
         template, name, shared, roleAudience, rows, reviewerUserId, omitted: [...omitted], orderMode, orderRoles, orderGroups, source, importNote,
     } } : null;
-    const draft = useSigningDraft({ api: replacementDraftApi, payload: draftPayload, active: !!template && !casePending && !clientPending && step !== 'done',
+    const draft = useSigningDraft({ api: entryDraftApi, payload: draftPayload, active: !!template && !contextBlocked && !casePending && !clientPending && step !== 'done',
         validateRestore: saved => {
-            if ((initialClientId && String(saved?.request?.clientId) !== String(initialClientId))
-                || (initialCaseId && String(saved?.request?.caseId) !== String(initialCaseId))) {
+            const word = isWordTemplate(saved?.editor?.template);
+            if ((initialClientId && (!word || saved?.request?.clientId != null) && String(saved?.request?.clientId) !== String(initialClientId))
+                || (initialCaseId && (!word || saved?.request?.caseId != null) && String(saved?.request?.caseId) !== String(initialCaseId))) {
                 throw Object.assign(new Error('DRAFT_CONTEXT_CHANGED'), { code: 'DRAFT_CONTEXT_CHANGED' });
             }
         },
@@ -628,10 +700,41 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             if (!editor?.template || editor.template.versionId !== saved.request.templateVersionId || !Array.isArray(editor.rows)) {
                 throw Object.assign(new Error('INVALID_DRAFT'), { code: 'INVALID_DRAFT' });
             }
-            const restoredCase = saved.request.caseId ? await api.caseContext(saved.request.caseId) : null;
-            const restoredClient = saved.request.clientId ? await api.clientContext(saved.request.clientId) : null;
+            // Recover the immutable version's server origin, not a cached editor
+            // object which could omit or substitute Word provenance.
+            let selected;
+            if (typeof api.templateVersion === 'function') {
+                const { version } = await api.templateVersion(saved.request.templateVersionId);
+                if (version?.id === saved.request.templateVersionId && version.state === 'published') {
+                    selected = { ...editor.template, origin: version.definition?.origin || null };
+                }
+            } else {
+                const catalog = await api.templates();
+                selected = catalog.templates.find(item => item.versionId === saved.request.templateVersionId);
+            }
             if (!isCurrent()) return;
-            setTemplate(editor.template); setName(editor.name || ''); setShared(editor.shared || {});
+            if (!selected) throw Object.assign(new Error('SELECTED_TEMPLATE_UNAVAILABLE'), { code: 'SELECTED_TEMPLATE_UNAVAILABLE' });
+            let restoredCase, restoredClient;
+            if (isWordTemplate(selected)) {
+                setTemplate(selected);
+                const resolved = await hydrateWordContext(selected, {
+                    clientId: saved.request.clientId, caseId: saved.request.caseId,
+                }, isCurrent, { clientId: initialClientId, caseId: initialCaseId });
+                if (!resolved || !isCurrent()) return;
+                restoredCase = resolved.caseContext; restoredClient = resolved.clientContext;
+            } else {
+                // A cached editor cannot label an ordinary draft as Word to
+                // bypass the incumbent explicit entry-context check.
+                if ((initialClientId && String(saved.request.clientId) !== String(initialClientId))
+                    || (initialCaseId && String(saved.request.caseId) !== String(initialCaseId))) {
+                    throw Object.assign(new Error('DRAFT_CONTEXT_CHANGED'), { code: 'DRAFT_CONTEXT_CHANGED' });
+                }
+                cancelWordContext();
+                restoredCase = saved.request.caseId ? await api.caseContext(saved.request.caseId) : null;
+                restoredClient = saved.request.clientId ? await api.clientContext(saved.request.clientId) : null;
+            }
+            if (!isCurrent()) return;
+            setTemplate(selected); setName(editor.name || ''); setShared(editor.shared || {});
             setRoleAudience(editor.roleAudience || {}); setReviewerUserId(editor.reviewerUserId || null);
             setRows(editor.rows.map(row => ({ ...row, id: `row-${++localId}` })));
             setOmitted(new Set(editor.omitted || [])); setOrderMode(editor.orderMode || 'parallel');
@@ -641,7 +744,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             setCaseContext(restoredCase); setCasePending(false); setCaseRestored(true); invalidate(); setStep('recipients');
         } });
     const runCheck = async () => {
-        if (checking.current || casePending || clientPending) return;
+        if (checking.current || contextBlocked || ['pending', 'error'].includes(wordContextModel.current.status) || casePending || clientPending) return;
         setError(null);
         const { body, sentIds } = payload();
         if (!body.name) { setError({ code: 'RUN_NAME_REQUIRED' }); return; }
@@ -665,7 +768,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         } catch (failure) { if (generation === inputGeneration.current) setError(failure); } finally { checking.current = false; setBusy(null); }
     };
     const create = async () => {
-        if (creating.current || !check?.preview.valid || (replacementSource && !replacementConfirmed)) return;
+        if (creating.current || contextBlocked || ['pending', 'error'].includes(wordContextModel.current.status) || !check?.preview.valid || (replacementSource && !replacementConfirmed)) return;
         creating.current = true; setBusy('create'); setError(null);
         try {
             const created = replacementSource
@@ -685,7 +788,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             try { await draft.flush(); onBack?.(); } catch { setLeaving(true); }
         } else if (step !== 'done' && dirty && !leaving) setLeaving(true); else onBack?.();
     };
-    const restart = () => { draft.reset(); setStep('template'); setTemplate(null); setRows([]); setShared({}); setName(''); setResult(null); setImportNote(null); invalidate(); };
+    const restart = () => { cancelWordContext(); draft.reset(); setStep('template'); setTemplate(null); setRows([]); setShared({}); setName(''); setResult(null); setImportNote(null); invalidate(); };
     const refreshReplacement = async () => {
         if (busy || !replacementSource) return;
         setBusy('refresh'); setError(null);
@@ -715,16 +818,32 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const filledRows = rows.filter(rowFilled).length;
     const preview = check?.preview;
     const sharedNames = [...new Map((preview?.shared || []).map(item => [sharedIdentityKey(check?.body.shared, item.roleKey, item.occurrence), item.name])).values()].join(', ');
-    if (replacementSource && ['FORBIDDEN', 'NOT_FOUND', 'ACCESS_CHANGED'].includes(error?.code)) return <section className="lw-signingPackages lw-signingCompose" dir={direction}>
+    if (replacementSource && !contextBlocked && ['FORBIDDEN', 'NOT_FOUND', 'ACCESS_CHANGED'].includes(error?.code)) return <section className="lw-signingPackages lw-signingCompose" dir={direction}>
         <StatusNotice><p>{errorMessage(error)}</p></StatusNotice>
         <SigningBackButton onPress={onBack}>{backLabel || t('signingV2.compose.back')}</SigningBackButton>
     </section>;
 
+    if (contextBlocked) return <section className="lw-signingPackages lw-signingCompose" dir={direction}>
+        <SigningBackButton onPress={onBack}>{backLabel || t('signingV2.compose.back')}</SigningBackButton>
+        {wordContext.status === 'error' ? <StatusNotice><p>{t('signingWord.savedContextFailure')}</p>
+            <SecondaryButton onPress={() => {
+                if (replacementContext && step === 'replacementOpening') setReplacementOpenAttempt(value => value + 1);
+                else if (draft.status === 'loadError') draft.recover(draft.id);
+                else if (wordContextRetry.current) {
+                    const saved = wordContextRetry.current;
+                    hydrateWordContext(saved.selected, saved.caller, saved.isCurrent, saved.additionalCaller).catch(() => {});
+                }
+            }}>{t('common.retry')}</SecondaryButton>
+        </StatusNotice> : <p role="status">{t('signingWord.nativePreparing')}</p>}
+        <SecondaryButton onPress={restart}>{t('signingV2.compose.template.chooseAnother')}</SecondaryButton>
+    </section>;
+
     if (draft.status === 'loading' || draft.status === 'loadError') return <section className="lw-signingPackages lw-signingCompose" dir={direction}>
         {draft.status === 'loading' ? <p role="status">{t('signingV2.compose.draft.loading')}</p> : <StatusNotice>
-            <p>{t(draft.error?.code === 'DRAFT_CONTEXT_CHANGED' ? 'signingV2.compose.draft.contextChanged' : 'signingV2.compose.draft.loadError')}</p>
+            <p>{t(draft.error?.code === 'DRAFT_TEMPLATE_CHANGED' ? 'signingV2.compose.errors.SELECTED_TEMPLATE_CHANGED'
+                : draft.error?.code === 'DRAFT_CONTEXT_CHANGED' ? 'signingV2.compose.draft.contextChanged' : 'signingV2.compose.draft.loadError')}</p>
             <SecondaryButton onPress={() => draft.recover(draft.id)}>{t('common.retry')}</SecondaryButton>
-            <SigningBackButton onPress={restart}>{t('signingV2.compose.draft.startNew')}</SigningBackButton>
+            <SigningBackButton onPress={() => { restart(); if (draft.error?.code === 'DRAFT_TEMPLATE_CHANGED' && initialTemplateId) setStep('opening'); }}>{t('signingV2.compose.draft.startNew')}</SigningBackButton>
         </StatusNotice>}
     </section>;
 
@@ -760,11 +879,12 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         <Stepper step={['opening', 'replacementOpening'].includes(step) ? 'template' : step} />
         {!replacementSource && api.clientContext && (initialClientId || clientContext) && step !== 'done' && <SimpleCard className="lw-signingCompose__card lw-signingCompose__context" hidden={step === 'review'}>
             <ClientSendContext key={String(clientRestored)} api={api} initialClientId={clientRestored ? null : initialClientId} value={clientContext}
+                locked={!!wordContext.lockedClientId || (lockedDocumentContext && !!initialClientId)}
                 onPending={value => { setClientPending(value); if (value) invalidate(); }}
                 onChange={value => { setClientContext(value); invalidate(); }} />
         </SimpleCard>}
         {!replacementSource && api.caseContext && step !== 'done' && <SimpleCard className="lw-signingCompose__card lw-signingCompose__context" hidden={step === 'review'}>
-            <CaseContextPicker api={api} initialCaseId={caseRestored ? null : initialCaseId} value={caseContext} onPending={value => { setCasePending(value); if (value) invalidate(); }}
+            <CaseContextPicker api={api} initialCaseId={caseRestored ? null : initialCaseId} value={caseContext} locked={!!wordContext.lockedCaseId || (lockedDocumentContext && !!initialCaseId)} onPending={value => { setCasePending(value); if (value) invalidate(); }}
                 onChange={value => { setCaseContext(value); invalidate(); }} />
         </SimpleCard>}
         {error && <StatusNotice><p>{t(`signingV2.compose.errors.${error.code}`, { defaultValue: errorMessage(error) })}</p></StatusNotice>}

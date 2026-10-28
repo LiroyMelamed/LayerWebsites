@@ -1,0 +1,56 @@
+{
+  "status": "REVIEW_ONLY_NOT_EXECUTED",
+  "scope": "Three dedicated tenants only: MelamedLaw, MorLevi, AshrafEssa. QA runtime, shared signup and Idm are outside this operator.",
+  "contract": "Root must supply current frozen base/candidate/forward-recovery child refs, exact source maps, guard/manifest hashes, actual qualified QA proof, script hashes and fresh private CAS values. Draft template cannot execute. No automatic batch or retry.",
+  "locks": "Every invocation uses nonblocking global shared maintenance lock and exclusive own-tenant mutex; one explicitly reviewed phase per invocation. Existing release-wide owner coordination remains necessary.",
+  "phases": [
+    {
+      "phase": "checkpoint",
+      "effects": "Exact named branch/base/source/env/PM2/office/provider/schema CAS; healthy verified-readback normal backupwatch younger than2h. Verify dependencies and exact converter tree, quiescence, resource headroom. Private0700 pinned stage with0600 env/full launch/office preimages, metadata, source archive, custom DB dump and verified restore-list. No application source/env/SQL mutation."
+    },
+    {
+      "phase": "schema_config",
+      "effects": "Require checkpoint/preimages, same base/PID/config/catalog/history. Stage five candidate SQL byte-exact files0600, execute each through local postgres socket with ON_ERROR_STOP and record its filename only after actual migration-table shape qualification. No generic migration runner. Preserve unrelated migration history. Qualify additive catalog changes and seal actual after hash once; then CAS-patch exactly two Word settings. No process restart."
+    },
+    {
+      "phase": "activate",
+      "effects": "Require prepared catalog hash, configuration, PM2/provider/other-process CAS. Fetch only reviewed candidate/recovery refs. Require candidate direct child of incumbent, recovery direct child of candidate with complete incumbent tree. Named branch ff-only, no reset/force/detach. Verify full backend/source guard then restart own PM2 process only; no update-env or dependency install."
+    },
+    {
+      "phase": "verify",
+      "effects": "Read-only application observation plus private receipt. Require exact candidate,103 guard,97 unchanged protected files and exact six revalidated exceptions, configured env, unchanged PM2 launch/other processes/provider connections/budgets, OFF delivery flags, exact sealed schema and five history rows, stable local health, fresh normal backupwatch, dependency/converter/resources and recovery material. Fresh receipt can bind static publisher for600s; it does not prove an actual rollback."
+    },
+    {
+      "phase": "rollback",
+      "effects": "Separate fresh root recovery CAS document is required after inspecting actual failure state. No automatic rollback. Only owned base/candidate head accepted; refuse new queued/created stage work until separate quarantine review. Stop own PM2, ff to reviewed child whose full tree equals incumbent, restore original env bytes only if exact owned-after CAS matches, restart own process and verify. Retain additive schema/migration history and all application rows; never restore whole DB."
+    }
+  ],
+  "ownedConfiguration": {
+    "WORD_TEMPLATE_SOFFICE_PATH": "/opt/melamedia-qa-word-converter-20261023/managed-soffice.py",
+    "WORD_TEMPLATE_MAX_CONCURRENT": "1"
+  },
+  "configurationSafety": "Preserve every other env byte. Duplicate assignments, unsafe UTF8, PM2 root/nested settings conflicting with either owned value or unknown CAS state stop. Preserve existing provider connections/grants/budgets. Capture, dispatch, real WhatsApp/pilot/worker controls stay OFF; no provider activation, fresh pairing, OTP or real outbound.",
+  "schemaQualification": "All public table/column/constraint/trigger/policy/index/grant/function metadata is snapshotted privately. Every incumbent item must remain identical. Exactly seven new feature tables, required column sets/PKs/Word immutable triggers and only pinned-migration additions to incumbent tables are permitted. New definitions are authorized by exact five reviewed SQL byte hashes; actual after-catalog hash is sealed in schema_config and reused as CAS at activation/verification. This is not a general DDL concurrency lock or independent reimplementation of PostgreSQL SQL semantics.",
+  "resources": {
+    "customerSlots": 3,
+    "qaSlots": 2,
+    "slotBytes": 805306368,
+    "reserveBytes": 1073741824,
+    "minimumMemAvailableBytes": 5100273664,
+    "effectiveCap1OnAllThreeCustomersRequiredBeforeWordEnablement": true,
+    "qaCap2Accounted": true,
+    "sandboxLimitsUnchanged": true,
+    "notHardGlobalAdmissionGuarantee": true
+  },
+  "health": "Reuse qualified25s total health budget, max1s probes, strict HTTP200/JSON ok:true, bounded body and two same PID/start snapshots. Keep actual Melamed min_uptime absent, Mor10000 and Ashraf5000; stability age is max5000/original policy. This is a stable-process window, not full async startup or authenticated workflow proof.",
+  "partialFailure": [
+    "An immutable phase intent without result means STOP; do not retry blindly. Transport timeout is uncertain state, never permission to re-execute.",
+    "SQL file COMMIT and separate filename record are not atomic. If SQL succeeds and recording/next file fails, retain all private intent/result evidence and inspect actual schema/history before a reviewed reconciliation. Already applied files must not be replayed casually.",
+    "Schema/config may be prepared while incumbent process runs; source may be forwarded before restart; own restart may fail; another writer or CAS change may prevent conditional recovery. Each is a distinct inspected state.",
+    "The initial DB dump is verified recovery preservation, not permission for wholesale rollback. Forward source-tree plus owned-env recovery keeps additive schema/history and all rows. Fresh normal backupwatch remains a separate prerequisite.",
+    "Private recovery stage/pin and raw logs are retained after every failure. No cleanup or retry is automatic."
+  ],
+  "proofLimits": "Local synthetic operator gates and byte-exact helper reuse are separate from actual remote execution, actual QA rollback drill, converter service/Linux proof, frontend browser proof, provider activation, customer authenticated workflows, native updates or full-product approval. Root reviews scripts and seals only actual completed critical proof before execution.",
+  "readOnlyInputObserver": "Export readOnlyContractInputs accepts minimal closed-three-tenant READONLY_INPUTS scope, current base/full backend+database source hashes, original min_uptime policy and bounded package.json paths. It does not require sealed QA or fabricated green fields. Root may invoke it under shared maintenance plus tenant mutex. It writes only new private0700/0600 preimages under /root/legal-word-stage-release-20261026-preflight, no phase stage, git fetch, app env/source/SQL/PM2 mutation or server import. Public stdout contains hashes/PID/metadata filenames only; state and catalog remain private. Snapshot hashes must be independently rechecked by checkpoint CAS.",
+  "pm2StableControlExtension": "In addition to unchanged historical selected launch/env checks, compare exact presence/type/value for autorestart, watch, ignore_watch, watch_options, max_memory_restart, restart_delay, exp_backoff_restart_delay, max_restarts, cron_restart, listen_timeout, wait_ready, shutdown_with_message, treekill and kill_retry_time. These are included in observed fingerprint, phase preservation and recovery CAS. Dynamic PM2 telemetry is not byte-compared."
+}

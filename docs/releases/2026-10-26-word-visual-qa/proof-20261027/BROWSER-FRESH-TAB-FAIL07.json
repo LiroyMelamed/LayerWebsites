@@ -1,0 +1,22 @@
+{
+  "at": "2026-10-27T03:57:25.834Z",
+  "url": "https://melamedia.mela-media.co.il/AdminStack/SigningManagerScreen?panel=templates&mode=word&_lwcb=1793073407294",
+  "bundle": "main.81f89751.js",
+  "state": "",
+  "errors": [
+    {
+      "level": "error",
+      "message": "TypeError: Cannot read properties of null (reading 'clientRecord')\n    at ne (https://melamedia.mela-media.co.il/static/js/main.81f89751.js:1:1734902)\n    at https://melamedia.mela-media.co.il/static/js/main.81f89751.js:1:1737081\n    at Object.To [as useState] (https://melamedia.mela-media.co.il/static/js/vendor-react.094da8d9.js:2:63498)\n    at https://melamedia.mela-media.co.il/static/js/vendor-react.094da8d9.js:2:136670\n    at ae (https://melamedia.mela-media.co.il/static/js/main.81f89751.js:1:1737047)\n    at go (https://melamedia.mela-media.co.il/static/js/vendor-react.094da8d9.js:2:60580)\n    at Su (https://melamedia.mela-media.co.il/static/js/vendor-react.094da8d9.js:2:120178)\n    at ys (https://melamedia.mela-media.co.il/static/js/vendor-react.094da8d9.js:2:109286)\n    at gs (https://melamedia.mela-media.co.il/static/js/vendor-react.094da8d9.js:2:109214)\n    at ms (https://melamedia.mela-media.co.il/static/js/vendor-react.094da8d9.js:2:109077)",
+      "timestamp": "2026-10-27T03:56:47.655Z",
+      "url": "https://melamedia.mela-media.co.il/static/js/vendor-react.094da8d9.js"
+    },
+    {
+      "level": "error",
+      "message": "TypeError: Cannot read properties of null (reading 'clientRecord')\n    at ne (https://melamedia.mela-media.co.il/static/js/main.81f89751.js:1:1734902)\n    at https://melamedia.mela-media.co.il/static/js/main.81f89751.js:1:1737081\n    at Object.To [as useState] (https://melamedia.mela-media.co.il/static/js/vendor-react.094da8d9.js:2:63498)\n    at https://melamedia.mela-media.co.il/static/js/vendor-react.094da8d9.js:2:136670\n    at ae (https://melamedia.mela-media.co.il/static/js/main.81f89751.js:1:1737047)\n    at go (https://melamedia.mela-media.co.il/static/js/vendor-react.094da8d9.js:2:60580)\n    at Su (https://melamedia.mela-media.co.il/static/js/vendor-react.094da8d9.js:2:120178)\n    at ys (https://melamedia.mela-media.co.il/static/js/vendor-react.094da8d9.js:2:109286)\n    at gs (https://melamedia.mela-media.co.il/static/js/vendor-react.094da8d9.js:2:109214)\n    at ms (https://melamedia.mela-media.co.il/static/js/vendor-react.094da8d9.js:2:109077)",
+      "timestamp": "2026-10-27T03:56:47.655Z",
+      "url": "https://melamedia.mela-media.co.il/static/js/vendor-react.094da8d9.js"
+    }
+  ],
+  "result": "FAIL_FRESH_WORD_TAB_NULL_CLIENTRECORD",
+  "noSourceMutation": true
+}

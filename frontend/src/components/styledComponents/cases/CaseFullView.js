@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import SimpleContainer from '../../simpleComponents/SimpleContainer';
 import SimpleInput from '../../simpleComponents/SimpleInput';
 import SimpleScrollView from '../../simpleComponents/SimpleScrollView';
@@ -26,6 +27,7 @@ import SimplePopUp from '../../simpleComponents/SimplePopUp';
 import CaseSigningFlow from '../../../screens/signingScreen/templates/CaseSigningFlow';
 import { useSigningV2Available } from '../../../screens/signingScreen/templates/SigningPackagesHub';
 import CaseStageAutomationPanel from '../../../screens/signingScreen/templates/CaseStageAutomationPanel';
+import { AdminStackName, SigningManagerScreenName } from '../../../navigation/screenPaths';
 
 function _buildInitialCaseData(caseDetails, initialDraft) {
     const source = caseDetails?.CaseId ? caseDetails : (initialDraft || caseDetails || {});
@@ -58,8 +60,24 @@ function _buildInitialCaseData(caseDetails, initialDraft) {
     };
 }
 
+function savedCaseWordContext(record) {
+    const id = Number(record?.CaseId);
+    if (!Number.isSafeInteger(id) || id <= 0) return null;
+    const people = new Map();
+    for (const person of record.Users || []) {
+        const userId = Number(person.UserId || person.userid);
+        if (Number.isSafeInteger(userId) && userId > 0) people.set(userId, String(person.Name || person.name || ''));
+    }
+    const primary = Number(record.UserId);
+    if (Number.isSafeInteger(primary) && primary > 0 && !people.has(primary)) people.set(primary, String(record.CustomerName || ''));
+    const onlyClient = people.size === 1 ? [...people.entries()][0] : null;
+    return { caseRecord: { id, label: String(record.CaseName || '') },
+        ...(onlyClient ? { clientRecord: { id: onlyClient[0], label: onlyClient[1] } } : {}) };
+}
+
 export default function CaseFullView({ caseDetails, initialDraft, rePerformRequest, onFailureFunction, closePopUpFunction, onCaseCreated, style: _style }) {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const { openPopup: openConfirm, closePopup: closeConfirm } = usePopup();
     const { canAction } = useFirmPermissions() || { canAction: () => true };
     const canCreateCases = canAction('cases', 'create');
@@ -74,7 +92,15 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
     const canSaveCase = isEditingExisting ? canEditCases : canCreateCases;
     const caseFormReadOnly = isEditingExisting && !canEditCases;
     const [signingOpen, setSigningOpen] = useState(false);
+    const [selectedWordContext, setSelectedWordContext] = useState(null);
     const signingAvailable = useSigningV2Available();
+    const wordInitialContext = caseDetails?.CaseId ? savedCaseWordContext(caseDetails) : selectedWordContext;
+    const openWordDocument = () => {
+        if (!wordInitialContext) return;
+        // Enter using persisted identity only; never save the case editor as a side effect.
+        closePopUpFunction?.();
+        navigate(`${AdminStackName}${SigningManagerScreenName}?panel=templates&mode=word`, { state: { wordInitialContext } });
+    };
 
     const seed = caseDetails?.CaseId ? caseDetails : (initialDraft || caseDetails);
     const [showLicenseExpiry, setShowLicenseExpiry] = useState(!!seed?.HasLicenseExpiry || !!seed?.LicenseExpiryDate);
@@ -421,6 +447,7 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
 
         const caseDetails = resultItem || cases.find(c => c.CaseName?.trim() === selectedCase?.trim());
         if (caseDetails) {
+            setSelectedWordContext(savedCaseWordContext(caseDetails));
             setCaseHasBeenChosen(true);
             setCaseData({
                 CaseId: caseDetails.CaseId || '',
@@ -715,6 +742,10 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
                     {signingAvailable && (caseDetails?.CaseId || caseData.CaseId) && canAction('signing', 'upload') && <SecondaryButton
                         onPress={() => setSigningOpen(true)} size={buttonSizes.MEDIUM}>
                         {t('signingV2.compose.context.open')}
+                    </SecondaryButton>}
+                    {signingAvailable && wordInitialContext && canAction('signing', 'upload') && <SecondaryButton
+                        onPress={openWordDocument} disabled={isSaving || isDeleting} size={buttonSizes.MEDIUM}>
+                        {t('signingWord.openFromCase')}
                     </SecondaryButton>}
                     {(isEditingExisting || caseHasBeenChosen) && canDeleteCases && (
                         <SecondaryButton

@@ -1,0 +1,41 @@
+{
+  "at": "2026-10-27T03:58:53.477785+00:00",
+  "scope": "Byte-exact deployed QA backend code-fix05 and static05 tooling archive; source preservation, no replay authorization",
+  "productMain": "04bf0dff92bcefef555899aefb0cdddc4033463d",
+  "qaProductCandidate": "fb0d6c22640f8b01911a9c6491ec856c4f5ab71a",
+  "files": {
+    "qa-backend-code-fix05.py": "4b13519dde9fe2c675224f0c0083b1399b2357b14e4d795ef9a375da6dbcfabc",
+    "qa-backend-code-fix05.local.test.py": "c6594935c95be9bcc1788da258ff96fef9fd1eb22eb506d64db1f8204c50abf6",
+    "run-qa-static05.py": "b96c5531b990d29d2e2f273604f0de7872c9a238c935d3ddaddc2ae2d6137a13",
+    "qa_static05_test.py": "b168c7bbdb8bf0056c862b770b875d2070a5c35357c3912ff113aa0041938b4c",
+    "QA-BACKEND-CODE-FIX05-PROTOCOL01.json": "cb13bbedb638a32c12f95210a852a6adad328d143c422bd7e5cdc16027574c89"
+  },
+  "supersedesArchiveAtCommit": "e10daae11b319803d723f4d3bf8512ca7763b896",
+  "previousArchiveFiles": {
+    "qa-backend-code-fix05.py": "08959037e0a386a045de812458de956ca0de34a6fedb0e260c9cc15331f23b7b",
+    "qa-backend-code-fix05.local.test.py": "b30af8b45644e4576283e3cf3a5da732a4170aa94e641b9fbfde2ab6570f098d",
+    "run-qa-static05.py": "88d2897c673802be64981d3896fc1020b2c9be9237f800b2112626b9a9759ef9",
+    "qa_static05_test.py": "6dd1ccf7f2ddc9a73f5af4a58abc13458d49eeceadc243d04827a222d54d59fb",
+    "QA-BACKEND-CODE-FIX05-PROTOCOL01.json": "43a258862c9655217b15a45a70fe3f60743b35230e759d7c9ad4de8ae0387b92"
+  },
+  "localQualification": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/ops05-local-qualification-20261027T032115259432Z.json",
+    "sha256": "be98da158d09eef7d58ce53d80427f2ec48164dc2dfafb569d104c23a59c1d88"
+  },
+  "backendExecution": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-code-fix-verify-20261027T032524569993Z-617af7cc.json",
+    "sha256": "9f9bc215f56f0e573cecea9352bb43991d30c31e1527c97bab245790ce86a0fa"
+  },
+  "staticContract": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-static-forward-contract10.json",
+    "sha256": "d0473ee7d2ffdb6871cddb47a43a79fcf781a981139619ef1af073184a08caa0"
+  },
+  "recovery": "Historical completed execution. Do not replay. Current future actions require new exact state/credentials/coordination/contract and separate source review. These source files alone do not carry execution authority.",
+  "notIncluded": [
+    "Credentials/private keys/raw environment values",
+    "Database dumps/customer data",
+    "Private transport logs/checkpoints/current observation state",
+    "Frontend compiled caches"
+  ],
+  "refPolicy": "Preserve through Git main-first; docs/tooling bytes do not change product runtime."
+}

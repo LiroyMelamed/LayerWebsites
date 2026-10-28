@@ -8,7 +8,7 @@ import PrimaryButton from '../../../components/styledComponents/buttons/PrimaryB
 import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
 import FloatingAddField from '../../../components/specializedComponents/signFiles/fieldToolbar/FloatingAddField';
 import AddFieldPanel from '../../../components/specializedComponents/signFiles/fieldToolbar/AddFieldPanel';
-import { SPOT_BASE_WIDTH } from '../../../utils/signingSpotGeometry';
+import { SPOT_BASE_WIDTH, clampSpotSize, clampSpotToPage, measuredPageSizeInSpotSpace } from '../../../utils/signingSpotGeometry';
 import PdfViewer from '../../../components/specializedComponents/signFiles/pdfViewer/PdfViewer';
 import { uploadFileToR2 } from '../../../utils/fileUploadUtils';
 import StatusNotice from '../../../components/ui/StatusNotice';
@@ -22,6 +22,12 @@ import { conditionSummary } from './templateConditions';
 import './templates.scss';
 
 const FIELD_TYPES = ['signature', 'email', 'phone', 'initials', 'text', 'date', 'checkbox', 'idnumber', 'lawyerStamp'];
+const FIELD_MOVE_STEP = 8;
+function FieldMoveIcon({ direction }) {
+    return <svg className={`lw-templates__fieldMoveIcon is-${direction}`} viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+        <path d="M20 12H4m6-6-6 6 6 6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>;
+}
 function LeaveConfirmation(props) {
     const content = useRef(null);
     useEffect(() => {
@@ -48,6 +54,7 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
     const [markMenu, setMarkMenu] = useState(null);
     const [markImages, setMarkImages] = useState({});
     const [editingField, setEditingField] = useState(false);
+    const [fieldPageMeasurement, setFieldPageMeasurement] = useState(null);
     const pdfRef = useRef(null);
     const pdfId = `template-pdf-${useId().replace(/:/g, '')}`;
     useEffect(() => { setAddMenu(null); setEditingField(false); }, [activeDoc, step]);
@@ -71,6 +78,43 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
         return () => window.removeEventListener('beforeunload', prevent);
     }, [dirty]);
     const document = draft.documents[activeDoc];const field = document?.fields[selected];
+    const currentDocumentId = document?.id;
+    const selectedPageNumber = field ? Number(field.pageNum) || 1 : null;
+    const currentPdf = pdfFiles[currentDocumentId];
+    const readFieldPage = pageNum => {
+        const element = pdfRef.current?.querySelector(`.lw-signing-pageInner[data-page-number="${pageNum}"]`);
+        const canvas = element?.querySelector('canvas');
+        const rect = canvas?.getBoundingClientRect();
+        if (!(rect?.width > 0 && rect?.height > 0)) return null;
+        const size = measuredPageSizeInSpotSpace(element);
+        return size && Number.isFinite(size.width) && Number.isFinite(size.height) && size.width > 0 && size.height > 0 ? size : null;
+    };
+    useEffect(() => {
+        if (!native || step !== 1 || !currentPdf || !selectedPageNumber) { setFieldPageMeasurement(null); return undefined; }
+        const root = pdfRef.current;
+        if (!root) return undefined;
+        const measure = () => {
+            const size = readFieldPage(selectedPageNumber);
+            setFieldPageMeasurement(previous => {
+                if (previous?.documentId === currentDocumentId && previous?.pageNum === selectedPageNumber &&
+                    previous?.size?.width === size?.width && previous?.size?.height === size?.height) return previous;
+                return size ? { documentId: currentDocumentId, pageNum: selectedPageNumber, size } : null;
+            });
+        };
+        const resize = typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null;
+        const observePage = () => {
+            resize?.disconnect();
+            const pageElement = root.querySelector(`.lw-signing-pageInner[data-page-number="${selectedPageNumber}"]`);
+            if (pageElement) resize?.observe(pageElement);
+            measure();
+        };
+        const mutations = typeof MutationObserver === 'function' ? new MutationObserver(observePage) : null;
+        mutations?.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['width', 'height', 'data-measured-width'] });
+        window.addEventListener('resize', measure); observePage();
+        return () => { resize?.disconnect(); mutations?.disconnect(); window.removeEventListener('resize', measure); };
+        // Page measurements come only from the rendered PDF, including its asynchronous canvas render.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [native, step, currentDocumentId, selectedPageNumber, currentPdf]);
     const missingPositions = native ? draft.roles.flatMap(role => Array.from({ length: role.nativeRole?.max ?? 1 }, (_, occurrence) => ({ role, occurrence })).filter(item => !draft.documents.some(doc => doc.fields.some(field => field.roleId === role.id && (field.occurrence ?? field.nativeField?.occurrence ?? 0) === item.occurrence)))) : [];
     useEffect(() => {
         if (!template || !document || pdfFiles[document.id]) return undefined;
@@ -91,6 +135,27 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
     const change = patch => { if (!native || !saving.current) setDraft(prev => ({ ...prev, ...patch })); };
     const updateDocument = update => { if (!native || !saving.current) setDraft(prev => ({ ...prev, documents: prev.documents.map((doc, i) => i === activeDoc ? update(doc) : doc) })); };
     const updateField = (index, patch) => updateDocument(doc => ({ ...doc, fields: doc.fields.map((item, i) => i === index ? { ...item, ...patch } : item) }));
+    const moveField = (dx, dy) => {
+        if (!native || !field || busy || saving.current) return;
+        const size = readFieldPage(selectedPageNumber);
+        if (!size) return;
+        updateField(selected, clampSpotToPage({ x: Number(field.x) + dx, y: Number(field.y) + dy,
+            width: field.width, height: field.height, pageWidth: size.width, pageHeight: size.height }));
+    };
+    const resizeField = (dw, dh) => {
+        if (!native || !field || busy || saving.current) return;
+        const size = readFieldPage(selectedPageNumber);
+        if (!size) return;
+        const width = Number(field.width), height = Number(field.height);
+        const availableWidth = size.width - Number(field.x), availableHeight = size.height - Number(field.y);
+        if (!(availableWidth > 0 && availableHeight > 0)) return;
+        const bounded = clampSpotSize(width + dw, height + dh);
+        // The existing minimum applies where it fits. A small authored checkbox
+        // at an edge must not grow when "narrower" is pressed or leave the page.
+        const nextWidth = dw ? Math.min(availableWidth, dw < 0 ? Math.min(width, bounded.width) : Math.max(width, bounded.width)) : width;
+        const nextHeight = dh ? Math.min(availableHeight, dh < 0 ? Math.min(height, bounded.height) : Math.max(height, bounded.height)) : height;
+        updateField(selected, { width: nextWidth, height: nextHeight });
+    };
     const removeField = index => { updateDocument(doc => ({ ...doc, fields: doc.fields.filter((_, i) => i !== index) }));setSelected(null);setEditingField(false); };
     async function upload(file) {
         if (!file || saving.current) return;if (!/\.pdf$/i.test(file.name) || file.size > 20 * 1024 * 1024) { setError(t('pdfError'));return; }
@@ -108,6 +173,11 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
         {Array.from({ length: current.nativeRole.max }, (_, index) => <option key={index} value={index}>{translate('signingV2.people.personNumber', { number: number(index + 1) })}</option>)}
     </SigningSelect></label>;
     const personLabel = item => { const role = draft.roles.find(role => role.id === item.roleId); return (role?.nativeRole?.max || 1) > 1 ? `${role.name} · ${number((item.occurrence ?? item.nativeField?.occurrence ?? 0) + 1)}` : role?.name; };
+    const fieldTypeLabel = item => item.fieldType === 'completionMark' ? translate('signingV2.completionMark.title') : item.fieldType === 'data' ? translate('signingV2.authoring.dataField') : translate(`signing.fields.${item.fieldType === 'idnumber' ? 'idNumber' : item.fieldType}`);
+    const fieldPersonLabel = item => item.fieldType === 'data' ? draft.dataKeys?.find(key => key.key === item.dataKey)?.label : personLabel(item);
+    const fieldChoiceLabel = (item, index) => [number(index + 1), fieldTypeLabel(item), fieldPersonLabel(item), item.fieldLabel,
+        t('fieldPage', { page: number(item.pageNum || 1) }), item.isRequired ? t('required') : ''].filter(Boolean).join(' · ');
+    const canMoveField = fieldPageMeasurement?.documentId === currentDocumentId && fieldPageMeasurement?.pageNum === selectedPageNumber;
     function addField(nextType, nextPage, anchor = {}, mark = null) {
         if (busy || saving.current || !document || !pdfFiles[document.id] || document.fields.length >= 150 ||
             (nextType === 'data' && !draft.dataKeys?.length)) return;
@@ -158,7 +228,7 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
                     <button type="button" onClick={() => { change({ documents: draft.documents.filter((_, i) => i !== activeDoc) });setActiveDoc(0);setSelected(null); }}>{t('removeDoc')}</button>
                 </div>
             </details>
-            <div className="lw-templates__canvas">
+            <div className={`lw-templates__canvas${native ? ' lw-templates__canvas--native' : ''}`}>
                 <div className="lw-templates__roleToolbar">
                     <div role="toolbar" aria-label={t('signer')} className="lw-templates__roleButtons">
                         {draft.roles.map((role, index) => {
@@ -169,10 +239,27 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
                         })}
                     </div>
                     {slotSelect('new-field-person', draft.roles.find(role => role.id === roleId), Math.min(occurrence, (draft.roles.find(role => role.id === roleId)?.nativeRole?.max || 1) - 1), setOccurrence)}
+                    {native && document.fields.length > 0 && <div className="lw-templates__selectedFieldTools">
+                        <label>{t('chooseField')}<SigningSelect dir={direction} value={selected === null ? '' : String(selected)}
+                            onChange={event => { const index = Number(event.target.value); if (event.target.value !== '' && Number.isInteger(index) && document.fields[index]) { setSelected(index); setEditingField(false); } }}>
+                            <option value="" disabled>{t('chooseFieldPlaceholder')}</option>
+                            {document.fields.map((item, index) => <option key={item.id || index} value={index}>{fieldChoiceLabel(item, index)}</option>)}
+                        </SigningSelect></label>
+                        {field && <>
+                            <div className="lw-templates__selectedFieldActions">
+                                <SecondaryButton onPress={() => setEditingField(true)}>{t('selectedField')}</SecondaryButton>
+                                <div role="group" aria-label={t('moveField')} className="lw-templates__fieldMove" dir="ltr">
+                                    {[['left', -FIELD_MOVE_STEP, 0], ['up', 0, -FIELD_MOVE_STEP], ['down', 0, FIELD_MOVE_STEP], ['right', FIELD_MOVE_STEP, 0]].map(([move, dx, dy]) => <SecondaryButton key={move}
+                                        aria-label={t(`moveField${move[0].toUpperCase()}${move.slice(1)}`)} title={t(`moveField${move[0].toUpperCase()}${move.slice(1)}`)}
+                                        className="lw-templates__fieldMoveButton" disabled={busy || !canMoveField} onPress={() => moveField(dx, dy)}><FieldMoveIcon direction={move} /></SecondaryButton>)}
+                                </div>
+                            </div>
+                        </>}
+                    </div>}
                 </div>
                 <p className="lw-templates__hint">{translate('signingV2.authoring.canvasHint')}</p>
                             <div className="lw-templates__pdf" ref={pdfRef} id={pdfId}>{pdfFiles[document.id] ? <PdfViewer key={document.id} pdfFile={pdfFiles[document.id]} spots={document.fields.map(f => ({ ...f, ...(f.fieldType === 'completionMark' ? { type: 'lawyerStamp', fieldType: 'lawyerStamp', stampImageDataUrl: markImages[f.assetId] } : {}), ...(f.fieldType === 'data' ? { type: 'text', fieldType: 'text', authoredDataLabel: draft.dataKeys?.find(key => key.key === f.dataKey)?.label || translate('signingV2.authoring.dataField'), isRequired: !!draft.dataKeys?.find(key => key.key === f.dataKey)?.required } : {}), signerIndex: draft.roles.findIndex(r => r.id === f.roleId), signerName: f.fieldType === 'data' ? draft.dataKeys?.find(key => key.key === f.dataKey)?.label || translate('signingV2.authoring.dataField') : personLabel(f) }))} signers={draft.roles.map((r, i) => ({ UserId: i + 1, Name: r.name }))} onUpdateSpot={updateField} onRemoveSpot={removeField} onRequestRemove={removeField} onSelectSpot={setSelected} onEditSpot={index => { setSelected(index); setEditingField(true); }} onPageChange={setPage} selectedSpotIndex={selected} /> : <p role="status">{t('loadingPdf')}</p>}</div>
-                {field && <button type="button" className="lw-templates__editSelected" onClick={() => setEditingField(true)}>{t('selectedField')}</button>}
+                {!native && field && <button type="button" className="lw-templates__editSelected" onClick={() => setEditingField(true)}>{t('selectedField')}</button>}
                 <fieldset className="lw-templates__unboxed" disabled={busy || !pdfFiles[document.id] || document.fields.length >= 150}>
                     <FloatingAddField containerSelector={`#${pdfId} .lw-signing-pdfViewer`} currentPage={page}
                         onAdd={(pageNum, anchor) => { if (!busy && !saving.current && document.fields.length < 150) setAddMenu({ pageNum, ...anchor }); }} />
@@ -241,6 +328,13 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
                     })()}
                     <label>{t('label')}<input value={field.fieldLabel || ''} maxLength={120} onChange={e => updateField(selected, { fieldLabel: e.target.value })} /></label>
                     {!['data', 'completionMark'].includes(field.fieldType) && <label className="lw-templates__check"><input type="checkbox" checked={field.isRequired} onChange={e => updateField(selected, { isRequired: e.target.checked })} />{t('required')}</label>}
+                    {native && <details className="lw-templates__fieldSize"><summary>{t('fieldSize')}</summary>
+                        <p>{t('fieldSizeHelp')}</p>
+                        <div role="group" aria-label={t('fieldSize')} className="lw-templates__fieldSizeButtons">
+                            {[['fieldNarrower', -FIELD_MOVE_STEP, 0], ['fieldWider', FIELD_MOVE_STEP, 0], ['fieldShorter', 0, -FIELD_MOVE_STEP], ['fieldTaller', 0, FIELD_MOVE_STEP]].map(([label, dw, dh]) => <SecondaryButton key={label}
+                                disabled={busy || !canMoveField} onPress={() => resizeField(dw, dh)}>{t(label)}</SecondaryButton>)}
+                        </div>
+                    </details>}
                     <button type="button" onClick={() => removeField(selected)}>{t('deleteField')}</button>
                 </fieldset>
                 <SecondaryButton onPress={() => setEditingField(false)}>{translate('common.close')}</SecondaryButton>

@@ -1,7 +1,7 @@
 import { downloadBlobAsFile } from "../../utils/downloadBlobAsFile";
 // src/screens/signingScreen/SigningManagerScreen.js
-import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import useHttpRequest from "../../hooks/useHttpRequest";
@@ -51,9 +51,18 @@ import TemplatesWorkspace from './templates/TemplatesWorkspace';
 import SigningPackagesHub, { useSigningV2Available } from './templates/SigningPackagesHub';
 import CaseStageAutomationPanel from './templates/CaseStageAutomationPanel';
 import SigningBackButton from './templates/SigningBackButton';
+import WordSigningWorkflow from './word/WordSigningWorkflow';
 
 
 export const SigningManagerScreenName = "/SigningManagerScreen";
+
+function draftForWordContext(draft, context) {
+    if (!draft) return null;
+    for (const [record, id] of [['clientRecord', 'clientId'], ['caseRecord', 'caseId']]) {
+        if (context?.[record]?.id && Number(draft.inputs?.[id] || 0) !== Number(context[record].id)) return null;
+    }
+    return draft;
+}
 
 export default function SigningManagerScreen() {
     const { canAction, scope: permissionScope, permissionMode, loaded } = useFirmPermissions() || { canAction: () => false };
@@ -62,6 +71,7 @@ export default function SigningManagerScreen() {
     const canSignManage = canAction('signing', 'manage');
     const { isSmallScreen } = useScreenSize();
     const navigate = useNavigate();
+    const location = useLocation();
     const { openPopup, closePopup } = usePopup();
     const { t } = useTranslation();
 
@@ -78,6 +88,17 @@ export default function SigningManagerScreen() {
     };
     const showTemplates = panel.startsWith("template");
     const showRuns = panel === "runs" || panel === "compose";
+    const wordInitialContext = location.state?.wordInitialContext || null;
+    const wordContextKey = `${wordInitialContext?.clientRecord?.id || ''}:${wordInitialContext?.caseRecord?.id || ''}`;
+    const wordSession = useRef({ contextKey: wordContextKey, draft: draftForWordContext(location.state?.wordResumeDraft, wordInitialContext) });
+    const [wordSigning, setWordSigning] = useState(null);
+    useEffect(() => { setWordSigning(null); }, [wordContextKey]);
+    // A different persisted record starts a new use; labels never authorize data.
+    if (wordSession.current.contextKey !== wordContextKey) {
+        wordSession.current = { contextKey: wordContextKey, draft: draftForWordContext(location.state?.wordResumeDraft, wordInitialContext) };
+    }
+    const rememberWordDraft = useCallback(draft => { wordSession.current.draft = draft; }, []);
+    const continueWord = preview => { setWordSigning(preview); };
     const signingV2Available = useSigningV2Available();
     const [scope, setScope] = useState("mine");
     useEffect(() => {
@@ -371,15 +392,28 @@ export default function SigningManagerScreen() {
         );
     };
 
-    if (panel === 'stage' && searchParams.get('caseId')) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><div className="lw-stageAutomationPage">
+    const panelShell = content => <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
+        {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={AdminStackName + MainScreenName} GetNavBarData={getNavBarData} chosenNavKey="signingFiles" />}
+        <SimpleScrollView>{content}</SimpleScrollView>
+    </SimpleScreen>;
+    if (panel === 'stage' && searchParams.get('caseId')) return panelShell(<div className="lw-stageAutomationPage">
         <SigningBackButton onPress={() => { const next = new URLSearchParams(searchParams); next.delete('caseId'); next.delete('stageRun'); next.delete('panel'); setSearchParams(next); }}>{t('common.back')}</SigningBackButton>
         {signingV2Available && canSignUpload ? <CaseStageAutomationPanel key={searchParams.get('caseId')} caseId={searchParams.get('caseId')} canEdit={canAction('cases', 'edit')} initiallyOpen initialRunId={searchParams.get('stageRun')} /> : <p>{t('stageAutomation.noAccess')}</p>}
-    </div></SimpleScrollView></SimpleScreen>;
-    if (showTemplates) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><TemplatesWorkspace nativeAvailable={signingV2Available} onSendTemplate={signingV2Available ? template => {
+    </div>);
+    if (showTemplates && wordSigning && signingV2Available && canSignUpload) return panelShell(<WordSigningWorkflow
+        key={`${wordSigning.id}:${wordSigning.pdfHash}`} preview={wordSigning} onBack={() => setWordSigning(null)}
+        onCreated={id => {
+            setWordSigning(null);
+            const next = new URLSearchParams(searchParams); next.set('panel', 'runs'); next.set('submission', id); next.delete('mode'); setSearchParams(next);
+        }} />);
+    if (showTemplates) return panelShell(<TemplatesWorkspace nativeAvailable={signingV2Available} onSendTemplate={signingV2Available ? template => {
         const next = new URLSearchParams(searchParams); next.set('panel', 'compose'); next.set('template', template.id); next.set('templateVersion', String(template.version)); setSearchParams(next);
-    } : undefined} onWordContinue={preview => navigate(AdminStackName + uploadFileForSigningScreenName, { state: { wordPreviewId: preview.id } })}
-        canUpload={canSignUpload} canManage={canSignManage} onClose={() => { setPanel(null); reloadFiles(); }} /></SimpleScrollView></SimpleScreen>;
-    if (showRuns) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><SigningPackagesHub canCreate={canSignUpload} canManage={canSignManage} onClose={() => { setPanel(null); reloadFiles(); }} /></SimpleScrollView></SimpleScreen>;
+    } : undefined} onWordContinue={continueWord}
+        initialWordMode={searchParams.get('mode') === 'word'} initialContext={wordInitialContext}
+        resumeDraft={wordSession.current.draft} onDraftChange={rememberWordDraft}
+        onWordBack={() => { const next = new URLSearchParams(searchParams); next.delete('mode'); setSearchParams(next); }}
+        canUpload={canSignUpload} canManage={canSignManage} onClose={() => { setPanel(null); reloadFiles(); }} />);
+    if (showRuns) return panelShell(<SigningPackagesHub canCreate={canSignUpload} canManage={canSignManage} onClose={() => { setPanel(null); reloadFiles(); }} />);
 
     return (
         <SimpleScreen
