@@ -54,3 +54,35 @@ test('labels on nonintersecting sides preserve their nearby source placement', (
     expect(result.map(box => box.top)).toEqual([30, 30]);
     expect(result.map(box => box.leader)).toEqual([null, null]);
 });
+
+test('the maximum 1000 dense bindings retain source order, exact anchor leaders and separated contained labels when the page has room', () => {
+    const count = 1000; const height = count * 22 + 80;
+    const chips = Array.from({ length: count }, (_, index) => chip(20 + (count - index - 1) * 11));
+    const before = JSON.parse(JSON.stringify(chips));
+    const result = layoutSourceChips(chips, 272, height);
+    expect(result).toHaveLength(count);
+    const inSourceOrder = result.map((box, index) => ({ ...box, anchor: chips[index].anchor }))
+        .sort((a, b) => a.anchor.top - b.anchor.top);
+    inSourceOrder.forEach((box, index) => {
+        expect(box.left).toBe(59); expect(box.width).toBe(105); expect(box.height).toBe(19);
+        expect(box.top).toBeGreaterThanOrEqual(0); expect(box.top + box.height).toBeLessThanOrEqual(height);
+        if (index) expect(box.top - inSourceOrder[index - 1].top).toBeGreaterThanOrEqual(22);
+        if (box.leader) {
+            expect(box.leader.x1).toBe(box.anchor.left + 7);
+            expect(box.leader.y1).toBe(box.anchor.top + 4);
+        }
+    });
+    expect(chips).toEqual(before);
+    expect(layoutSourceChips(chips, 272, height)).toEqual(result);
+});
+
+test('the maximum binding count on an overfull narrow page still keeps measured labels and source geometry inside bounds', () => {
+    const chips = Array.from({ length: 1000 }, (_, index) => chip(40 + (index % 22) * 11));
+    const result = layoutSourceChips(chips, 272, 360);
+    expect(result).toHaveLength(1000);
+    result.forEach(box => {
+        expect(box.left).toBeGreaterThanOrEqual(0); expect(box.left + box.width).toBeLessThanOrEqual(272);
+        expect(box.top).toBeGreaterThanOrEqual(0); expect(box.top + box.height).toBeLessThanOrEqual(360);
+        expect(box.height).toBe(19);
+    });
+});
