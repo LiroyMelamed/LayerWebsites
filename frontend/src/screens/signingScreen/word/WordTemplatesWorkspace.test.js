@@ -592,3 +592,24 @@ test('a busy preview request shows retry-later feedback without dropping chosen 
     fireEvent.click(screen.getByText('preview')); await screen.findByTestId('final-pdf');
     expect(api.preview).toHaveBeenCalledTimes(2); expect(screen.queryByText('converterBusy')).not.toBeInTheDocument();
 });
+
+test('a signature-only Word source prepares the exact empty-data payload and requires PDF readiness plus review before continuing', async () => {
+    const onContinue = jest.fn(); const saved = { ...source(), roles: [{ key: 'dataRole', label: 'Data role' }] };
+    await open(saved, { onContinue });
+    expect(screen.getByText('noMappedFields')).toBeVisible();
+    expect(screen.getByText('preview')).toBeEnabled();
+    expect(screen.queryByLabelText('roleClientId Data role')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('preview')); await screen.findByTestId('final-pdf');
+    expect(api.preview).toHaveBeenCalledWith(saved.id, { expectedVersion: saved.version, bindingsHash: saved.bindingsHash,
+        inputs: { manualValues: {}, roleClientIds: {} } }, expect.any(String));
+    expect(api.preview.mock.calls[0][1]).not.toHaveProperty('bindings');
+    expect(api.preview.mock.calls[0][1].inputs).not.toHaveProperty('signers');
+    expect(screen.getByText('continue')).toBeDisabled(); expect(screen.getByLabelText('previewAcknowledgement')).toBeDisabled();
+    fireEvent.click(screen.getByText('continue')); expect(onContinue).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText('pdf-loaded')); expect(screen.getByText('continue')).toBeDisabled();
+    fireEvent.click(screen.getByText('continue')); expect(onContinue).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByLabelText('previewAcknowledgement')); fireEvent.click(screen.getByText('continue'));
+    expect(onContinue).toHaveBeenCalledWith(expect.objectContaining({ id: 'preview-a', sourceId: saved.id,
+        sourceVersion: saved.version, pdfHash: 'd'.repeat(64), fileBlob: expect.any(Blob), requiresFreshSigningGeometry: true }));
+    expect(api.create).not.toHaveBeenCalled(); expect(api.save).not.toHaveBeenCalled();
+});

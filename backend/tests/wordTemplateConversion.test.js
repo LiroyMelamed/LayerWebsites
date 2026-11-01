@@ -115,6 +115,18 @@ test('nonzero converter exit leaks no output and cleans all private files', asyn
     await job.clean();
 });
 
+test('host-wide managed admission exit 75 is retryable busy and retains caller source', async t => {
+    const job = await harness(t, "console.error('private admission diagnostics'); process.exit(75);");
+    const source = docx(); const before = digest(source);
+    await assert.rejects(convertDocxToPdf(source, job), expectedError('WORD_CONVERSION_BUSY'));
+    assert.equal(digest(source), before);
+    await job.clean();
+    // A rejected global lease must also release the per-process admission slot.
+    const next = await harness(t, writePdf);
+    assert.equal((await convertDocxToPdf(source, next)).pageCount, 1);
+    await next.clean();
+});
+
 test('a signal crash is a conversion failure and cleans all private files', async t => {
     const job = await harness(t, "process.kill(process.pid, 'SIGKILL');");
     await assert.rejects(convertDocxToPdf(docx(), job), expectedError('WORD_CONVERSION_FAILED'));

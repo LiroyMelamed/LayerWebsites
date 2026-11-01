@@ -1,10 +1,10 @@
 const { createAppError } = require('../utils/appError');
 
 function conversionStatus(code) {
-    if (code === 'WORD_AUTHORING_BUSY') return 503;
+    if (code === 'WORD_CONVERSION_BUSY' || code === 'WORD_AUTHORING_BUSY') return 429;
     if (code === 'WORD_AUTHORING_EXTRACTION_TIMEOUT') return 504;
     if (code === 'WORD_AUTHORING_EXTRACTION_FAILED') return 500;
-    if (/^WORD_CONVERSION_(NOT_CONFIGURED|EXECUTABLE_UNAVAILABLE|BUSY)$/.test(code)) return 503;
+    if (/^WORD_CONVERSION_(NOT_CONFIGURED|EXECUTABLE_UNAVAILABLE)$/.test(code)) return 503;
     if (code === 'WORD_CONVERSION_TIMEOUT') return 504;
     if (code === 'WORD_CONVERSION_INVALID_DOCX') return 400;
     if (code === 'WORD_CONVERSION_ABORTED') return 409;
@@ -15,8 +15,10 @@ function wordRouteError(error) {
     if (error?.name !== 'WordTemplateError') return error;
     const code = /^[A-Z][A-Z0-9_]{1,100}$/.test(error.code || '') ? error.code : 'INVALID_DOCX';
     // Parsing/conversion errors contain no source text, file paths or process output.
+    const busy = code === 'WORD_CONVERSION_BUSY' || code === 'WORD_AUTHORING_BUSY';
     return createAppError(code, conversionStatus(code), code, undefined,
-        { messageKey: 'signingWord.requestFailed', retryable: false });
+        { messageKey: 'signingWord.requestFailed', retryable: busy,
+            ...(busy ? { retryAfterSeconds: 2 } : {}) });
 }
 
 function createWordStorage() {
@@ -57,7 +59,11 @@ function createSigningWordRouter({ pool, actorScope, service, storage, convertDo
             res.set({ 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' });
             const scope = await actorScope(pool, req, 'upload');
             await action(req, res, scope);
-        } catch (error) { next(wordRouteError(error)); }
+        } catch (error) {
+            const safe = wordRouteError(error);
+            if (safe.errorCode === 'WORD_CONVERSION_BUSY' || safe.errorCode === 'WORD_AUTHORING_BUSY') res.set({ 'Retry-After': '2' });
+            next(safe);
+        }
     };
 
     router.get('/', run(async (_req, res, scope) => res.json(await word.list(pool, scope))));
