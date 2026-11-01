@@ -1,0 +1,35 @@
+{
+  "candidate": "2d9c7040ade76ff30aab7026a7c5ccd54d18bafa",
+  "branch": "codex/qa-billing-integration-20261101",
+  "base": "4a766a35921263260c3139632378444e6550a5e3",
+  "mergedSharedCandidate": "176ff60a",
+  "conflicts": 0,
+  "frontend": {
+    "numPassedTestSuites": 110,
+    "numFailedTestSuites": 0,
+    "numPassedTests": 902,
+    "numFailedTests": 0,
+    "numPendingTests": 0
+  },
+  "billing": {
+    "files": 26,
+    "pass": 191,
+    "fail": 0,
+    "skipped": 1
+  },
+  "commonBackend": {
+    "files": 5,
+    "pass": 53,
+    "fail": 0,
+    "skipped": 1
+  },
+  "sourceGuardEntries": 103,
+  "productionCompile": {
+    "exit": 0,
+    "sourceStable": true,
+    "dependencyStable": true,
+    "artifactFiles": 347,
+    "apiOrigin": "http://127.0.0.1:55799"
+  },
+  "noPushOrDeploymentOrLiveAccounting": true
+}

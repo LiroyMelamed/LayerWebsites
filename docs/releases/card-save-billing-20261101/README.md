@@ -1,8 +1,11 @@
 # Card saving and due subscription collection
 
-Status: local implementation and synthetic-provider verification; **not deployed**.
-Product base: `047567a8`; shared main has since advanced. See the refreshed
-[version audit](version-audit/REPORT.md) before integration. The reported MelamedLaw release
+Status: local implementation, separate main/client integrations and synthetic-
+provider verification; **not pushed or deployed**. Current combined gates and
+exact branch pins are in [integration QA](integration-qa/README.md).
+Original billing base: `047567a8`; the local combined candidate starts from
+shared main `53d177ee`. The earlier [version audit](version-audit/REPORT.md)
+records the pre-integration snapshot. The reported MelamedLaw release
 `0631caf7` has the same legacy setup settlement defect. No customer billing data
 was used to infer a new bill or changed by this work.
 
@@ -99,8 +102,10 @@ and initial-signup boundaries are covered by the portable mocked-provider tests.
 
 ## Release holds
 
-No branch was merged, no tenant deployed, and no live accounting correction was
-made. Land reviewed code on `main`, then follow the existing Melamedia QA gate
+No active or remote branch was changed, no tenant deployed, and no live
+accounting correction was made. Separate local integration branches and their
+tests are now recorded in [integration QA](integration-qa/README.md).
+Land reviewed code on `main`, then follow the existing Melamedia QA gate
 before any customer branch or deployment. Confirm the full signup/office-policy
 suite and the real-provider sandbox receipt/email flow during QA. The exact
 missing environment and provider settings holds are recorded in the follow-up.

@@ -1,0 +1,283 @@
+✔ tenant defaults: ashrafessa complimentary through 01/01/2027 (1.706333ms)
+✔ tenant defaults: morlevy complimentary through 01/01/2027 (0.105083ms)
+✔ tenant defaults: melamedlaw complimentary through 30/09/2026 (pay from 01/10/2026) (0.853416ms)
+✔ tenant defaults: melamedia is unbilled (0.128583ms)
+✔ billing lock exempts auth, webhooks, billing, public signing (0.168208ms)
+✔ excluded seat phones include owner 0507299064 as last-9 507299064 (0.185667ms)
+✔ complimentary firm is never locked even after a failed pay attempt (0.194542ms)
+✔ setup-style failure during complimentary does not lock (0.094542ms)
+✔ after complimentary ends, expired grace locks the firm (0.094708ms)
+✔ getBillingEmailBranding uses MelaMedia platform logo by default (0.705708ms)
+✔ buildFailedPaymentHtml includes MelaMedia logo in wrapper (11.664833ms)
+✔ parseBillingAlertEmails splits comma-separated owner alerts (1.397542ms)
+✔ sendFailedPaymentEmails uses branding name in fromName (1.030542ms)
+✖ missing tenant header cannot bypass the current customer identity billing lock (3.455542ms)
+ℹ Error: Test "missing tenant header cannot bypass the current customer identity billing lock" at backend/tests/billingIdentity.test.js:11:1 generated asynchronous activity after the test ended. This activity created the error "Error: listen EPERM: operation not permitted 0.0.0.0" and would have caused the test to fail, but instead triggered an uncaughtException event.
+✔ client lock status contains no payment reason, deadline, amount or pay link (1.120209ms)
+✔ verified authorized business owner receives recovery details (0.250667ms)
+[billing-renewal] Started. poll=15m tz=Asia/Jerusalem
+[billing-renewal] self-service {"processed":0,"needsReview":0}
+[billing-renewal] Started. poll=15m tz=Asia/Jerusalem
+[billing-renewal] Scheduler disabled via BILLING_RENEWAL_SCHEDULER_ENABLED.
+✔ scheduled signup renewals remain separate from dedicated billing across normalized flags (16.397334ms)
+✔ dedicated legacy card save collects the stored debt once, separately from ₪1 (2095.749667ms)
+✔ scoped legacy card save collects the stored debt once, separately from ₪1 (3644.486334ms)
+✔ card verification leaves nonbillable subscription unchanged: {"amount":0} (3457.551ms)
+✔ card verification leaves nonbillable subscription unchanged: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"} (2739.987833ms)
+✔ card verification leaves nonbillable subscription unchanged: {"status":"complimentary","complimentaryUntil":"2026-12-01T12:00:00Z"} (2435.723917ms)
+✔ card verification leaves nonbillable subscription unchanged: {"billingEnabled":false} (3104.152166ms)
+✔ card verification leaves nonbillable subscription unchanged: {"autoRenew":false,"status":"active","renewsAt":"2026-10-01T12:00:00Z"} (3296.003583ms)
+✔ one definite decline retains debt/grace and callback replay never retries that setup attempt (2914.92775ms)
+✔ timeout charge outcome retains a reservation and prevents alternate charges or checkout (2597.794375ms)
+✔ ambiguous charge outcome retains a reservation and prevents alternate charges or checkout (2329.3155ms)
+✔ malformed charge outcome retains a reservation and prevents alternate charges or checkout (2820.068583ms)
+✔ an existing unresolved payment survives setup and blocks a second collection (2754.127708ms)
+✔ concurrent setup callbacks, explicit retry and maintenance dispatch at most one subscription charge (3323.7085ms)
+✔ unverified setup or missing trusted token cannot save a callback card or collect debt (4097.90025ms)
+✔ initial signup payment provisions the signup without entering card debt collection (4017.07275ms)
+✔ a setup saved before the next bill cannot authorize that later bill when its callback replays (3790.793666ms)
+✔ pre-fix succeeded setup without collection authorization cannot start a historical live bill (2469.958458ms)
+✔ a successful charge with unverifiable outcome remains reserved until its same transaction verifies (4161.710084ms)
+✔ setup settlement rejects a stored intent from a different office before saving its card (4156.829791ms)
+✔ a setup authorized for an unresolved old cycle cannot collect a different later cycle (4984.092667ms)
+✔ hosted checkout racing setup collection reserves one payment route (4971.030666ms)
+✔ yearly debt collection uses its stored agreed monthly amount and existing annual rule (4603.598125ms)
+✔ setup return reports actual payment result for an active account with due debt: timeout (5863.122958ms)
+✔ setup return reports actual payment result for an active account with due debt: success (6326.636833ms)
+✔ browser cancellation preserves an uncertain hosted reservation; later confirmed payment settles once (6989.764708ms)
+✔ a missing card cannot downgrade a nonbillable account: {"amount":0} (6765.498542ms)
+✔ a missing credentials cannot downgrade a nonbillable account: {"amount":0} (5111.13725ms)
+✔ a missing card cannot downgrade a nonbillable account: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"} (6764.108667ms)
+✔ a missing credentials cannot downgrade a nonbillable account: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"} (9520.420459ms)
+✔ setup blocked by an unrelated pending payment cannot retry it after its later decline (10050.94875ms)
+✔ provider document reference persists on the successful intent and history without assuming email delivery (5748.188542ms)
+✔ expiry suspension after cancellation without an existing payment failure creates no debt on card save (9000.599625ms)
+✔ zero-price v2 agreement remains readable by plan, return and lock status snapshots (7348.849542ms)
+✔ due debt with missing card returns explicit failed payment instead of success-shaped snapshot (6792.163208ms)
+✔ due debt with missing credentials returns explicit failed payment instead of success-shaped snapshot (4759.225333ms)
+✔ hosted page timeout preserves a reservation and blocks alternate payment dispatch (7619.271083ms)
+✔ a lost hosted order reference cannot be reconciled with an unrelated approved order (6172.819333ms)
+✔ saved-card endpoint rejects unsupported setup kind before reserving or charging (6906.440167ms)
+✔ saved-card endpoint rejects unsupported unrecognized kind before reserving or charging (3884.109084ms)
+✔ saved-card endpoint rejects unsupported manual kind before reserving or charging (4520.094416ms)
+✔ manual annual charge reads the current agreed price under reservation lock (6089.737291ms)
+✔ a disable committed before annual reservation prevents provider dispatch (5997.909458ms)
+✔ a scheduled annual cycle cannot dispatch twice after its first settlement (4670.246916ms)
+✔ a paid monthly reservation retains its frozen period if current interval changed before reconciliation (3547.693042ms)
+✔ legacy interval-only edits are blocked while a payment is unresolved (2655.542833ms)
+✔ an interval-only legacy edit preserves its agreed monthly amount instead of repricing the catalogue (2926.998458ms)
+✔ success before transaction-reference persistence failure remains pending and cannot be redispatched (4515.952709ms)
+✔ two different verified card setups race into at most one subscription payment and replays keep the current card (3902.878084ms)
+✔ an approved payment with missing provider document reference is not charged again to create a receipt (4873.074791ms)
+✔ a dedicated deployment without configured billing contact never guesses an arbitrary administrator recipient (4357.472416ms)
+✔ settling an earlier saved-token charge cannot replace a newer verified active card (3975.331666ms)
+✔ hosted subscription verification binds the exact approved order and transaction without requiring a saved card (0.968458ms)
+✔ foreign order identity, price, currency and ambiguous approved transaction are rejected before transaction lookup (1.294833ms)
+✔ callback-like approval cannot replace independent transaction amount, identity and card evidence (0.89675ms)
+✔ unavailable provider reads and malformed expected prices never become verified receipts (0.215083ms)
+✔ optional hosted token handling does not relax the one-shekel signup card-storage requirement (0.109083ms)
+✔ existing named production and sandbox credentials remain separate (3.047209ms)
+✔ legacy credentials retain compatibility; incomplete pairs do not become credentials (1.214625ms)
+✔ configured card verification amount remains available without accepting invalid amounts (3.789541ms)
+✔ checkout confirmation validates the provider return before exposing the refreshed snapshot (3.763041ms)
+✔ an uncertain card collection cannot be reported paid because the subscription was already active (4.700166ms)
+✔ saved-card controller rejects a setup-kind charge as a client error (1.408916ms)
+✔ checkout confirmation rejects missing identifiers and failed validation without refreshing (0.613292ms)
+✔ case deletion keeps role permission checks ahead of all database mutations (6.364917ms)
+✔ production hard deletion remains disabled by default (1.103917ms)
+✔ explicit hard-delete permission never overrides linked legal data protection (0.56775ms)
+✔ an empty case deletes in one locked transaction when explicitly enabled (1.318042ms)
+✔ database failure rolls back deletion and releases the connection (0.943709ms)
+✔ monthly and discounted annual subscriptions produce monthly minor units (2.209875ms)
+✔ complimentary, suspended and disabled plans do not report list price as recurring revenue (0.191875ms)
+✔ invalid billing data fails instead of becoming a healthy zero (0.236666ms)
+✔ payments map real field names, units, enum and timestamp without provider/private fields (0.663375ms)
+✔ missing payment values are rejected rather than silently fabricated (0.13875ms)
+✔ real route retains authentication and never reads billing for anonymous callers (1.990417ms)
+✔ real routes expose dependency failures as503 without exception details or fake empty data (0.44675ms)
+✔ real payments route returns transformed data and genuine empty history (0.311875ms)
+✔ evaluatePackageChange blocks cheaper signing when documents exceed pack (0.7615ms)
+✔ evaluatePackageChange allows upgrade even when over current quota (0.07575ms)
+✔ evaluatePackageChange blocks platform downgrade from site_app (0.064125ms)
+✔ evaluatePackageChange blocks resource downgrade when seats exceed (0.684458ms)
+✔ disabledOptionsForUsage marks cheaper signing packs (0.410042ms)
+✔ resolvePricingLineItems default site_app + pro + 500 totals 972 (0.132042ms)
+✔ enterprise SMS monthly quota is 5000 not unlimited (0.137541ms)
+✔ recommendCheapestPackage: MelamedLaw-shaped usage needs enterprise 1353 (0.269958ms)
+✔ recommendCheapestPackage: MorLevi-shaped usage fits basic 845 (0.152ms)
+✔ recommendCheapestPackage: SMS above pro cap 2000 needs enterprise (0.176959ms)
+✔ yearly billing is 10% off 12 months, rounded (0.133042ms)
+✔ new package choices reject a platform-free contract even from legacy none (0.088291ms)
+[billing-lock] snapshot failed: db timeout
+✔ requireBillingAccess allows when snapshot not locked (0.946ms)
+✔ requireBillingAccess returns a neutral 503 without financial details when locked (0.276208ms)
+✔ requireBillingAccess fails closed when snapshot throws (0.404167ms)
+✔ requireBillingAccess still exempts auth paths when snapshot throws (0.061083ms)
+✔ only session identity lookup remains available for owner recovery navigation (0.051792ms)
+[billing] PACKAGE_PERSIST_AFTER_CHARGE {
+  code: 'PACKAGE_PERSIST_AFTER_CHARGE',
+  platformId: 'site_app',
+  resourceId: 'pro',
+  signingId: '1500',
+  billingInterval: 'monthly',
+  message: 'disk full'
+}
+✔ savePackage does not persist package before failed upgrade charge (0.844417ms)
+✔ savePackage persists only after successful upgrade charge (1.0955ms)
+✔ savePackage throws when persist fails after successful charge (1.718833ms)
+✔ savePackage no-card upgrade opens checkout with pending package snapshot (0.69875ms)
+[takbull] Using legacy TAKBULL_API_KEY/TAKBULL_API_SECRET. Set TAKBULL_MODE plus PROD_TAKBULL_* and TEST_TAKBULL_* to avoid confusion.
+[billing] UPGRADE_PACKAGE_RECOVERED {
+  code: 'UPGRADE_PACKAGE_RECOVERED',
+  intentId: '98ef29a3-4b9d-48e0-9d66-7855cf7a63de',
+  orderReference: 'lw-upgrade-98ef29a34b9d48e09d',
+  transactionId: 'txn-1-lw-upgrade-98ef29a34b9d48e09d',
+  platformId: 'site_app',
+  resourceId: 'pro',
+  signingId: '1500',
+  upgradeOperationKey: 'legacy|site_app|pro|1500|monthly|200.00'
+}
+[billing] PACKAGE_PERSIST_AFTER_CHARGE {
+  code: 'PACKAGE_PERSIST_AFTER_CHARGE',
+  platformId: 'site_app',
+  resourceId: 'pro',
+  signingId: '1500',
+  billingInterval: 'monthly',
+  message: 'sync down'
+}
+[billing] UPGRADE_PACKAGE_RECOVERED {
+  code: 'UPGRADE_PACKAGE_RECOVERED',
+  intentId: '66397956-295f-4787-9348-ac7aaa19c951',
+  orderReference: 'lw-upgrade-66397956295f478793',
+  transactionId: 'txn-1-lw-upgrade-66397956295f478793',
+  platformId: 'site_app',
+  resourceId: 'pro',
+  signingId: '1500',
+  upgradeOperationKey: 'legacy|site_app|pro|1500|monthly|200.00'
+}
+✔ buildUpgradeOperationKey is stable for the same logical upgrade (1.128875ms)
+✔ saved-card upgrade charges once then retry recovers without second provider charge (13.426167ms)
+✔ failed charge allows a fresh provider charge on retry (7.890042ms)
+✔ concurrent upgrade requests produce at most one provider charge (2.518042ms)
+✔ an uncertain provider response keeps a committed reservation and blocks a second charge (2.225416ms)
+✔ a recorded provider transaction is independently verified on recovery instead of charging again (0.804792ms)
+✔ historical succeeded intent for a different package is not reused (0.283083ms)
+✔ already-applied package returns success without charging (0.123209ms)
+✔ savePackage retry after PACKAGE_PERSIST passes upgradeOperation and avoids duplicate charge stub (1.062625ms)
+✔ repeated retries after paid-unapplied state still produce only one total charge (1.120333ms)
+✔ an existing pending intent without a known outcome remains reserved across retries (0.617083ms)
+✔ complimentary interval-only savePackage does not pass upgradeOperation to charge (0.281833ms)
+✔ savePackage blocks fallback checkout for an unresolved payment (0.773125ms)
+✔ savePackage does not persist an already atomic upgrade a second time (0.164708ms)
+✔ verified card save collects overdue agreed amount once across concurrent callbacks and replay (2832.368458ms)
+✔ definite decline keeps debt and grace and setup replay cannot dispatch another attempt (4160.172958ms)
+✔ timeout keeps the durable cycle pending and blocks setup and owner retries (2804.186125ms)
+✔ HTTP or malformed failure keeps the durable cycle pending and blocks setup and owner retries (2537.533792ms)
+✔ missing result keeps the durable cycle pending and blocks setup and owner retries (3061.36225ms)
+✔ approval without transaction keeps the durable cycle pending and blocks setup and owner retries (3124.893084ms)
+✔ failed independent verification cannot settle or issue a payment notice (2761.26925ms)
+✔ zero due amount skips provider and leaves billing state unpaid (2692.010291ms)
+✔ unverified or another office setup cannot trigger debt collection (2313.889958ms)
+✔ new signup trial has no charge despite a verified replacement card (2142.723041ms)
+✔ old setups and setups saved without debt cannot collect a later renewal cycle (2630.015042ms)
+✔ normal scheduled renewal persists a non-null metadata object and charges once (2515.189209ms)
+✔ a card save blocked by an existing pending payment cannot later replay into a new charge (3736.724625ms)
+✔ canceled future renewal is preserved while explicit setup can recover existing past-due debt (4320.753167ms)
+✔ an expired canceled active subscription does not invent renewal debt on card save (3171.965125ms)
+✔ canceled access expiry without a prior payment failure is not collectible debt (3891.740584ms)
+✖ closed shared signup cannot create an order or office; status exposes no contact data (18.842709ms)
+✔ hosted signup asks Takbull to return the browser; legacy iframe callers retain their contract (0.720916ms)
+✖ status polling cannot exhaust signup creation, checkout or verified-return budgets (19.086625ms)
+✔ billing lock permits public signup and separately authenticated business control only at proper boundaries (0.384666ms)
+﹣ paid signup and renewal with real PostgreSQL office policies (0.5895ms) # SKIP
+✔ logo is mandatory; active, forged and corrupt files are rejected (10.127875ms)
+✔ size and dimension limits reject low quality, oversized and non-square files (69.777ms)
+✔ valid logo retains transparency and dimensions; output decodes and has stable content hash (16.202584ms)
+✔ high resolution JPEG is sanitized to PNG without upscaling or cropping (120.419875ms)
+✔ signup uses authenticated order and card transaction, not callback amount/token (19.696166ms)
+✔ signup rejects foreign, missing, wrong amount/currency/type and missing token evidence (5.938375ms)
+✔ saved-token renewal requires exact independently read transaction evidence (0.356708ms)
+✔ three calendar months use Israel local time and clamp month ends through DST (21.323583ms)
+✔ all 90 allowed signup choices use final prices and the existing annual discount (2.153958ms)
+✔ website plus basic resources costs ₪532 final; historical system-only contracts remain unchanged (0.190334ms)
+✔ accepted plan changes use the agreed billing row, not an obsolete signup or live catalogue price (0.084958ms)
+✔ invalid choices and missing new contract charge fail closed (0.703792ms)
+✔ omitted or unchecked optional consent creates no grant and does not block signup (8.011625ms)
+✔ explicit opt-in requires enabled shared signup and the exact separate consent copy (37.317708ms)
+✔ dedicated deployment cannot accidentally receive shared signup grants (0.60775ms)
+✔ existing signup and billing-only consent are never backfilled (0.359791ms)
+✔ provisioning preserves actual capture time and queues only an active subscription update on the same client (17.923375ms)
+✔ consent/outbox failure propagates to the caller transaction rather than silently completing signup (3.474583ms)
+✔ real producer accepts the provisioned signup UUID, persists consent and trial update atomically, and deduplicates replay (3453.715834ms)
+✔ real signup intent stores separate server-captured consent and rejects changed consent on the same signup identity (4342.736916ms)
+✔ welcome is RTL, escaped, includes login/OTP and frozen final annual price (17.872833ms)
+✔ SMTP sends only to new owner from MelaMedia, deterministic ID, and distinguishes rejection from unknown delivery (57.457333ms)
+✔ verified settlement commits payment, package, audit and outbox once; replay is inert (4758.174084ms)
+✔ outbox failure after insert rolls back the payment and package and permits one clean retry (4079.054625ms)
+✔ audit failure is transactional rather than silently losing the payment history (3990.429125ms)
+✔ a provider verification failure cannot activate a subscription or enqueue a notice (5042.430459ms)
+✔ one-shekel card setup does not create a subscription-payment notice (5741.11875ms)
+✔ a hosted callback cannot inject a card token absent from the independently verified transaction (6066.89675ms)
+✔ persisted office ownership defeats a tampered intent object (6371.303ms)
+✔ an enclosing upgrade transaction owns commit and can roll back every settlement effect (5129.512375ms)
+✔ shared renewal: verified success and outbox commit together and a repeated request does not recharge (6903.691792ms)
+✔ shared renewal: outbox failure rolls back final settlement but retains the charged reservation (8877.197834ms)
+✔ shared upgrade: verified success and outbox commit together and a repeated request does not recharge (7071.968583ms)
+✔ shared upgrade: outbox failure rolls back final settlement but retains the charged reservation (8182.191042ms)
+✔ hosted checkout and saved-card charge request one provider-native document with recipient and amount (18.84075ms)
+✔ 1 ILS card verification remains a real payment document and gets a line item without a supplied purpose (0.231667ms)
+✔ explicit receipt type or existing configured type is validated before any payment request (0.895542ms)
+✔ zero, negative, or invalid amount never reaches a payment/document operation (0.222916ms)
+✔ timeout is not retried and cannot trigger a separate document operation (1.691667ms)
+✔ HTTP errors, malformed responses, and unbound provider errors remain uncertain (0.810583ms)
+✔ document error after an approved charge is uncertain and never a safe new-charge signal (0.346792ms)
+✔ only a matching terminal failed card charge permits retry; mismatches and unavailable reads remain uncertain (1.083584ms)
+✔ document reference does not assert email delivery or mistake zero document ID for a receipt (0.133666ms)
+ℹ tests 192
+ℹ suites 0
+ℹ pass 188
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 243149.929084
+
+✖ failing tests:
+
+test at backend/tests/billingIdentity.test.js:11:1
+✖ missing tenant header cannot bypass the current customer identity billing lock (3.455542ms)
+  TypeError: Cannot read properties of null (reading 'port')
+      at Test.serverAddress (/private/tmp/layer-billing-lock-deps/node_modules/supertest/lib/test.js:67:31)
+      at new Test (/private/tmp/layer-billing-lock-deps/node_modules/supertest/lib/test.js:49:14)
+      at obj.<computed> [as get] (/private/tmp/layer-billing-lock-deps/node_modules/supertest/index.js:40:18)
+      at TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/billingIdentity.test.js:19:36)
+      at Test.runInAsyncScope (node:async_hooks:228:14)
+      at Test.run (node:internal/test_runner/test:1118:25)
+      at Test.start (node:internal/test_runner/test:1015:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:358:17)
+
+test at backend/tests/signupAvailability.test.js:12:1
+✖ closed shared signup cannot create an order or office; status exposes no contact data (18.842709ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:1926:21)
+      at listenInCluster (node:net:2005:12)
+      at node:net:2214:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at backend/tests/signupHttp.test.js:21:1
+✖ status polling cannot exhaust signup creation, checkout or verified-return budgets (19.086625ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:1926:21)
+      at listenInCluster (node:net:2005:12)
+      at node:net:2214:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }

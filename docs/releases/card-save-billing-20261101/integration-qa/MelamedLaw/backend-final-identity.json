@@ -1,0 +1,9 @@
+{
+  "testedBackendCandidate": "3a7cb009af25794fc33d3f2e11258a6cbd208916",
+  "candidateAtVerification": "b54a4b22f22f0439e312d2faae5d412c49fb597b",
+  "backendTreeAtTest": "f2c0f16de3846c65bfdbc28ffce4262599c11644",
+  "backendTreeNow": "f2c0f16de3846c65bfdbc28ffce4262599c11644",
+  "allRecordedBackendFileHashesMatch": true,
+  "recordedFiles": 808,
+  "interveningSourceChange": "frontend-only MemoryRouter test fixture, no backend source/dependency change"
+}

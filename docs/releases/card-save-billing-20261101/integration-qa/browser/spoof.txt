@@ -1,0 +1,163 @@
+Browser tab: 3, Title: "Local billing browser QA", URL: "http://127.0.0.1:55701/AdminStack/PlanUsage".
+0 AXWebArea Local billing browser QA, URL: 127.0.0.1:55701/AdminStack/PlanUsage
+	1 container
+		2 container qa
+			3 text LOCAL QA — actual screens, synthetic API + iframe; no credentials or provider I/O
+			4 container
+				5 text Scenario 
+				6 pop up button (collapsed, settable) Scenario, Value: success, ID: scenario, Secondary Actions: Expand
+					7 menu
+						8 (selected) success
+						9 decline
+						10 unknown
+						11 no-debt
+			12 button Reset scenario, ID: reset
+			13 button PlanUsage screen, ID: plan
+			14 button PlansPricing screen, ID: pricing
+			15 button Send forged parent message, ID: spoof
+			16 container Description: Synthetic payment and access status, ID: qa-summary
+				142 text scenario=success | status=past_due | due=1353 | savedCard=false | paid=false | pending=false | checkouts=1 | confirmations=0 | verificationFee=0 | simulatedSubscriptionCharges=0
+			18 container Description: Synthetic API counters, ID: qa-state
+				143 text {
+ "scenario": "success",
+ "checkouts": 1,
+ "confirmations": 0,
+ "confirmBodies": [],
+ "fee": 0,
+ "subscriptionCharges": 0,
+ "savedCard": false,
+ "paid": false,
+ "pending": false,
+ "calls": [
+  {
+   "method": "GET",
+   "path": "/api/billing/system-message-consent"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/plan"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/usage"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/lock-status"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/system-message-consent"
+  },
+  {
+   "method": "POST",
+   "path": "/api/billing/checkout"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/lock-status"
+  }
+ ],
+ "messages": [],
+ "completed": [],
+ "accountStatus": "past_due",
+ "collectibleDebt": 1353
+}
+		44 container
+			45 text התכנית שלך
+			46 text תשלום נכשל
+			47 text פרו · אתר + אפליקציה · 500 חתימות
+			48 text 1,353 ₪
+			49 text לחודש
+			50 text אפשר לשלם שנה מראש ב־14,612 ₪ ולחסוך 10%
+			51 text איך לשלם
+			52 איך לשלם
+				53 radio button חודשי 1,353 ₪, Value: 1
+				54 radio button שנתי 14,612 ₪ 10% הנחה, Value: 0
+					55 text שנתי
+					56 text 14,612 ₪
+					57 text 10% הנחה
+			58 text החיוב הבא: 01/10/2026 · 1,353 ₪ לחודש
+			59 container
+				60 text חסימה אם לא ישולם עד: 04/11/2026
+			61 text אין כרטיס שמור. שמרו כרטיס כדי שהחיוב יעבור אוטומטית.
+			62 text פירוט לחודש
+			63 text מערכת
+			64 text 296 ₪
+			65 text פלטפורמה: אתר + אפליקציה
+			66 text 296 ₪
+			67 text חבילת משאבים: פרו
+			68 text 211 ₪
+			69 text חבילת חתימות: 500 חתימות
+			70 text 169 ₪
+			71 button שלמו שנה מראש
+				72 text שלמו שנה מראש
+			73 button שינוי חבילה
+				74 text שינוי חבילה
+			75 button שמירת כרטיס
+				76 text שמירת כרטיס
+			77 button ביטול מנוי
+				78 text ביטול מנוי
+			79 text חיובים
+			80 text עדיין אין חיובים. החיוב הראשון ב־01/10/2026.
+			81 text שמירה
+			82 text מסמכים (ליבה):
+			83 text 180 ימים
+			84 text מסמכים (מידע אישי):
+			85 text 180 ימים
+			86 text שימוש
+			87 text מסמכים (החודש)
+			88 text בשימוש:
+			89 text 0
+			90 text מגבלה:
+			91 text 500
+			92 text מסמכים
+			93 container
+				94 text 0 / 500
+			95 container
+				96 text 0 %
+			97 text אחסון (MB)
+			98 text בשימוש:
+			99 text 0 MB
+			100 text מגבלה:
+			101 text 1024 MB
+			102 text אחסון
+			103 container
+				104 text 0 / 1024
+			105 container
+				106 text 0 %
+			107 text ~ 0 MB בשימוש
+			108 text מנהלי מערכת
+			109 text בשימוש:
+			110 text 0
+			111 text מגבלה:
+			112 text 5
+			113 text מנהלי מערכת
+			114 container
+				115 text 0 / 5
+			116 container
+				117 text 0 %
+			118 text SMS (החודש)
+			119 text בשימוש:
+			120 text 0
+			121 text מגבלה:
+			122 text 2000
+			123 text SMS
+			124 container
+				125 text 0 / 2000
+			126 container
+				127 text 0 %
+			128 text תשלום מאובטח
+			129 text השלימו את התשלום בחלון הסליקה. הכרטיס יישמר לחיוב החודשי.
+			130 container Takbull checkout
+				136 AXWebArea 127.0.0.1:55702/checkout/1
+					137 heading מסגרת תקבול מדומה — בדיקה מקומית בלבד, Value: 2
+						138 text מסגרת תקבול מדומה — בדיקה מקומית בלבד
+					139 text אין כרטיס, תשלום או מסמך אמיתי. התוצאה נקבעת לפי תרחיש הבדיקה.
+					140 button אשר אימות כרטיס מדומה, ID: approve
+					141 button שלח אישור כפול מדומה, ID: repeat
+			132 button ביטול
+				133 text ביטול
+		41 container Notifications
+
+The focused UI element is 15 button Send forged parent message, ID: spoof

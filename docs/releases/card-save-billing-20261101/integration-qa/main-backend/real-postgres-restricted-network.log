@@ -1,0 +1,928 @@
+✖ dedicated legacy card save collects the stored debt once, separately from ₪1 (174.870167ms)
+✖ scoped legacy card save collects the stored debt once, separately from ₪1 (7.338792ms)
+✖ card verification leaves nonbillable subscription unchanged: {"amount":0} (8.976583ms)
+✖ card verification leaves nonbillable subscription unchanged: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"} (9.379333ms)
+✖ card verification leaves nonbillable subscription unchanged: {"status":"complimentary","complimentaryUntil":"2026-12-01T12:00:00Z"} (1.931ms)
+✖ card verification leaves nonbillable subscription unchanged: {"billingEnabled":false} (2.880125ms)
+✖ card verification leaves nonbillable subscription unchanged: {"autoRenew":false,"status":"active","renewsAt":"2026-10-01T12:00:00Z"} (0.804209ms)
+✖ one definite decline retains debt/grace and callback replay never retries that setup attempt (1.413667ms)
+✖ timeout charge outcome retains a reservation and prevents alternate charges or checkout (4.57775ms)
+✖ ambiguous charge outcome retains a reservation and prevents alternate charges or checkout (1.053792ms)
+✖ malformed charge outcome retains a reservation and prevents alternate charges or checkout (1.650792ms)
+✖ an existing unresolved payment survives setup and blocks a second collection (0.819042ms)
+✖ concurrent setup callbacks, explicit retry and maintenance dispatch at most one subscription charge (1.0445ms)
+✖ unverified setup or missing trusted token cannot save a callback card or collect debt (0.602125ms)
+✖ initial signup payment provisions the signup without entering card debt collection (0.942ms)
+✖ a setup saved before the next bill cannot authorize that later bill when its callback replays (1.106792ms)
+✖ pre-fix succeeded setup without collection authorization cannot start a historical live bill (0.996667ms)
+✖ a successful charge with unverifiable outcome remains reserved until its same transaction verifies (0.824208ms)
+✖ setup settlement rejects a stored intent from a different office before saving its card (0.725834ms)
+✖ a setup authorized for an unresolved old cycle cannot collect a different later cycle (0.690208ms)
+✖ hosted checkout racing setup collection reserves one payment route (0.819ms)
+✖ yearly debt collection uses its stored agreed monthly amount and existing annual rule (0.378208ms)
+✖ setup return reports actual payment result for an active account with due debt: timeout (0.254958ms)
+✖ setup return reports actual payment result for an active account with due debt: success (0.14575ms)
+✖ browser cancellation preserves an uncertain hosted reservation; later confirmed payment settles once (0.184792ms)
+✖ a missing card cannot downgrade a nonbillable account: {"amount":0} (0.125917ms)
+✖ a missing credentials cannot downgrade a nonbillable account: {"amount":0} (0.103334ms)
+✖ a missing card cannot downgrade a nonbillable account: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"} (0.095209ms)
+✖ a missing credentials cannot downgrade a nonbillable account: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"} (0.1635ms)
+✖ setup blocked by an unrelated pending payment cannot retry it after its later decline (0.517625ms)
+✖ provider document reference persists on the successful intent and history without assuming email delivery (2.26625ms)
+✖ expiry suspension after cancellation without an existing payment failure creates no debt on card save (0.43525ms)
+✖ zero-price v2 agreement remains readable by plan, return and lock status snapshots (0.327833ms)
+✖ due debt with missing card returns explicit failed payment instead of success-shaped snapshot (0.602208ms)
+✖ due debt with missing credentials returns explicit failed payment instead of success-shaped snapshot (0.74875ms)
+✖ hosted page timeout preserves a reservation and blocks alternate payment dispatch (1.189666ms)
+✖ a lost hosted order reference cannot be reconciled with an unrelated approved order (1.57375ms)
+✖ saved-card endpoint rejects unsupported setup kind before reserving or charging (0.527625ms)
+✖ saved-card endpoint rejects unsupported unrecognized kind before reserving or charging (0.299916ms)
+✖ saved-card endpoint rejects unsupported manual kind before reserving or charging (0.243625ms)
+✖ manual annual charge reads the current agreed price under reservation lock (0.326667ms)
+✖ a disable committed before annual reservation prevents provider dispatch (0.444708ms)
+✖ a scheduled annual cycle cannot dispatch twice after its first settlement (0.34225ms)
+✖ a paid monthly reservation retains its frozen period if current interval changed before reconciliation (0.325958ms)
+✖ legacy interval-only edits are blocked while a payment is unresolved (0.336125ms)
+✖ an interval-only legacy edit preserves its agreed monthly amount instead of repricing the catalogue (0.325625ms)
+✖ success before transaction-reference persistence failure remains pending and cannot be redispatched (0.300792ms)
+✖ two different verified card setups race into at most one subscription payment and replays keep the current card (0.287125ms)
+✖ an approved payment with missing provider document reference is not charged again to create a receipt (0.305042ms)
+✖ a dedicated deployment without configured billing contact never guesses an arbitrary administrator recipient (0.24875ms)
+✖ settling an earlier saved-token charge cannot replace a newer verified active card (0.283416ms)
+ℹ tests 51
+ℹ suites 0
+ℹ pass 0
+ℹ fail 51
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 516.693916
+
+✖ failing tests:
+
+test at backend/tests/cardSetupDebtCollection.test.js:265:5
+✖ dedicated legacy card save collects the stored debt once, separately from ₪1 (174.870167ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:266:19)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:265:5
+✖ scoped legacy card save collects the stored debt once, separately from ₪1 (7.338792ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:266:19)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:297:5
+✖ card verification leaves nonbillable subscription unchanged: {"amount":0} (8.976583ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:298:19)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:297:5
+✖ card verification leaves nonbillable subscription unchanged: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"} (9.379333ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:298:19)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:297:5
+✖ card verification leaves nonbillable subscription unchanged: {"status":"complimentary","complimentaryUntil":"2026-12-01T12:00:00Z"} (1.931ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:298:19)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:297:5
+✖ card verification leaves nonbillable subscription unchanged: {"billingEnabled":false} (2.880125ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:298:19)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:297:5
+✖ card verification leaves nonbillable subscription unchanged: {"autoRenew":false,"status":"active","renewsAt":"2026-10-01T12:00:00Z"} (0.804209ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:298:19)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:310:1
+✖ one definite decline retains debt/grace and callback replay never retries that setup attempt (1.413667ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:311:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:324:5
+✖ timeout charge outcome retains a reservation and prevents alternate charges or checkout (4.57775ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:325:19)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:324:5
+✖ ambiguous charge outcome retains a reservation and prevents alternate charges or checkout (1.053792ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:325:19)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:324:5
+✖ malformed charge outcome retains a reservation and prevents alternate charges or checkout (1.650792ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:325:19)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:338:1
+✖ an existing unresolved payment survives setup and blocks a second collection (0.819042ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:339:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:349:1
+✖ concurrent setup callbacks, explicit retry and maintenance dispatch at most one subscription charge (1.0445ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:350:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:358:1
+✖ unverified setup or missing trusted token cannot save a callback card or collect debt (0.602125ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:359:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:371:1
+✖ initial signup payment provisions the signup without entering card debt collection (0.942ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:372:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:379:1
+✖ a setup saved before the next bill cannot authorize that later bill when its callback replays (1.106792ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:380:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:391:1
+✖ pre-fix succeeded setup without collection authorization cannot start a historical live bill (0.996667ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:392:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:399:1
+✖ a successful charge with unverifiable outcome remains reserved until its same transaction verifies (0.824208ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:400:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:411:1
+✖ setup settlement rejects a stored intent from a different office before saving its card (0.725834ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:412:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:418:1
+✖ a setup authorized for an unresolved old cycle cannot collect a different later cycle (0.690208ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:419:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:431:1
+✖ hosted checkout racing setup collection reserves one payment route (0.819ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:432:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:441:1
+✖ yearly debt collection uses its stored agreed monthly amount and existing annual rule (0.378208ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:442:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:452:5
+✖ setup return reports actual payment result for an active account with due debt: timeout (0.254958ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:453:19)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:452:5
+✖ setup return reports actual payment result for an active account with due debt: success (0.14575ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:453:19)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:466:1
+✖ browser cancellation preserves an uncertain hosted reservation; later confirmed payment settles once (0.184792ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:467:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:488:9
+✖ a missing card cannot downgrade a nonbillable account: {"amount":0} (0.125917ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:489:23)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:488:9
+✖ a missing credentials cannot downgrade a nonbillable account: {"amount":0} (0.103334ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:489:23)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:488:9
+✖ a missing card cannot downgrade a nonbillable account: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"} (0.095209ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:489:23)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:488:9
+✖ a missing credentials cannot downgrade a nonbillable account: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"} (0.1635ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:489:23)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:501:1
+✖ setup blocked by an unrelated pending payment cannot retry it after its later decline (0.517625ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:502:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:514:1
+✖ provider document reference persists on the successful intent and history without assuming email delivery (2.26625ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:515:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:528:1
+✖ expiry suspension after cancellation without an existing payment failure creates no debt on card save (0.43525ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:529:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:539:1
+✖ zero-price v2 agreement remains readable by plan, return and lock status snapshots (0.327833ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:540:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:552:5
+✖ due debt with missing card returns explicit failed payment instead of success-shaped snapshot (0.602208ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:553:19)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:552:5
+✖ due debt with missing credentials returns explicit failed payment instead of success-shaped snapshot (0.74875ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:553:19)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:564:1
+✖ hosted page timeout preserves a reservation and blocks alternate payment dispatch (1.189666ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:565:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:575:1
+✖ a lost hosted order reference cannot be reconciled with an unrelated approved order (1.57375ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:576:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:593:5
+✖ saved-card endpoint rejects unsupported setup kind before reserving or charging (0.527625ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:594:19)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:593:5
+✖ saved-card endpoint rejects unsupported unrecognized kind before reserving or charging (0.299916ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:594:19)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:593:5
+✖ saved-card endpoint rejects unsupported manual kind before reserving or charging (0.243625ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:594:19)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:602:1
+✖ manual annual charge reads the current agreed price under reservation lock (0.326667ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:603:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:611:1
+✖ a disable committed before annual reservation prevents provider dispatch (0.444708ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:612:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:618:1
+✖ a scheduled annual cycle cannot dispatch twice after its first settlement (0.34225ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:619:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:628:1
+✖ a paid monthly reservation retains its frozen period if current interval changed before reconciliation (0.325958ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:629:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:642:1
+✖ legacy interval-only edits are blocked while a payment is unresolved (0.336125ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:643:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:650:1
+✖ an interval-only legacy edit preserves its agreed monthly amount instead of repricing the catalogue (0.325625ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:651:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:659:1
+✖ success before transaction-reference persistence failure remains pending and cannot be redispatched (0.300792ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:660:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:669:1
+✖ two different verified card setups race into at most one subscription payment and replays keep the current card (0.287125ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:670:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:685:1
+✖ an approved payment with missing provider document reference is not charged again to create a receipt (0.305042ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:686:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:695:1
+✖ a dedicated deployment without configured billing contact never guesses an arbitrary administrator recipient (0.24875ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:696:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }
+
+test at backend/tests/cardSetupDebtCollection.test.js:706:1
+✖ settling an earlier saved-token charge cannot replace a newer verified active card (0.283416ms)
+  Error: connect EPERM 127.0.0.1:55449 - Local (0.0.0.0:0)
+      at /private/tmp/layer-billing-lock-deps/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async testDatabase (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:37:5)
+      at async fixture (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:56:30)
+      at async TestContext.<anonymous> (/private/tmp/layer-billing-integration-20261101/main/backend/tests/cardSetupDebtCollection.test.js:707:15)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55449
+  }

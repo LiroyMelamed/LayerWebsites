@@ -1,0 +1,33 @@
+{
+  "candidate": "176ff60a377136ce6a01b43c1defd23f2fe0674b",
+  "startedAtUtc": "2026-11-01T14:06:18.530091+00:00",
+  "finishedAtUtc": "2026-11-01T14:06:19.278904+00:00",
+  "command": [
+    "node",
+    "--require",
+    "/private/tmp/layer-billing-integration-20261101/main/docs/releases/card-save-billing-20261101/integration-qa/main-backend/real-postgres-network-guard.cjs",
+    "--test",
+    "backend/tests/cardSetupDebtCollection.test.js"
+  ],
+  "exitCode": 1,
+  "summary": {
+    "tests": null,
+    "pass": null,
+    "fail": null,
+    "skipped": null,
+    "cancelled": null
+  },
+  "serviceSha256Before": "5f6ecd8d26503d7a79a082809907df309da0c19b875fbb31e5f87facb2280e80",
+  "serviceSha256After": "5f6ecd8d26503d7a79a082809907df309da0c19b875fbb31e5f87facb2280e80",
+  "dependencyRoot": "/tmp/layer-billing-lock-deps/node_modules",
+  "fixture": {
+    "host": "127.0.0.1",
+    "port": 55449,
+    "user": "billing_qa",
+    "database": "billing_card_setup_qa",
+    "newClusterOrRoleCreated": false
+  },
+  "providerCalls": "synthetic only",
+  "networkGuard": "fixed127.0.0.1:55449only; native fetch blocked",
+  "logSha256": "577b5e357be4f3061927ec076532eeafe10c362228cb089c6a7a1c254bca3b14"
+}
