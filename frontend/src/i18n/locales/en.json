@@ -422,7 +422,16 @@
       "invalidProfile": "Check the identification and address details",
       "requiredCompanyName": "Enter the registered organization name",
       "loading": "Loading document details…",
-      "loadFailed": "Document details could not be loaded. You can update contact details without changing the stored identification details."
+      "loadFailed": "Document details could not be loaded. You can update contact details without changing the stored identification details.",
+      "nationalIdNumber": "National ID number",
+      "nationalIdCountry": "National ID issuing country",
+      "nationalIdHelp": "Enter the identifier as printed, including letters and leading zeros. Formats may differ between countries.",
+      "passportNumber": "Passport number",
+      "passportCountry": "Passport issuing country",
+      "passportHelp": "Enter the passport number as printed, including letters and leading zeros.",
+      "otherIdentityNumber": "Other identifier number",
+      "otherIdentityCountry": "Identifier issuing country",
+      "otherIdentityHelp": "Enter the identifier and number as printed on the document, and its issuing country."
     }
   },
   "admins": {
