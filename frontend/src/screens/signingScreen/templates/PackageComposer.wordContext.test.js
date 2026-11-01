@@ -48,7 +48,8 @@ afterEach(() => {
 });
 async function checkWithExplicitRecipient(api) {
     const row = screen.getByRole('group', { name: 'Row 1' });
-    expect(within(row).getByLabelText('Full name')).toHaveValue('');
+    expect(within(row).queryByLabelText('Full name')).not.toBeInTheDocument();
+    fireEvent.click(within(row).getByRole('button', { name: en.signingV2.compose.recipient.newPerson }));
     changeField(within(row).getByLabelText('Full name'), { target: { value: 'Synthetic explicit signer' } });
     changeField(within(row).getByLabelText('Email'), { target: { value: 'signer@example.invalid' } });
     fireEvent.click(screen.getByRole('button', { name: en.signingV2.compose.check }));
@@ -69,7 +70,7 @@ function recoverable(api, selected, state = 'editing') {
 
 test('saved Word selected through the generic catalog recovers locked context and sends the required IDs', async () => {
     const api = fakeApi(); await mount(api);
-    await screen.findByText('Synthetic pinned client'); await screen.findByText('Synthetic pinned case');
+    await screen.findByText('Synthetic pinned client', { selector: '.lw-signingCompose__contextStrip bdi' }); await screen.findByText('Synthetic pinned case');
     expect(screen.queryByRole('button', { name: en.signingV2.compose.clientContext.remove })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: en.signingV2.compose.context.remove })).not.toBeInTheDocument();
     expect(screen.queryByLabelText(en.signingV2.compose.context.label)).not.toBeInTheDocument();
@@ -86,7 +87,7 @@ test('draft recovery uses the server version origin and restores pinned IDs abse
             shared: {}, roleAudience: {}, omitted: [], orderMode: 'parallel', orderRoles: ['first'], orderGroups: [['first']] } } });
     api.saveDraft = jest.fn().mockResolvedValue({ id, version: 2, updatedAt: '2026-10-26T00:00:01Z' }); api.submitDraft = jest.fn();
     await mount(api);
-    await screen.findByText('Synthetic pinned client'); await screen.findByDisplayValue('Synthetic restored signer');
+    await screen.findByText('Synthetic pinned client', { selector: '.lw-signingCompose__contextStrip bdi' }); await screen.findByDisplayValue('Synthetic restored signer');
     expect(api.templateVersion).toHaveBeenCalledWith(word.versionId);
     expect(screen.queryByRole('button', { name: en.signingV2.compose.clientContext.remove })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: en.signingV2.compose.check }));
@@ -153,7 +154,7 @@ test.each(['editing', 'submitted'])('a stale %s URL draft cannot replace an expl
     expect(screen.queryByRole('heading', { name: en.signingV2.compose.done.heading })).not.toBeInTheDocument();
     expect(api.wordPreviewInfo).not.toHaveBeenCalled(); expect(api.saveDraft).not.toHaveBeenCalled(); expect(api.create).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: en.signingV2.compose.draft.startNew }));
-    await screen.findByText('Synthetic pinned client');
+    await screen.findByText('Synthetic pinned client', { selector: '.lw-signingCompose__contextStrip bdi' });
     expect(window.location.search).toBe('');
     expect(api.wordPreviewInfo).toHaveBeenCalledWith(origin.previewId);
 });
@@ -161,7 +162,7 @@ test.each(['editing', 'submitted'])('a stale %s URL draft cannot replace an expl
 test('a matching explicit head and expected version restores its Word draft', async () => {
     const api = fakeApi(); recoverable(api, word);
     await mount(api, { initialTemplateId: word.templateId, initialTemplateVersion: '1' });
-    await screen.findByDisplayValue('Synthetic recovered signer'); await screen.findByText('Synthetic pinned client');
+    await screen.findByDisplayValue('Synthetic recovered signer'); await screen.findByText('Synthetic pinned client', { selector: '.lw-signingCompose__contextStrip bdi' });
     expect(screen.queryByText(en.signingV2.compose.errors.SELECTED_TEMPLATE_CHANGED)).not.toBeInTheDocument();
 });
 

@@ -19,13 +19,21 @@ const profile = normalizeClientProfile({ identity: { number: '001234567' } });
 function fixture(actorPatch = {}, targetPatch = {}, { billingStatus = 0 } = {}) {
     const actor = { userid: 7, role: 'Admin', law_firm_tenant_id: tenantA, ...actorPatch };
     const target = { userid: 42, role: 'User', name: 'Synthetic customer', law_firm_tenant_id: tenantA,
-        client_profile: profile, ...targetPatch };
+        email: 'legacy invalid email', phonenumber: '0', client_profile: profile, ...targetPatch };
     const calls = [], billingChecks = [];
     const pool = { query: async (sql, params) => {
         calls.push({ sql, params });
-        if (sql.includes('WHERE userid=$1 AND law_firm_tenant_id')) {
+        if (/WHERE userid=\$1\s+AND law_firm_tenant_id/.test(sql)) {
             return { rows: params[0] === target.userid && params[1] === target.law_firm_tenant_id
                 && !['Admin', 'Deleted'].includes(target.role) ? [target] : [] };
+        }
+        if (sql.includes('UPDATE users')) {
+            const allowed = params[5] === target.userid && params[9] === target.law_firm_tenant_id
+                && !['Admin', 'Deleted'].includes(target.role) && params[10] === target.phonenumber
+                && params[11] === target.email && params[12] === target.role;
+            if (!allowed) return { rows: [], rowCount: 0 };
+            Object.assign(target, { name: params[0], email: params[1], phonenumber: params[2] });
+            return { rows: [target], rowCount: 1 };
         }
         return { rows: [actor] };
     } };
@@ -36,7 +44,7 @@ function fixture(actorPatch = {}, targetPatch = {}, { billingStatus = 0 } = {}) 
                 if (Object.prototype.hasOwnProperty.call(overrides, id)) return overrides[id];
                 if (id === '../config/db') return pool;
                 if (relative === 'controllers/customerController.js') {
-                    if (id === '../utils/clientProfile' || id === '../utils/paramValidation') return require(path.resolve(path.dirname(filename), id));
+                    if (['../utils/clientProfile', '../utils/paramValidation', '../utils/phoneUtils'].includes(id)) return require(path.resolve(path.dirname(filename), id));
                     return {};
                 }
                 return id.startsWith('.') ? require(path.resolve(path.dirname(filename), id)) : require(id);
@@ -67,10 +75,11 @@ function fixture(actorPatch = {}, targetPatch = {}, { billingStatus = 0 } = {}) 
     multer.memoryStorage = () => ({});
     load('routes/customerRoutes.js', { express: { Router: () => router }, multer,
         '../controllers/customerController': controller, '../middlewares/authMiddleware': auth });
-    const handlers = routes.find(route => route.method === 'get' && route.route === '/GetCustomer/:customerId').handlers;
-    const token = jwt.sign({ userid: 7, role: actor.role }, secret, { algorithm: 'HS256', expiresIn: 60 });
-    const read = async (id = '42', options = {}) => {
-        const req = { method: 'GET', url: `/GetCustomer/${id}`, originalUrl: `/api/Customers/GetCustomer/${id}`,
+    const token = jwt.sign({ userid: actor.userid, role: actor.role }, secret, { algorithm: 'HS256', expiresIn: 60 });
+    const dispatch = async (method, id = '42', options = {}) => {
+        const routeName = method === 'get' ? 'GetCustomer' : 'UpdateCustomer';
+        const handlers = routes.find(route => route.method === method && route.route === `/${routeName}/:customerId`).handlers;
+        const req = { method: method.toUpperCase(), url: `/${routeName}/${id}`, originalUrl: `/api/Customers/${routeName}/${id}`,
             params: { customerId: id }, query: options.query || {}, body: options.body || {},
             headers: options.token ? { authorization: `Bearer ${options.token}` } : {} };
         const response = { status: 200, headers: {} };
@@ -89,7 +98,8 @@ function fixture(actorPatch = {}, targetPatch = {}, { billingStatus = 0 } = {}) 
         });
         return response;
     };
-    return { read, token, calls, billingChecks };
+    return { read: (id, options) => dispatch('get', id, options), update: (id, options) => dispatch('put', id, options),
+        token, calls, billingChecks, target };
 }
 
 test('exact customer read rejects missing authentication before DB lookup', async () => {
@@ -149,4 +159,37 @@ test('the exact profile route honors a billing rejection before any target-data 
     assert.deepEqual(f.billingChecks, [tenantA]);
     assert.equal(f.calls.length, 1);
     assert.equal(f.calls.some(call => call.sql.includes('WHERE userid=$1 AND law_firm_tenant_id')), false);
+});
+
+const legacyEdit = { name: 'Updated profile', phoneNumber: '0', email: 'legacy invalid email',
+    clientProfile: { identity: { type: 'passport', number: '000321-A', country: 'UK' } } };
+
+test('same-tenant admin can preserve an exact legacy contact snapshot through the actual edit route', async () => {
+    const f = fixture({}, { role: 'ExternalSigner' });
+    const response = await f.update('42', { token: f.token, body: legacyEdit });
+    assert.equal(response.status, 200); assert.equal(f.target.role, 'ExternalSigner');
+    assert.equal(f.target.phonenumber, '0'); assert.equal(f.target.email, 'legacy invalid email');
+    assert.deepEqual(Array.from(f.calls.at(-1).params).slice(9), [tenantA, '0', 'legacy invalid email', 'ExternalSigner']);
+});
+
+test('another tenant actor cannot borrow legacy contact values or a body tenant override to edit the target', async () => {
+    const f = fixture({ userid: 8, law_firm_tenant_id: tenantB });
+    const response = await f.update('42', { token: f.token, body: { ...legacyEdit, firmTenantId: tenantA } });
+    assert.equal(response.status, 404); assert.equal(response.body.ClientProfile, undefined);
+    assert.equal(f.calls.at(-1).params[1], tenantB);
+    assert.equal(f.calls.some(call => call.sql.includes('UPDATE users')), false);
+    assert.equal(f.target.name, 'Synthetic customer');
+});
+
+test('a clients viewer cannot use the legacy preservation exception to acquire edit permission', async () => {
+    const f = fixture({ role: 'Staff', firm_staff_role_id: 8, role_id: 8, role_is_active: true,
+        role_tenant_id: tenantA, role_permissions: { version: 7, areas: { clients: { visible: true, actions: ['view'] } } } });
+    const response = await f.update('42', { token: f.token, body: legacyEdit });
+    assert.equal(response.status, 403); assert.equal(f.calls.length, 1);
+});
+
+for (const role of ['Admin', 'Deleted']) test(`edit route still excludes ${role} target when contacts match`, async () => {
+    const f = fixture({}, { role });
+    const response = await f.update('42', { token: f.token, body: legacyEdit });
+    assert.equal(response.status, 404); assert.equal(f.calls.some(call => call.sql.includes('UPDATE users')), false);
 });

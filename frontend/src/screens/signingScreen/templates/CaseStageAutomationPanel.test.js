@@ -66,7 +66,10 @@ async function configure(i18n, stageIndex = 0) {
 }
 
 function selectCasePerson(i18n, role, id) {
-    changeField(within(screen.getByRole('group', { name: role })).getByRole('combobox', { name: i18n.t('signingV2.compose.context.fill') }), { target: { value: String(id) } });
+    const section = within(screen.getByRole('group', { name: role }));
+    const change = section.queryByRole('button', { name: i18n.t('signingV2.compose.recipient.changePerson') });
+    if (change) fireEvent.click(change);
+    fireEvent.click(section.getByRole('button', { name: new RegExp(contacts.find(person => person.id === id).name) }));
 }
 
 function fillConfiguredPeople(i18n) {
@@ -148,12 +151,13 @@ test.each([
     const { api, i18n } = await setup();
     await configure(i18n);
     const tenant = within(screen.getByRole('group', { name: 'Tenant' }));
-    changeField(tenant.getByLabelText('Full name'), { target: { value: 'Synthetic' } });
+    changeField(tenant.getByLabelText(en.signingV2.compose.recipient.search), { target: { value: 'Synthetic' } });
     fireEvent.pointerDown(await screen.findByRole('button', { name: 'Synthetic tenant | tenant@example.invalid' }));
-    await waitFor(() => expect(tenant.getByLabelText('Full name')).toHaveValue('Synthetic tenant'));
+    expect(tenant.getByText('Synthetic tenant')).toBeInTheDocument();
     fireEvent.click(button(i18n, 'check'));
     await screen.findByText(en.stageAutomation.reviewReady);
     expect(api.preview.mock.calls[0][2].rows[0].recipients.tenant).toEqual(expect.objectContaining({ name: 'Synthetic tenant', email: 'tenant@example.invalid', contactUserId: 501 }));
+    fireEvent.click(tenant.getByRole('button', { name: en.signingV2.compose.recipient.editDetails }));
     changeField(tenant.getByLabelText(en.signingV2.compose.fields[field]), { target: { value: nextValue } });
     expect(button(i18n, 'save')).toBeDisabled();
     fireEvent.click(button(i18n, 'check'));
@@ -220,11 +224,11 @@ test('the dependent ordinary composer suggestion still fills all contact values 
     render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialTemplateId={template.versionId} /></I18nextProvider>);
     await screen.findByLabelText('Run name');
     const recipient = within(screen.getByRole('group', { name: 'Row 1' }));
-    changeField(recipient.getByLabelText('Full name'), { target: { value: 'Synthetic' } });
+    changeField(recipient.getByLabelText(en.signingV2.compose.recipient.search), { target: { value: 'Synthetic' } });
     fireEvent.pointerDown(await screen.findByRole('button', { name: 'Synthetic tenant | 0507654321' }));
-    expect(recipient.getByLabelText('Full name')).toHaveValue(contact.name);
-    expect(recipient.getByLabelText('Email')).toHaveValue(contact.email);
-    expect(recipient.getByLabelText('Phone')).toHaveValue(contact.phone);
+    expect(recipient.getByText(contact.name)).toBeInTheDocument();
+    expect(recipient.getByText(contact.email)).toBeInTheDocument();
+    expect(recipient.getByText(contact.phone)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: en.signingV2.compose.check }));
     await screen.findByRole('alert', { name: i18n.t('signingV2.compose.errorsHeading', { count: 1, formattedCount: '1' }) });
     expect(api.previewCreation).toHaveBeenCalledTimes(1);
@@ -238,6 +242,7 @@ test('switching a bound account to an explicit signing directory person removes 
     await configure(i18n);
     selectCasePerson(i18n, 'Tenant', 501);
     const tenant = within(screen.getByRole('group', { name: 'Tenant' }));
+    fireEvent.click(tenant.getByText(i18n.t('signingV2.compose.recipient.advanced')));
     fireEvent.click(tenant.getByText(i18n.t('signingV2.authority.directoryTitle')));
     changeField(tenant.getByLabelText(i18n.t('signingV2.authority.searchPerson')), { target: { value: 'Synthetic directory' } });
     fireEvent.pointerDown(await screen.findByRole('button', { name: 'Synthetic directory signer · directory@example.invalid' }));
@@ -282,7 +287,9 @@ test('editing a saved rule restores automatic channels and preserves explicit ch
         enabled: true, alreadyTriggered: true, template: savedTemplate, templateVersionId: template.versionId, templateName: template.name, shared, rows }] }) });
     fireEvent.click(button(i18n, 'edit'));
     for (const [role, channels] of [['Tenant', ['auto']], ['Lawyer', ['auto']], ['Witnesses', ['auto', 'email', 'sms']], ['Office signers', ['auto', 'both']]]) {
-        const groups = within(screen.getByRole('group', { name: role })).getAllByRole('radiogroup', { name: i18n.t('signingV2.compose.fields.channel') });
+        const section = within(screen.getByRole('group', { name: role }));
+        section.getAllByRole('button', { name: i18n.t('signingV2.compose.recipient.changeDelivery') }).forEach(button => fireEvent.click(button));
+        const groups = section.getAllByRole('radiogroup', { name: i18n.t('signingV2.compose.fields.channel') });
         expect(groups).toHaveLength(channels.length);
         groups.forEach((group, index) => {
             expect(within(group).getAllByRole('radio', { checked: true })).toHaveLength(1);

@@ -1,8 +1,7 @@
+import { forwardRef } from "react";
 import ClientSigningFlow from '../../signingScreen/templates/ClientSigningFlow';
 import { useSigningV2Available } from '../../signingScreen/templates/SigningPackagesHub';
 import { useFirmPermissions } from '../../../providers/FirmPermissionsProvider';
-import TertiaryButton from '../../../components/styledComponents/buttons/TertiaryButton';
-import { forwardRef } from "react";
 import { images } from "../../../assets/images/images";
 import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
@@ -105,12 +104,10 @@ const ClientsCard = forwardRef(({ rePerformRequest, customerList, style: _style,
                             closePopUpFunction={closePopup}
                             rePerformRequest={rePerformRequest}
                             allowEdit={allowEdit}
+                            onReadOnlyPress={!allowEdit && canSend && (customer.UserId || customer.userid) ? () => openPopup(<ClientPopup
+                                readOnly clientDetails={customer} closePopUpFunction={closePopup}
+                                onSendClient={clientId => openPopup(<ClientSigningFlow clientId={clientId} onBack={closePopup} />)} />) : undefined}
                         />
-                        {canSend && (customer.UserId || customer.userid) && <TertiaryButton className="lw-clientsCard__signing"
-                            aria-label={t('signingV2.compose.clientContext.sendNamed', { name: customer.name })}
-                            onPress={() => openPopup(<ClientSigningFlow clientId={customer.UserId || customer.userid} onBack={closePopup} />)}>
-                            {t('signingV2.compose.clientContext.send')}
-                        </TertiaryButton>}
                     </SimpleContainer>
 
                 ))}
