@@ -63,7 +63,7 @@ test('protected PDF response uses fixed safe disposition rather than customer na
     assert.equal(source.headers['Content-Disposition'], 'inline; filename="word-source.pdf"');
 });
 test('converter operational failures have accurate safe HTTP status and no source/process details', async () => {
-    for (const [code, status] of [['WORD_CONVERSION_NOT_CONFIGURED', 503], ['WORD_CONVERSION_BUSY', 503],
+    for (const [code, status] of [['WORD_CONVERSION_NOT_CONFIGURED', 503], ['WORD_CONVERSION_BUSY', 429], ['WORD_AUTHORING_BUSY', 429],
         ['WORD_CONVERSION_TIMEOUT', 504], ['WORD_CONVERSION_FAILED', 500], ['WORD_CONVERSION_INVALID_DOCX', 400], ['INVALID_SELECTION_RANGE', 422],
         ['WORD_AUTHORING_EXTRACTION_TIMEOUT', 504], ['WORD_AUTHORING_EXTRACTION_FAILED', 500]]) {
         const failure = new WordTemplateError(code); failure.details = { text: 'private-fixture', path: '/private/location' };
@@ -71,6 +71,10 @@ test('converter operational failures have accurate safe HTTP status and no sourc
         assert.equal(result.error.errorCode, code); assert.equal(result.error.httpStatus, status);
         assert.equal(result.error.extras.messageKey, 'signingWord.requestFailed');
         assert.equal(result.error.meta, undefined); assert.ok(!JSON.stringify(result.error).includes('private-fixture'));
+        const busy = code === 'WORD_CONVERSION_BUSY' || code === 'WORD_AUTHORING_BUSY';
+        assert.equal(result.error.extras.retryable, busy);
+        assert.equal(result.headers['Retry-After'], busy ? '2' : undefined);
+        assert.equal(result.error.extras.retryAfterSeconds, busy ? 2 : undefined);
     }
 });
 

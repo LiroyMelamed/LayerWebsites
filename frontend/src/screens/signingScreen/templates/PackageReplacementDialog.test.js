@@ -104,6 +104,7 @@ test('new replacement permission loss hides the private review and form', async 
 });
 test('new replacement composer edits one package, preserves deadline and language, previews and publishes one reviewed revision', async () => {
     const api = apiFor(), onCreated = jest.fn(), i = await mountComposer(api, undefined, onCreated);
+    fireEvent.click(await screen.findByRole('button', { name: i.t('signingV2.compose.recipient.editDetails') }));
     expect(screen.getByRole('textbox', { name: i.t('signingV2.compose.fields.name') })).toHaveValue('Synthetic person');
     expect(screen.queryByRole('button', { name: i.t('signingV2.compose.rows.add') })).toBeNull();
     expect(screen.queryByRole('radiogroup', { name: i.t('signingV2.compose.rows.source') })).toBeNull();
@@ -176,6 +177,7 @@ test('new workspace replacement opens the existing composer after the reviewed s
     fireEvent.click(screen.getByRole('button', { name: i.t('signingV2.replacement.start') }));
     await screen.findByRole('heading', { name: i.t('signingV2.replacement.composeTitle') });
     expect(screen.queryByRole('dialog')).toBeNull();
+    fireEvent.click(await screen.findByRole('button', { name: i.t('signingV2.compose.recipient.editDetails') }));
     expect(await screen.findByRole('textbox', { name: i.t('signingV2.compose.fields.name') })).toHaveValue('Synthetic person');
 });
 test('new revision history downloads the selected historical document and evidence through scoped APIs', async () => {

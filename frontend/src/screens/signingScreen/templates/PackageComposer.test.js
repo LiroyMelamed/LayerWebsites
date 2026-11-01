@@ -54,9 +54,18 @@ async function toRecipients(i18n, api) {
     fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.next') }));
     await screen.findByRole('heading', { name: i18n.t('signingV2.compose.rows.heading') });
     expect(screen.queryByLabelText(i18n.t('signingV2.compose.rows.key'))).not.toBeInTheDocument();
-    expect(screen.getAllByText(i18n.t('signingV2.compose.directoryHelp.all')).length).toBeGreaterThan(0);
+    // These legacy creation cases deliberately use manual entry. Picker behavior has its own flow tests.
+    screen.getAllByRole('button', { name: i18n.t('signingV2.compose.recipient.newPerson') }).forEach(button => fireEvent.click(button));
 }
-const field = (container, label) => within(container).getByLabelText(label);
+const field = (container, label) => {
+    if (!within(container).queryByLabelText(label)) {
+        const names = [he, ar, en].flatMap(locale => [locale.signingV2.compose.recipient.newPerson, locale.signingV2.compose.recipient.editDetails]);
+        const action = within(container).getAllByRole('button').find(button => names.includes(button.textContent));
+        if (action) fireEvent.click(action);
+    }
+    return within(container).getByLabelText(label);
+};
+const delivery = (container, i18n) => fireEvent.click(within(container).getByRole('button', { name: i18n.t('signingV2.compose.recipient.changeDelivery') }));
 
 test('every creation string exists in Hebrew, Arabic and English', () => {
     const reference = new Set(keys(he.signingV2.compose));
@@ -91,6 +100,7 @@ test.each(['he', 'ar', 'en'])('explicit conversion, field errors linked to their
 
     changeField(email, { target: { value: '' } });
     changeField(field(row, i18n.t('signingV2.compose.fields.phone')), { target: { value: '050-123-4567' } });
+    delivery(row, i18n);
     fireEvent.click(within(row).getByRole('radio', { name: i18n.t('signingV2.compose.channel.sms') }));
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     api.previewCreation.mockResolvedValueOnce(validPreview(1));
@@ -195,6 +205,7 @@ test('sequential signing uses the same choice as a regular document and keeps th
     const row = screen.getByRole('group', { name: i18n.t('signingV2.compose.rows.row', { number: '1' }) });
     changeField(field(row, i18n.t('signingV2.compose.fields.name')), { target: { value: 'Synthetic employee' } });
     changeField(field(row, i18n.t('signingV2.compose.fields.phone')), { target: { value: '0501234567' } });
+    delivery(row, i18n);
     fireEvent.click(within(row).getByRole('radio', { name: i18n.t('signingV2.compose.channel.sms') }));
     const shared = screen.getByRole('group', { name: 'Lawyer' });
     changeField(field(shared, i18n.t('signingV2.compose.fields.name')), { target: { value: 'Synthetic lawyer' } });
@@ -219,7 +230,7 @@ test('requires a run name and at least one recipient before asking the server', 
     expect(await screen.findByRole('alert')).toHaveTextContent('Give this run a name');
     expect(api.previewCreation).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Add row' }));
-    expect(field(screen.getByRole('group', { name: 'Row 2' }), 'Full name')).toHaveFocus();
+    expect(within(screen.getByRole('group', { name: 'Row 2' })).getByLabelText(en.signingV2.compose.recipient.search)).toHaveFocus();
     fireEvent.click(screen.getByRole('button', { name: 'Remove row 2' }));
     expect(screen.queryByRole('group', { name: 'Row 2' })).not.toBeInTheDocument();
 });
@@ -344,8 +355,8 @@ test.each(['he', 'ar', 'en'])('case contacts require a role choice and case asso
     await screen.findByText('Synthetic case');
     await screen.findByLabelText(i18n.t('signingV2.compose.runName'));
     const row = screen.getByRole('group', { name: i18n.t('signingV2.compose.rows.row', { number: new Intl.NumberFormat({ he: 'he-IL', ar: 'ar-IL', en: 'en-GB' }[language]).format(1) }) });
-    expect(field(row, i18n.t('signingV2.compose.fields.name'))).toHaveValue('');
-    changeField(within(row).getByLabelText(i18n.t('signingV2.compose.context.fill')), { target: { value: '71' } });
+    expect(within(row).queryByLabelText(i18n.t('signingV2.compose.fields.name'))).not.toBeInTheDocument();
+    fireEvent.click(within(row).getByRole('button', { name: /Synthetic buyer/ }));
     expect(field(row, i18n.t('signingV2.compose.fields.name'))).toHaveValue('Synthetic buyer');
     expect(field(row, i18n.t('signingV2.compose.fields.email'))).toHaveValue('buyer@example.invalid');
     expect(field(screen.getByRole('group', { name: 'Lawyer' }), i18n.t('signingV2.compose.fields.name'))).toHaveValue('');
@@ -399,18 +410,19 @@ test('an explicit same-person role sends a reference, preserves original details
     fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.compose.next')}));
     const opening = screen.getByRole('group',{name:'Opening lawyer'});
     const closing = screen.getByRole('group',{name:'Closing lawyer'});
-    changeField(within(opening).getByLabelText(i18n.t('signingV2.compose.fields.name')),{target:{value:'Same synthetic lawyer'}});
+    changeField(field(opening, i18n.t('signingV2.compose.fields.name')),{target:{value:'Same synthetic lawyer'}});
     changeField(within(opening).getByLabelText(i18n.t('signingV2.compose.fields.email')),{target:{value:'lawyer@example.invalid'}});
-    changeField(within(closing).getByLabelText(i18n.t('signingV2.compose.fields.name')),{target:{value:'Separate draft details'}});
+    changeField(field(closing, i18n.t('signingV2.compose.fields.name')),{target:{value:'Separate draft details'}});
+    fireEvent.click(within(closing).getByText(i18n.t('signingV2.compose.recipient.advanced')));
     const choice = within(closing).getByRole('combobox',{name:i18n.t('signingV2.compose.identity.label')});
     expect(within(choice).queryByRole('option',{name:'Same person as: Client'})).not.toBeInTheDocument();
     changeField(choice,{target:{value:'opening'}});
     expect(within(closing).queryByLabelText(i18n.t('signingV2.compose.fields.email'))).not.toBeInTheDocument();
     changeField(choice,{target:{value:''}});
-    expect(within(closing).getByLabelText(i18n.t('signingV2.compose.fields.name'))).toHaveValue('Separate draft details');
+    expect(field(closing, i18n.t('signingV2.compose.fields.name'))).toHaveValue('Separate draft details');
     changeField(choice,{target:{value:'opening'}});
     const row = screen.getByRole('group',{name:i18n.t('signingV2.compose.rows.row',{number:'1'})});
-    changeField(within(row).getByLabelText(i18n.t('signingV2.compose.fields.name')),{target:{value:'Client'}});
+    changeField(field(row, i18n.t('signingV2.compose.fields.name')),{target:{value:'Client'}});
     changeField(within(row).getByLabelText(i18n.t('signingV2.compose.fields.email')),{target:{value:'client@example.invalid'}});
     api.previewCreation.mockResolvedValue({...validPreview(1), shared:[{roleKey:'opening',name:'Same synthetic lawyer'},{roleKey:'closing',name:'Same synthetic lawyer'}]});
     fireEvent.click(screen.getByRole('button',{name:i18n.t('signingV2.compose.check')}));
@@ -454,7 +466,7 @@ test.each(['he', 'ar', 'en'])('document data keeps identifiers, exact amounts an
     const i18n = await translations(language), api = fakeApi();
     await openDataComposer(i18n, api);
     const person = screen.getByRole('group', { name: i18n.t('signingV2.compose.rows.row', { number: new Intl.NumberFormat({ he: 'he-IL', ar: 'ar-EG', en: 'en-GB' }[language]).format(1) }) });
-    changeField(within(person).getByLabelText(i18n.t('signingV2.compose.fields.name')), { target: { value: 'Synthetic data client' } });
+    changeField(field(person, i18n.t('signingV2.compose.fields.name')), { target: { value: 'Synthetic data client' } });
     const identity = screen.getByLabelText(/Identity number/), amount = screen.getByLabelText('Exact amount');
     expect(identity).toHaveAttribute('type', 'text');
     expect(screen.getByRole('combobox', { name: 'Confirmed' })).toHaveValue('false');
@@ -562,11 +574,11 @@ test.each(['he', 'ar', 'en'])('client-card entry keeps explicit role choice and 
     api.clientContext = jest.fn().mockResolvedValue(record);
     api.templates.mockResolvedValue({ templates: [converted], legacy: [] });
     render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialClientId="71" initialTemplateId="t-1" /></I18nextProvider>);
-    await screen.findByText('Synthetic client');
+    await screen.findByText('Synthetic client', { selector: '.lw-signingCompose__contextStrip bdi' });
     await screen.findByLabelText(i18n.t('signingV2.compose.runName'));
     const row = screen.getByRole('group', { name: i18n.t('signingV2.compose.rows.row', { number: new Intl.NumberFormat({ he: 'he-IL', ar: 'ar-IL', en: 'en-GB' }[language]).format(1) }) });
-    expect(field(row, i18n.t('signingV2.compose.fields.name'))).toHaveValue('');
-    changeField(within(row).getByLabelText(i18n.t('signingV2.compose.clientContext.fill')), { target: { value: '71' } });
+    expect(within(row).queryByLabelText(i18n.t('signingV2.compose.fields.name'))).not.toBeInTheDocument();
+    fireEvent.click(within(row).getByRole('button', { name: /Synthetic client/ }));
     expect(field(row, i18n.t('signingV2.compose.fields.email'))).toHaveValue(record.email);
     expect(field(screen.getByRole('group', { name: 'Lawyer' }), i18n.t('signingV2.compose.fields.name'))).toHaveValue('');
     api.previewCreation.mockResolvedValue(validPreview(1));
@@ -585,7 +597,7 @@ test('missing client blocks creation; retry loads only persisted details and exp
     const check = await screen.findByRole('button', { name: 'Check data' });
     expect(check).toBeDisabled();
     fireEvent.click(await screen.findByRole('button', { name: en.common.retry }));
-    await screen.findByText('Stored client');
+    await screen.findByText('Stored client', { selector: '.lw-signingCompose__contextStrip bdi' });
     expect(check).toBeEnabled();
     fireEvent.click(screen.getByRole('button', { name: 'Remove client link' }));
     expect(screen.queryByText('Stored client')).not.toBeInTheDocument();
@@ -624,13 +636,14 @@ test.each(['he','ar','en'])('multiple people keep explicit positions and focused
     render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialTemplateId="t-1" onBack={jest.fn()} onCreated={jest.fn()}/></I18nextProvider>);
     const label=(key,values)=>i18n.t(`signingV2.people.${key}`,values),fmt=n=>new Intl.NumberFormat({he:'he-IL',ar:'ar-IL',en:'en-GB'}[language]).format(n);
     const first=await screen.findByRole('group',{name:label('personNumber',{number:fmt(1)})});
-    changeField(within(first).getByLabelText(i18n.t('signingV2.compose.fields.name')),{target:{value:'First buyer'}});
+    changeField(field(first, i18n.t('signingV2.compose.fields.name')),{target:{value:'First buyer'}});
     changeField(within(first).getByLabelText(i18n.t('signingV2.compose.fields.email')),{target:{value:'first@example.invalid'}});
     fireEvent.click(screen.getByRole('button',{name:label('add',{role:'Buyers'})}));
     const second=screen.getByRole('group',{name:label('personNumber',{number:fmt(2)})});
-    changeField(within(second).getByLabelText(i18n.t('signingV2.compose.fields.name')),{target:{value:'Second buyer'}});
+    changeField(field(second, i18n.t('signingV2.compose.fields.name')),{target:{value:'Second buyer'}});
     const email=within(second).getByLabelText(i18n.t('signingV2.compose.fields.email'));
     changeField(email,{target:{value:'bad-email'}});
+    fireEvent.click(screen.getAllByText(i18n.t('signingV2.compose.recipient.advanced')).at(-1));
     const link=screen.getAllByLabelText(i18n.t('signingV2.compose.identity.label')).at(-1);
     changeField(link,{target:{value:'first|1'}});
     api.previewCreation.mockResolvedValue({valid:false,errors:[{path:'rows.0.first.people.1.email',code:'INVALID_EMAIL'}],errorCount:1});
@@ -650,10 +663,10 @@ test('new internal reviewer is explicit in creation preview and review',async()=
  const i=await translations('en'),api=fakeApi();api.templates.mockResolvedValue({templates:[{...converted,approvalRequired:true}],legacy:[]});api.approvalReviewers=jest.fn().mockResolvedValue({users:[{id:21,name:'Chosen reviewer',self:false}]});
  api.previewCreation.mockResolvedValue({...validPreview(1),approval:{name:'Chosen reviewer',reviewerId:21}});
  render(<I18nextProvider i18n={i}><PackageComposer api={api} initialTemplateId="t-1"/></I18nextProvider>);
- const picker=await screen.findByRole('combobox',{name:i.t('signingV2.approval.reviewer')});await openChoices(picker).findByRole('option',{name:'Chosen reviewer'});changeField(picker,{target:{value:'21'}});changeField(within(screen.getByRole('group',{name:i.t('signingV2.compose.rows.row',{number:'1'})})).getByLabelText(i.t('signingV2.compose.fields.name')),{target:{value:'Synthetic recipient'}});fireEvent.click(screen.getByRole('button',{name:i.t('signingV2.compose.check')}));await screen.findByRole('heading',{name:i.t('signingV2.compose.review.heading')});
+ const picker=await screen.findByRole('combobox',{name:i.t('signingV2.approval.reviewer')});await openChoices(picker).findByRole('option',{name:'Chosen reviewer'});changeField(picker,{target:{value:'21'}});changeField(field(screen.getByRole('group',{name:i.t('signingV2.compose.rows.row',{number:'1'})}), i.t('signingV2.compose.fields.name')),{target:{value:'Synthetic recipient'}});fireEvent.click(screen.getByRole('button',{name:i.t('signingV2.compose.check')}));await screen.findByRole('heading',{name:i.t('signingV2.compose.review.heading')});
  expect(api.previewCreation.mock.calls[0][0].reviewerUserId).toBe(21);expect(screen.getByText('Chosen reviewer')).toBeTruthy();expect(screen.getByText(i.t('signingV2.approval.beforeSending'),{exact:false})).toBeTruthy();
 });
 test('new missing internal reviewer error focuses the actual picker',async()=>{
  const i=await translations('en'),api=fakeApi();api.templates.mockResolvedValue({templates:[{...converted,approvalRequired:true}],legacy:[]});api.approvalReviewers=jest.fn().mockResolvedValue({users:[{id:21,name:'Reviewer',self:false}]});api.previewCreation.mockResolvedValue({valid:false,errorCount:1,errors:[{path:'reviewerUserId',code:'APPROVER_REQUIRED'}]});
- render(<I18nextProvider i18n={i}><PackageComposer api={api} initialTemplateId="t-1"/></I18nextProvider>);const reviewerMenu=openChoices(await screen.findByRole('combobox',{name:i.t('signingV2.approval.reviewer')}));await reviewerMenu.findByRole('option',{name:'Reviewer'});fireEvent.keyDown(screen.getByRole('listbox'),{key:'Escape'});changeField(within(screen.getByRole('group',{name:i.t('signingV2.compose.rows.row',{number:'1'})})).getByLabelText(i.t('signingV2.compose.fields.name')),{target:{value:'Synthetic recipient'}});fireEvent.click(screen.getByRole('button',{name:i.t('signingV2.compose.check')}));const summary=await screen.findByRole('alert');fireEvent.click(within(summary).getByRole('button'));const picker=screen.getByRole('combobox',{name:i.t('signingV2.approval.reviewer')});expect(picker).toHaveFocus();expect(picker).toHaveAttribute('aria-invalid','true');expect(picker).toHaveAccessibleDescription(i.t('signingV2.errors.APPROVER_REQUIRED'));
+ render(<I18nextProvider i18n={i}><PackageComposer api={api} initialTemplateId="t-1"/></I18nextProvider>);const reviewerMenu=openChoices(await screen.findByRole('combobox',{name:i.t('signingV2.approval.reviewer')}));await reviewerMenu.findByRole('option',{name:'Reviewer'});fireEvent.keyDown(screen.getByRole('listbox'),{key:'Escape'});changeField(field(screen.getByRole('group',{name:i.t('signingV2.compose.rows.row',{number:'1'})}), i.t('signingV2.compose.fields.name')),{target:{value:'Synthetic recipient'}});fireEvent.click(screen.getByRole('button',{name:i.t('signingV2.compose.check')}));const summary=await screen.findByRole('alert');fireEvent.click(within(summary).getByRole('button'));const picker=screen.getByRole('combobox',{name:i.t('signingV2.approval.reviewer')});expect(picker).toHaveFocus();expect(picker).toHaveAttribute('aria-invalid','true');expect(picker).toHaveAccessibleDescription(i.t('signingV2.errors.APPROVER_REQUIRED'));
 });

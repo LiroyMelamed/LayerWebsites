@@ -76,15 +76,49 @@ export function verifyPageGeometry(page, proxy, tolerance = 0) {
         !viewport.transform?.every((value, n) => close(value, page.viewportTransform[n]))) fail();
 }
 
-export function tagVerifiedTextLayer(host, page) {
+function rtlUnderscoreItem(item, paragraphs) {
+    if (item.dir !== 'ltr' || !/^_+$/u.test(item.text) || item.readOnlyReason || !item.segments.length) return false;
+    const segments = [...item.segments].sort((a, b) => a.itemStart - b.itemStart);
+    const first = segments[0];
+    const paragraph = paragraphs.get(JSON.stringify([first.part, first.paragraphId]));
+    if (paragraph?.editable !== true || typeof paragraph.text !== 'string' || !HASH.test(paragraph.textHash || '') || paragraph.textHash !== first.paragraphHash ||
+        /[\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/u.test(paragraph.text)) return false;
+    const firstLetter = paragraph.text.match(/\p{Letter}/u)?.[0];
+    if (!firstLetter || !/[\p{Script=Hebrew}\p{Script=Arabic}]/u.test(firstLetter)) return false;
+    let itemEnd = 0; let sourceEnd = first.sourceStart;
+    for (const segment of segments) {
+        if (segment.part !== first.part || segment.paragraphId !== first.paragraphId || segment.paragraphHash !== paragraph.textHash ||
+            ![segment.itemStart, segment.itemEnd, segment.sourceStart, segment.sourceEnd].every(Number.isInteger) ||
+            segment.sourceStart < 0 || segment.sourceEnd > paragraph.text.length || segment.itemEnd <= segment.itemStart ||
+            segment.itemStart !== itemEnd || segment.sourceStart !== sourceEnd ||
+            segment.itemEnd - segment.itemStart !== segment.sourceEnd - segment.sourceStart ||
+            paragraph.text.slice(segment.sourceStart, segment.sourceEnd) !== item.text.slice(segment.itemStart, segment.itemEnd)) return false;
+        itemEnd = segment.itemEnd; sourceEnd = segment.sourceEnd;
+    }
+    return itemEnd === item.text.length;
+}
+
+export function tagVerifiedTextLayer(host, page, sourceParagraphs = []) {
     const layer = host?.querySelector('.textLayer');
     if (!layer) fail();
     const spans = Array.from(layer.querySelectorAll('span[role="presentation"]'));
     const visibleItems = page.items.filter(item => item.text !== '');
     if (spans.length !== visibleItems.length || spans.some((span, index) => span.textContent !== visibleItems[index].text)) fail();
+    const paragraphs = new Map();
+    sourceParagraphs.forEach(paragraph => {
+        const key = JSON.stringify([paragraph.part, paragraph.id]);
+        paragraphs.set(key, paragraphs.has(key) ? null : paragraph);
+    });
     spans.forEach((span, index) => {
         const item = visibleItems[index];
-        if (item.segments.length && !item.readOnlyReason) span.dataset.wordItem = item.id;
+        delete span.dataset.wordNeutralRtl;
+        if (item.segments.length && !item.readOnlyReason) {
+            span.dataset.wordItem = item.id; delete span.dataset.wordReadonly;
+            // Pure neutral blanks can inherit the wrong LTR native caret order
+            // from PDF.js. This affects presentation only; tuples and selectors
+            // still use the verified PDF item and exact UTF16 source map.
+            if (rtlUnderscoreItem(item, paragraphs)) span.dataset.wordNeutralRtl = 'true';
+        }
         else { delete span.dataset.wordItem; span.dataset.wordReadonly = 'true'; }
     });
     layer.dataset.wordVerified = 'true';
