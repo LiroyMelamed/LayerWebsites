@@ -4,6 +4,21 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const billing = require('../lib/billing/firmBillingService');
+const pool = require('../config/db');
+
+// Package helpers are mocked below; keep the real transaction/pending guard at
+// its DB boundary too, so no test can fall through to a local application DB.
+test.beforeEach(t => {
+    const original = pool.connect;
+    pool.connect = async () => ({
+        async query(sql) {
+            assert.match(String(sql), /^(BEGIN|COMMIT|ROLLBACK|SELECT id FROM firm_billing|SELECT id FROM firm_payment_intents)/);
+            return { rows: [], rowCount: 0 };
+        },
+        release() {},
+    });
+    t.after(() => { pool.connect = original; });
+});
 
 const baseRow = {
     platformId: 'site_app',

@@ -1,0 +1,8 @@
+{
+  "atUtc": "2026-11-01T14:13:49.394462+00:00",
+  "status": "INTENTIONALLY_TERMINATED_NOT_A_TEST_RESULT",
+  "reason": "Parent requested shared compile/test resource isolation after this run had launched. Only processes holding the unique owned test log were terminated. Unchanged complete suite will be rerun behind the local resource mutex.",
+  "targetLog": "interrupted-before-resource-lock-tests.log",
+  "sourceEdits": false,
+  "assertionEdits": false
+}

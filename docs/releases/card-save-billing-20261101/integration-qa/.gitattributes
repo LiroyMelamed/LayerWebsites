@@ -1,0 +1,4 @@
+# Preserve raw diagnostic whitespace as evidence, not application source.
+*.log -whitespace
+*.tap -whitespace
+browser/*.txt -whitespace

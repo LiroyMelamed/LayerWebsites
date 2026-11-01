@@ -1,0 +1,1054 @@
+{
+  "startedAtUtc": "2026-11-01T23:15:53.110590+00:00",
+  "completedAtUtc": "2026-11-01T23:15:55.289724+00:00",
+  "scope": "Read-only persisted backend/transport evidence verification after Mac reconnection; no product rerun, provider, DB, network, source edit or HEAD move",
+  "rootRuntimeCandidate": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "result": "PASS_PERSISTENCE_AND_SOURCE_BINDING",
+  "gaps": [],
+  "checks": [
+    {
+      "scope": "main-backend",
+      "binding": {
+        "qualifiedCandidate": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+        "currentHead": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+        "qualifiedCandidateIsAncestor": true,
+        "runtimeDiffToCurrentHead": [],
+        "auditDocumentationDescendantOnly": true
+      },
+      "sourcePins": {
+        "checked": 776,
+        "manifestSha256": "fae5993162f9313cf548acf7ec98f0c7830624c0ed644521813087e00d2f01f3",
+        "mismatches": [],
+        "missing": [],
+        "invalid": []
+      },
+      "sourceStableRecorded": true,
+      "summaries": {
+        "billing": {
+          "tests": 218,
+          "suites": 0,
+          "pass": 217,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 1,
+          "todo": 0
+        },
+        "common-boundaries": {
+          "tests": 125,
+          "suites": 0,
+          "pass": 124,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 1,
+          "todo": 0
+        },
+        "pause-gate": {
+          "tests": 14,
+          "suites": 0,
+          "pass": 14,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        },
+        "outbox-sdk": {
+          "tests": 33,
+          "suites": 0,
+          "pass": 33,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        }
+      }
+    },
+    {
+      "scope": "main-real-postgres",
+      "binding": {
+        "qualifiedCandidate": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+        "currentHead": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+        "qualifiedCandidateIsAncestor": true,
+        "runtimeDiffToCurrentHead": [],
+        "auditDocumentationDescendantOnly": true
+      },
+      "sourcePinsBefore": {
+        "checked": 3,
+        "manifestSha256": "b3f639ccbea855a53f22896be88e7f5d72b0a5ac3fcd33e0e691be2687d6b380",
+        "mismatches": [],
+        "missing": [],
+        "invalid": []
+      },
+      "sourcePinsAfter": {
+        "checked": 3,
+        "manifestSha256": "b3f639ccbea855a53f22896be88e7f5d72b0a5ac3fcd33e0e691be2687d6b380",
+        "mismatches": [],
+        "missing": [],
+        "invalid": []
+      },
+      "summary": {
+        "tests": 57,
+        "pass": 57,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0
+      }
+    },
+    {
+      "scope": "main-delta",
+      "binding": {
+        "qualifiedCandidate": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+        "currentHead": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+        "qualifiedCandidateIsAncestor": true,
+        "runtimeDiffToCurrentHead": [],
+        "auditDocumentationDescendantOnly": true
+      },
+      "sourcePins": {
+        "checked": 1674,
+        "manifestSha256": "419e185ac6ab5f144b02884e3eacce90f92b5013081ba60cb002fa0c25925bdf",
+        "mismatches": [],
+        "missing": [],
+        "invalid": []
+      },
+      "summary": {
+        "tests": 40,
+        "suites": 0,
+        "pass": 40,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "sourceStableRecorded": true
+    },
+    {
+      "scope": "AshrafEssa/backend",
+      "binding": {
+        "qualifiedCandidate": "9eaebbdb6c23d56d974546e233b8905d19570ef5",
+        "currentHead": "4d1789f1a9f133e992d8ada312601ec161d3ac92",
+        "qualifiedCandidateIsAncestor": true,
+        "runtimeDiffToCurrentHead": [],
+        "auditDocumentationDescendantOnly": true
+      },
+      "sourcePins": {
+        "checked": 1678,
+        "manifestSha256": "e5571a65bbb2c5e273cc8a4111c127f1c781f458373a5a6482d296bc108c5179",
+        "mismatches": [],
+        "missing": [],
+        "invalid": []
+      },
+      "sourceStableRecorded": true,
+      "summaries": {
+        "billing-and-gate": {
+          "tests": 218,
+          "pass": 217,
+          "fail": 0,
+          "skipped": 1,
+          "cancelled": 0
+        },
+        "common": {
+          "tests": 125,
+          "pass": 124,
+          "fail": 0,
+          "skipped": 1,
+          "cancelled": 0
+        }
+      },
+      "copies": [
+        {
+          "originalExists": true,
+          "copyMatchesOriginal": true,
+          "rootCopySha256": "7897659cbc7aa947f504f3b48baea8c36ff097ea3073c27004945ee42df0d7bb",
+          "originalSha256": "7897659cbc7aa947f504f3b48baea8c36ff097ea3073c27004945ee42df0d7bb"
+        },
+        {
+          "originalExists": true,
+          "copyMatchesOriginal": true,
+          "rootCopySha256": "387bee6a4b5f6f7ee729cd8f9d666b84144c6e92f4b1e183e647857e2544caca",
+          "originalSha256": "387bee6a4b5f6f7ee729cd8f9d666b84144c6e92f4b1e183e647857e2544caca"
+        },
+        {
+          "originalExists": true,
+          "copyMatchesOriginal": true,
+          "rootCopySha256": "18d7fe1b9b5930d6ce4414aafc06ae310b2d8e2abcf80e87341d3c901e85715e",
+          "originalSha256": "18d7fe1b9b5930d6ce4414aafc06ae310b2d8e2abcf80e87341d3c901e85715e"
+        }
+      ]
+    },
+    {
+      "scope": "AshrafEssa/transport",
+      "binding": {
+        "qualifiedCandidate": "9eaebbdb6c23d56d974546e233b8905d19570ef5",
+        "currentHead": "4d1789f1a9f133e992d8ada312601ec161d3ac92",
+        "qualifiedCandidateIsAncestor": true,
+        "runtimeDiffToCurrentHead": [],
+        "auditDocumentationDescendantOnly": true
+      },
+      "sourcePins": {
+        "checked": 1678,
+        "manifestSha256": "e5571a65bbb2c5e273cc8a4111c127f1c781f458373a5a6482d296bc108c5179",
+        "mismatches": [],
+        "missing": [],
+        "invalid": []
+      },
+      "sourceStableRecorded": true,
+      "summaries": {
+        "tests": 40,
+        "pass": 40,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0
+      },
+      "copies": [
+        {
+          "originalExists": true,
+          "copyMatchesOriginal": true,
+          "rootCopySha256": "23f67cee4bc5c3aa059723233d4bb87177972641c8c5a06ccc73a02a70525da7",
+          "originalSha256": "23f67cee4bc5c3aa059723233d4bb87177972641c8c5a06ccc73a02a70525da7"
+        },
+        {
+          "originalExists": true,
+          "copyMatchesOriginal": true,
+          "rootCopySha256": "67f531e2cd5e4aa0b0a6e6ff643c5932942203d3555dda1c03e6ccb05ad0b68c",
+          "originalSha256": "67f531e2cd5e4aa0b0a6e6ff643c5932942203d3555dda1c03e6ccb05ad0b68c"
+        }
+      ]
+    },
+    {
+      "scope": "MelamedLaw/backend",
+      "binding": {
+        "qualifiedCandidate": "21d51f5766e5df0b0ac497fce4cc9d16bdd8bbf5",
+        "currentHead": "d271d9887c575978204f6ba075d944f8e6a6b5aa",
+        "qualifiedCandidateIsAncestor": true,
+        "runtimeDiffToCurrentHead": [],
+        "auditDocumentationDescendantOnly": true
+      },
+      "sourcePins": {
+        "checked": 1689,
+        "manifestSha256": "2cf5eb2f4c5b6df0ad23b32b32988635c0c93d1edf43a16121bfe54999d69bc3",
+        "mismatches": [],
+        "missing": [],
+        "invalid": []
+      },
+      "sourceStableRecorded": true,
+      "summaries": {
+        "billing-and-gate": {
+          "tests": 218,
+          "pass": 217,
+          "fail": 0,
+          "skipped": 1,
+          "cancelled": 0
+        },
+        "common": {
+          "tests": 125,
+          "pass": 124,
+          "fail": 0,
+          "skipped": 1,
+          "cancelled": 0
+        }
+      },
+      "copies": [
+        {
+          "originalExists": true,
+          "copyMatchesOriginal": true,
+          "rootCopySha256": "1258d50f4547d031cd5b1e886c9060e1e07cd5ae075607318b72f495fcb1aef6",
+          "originalSha256": "1258d50f4547d031cd5b1e886c9060e1e07cd5ae075607318b72f495fcb1aef6"
+        },
+        {
+          "originalExists": true,
+          "copyMatchesOriginal": true,
+          "rootCopySha256": "9152e6b8b83c7cc48713d6d98e1b158d91a6758899a397fa20d3dcbab755bf78",
+          "originalSha256": "9152e6b8b83c7cc48713d6d98e1b158d91a6758899a397fa20d3dcbab755bf78"
+        },
+        {
+          "originalExists": true,
+          "copyMatchesOriginal": true,
+          "rootCopySha256": "4f86fd2e03e33319fd9d8c27a3b39defd65fe90726d25aff1738233043943811",
+          "originalSha256": "4f86fd2e03e33319fd9d8c27a3b39defd65fe90726d25aff1738233043943811"
+        }
+      ]
+    },
+    {
+      "scope": "MelamedLaw/transport",
+      "binding": {
+        "qualifiedCandidate": "21d51f5766e5df0b0ac497fce4cc9d16bdd8bbf5",
+        "currentHead": "d271d9887c575978204f6ba075d944f8e6a6b5aa",
+        "qualifiedCandidateIsAncestor": true,
+        "runtimeDiffToCurrentHead": [],
+        "auditDocumentationDescendantOnly": true
+      },
+      "sourcePins": {
+        "checked": 1689,
+        "manifestSha256": "2cf5eb2f4c5b6df0ad23b32b32988635c0c93d1edf43a16121bfe54999d69bc3",
+        "mismatches": [],
+        "missing": [],
+        "invalid": []
+      },
+      "sourceStableRecorded": true,
+      "summaries": {
+        "tests": 40,
+        "pass": 40,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0
+      },
+      "copies": [
+        {
+          "originalExists": true,
+          "copyMatchesOriginal": true,
+          "rootCopySha256": "8655ee7954e2eedd945edca4316a8eef39575ce7adde142b9409f68ab80be7e5",
+          "originalSha256": "8655ee7954e2eedd945edca4316a8eef39575ce7adde142b9409f68ab80be7e5"
+        },
+        {
+          "originalExists": true,
+          "copyMatchesOriginal": true,
+          "rootCopySha256": "de8778b5405b35738476a9f66669fdf2d25bc8eff419b04d9781a897eefe660d",
+          "originalSha256": "de8778b5405b35738476a9f66669fdf2d25bc8eff419b04d9781a897eefe660d"
+        }
+      ]
+    },
+    {
+      "scope": "Melamedia/backend",
+      "binding": {
+        "qualifiedCandidate": "efe1ee371ad96bc76963ac1848076055cb83066b",
+        "currentHead": "b80289be5d11d22a8867e5b6fd87e9a2e5b9508f",
+        "qualifiedCandidateIsAncestor": true,
+        "runtimeDiffToCurrentHead": [],
+        "auditDocumentationDescendantOnly": true
+      },
+      "sourcePins": {
+        "checked": 1694,
+        "manifestSha256": "c7a8c2c0275a9d43fe31b85fd93797fc1f0928d13cc1d348b744cea5bc4a2a47",
+        "mismatches": [],
+        "missing": [],
+        "invalid": []
+      },
+      "sourceStableRecorded": true,
+      "summaries": {
+        "billing-and-gate": {
+          "tests": 218,
+          "pass": 217,
+          "fail": 0,
+          "skipped": 1,
+          "cancelled": 0
+        },
+        "common": {
+          "tests": 125,
+          "pass": 124,
+          "fail": 0,
+          "skipped": 1,
+          "cancelled": 0
+        }
+      },
+      "copies": [
+        {
+          "originalExists": true,
+          "copyMatchesOriginal": true,
+          "rootCopySha256": "3d335a8c99a0cac7d7341e3caaf82fca36416c2bd764b05852e106758240bdc9",
+          "originalSha256": "3d335a8c99a0cac7d7341e3caaf82fca36416c2bd764b05852e106758240bdc9"
+        },
+        {
+          "originalExists": true,
+          "copyMatchesOriginal": true,
+          "rootCopySha256": "14ae2ab3c3efa3827356e734969b2f3ed1d89328d6ca88e63c84a657f76b939a",
+          "originalSha256": "14ae2ab3c3efa3827356e734969b2f3ed1d89328d6ca88e63c84a657f76b939a"
+        },
+        {
+          "originalExists": true,
+          "copyMatchesOriginal": true,
+          "rootCopySha256": "2a012704e4c95484f4da64688a1b339c22754f2b06826d1d156ff244f22bb76e",
+          "originalSha256": "2a012704e4c95484f4da64688a1b339c22754f2b06826d1d156ff244f22bb76e"
+        }
+      ]
+    },
+    {
+      "scope": "Melamedia/transport",
+      "binding": {
+        "qualifiedCandidate": "efe1ee371ad96bc76963ac1848076055cb83066b",
+        "currentHead": "b80289be5d11d22a8867e5b6fd87e9a2e5b9508f",
+        "qualifiedCandidateIsAncestor": true,
+        "runtimeDiffToCurrentHead": [],
+        "auditDocumentationDescendantOnly": true
+      },
+      "sourcePins": {
+        "checked": 1694,
+        "manifestSha256": "c7a8c2c0275a9d43fe31b85fd93797fc1f0928d13cc1d348b744cea5bc4a2a47",
+        "mismatches": [],
+        "missing": [],
+        "invalid": []
+      },
+      "sourceStableRecorded": true,
+      "summaries": {
+        "tests": 40,
+        "pass": 40,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0
+      },
+      "copies": [
+        {
+          "originalExists": true,
+          "copyMatchesOriginal": true,
+          "rootCopySha256": "b140922c2b99897fbec9fd7715852fa55a78c368c332219ec57cd3d244593b1e",
+          "originalSha256": "b140922c2b99897fbec9fd7715852fa55a78c368c332219ec57cd3d244593b1e"
+        },
+        {
+          "originalExists": true,
+          "copyMatchesOriginal": true,
+          "rootCopySha256": "05dfe983e074c4b923bf4a104421df42fc92ec28f5dd4247ad2a623aacae3ea1",
+          "originalSha256": "05dfe983e074c4b923bf4a104421df42fc92ec28f5dd4247ad2a623aacae3ea1"
+        }
+      ]
+    },
+    {
+      "scope": "MorLevi/backend",
+      "binding": {
+        "qualifiedCandidate": "b05d66f9f7873753e520c554f4b2c1c540e6682b",
+        "currentHead": "9b42eff71f8ba358a38825cc196423179bb73bee",
+        "qualifiedCandidateIsAncestor": true,
+        "runtimeDiffToCurrentHead": [],
+        "auditDocumentationDescendantOnly": true
+      },
+      "sourcePins": {
+        "checked": 1677,
+        "manifestSha256": "087f7fa43efe79574a4a049c591d55aefc72adc18de8cf49dfe6d796729aebe6",
+        "mismatches": [],
+        "missing": [],
+        "invalid": []
+      },
+      "sourceStableRecorded": true,
+      "summaries": {
+        "billing-and-gate": {
+          "tests": 218,
+          "pass": 217,
+          "fail": 0,
+          "skipped": 1,
+          "cancelled": 0
+        },
+        "common": {
+          "tests": 125,
+          "pass": 124,
+          "fail": 0,
+          "skipped": 1,
+          "cancelled": 0
+        }
+      },
+      "copies": [
+        {
+          "originalExists": true,
+          "copyMatchesOriginal": true,
+          "rootCopySha256": "34d8cf65b59485f075c5936955a80da5358c42f3fb15076b2ba4ca2de3cb7cc0",
+          "originalSha256": "34d8cf65b59485f075c5936955a80da5358c42f3fb15076b2ba4ca2de3cb7cc0"
+        },
+        {
+          "originalExists": true,
+          "copyMatchesOriginal": true,
+          "rootCopySha256": "5a839e73c33c30142e84a337ffb2177e68667b5607f83e1e461919be1977e996",
+          "originalSha256": "5a839e73c33c30142e84a337ffb2177e68667b5607f83e1e461919be1977e996"
+        },
+        {
+          "originalExists": true,
+          "copyMatchesOriginal": true,
+          "rootCopySha256": "fd01887c64e3d04586e2e4553a7298adc56b7c5cb3e5834577bec45e39581ecd",
+          "originalSha256": "fd01887c64e3d04586e2e4553a7298adc56b7c5cb3e5834577bec45e39581ecd"
+        }
+      ]
+    },
+    {
+      "scope": "MorLevi/transport",
+      "binding": {
+        "qualifiedCandidate": "b05d66f9f7873753e520c554f4b2c1c540e6682b",
+        "currentHead": "9b42eff71f8ba358a38825cc196423179bb73bee",
+        "qualifiedCandidateIsAncestor": true,
+        "runtimeDiffToCurrentHead": [],
+        "auditDocumentationDescendantOnly": true
+      },
+      "sourcePins": {
+        "checked": 1677,
+        "manifestSha256": "087f7fa43efe79574a4a049c591d55aefc72adc18de8cf49dfe6d796729aebe6",
+        "mismatches": [],
+        "missing": [],
+        "invalid": []
+      },
+      "sourceStableRecorded": true,
+      "summaries": {
+        "tests": 40,
+        "pass": 40,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0
+      },
+      "copies": [
+        {
+          "originalExists": true,
+          "copyMatchesOriginal": true,
+          "rootCopySha256": "9125c466a9ab5efa47381e67f378096f9a576c8721bd8cb43af901b542834a20",
+          "originalSha256": "9125c466a9ab5efa47381e67f378096f9a576c8721bd8cb43af901b542834a20"
+        },
+        {
+          "originalExists": true,
+          "copyMatchesOriginal": true,
+          "rootCopySha256": "39d5c7805d6283831441d857fad14eeeb29b47d898477f24bdb3dd0fc3af56a3",
+          "originalSha256": "39d5c7805d6283831441d857fad14eeeb29b47d898477f24bdb3dd0fc3af56a3"
+        }
+      ]
+    }
+  ],
+  "rawLogChecks": [
+    {
+      "scope": "main-backend/billing",
+      "path": "docs/releases/card-save-billing-20261101/release-qualification/latest-main-backend/billing.tap",
+      "expectedSha256": "eb3bab4f63826a9ad7cb6ad91fdf719d82d6a31a5ae1ac1094803d5f4e22329d",
+      "actualSha256": "eb3bab4f63826a9ad7cb6ad91fdf719d82d6a31a5ae1ac1094803d5f4e22329d",
+      "hashMatches": true,
+      "observedSummary": {
+        "tests": 218,
+        "pass": 217,
+        "fail": 0,
+        "skipped": 1,
+        "cancelled": 0
+      },
+      "recordedSummary": {
+        "tests": 218,
+        "pass": 217,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 1
+      },
+      "summaryMatches": true
+    },
+    {
+      "scope": "main-backend/common-boundaries",
+      "path": "docs/releases/card-save-billing-20261101/release-qualification/latest-main-backend/common-boundaries.tap",
+      "expectedSha256": "522a9ce3724a229e8d67cf4d0bfbe14660049c27d6e73cfce1881e3a3b7c6f5c",
+      "actualSha256": "522a9ce3724a229e8d67cf4d0bfbe14660049c27d6e73cfce1881e3a3b7c6f5c",
+      "hashMatches": true,
+      "observedSummary": {
+        "tests": 125,
+        "pass": 124,
+        "fail": 0,
+        "skipped": 1,
+        "cancelled": 0
+      },
+      "recordedSummary": {
+        "tests": 125,
+        "pass": 124,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 1
+      },
+      "summaryMatches": true
+    },
+    {
+      "scope": "main-backend/pause-gate",
+      "path": "docs/releases/card-save-billing-20261101/release-qualification/latest-main-backend/pause-gate.tap",
+      "expectedSha256": "43d1d582cc2dd9d2b3252c8f7b317199b9d64016d8ff56a02c2c6503b98c8a61",
+      "actualSha256": "43d1d582cc2dd9d2b3252c8f7b317199b9d64016d8ff56a02c2c6503b98c8a61",
+      "hashMatches": true,
+      "observedSummary": {
+        "tests": 14,
+        "pass": 14,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0
+      },
+      "recordedSummary": {
+        "tests": 14,
+        "pass": 14,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "summaryMatches": true
+    },
+    {
+      "scope": "main-backend/outbox-sdk",
+      "path": "docs/releases/card-save-billing-20261101/release-qualification/latest-main-backend/outbox-sdk.tap",
+      "expectedSha256": "78ead299f0f6fa6c187a618e6d06305123a18fb4fc4b8f4131ca61d8aae70b6e",
+      "actualSha256": "78ead299f0f6fa6c187a618e6d06305123a18fb4fc4b8f4131ca61d8aae70b6e",
+      "hashMatches": true,
+      "observedSummary": {
+        "tests": 33,
+        "pass": 33,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0
+      },
+      "recordedSummary": {
+        "tests": 33,
+        "pass": 33,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "summaryMatches": true
+    },
+    {
+      "scope": "main-real-postgres",
+      "path": "docs/releases/card-save-billing-20261101/release-qualification/latest-main-backend/real-postgres.tap",
+      "expectedSha256": "e335de5fc81dd3357dab7bccd6ec38f1f3c9f2d15812e1a99565e2193466e77b",
+      "actualSha256": "e335de5fc81dd3357dab7bccd6ec38f1f3c9f2d15812e1a99565e2193466e77b",
+      "hashMatches": true,
+      "observedSummary": {
+        "tests": 57,
+        "pass": 57,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0
+      },
+      "recordedSummary": {
+        "tests": 57,
+        "pass": 57,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0
+      },
+      "summaryMatches": true
+    },
+    {
+      "scope": "main-delta",
+      "path": "docs/releases/card-save-billing-20261101/release-qualification/latest-main-delta/delta-tests.tap",
+      "expectedSha256": "5d3dfe61c79540eb77c98c9ddc7187c4eb20a0a6cbcf200a20030ef2d5d747e9",
+      "actualSha256": "5d3dfe61c79540eb77c98c9ddc7187c4eb20a0a6cbcf200a20030ef2d5d747e9",
+      "hashMatches": true,
+      "observedSummary": {
+        "tests": 40,
+        "pass": 40,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0
+      },
+      "recordedSummary": {
+        "tests": 40,
+        "pass": 40,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "summaryMatches": true
+    },
+    {
+      "scope": "main-delta-source-guard",
+      "path": "docs/releases/card-save-billing-20261101/release-qualification/latest-main-delta/source-release-guard.log",
+      "expectedSha256": "8cf7fed3babf8e32a7fe680976c4f5d6980fe799f96caaa4851a0d8ff5165a8f",
+      "actualSha256": "8cf7fed3babf8e32a7fe680976c4f5d6980fe799f96caaa4851a0d8ff5165a8f",
+      "hashMatches": true
+    },
+    {
+      "scope": "AshrafEssa/backend/billing-and-gate",
+      "path": "docs/releases/card-save-billing-20261101/release-qualification/AshrafEssa/billing-and-gate.tap",
+      "expectedSha256": "387bee6a4b5f6f7ee729cd8f9d666b84144c6e92f4b1e183e647857e2544caca",
+      "actualSha256": "387bee6a4b5f6f7ee729cd8f9d666b84144c6e92f4b1e183e647857e2544caca",
+      "hashMatches": true,
+      "observedSummary": {
+        "tests": 218,
+        "pass": 217,
+        "fail": 0,
+        "skipped": 1,
+        "cancelled": 0
+      },
+      "recordedSummary": {
+        "tests": 218,
+        "pass": 217,
+        "fail": 0,
+        "skipped": 1,
+        "cancelled": 0
+      },
+      "summaryMatches": true
+    },
+    {
+      "scope": "AshrafEssa/backend/common",
+      "path": "docs/releases/card-save-billing-20261101/release-qualification/AshrafEssa/common.tap",
+      "expectedSha256": "18d7fe1b9b5930d6ce4414aafc06ae310b2d8e2abcf80e87341d3c901e85715e",
+      "actualSha256": "18d7fe1b9b5930d6ce4414aafc06ae310b2d8e2abcf80e87341d3c901e85715e",
+      "hashMatches": true,
+      "observedSummary": {
+        "tests": 125,
+        "pass": 124,
+        "fail": 0,
+        "skipped": 1,
+        "cancelled": 0
+      },
+      "recordedSummary": {
+        "tests": 125,
+        "pass": 124,
+        "fail": 0,
+        "skipped": 1,
+        "cancelled": 0
+      },
+      "summaryMatches": true
+    },
+    {
+      "scope": "AshrafEssa/transport",
+      "path": "docs/releases/card-save-billing-20261101/release-qualification/AshrafEssa/transport-and-outbox.tap",
+      "expectedSha256": "67f531e2cd5e4aa0b0a6e6ff643c5932942203d3555dda1c03e6ccb05ad0b68c",
+      "actualSha256": "67f531e2cd5e4aa0b0a6e6ff643c5932942203d3555dda1c03e6ccb05ad0b68c",
+      "hashMatches": true,
+      "observedSummary": {
+        "tests": 40,
+        "pass": 40,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0
+      },
+      "recordedSummary": {
+        "tests": 40,
+        "pass": 40,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0
+      },
+      "summaryMatches": true
+    },
+    {
+      "scope": "MelamedLaw/backend/billing-and-gate",
+      "path": "docs/releases/card-save-billing-20261101/release-qualification/MelamedLaw/billing-and-gate.tap",
+      "expectedSha256": "9152e6b8b83c7cc48713d6d98e1b158d91a6758899a397fa20d3dcbab755bf78",
+      "actualSha256": "9152e6b8b83c7cc48713d6d98e1b158d91a6758899a397fa20d3dcbab755bf78",
+      "hashMatches": true,
+      "observedSummary": {
+        "tests": 218,
+        "pass": 217,
+        "fail": 0,
+        "skipped": 1,
+        "cancelled": 0
+      },
+      "recordedSummary": {
+        "tests": 218,
+        "pass": 217,
+        "fail": 0,
+        "skipped": 1,
+        "cancelled": 0
+      },
+      "summaryMatches": true
+    },
+    {
+      "scope": "MelamedLaw/backend/common",
+      "path": "docs/releases/card-save-billing-20261101/release-qualification/MelamedLaw/common.tap",
+      "expectedSha256": "4f86fd2e03e33319fd9d8c27a3b39defd65fe90726d25aff1738233043943811",
+      "actualSha256": "4f86fd2e03e33319fd9d8c27a3b39defd65fe90726d25aff1738233043943811",
+      "hashMatches": true,
+      "observedSummary": {
+        "tests": 125,
+        "pass": 124,
+        "fail": 0,
+        "skipped": 1,
+        "cancelled": 0
+      },
+      "recordedSummary": {
+        "tests": 125,
+        "pass": 124,
+        "fail": 0,
+        "skipped": 1,
+        "cancelled": 0
+      },
+      "summaryMatches": true
+    },
+    {
+      "scope": "MelamedLaw/transport",
+      "path": "docs/releases/card-save-billing-20261101/release-qualification/MelamedLaw/transport-and-outbox.tap",
+      "expectedSha256": "de8778b5405b35738476a9f66669fdf2d25bc8eff419b04d9781a897eefe660d",
+      "actualSha256": "de8778b5405b35738476a9f66669fdf2d25bc8eff419b04d9781a897eefe660d",
+      "hashMatches": true,
+      "observedSummary": {
+        "tests": 40,
+        "pass": 40,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0
+      },
+      "recordedSummary": {
+        "tests": 40,
+        "pass": 40,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0
+      },
+      "summaryMatches": true
+    },
+    {
+      "scope": "Melamedia/backend/billing-and-gate",
+      "path": "docs/releases/card-save-billing-20261101/release-qualification/Melamedia/billing-and-gate.tap",
+      "expectedSha256": "14ae2ab3c3efa3827356e734969b2f3ed1d89328d6ca88e63c84a657f76b939a",
+      "actualSha256": "14ae2ab3c3efa3827356e734969b2f3ed1d89328d6ca88e63c84a657f76b939a",
+      "hashMatches": true,
+      "observedSummary": {
+        "tests": 218,
+        "pass": 217,
+        "fail": 0,
+        "skipped": 1,
+        "cancelled": 0
+      },
+      "recordedSummary": {
+        "tests": 218,
+        "pass": 217,
+        "fail": 0,
+        "skipped": 1,
+        "cancelled": 0
+      },
+      "summaryMatches": true
+    },
+    {
+      "scope": "Melamedia/backend/common",
+      "path": "docs/releases/card-save-billing-20261101/release-qualification/Melamedia/common.tap",
+      "expectedSha256": "2a012704e4c95484f4da64688a1b339c22754f2b06826d1d156ff244f22bb76e",
+      "actualSha256": "2a012704e4c95484f4da64688a1b339c22754f2b06826d1d156ff244f22bb76e",
+      "hashMatches": true,
+      "observedSummary": {
+        "tests": 125,
+        "pass": 124,
+        "fail": 0,
+        "skipped": 1,
+        "cancelled": 0
+      },
+      "recordedSummary": {
+        "tests": 125,
+        "pass": 124,
+        "fail": 0,
+        "skipped": 1,
+        "cancelled": 0
+      },
+      "summaryMatches": true
+    },
+    {
+      "scope": "Melamedia/transport",
+      "path": "docs/releases/card-save-billing-20261101/release-qualification/Melamedia/transport-and-outbox.tap",
+      "expectedSha256": "05dfe983e074c4b923bf4a104421df42fc92ec28f5dd4247ad2a623aacae3ea1",
+      "actualSha256": "05dfe983e074c4b923bf4a104421df42fc92ec28f5dd4247ad2a623aacae3ea1",
+      "hashMatches": true,
+      "observedSummary": {
+        "tests": 40,
+        "pass": 40,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0
+      },
+      "recordedSummary": {
+        "tests": 40,
+        "pass": 40,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0
+      },
+      "summaryMatches": true
+    },
+    {
+      "scope": "MorLevi/backend/billing-and-gate",
+      "path": "docs/releases/card-save-billing-20261101/release-qualification/MorLevi/billing-and-gate.tap",
+      "expectedSha256": "5a839e73c33c30142e84a337ffb2177e68667b5607f83e1e461919be1977e996",
+      "actualSha256": "5a839e73c33c30142e84a337ffb2177e68667b5607f83e1e461919be1977e996",
+      "hashMatches": true,
+      "observedSummary": {
+        "tests": 218,
+        "pass": 217,
+        "fail": 0,
+        "skipped": 1,
+        "cancelled": 0
+      },
+      "recordedSummary": {
+        "tests": 218,
+        "pass": 217,
+        "fail": 0,
+        "skipped": 1,
+        "cancelled": 0
+      },
+      "summaryMatches": true
+    },
+    {
+      "scope": "MorLevi/backend/common",
+      "path": "docs/releases/card-save-billing-20261101/release-qualification/MorLevi/common.tap",
+      "expectedSha256": "fd01887c64e3d04586e2e4553a7298adc56b7c5cb3e5834577bec45e39581ecd",
+      "actualSha256": "fd01887c64e3d04586e2e4553a7298adc56b7c5cb3e5834577bec45e39581ecd",
+      "hashMatches": true,
+      "observedSummary": {
+        "tests": 125,
+        "pass": 124,
+        "fail": 0,
+        "skipped": 1,
+        "cancelled": 0
+      },
+      "recordedSummary": {
+        "tests": 125,
+        "pass": 124,
+        "fail": 0,
+        "skipped": 1,
+        "cancelled": 0
+      },
+      "summaryMatches": true
+    },
+    {
+      "scope": "MorLevi/transport",
+      "path": "docs/releases/card-save-billing-20261101/release-qualification/MorLevi/transport-and-outbox.tap",
+      "expectedSha256": "39d5c7805d6283831441d857fad14eeeb29b47d898477f24bdb3dd0fc3af56a3",
+      "actualSha256": "39d5c7805d6283831441d857fad14eeeb29b47d898477f24bdb3dd0fc3af56a3",
+      "hashMatches": true,
+      "observedSummary": {
+        "tests": 40,
+        "pass": 40,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0
+      },
+      "recordedSummary": {
+        "tests": 40,
+        "pass": 40,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0
+      },
+      "summaryMatches": true
+    }
+  ],
+  "rawLogCount": 19,
+  "runtimeSnapshotsBeforeAfter": {
+    "main": {
+      "repository": "/private/tmp/layer-billing-main-current-20261101",
+      "before": {
+        "head": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+        "missing": [],
+        "pathSetSha256": "501c59133119c65b89f0ed46f4bd4ff074d642e227798c3926cae202c1f2a4b8",
+        "actualTrackedRuntimeManifestSha256": "d74dcd2f5d9e6977ed4f2b60ce69a5950db677ca85d766ab59d10ef499e88e1b",
+        "trackedRuntimeSourceCount": 1467
+      },
+      "after": {
+        "head": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+        "missing": [],
+        "pathSetSha256": "501c59133119c65b89f0ed46f4bd4ff074d642e227798c3926cae202c1f2a4b8",
+        "actualTrackedRuntimeManifestSha256": "d74dcd2f5d9e6977ed4f2b60ce69a5950db677ca85d766ab59d10ef499e88e1b",
+        "trackedRuntimeSourceCount": 1467
+      },
+      "changedActualTrackedRuntimePaths": [],
+      "stable": true
+    },
+    "AshrafEssa": {
+      "repository": "/private/tmp/layer-billing-release-clients-20261101/AshrafEssa",
+      "before": {
+        "head": "4d1789f1a9f133e992d8ada312601ec161d3ac92",
+        "missing": [],
+        "pathSetSha256": "a0c0dab5f31e9919bc7000405ae637b6ac94bbd610278c98463ddc79401a7e78",
+        "actualTrackedRuntimeManifestSha256": "c9becf6f277148bbb518fedc26ee139732fd9b8273d377734ac3ee443b43f18e",
+        "trackedRuntimeSourceCount": 1471
+      },
+      "after": {
+        "head": "4d1789f1a9f133e992d8ada312601ec161d3ac92",
+        "missing": [],
+        "pathSetSha256": "a0c0dab5f31e9919bc7000405ae637b6ac94bbd610278c98463ddc79401a7e78",
+        "actualTrackedRuntimeManifestSha256": "c9becf6f277148bbb518fedc26ee139732fd9b8273d377734ac3ee443b43f18e",
+        "trackedRuntimeSourceCount": 1471
+      },
+      "changedActualTrackedRuntimePaths": [],
+      "stable": true
+    },
+    "MelamedLaw": {
+      "repository": "/private/tmp/layer-billing-release-clients-20261101/MelamedLaw",
+      "before": {
+        "head": "d271d9887c575978204f6ba075d944f8e6a6b5aa",
+        "missing": [],
+        "pathSetSha256": "f4006b6488004f9715da30f1bbcf80ac6f113c2fadad44c9e8980fdfb47b6865",
+        "actualTrackedRuntimeManifestSha256": "fcc03c072750af46a0f080bb9fd7b6c5b1dcd51ecac18d19d2348616554bf889",
+        "trackedRuntimeSourceCount": 1480
+      },
+      "after": {
+        "head": "d271d9887c575978204f6ba075d944f8e6a6b5aa",
+        "missing": [],
+        "pathSetSha256": "f4006b6488004f9715da30f1bbcf80ac6f113c2fadad44c9e8980fdfb47b6865",
+        "actualTrackedRuntimeManifestSha256": "fcc03c072750af46a0f080bb9fd7b6c5b1dcd51ecac18d19d2348616554bf889",
+        "trackedRuntimeSourceCount": 1480
+      },
+      "changedActualTrackedRuntimePaths": [],
+      "stable": true
+    },
+    "Melamedia": {
+      "repository": "/private/tmp/layer-billing-release-clients-20261101/Melamedia",
+      "before": {
+        "head": "b80289be5d11d22a8867e5b6fd87e9a2e5b9508f",
+        "missing": [],
+        "pathSetSha256": "84412a3718d227cd953b45b618fc3a39620e30ab7412f87b333be246dbbf1db0",
+        "actualTrackedRuntimeManifestSha256": "c20257a37080346ff36203a0cd42ec12846bf629970450cf7ab8030fdad3a744",
+        "trackedRuntimeSourceCount": 1485
+      },
+      "after": {
+        "head": "b80289be5d11d22a8867e5b6fd87e9a2e5b9508f",
+        "missing": [],
+        "pathSetSha256": "84412a3718d227cd953b45b618fc3a39620e30ab7412f87b333be246dbbf1db0",
+        "actualTrackedRuntimeManifestSha256": "c20257a37080346ff36203a0cd42ec12846bf629970450cf7ab8030fdad3a744",
+        "trackedRuntimeSourceCount": 1485
+      },
+      "changedActualTrackedRuntimePaths": [],
+      "stable": true
+    },
+    "MorLevi": {
+      "repository": "/private/tmp/layer-billing-release-clients-20261101/MorLevi",
+      "before": {
+        "head": "9b42eff71f8ba358a38825cc196423179bb73bee",
+        "missing": [],
+        "pathSetSha256": "4f3dcb79d84a3ce71489ae684330504dceb676b7f8df916d8812c74d8b8bfcba",
+        "actualTrackedRuntimeManifestSha256": "06a625a6b69ed8b2d302d0ffcaabf1b875e6d5a701c1bc478b9bd1b6b0295f14",
+        "trackedRuntimeSourceCount": 1470
+      },
+      "after": {
+        "head": "9b42eff71f8ba358a38825cc196423179bb73bee",
+        "missing": [],
+        "pathSetSha256": "4f3dcb79d84a3ce71489ae684330504dceb676b7f8df916d8812c74d8b8bfcba",
+        "actualTrackedRuntimeManifestSha256": "06a625a6b69ed8b2d302d0ffcaabf1b875e6d5a701c1bc478b9bd1b6b0295f14",
+        "trackedRuntimeSourceCount": 1470
+      },
+      "changedActualTrackedRuntimePaths": [],
+      "stable": true
+    }
+  },
+  "sharedProductionPathsSha256": {
+    "backend/controllers/billingController.js": "bf5e5f42e194c0e7efb6433bb02724f3c63d715472bf59982ec5505daa65abfe",
+    "backend/controllers/publicSignupController.js": "3d1c0bc148d6dde079e17d84fe59b9cedca06cd678de4a6776a8f531acc6363c",
+    "backend/lib/billing/billingEmails.js": "6faee5f89cdda2ca2f1f58b644fa88a111b11f1de417b53479eccc5fc62fc95c",
+    "backend/lib/billing/billingOperations.js": "50932a1b1e8d9e167cd6ae377d2cea21d45344f191a24dce59aca6cb74f3d10f",
+    "backend/lib/billing/firmBillingService.js": "b651a79ec829b48a92536e07499def3b85b1a2b2eb051de6851a6f741bc4cda0",
+    "backend/lib/billing/selfServiceRenewal.js": "a9d90f0fd6bf6e9fb97cc690e5973540e2a0836721ee13d418a51e3579c20c09",
+    "backend/lib/billing/selfServiceUpgrade.js": "262e5b697091eaa5d3b53c0131872a49f4b2f2742c098268e1d42aea1643640e",
+    "backend/lib/payments/takbullClient.js": "9cd2d96d4644071de5baad44035a925d71085bad55f18ff30cff3a3aecb6afa6",
+    "backend/lib/payments/verifySignupPayment.js": "65157d1c97ac6a7f7f87fd9b5c8891df9e65c3e21d77aae71c50ecbf43e90c90",
+    "backend/lib/qaOutboundNoop.js": "b9fbbd8d2ea1a676e381a3d549f916d29fb36e4dbb414c9e78b0f50ff7e89a40",
+    "backend/lib/systemMessages/index.js": "d5f0708d46218b8fe238b059be9d37422e84a11c2f7f471186c74d004ee4763a",
+    "backend/lib/tenant/signupService.js": "fc3dc82a7ab944cc08b07dcc87689624d86ddceb579c2ca779c2f7fae2652d0b",
+    "backend/lib/tenant/signupWelcomeEmail.js": "f6bcb71739c76a3b9a623e6a80308092c8f08d6cec9917418d58d6cd260052d4",
+    "backend/routes/paymentWebhookRoutes.js": "a514084f75dd3254fc14cad03a32c040ecbfd7a57e2509cd157293e635fd0477",
+    "backend/services/notifications/notificationOrchestrator.js": "6ff44e7c951907c273e7df4a981297880df6180cf799f8e1951cd9008ba8efcf",
+    "backend/services/signingV2/runtime.js": "7ae7721347313e46a7036c5bbfe098b516bebd862ba89913e50821f12e5a3d70",
+    "backend/tasks/billingRenewal/scheduler.js": "04df2a8951fc1144fda6fb5920a19f2edb0d9517aaf0e2971006c29d6474b3e1",
+    "backend/utils/smooveEmailCampaignService.js": "914d7cc12e2ff11e7c433fd8911377ed059801679eacdece59f099ccab3101e2"
+  },
+  "sharedClientComparisons": [
+    {
+      "tenant": "AshrafEssa",
+      "checkedSharedPaths": 18,
+      "mismatches": []
+    },
+    {
+      "tenant": "MelamedLaw",
+      "checkedSharedPaths": 18,
+      "mismatches": []
+    },
+    {
+      "tenant": "Melamedia",
+      "checkedSharedPaths": 18,
+      "mismatches": []
+    },
+    {
+      "tenant": "MorLevi",
+      "checkedSharedPaths": 18,
+      "mismatches": []
+    }
+  ],
+  "savedMetadataChecks": {
+    "postgresCleanupSuccessful": true,
+    "postgresCleanupWasNotReexecutedOrLiveQueried": true,
+    "mainGuardManifestBindingMatches": true,
+    "postgresGuardHashAnd4NegativeChecksMatch": true,
+    "mainDeltaRunnerHashMatches": true,
+    "mainDeltaSourceGuardLogMatchesRecordedStdout": true
+  },
+  "limits": [
+    "These are persisted historical scoped test results, not fresh product, provider, delivery, deployment or live-environment acceptance.",
+    "The existing signup/profile PostgreSQL and Takbull sandbox/document/email-delivery holds remain.",
+    "Intentional tenant branding/configuration is checked against each tenant receipt; only the explicitly shared production units are compared with main."
+  ]
+}

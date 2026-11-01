@@ -79,7 +79,8 @@
     "checkoutHint": "Complete payment in the checkout window. The card will be saved for monthly billing.",
     "checkoutTitle": "Secure payment",
     "closeCheckout": "Close",
-    "openInNewTab": "Open in a new tab"
+    "openInNewTab": "Open in a new tab",
+    "paymentUnconfirmed": "The payment result is not confirmed yet. Check your subscription status before trying another payment."
   },
   "billingLock": {
     "body": "The monthly payment was not completed. Access will resume as soon as payment is settled.",

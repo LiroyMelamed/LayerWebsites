@@ -1,0 +1,44 @@
+{
+  "candidate": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "startedAtUtc": "2026-11-01T22:52:44.272377+00:00",
+  "finishedAtUtc": "2026-11-01T22:52:48.098659+00:00",
+  "command": [
+    "/Users/liroymelamed/.nvm/versions/node/v24.14.0/bin/node",
+    "--require",
+    "/private/tmp/layer-billing-main-current-20261101/docs/releases/card-save-billing-20261101/release-qualification/latest-main-backend/real-postgres-network-guard.cjs",
+    "--test",
+    "--test-reporter=tap",
+    "backend/tests/cardSetupDebtCollection.test.js"
+  ],
+  "exitCode": 0,
+  "summary": {
+    "tests": 57,
+    "pass": 57,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "sourceSha256Before": {
+    "backend/lib/billing/firmBillingService.js": "b651a79ec829b48a92536e07499def3b85b1a2b2eb051de6851a6f741bc4cda0",
+    "backend/lib/billing/billingOperations.js": "50932a1b1e8d9e167cd6ae377d2cea21d45344f191a24dce59aca6cb74f3d10f",
+    "backend/tests/cardSetupDebtCollection.test.js": "d1086bc9b5e19d56ab23af2dcf71de5d61ec61a00f48cd0529c842c382888378"
+  },
+  "sourceSha256After": {
+    "backend/lib/billing/firmBillingService.js": "b651a79ec829b48a92536e07499def3b85b1a2b2eb051de6851a6f741bc4cda0",
+    "backend/lib/billing/billingOperations.js": "50932a1b1e8d9e167cd6ae377d2cea21d45344f191a24dce59aca6cb74f3d10f",
+    "backend/tests/cardSetupDebtCollection.test.js": "d1086bc9b5e19d56ab23af2dcf71de5d61ec61a00f48cd0529c842c382888378"
+  },
+  "sourceStable": true,
+  "financialOperationsFlagSupplied": false,
+  "flow": "Normal unconfigured-enabled behavior",
+  "dependencyRoot": "/tmp/layer-billing-lock-deps/node_modules",
+  "fixture": {
+    "host": "127.0.0.1",
+    "port": 55449,
+    "user": "billing_qa",
+    "database": "billing_card_setup_qa"
+  },
+  "providerCalls": "synthetic only",
+  "networkGuard": "only127.0.0.1:55449 TCP, native fetch blocked",
+  "logSha256": "e335de5fc81dd3357dab7bccd6ec38f1f3c9f2d15812e1a99565e2193466e77b"
+}

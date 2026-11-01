@@ -37,7 +37,8 @@ async function fixture(t, flow, failOutbox = false) {
         CREATE TABLE users(userid integer PRIMARY KEY,role text,law_firm_tenant_id uuid);
         CREATE TABLE tenant_subscriptions(tenant_id integer PRIMARY KEY,plan_key text,status text,
             starts_at timestamptz,updated_at timestamptz,created_at timestamptz);
-        CREATE TABLE signup_intents(id uuid,law_firm_tenant_id uuid,status text,consent_version text,recurring_amount_ils numeric);
+        CREATE TABLE signup_intents(id uuid,law_firm_tenant_id uuid,status text,consent_version text,recurring_amount_ils numeric,
+            admin_email text,admin_name text,admin_phone text);
         CREATE TABLE synthetic_system_outbox(source_id uuid PRIMARY KEY,office_id uuid,amount_ils numeric);
     `);
     await db.query(`INSERT INTO firm_billing(law_firm_tenant_id,platform_id,resource_id,signing_id,
@@ -47,7 +48,8 @@ async function fixture(t, flow, failOutbox = false) {
         price_monthly_ils,status,renews_at) VALUES($1,'site','basic','none',532,'active',now()+interval '1 month')`, [OTHER]);
     await db.query(`INSERT INTO users(userid,role,law_firm_tenant_id) VALUES(91,'Admin',$1)`, [OFFICE]);
     await db.query(`INSERT INTO firm_payment_methods VALUES($1,'synthetic-encrypted-card',true)`, [OFFICE]);
-    await db.query(`INSERT INTO signup_intents VALUES('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',$1,'completed','signup-1ils-3months-v2',532)`, [OFFICE]);
+    await db.query(`INSERT INTO signup_intents VALUES('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',$1,'completed','signup-1ils-3months-v2',532,
+        'owner@synthetic.invalid','Synthetic owner','0500000000')`, [OFFICE]);
     // A pending payment in a different office must neither block nor be updated.
     await db.query(`INSERT INTO firm_payment_intents(id,law_firm_tenant_id,kind,status,amount_ils,order_reference)
         VALUES('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',$1,'renewal','pending',532,'foreign-pending')`, [OTHER]);
@@ -87,7 +89,9 @@ async function fixture(t, flow, failOutbox = false) {
         assert.equal(reserved.length, 1);
         assert.equal(reserved[0].status, 'pending');
         charges++;
-        return { ok: true, transactionInternalNumber: PROVIDER_TRANSACTION };
+        return { ok: true, transactionInternalNumber: PROVIDER_TRANSACTION,
+            document: { created: true, id: 'synthetic-shared-document', uniqId: null, number: '456', deliveryStatus: 'unknown' },
+            raw: { cardToken: 'unpersisted-synthetic-card-token' } };
     };
     const verify = async (_credentials, transactionId, amount) => {
         assert.equal(transactionId, PROVIDER_TRANSACTION);
@@ -152,6 +156,9 @@ for (const flow of ['renewal', 'upgrade']) {
         assert.ok(result.status === 'succeeded' || result.ok === true);
         const state = await f.state();
         assert.equal(state.intent.status, 'succeeded');
+        assert.equal(state.intent.package_snapshot.providerDocument.id, 'synthetic-shared-document');
+        assert.equal(state.intent.package_snapshot.providerDocument.deliveryStatus, 'unknown');
+        assert.equal(JSON.stringify(state.intent.package_snapshot).includes('unpersisted-synthetic-card-token'), false);
         assert.equal(state.account.status, 'active');
         assert.equal(state.outbox.length, 1);
         assert.equal(state.outbox[0].source_id, state.intent.id);

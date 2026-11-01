@@ -147,7 +147,7 @@ test('paid signup and renewal with real PostgreSQL office policies', { skip: !pr
     const renewal = mode => createSignupRenewal({ database: pool, now: () => clock, credentials: provider.getTakbullCredentialsFromEnv,
         charge: async input => { calls++; assert.equal(input.amount, 532); assert.equal(input.cardExternalToken, 'synthetic-card-token');
             if (mode === 'unknown') throw Error('SYNTHETIC_TIMEOUT');
-            return { ok: mode === 'success', transactionInternalNumber: mode === 'success' ? crypto.randomUUID() : null }; },
+            return { ok: mode === 'success', definitiveFailure: mode === 'decline', transactionInternalNumber: mode === 'success' ? crypto.randomUUID() : null }; },
         verify: async (_credentials, transaction, amount) => { assert.ok(transaction); assert.equal(amount, 532); } });
     await t.test('trial blocks charges; scheduled concurrent renewal dispatches once at the agreed final price', async () => {
         const service = renewal('success');
@@ -213,10 +213,13 @@ test('paid signup and renewal with real PostgreSQL office policies', { skip: !pr
         assert.equal((await call(office.owner_user_id, '/api/billing/plan')).status, 200);
         assert.equal((await runWithTenant(office, () => pool.query('SELECT userid FROM users'))).rowCount, 2);
     });
-    await t.test('a ₪1 replacement-card verification cannot settle the unpaid subscription', async () => {
+    await t.test('a ₪1 replacement-card verification collects separately; a decline preserves the unpaid subscription and setup replay is inert', async () => {
         const billing = require('../lib/billing/firmBillingService');
-        await runWithTenant(office, async () => {
+        const renewalModule = require('../lib/billing/selfServiceRenewal'), saved = renewalModule.signupRenewal;
+        renewalModule.signupRenewal = renewal('decline');
+        try { await runWithTenant(office, async () => {
             const before = (await pool.query('SELECT * FROM firm_billing')).rows[0];
+            const callsBefore = calls;
             const checkout = await billing.createCheckout({ kind: 'setup' });
             assert.equal(checkout.amount, 1); orders.get(checkout.uniqId).paid = true;
             await billing.handleTakbullNotification({ uniqId: checkout.uniqId });
@@ -224,10 +227,32 @@ test('paid signup and renewal with real PostgreSQL office policies', { skip: !pr
             assert.equal(after.status, before.status);
             assert.equal(+after.renews_at, +before.renews_at);
             assert.equal(+after.grace_until, +before.grace_until);
-        });
+            assert.equal(calls, callsBefore + 1);
+            await billing.handleTakbullNotification({ uniqId: checkout.uniqId });
+            assert.equal(calls, callsBefore + 1);
+        }); } finally { renewalModule.signupRenewal = saved; }
+    });
+    await t.test('a new verified replacement card can recover a declined cycle with exactly one actual subscription charge', async () => {
+        const billing = require('../lib/billing/firmBillingService');
+        const renewalModule = require('../lib/billing/selfServiceRenewal'), saved = renewalModule.signupRenewal;
+        renewalModule.signupRenewal = renewal('success');
+        try { await runWithTenant(office, async () => {
+            const callsBefore = calls;
+            const checkout = await billing.createCheckout({ kind: 'setup' });
+            orders.get(checkout.uniqId).paid = true;
+            await billing.handleTakbullNotification({ uniqId: checkout.uniqId });
+            const after = (await pool.query('SELECT * FROM firm_billing')).rows[0];
+            assert.equal(calls, callsBefore + 1);
+            assert.equal(after.status, 'active');
+            assert.equal(after.grace_until, null);
+            assert.ok(after.last_paid_at);
+            await billing.handleTakbullNotification({ uniqId: checkout.uniqId });
+            assert.equal(calls, callsBefore + 1);
+        }); } finally { renewalModule.signupRenewal = saved; }
     });
     await t.test('uncertain provider outcome blocks both owner retry and alternate hosted payment', async () => {
         clock = new Date(); const service = renewal('unknown');
+        await runWithTenant(office, () => pool.query("UPDATE firm_billing SET status='past_due',renews_at=now()-interval '1 day',grace_until=now()+interval '2 days'"));
         await assert.rejects(runWithTenant(office, () => service.renew(office.id)), /SYNTHETIC_TIMEOUT/);
         const before = calls, pagesBefore = hostedCalls;
         assert.equal((await runWithTenant(office, () => service.renew(office.id, { retryFailed: true }))).status, 'pending');

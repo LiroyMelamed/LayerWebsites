@@ -1,0 +1,20 @@
+{
+  "branch": "codex/billing-final-mor-20261101",
+  "candidate": "b05d66f9f7873753e520c554f4b2c1c540e6682b",
+  "parents": [
+    "e89dcd021a31c9a45b4ff2f9909d3219e8655d07",
+    "586f93e5ac5148ba5ec0059cb5430ebbc4e92e6c"
+  ],
+  "tenantBase": "f5220552918507a8b34b30cb7fb0cc41f3f0710b",
+  "latestClientHistory": "586f93e5ac5148ba5ec0059cb5430ebbc4e92e6c",
+  "initialCandidate": "3217781317b54b3143d8bfba29475f2ab42485bd",
+  "previousQualifiedRuntime": "af9e8c50e5a5714f6ba4e04d83a71580ee676583",
+  "previousAuditTip": "0062db561ef3d4b678f3031bfb4c0fbce18de5b6",
+  "finalDonor": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "cutoffMain": "074df7520497a0cd6bd95ad70353201c905f0aa6",
+  "mergeType": "real --no-ff donor merge then latest client history merge",
+  "conflicts": [],
+  "runtimeAdaptations": [],
+  "furtherDriftPolicy": "HOLD; fixed cutoff only",
+  "scope": "new isolated local branch only; no active client branch or deployment modified"
+}

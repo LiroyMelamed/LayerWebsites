@@ -1,0 +1,15 @@
+{
+  "branch": "codex/billing-final-mor-20261101",
+  "candidate": "3217781317b54b3143d8bfba29475f2ab42485bd",
+  "parents": [
+    "f5220552918507a8b34b30cb7fb0cc41f3f0710b",
+    "9dd9cb3607ee79434fcfb1aed5a40773e5713789"
+  ],
+  "tenantBase": "f5220552918507a8b34b30cb7fb0cc41f3f0710b",
+  "donor": "9dd9cb3607ee79434fcfb1aed5a40773e5713789",
+  "sharedMain": "9f01a42dcf85ec36a1e4a6d980c86f44e1eab5e9",
+  "mergeType": "real --no-ff",
+  "conflicts": [],
+  "runtimeAdaptations": [],
+  "scope": "new isolated local branch; no active client branch or deployment modified"
+}

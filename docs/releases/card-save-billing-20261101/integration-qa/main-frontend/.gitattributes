@@ -1,0 +1,2 @@
+# Preserve emitted test/compiler evidence byte-for-byte, including trailing spaces.
+*.log -whitespace

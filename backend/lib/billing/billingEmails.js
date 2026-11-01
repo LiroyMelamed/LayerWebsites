@@ -1,4 +1,5 @@
 const { sendEmailWithAttachments } = require('../../utils/smooveEmailCampaignService');
+const { billingOperationsEnabled } = require('./billingOperations');
 const settingsService = require('../../services/settingsService');
 const { getPayUrl } = require('./tenantBillingDefaults');
 const { wrapEmailHtml } = require('../../tasks/emailReminders/templates');
@@ -90,6 +91,7 @@ async function collectBillingRecipients() {
 }
 
 async function sendFailedPaymentEmails({ amountIls, last4, graceUntil, errorMessage } = {}) {
+    if (!billingOperationsEnabled()) return { skipped: true, reason: 'billing_operations_paused' };
     const payUrl = getPayUrl();
     const { firmName, firmLogoUrl } = getBillingEmailBranding();
     const html = buildFailedPaymentHtml({

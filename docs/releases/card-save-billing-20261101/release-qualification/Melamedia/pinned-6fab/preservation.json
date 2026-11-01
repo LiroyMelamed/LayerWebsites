@@ -1,0 +1,1226 @@
+{
+  "capturedAtUtc": "2026-11-01T22:45:25.001354+00:00",
+  "tenant": "Melamedia",
+  "currentClientBaseline": "1d61825c2fac7503f5cf7f25ff3543cde471914d",
+  "initialClientBaseline": "615078693afd117e2d488f5c5355f1338d622ad8",
+  "donor": "6fab2887d056262cf52ddb773a377e5ad804f0d7",
+  "runtimeCandidate": "19b283433cf8774e2bdd697568e8065a2bcaa1ba",
+  "sharedMain": "4917ca1a3d25e4224bd64fa8c05048285c0741dd",
+  "ancestry": {
+    "currentClientBaseline": true,
+    "currentSharedMain": true,
+    "finalDonor": true
+  },
+  "preservedPaths": [
+    {
+      "path": "backend/ecosystem.config.js",
+      "originalPreparationSha256": "3cdceca8f0e699d46de69f6990ebd1723c413b3cc4852ca51a16b21f8de29c5f",
+      "currentClientBaselineSha256": "3cdceca8f0e699d46de69f6990ebd1723c413b3cc4852ca51a16b21f8de29c5f",
+      "actualSha256": "3cdceca8f0e699d46de69f6990ebd1723c413b3cc4852ca51a16b21f8de29c5f",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "backend/lib/billing/tenantBillingDefaults.js",
+      "originalPreparationSha256": "f91ccaacc4447dcc334f91e9d1bb95ab0b653d8db9874aed84e507daa2fe2c0a",
+      "currentClientBaselineSha256": "f91ccaacc4447dcc334f91e9d1bb95ab0b653d8db9874aed84e507daa2fe2c0a",
+      "actualSha256": "f91ccaacc4447dcc334f91e9d1bb95ab0b653d8db9874aed84e507daa2fe2c0a",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "docs/signing-v2/release-baseline.json",
+      "originalPreparationSha256": "6056c5c19e711a2e1810a5179806b0674d16bb953042636ecb2b4e8ef1c29c21",
+      "currentClientBaselineSha256": "6056c5c19e711a2e1810a5179806b0674d16bb953042636ecb2b4e8ef1c29c21",
+      "actualSha256": "6056c5c19e711a2e1810a5179806b0674d16bb953042636ecb2b4e8ef1c29c21",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/ashrafessa/.well-known/apple-app-site-association",
+      "originalPreparationSha256": "9d978179e09d41f2bc431be34350daad931bd3857943ca54183a8b0b8c4b81c4",
+      "currentClientBaselineSha256": "9d978179e09d41f2bc431be34350daad931bd3857943ca54183a8b0b8c4b81c4",
+      "actualSha256": "9d978179e09d41f2bc431be34350daad931bd3857943ca54183a8b0b8c4b81c4",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/ashrafessa/.well-known/assetlinks.json",
+      "originalPreparationSha256": "08b7a288147e6077fca8d97bcef84b035772fb83882d66f737d87192bd85ff57",
+      "currentClientBaselineSha256": "08b7a288147e6077fca8d97bcef84b035772fb83882d66f737d87192bd85ff57",
+      "actualSha256": "08b7a288147e6077fca8d97bcef84b035772fb83882d66f737d87192bd85ff57",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/ashrafessa/android-chrome-192x192.png",
+      "originalPreparationSha256": "55ee341bab892325c41af88e5713481fd7b56b32e47b56172fd98bea34354682",
+      "currentClientBaselineSha256": "55ee341bab892325c41af88e5713481fd7b56b32e47b56172fd98bea34354682",
+      "actualSha256": "55ee341bab892325c41af88e5713481fd7b56b32e47b56172fd98bea34354682",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/ashrafessa/android-chrome-512x512.png",
+      "originalPreparationSha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b",
+      "currentClientBaselineSha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b",
+      "actualSha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/ashrafessa/apple-touch-icon.png",
+      "originalPreparationSha256": "7019f391c502bd9dd0a4ea332d141b4bc078bcde3d3a5c9bc4ac010237412253",
+      "currentClientBaselineSha256": "7019f391c502bd9dd0a4ea332d141b4bc078bcde3d3a5c9bc4ac010237412253",
+      "actualSha256": "7019f391c502bd9dd0a4ea332d141b4bc078bcde3d3a5c9bc4ac010237412253",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/ashrafessa/favicon-16x16.png",
+      "originalPreparationSha256": "123091e779f964977ca5fc879ea7d712f7834a9d95f7d79afd3058d17243d0e3",
+      "currentClientBaselineSha256": "123091e779f964977ca5fc879ea7d712f7834a9d95f7d79afd3058d17243d0e3",
+      "actualSha256": "123091e779f964977ca5fc879ea7d712f7834a9d95f7d79afd3058d17243d0e3",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/ashrafessa/favicon-32x32.png",
+      "originalPreparationSha256": "f6d903577d671c805fc8c045ba7083cef5c5e09dea2df7e8ad11e05be10d8148",
+      "currentClientBaselineSha256": "f6d903577d671c805fc8c045ba7083cef5c5e09dea2df7e8ad11e05be10d8148",
+      "actualSha256": "f6d903577d671c805fc8c045ba7083cef5c5e09dea2df7e8ad11e05be10d8148",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/ashrafessa/favicon.ico",
+      "originalPreparationSha256": "7e35d911c2bcdd6d091cd716f51b630e17fde315196431d0964bac2969943ce4",
+      "currentClientBaselineSha256": "7e35d911c2bcdd6d091cd716f51b630e17fde315196431d0964bac2969943ce4",
+      "actualSha256": "7e35d911c2bcdd6d091cd716f51b630e17fde315196431d0964bac2969943ce4",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/ashrafessa/favicon.png",
+      "originalPreparationSha256": "f6d903577d671c805fc8c045ba7083cef5c5e09dea2df7e8ad11e05be10d8148",
+      "currentClientBaselineSha256": "f6d903577d671c805fc8c045ba7083cef5c5e09dea2df7e8ad11e05be10d8148",
+      "actualSha256": "f6d903577d671c805fc8c045ba7083cef5c5e09dea2df7e8ad11e05be10d8148",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/ashrafessa/firm-logo.png",
+      "originalPreparationSha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b",
+      "currentClientBaselineSha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b",
+      "actualSha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/ashrafessa/index.html",
+      "originalPreparationSha256": "73fe4c0a30727f62197cc359bb82b55376de25e865b23ffb865a023502be0c1b",
+      "currentClientBaselineSha256": "73fe4c0a30727f62197cc359bb82b55376de25e865b23ffb865a023502be0c1b",
+      "actualSha256": "73fe4c0a30727f62197cc359bb82b55376de25e865b23ffb865a023502be0c1b",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/ashrafessa/logo192.png",
+      "originalPreparationSha256": "55ee341bab892325c41af88e5713481fd7b56b32e47b56172fd98bea34354682",
+      "currentClientBaselineSha256": "55ee341bab892325c41af88e5713481fd7b56b32e47b56172fd98bea34354682",
+      "actualSha256": "55ee341bab892325c41af88e5713481fd7b56b32e47b56172fd98bea34354682",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/ashrafessa/logo512.png",
+      "originalPreparationSha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b",
+      "currentClientBaselineSha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b",
+      "actualSha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/ashrafessa/logos/logo.png",
+      "originalPreparationSha256": "0c25449fe261ed58a0e8edf5427b1f7dfa2b140e25469532648136369a318d20",
+      "currentClientBaselineSha256": "0c25449fe261ed58a0e8edf5427b1f7dfa2b140e25469532648136369a318d20",
+      "actualSha256": "0c25449fe261ed58a0e8edf5427b1f7dfa2b140e25469532648136369a318d20",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/ashrafessa/logos/logo2.png",
+      "originalPreparationSha256": "27a4633e7842f106f37f3e0b0cfffb7a80593dd01fcea4bb9c3f9d5269548b2e",
+      "currentClientBaselineSha256": "27a4633e7842f106f37f3e0b0cfffb7a80593dd01fcea4bb9c3f9d5269548b2e",
+      "actualSha256": "27a4633e7842f106f37f3e0b0cfffb7a80593dd01fcea4bb9c3f9d5269548b2e",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/ashrafessa/logos/logoLM.png",
+      "originalPreparationSha256": "069ea24b4d3a201a161cdf882e128d369f276c710687a08abc561af07bf8dec7",
+      "currentClientBaselineSha256": "069ea24b4d3a201a161cdf882e128d369f276c710687a08abc561af07bf8dec7",
+      "actualSha256": "069ea24b4d3a201a161cdf882e128d369f276c710687a08abc561af07bf8dec7",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/ashrafessa/logos/logoLMwhite.png",
+      "originalPreparationSha256": "8483bf94ec0c21d53409b7c9960e5269abdb079e330ec5c259fbef5cc73c7900",
+      "currentClientBaselineSha256": "8483bf94ec0c21d53409b7c9960e5269abdb079e330ec5c259fbef5cc73c7900",
+      "actualSha256": "8483bf94ec0c21d53409b7c9960e5269abdb079e330ec5c259fbef5cc73c7900",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/ashrafessa/manifest.json",
+      "originalPreparationSha256": "b8de8a18ad1d29a42658dbab96679ed992dd513e7b0b5069741c2cc283fe9d64",
+      "currentClientBaselineSha256": "b8de8a18ad1d29a42658dbab96679ed992dd513e7b0b5069741c2cc283fe9d64",
+      "actualSha256": "b8de8a18ad1d29a42658dbab96679ed992dd513e7b0b5069741c2cc283fe9d64",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/idm/apple-touch-icon.png",
+      "originalPreparationSha256": "b363c4f7e3deb5cb91f3e87434af4cde279fd0570cca47e854653d5c11ca3e95",
+      "currentClientBaselineSha256": "b363c4f7e3deb5cb91f3e87434af4cde279fd0570cca47e854653d5c11ca3e95",
+      "actualSha256": "b363c4f7e3deb5cb91f3e87434af4cde279fd0570cca47e854653d5c11ca3e95",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/idm/favicon-16x16.png",
+      "originalPreparationSha256": "dd73a6da82033d7f516776713b67bf67b57407b2405908d1f9a649e6fe837fe1",
+      "currentClientBaselineSha256": "dd73a6da82033d7f516776713b67bf67b57407b2405908d1f9a649e6fe837fe1",
+      "actualSha256": "dd73a6da82033d7f516776713b67bf67b57407b2405908d1f9a649e6fe837fe1",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/idm/favicon-32x32.png",
+      "originalPreparationSha256": "e22eb1948ae61b76aaa61ef720f98bc610ff130a348bc2585fd3f3b7b361944c",
+      "currentClientBaselineSha256": "e22eb1948ae61b76aaa61ef720f98bc610ff130a348bc2585fd3f3b7b361944c",
+      "actualSha256": "e22eb1948ae61b76aaa61ef720f98bc610ff130a348bc2585fd3f3b7b361944c",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/idm/favicon.ico",
+      "originalPreparationSha256": "0863a016428a855ca5da0bd21d0d1dc92de07a05235bc1f0bf8e428e725197ea",
+      "currentClientBaselineSha256": "0863a016428a855ca5da0bd21d0d1dc92de07a05235bc1f0bf8e428e725197ea",
+      "actualSha256": "0863a016428a855ca5da0bd21d0d1dc92de07a05235bc1f0bf8e428e725197ea",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/idm/favicon.png",
+      "originalPreparationSha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5",
+      "currentClientBaselineSha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5",
+      "actualSha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/idm/firm-logo.png",
+      "originalPreparationSha256": "808748756abf4482fccd7af896989ab7ae66ee3ea440784ecd63ec4416f125fd",
+      "currentClientBaselineSha256": "808748756abf4482fccd7af896989ab7ae66ee3ea440784ecd63ec4416f125fd",
+      "actualSha256": "808748756abf4482fccd7af896989ab7ae66ee3ea440784ecd63ec4416f125fd",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/idm/firm-logo.svg",
+      "originalPreparationSha256": "797f4987981c87d9d600e6993fd1ea7edb030f866cd76d7d66768349fa2eb539",
+      "currentClientBaselineSha256": "797f4987981c87d9d600e6993fd1ea7edb030f866cd76d7d66768349fa2eb539",
+      "actualSha256": "797f4987981c87d9d600e6993fd1ea7edb030f866cd76d7d66768349fa2eb539",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/idm/index.html",
+      "originalPreparationSha256": "029104c7b39c93f52d369d40b1a2c8dd998e581637c6e0d07907d796a4271d93",
+      "currentClientBaselineSha256": "029104c7b39c93f52d369d40b1a2c8dd998e581637c6e0d07907d796a4271d93",
+      "actualSha256": "029104c7b39c93f52d369d40b1a2c8dd998e581637c6e0d07907d796a4271d93",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/idm/logo192.png",
+      "originalPreparationSha256": "0ddee67f7e4dc520d2a4e7e95ad39bc7587fd166b397d05dfba2b3aea4174943",
+      "currentClientBaselineSha256": "0ddee67f7e4dc520d2a4e7e95ad39bc7587fd166b397d05dfba2b3aea4174943",
+      "actualSha256": "0ddee67f7e4dc520d2a4e7e95ad39bc7587fd166b397d05dfba2b3aea4174943",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/idm/logo512.png",
+      "originalPreparationSha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5",
+      "currentClientBaselineSha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5",
+      "actualSha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/idm/logos/logo.png",
+      "originalPreparationSha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5",
+      "currentClientBaselineSha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5",
+      "actualSha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/idm/logos/logo2.png",
+      "originalPreparationSha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5",
+      "currentClientBaselineSha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5",
+      "actualSha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/idm/logos/logoLM.png",
+      "originalPreparationSha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5",
+      "currentClientBaselineSha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5",
+      "actualSha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/idm/logos/logoLMwhite.png",
+      "originalPreparationSha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5",
+      "currentClientBaselineSha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5",
+      "actualSha256": "86a76a86f2ef623cd68d76b24ec3f28e791719e5d887ad55dcb83c04c9345aa5",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/idm/manifest.json",
+      "originalPreparationSha256": "69acb23ba720415a428ef04ccd686281643bbdfff2235fcd85bbcbf30001ffaa",
+      "currentClientBaselineSha256": "69acb23ba720415a428ef04ccd686281643bbdfff2235fcd85bbcbf30001ffaa",
+      "actualSha256": "69acb23ba720415a428ef04ccd686281643bbdfff2235fcd85bbcbf30001ffaa",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/lawyer/android-chrome-192x192.png",
+      "originalPreparationSha256": "1b59c135435791372b56b7431338e63519bb05c430f3fd730a35b172979af860",
+      "currentClientBaselineSha256": "1b59c135435791372b56b7431338e63519bb05c430f3fd730a35b172979af860",
+      "actualSha256": "1b59c135435791372b56b7431338e63519bb05c430f3fd730a35b172979af860",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/lawyer/android-chrome-512x512.png",
+      "originalPreparationSha256": "8eafabab4a66a47fc9ebc05fdf6346f82252f29b8a048bd3eb89fc1fa4cc26fc",
+      "currentClientBaselineSha256": "8eafabab4a66a47fc9ebc05fdf6346f82252f29b8a048bd3eb89fc1fa4cc26fc",
+      "actualSha256": "8eafabab4a66a47fc9ebc05fdf6346f82252f29b8a048bd3eb89fc1fa4cc26fc",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/lawyer/apple-touch-icon.png",
+      "originalPreparationSha256": "9ea39ce0ea7c51a677bac8228ba5d05ed6192395a7f7406af44bb67180819af9",
+      "currentClientBaselineSha256": "9ea39ce0ea7c51a677bac8228ba5d05ed6192395a7f7406af44bb67180819af9",
+      "actualSha256": "9ea39ce0ea7c51a677bac8228ba5d05ed6192395a7f7406af44bb67180819af9",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/lawyer/favicon-16x16.png",
+      "originalPreparationSha256": "5127ba1ffd001770bb9bef6c05af604d8f4c8b7540bc36c8e0acfe9020f221ef",
+      "currentClientBaselineSha256": "5127ba1ffd001770bb9bef6c05af604d8f4c8b7540bc36c8e0acfe9020f221ef",
+      "actualSha256": "5127ba1ffd001770bb9bef6c05af604d8f4c8b7540bc36c8e0acfe9020f221ef",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/lawyer/favicon-32x32.png",
+      "originalPreparationSha256": "73af27353d9e3f408895df43b791e7f3ab04be80b7fb5ec697824798942641c2",
+      "currentClientBaselineSha256": "73af27353d9e3f408895df43b791e7f3ab04be80b7fb5ec697824798942641c2",
+      "actualSha256": "73af27353d9e3f408895df43b791e7f3ab04be80b7fb5ec697824798942641c2",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/lawyer/favicon.ico",
+      "originalPreparationSha256": "242abf57d50895694c8dc4050fdc87e91566cf82aace2d9594a944e3044ced3a",
+      "currentClientBaselineSha256": "242abf57d50895694c8dc4050fdc87e91566cf82aace2d9594a944e3044ced3a",
+      "actualSha256": "242abf57d50895694c8dc4050fdc87e91566cf82aace2d9594a944e3044ced3a",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/lawyer/favicon.png",
+      "originalPreparationSha256": "73af27353d9e3f408895df43b791e7f3ab04be80b7fb5ec697824798942641c2",
+      "currentClientBaselineSha256": "73af27353d9e3f408895df43b791e7f3ab04be80b7fb5ec697824798942641c2",
+      "actualSha256": "73af27353d9e3f408895df43b791e7f3ab04be80b7fb5ec697824798942641c2",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/lawyer/firm-logo.png",
+      "originalPreparationSha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e",
+      "currentClientBaselineSha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e",
+      "actualSha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/lawyer/index.html",
+      "originalPreparationSha256": "82b51f22a16d02686884e33d2b51f89cbe25d7b0a9e2bd11e88e144e14adc7ba",
+      "currentClientBaselineSha256": "82b51f22a16d02686884e33d2b51f89cbe25d7b0a9e2bd11e88e144e14adc7ba",
+      "actualSha256": "82b51f22a16d02686884e33d2b51f89cbe25d7b0a9e2bd11e88e144e14adc7ba",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/lawyer/logo192.png",
+      "originalPreparationSha256": "1b59c135435791372b56b7431338e63519bb05c430f3fd730a35b172979af860",
+      "currentClientBaselineSha256": "1b59c135435791372b56b7431338e63519bb05c430f3fd730a35b172979af860",
+      "actualSha256": "1b59c135435791372b56b7431338e63519bb05c430f3fd730a35b172979af860",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/lawyer/logo512.png",
+      "originalPreparationSha256": "8eafabab4a66a47fc9ebc05fdf6346f82252f29b8a048bd3eb89fc1fa4cc26fc",
+      "currentClientBaselineSha256": "8eafabab4a66a47fc9ebc05fdf6346f82252f29b8a048bd3eb89fc1fa4cc26fc",
+      "actualSha256": "8eafabab4a66a47fc9ebc05fdf6346f82252f29b8a048bd3eb89fc1fa4cc26fc",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/lawyer/logos/logo.png",
+      "originalPreparationSha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e",
+      "currentClientBaselineSha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e",
+      "actualSha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/lawyer/logos/logo2.png",
+      "originalPreparationSha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e",
+      "currentClientBaselineSha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e",
+      "actualSha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/lawyer/logos/logoLM.png",
+      "originalPreparationSha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e",
+      "currentClientBaselineSha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e",
+      "actualSha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/lawyer/logos/logoLMwhite.png",
+      "originalPreparationSha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e",
+      "currentClientBaselineSha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e",
+      "actualSha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/lawyer/melamedia-mark.png",
+      "originalPreparationSha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e",
+      "currentClientBaselineSha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e",
+      "actualSha256": "c94be4363668d5dec9447621f75e0feccaa3fc051b0d83cca27f32b81ff3eb9e",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedia/.well-known/apple-app-site-association",
+      "originalPreparationSha256": "15cb685f00dee65f8edffc1424e806ed3264abfd2195996d8180fffe1f966e04",
+      "currentClientBaselineSha256": "15cb685f00dee65f8edffc1424e806ed3264abfd2195996d8180fffe1f966e04",
+      "actualSha256": "15cb685f00dee65f8edffc1424e806ed3264abfd2195996d8180fffe1f966e04",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedia/android-chrome-192x192.png",
+      "originalPreparationSha256": "a41470a71c06de90e023b8a980350c91ec66cf0f33ffbb0d53d4c0a96cba88b0",
+      "currentClientBaselineSha256": "a41470a71c06de90e023b8a980350c91ec66cf0f33ffbb0d53d4c0a96cba88b0",
+      "actualSha256": "a41470a71c06de90e023b8a980350c91ec66cf0f33ffbb0d53d4c0a96cba88b0",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedia/android-chrome-512x512.png",
+      "originalPreparationSha256": "fd501809e8aa48e1283dbec82a5f0f949898b01193ee76816c035e577f31e8a8",
+      "currentClientBaselineSha256": "fd501809e8aa48e1283dbec82a5f0f949898b01193ee76816c035e577f31e8a8",
+      "actualSha256": "fd501809e8aa48e1283dbec82a5f0f949898b01193ee76816c035e577f31e8a8",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedia/apple-touch-icon.png",
+      "originalPreparationSha256": "3750b65efbc52e9552a888c05c614daf13fb015289ca6d1778060652b5a17a2b",
+      "currentClientBaselineSha256": "3750b65efbc52e9552a888c05c614daf13fb015289ca6d1778060652b5a17a2b",
+      "actualSha256": "3750b65efbc52e9552a888c05c614daf13fb015289ca6d1778060652b5a17a2b",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedia/favicon-16x16.png",
+      "originalPreparationSha256": "b2add3fa98e47823865ceea0ae31ecbcdad4473d16e18c95603bd1edb5468430",
+      "currentClientBaselineSha256": "b2add3fa98e47823865ceea0ae31ecbcdad4473d16e18c95603bd1edb5468430",
+      "actualSha256": "b2add3fa98e47823865ceea0ae31ecbcdad4473d16e18c95603bd1edb5468430",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedia/favicon-32x32.png",
+      "originalPreparationSha256": "4da8d1a591b040c7745fbb9cad192b0bd1f6e87f91a8ec27918ee158f50f6114",
+      "currentClientBaselineSha256": "4da8d1a591b040c7745fbb9cad192b0bd1f6e87f91a8ec27918ee158f50f6114",
+      "actualSha256": "4da8d1a591b040c7745fbb9cad192b0bd1f6e87f91a8ec27918ee158f50f6114",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedia/favicon.ico",
+      "originalPreparationSha256": "ad1875090d981632d5eb8f1bf6af89c0c946d645a58e376b636e4dd74c37b40a",
+      "currentClientBaselineSha256": "ad1875090d981632d5eb8f1bf6af89c0c946d645a58e376b636e4dd74c37b40a",
+      "actualSha256": "ad1875090d981632d5eb8f1bf6af89c0c946d645a58e376b636e4dd74c37b40a",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedia/favicon.png",
+      "originalPreparationSha256": "fd501809e8aa48e1283dbec82a5f0f949898b01193ee76816c035e577f31e8a8",
+      "currentClientBaselineSha256": "fd501809e8aa48e1283dbec82a5f0f949898b01193ee76816c035e577f31e8a8",
+      "actualSha256": "fd501809e8aa48e1283dbec82a5f0f949898b01193ee76816c035e577f31e8a8",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedia/firm-logo.png",
+      "originalPreparationSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "currentClientBaselineSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "actualSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedia/index.html",
+      "originalPreparationSha256": "82b51f22a16d02686884e33d2b51f89cbe25d7b0a9e2bd11e88e144e14adc7ba",
+      "currentClientBaselineSha256": "82b51f22a16d02686884e33d2b51f89cbe25d7b0a9e2bd11e88e144e14adc7ba",
+      "actualSha256": "82b51f22a16d02686884e33d2b51f89cbe25d7b0a9e2bd11e88e144e14adc7ba",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedia/logo192.png",
+      "originalPreparationSha256": "a41470a71c06de90e023b8a980350c91ec66cf0f33ffbb0d53d4c0a96cba88b0",
+      "currentClientBaselineSha256": "a41470a71c06de90e023b8a980350c91ec66cf0f33ffbb0d53d4c0a96cba88b0",
+      "actualSha256": "a41470a71c06de90e023b8a980350c91ec66cf0f33ffbb0d53d4c0a96cba88b0",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedia/logo512.png",
+      "originalPreparationSha256": "fd501809e8aa48e1283dbec82a5f0f949898b01193ee76816c035e577f31e8a8",
+      "currentClientBaselineSha256": "fd501809e8aa48e1283dbec82a5f0f949898b01193ee76816c035e577f31e8a8",
+      "actualSha256": "fd501809e8aa48e1283dbec82a5f0f949898b01193ee76816c035e577f31e8a8",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedia/logos/logo.png",
+      "originalPreparationSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "currentClientBaselineSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "actualSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedia/logos/logo2.png",
+      "originalPreparationSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "currentClientBaselineSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "actualSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedia/logos/logoLM.png",
+      "originalPreparationSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "currentClientBaselineSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "actualSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedia/logos/logoLMwhite.png",
+      "originalPreparationSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "currentClientBaselineSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "actualSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedia/manifest.json",
+      "originalPreparationSha256": "802a02ac9eca1489b2b43537612acb87b28e454b0953321cae32a3126f8f2c30",
+      "currentClientBaselineSha256": "802a02ac9eca1489b2b43537612acb87b28e454b0953321cae32a3126f8f2c30",
+      "actualSha256": "802a02ac9eca1489b2b43537612acb87b28e454b0953321cae32a3126f8f2c30",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedia/site.webmanifest",
+      "originalPreparationSha256": "fc28f60711838f69d35ddd823290defa64ce021b026bd3193327e29733ad7790",
+      "currentClientBaselineSha256": "fc28f60711838f69d35ddd823290defa64ce021b026bd3193327e29733ad7790",
+      "actualSha256": "fc28f60711838f69d35ddd823290defa64ce021b026bd3193327e29733ad7790",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedlaw/.well-known/apple-app-site-association",
+      "originalPreparationSha256": "31d927ace4249e5698dc9f456daeeb1434c6c575c6e0d0e6143509582bdc8a4d",
+      "currentClientBaselineSha256": "31d927ace4249e5698dc9f456daeeb1434c6c575c6e0d0e6143509582bdc8a4d",
+      "actualSha256": "31d927ace4249e5698dc9f456daeeb1434c6c575c6e0d0e6143509582bdc8a4d",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedlaw/.well-known/assetlinks.json",
+      "originalPreparationSha256": "8dd1174757afe081c042ecc05af82a2d9309cce863498158ca96765be19d748f",
+      "currentClientBaselineSha256": "8dd1174757afe081c042ecc05af82a2d9309cce863498158ca96765be19d748f",
+      "actualSha256": "8dd1174757afe081c042ecc05af82a2d9309cce863498158ca96765be19d748f",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedlaw/android-chrome-192x192.png",
+      "originalPreparationSha256": "57c64f9486a9ecd4837eac4855cf79c780ea698b5d286a14164cb79aeb85fe71",
+      "currentClientBaselineSha256": "57c64f9486a9ecd4837eac4855cf79c780ea698b5d286a14164cb79aeb85fe71",
+      "actualSha256": "57c64f9486a9ecd4837eac4855cf79c780ea698b5d286a14164cb79aeb85fe71",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedlaw/android-chrome-512x512.png",
+      "originalPreparationSha256": "1fa5005cdee840cfc3efebcfef300507b5b467536c6cc6fc1e0ef6505ba52db1",
+      "currentClientBaselineSha256": "1fa5005cdee840cfc3efebcfef300507b5b467536c6cc6fc1e0ef6505ba52db1",
+      "actualSha256": "1fa5005cdee840cfc3efebcfef300507b5b467536c6cc6fc1e0ef6505ba52db1",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedlaw/apple-touch-icon.png",
+      "originalPreparationSha256": "1fb0daa9e2a26dd4342ac9ae02b14afab850c55d13bf59bc87241e08c18f0045",
+      "currentClientBaselineSha256": "1fb0daa9e2a26dd4342ac9ae02b14afab850c55d13bf59bc87241e08c18f0045",
+      "actualSha256": "1fb0daa9e2a26dd4342ac9ae02b14afab850c55d13bf59bc87241e08c18f0045",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedlaw/favicon-16x16.png",
+      "originalPreparationSha256": "c4aac9323e6c3647b2aee798ef53a95fecfe6c05c15bf382e45ca0dd5b80b20c",
+      "currentClientBaselineSha256": "c4aac9323e6c3647b2aee798ef53a95fecfe6c05c15bf382e45ca0dd5b80b20c",
+      "actualSha256": "c4aac9323e6c3647b2aee798ef53a95fecfe6c05c15bf382e45ca0dd5b80b20c",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedlaw/favicon-32x32.png",
+      "originalPreparationSha256": "344876a46a433c4d1a9ebfdf87c512beebf5f651f6761f80d91ffa1f7172e6eb",
+      "currentClientBaselineSha256": "344876a46a433c4d1a9ebfdf87c512beebf5f651f6761f80d91ffa1f7172e6eb",
+      "actualSha256": "344876a46a433c4d1a9ebfdf87c512beebf5f651f6761f80d91ffa1f7172e6eb",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedlaw/favicon.ico",
+      "originalPreparationSha256": "04093669c1c03dae2c062a66a3dd5c7b83726d3c5cc2bbca196571c13b2f763c",
+      "currentClientBaselineSha256": "04093669c1c03dae2c062a66a3dd5c7b83726d3c5cc2bbca196571c13b2f763c",
+      "actualSha256": "04093669c1c03dae2c062a66a3dd5c7b83726d3c5cc2bbca196571c13b2f763c",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedlaw/favicon.png",
+      "originalPreparationSha256": "344876a46a433c4d1a9ebfdf87c512beebf5f651f6761f80d91ffa1f7172e6eb",
+      "currentClientBaselineSha256": "344876a46a433c4d1a9ebfdf87c512beebf5f651f6761f80d91ffa1f7172e6eb",
+      "actualSha256": "344876a46a433c4d1a9ebfdf87c512beebf5f651f6761f80d91ffa1f7172e6eb",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedlaw/firm-logo.png",
+      "originalPreparationSha256": "1fa5005cdee840cfc3efebcfef300507b5b467536c6cc6fc1e0ef6505ba52db1",
+      "currentClientBaselineSha256": "1fa5005cdee840cfc3efebcfef300507b5b467536c6cc6fc1e0ef6505ba52db1",
+      "actualSha256": "1fa5005cdee840cfc3efebcfef300507b5b467536c6cc6fc1e0ef6505ba52db1",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedlaw/index.html",
+      "originalPreparationSha256": "1ca9d8118f16a82aa0669e3ed29464dc7b850d101fb11000d647dd63693bd2c5",
+      "currentClientBaselineSha256": "1ca9d8118f16a82aa0669e3ed29464dc7b850d101fb11000d647dd63693bd2c5",
+      "actualSha256": "1ca9d8118f16a82aa0669e3ed29464dc7b850d101fb11000d647dd63693bd2c5",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedlaw/logo192.png",
+      "originalPreparationSha256": "57c64f9486a9ecd4837eac4855cf79c780ea698b5d286a14164cb79aeb85fe71",
+      "currentClientBaselineSha256": "57c64f9486a9ecd4837eac4855cf79c780ea698b5d286a14164cb79aeb85fe71",
+      "actualSha256": "57c64f9486a9ecd4837eac4855cf79c780ea698b5d286a14164cb79aeb85fe71",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedlaw/logo512.png",
+      "originalPreparationSha256": "1fa5005cdee840cfc3efebcfef300507b5b467536c6cc6fc1e0ef6505ba52db1",
+      "currentClientBaselineSha256": "1fa5005cdee840cfc3efebcfef300507b5b467536c6cc6fc1e0ef6505ba52db1",
+      "actualSha256": "1fa5005cdee840cfc3efebcfef300507b5b467536c6cc6fc1e0ef6505ba52db1",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedlaw/logos/logo.png",
+      "originalPreparationSha256": "8899e54b782e4a68e718c40fd9ae1bf0865adc0bf76fb8e570acf12b2719074c",
+      "currentClientBaselineSha256": "8899e54b782e4a68e718c40fd9ae1bf0865adc0bf76fb8e570acf12b2719074c",
+      "actualSha256": "8899e54b782e4a68e718c40fd9ae1bf0865adc0bf76fb8e570acf12b2719074c",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedlaw/logos/logo2.png",
+      "originalPreparationSha256": "fca6833f1e5ebc26883ca69fe4168e6180e5c7198b80e4fabe1c66926387a705",
+      "currentClientBaselineSha256": "fca6833f1e5ebc26883ca69fe4168e6180e5c7198b80e4fabe1c66926387a705",
+      "actualSha256": "fca6833f1e5ebc26883ca69fe4168e6180e5c7198b80e4fabe1c66926387a705",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedlaw/logos/logoLM.png",
+      "originalPreparationSha256": "eed6152e5cdb7e12a4e2e02aa50eca8c59a78f5ea4b200f945a9c43ca48d9ea0",
+      "currentClientBaselineSha256": "eed6152e5cdb7e12a4e2e02aa50eca8c59a78f5ea4b200f945a9c43ca48d9ea0",
+      "actualSha256": "eed6152e5cdb7e12a4e2e02aa50eca8c59a78f5ea4b200f945a9c43ca48d9ea0",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedlaw/logos/logoLMwhite.png",
+      "originalPreparationSha256": "ad6d8fb204b5611af660ee8e75fe64ac42dc37ed5c7d1adbe556a6a41cfe0b56",
+      "currentClientBaselineSha256": "ad6d8fb204b5611af660ee8e75fe64ac42dc37ed5c7d1adbe556a6a41cfe0b56",
+      "actualSha256": "ad6d8fb204b5611af660ee8e75fe64ac42dc37ed5c7d1adbe556a6a41cfe0b56",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/melamedlaw/manifest.json",
+      "originalPreparationSha256": "7bc073853901651f74a20c4b47cbe5c207b1dea3536311b0baff8b0a8dd746f1",
+      "currentClientBaselineSha256": "7bc073853901651f74a20c4b47cbe5c207b1dea3536311b0baff8b0a8dd746f1",
+      "actualSha256": "7bc073853901651f74a20c4b47cbe5c207b1dea3536311b0baff8b0a8dd746f1",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/morlevy/.well-known/apple-app-site-association",
+      "originalPreparationSha256": "dfd7b08f1fc13682000e3429c1f9cee01e10caaab64cd7130705b335f1edc1e7",
+      "currentClientBaselineSha256": "dfd7b08f1fc13682000e3429c1f9cee01e10caaab64cd7130705b335f1edc1e7",
+      "actualSha256": "dfd7b08f1fc13682000e3429c1f9cee01e10caaab64cd7130705b335f1edc1e7",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/morlevy/.well-known/assetlinks.json",
+      "originalPreparationSha256": "27b0fb377ab283c2e6ab0b64abb4edd45e5e4d0647c9d78a07e43093f072ed88",
+      "currentClientBaselineSha256": "27b0fb377ab283c2e6ab0b64abb4edd45e5e4d0647c9d78a07e43093f072ed88",
+      "actualSha256": "27b0fb377ab283c2e6ab0b64abb4edd45e5e4d0647c9d78a07e43093f072ed88",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/morlevy/android-chrome-192x192.png",
+      "originalPreparationSha256": "ab5434f9efbb315eb1fda80982959675366f314ab59d98fc72964355c8c14fcb",
+      "currentClientBaselineSha256": "ab5434f9efbb315eb1fda80982959675366f314ab59d98fc72964355c8c14fcb",
+      "actualSha256": "ab5434f9efbb315eb1fda80982959675366f314ab59d98fc72964355c8c14fcb",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/morlevy/android-chrome-512x512.png",
+      "originalPreparationSha256": "dd63a85b6e9997ac65c645442b371efaeafb1b0c244905dbd51c9d3e48b6d177",
+      "currentClientBaselineSha256": "dd63a85b6e9997ac65c645442b371efaeafb1b0c244905dbd51c9d3e48b6d177",
+      "actualSha256": "dd63a85b6e9997ac65c645442b371efaeafb1b0c244905dbd51c9d3e48b6d177",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/morlevy/apple-touch-icon.png",
+      "originalPreparationSha256": "e79ee8588c885f201ab5ac71a4281c2f213967aa704b7632b2a36494b648ae84",
+      "currentClientBaselineSha256": "e79ee8588c885f201ab5ac71a4281c2f213967aa704b7632b2a36494b648ae84",
+      "actualSha256": "e79ee8588c885f201ab5ac71a4281c2f213967aa704b7632b2a36494b648ae84",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/morlevy/favicon-16x16.png",
+      "originalPreparationSha256": "4e6ea9eed8be5d3d859006c16e532424627687f6f9e1ecd30efaf3f63aaa5b18",
+      "currentClientBaselineSha256": "4e6ea9eed8be5d3d859006c16e532424627687f6f9e1ecd30efaf3f63aaa5b18",
+      "actualSha256": "4e6ea9eed8be5d3d859006c16e532424627687f6f9e1ecd30efaf3f63aaa5b18",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/morlevy/favicon-32x32.png",
+      "originalPreparationSha256": "26cab43d59c8e1a00a92c33c49b639af2e9c8efc961e61919d9f72a085da6797",
+      "currentClientBaselineSha256": "26cab43d59c8e1a00a92c33c49b639af2e9c8efc961e61919d9f72a085da6797",
+      "actualSha256": "26cab43d59c8e1a00a92c33c49b639af2e9c8efc961e61919d9f72a085da6797",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/morlevy/favicon.ico",
+      "originalPreparationSha256": "1235cc7128c44375efccddde4f88d4bb8282bc39c4fd1e9f2b0deea14a832c10",
+      "currentClientBaselineSha256": "1235cc7128c44375efccddde4f88d4bb8282bc39c4fd1e9f2b0deea14a832c10",
+      "actualSha256": "1235cc7128c44375efccddde4f88d4bb8282bc39c4fd1e9f2b0deea14a832c10",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/morlevy/favicon.png",
+      "originalPreparationSha256": "26cab43d59c8e1a00a92c33c49b639af2e9c8efc961e61919d9f72a085da6797",
+      "currentClientBaselineSha256": "26cab43d59c8e1a00a92c33c49b639af2e9c8efc961e61919d9f72a085da6797",
+      "actualSha256": "26cab43d59c8e1a00a92c33c49b639af2e9c8efc961e61919d9f72a085da6797",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/morlevy/firm-logo.png",
+      "originalPreparationSha256": "df1a1a097e081dcae854f1d9798985f31b0a94375c3b6dfa41aa9c172b6d3888",
+      "currentClientBaselineSha256": "df1a1a097e081dcae854f1d9798985f31b0a94375c3b6dfa41aa9c172b6d3888",
+      "actualSha256": "df1a1a097e081dcae854f1d9798985f31b0a94375c3b6dfa41aa9c172b6d3888",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/morlevy/index.html",
+      "originalPreparationSha256": "1bc333aa0a5830f16b6a3c5081be8b708ee519b1e4f457822c5bab3df79caaac",
+      "currentClientBaselineSha256": "1bc333aa0a5830f16b6a3c5081be8b708ee519b1e4f457822c5bab3df79caaac",
+      "actualSha256": "1bc333aa0a5830f16b6a3c5081be8b708ee519b1e4f457822c5bab3df79caaac",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/morlevy/logo192.png",
+      "originalPreparationSha256": "ab5434f9efbb315eb1fda80982959675366f314ab59d98fc72964355c8c14fcb",
+      "currentClientBaselineSha256": "ab5434f9efbb315eb1fda80982959675366f314ab59d98fc72964355c8c14fcb",
+      "actualSha256": "ab5434f9efbb315eb1fda80982959675366f314ab59d98fc72964355c8c14fcb",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/morlevy/logo512.png",
+      "originalPreparationSha256": "dd63a85b6e9997ac65c645442b371efaeafb1b0c244905dbd51c9d3e48b6d177",
+      "currentClientBaselineSha256": "dd63a85b6e9997ac65c645442b371efaeafb1b0c244905dbd51c9d3e48b6d177",
+      "actualSha256": "dd63a85b6e9997ac65c645442b371efaeafb1b0c244905dbd51c9d3e48b6d177",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/morlevy/logos/logo.png",
+      "originalPreparationSha256": "3a7213f1d68d266a7026f904e8635804972023162a3566a9cae06da870debb94",
+      "currentClientBaselineSha256": "3a7213f1d68d266a7026f904e8635804972023162a3566a9cae06da870debb94",
+      "actualSha256": "3a7213f1d68d266a7026f904e8635804972023162a3566a9cae06da870debb94",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/morlevy/logos/logo2.png",
+      "originalPreparationSha256": "df1a1a097e081dcae854f1d9798985f31b0a94375c3b6dfa41aa9c172b6d3888",
+      "currentClientBaselineSha256": "df1a1a097e081dcae854f1d9798985f31b0a94375c3b6dfa41aa9c172b6d3888",
+      "actualSha256": "df1a1a097e081dcae854f1d9798985f31b0a94375c3b6dfa41aa9c172b6d3888",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/morlevy/logos/logoLM.png",
+      "originalPreparationSha256": "5b2ecda9791a89448cafea69570ce40512a6e66fa85420472f91ae351e1cffc0",
+      "currentClientBaselineSha256": "5b2ecda9791a89448cafea69570ce40512a6e66fa85420472f91ae351e1cffc0",
+      "actualSha256": "5b2ecda9791a89448cafea69570ce40512a6e66fa85420472f91ae351e1cffc0",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/morlevy/logos/logoLMwhite.png",
+      "originalPreparationSha256": "0cb25a911a221e32f9bb812d9d854594a592bc8f2f3ae03c5e0c45296f6769d6",
+      "currentClientBaselineSha256": "0cb25a911a221e32f9bb812d9d854594a592bc8f2f3ae03c5e0c45296f6769d6",
+      "actualSha256": "0cb25a911a221e32f9bb812d9d854594a592bc8f2f3ae03c5e0c45296f6769d6",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/public/tenants/morlevy/manifest.json",
+      "originalPreparationSha256": "7859688dd9ab9c3464e12735a2fd2b57367794cb52e02991e3d8396c627aad30",
+      "currentClientBaselineSha256": "7859688dd9ab9c3464e12735a2fd2b57367794cb52e02991e3d8396c627aad30",
+      "actualSha256": "7859688dd9ab9c3464e12735a2fd2b57367794cb52e02991e3d8396c627aad30",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/src/assets/images/logos/logo.png",
+      "originalPreparationSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "currentClientBaselineSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "actualSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/src/assets/images/logos/logo2.png",
+      "originalPreparationSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "currentClientBaselineSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "actualSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/src/assets/images/logos/logoLM.png",
+      "originalPreparationSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "currentClientBaselineSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "actualSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/src/assets/images/logos/logoLMwhite.png",
+      "originalPreparationSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "currentClientBaselineSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "actualSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    },
+    {
+      "path": "frontend/src/components/specializedComponents/signFiles/pdfViewer/PdfViewer.js",
+      "originalPreparationSha256": "e7ed2617c99ea88ba814fea688ea939b2bdd2134d818bf1795336c5d5d86d68d",
+      "currentClientBaselineSha256": "e7ed2617c99ea88ba814fea688ea939b2bdd2134d818bf1795336c5d5d86d68d",
+      "actualSha256": "e7ed2617c99ea88ba814fea688ea939b2bdd2134d818bf1795336c5d5d86d68d",
+      "preserved": true,
+      "preparationBaselineAlsoUnchanged": true
+    }
+  ],
+  "preservedPathCount": 111,
+  "donorChangedPaths": [
+    {
+      "path": "backend/controllers/billingController.js",
+      "donorSha256": "bf5e5f42e194c0e7efb6433bb02724f3c63d715472bf59982ec5505daa65abfe",
+      "candidateSha256": "bf5e5f42e194c0e7efb6433bb02724f3c63d715472bf59982ec5505daa65abfe",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/controllers/publicSignupController.js",
+      "donorSha256": "3d1c0bc148d6dde079e17d84fe59b9cedca06cd678de4a6776a8f531acc6363c",
+      "candidateSha256": "3d1c0bc148d6dde079e17d84fe59b9cedca06cd678de4a6776a8f531acc6363c",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/lib/billing/billingEmails.js",
+      "donorSha256": "6faee5f89cdda2ca2f1f58b644fa88a111b11f1de417b53479eccc5fc62fc95c",
+      "candidateSha256": "6faee5f89cdda2ca2f1f58b644fa88a111b11f1de417b53479eccc5fc62fc95c",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/lib/billing/billingOperations.js",
+      "donorSha256": "50932a1b1e8d9e167cd6ae377d2cea21d45344f191a24dce59aca6cb74f3d10f",
+      "candidateSha256": "50932a1b1e8d9e167cd6ae377d2cea21d45344f191a24dce59aca6cb74f3d10f",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/lib/billing/firmBillingService.js",
+      "donorSha256": "b651a79ec829b48a92536e07499def3b85b1a2b2eb051de6851a6f741bc4cda0",
+      "candidateSha256": "b651a79ec829b48a92536e07499def3b85b1a2b2eb051de6851a6f741bc4cda0",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/lib/billing/selfServiceRenewal.js",
+      "donorSha256": "a9d90f0fd6bf6e9fb97cc690e5973540e2a0836721ee13d418a51e3579c20c09",
+      "candidateSha256": "a9d90f0fd6bf6e9fb97cc690e5973540e2a0836721ee13d418a51e3579c20c09",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/lib/billing/selfServiceUpgrade.js",
+      "donorSha256": "262e5b697091eaa5d3b53c0131872a49f4b2f2742c098268e1d42aea1643640e",
+      "candidateSha256": "262e5b697091eaa5d3b53c0131872a49f4b2f2742c098268e1d42aea1643640e",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/lib/payments/takbullClient.js",
+      "donorSha256": "9cd2d96d4644071de5baad44035a925d71085bad55f18ff30cff3a3aecb6afa6",
+      "candidateSha256": "9cd2d96d4644071de5baad44035a925d71085bad55f18ff30cff3a3aecb6afa6",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/lib/payments/verifySignupPayment.js",
+      "donorSha256": "65157d1c97ac6a7f7f87fd9b5c8891df9e65c3e21d77aae71c50ecbf43e90c90",
+      "candidateSha256": "65157d1c97ac6a7f7f87fd9b5c8891df9e65c3e21d77aae71c50ecbf43e90c90",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/lib/qaOutboundNoop.js",
+      "donorSha256": "e0f503dd43784fa85ea9379d3d9630c64872a668dc2461a613ce5b8dbd0efd00",
+      "candidateSha256": "e0f503dd43784fa85ea9379d3d9630c64872a668dc2461a613ce5b8dbd0efd00",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/lib/systemMessages/index.js",
+      "donorSha256": "d5f0708d46218b8fe238b059be9d37422e84a11c2f7f471186c74d004ee4763a",
+      "candidateSha256": "d5f0708d46218b8fe238b059be9d37422e84a11c2f7f471186c74d004ee4763a",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/lib/tenant/signupService.js",
+      "donorSha256": "fc3dc82a7ab944cc08b07dcc87689624d86ddceb579c2ca779c2f7fae2652d0b",
+      "candidateSha256": "fc3dc82a7ab944cc08b07dcc87689624d86ddceb579c2ca779c2f7fae2652d0b",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/lib/tenant/signupWelcomeEmail.js",
+      "donorSha256": "f6bcb71739c76a3b9a623e6a80308092c8f08d6cec9917418d58d6cd260052d4",
+      "candidateSha256": "f6bcb71739c76a3b9a623e6a80308092c8f08d6cec9917418d58d6cd260052d4",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/routes/paymentWebhookRoutes.js",
+      "donorSha256": "a514084f75dd3254fc14cad03a32c040ecbfd7a57e2509cd157293e635fd0477",
+      "candidateSha256": "a514084f75dd3254fc14cad03a32c040ecbfd7a57e2509cd157293e635fd0477",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/services/notifications/notificationOrchestrator.js",
+      "donorSha256": "6ff44e7c951907c273e7df4a981297880df6180cf799f8e1951cd9008ba8efcf",
+      "candidateSha256": "6ff44e7c951907c273e7df4a981297880df6180cf799f8e1951cd9008ba8efcf",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/services/signingV2/runtime.js",
+      "donorSha256": "7ae7721347313e46a7036c5bbfe098b516bebd862ba89913e50821f12e5a3d70",
+      "candidateSha256": "7ae7721347313e46a7036c5bbfe098b516bebd862ba89913e50821f12e5a3d70",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/tasks/billingRenewal/scheduler.js",
+      "donorSha256": "04df2a8951fc1144fda6fb5920a19f2edb0d9517aaf0e2971006c29d6474b3e1",
+      "candidateSha256": "04df2a8951fc1144fda6fb5920a19f2edb0d9517aaf0e2971006c29d6474b3e1",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/tests/billingOperationsGate.test.js",
+      "donorSha256": "8d3e2b4fe4d96b0f6ccad74a736b1d38dbe293e4ba453d2fa9d19c550d34f19c",
+      "candidateSha256": "8d3e2b4fe4d96b0f6ccad74a736b1d38dbe293e4ba453d2fa9d19c550d34f19c",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/tests/cardSetupDebtCollection.test.js",
+      "donorSha256": "d1086bc9b5e19d56ab23af2dcf71de5d61ec61a00f48cd0529c842c382888378",
+      "candidateSha256": "d1086bc9b5e19d56ab23af2dcf71de5d61ec61a00f48cd0529c842c382888378",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/tests/liveServerPreservation.test.js",
+      "donorSha256": "9be5e8da2dcc21d0c385d09e141c8e134ec6883caeff6c82a95c1a57a45b8e92",
+      "candidateSha256": "9be5e8da2dcc21d0c385d09e141c8e134ec6883caeff6c82a95c1a57a45b8e92",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/tests/qaOutboundNoop.recovery.test.js",
+      "donorSha256": "e11423a39b07038515285ca86d334191390ccdd923cecc83c385b23d3e17da18",
+      "candidateSha256": "e11423a39b07038515285ca86d334191390ccdd923cecc83c385b23d3e17da18",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/tests/savePackage.chargeOrder.test.js",
+      "donorSha256": "8111e4f4c7cdf7b17dba620b150f1ddeab110d2549034db8bbb2d853145c47b4",
+      "candidateSha256": "8111e4f4c7cdf7b17dba620b150f1ddeab110d2549034db8bbb2d853145c47b4",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/tests/savePackage.idempotency.test.js",
+      "donorSha256": "d8575a94aa487819cb0515c45bbaefcc792f7ea3ef1a7afc1439afc3b32f4ace",
+      "candidateSha256": "d8575a94aa487819cb0515c45bbaefcc792f7ea3ef1a7afc1439afc3b32f4ace",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/tests/selfServiceCardSetupCollection.test.js",
+      "donorSha256": "26ed71b456d5f1d206093f1e20a82b49320f37d7de379396c33e45c5cf499f41",
+      "candidateSha256": "26ed71b456d5f1d206093f1e20a82b49320f37d7de379396c33e45c5cf499f41",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/tests/signingV2.completedCopyNotification.test.js",
+      "donorSha256": "acdbb06ecbcacfa2dc816e0bee7013a43954cc41ca6a77fb0edd25753a8f0160",
+      "candidateSha256": "acdbb06ecbcacfa2dc816e0bee7013a43954cc41ca6a77fb0edd25753a8f0160",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/tests/signingV2.transportOutcomes.test.js",
+      "donorSha256": "cba592d33f04a94c345bb6ab6a56ad1060f7e4bfdd59ad878ce4b5e4166fc874",
+      "candidateSha256": "cba592d33f04a94c345bb6ab6a56ad1060f7e4bfdd59ad878ce4b5e4166fc874",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/tests/signupAvailability.test.js",
+      "donorSha256": "3afab789005fcbdf99d499b578ef54dec893242637ceae07a84123942f388d17",
+      "candidateSha256": "3afab789005fcbdf99d499b578ef54dec893242637ceae07a84123942f388d17",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/tests/signupLifecycle.officeIsolation.integration.test.js",
+      "donorSha256": "820acc67003577b9652e6d864b47d4aabb9d5e0986c4dbee3886b759ddbca079",
+      "candidateSha256": "820acc67003577b9652e6d864b47d4aabb9d5e0986c4dbee3886b759ddbca079",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/tests/systemMessageBillingSettlement.test.js",
+      "donorSha256": "e574d96cf9b1d2d4028485fe2bf0babad17a2e9304376cdb26b73138046e8c71",
+      "candidateSha256": "e574d96cf9b1d2d4028485fe2bf0babad17a2e9304376cdb26b73138046e8c71",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/tests/systemMessageSharedSettlement.test.js",
+      "donorSha256": "959cb0c476bc6c13f67b301dfdf577ba34ad6c7d75a81779ac6eee5a6ebfb44b",
+      "candidateSha256": "959cb0c476bc6c13f67b301dfdf577ba34ad6c7d75a81779ac6eee5a6ebfb44b",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/tests/takbullDocuments.test.js",
+      "donorSha256": "0940270e94d2b9b761abb28d346a429e65de64246b669e8c8a0cb3ba479b3a08",
+      "candidateSha256": "0940270e94d2b9b761abb28d346a429e65de64246b669e8c8a0cb3ba479b3a08",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "backend/utils/smooveEmailCampaignService.js",
+      "donorSha256": "914d7cc12e2ff11e7c433fd8911377ed059801679eacdece59f099ccab3101e2",
+      "candidateSha256": "914d7cc12e2ff11e7c433fd8911377ed059801679eacdece59f099ccab3101e2",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "frontend/src/api/billingApi.confirmCheckout.test.js",
+      "donorSha256": "5821537d6e93d740d077a510b3774bf508f70fe48660f419cd59058b02b216b0",
+      "candidateSha256": "5821537d6e93d740d077a510b3774bf508f70fe48660f419cd59058b02b216b0",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "frontend/src/api/billingApi.js",
+      "donorSha256": "22dc8579d0e6385ddf29cce631111d3cd3f9d34a94638ffbd78d1fdc7dca8b1a",
+      "candidateSha256": "22dc8579d0e6385ddf29cce631111d3cd3f9d34a94638ffbd78d1fdc7dca8b1a",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "frontend/src/components/billing/TakbullCheckoutDialog.js",
+      "donorSha256": "5f58fb9626f9f976874d5e0167031c3f09f67cd8ea36a00c5bbdbc76c60e78cc",
+      "candidateSha256": "5f58fb9626f9f976874d5e0167031c3f09f67cd8ea36a00c5bbdbc76c60e78cc",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "frontend/src/components/billing/TakbullCheckoutDialog.test.js",
+      "donorSha256": "80ac851e7ef0ca81976ff95d0777d54ef5776ba27fa6c2d036118546d145002e",
+      "candidateSha256": "80ac851e7ef0ca81976ff95d0777d54ef5776ba27fa6c2d036118546d145002e",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "frontend/src/i18n/locales/ar.json",
+      "donorSha256": "50c40b83edeb4284e217b60125943e2f979174c2680f8b6ba47f8e3c3fec26b5",
+      "candidateSha256": "27e7a16ffbb263243a7cdc7e55e60a4c32047f2ea6406e871afc965860329d68",
+      "exactBytesMatch": false,
+      "allBaseClientValuesPreserved": true,
+      "addedKey": "billing.paymentUnconfirmed",
+      "addedValueMatchesDonor": true
+    },
+    {
+      "path": "frontend/src/i18n/locales/en.json",
+      "donorSha256": "b5d84b608012fa2ba75d24410aba389f068cd265800f4c0e184f1749b2dac37c",
+      "candidateSha256": "9db4cafe65a9e4f9d1d4f70aa29e1bcd195d773ecd718d9a0926bd7c5b1c5ecb",
+      "exactBytesMatch": false,
+      "allBaseClientValuesPreserved": true,
+      "addedKey": "billing.paymentUnconfirmed",
+      "addedValueMatchesDonor": true
+    },
+    {
+      "path": "frontend/src/i18n/locales/he.json",
+      "donorSha256": "ed6f686c52a1c96baadfe3e9f9f4317401045a34a4ba56482b0baeccee6bea68",
+      "candidateSha256": "a07a69d128eec5a23735917af9918a329dcad7f8ee381c622f24f7cd3a69a27c",
+      "exactBytesMatch": false,
+      "allBaseClientValuesPreserved": true,
+      "addedKey": "billing.paymentUnconfirmed",
+      "addedValueMatchesDonor": true
+    },
+    {
+      "path": "frontend/src/screens/billingScreen/PlanUsageScreen.js",
+      "donorSha256": "0d0b555e7b0887875908c4a4e57a00705124df9dfd6eee4ec9740fb77c6bfdf0",
+      "candidateSha256": "0d0b555e7b0887875908c4a4e57a00705124df9dfd6eee4ec9740fb77c6bfdf0",
+      "exactBytesMatch": true
+    },
+    {
+      "path": "frontend/src/screens/billingScreen/PlansPricingScreen.js",
+      "donorSha256": "2db947f4ed9f429ced095db7a3ae89aeacaaf67ae08e2e1c6f541c5b40734302",
+      "candidateSha256": "2db947f4ed9f429ced095db7a3ae89aeacaaf67ae08e2e1c6f541c5b40734302",
+      "exactBytesMatch": true
+    }
+  ],
+  "donorChangedPathCount": 41,
+  "allDonorNonLocaleRuntimeTestFrontendPathsExact": true,
+  "allClientLocaleValuesPreserved": true,
+  "newSharedMainDelta": [
+    {
+      "path": "backend/lib/qaOutboundNoop.js",
+      "currentSharedMainSha256": "e0f503dd43784fa85ea9379d3d9630c64872a668dc2461a613ce5b8dbd0efd00",
+      "actualSha256": "e0f503dd43784fa85ea9379d3d9630c64872a668dc2461a613ce5b8dbd0efd00",
+      "matchesCurrentSharedMain": true,
+      "newQaBaselineSha256": "e0f503dd43784fa85ea9379d3d9630c64872a668dc2461a613ce5b8dbd0efd00",
+      "newQaBaselinePreserved": true
+    },
+    {
+      "path": "backend/services/notifications/notificationOrchestrator.js",
+      "currentSharedMainSha256": "6ff44e7c951907c273e7df4a981297880df6180cf799f8e1951cd9008ba8efcf",
+      "actualSha256": "6ff44e7c951907c273e7df4a981297880df6180cf799f8e1951cd9008ba8efcf",
+      "matchesCurrentSharedMain": true,
+      "newQaBaselineSha256": "6ff44e7c951907c273e7df4a981297880df6180cf799f8e1951cd9008ba8efcf",
+      "newQaBaselinePreserved": true
+    },
+    {
+      "path": "backend/services/signingV2/runtime.js",
+      "currentSharedMainSha256": "7ae7721347313e46a7036c5bbfe098b516bebd862ba89913e50821f12e5a3d70",
+      "actualSha256": "7ae7721347313e46a7036c5bbfe098b516bebd862ba89913e50821f12e5a3d70",
+      "matchesCurrentSharedMain": true,
+      "newQaBaselineSha256": "7ae7721347313e46a7036c5bbfe098b516bebd862ba89913e50821f12e5a3d70",
+      "newQaBaselinePreserved": true
+    },
+    {
+      "path": "backend/tests/qaOutboundNoop.recovery.test.js",
+      "currentSharedMainSha256": "e11423a39b07038515285ca86d334191390ccdd923cecc83c385b23d3e17da18",
+      "actualSha256": "e11423a39b07038515285ca86d334191390ccdd923cecc83c385b23d3e17da18",
+      "matchesCurrentSharedMain": true,
+      "newQaBaselineSha256": "e11423a39b07038515285ca86d334191390ccdd923cecc83c385b23d3e17da18",
+      "newQaBaselinePreserved": true
+    },
+    {
+      "path": "backend/tests/signingV2.completedCopyNotification.test.js",
+      "currentSharedMainSha256": "acdbb06ecbcacfa2dc816e0bee7013a43954cc41ca6a77fb0edd25753a8f0160",
+      "actualSha256": "acdbb06ecbcacfa2dc816e0bee7013a43954cc41ca6a77fb0edd25753a8f0160",
+      "matchesCurrentSharedMain": true,
+      "newQaBaselineSha256": "acdbb06ecbcacfa2dc816e0bee7013a43954cc41ca6a77fb0edd25753a8f0160",
+      "newQaBaselinePreserved": true
+    },
+    {
+      "path": "backend/tests/signingV2.transportOutcomes.test.js",
+      "currentSharedMainSha256": "cba592d33f04a94c345bb6ab6a56ad1060f7e4bfdd59ad878ce4b5e4166fc874",
+      "actualSha256": "cba592d33f04a94c345bb6ab6a56ad1060f7e4bfdd59ad878ce4b5e4166fc874",
+      "matchesCurrentSharedMain": true,
+      "newQaBaselineSha256": "cba592d33f04a94c345bb6ab6a56ad1060f7e4bfdd59ad878ce4b5e4166fc874",
+      "newQaBaselinePreserved": true
+    },
+    {
+      "path": "backend/utils/smooveEmailCampaignService.js",
+      "currentSharedMainSha256": "914d7cc12e2ff11e7c433fd8911377ed059801679eacdece59f099ccab3101e2",
+      "actualSha256": "914d7cc12e2ff11e7c433fd8911377ed059801679eacdece59f099ccab3101e2",
+      "matchesCurrentSharedMain": true,
+      "newQaBaselineSha256": "914d7cc12e2ff11e7c433fd8911377ed059801679eacdece59f099ccab3101e2",
+      "newQaBaselinePreserved": true
+    }
+  ],
+  "allCurrentSharedMainDeltaPathsMatch": true,
+  "noCustomerDataProviderOrLiveAccess": true,
+  "ownerWaivedPeriods": "Owner-waived periods were preserved; customer-specific evidence stays private outside Git."
+}

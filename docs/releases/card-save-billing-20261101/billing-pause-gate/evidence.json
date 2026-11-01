@@ -1,0 +1,45 @@
+{
+  "recordedAtUtc": "2026-11-01T22:30:19.117Z",
+  "baseAtQualification": "a5500556",
+  "headAtEvidence": "9dd9cb3607ee79434fcfb1aed5a40773e5713789",
+  "node": "v24.14.0",
+  "guard": "docs/releases/card-save-billing-20261101/comprehensive-qa/offline-network-guard.cjs",
+  "provider": "synthetic only",
+  "database": "in-memory PGlite only; real application PostgreSQL blocked",
+  "network": "guarded synthetic loopback only",
+  "runs": {
+    "billing-plus-gate.tap": {
+      "tests": 218,
+      "pass": 217,
+      "fail": 0,
+      "skipped": 1,
+      "sha256": "9758047d8deae7c6b531f629914fc3b985db7192a770cede541d098ba00b34b8"
+    },
+    "gate-final.tap": {
+      "tests": 14,
+      "pass": 14,
+      "fail": 0,
+      "skipped": 0,
+      "sha256": "5ad33ca22aaf33d25c37bdf61163c4430d80eb3132dec75d443123892e1e6cf8"
+    },
+    "common-boundaries.tap": {
+      "tests": 125,
+      "pass": 124,
+      "fail": 0,
+      "skipped": 1,
+      "sha256": "c3cc28c7e4070c989e869b368305819b05ba6d8a790442ef293a7c3c22c6fad3"
+    },
+    "outbox-recovery.tap": {
+      "tests": 33,
+      "pass": 33,
+      "fail": 0,
+      "skipped": 0,
+      "sha256": "67c3fc6f88f0d2bb4e5b7c98b481b651391b29559724fdcbd9909e96e867598d"
+    }
+  },
+  "sourceHashesAtEvidence": {
+    "backend/lib/billing/billingOperations.js": "50932a1b1e8d9e167cd6ae377d2cea21d45344f191a24dce59aca6cb74f3d10f",
+    "backend/tests/billingOperationsGate.test.js": "8d3e2b4fe4d96b0f6ccad74a736b1d38dbe293e4ba453d2fa9d19c550d34f19c"
+  },
+  "note": "Final gate-only run includes last scheduler/read-option assertions added after combined run started; runtime unchanged. Full immutable donor qualification follows in parent release work."
+}

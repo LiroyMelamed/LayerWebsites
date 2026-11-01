@@ -1,0 +1,203 @@
+{
+  "atUtc": "2026-11-01T22:57:00.402125+00:00",
+  "runtimeCandidate": "21d51f5766e5df0b0ac497fce4cc9d16bdd8bbf5",
+  "jsonFilesParsed": 34,
+  "validatedJsonFiles": [
+    "locale-preservation.json",
+    "dependencies.json",
+    "frontend-build-carry.json",
+    "source-guard.json",
+    "frontend-result.json",
+    "frontend.json",
+    "qualification-summary.json",
+    "preservation.json",
+    "transport.json",
+    "frontend-import-scope.json",
+    "backend.json",
+    "build.json",
+    "pinned-6fab/locale-preservation.json",
+    "pinned-6fab/dependencies.json",
+    "pinned-6fab/frontend-build-carry.json",
+    "pinned-6fab/source-guard.json",
+    "pinned-6fab/frontend-result.json",
+    "pinned-6fab/frontend.json",
+    "pinned-6fab/qualification-summary.json",
+    "pinned-6fab/preservation.json",
+    "pinned-6fab/transport.json",
+    "pinned-6fab/frontend-import-scope.json",
+    "pinned-6fab/backend.json",
+    "pinned-6fab/build.json",
+    "pinned-6fab/pinned-9dd/locale-preservation.json",
+    "pinned-6fab/pinned-9dd/dependencies.json",
+    "pinned-6fab/pinned-9dd/source-guard.json",
+    "pinned-6fab/pinned-9dd/preservation.json",
+    "pinned-6fab/pinned-9dd/backend.json",
+    "pinned-9dd/locale-preservation.json",
+    "pinned-9dd/dependencies.json",
+    "pinned-9dd/source-guard.json",
+    "pinned-9dd/preservation.json",
+    "pinned-9dd/backend.json"
+  ],
+  "relativeMarkdownLinksChecked": 39,
+  "relativeLinks": [
+    {
+      "document": "README.md",
+      "relativeTarget": "locale-preservation.json"
+    },
+    {
+      "document": "README.md",
+      "relativeTarget": "billing-and-gate.tap"
+    },
+    {
+      "document": "README.md",
+      "relativeTarget": "common.tap"
+    },
+    {
+      "document": "README.md",
+      "relativeTarget": "transport-and-outbox.tap"
+    },
+    {
+      "document": "README.md",
+      "relativeTarget": "frontend.json"
+    },
+    {
+      "document": "README.md",
+      "relativeTarget": "build.json"
+    },
+    {
+      "document": "README.md",
+      "relativeTarget": "preservation.json"
+    },
+    {
+      "document": "README.md",
+      "relativeTarget": "source-guard.json"
+    },
+    {
+      "document": "README.md",
+      "relativeTarget": "dependencies.json"
+    },
+    {
+      "document": "README.md",
+      "relativeTarget": "frontend-build-carry.json"
+    },
+    {
+      "document": "README.md",
+      "relativeTarget": "frontend-import-scope.json"
+    },
+    {
+      "document": "README.md",
+      "relativeTarget": "frontend.log"
+    },
+    {
+      "document": "README.md",
+      "relativeTarget": "build.log"
+    },
+    {
+      "document": "README.md",
+      "relativeTarget": "frontend-result.json"
+    },
+    {
+      "document": "README.md",
+      "relativeTarget": "pinned-9dd/backend.json"
+    },
+    {
+      "document": "README.md",
+      "relativeTarget": "pinned-6fab/README.md"
+    },
+    {
+      "document": "README.md",
+      "relativeTarget": "qualification-summary.json"
+    },
+    {
+      "document": "README.md",
+      "relativeTarget": "backend.json"
+    },
+    {
+      "document": "README.md",
+      "relativeTarget": "transport.json"
+    },
+    {
+      "document": "README.md",
+      "relativeTarget": "reproduce/qualify-final-client.py"
+    },
+    {
+      "document": "pinned-6fab/README.md",
+      "relativeTarget": "locale-preservation.json"
+    },
+    {
+      "document": "pinned-6fab/README.md",
+      "relativeTarget": "billing-and-gate.tap"
+    },
+    {
+      "document": "pinned-6fab/README.md",
+      "relativeTarget": "common.tap"
+    },
+    {
+      "document": "pinned-6fab/README.md",
+      "relativeTarget": "transport-and-outbox.tap"
+    },
+    {
+      "document": "pinned-6fab/README.md",
+      "relativeTarget": "frontend.json"
+    },
+    {
+      "document": "pinned-6fab/README.md",
+      "relativeTarget": "build.json"
+    },
+    {
+      "document": "pinned-6fab/README.md",
+      "relativeTarget": "preservation.json"
+    },
+    {
+      "document": "pinned-6fab/README.md",
+      "relativeTarget": "source-guard.json"
+    },
+    {
+      "document": "pinned-6fab/README.md",
+      "relativeTarget": "dependencies.json"
+    },
+    {
+      "document": "pinned-6fab/README.md",
+      "relativeTarget": "frontend-build-carry.json"
+    },
+    {
+      "document": "pinned-6fab/README.md",
+      "relativeTarget": "frontend-import-scope.json"
+    },
+    {
+      "document": "pinned-6fab/README.md",
+      "relativeTarget": "frontend.log"
+    },
+    {
+      "document": "pinned-6fab/README.md",
+      "relativeTarget": "build.log"
+    },
+    {
+      "document": "pinned-6fab/README.md",
+      "relativeTarget": "frontend-result.json"
+    },
+    {
+      "document": "pinned-6fab/README.md",
+      "relativeTarget": "pinned-9dd/backend.json"
+    },
+    {
+      "document": "pinned-6fab/README.md",
+      "relativeTarget": "qualification-summary.json"
+    },
+    {
+      "document": "pinned-6fab/README.md",
+      "relativeTarget": "backend.json"
+    },
+    {
+      "document": "pinned-6fab/README.md",
+      "relativeTarget": "transport.json"
+    },
+    {
+      "document": "pinned-6fab/README.md",
+      "relativeTarget": "reproduce/qualify-final-client.py"
+    }
+  ],
+  "customerSpecificNameMatches": 0,
+  "selfExcludedFromJsonCount": true,
+  "result": "PASS"
+}

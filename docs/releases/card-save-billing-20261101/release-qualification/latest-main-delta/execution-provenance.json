@@ -1,0 +1,12 @@
+{
+  "candidate": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "approvedExecution": "Normal require_escalated only for authorized synthetic loopback HTTP listeners; unchanged external/application-DB guard retained",
+  "attempts": 1,
+  "runtimeOrAssertionChangesByQa": false,
+  "sharedMutex": true,
+  "environment": "clean whitelist, no application env file or real provider credentials",
+  "runnerSha256": "514c73401947d747a8b05345afd1e525dab10c5a43025acb81bf3b5585293f60",
+  "old6fabDeltaEvidencePreserved": true,
+  "noFurtherMainChase": true,
+  "upstreamCutoff": "074df7520497a0cd6bd95ad70353201c905f0aa6"
+}

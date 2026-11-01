@@ -1,0 +1,2353 @@
+{
+  "capturedAtUtc": "2026-11-01T14:20:54.464125+00:00",
+  "scope": "READ_ONLY_SOURCE_INTEGRATION_REVIEW; no runtime tests, network, provider, database or deployment actions",
+  "sharedIntegrationCommit": "176ff60a377136ce6a01b43c1defd23f2fe0674b",
+  "sharedMainBase": "53d177eea8bcdcb882ade913f4afa15c6011da4b",
+  "pathScope": [
+    "backend/",
+    "frontend/",
+    "scripts/",
+    ".github/"
+  ],
+  "comparisonUnit": "Git blob identity for whole-file changes; file modes excluded from unique-unit counts. Protected entries independently checked with SHA256 of Git blob and current worktree bytes.",
+  "allowedFixtureException": {
+    "tenant": "MelamedLaw",
+    "path": "frontend/src/screens/platformSettingsScreen/PlatformSettingsScreen.accessibility.test.js",
+    "commit": "b54a4b22f22f0439e312d2faae5d412c49fb597b",
+    "change": "Import MemoryRouter and wrap two renders; retain accessibility assertions and production source."
+  },
+  "rows": [
+    {
+      "tenant": "AshrafEssa",
+      "clientBase": "c469ee2e0fb5bee403902c698f6621cb7a08cab3",
+      "candidateHead": "1a5dcacf37843bc8f8644efc96a22b38f9b61e42",
+      "mergeBase": "22ff67401a1fa15221125059ba3ea0e5557c39c2",
+      "ancestorChecks": {
+        "c469ee2e0fb5bee403902c698f6621cb7a08cab3": true,
+        "176ff60a377136ce6a01b43c1defd23f2fe0674b": true
+      },
+      "protectedManifest": {
+        "requiredAncestor": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+        "requiredAncestorIsAncestor": true,
+        "entryCount": 103,
+        "manifestIdenticalToClientBase": true,
+        "mismatchedHashes": [],
+        "worktreeDrift": [],
+        "entries": {
+          "backend/controllers/signingFileController.js": {
+            "expectedSha256": "89c87e97cedd1f986fb9fddbf7d8eb4100435a50160e971ab38d62a69ee7f365",
+            "actualSha256": "89c87e97cedd1f986fb9fddbf7d8eb4100435a50160e971ab38d62a69ee7f365",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingGeometry.js": {
+            "expectedSha256": "31aef464c70d9e9bdc432951d8e8db175072af7337eb556530764224fa3268c4",
+            "actualSha256": "31aef464c70d9e9bdc432951d8e8db175072af7337eb556530764224fa3268c4",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/canonical.js": {
+            "expectedSha256": "35a3122f3b82aeff80a5b8c44865e2eb4081225ba4e9c33680d850baa3624ccf",
+            "actualSha256": "35a3122f3b82aeff80a5b8c44865e2eb4081225ba4e9c33680d850baa3624ccf",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/compiler.js": {
+            "expectedSha256": "26a3830609f1cf050f371bb1cb2dfba03739c43e52c4bf39dceee898b968478c",
+            "actualSha256": "26a3830609f1cf050f371bb1cb2dfba03739c43e52c4bf39dceee898b968478c",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/dataRenderer.js": {
+            "expectedSha256": "36f566839b3c466dba5bbbbd5ecdc34681a635d4d2ae2698251286ae5a33114b",
+            "actualSha256": "36f566839b3c466dba5bbbbd5ecdc34681a635d4d2ae2698251286ae5a33114b",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/errors.js": {
+            "expectedSha256": "d875a5b3b091663ba6085056cda65fb0a43b77c169a31f92099b411a64edc8f3",
+            "actualSha256": "d875a5b3b091663ba6085056cda65fb0a43b77c169a31f92099b411a64edc8f3",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/limits.js": {
+            "expectedSha256": "d69b0b2b574dd7410b7f6e02812e789fc3631e8e88e03cd506a8ff6282f6fa4b",
+            "actualSha256": "d69b0b2b574dd7410b7f6e02812e789fc3631e8e88e03cd506a8ff6282f6fa4b",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/personalEvidence.js": {
+            "expectedSha256": "62451ddf5d3951bcfe8fcf82318917b82de85dec65e196cc3199a4560ef03eda",
+            "actualSha256": "62451ddf5d3951bcfe8fcf82318917b82de85dec65e196cc3199a4560ef03eda",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/recipientBindings.js": {
+            "expectedSha256": "8fb8f88c30257e598aadb9626bb01470f1b997eeae03d3b48856e7dad211dfc0",
+            "actualSha256": "8fb8f88c30257e598aadb9626bb01470f1b997eeae03d3b48856e7dad211dfc0",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/recipientLayout.js": {
+            "expectedSha256": "074af44b4adbbf0e41eebc15bbfe9637f52f4c6aede0e3021e41dcabfe09373c",
+            "actualSha256": "074af44b4adbbf0e41eebc15bbfe9637f52f4c6aede0e3021e41dcabfe09373c",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/signerFieldValue.js": {
+            "expectedSha256": "b182e643c594318c08c4227bd029e2ebd5a47ee5eeb05b7f3995cd16f2a2d996",
+            "actualSha256": "b182e643c594318c08c4227bd029e2ebd5a47ee5eeb05b7f3995cd16f2a2d996",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/signingOrder.js": {
+            "expectedSha256": "4307034929ff7b213303e8fced9632be3be1f4cfab5f813e6ffa05311e7c669b",
+            "actualSha256": "4307034929ff7b213303e8fced9632be3be1f4cfab5f813e6ffa05311e7c669b",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/sourceCache.js": {
+            "expectedSha256": "8dc9d45f39d5544fe1fb1240b62913cc6c61b4248f54b771956dde043c8dba4d",
+            "actualSha256": "8dc9d45f39d5544fe1fb1240b62913cc6c61b4248f54b771956dde043c8dba4d",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/stamp.js": {
+            "expectedSha256": "df65a135e86a83ed08af425015d83790a21ef721024f6780c6199780c62d7e4f",
+            "actualSha256": "df65a135e86a83ed08af425015d83790a21ef721024f6780c6199780c62d7e4f",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/workbook.js": {
+            "expectedSha256": "cf957102bed3cdf1bbb15bbb92eef097ffbb2dc11e65a56ba3e4dd0aed7bdf6a",
+            "actualSha256": "cf957102bed3cdf1bbb15bbb92eef097ffbb2dc11e65a56ba3e4dd0aed7bdf6a",
+            "worktreeMatchesCommit": true
+          },
+          "backend/routes/signingFileRoutes.js": {
+            "expectedSha256": "d84f90435c2f060f876e733b292b521a8796c2f9c0c7384ea0247748c89f3b9c",
+            "actualSha256": "d84f90435c2f060f876e733b292b521a8796c2f9c0c7384ea0247748c89f3b9c",
+            "worktreeMatchesCommit": true
+          },
+          "backend/routes/signingV2PublicRoutes.js": {
+            "expectedSha256": "82779cb281f9cf9969581cce55ce2ccbe9f7ce20a4de3b0b921d51365c018d58",
+            "actualSha256": "82779cb281f9cf9969581cce55ce2ccbe9f7ce20a4de3b0b921d51365c018d58",
+            "worktreeMatchesCommit": true
+          },
+          "backend/routes/signingV2Routes.js": {
+            "expectedSha256": "e3541a4f6902894a80724d190cecf514ce9028725fd96b5d8c4bc5e9cbfad003",
+            "actualSha256": "e3541a4f6902894a80724d190cecf514ce9028725fd96b5d8c4bc5e9cbfad003",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/api/signingFilesApi.js": {
+            "expectedSha256": "7d499b703f1f0ec220495614551364ed0b8f1b3ec3495a029d094c0dfe63d16d",
+            "actualSha256": "7d499b703f1f0ec220495614551364ed0b8f1b3ec3495a029d094c0dfe63d16d",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/api/signingPublicApi.js": {
+            "expectedSha256": "30ea3b036ae92aaefc8c16d1d1c89221b65c7966d72868e64455611d69976b1c",
+            "actualSha256": "30ea3b036ae92aaefc8c16d1d1c89221b65c7966d72868e64455611d69976b1c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/LawyerStampPopup.js": {
+            "expectedSha256": "d6edf4b25d7338276e3c3006199621720d11f86c891878a1a92cc8a6024aa821",
+            "actualSha256": "d6edf4b25d7338276e3c3006199621720d11f86c891878a1a92cc8a6024aa821",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/LawyerStampPopup.scss": {
+            "expectedSha256": "30b9e7ce8f5f2567072620668744f63cca98c153810c31e620fdc0f87bc0be5c",
+            "actualSha256": "30b9e7ce8f5f2567072620668744f63cca98c153810c31e620fdc0f87bc0be5c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/SignatureCanvas.js": {
+            "expectedSha256": "a24c23bd80d6d00b3f470c3cb6d74f00b9f34a8d3173f5b1bc2732603f48f2c2",
+            "actualSha256": "a24c23bd80d6d00b3f470c3cb6d74f00b9f34a8d3173f5b1bc2732603f48f2c2",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/SignatureSpotMarker.js": {
+            "expectedSha256": "f7f36033937ac23741e08222766774281c6230514acab66d031923af35bdd9aa",
+            "actualSha256": "f7f36033937ac23741e08222766774281c6230514acab66d031923af35bdd9aa",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/SigningFileCard.js": {
+            "expectedSha256": "06d365fe6a8d29fdd3a7214b14cc7c9c7742bf7a50813bdb8b2f0db7a03aed14",
+            "actualSha256": "06d365fe6a8d29fdd3a7214b14cc7c9c7742bf7a50813bdb8b2f0db7a03aed14",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/SigningTabButton.js": {
+            "expectedSha256": "eef0c48c00a188ca49abd12f740512c001b3b4c8b0d72a419d9e7fa0b3ea0117",
+            "actualSha256": "eef0c48c00a188ca49abd12f740512c001b3b4c8b0d72a419d9e7fa0b3ea0117",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/fieldToolbar/AddFieldPanel.js": {
+            "expectedSha256": "0627a169601f3a48a13e18e77798487aed23f21f70c597b75a411bd32e139f4d",
+            "actualSha256": "0627a169601f3a48a13e18e77798487aed23f21f70c597b75a411bd32e139f4d",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/fieldToolbar/FloatingAddField.js": {
+            "expectedSha256": "527fe75b8f42e6ff45acf1d0ced2372f30b284fa71c3677bf5371aa64225b70c",
+            "actualSha256": "527fe75b8f42e6ff45acf1d0ced2372f30b284fa71c3677bf5371aa64225b70c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/fieldToolbar/addFieldPanel.scss": {
+            "expectedSha256": "7aa116c56fcdde03e822273cabc797cc62515006a6ec44cac287f2b3700f42c7",
+            "actualSha256": "7aa116c56fcdde03e822273cabc797cc62515006a6ec44cac287f2b3700f42c7",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/fieldToolbar/fieldContextMenu.scss": {
+            "expectedSha256": "070885516569011a0aa83b1b828bda117e59caac0485dc03e24385783536832f",
+            "actualSha256": "070885516569011a0aa83b1b828bda117e59caac0485dc03e24385783536832f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/fieldToolbar/fieldToolbar.scss": {
+            "expectedSha256": "680974e6b601496e32d4862afc621e05e53bca4ef32d472062e216265979c298",
+            "actualSha256": "680974e6b601496e32d4862afc621e05e53bca4ef32d472062e216265979c298",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/pdfViewer/PdfOverlay.js": {
+            "expectedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "actualSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/pdfViewer/PdfPage.js": {
+            "expectedSha256": "5842587ff4060c25ba9b7fa04eeb092a1e57854abb162c10ff3419d473c31f60",
+            "actualSha256": "5842587ff4060c25ba9b7fa04eeb092a1e57854abb162c10ff3419d473c31f60",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/pdfViewer/PdfViewer.js": {
+            "expectedSha256": "74b729cf3d7c23b67c77417a6a3d3a9863fd965037399339996d104ba651081c",
+            "actualSha256": "74b729cf3d7c23b67c77417a6a3d3a9863fd965037399339996d104ba651081c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/personalStampPdf.js": {
+            "expectedSha256": "fae010adbcc8dceb8bd1a98eb767e013694e877e537741d00ad6c1218c1fb629",
+            "actualSha256": "fae010adbcc8dceb8bd1a98eb767e013694e877e537741d00ad6c1218c1fb629",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/signFiles.scss": {
+            "expectedSha256": "bb0f168b4e0420937133f76cb0faa54627965cb6d4a1137a37fc661c84042290",
+            "actualSha256": "bb0f168b4e0420937133f76cb0faa54627965cb6d4a1137a37fc661c84042290",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/signatureSpots/SignatureSpot.js": {
+            "expectedSha256": "74a75dfd85b12a034ea534b4e17c8eaa57c98366d3eb6226ef1e3d32dacfd13a",
+            "actualSha256": "74a75dfd85b12a034ea534b4e17c8eaa57c98366d3eb6226ef1e3d32dacfd13a",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/signatureSpots/SignatureSpotsLayer.js": {
+            "expectedSha256": "9dd0e0d33fc421c949325bf9069642c1a4f76d5e18a9b6410d97832cde94ea7e",
+            "actualSha256": "9dd0e0d33fc421c949325bf9069642c1a4f76d5e18a9b6410d97832cde94ea7e",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/PublicSigningScreen.js": {
+            "expectedSha256": "311fd3fa140e37ef2ea788bd81ccee74eaf2d047c5cf5e206f24921eedb3cc61",
+            "actualSha256": "311fd3fa140e37ef2ea788bd81ccee74eaf2d047c5cf5e206f24921eedb3cc61",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/PublicSigningScreen.scss": {
+            "expectedSha256": "69d8afabcbb62971bf55b390ba618aeb2e2320a01c78cdd4248a6ebb2f8a0141",
+            "actualSha256": "69d8afabcbb62971bf55b390ba618aeb2e2320a01c78cdd4248a6ebb2f8a0141",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/ShortSignRedirectScreen.js": {
+            "expectedSha256": "05ab1c08b2e67271b70381c79ba96b77246c3edd43a3468e0006819fe95d8a85",
+            "actualSha256": "05ab1c08b2e67271b70381c79ba96b77246c3edd43a3468e0006819fe95d8a85",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningManagerScreen.js": {
+            "expectedSha256": "67b7bc39d033cc43b70c8416309423835c020cfd55915f5a599f8dd9ea4154f0",
+            "actualSha256": "67b7bc39d033cc43b70c8416309423835c020cfd55915f5a599f8dd9ea4154f0",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningManagerScreen.scss": {
+            "expectedSha256": "911793cfc7bf3fc38d670d84c3cc1ea1265536b880c792b03d4319e55df16972",
+            "actualSha256": "911793cfc7bf3fc38d670d84c3cc1ea1265536b880c792b03d4319e55df16972",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningScreen.js": {
+            "expectedSha256": "46ea8c556e9b79b12e7c29ec8d38fb352a8432517319a54955e0d83288c84b24",
+            "actualSha256": "46ea8c556e9b79b12e7c29ec8d38fb352a8432517319a54955e0d83288c84b24",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningScreen.scss": {
+            "expectedSha256": "b2eccc113f0f7fa6719e9d2d8d281c1e058e340cf1b345dce8f0a91880b4ad3a",
+            "actualSha256": "b2eccc113f0f7fa6719e9d2d8d281c1e058e340cf1b345dce8f0a91880b4ad3a",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningSpotsPreviewScreen.js": {
+            "expectedSha256": "25a3befbf69ebdd7926c6c53c7f62e70a68ba50935f20b242a7b718607786577",
+            "actualSha256": "25a3befbf69ebdd7926c6c53c7f62e70a68ba50935f20b242a7b718607786577",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningSpotsPreviewScreen.scss": {
+            "expectedSha256": "87584fdefaaa03039f44896fc2015ae7b236b4fc8d5ee68626d8004c1162b308",
+            "actualSha256": "87584fdefaaa03039f44896fc2015ae7b236b4fc8d5ee68626d8004c1162b308",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/UploadFileForSigningScreen.js": {
+            "expectedSha256": "10e03b14af2221a23c53dab4e999809327d59efe822d2ea5b773a75fc1851c12",
+            "actualSha256": "10e03b14af2221a23c53dab4e999809327d59efe822d2ea5b773a75fc1851c12",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/UploadFileForSigningScreen.scss": {
+            "expectedSha256": "ba9584c74101ab9613dbcd378d82e0abb553a61438479f8ed4666fa0bdca94e4",
+            "actualSha256": "ba9584c74101ab9613dbcd378d82e0abb553a61438479f8ed4666fa0bdca94e4",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/CompletedPackageCopy.js": {
+            "expectedSha256": "c2b9175e4a602a8ebc820847b4a1dad0e89b932284b5b2b1184bd4810c630d77",
+            "actualSha256": "c2b9175e4a602a8ebc820847b4a1dad0e89b932284b5b2b1184bd4810c630d77",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/PublicPackageSigning.js": {
+            "expectedSha256": "c3e7c41fbaec5ef1fe640eddefc213898c39a5d93861c328b41dd2eb18133d31",
+            "actualSha256": "c3e7c41fbaec5ef1fe640eddefc213898c39a5d93861c328b41dd2eb18133d31",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/SignaturePad.js": {
+            "expectedSha256": "b646e4b0e94e1731d17ed3c9c0f0a64c95370c2613dd0d562927d5a735bc2bcb",
+            "actualSha256": "b646e4b0e94e1731d17ed3c9c0f0a64c95370c2613dd0d562927d5a735bc2bcb",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/completedPackageCopy.scss": {
+            "expectedSha256": "8a7d718424624b796f5f5df0b3b69cea388cc5dedafd2c7beed11653dfc4ae3d",
+            "actualSha256": "8a7d718424624b796f5f5df0b3b69cea388cc5dedafd2c7beed11653dfc4ae3d",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/publicPackageSigning.scss": {
+            "expectedSha256": "57ffd7691bad8ef2121d0c9a736a9917642847167fff48c357d14a4f8807ca19",
+            "actualSha256": "57ffd7691bad8ef2121d0c9a736a9917642847167fff48c357d14a4f8807ca19",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/v2SigningCanvasAdapter.js": {
+            "expectedSha256": "d05e3e3aabe9cdf8d510d122654ccb2072db1ace80de3a34b946ef76ed754073",
+            "actualSha256": "d05e3e3aabe9cdf8d510d122654ccb2072db1ace80de3a34b946ef76ed754073",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/signerDeliveryUtils.js": {
+            "expectedSha256": "8fffbf0c9a19a6a3133371f850e1dc7194a46b166397085bef7bb36cba4ebf0c",
+            "actualSha256": "8fffbf0c9a19a6a3133371f850e1dc7194a46b166397085bef7bb36cba4ebf0c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ApprovalReviewerField.js": {
+            "expectedSha256": "c19bc183d3c56652d29ca3313befb084886f3754ea6958bb4a750c75124ac19f",
+            "actualSha256": "c19bc183d3c56652d29ca3313befb084886f3754ea6958bb4a750c75124ac19f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/BatchComposer.js": {
+            "expectedSha256": "40fda60d5b4d3fa6e1a2fe57ea5c7e6f4cd7c9a93e982ac03e3a6da224dbf552",
+            "actualSha256": "40fda60d5b4d3fa6e1a2fe57ea5c7e6f4cd7c9a93e982ac03e3a6da224dbf552",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/BulkActionsWorkspace.js": {
+            "expectedSha256": "fdcd4f38266e5d838dbd34dc0aa2f34d875ec78614f3163a46647388c6315cd5",
+            "actualSha256": "fdcd4f38266e5d838dbd34dc0aa2f34d875ec78614f3163a46647388c6315cd5",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/CaseContextPicker.js": {
+            "expectedSha256": "b776a31b221ab0189491cfa18a766c29d53071924764b1ec0e20f8b55d7e0439",
+            "actualSha256": "b776a31b221ab0189491cfa18a766c29d53071924764b1ec0e20f8b55d7e0439",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/CaseSigningFlow.js": {
+            "expectedSha256": "56836fdadbe50416d377de629f38a943c62ffb34a1bb25a361a0a0c426ddd997",
+            "actualSha256": "56836fdadbe50416d377de629f38a943c62ffb34a1bb25a361a0a0c426ddd997",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ClientSendContext.js": {
+            "expectedSha256": "236122dffc4f7423ac911d0277b10ce00cb2ac2f880d5b88ca4be0c953379b91",
+            "actualSha256": "236122dffc4f7423ac911d0277b10ce00cb2ac2f880d5b88ca4be0c953379b91",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ClientSigningFlow.js": {
+            "expectedSha256": "056a4e1d09f3d20c656847380bfcf411d2f48e68ec4aca48c80be2a867f2d72b",
+            "actualSha256": "056a4e1d09f3d20c656847380bfcf411d2f48e68ec4aca48c80be2a867f2d72b",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/CompletionMarkDialog.js": {
+            "expectedSha256": "2ff2bff67f2675f4f43c159c52353c9033ecfa3a14f6c2a55c45a81b27bb4b9e",
+            "actualSha256": "2ff2bff67f2675f4f43c159c52353c9033ecfa3a14f6c2a55c45a81b27bb4b9e",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/DraftRecoveryList.js": {
+            "expectedSha256": "c0f9788db847b78fac2baf591be8ac5dfcc44907128388138d647140814744cf",
+            "actualSha256": "c0f9788db847b78fac2baf591be8ac5dfcc44907128388138d647140814744cf",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/NativeTemplateBuilder.js": {
+            "expectedSha256": "af498f44ad20cd5321a05211b99bfcca783bd697bc8a4f5fc5491588e9ef396b",
+            "actualSha256": "af498f44ad20cd5321a05211b99bfcca783bd697bc8a4f5fc5491588e9ef396b",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/PackageApprovalDialog.js": {
+            "expectedSha256": "5061efd320d0c13e5314605a9f8bf647fed5ca928bf10f991049425d39ce17bd",
+            "actualSha256": "5061efd320d0c13e5314605a9f8bf647fed5ca928bf10f991049425d39ce17bd",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/PackageComposer.js": {
+            "expectedSha256": "497bee76b11f15574fd42bf78d2ccf252a2e1d53dba923bb6bfed35e663fd57c",
+            "actualSha256": "497bee76b11f15574fd42bf78d2ccf252a2e1d53dba923bb6bfed35e663fd57c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/PackageLifecycleDialog.js": {
+            "expectedSha256": "7765876c60b589298a7a822215318da25b63f9ca343a1d62a23b6eeaf0fb0bb2",
+            "actualSha256": "7765876c60b589298a7a822215318da25b63f9ca343a1d62a23b6eeaf0fb0bb2",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/PackageReplacementDialog.js": {
+            "expectedSha256": "7d513b34b1852174f39623388277d06fc4d3de0f8b2e501b0f9e5e71e7ed4be8",
+            "actualSha256": "7d513b34b1852174f39623388277d06fc4d3de0f8b2e501b0f9e5e71e7ed4be8",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ParticipantActionDialog.js": {
+            "expectedSha256": "cded137133f1924a26c0d04ccbacaee8c156205e4f16cae15892b9620a5b67e4",
+            "actualSha256": "cded137133f1924a26c0d04ccbacaee8c156205e4f16cae15892b9620a5b67e4",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ParticipantContactDialog.js": {
+            "expectedSha256": "6b9b58259802e9dceeb87d2f2da11493340889e8d7b150d7bd55e9e7e7a880e4",
+            "actualSha256": "6b9b58259802e9dceeb87d2f2da11493340889e8d7b150d7bd55e9e7e7a880e4",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ParticipantDirectoryFields.js": {
+            "expectedSha256": "99be15dc96be66dbc4bf259535bb987407757f21803f0fd6305ff983ac7cb632",
+            "actualSha256": "99be15dc96be66dbc4bf259535bb987407757f21803f0fd6305ff983ac7cb632",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/PublicBatchSigning.js": {
+            "expectedSha256": "86ec1f92747a4e7016f90b2adfe2a2b188e43fa3ed4247f05de8241c1e63e20f",
+            "actualSha256": "86ec1f92747a4e7016f90b2adfe2a2b188e43fa3ed4247f05de8241c1e63e20f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/RecipientFields.js": {
+            "expectedSha256": "4d9f38203e802b1c71f45ae12161af7370f1ddc386740151c005b49a0c1c6b3c",
+            "actualSha256": "4d9f38203e802b1c71f45ae12161af7370f1ddc386740151c005b49a0c1c6b3c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SelectedTemplateEntry.js": {
+            "expectedSha256": "e9d699699537a3712c8bd74c93fbaf1e1e7529a22c75064e86e79a9f479d194d",
+            "actualSha256": "e9d699699537a3712c8bd74c93fbaf1e1e7529a22c75064e86e79a9f479d194d",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SharedSignerSummary.js": {
+            "expectedSha256": "a21136bb73ac263dc5ccd6826e13257c74a22b7d6cdf19cdd12feb033659f830",
+            "actualSha256": "a21136bb73ac263dc5ccd6826e13257c74a22b7d6cdf19cdd12feb033659f830",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SigningBackButton.js": {
+            "expectedSha256": "cbe47e58cf143278268b5eada5da5e217f6966445e561f32ca565d3241d09631",
+            "actualSha256": "cbe47e58cf143278268b5eada5da5e217f6966445e561f32ca565d3241d09631",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SigningPackagesHub.js": {
+            "expectedSha256": "216926fca2a646c8c99c503c1b7428cef75765231c45d3452f4c9f63da1890e2",
+            "actualSha256": "216926fca2a646c8c99c503c1b7428cef75765231c45d3452f4c9f63da1890e2",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js": {
+            "expectedSha256": "c88848992d94649c879f525b9f5ad5db395f432b20805e5ca7bfefcb119b0e85",
+            "actualSha256": "c88848992d94649c879f525b9f5ad5db395f432b20805e5ca7bfefcb119b0e85",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SigningSelect.js": {
+            "expectedSha256": "8a9a4f79bb78fed9c4b6cced2a6f037e575fa1ab0fa45795f664293cd994b024",
+            "actualSha256": "8a9a4f79bb78fed9c4b6cced2a6f037e575fa1ab0fa45795f664293cd994b024",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TaskIssueDialog.js": {
+            "expectedSha256": "92d60395a381db2a52ec132cd3361f258ec2d12e2ceb95235ce982522c3be088",
+            "actualSha256": "92d60395a381db2a52ec132cd3361f258ec2d12e2ceb95235ce982522c3be088",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TaskIssues.scss": {
+            "expectedSha256": "101f833ea357a857b22792681be6abc1a144e2d5982a08d2919387f00473227f",
+            "actualSha256": "101f833ea357a857b22792681be6abc1a144e2d5982a08d2919387f00473227f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateArchiveConfirmation.js": {
+            "expectedSha256": "cf2c56560a0fcc5a505e7e5ccca9360f278450666f3d91d03df11373afcae57b",
+            "actualSha256": "cf2c56560a0fcc5a505e7e5ccca9360f278450666f3d91d03df11373afcae57b",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateBuilder.js": {
+            "expectedSha256": "2e7c339518cdf012ab1d2f8d7daf088ae8ceef0cd865d6b358e6332fbd8a33ab",
+            "actualSha256": "2e7c339518cdf012ab1d2f8d7daf088ae8ceef0cd865d6b358e6332fbd8a33ab",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateDataKeys.js": {
+            "expectedSha256": "a72e61546e168580a04d5222a8be0681aecf3a4ecf1b491523a2628efd5b1ba9",
+            "actualSha256": "a72e61546e168580a04d5222a8be0681aecf3a4ecf1b491523a2628efd5b1ba9",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateDataValueInput.js": {
+            "expectedSha256": "dca1ab5b68aa1ff254109a0ea112159baf55f1c35200e903e390f562403b90ca",
+            "actualSha256": "dca1ab5b68aa1ff254109a0ea112159baf55f1c35200e903e390f562403b90ca",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateDocumentCondition.js": {
+            "expectedSha256": "02d89ec6a8dc46668c6b8751993da5baadec8f26adda0b0d9d8a56c8a7810e79",
+            "actualSha256": "02d89ec6a8dc46668c6b8751993da5baadec8f26adda0b0d9d8a56c8a7810e79",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateRoles.js": {
+            "expectedSha256": "dda9fa6229507d4e9ff68f9b9c39314b1a569093120394c3f19a4424dad7bac4",
+            "actualSha256": "dda9fa6229507d4e9ff68f9b9c39314b1a569093120394c3f19a4424dad7bac4",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplatesWorkspace.js": {
+            "expectedSha256": "714aaa9e5de271217cacd9398db0dcd4cee4d45719c49819ecd7501a6f93e933",
+            "actualSha256": "714aaa9e5de271217cacd9398db0dcd4cee4d45719c49819ecd7501a6f93e933",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/WorkbookImport.js": {
+            "expectedSha256": "7c8c3b70acf779702ab96db95f3db58c6b2c17b4f2ad84e2c108a0607da2ed4f",
+            "actualSha256": "7c8c3b70acf779702ab96db95f3db58c6b2c17b4f2ad84e2c108a0607da2ed4f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/_selectArrow.scss": {
+            "expectedSha256": "bc0a656382549a322a5036d1137097cf271ff6ae3139726b1d7bfba829ff281a",
+            "actualSha256": "bc0a656382549a322a5036d1137097cf271ff6ae3139726b1d7bfba829ff281a",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/documentDataValue.js": {
+            "expectedSha256": "d9a4a7cea29c8348c1d7ba4627a41df645eace8b024953e851308167036b8250",
+            "actualSha256": "d9a4a7cea29c8348c1d7ba4627a41df645eace8b024953e851308167036b8250",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/nativeTemplateAdapter.js": {
+            "expectedSha256": "5a7ee5fdcd1db96906109744edc4bf805a370fc9c7d115c47f89c7ccec06d038",
+            "actualSha256": "5a7ee5fdcd1db96906109744edc4bf805a370fc9c7d115c47f89c7ccec06d038",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/signingBackButton.scss": {
+            "expectedSha256": "78b82f365f0a0dc9523cb1cebc6f6ad6c6f24db9cdba88bb0dcebdf37eb758c2",
+            "actualSha256": "78b82f365f0a0dc9523cb1cebc6f6ad6c6f24db9cdba88bb0dcebdf37eb758c2",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/signingCompose.scss": {
+            "expectedSha256": "c8e8f1ae5d3d9dffdf09c89e24a3224c02b6cd24487cda21c8b33153597aec63",
+            "actualSha256": "c8e8f1ae5d3d9dffdf09c89e24a3224c02b6cd24487cda21c8b33153597aec63",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/signingPackages.scss": {
+            "expectedSha256": "7939ed098ac5a19a9cbb7b32fbe3bd3aee585d8fbe6d252af692a7a4a4fcd471",
+            "actualSha256": "7939ed098ac5a19a9cbb7b32fbe3bd3aee585d8fbe6d252af692a7a4a4fcd471",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/signingSelect.scss": {
+            "expectedSha256": "3b8fc5ffb04426440a7a8e2b2bfb2b9e7571be5430aa6ff5ea7d0f0cbb275644",
+            "actualSha256": "3b8fc5ffb04426440a7a8e2b2bfb2b9e7571be5430aa6ff5ea7d0f0cbb275644",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/templateConditions.js": {
+            "expectedSha256": "d8e765f65e62f5a6919aafae38470888cf515afc9ecfc91c234850c9939147bd",
+            "actualSha256": "d8e765f65e62f5a6919aafae38470888cf515afc9ecfc91c234850c9939147bd",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/templates.scss": {
+            "expectedSha256": "7961e93ea83224d0675969de87459358f20d5347f23b942c2c27742585fbdf22",
+            "actualSha256": "7961e93ea83224d0675969de87459358f20d5347f23b942c2c27742585fbdf22",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/useSigningDraft.js": {
+            "expectedSha256": "9b0c88adbb2e13181efe4588b5fd33107728a3d58fe16252588ad42711b7a31f",
+            "actualSha256": "9b0c88adbb2e13181efe4588b5fd33107728a3d58fe16252588ad42711b7a31f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/useSigningLocale.js": {
+            "expectedSha256": "dc6464889dab401ff9c3d10c5408dfef698e7f3f94c0fc9bd168775c5a31227e",
+            "actualSha256": "dc6464889dab401ff9c3d10c5408dfef698e7f3f94c0fc9bd168775c5a31227e",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/utils/signingSpotGeometry.js": {
+            "expectedSha256": "a0b23d9c4dba659e83df13c344ea6f24e3caf076c18c0ae818b46a59cb5e34cf",
+            "actualSha256": "a0b23d9c4dba659e83df13c344ea6f24e3caf076c18c0ae818b46a59cb5e34cf",
+            "worktreeMatchesCommit": true
+          }
+        }
+      },
+      "billingJavaScript": {
+        "comparedPaths": [
+          "backend/controllers/billingController.js",
+          "backend/lib/billing/firmBillingService.js",
+          "backend/lib/billing/selfServiceRenewal.js",
+          "backend/lib/billing/selfServiceUpgrade.js",
+          "backend/lib/payments/takbullClient.js",
+          "frontend/src/api/billingApi.js",
+          "frontend/src/components/billing/TakbullCheckoutDialog.js",
+          "frontend/src/screens/billingScreen/PlanUsageScreen.js",
+          "frontend/src/screens/billingScreen/PlansPricingScreen.js"
+        ],
+        "differentFromShared": []
+      },
+      "localePreservation": [
+        {
+          "language": "he",
+          "clientUniqueKeyCount": 0,
+          "lostClientUniqueKeys": [],
+          "paymentUnconfirmedMatchesShared": true
+        },
+        {
+          "language": "en",
+          "clientUniqueKeyCount": 0,
+          "lostClientUniqueKeys": [],
+          "paymentUnconfirmedMatchesShared": true
+        },
+        {
+          "language": "ar",
+          "clientUniqueKeyCount": 0,
+          "lostClientUniqueKeys": [],
+          "paymentUnconfirmedMatchesShared": true
+        }
+      ],
+      "clientOnlyWholeFiles": {
+        "count": 7,
+        "unchangedCount": 7,
+        "differences": [],
+        "allowedDifferences": [],
+        "unexpectedDifferences": []
+      },
+      "sharedOnlyWholeFiles": {
+        "count": 50,
+        "differences": []
+      }
+    },
+    {
+      "tenant": "MelamedLaw",
+      "clientBase": "0631caf7b1c829673887e12c1d2e3ffc36c1715b",
+      "candidateHead": "b54a4b22f22f0439e312d2faae5d412c49fb597b",
+      "mergeBase": "aac048ed62caf0a0b291f5bacc0571f3440e89e9",
+      "ancestorChecks": {
+        "0631caf7b1c829673887e12c1d2e3ffc36c1715b": true,
+        "176ff60a377136ce6a01b43c1defd23f2fe0674b": true
+      },
+      "protectedManifest": {
+        "requiredAncestor": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+        "requiredAncestorIsAncestor": true,
+        "entryCount": 103,
+        "manifestIdenticalToClientBase": false,
+        "mismatchedHashes": [],
+        "worktreeDrift": [],
+        "entries": {
+          "backend/controllers/signingFileController.js": {
+            "expectedSha256": "89c87e97cedd1f986fb9fddbf7d8eb4100435a50160e971ab38d62a69ee7f365",
+            "actualSha256": "89c87e97cedd1f986fb9fddbf7d8eb4100435a50160e971ab38d62a69ee7f365",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingGeometry.js": {
+            "expectedSha256": "31aef464c70d9e9bdc432951d8e8db175072af7337eb556530764224fa3268c4",
+            "actualSha256": "31aef464c70d9e9bdc432951d8e8db175072af7337eb556530764224fa3268c4",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/canonical.js": {
+            "expectedSha256": "35a3122f3b82aeff80a5b8c44865e2eb4081225ba4e9c33680d850baa3624ccf",
+            "actualSha256": "35a3122f3b82aeff80a5b8c44865e2eb4081225ba4e9c33680d850baa3624ccf",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/compiler.js": {
+            "expectedSha256": "26a3830609f1cf050f371bb1cb2dfba03739c43e52c4bf39dceee898b968478c",
+            "actualSha256": "26a3830609f1cf050f371bb1cb2dfba03739c43e52c4bf39dceee898b968478c",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/dataRenderer.js": {
+            "expectedSha256": "36f566839b3c466dba5bbbbd5ecdc34681a635d4d2ae2698251286ae5a33114b",
+            "actualSha256": "36f566839b3c466dba5bbbbd5ecdc34681a635d4d2ae2698251286ae5a33114b",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/errors.js": {
+            "expectedSha256": "d875a5b3b091663ba6085056cda65fb0a43b77c169a31f92099b411a64edc8f3",
+            "actualSha256": "d875a5b3b091663ba6085056cda65fb0a43b77c169a31f92099b411a64edc8f3",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/limits.js": {
+            "expectedSha256": "d69b0b2b574dd7410b7f6e02812e789fc3631e8e88e03cd506a8ff6282f6fa4b",
+            "actualSha256": "d69b0b2b574dd7410b7f6e02812e789fc3631e8e88e03cd506a8ff6282f6fa4b",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/personalEvidence.js": {
+            "expectedSha256": "62451ddf5d3951bcfe8fcf82318917b82de85dec65e196cc3199a4560ef03eda",
+            "actualSha256": "62451ddf5d3951bcfe8fcf82318917b82de85dec65e196cc3199a4560ef03eda",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/recipientBindings.js": {
+            "expectedSha256": "8fb8f88c30257e598aadb9626bb01470f1b997eeae03d3b48856e7dad211dfc0",
+            "actualSha256": "8fb8f88c30257e598aadb9626bb01470f1b997eeae03d3b48856e7dad211dfc0",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/recipientLayout.js": {
+            "expectedSha256": "074af44b4adbbf0e41eebc15bbfe9637f52f4c6aede0e3021e41dcabfe09373c",
+            "actualSha256": "074af44b4adbbf0e41eebc15bbfe9637f52f4c6aede0e3021e41dcabfe09373c",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/signerFieldValue.js": {
+            "expectedSha256": "b182e643c594318c08c4227bd029e2ebd5a47ee5eeb05b7f3995cd16f2a2d996",
+            "actualSha256": "b182e643c594318c08c4227bd029e2ebd5a47ee5eeb05b7f3995cd16f2a2d996",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/signingOrder.js": {
+            "expectedSha256": "4307034929ff7b213303e8fced9632be3be1f4cfab5f813e6ffa05311e7c669b",
+            "actualSha256": "4307034929ff7b213303e8fced9632be3be1f4cfab5f813e6ffa05311e7c669b",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/sourceCache.js": {
+            "expectedSha256": "8dc9d45f39d5544fe1fb1240b62913cc6c61b4248f54b771956dde043c8dba4d",
+            "actualSha256": "8dc9d45f39d5544fe1fb1240b62913cc6c61b4248f54b771956dde043c8dba4d",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/stamp.js": {
+            "expectedSha256": "df65a135e86a83ed08af425015d83790a21ef721024f6780c6199780c62d7e4f",
+            "actualSha256": "df65a135e86a83ed08af425015d83790a21ef721024f6780c6199780c62d7e4f",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/workbook.js": {
+            "expectedSha256": "cf957102bed3cdf1bbb15bbb92eef097ffbb2dc11e65a56ba3e4dd0aed7bdf6a",
+            "actualSha256": "cf957102bed3cdf1bbb15bbb92eef097ffbb2dc11e65a56ba3e4dd0aed7bdf6a",
+            "worktreeMatchesCommit": true
+          },
+          "backend/routes/signingFileRoutes.js": {
+            "expectedSha256": "d84f90435c2f060f876e733b292b521a8796c2f9c0c7384ea0247748c89f3b9c",
+            "actualSha256": "d84f90435c2f060f876e733b292b521a8796c2f9c0c7384ea0247748c89f3b9c",
+            "worktreeMatchesCommit": true
+          },
+          "backend/routes/signingV2PublicRoutes.js": {
+            "expectedSha256": "82779cb281f9cf9969581cce55ce2ccbe9f7ce20a4de3b0b921d51365c018d58",
+            "actualSha256": "82779cb281f9cf9969581cce55ce2ccbe9f7ce20a4de3b0b921d51365c018d58",
+            "worktreeMatchesCommit": true
+          },
+          "backend/routes/signingV2Routes.js": {
+            "expectedSha256": "e3541a4f6902894a80724d190cecf514ce9028725fd96b5d8c4bc5e9cbfad003",
+            "actualSha256": "e3541a4f6902894a80724d190cecf514ce9028725fd96b5d8c4bc5e9cbfad003",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/api/signingFilesApi.js": {
+            "expectedSha256": "7d499b703f1f0ec220495614551364ed0b8f1b3ec3495a029d094c0dfe63d16d",
+            "actualSha256": "7d499b703f1f0ec220495614551364ed0b8f1b3ec3495a029d094c0dfe63d16d",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/api/signingPublicApi.js": {
+            "expectedSha256": "30ea3b036ae92aaefc8c16d1d1c89221b65c7966d72868e64455611d69976b1c",
+            "actualSha256": "30ea3b036ae92aaefc8c16d1d1c89221b65c7966d72868e64455611d69976b1c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/LawyerStampPopup.js": {
+            "expectedSha256": "d6edf4b25d7338276e3c3006199621720d11f86c891878a1a92cc8a6024aa821",
+            "actualSha256": "d6edf4b25d7338276e3c3006199621720d11f86c891878a1a92cc8a6024aa821",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/LawyerStampPopup.scss": {
+            "expectedSha256": "30b9e7ce8f5f2567072620668744f63cca98c153810c31e620fdc0f87bc0be5c",
+            "actualSha256": "30b9e7ce8f5f2567072620668744f63cca98c153810c31e620fdc0f87bc0be5c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/SignatureCanvas.js": {
+            "expectedSha256": "a24c23bd80d6d00b3f470c3cb6d74f00b9f34a8d3173f5b1bc2732603f48f2c2",
+            "actualSha256": "a24c23bd80d6d00b3f470c3cb6d74f00b9f34a8d3173f5b1bc2732603f48f2c2",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/SignatureSpotMarker.js": {
+            "expectedSha256": "f7f36033937ac23741e08222766774281c6230514acab66d031923af35bdd9aa",
+            "actualSha256": "f7f36033937ac23741e08222766774281c6230514acab66d031923af35bdd9aa",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/SigningFileCard.js": {
+            "expectedSha256": "06d365fe6a8d29fdd3a7214b14cc7c9c7742bf7a50813bdb8b2f0db7a03aed14",
+            "actualSha256": "06d365fe6a8d29fdd3a7214b14cc7c9c7742bf7a50813bdb8b2f0db7a03aed14",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/SigningTabButton.js": {
+            "expectedSha256": "eef0c48c00a188ca49abd12f740512c001b3b4c8b0d72a419d9e7fa0b3ea0117",
+            "actualSha256": "eef0c48c00a188ca49abd12f740512c001b3b4c8b0d72a419d9e7fa0b3ea0117",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/fieldToolbar/AddFieldPanel.js": {
+            "expectedSha256": "0627a169601f3a48a13e18e77798487aed23f21f70c597b75a411bd32e139f4d",
+            "actualSha256": "0627a169601f3a48a13e18e77798487aed23f21f70c597b75a411bd32e139f4d",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/fieldToolbar/FloatingAddField.js": {
+            "expectedSha256": "527fe75b8f42e6ff45acf1d0ced2372f30b284fa71c3677bf5371aa64225b70c",
+            "actualSha256": "527fe75b8f42e6ff45acf1d0ced2372f30b284fa71c3677bf5371aa64225b70c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/fieldToolbar/addFieldPanel.scss": {
+            "expectedSha256": "7aa116c56fcdde03e822273cabc797cc62515006a6ec44cac287f2b3700f42c7",
+            "actualSha256": "7aa116c56fcdde03e822273cabc797cc62515006a6ec44cac287f2b3700f42c7",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/fieldToolbar/fieldContextMenu.scss": {
+            "expectedSha256": "070885516569011a0aa83b1b828bda117e59caac0485dc03e24385783536832f",
+            "actualSha256": "070885516569011a0aa83b1b828bda117e59caac0485dc03e24385783536832f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/fieldToolbar/fieldToolbar.scss": {
+            "expectedSha256": "680974e6b601496e32d4862afc621e05e53bca4ef32d472062e216265979c298",
+            "actualSha256": "680974e6b601496e32d4862afc621e05e53bca4ef32d472062e216265979c298",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/pdfViewer/PdfOverlay.js": {
+            "expectedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "actualSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/pdfViewer/PdfPage.js": {
+            "expectedSha256": "5842587ff4060c25ba9b7fa04eeb092a1e57854abb162c10ff3419d473c31f60",
+            "actualSha256": "5842587ff4060c25ba9b7fa04eeb092a1e57854abb162c10ff3419d473c31f60",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/pdfViewer/PdfViewer.js": {
+            "expectedSha256": "74b729cf3d7c23b67c77417a6a3d3a9863fd965037399339996d104ba651081c",
+            "actualSha256": "74b729cf3d7c23b67c77417a6a3d3a9863fd965037399339996d104ba651081c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/personalStampPdf.js": {
+            "expectedSha256": "fae010adbcc8dceb8bd1a98eb767e013694e877e537741d00ad6c1218c1fb629",
+            "actualSha256": "fae010adbcc8dceb8bd1a98eb767e013694e877e537741d00ad6c1218c1fb629",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/signFiles.scss": {
+            "expectedSha256": "bb0f168b4e0420937133f76cb0faa54627965cb6d4a1137a37fc661c84042290",
+            "actualSha256": "bb0f168b4e0420937133f76cb0faa54627965cb6d4a1137a37fc661c84042290",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/signatureSpots/SignatureSpot.js": {
+            "expectedSha256": "74a75dfd85b12a034ea534b4e17c8eaa57c98366d3eb6226ef1e3d32dacfd13a",
+            "actualSha256": "74a75dfd85b12a034ea534b4e17c8eaa57c98366d3eb6226ef1e3d32dacfd13a",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/signatureSpots/SignatureSpotsLayer.js": {
+            "expectedSha256": "9dd0e0d33fc421c949325bf9069642c1a4f76d5e18a9b6410d97832cde94ea7e",
+            "actualSha256": "9dd0e0d33fc421c949325bf9069642c1a4f76d5e18a9b6410d97832cde94ea7e",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/PublicSigningScreen.js": {
+            "expectedSha256": "311fd3fa140e37ef2ea788bd81ccee74eaf2d047c5cf5e206f24921eedb3cc61",
+            "actualSha256": "311fd3fa140e37ef2ea788bd81ccee74eaf2d047c5cf5e206f24921eedb3cc61",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/PublicSigningScreen.scss": {
+            "expectedSha256": "69d8afabcbb62971bf55b390ba618aeb2e2320a01c78cdd4248a6ebb2f8a0141",
+            "actualSha256": "69d8afabcbb62971bf55b390ba618aeb2e2320a01c78cdd4248a6ebb2f8a0141",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/ShortSignRedirectScreen.js": {
+            "expectedSha256": "05ab1c08b2e67271b70381c79ba96b77246c3edd43a3468e0006819fe95d8a85",
+            "actualSha256": "05ab1c08b2e67271b70381c79ba96b77246c3edd43a3468e0006819fe95d8a85",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningManagerScreen.js": {
+            "expectedSha256": "67b7bc39d033cc43b70c8416309423835c020cfd55915f5a599f8dd9ea4154f0",
+            "actualSha256": "67b7bc39d033cc43b70c8416309423835c020cfd55915f5a599f8dd9ea4154f0",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningManagerScreen.scss": {
+            "expectedSha256": "911793cfc7bf3fc38d670d84c3cc1ea1265536b880c792b03d4319e55df16972",
+            "actualSha256": "911793cfc7bf3fc38d670d84c3cc1ea1265536b880c792b03d4319e55df16972",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningScreen.js": {
+            "expectedSha256": "46ea8c556e9b79b12e7c29ec8d38fb352a8432517319a54955e0d83288c84b24",
+            "actualSha256": "46ea8c556e9b79b12e7c29ec8d38fb352a8432517319a54955e0d83288c84b24",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningScreen.scss": {
+            "expectedSha256": "b2eccc113f0f7fa6719e9d2d8d281c1e058e340cf1b345dce8f0a91880b4ad3a",
+            "actualSha256": "b2eccc113f0f7fa6719e9d2d8d281c1e058e340cf1b345dce8f0a91880b4ad3a",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningSpotsPreviewScreen.js": {
+            "expectedSha256": "25a3befbf69ebdd7926c6c53c7f62e70a68ba50935f20b242a7b718607786577",
+            "actualSha256": "25a3befbf69ebdd7926c6c53c7f62e70a68ba50935f20b242a7b718607786577",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningSpotsPreviewScreen.scss": {
+            "expectedSha256": "87584fdefaaa03039f44896fc2015ae7b236b4fc8d5ee68626d8004c1162b308",
+            "actualSha256": "87584fdefaaa03039f44896fc2015ae7b236b4fc8d5ee68626d8004c1162b308",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/UploadFileForSigningScreen.js": {
+            "expectedSha256": "10e03b14af2221a23c53dab4e999809327d59efe822d2ea5b773a75fc1851c12",
+            "actualSha256": "10e03b14af2221a23c53dab4e999809327d59efe822d2ea5b773a75fc1851c12",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/UploadFileForSigningScreen.scss": {
+            "expectedSha256": "ba9584c74101ab9613dbcd378d82e0abb553a61438479f8ed4666fa0bdca94e4",
+            "actualSha256": "ba9584c74101ab9613dbcd378d82e0abb553a61438479f8ed4666fa0bdca94e4",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/CompletedPackageCopy.js": {
+            "expectedSha256": "c2b9175e4a602a8ebc820847b4a1dad0e89b932284b5b2b1184bd4810c630d77",
+            "actualSha256": "c2b9175e4a602a8ebc820847b4a1dad0e89b932284b5b2b1184bd4810c630d77",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/PublicPackageSigning.js": {
+            "expectedSha256": "c3e7c41fbaec5ef1fe640eddefc213898c39a5d93861c328b41dd2eb18133d31",
+            "actualSha256": "c3e7c41fbaec5ef1fe640eddefc213898c39a5d93861c328b41dd2eb18133d31",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/SignaturePad.js": {
+            "expectedSha256": "b646e4b0e94e1731d17ed3c9c0f0a64c95370c2613dd0d562927d5a735bc2bcb",
+            "actualSha256": "b646e4b0e94e1731d17ed3c9c0f0a64c95370c2613dd0d562927d5a735bc2bcb",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/completedPackageCopy.scss": {
+            "expectedSha256": "8a7d718424624b796f5f5df0b3b69cea388cc5dedafd2c7beed11653dfc4ae3d",
+            "actualSha256": "8a7d718424624b796f5f5df0b3b69cea388cc5dedafd2c7beed11653dfc4ae3d",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/publicPackageSigning.scss": {
+            "expectedSha256": "57ffd7691bad8ef2121d0c9a736a9917642847167fff48c357d14a4f8807ca19",
+            "actualSha256": "57ffd7691bad8ef2121d0c9a736a9917642847167fff48c357d14a4f8807ca19",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/v2SigningCanvasAdapter.js": {
+            "expectedSha256": "d05e3e3aabe9cdf8d510d122654ccb2072db1ace80de3a34b946ef76ed754073",
+            "actualSha256": "d05e3e3aabe9cdf8d510d122654ccb2072db1ace80de3a34b946ef76ed754073",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/signerDeliveryUtils.js": {
+            "expectedSha256": "8fffbf0c9a19a6a3133371f850e1dc7194a46b166397085bef7bb36cba4ebf0c",
+            "actualSha256": "8fffbf0c9a19a6a3133371f850e1dc7194a46b166397085bef7bb36cba4ebf0c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ApprovalReviewerField.js": {
+            "expectedSha256": "c19bc183d3c56652d29ca3313befb084886f3754ea6958bb4a750c75124ac19f",
+            "actualSha256": "c19bc183d3c56652d29ca3313befb084886f3754ea6958bb4a750c75124ac19f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/BatchComposer.js": {
+            "expectedSha256": "40fda60d5b4d3fa6e1a2fe57ea5c7e6f4cd7c9a93e982ac03e3a6da224dbf552",
+            "actualSha256": "40fda60d5b4d3fa6e1a2fe57ea5c7e6f4cd7c9a93e982ac03e3a6da224dbf552",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/BulkActionsWorkspace.js": {
+            "expectedSha256": "fdcd4f38266e5d838dbd34dc0aa2f34d875ec78614f3163a46647388c6315cd5",
+            "actualSha256": "fdcd4f38266e5d838dbd34dc0aa2f34d875ec78614f3163a46647388c6315cd5",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/CaseContextPicker.js": {
+            "expectedSha256": "b776a31b221ab0189491cfa18a766c29d53071924764b1ec0e20f8b55d7e0439",
+            "actualSha256": "b776a31b221ab0189491cfa18a766c29d53071924764b1ec0e20f8b55d7e0439",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/CaseSigningFlow.js": {
+            "expectedSha256": "56836fdadbe50416d377de629f38a943c62ffb34a1bb25a361a0a0c426ddd997",
+            "actualSha256": "56836fdadbe50416d377de629f38a943c62ffb34a1bb25a361a0a0c426ddd997",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ClientSendContext.js": {
+            "expectedSha256": "236122dffc4f7423ac911d0277b10ce00cb2ac2f880d5b88ca4be0c953379b91",
+            "actualSha256": "236122dffc4f7423ac911d0277b10ce00cb2ac2f880d5b88ca4be0c953379b91",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ClientSigningFlow.js": {
+            "expectedSha256": "056a4e1d09f3d20c656847380bfcf411d2f48e68ec4aca48c80be2a867f2d72b",
+            "actualSha256": "056a4e1d09f3d20c656847380bfcf411d2f48e68ec4aca48c80be2a867f2d72b",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/CompletionMarkDialog.js": {
+            "expectedSha256": "2ff2bff67f2675f4f43c159c52353c9033ecfa3a14f6c2a55c45a81b27bb4b9e",
+            "actualSha256": "2ff2bff67f2675f4f43c159c52353c9033ecfa3a14f6c2a55c45a81b27bb4b9e",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/DraftRecoveryList.js": {
+            "expectedSha256": "c0f9788db847b78fac2baf591be8ac5dfcc44907128388138d647140814744cf",
+            "actualSha256": "c0f9788db847b78fac2baf591be8ac5dfcc44907128388138d647140814744cf",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/NativeTemplateBuilder.js": {
+            "expectedSha256": "af498f44ad20cd5321a05211b99bfcca783bd697bc8a4f5fc5491588e9ef396b",
+            "actualSha256": "af498f44ad20cd5321a05211b99bfcca783bd697bc8a4f5fc5491588e9ef396b",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/PackageApprovalDialog.js": {
+            "expectedSha256": "5061efd320d0c13e5314605a9f8bf647fed5ca928bf10f991049425d39ce17bd",
+            "actualSha256": "5061efd320d0c13e5314605a9f8bf647fed5ca928bf10f991049425d39ce17bd",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/PackageComposer.js": {
+            "expectedSha256": "497bee76b11f15574fd42bf78d2ccf252a2e1d53dba923bb6bfed35e663fd57c",
+            "actualSha256": "497bee76b11f15574fd42bf78d2ccf252a2e1d53dba923bb6bfed35e663fd57c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/PackageLifecycleDialog.js": {
+            "expectedSha256": "7765876c60b589298a7a822215318da25b63f9ca343a1d62a23b6eeaf0fb0bb2",
+            "actualSha256": "7765876c60b589298a7a822215318da25b63f9ca343a1d62a23b6eeaf0fb0bb2",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/PackageReplacementDialog.js": {
+            "expectedSha256": "7d513b34b1852174f39623388277d06fc4d3de0f8b2e501b0f9e5e71e7ed4be8",
+            "actualSha256": "7d513b34b1852174f39623388277d06fc4d3de0f8b2e501b0f9e5e71e7ed4be8",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ParticipantActionDialog.js": {
+            "expectedSha256": "cded137133f1924a26c0d04ccbacaee8c156205e4f16cae15892b9620a5b67e4",
+            "actualSha256": "cded137133f1924a26c0d04ccbacaee8c156205e4f16cae15892b9620a5b67e4",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ParticipantContactDialog.js": {
+            "expectedSha256": "6b9b58259802e9dceeb87d2f2da11493340889e8d7b150d7bd55e9e7e7a880e4",
+            "actualSha256": "6b9b58259802e9dceeb87d2f2da11493340889e8d7b150d7bd55e9e7e7a880e4",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ParticipantDirectoryFields.js": {
+            "expectedSha256": "99be15dc96be66dbc4bf259535bb987407757f21803f0fd6305ff983ac7cb632",
+            "actualSha256": "99be15dc96be66dbc4bf259535bb987407757f21803f0fd6305ff983ac7cb632",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/PublicBatchSigning.js": {
+            "expectedSha256": "86ec1f92747a4e7016f90b2adfe2a2b188e43fa3ed4247f05de8241c1e63e20f",
+            "actualSha256": "86ec1f92747a4e7016f90b2adfe2a2b188e43fa3ed4247f05de8241c1e63e20f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/RecipientFields.js": {
+            "expectedSha256": "4d9f38203e802b1c71f45ae12161af7370f1ddc386740151c005b49a0c1c6b3c",
+            "actualSha256": "4d9f38203e802b1c71f45ae12161af7370f1ddc386740151c005b49a0c1c6b3c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SelectedTemplateEntry.js": {
+            "expectedSha256": "e9d699699537a3712c8bd74c93fbaf1e1e7529a22c75064e86e79a9f479d194d",
+            "actualSha256": "e9d699699537a3712c8bd74c93fbaf1e1e7529a22c75064e86e79a9f479d194d",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SharedSignerSummary.js": {
+            "expectedSha256": "a21136bb73ac263dc5ccd6826e13257c74a22b7d6cdf19cdd12feb033659f830",
+            "actualSha256": "a21136bb73ac263dc5ccd6826e13257c74a22b7d6cdf19cdd12feb033659f830",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SigningBackButton.js": {
+            "expectedSha256": "cbe47e58cf143278268b5eada5da5e217f6966445e561f32ca565d3241d09631",
+            "actualSha256": "cbe47e58cf143278268b5eada5da5e217f6966445e561f32ca565d3241d09631",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SigningPackagesHub.js": {
+            "expectedSha256": "216926fca2a646c8c99c503c1b7428cef75765231c45d3452f4c9f63da1890e2",
+            "actualSha256": "216926fca2a646c8c99c503c1b7428cef75765231c45d3452f4c9f63da1890e2",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js": {
+            "expectedSha256": "c88848992d94649c879f525b9f5ad5db395f432b20805e5ca7bfefcb119b0e85",
+            "actualSha256": "c88848992d94649c879f525b9f5ad5db395f432b20805e5ca7bfefcb119b0e85",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SigningSelect.js": {
+            "expectedSha256": "8a9a4f79bb78fed9c4b6cced2a6f037e575fa1ab0fa45795f664293cd994b024",
+            "actualSha256": "8a9a4f79bb78fed9c4b6cced2a6f037e575fa1ab0fa45795f664293cd994b024",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TaskIssueDialog.js": {
+            "expectedSha256": "92d60395a381db2a52ec132cd3361f258ec2d12e2ceb95235ce982522c3be088",
+            "actualSha256": "92d60395a381db2a52ec132cd3361f258ec2d12e2ceb95235ce982522c3be088",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TaskIssues.scss": {
+            "expectedSha256": "101f833ea357a857b22792681be6abc1a144e2d5982a08d2919387f00473227f",
+            "actualSha256": "101f833ea357a857b22792681be6abc1a144e2d5982a08d2919387f00473227f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateArchiveConfirmation.js": {
+            "expectedSha256": "cf2c56560a0fcc5a505e7e5ccca9360f278450666f3d91d03df11373afcae57b",
+            "actualSha256": "cf2c56560a0fcc5a505e7e5ccca9360f278450666f3d91d03df11373afcae57b",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateBuilder.js": {
+            "expectedSha256": "2e7c339518cdf012ab1d2f8d7daf088ae8ceef0cd865d6b358e6332fbd8a33ab",
+            "actualSha256": "2e7c339518cdf012ab1d2f8d7daf088ae8ceef0cd865d6b358e6332fbd8a33ab",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateDataKeys.js": {
+            "expectedSha256": "a72e61546e168580a04d5222a8be0681aecf3a4ecf1b491523a2628efd5b1ba9",
+            "actualSha256": "a72e61546e168580a04d5222a8be0681aecf3a4ecf1b491523a2628efd5b1ba9",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateDataValueInput.js": {
+            "expectedSha256": "dca1ab5b68aa1ff254109a0ea112159baf55f1c35200e903e390f562403b90ca",
+            "actualSha256": "dca1ab5b68aa1ff254109a0ea112159baf55f1c35200e903e390f562403b90ca",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateDocumentCondition.js": {
+            "expectedSha256": "02d89ec6a8dc46668c6b8751993da5baadec8f26adda0b0d9d8a56c8a7810e79",
+            "actualSha256": "02d89ec6a8dc46668c6b8751993da5baadec8f26adda0b0d9d8a56c8a7810e79",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateRoles.js": {
+            "expectedSha256": "dda9fa6229507d4e9ff68f9b9c39314b1a569093120394c3f19a4424dad7bac4",
+            "actualSha256": "dda9fa6229507d4e9ff68f9b9c39314b1a569093120394c3f19a4424dad7bac4",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplatesWorkspace.js": {
+            "expectedSha256": "714aaa9e5de271217cacd9398db0dcd4cee4d45719c49819ecd7501a6f93e933",
+            "actualSha256": "714aaa9e5de271217cacd9398db0dcd4cee4d45719c49819ecd7501a6f93e933",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/WorkbookImport.js": {
+            "expectedSha256": "7c8c3b70acf779702ab96db95f3db58c6b2c17b4f2ad84e2c108a0607da2ed4f",
+            "actualSha256": "7c8c3b70acf779702ab96db95f3db58c6b2c17b4f2ad84e2c108a0607da2ed4f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/_selectArrow.scss": {
+            "expectedSha256": "bc0a656382549a322a5036d1137097cf271ff6ae3139726b1d7bfba829ff281a",
+            "actualSha256": "bc0a656382549a322a5036d1137097cf271ff6ae3139726b1d7bfba829ff281a",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/documentDataValue.js": {
+            "expectedSha256": "d9a4a7cea29c8348c1d7ba4627a41df645eace8b024953e851308167036b8250",
+            "actualSha256": "d9a4a7cea29c8348c1d7ba4627a41df645eace8b024953e851308167036b8250",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/nativeTemplateAdapter.js": {
+            "expectedSha256": "5a7ee5fdcd1db96906109744edc4bf805a370fc9c7d115c47f89c7ccec06d038",
+            "actualSha256": "5a7ee5fdcd1db96906109744edc4bf805a370fc9c7d115c47f89c7ccec06d038",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/signingBackButton.scss": {
+            "expectedSha256": "78b82f365f0a0dc9523cb1cebc6f6ad6c6f24db9cdba88bb0dcebdf37eb758c2",
+            "actualSha256": "78b82f365f0a0dc9523cb1cebc6f6ad6c6f24db9cdba88bb0dcebdf37eb758c2",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/signingCompose.scss": {
+            "expectedSha256": "c8e8f1ae5d3d9dffdf09c89e24a3224c02b6cd24487cda21c8b33153597aec63",
+            "actualSha256": "c8e8f1ae5d3d9dffdf09c89e24a3224c02b6cd24487cda21c8b33153597aec63",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/signingPackages.scss": {
+            "expectedSha256": "7939ed098ac5a19a9cbb7b32fbe3bd3aee585d8fbe6d252af692a7a4a4fcd471",
+            "actualSha256": "7939ed098ac5a19a9cbb7b32fbe3bd3aee585d8fbe6d252af692a7a4a4fcd471",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/signingSelect.scss": {
+            "expectedSha256": "3b8fc5ffb04426440a7a8e2b2bfb2b9e7571be5430aa6ff5ea7d0f0cbb275644",
+            "actualSha256": "3b8fc5ffb04426440a7a8e2b2bfb2b9e7571be5430aa6ff5ea7d0f0cbb275644",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/templateConditions.js": {
+            "expectedSha256": "d8e765f65e62f5a6919aafae38470888cf515afc9ecfc91c234850c9939147bd",
+            "actualSha256": "d8e765f65e62f5a6919aafae38470888cf515afc9ecfc91c234850c9939147bd",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/templates.scss": {
+            "expectedSha256": "7961e93ea83224d0675969de87459358f20d5347f23b942c2c27742585fbdf22",
+            "actualSha256": "7961e93ea83224d0675969de87459358f20d5347f23b942c2c27742585fbdf22",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/useSigningDraft.js": {
+            "expectedSha256": "9b0c88adbb2e13181efe4588b5fd33107728a3d58fe16252588ad42711b7a31f",
+            "actualSha256": "9b0c88adbb2e13181efe4588b5fd33107728a3d58fe16252588ad42711b7a31f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/useSigningLocale.js": {
+            "expectedSha256": "dc6464889dab401ff9c3d10c5408dfef698e7f3f94c0fc9bd168775c5a31227e",
+            "actualSha256": "dc6464889dab401ff9c3d10c5408dfef698e7f3f94c0fc9bd168775c5a31227e",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/utils/signingSpotGeometry.js": {
+            "expectedSha256": "a0b23d9c4dba659e83df13c344ea6f24e3caf076c18c0ae818b46a59cb5e34cf",
+            "actualSha256": "a0b23d9c4dba659e83df13c344ea6f24e3caf076c18c0ae818b46a59cb5e34cf",
+            "worktreeMatchesCommit": true
+          }
+        }
+      },
+      "billingJavaScript": {
+        "comparedPaths": [
+          "backend/controllers/billingController.js",
+          "backend/lib/billing/firmBillingService.js",
+          "backend/lib/billing/selfServiceRenewal.js",
+          "backend/lib/billing/selfServiceUpgrade.js",
+          "backend/lib/payments/takbullClient.js",
+          "frontend/src/api/billingApi.js",
+          "frontend/src/components/billing/TakbullCheckoutDialog.js",
+          "frontend/src/screens/billingScreen/PlanUsageScreen.js",
+          "frontend/src/screens/billingScreen/PlansPricingScreen.js"
+        ],
+        "differentFromShared": []
+      },
+      "localePreservation": [
+        {
+          "language": "he",
+          "clientUniqueKeyCount": 0,
+          "lostClientUniqueKeys": [],
+          "paymentUnconfirmedMatchesShared": true
+        },
+        {
+          "language": "en",
+          "clientUniqueKeyCount": 0,
+          "lostClientUniqueKeys": [],
+          "paymentUnconfirmedMatchesShared": true
+        },
+        {
+          "language": "ar",
+          "clientUniqueKeyCount": 0,
+          "lostClientUniqueKeys": [],
+          "paymentUnconfirmedMatchesShared": true
+        }
+      ],
+      "clientOnlyWholeFiles": {
+        "count": 21,
+        "unchangedCount": 20,
+        "differences": [
+          "frontend/src/screens/platformSettingsScreen/PlatformSettingsScreen.accessibility.test.js"
+        ],
+        "allowedDifferences": [
+          "frontend/src/screens/platformSettingsScreen/PlatformSettingsScreen.accessibility.test.js"
+        ],
+        "unexpectedDifferences": []
+      },
+      "sharedOnlyWholeFiles": {
+        "count": 94,
+        "differences": []
+      }
+    },
+    {
+      "tenant": "MorLevi",
+      "clientBase": "a50afb3fccaaee17633328ef62b5695336d73090",
+      "candidateHead": "1deb2c6434a7fbfc73c3e4fe239355367e7a2275",
+      "mergeBase": "aac048ed62caf0a0b291f5bacc0571f3440e89e9",
+      "ancestorChecks": {
+        "a50afb3fccaaee17633328ef62b5695336d73090": true,
+        "176ff60a377136ce6a01b43c1defd23f2fe0674b": true
+      },
+      "protectedManifest": {
+        "requiredAncestor": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+        "requiredAncestorIsAncestor": true,
+        "entryCount": 103,
+        "manifestIdenticalToClientBase": false,
+        "mismatchedHashes": [],
+        "worktreeDrift": [],
+        "entries": {
+          "backend/controllers/signingFileController.js": {
+            "expectedSha256": "89c87e97cedd1f986fb9fddbf7d8eb4100435a50160e971ab38d62a69ee7f365",
+            "actualSha256": "89c87e97cedd1f986fb9fddbf7d8eb4100435a50160e971ab38d62a69ee7f365",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingGeometry.js": {
+            "expectedSha256": "31aef464c70d9e9bdc432951d8e8db175072af7337eb556530764224fa3268c4",
+            "actualSha256": "31aef464c70d9e9bdc432951d8e8db175072af7337eb556530764224fa3268c4",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/canonical.js": {
+            "expectedSha256": "35a3122f3b82aeff80a5b8c44865e2eb4081225ba4e9c33680d850baa3624ccf",
+            "actualSha256": "35a3122f3b82aeff80a5b8c44865e2eb4081225ba4e9c33680d850baa3624ccf",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/compiler.js": {
+            "expectedSha256": "26a3830609f1cf050f371bb1cb2dfba03739c43e52c4bf39dceee898b968478c",
+            "actualSha256": "26a3830609f1cf050f371bb1cb2dfba03739c43e52c4bf39dceee898b968478c",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/dataRenderer.js": {
+            "expectedSha256": "36f566839b3c466dba5bbbbd5ecdc34681a635d4d2ae2698251286ae5a33114b",
+            "actualSha256": "36f566839b3c466dba5bbbbd5ecdc34681a635d4d2ae2698251286ae5a33114b",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/errors.js": {
+            "expectedSha256": "d875a5b3b091663ba6085056cda65fb0a43b77c169a31f92099b411a64edc8f3",
+            "actualSha256": "d875a5b3b091663ba6085056cda65fb0a43b77c169a31f92099b411a64edc8f3",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/limits.js": {
+            "expectedSha256": "d69b0b2b574dd7410b7f6e02812e789fc3631e8e88e03cd506a8ff6282f6fa4b",
+            "actualSha256": "d69b0b2b574dd7410b7f6e02812e789fc3631e8e88e03cd506a8ff6282f6fa4b",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/personalEvidence.js": {
+            "expectedSha256": "62451ddf5d3951bcfe8fcf82318917b82de85dec65e196cc3199a4560ef03eda",
+            "actualSha256": "62451ddf5d3951bcfe8fcf82318917b82de85dec65e196cc3199a4560ef03eda",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/recipientBindings.js": {
+            "expectedSha256": "8fb8f88c30257e598aadb9626bb01470f1b997eeae03d3b48856e7dad211dfc0",
+            "actualSha256": "8fb8f88c30257e598aadb9626bb01470f1b997eeae03d3b48856e7dad211dfc0",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/recipientLayout.js": {
+            "expectedSha256": "074af44b4adbbf0e41eebc15bbfe9637f52f4c6aede0e3021e41dcabfe09373c",
+            "actualSha256": "074af44b4adbbf0e41eebc15bbfe9637f52f4c6aede0e3021e41dcabfe09373c",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/signerFieldValue.js": {
+            "expectedSha256": "b182e643c594318c08c4227bd029e2ebd5a47ee5eeb05b7f3995cd16f2a2d996",
+            "actualSha256": "b182e643c594318c08c4227bd029e2ebd5a47ee5eeb05b7f3995cd16f2a2d996",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/signingOrder.js": {
+            "expectedSha256": "4307034929ff7b213303e8fced9632be3be1f4cfab5f813e6ffa05311e7c669b",
+            "actualSha256": "4307034929ff7b213303e8fced9632be3be1f4cfab5f813e6ffa05311e7c669b",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/sourceCache.js": {
+            "expectedSha256": "8dc9d45f39d5544fe1fb1240b62913cc6c61b4248f54b771956dde043c8dba4d",
+            "actualSha256": "8dc9d45f39d5544fe1fb1240b62913cc6c61b4248f54b771956dde043c8dba4d",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/stamp.js": {
+            "expectedSha256": "df65a135e86a83ed08af425015d83790a21ef721024f6780c6199780c62d7e4f",
+            "actualSha256": "df65a135e86a83ed08af425015d83790a21ef721024f6780c6199780c62d7e4f",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/workbook.js": {
+            "expectedSha256": "cf957102bed3cdf1bbb15bbb92eef097ffbb2dc11e65a56ba3e4dd0aed7bdf6a",
+            "actualSha256": "cf957102bed3cdf1bbb15bbb92eef097ffbb2dc11e65a56ba3e4dd0aed7bdf6a",
+            "worktreeMatchesCommit": true
+          },
+          "backend/routes/signingFileRoutes.js": {
+            "expectedSha256": "d84f90435c2f060f876e733b292b521a8796c2f9c0c7384ea0247748c89f3b9c",
+            "actualSha256": "d84f90435c2f060f876e733b292b521a8796c2f9c0c7384ea0247748c89f3b9c",
+            "worktreeMatchesCommit": true
+          },
+          "backend/routes/signingV2PublicRoutes.js": {
+            "expectedSha256": "82779cb281f9cf9969581cce55ce2ccbe9f7ce20a4de3b0b921d51365c018d58",
+            "actualSha256": "82779cb281f9cf9969581cce55ce2ccbe9f7ce20a4de3b0b921d51365c018d58",
+            "worktreeMatchesCommit": true
+          },
+          "backend/routes/signingV2Routes.js": {
+            "expectedSha256": "e3541a4f6902894a80724d190cecf514ce9028725fd96b5d8c4bc5e9cbfad003",
+            "actualSha256": "e3541a4f6902894a80724d190cecf514ce9028725fd96b5d8c4bc5e9cbfad003",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/api/signingFilesApi.js": {
+            "expectedSha256": "7d499b703f1f0ec220495614551364ed0b8f1b3ec3495a029d094c0dfe63d16d",
+            "actualSha256": "7d499b703f1f0ec220495614551364ed0b8f1b3ec3495a029d094c0dfe63d16d",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/api/signingPublicApi.js": {
+            "expectedSha256": "30ea3b036ae92aaefc8c16d1d1c89221b65c7966d72868e64455611d69976b1c",
+            "actualSha256": "30ea3b036ae92aaefc8c16d1d1c89221b65c7966d72868e64455611d69976b1c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/LawyerStampPopup.js": {
+            "expectedSha256": "d6edf4b25d7338276e3c3006199621720d11f86c891878a1a92cc8a6024aa821",
+            "actualSha256": "d6edf4b25d7338276e3c3006199621720d11f86c891878a1a92cc8a6024aa821",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/LawyerStampPopup.scss": {
+            "expectedSha256": "30b9e7ce8f5f2567072620668744f63cca98c153810c31e620fdc0f87bc0be5c",
+            "actualSha256": "30b9e7ce8f5f2567072620668744f63cca98c153810c31e620fdc0f87bc0be5c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/SignatureCanvas.js": {
+            "expectedSha256": "a24c23bd80d6d00b3f470c3cb6d74f00b9f34a8d3173f5b1bc2732603f48f2c2",
+            "actualSha256": "a24c23bd80d6d00b3f470c3cb6d74f00b9f34a8d3173f5b1bc2732603f48f2c2",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/SignatureSpotMarker.js": {
+            "expectedSha256": "f7f36033937ac23741e08222766774281c6230514acab66d031923af35bdd9aa",
+            "actualSha256": "f7f36033937ac23741e08222766774281c6230514acab66d031923af35bdd9aa",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/SigningFileCard.js": {
+            "expectedSha256": "06d365fe6a8d29fdd3a7214b14cc7c9c7742bf7a50813bdb8b2f0db7a03aed14",
+            "actualSha256": "06d365fe6a8d29fdd3a7214b14cc7c9c7742bf7a50813bdb8b2f0db7a03aed14",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/SigningTabButton.js": {
+            "expectedSha256": "eef0c48c00a188ca49abd12f740512c001b3b4c8b0d72a419d9e7fa0b3ea0117",
+            "actualSha256": "eef0c48c00a188ca49abd12f740512c001b3b4c8b0d72a419d9e7fa0b3ea0117",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/fieldToolbar/AddFieldPanel.js": {
+            "expectedSha256": "0627a169601f3a48a13e18e77798487aed23f21f70c597b75a411bd32e139f4d",
+            "actualSha256": "0627a169601f3a48a13e18e77798487aed23f21f70c597b75a411bd32e139f4d",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/fieldToolbar/FloatingAddField.js": {
+            "expectedSha256": "527fe75b8f42e6ff45acf1d0ced2372f30b284fa71c3677bf5371aa64225b70c",
+            "actualSha256": "527fe75b8f42e6ff45acf1d0ced2372f30b284fa71c3677bf5371aa64225b70c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/fieldToolbar/addFieldPanel.scss": {
+            "expectedSha256": "7aa116c56fcdde03e822273cabc797cc62515006a6ec44cac287f2b3700f42c7",
+            "actualSha256": "7aa116c56fcdde03e822273cabc797cc62515006a6ec44cac287f2b3700f42c7",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/fieldToolbar/fieldContextMenu.scss": {
+            "expectedSha256": "070885516569011a0aa83b1b828bda117e59caac0485dc03e24385783536832f",
+            "actualSha256": "070885516569011a0aa83b1b828bda117e59caac0485dc03e24385783536832f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/fieldToolbar/fieldToolbar.scss": {
+            "expectedSha256": "680974e6b601496e32d4862afc621e05e53bca4ef32d472062e216265979c298",
+            "actualSha256": "680974e6b601496e32d4862afc621e05e53bca4ef32d472062e216265979c298",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/pdfViewer/PdfOverlay.js": {
+            "expectedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "actualSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/pdfViewer/PdfPage.js": {
+            "expectedSha256": "5842587ff4060c25ba9b7fa04eeb092a1e57854abb162c10ff3419d473c31f60",
+            "actualSha256": "5842587ff4060c25ba9b7fa04eeb092a1e57854abb162c10ff3419d473c31f60",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/pdfViewer/PdfViewer.js": {
+            "expectedSha256": "74b729cf3d7c23b67c77417a6a3d3a9863fd965037399339996d104ba651081c",
+            "actualSha256": "74b729cf3d7c23b67c77417a6a3d3a9863fd965037399339996d104ba651081c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/personalStampPdf.js": {
+            "expectedSha256": "fae010adbcc8dceb8bd1a98eb767e013694e877e537741d00ad6c1218c1fb629",
+            "actualSha256": "fae010adbcc8dceb8bd1a98eb767e013694e877e537741d00ad6c1218c1fb629",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/signFiles.scss": {
+            "expectedSha256": "bb0f168b4e0420937133f76cb0faa54627965cb6d4a1137a37fc661c84042290",
+            "actualSha256": "bb0f168b4e0420937133f76cb0faa54627965cb6d4a1137a37fc661c84042290",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/signatureSpots/SignatureSpot.js": {
+            "expectedSha256": "74a75dfd85b12a034ea534b4e17c8eaa57c98366d3eb6226ef1e3d32dacfd13a",
+            "actualSha256": "74a75dfd85b12a034ea534b4e17c8eaa57c98366d3eb6226ef1e3d32dacfd13a",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/signatureSpots/SignatureSpotsLayer.js": {
+            "expectedSha256": "9dd0e0d33fc421c949325bf9069642c1a4f76d5e18a9b6410d97832cde94ea7e",
+            "actualSha256": "9dd0e0d33fc421c949325bf9069642c1a4f76d5e18a9b6410d97832cde94ea7e",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/PublicSigningScreen.js": {
+            "expectedSha256": "311fd3fa140e37ef2ea788bd81ccee74eaf2d047c5cf5e206f24921eedb3cc61",
+            "actualSha256": "311fd3fa140e37ef2ea788bd81ccee74eaf2d047c5cf5e206f24921eedb3cc61",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/PublicSigningScreen.scss": {
+            "expectedSha256": "69d8afabcbb62971bf55b390ba618aeb2e2320a01c78cdd4248a6ebb2f8a0141",
+            "actualSha256": "69d8afabcbb62971bf55b390ba618aeb2e2320a01c78cdd4248a6ebb2f8a0141",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/ShortSignRedirectScreen.js": {
+            "expectedSha256": "05ab1c08b2e67271b70381c79ba96b77246c3edd43a3468e0006819fe95d8a85",
+            "actualSha256": "05ab1c08b2e67271b70381c79ba96b77246c3edd43a3468e0006819fe95d8a85",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningManagerScreen.js": {
+            "expectedSha256": "67b7bc39d033cc43b70c8416309423835c020cfd55915f5a599f8dd9ea4154f0",
+            "actualSha256": "67b7bc39d033cc43b70c8416309423835c020cfd55915f5a599f8dd9ea4154f0",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningManagerScreen.scss": {
+            "expectedSha256": "911793cfc7bf3fc38d670d84c3cc1ea1265536b880c792b03d4319e55df16972",
+            "actualSha256": "911793cfc7bf3fc38d670d84c3cc1ea1265536b880c792b03d4319e55df16972",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningScreen.js": {
+            "expectedSha256": "46ea8c556e9b79b12e7c29ec8d38fb352a8432517319a54955e0d83288c84b24",
+            "actualSha256": "46ea8c556e9b79b12e7c29ec8d38fb352a8432517319a54955e0d83288c84b24",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningScreen.scss": {
+            "expectedSha256": "b2eccc113f0f7fa6719e9d2d8d281c1e058e340cf1b345dce8f0a91880b4ad3a",
+            "actualSha256": "b2eccc113f0f7fa6719e9d2d8d281c1e058e340cf1b345dce8f0a91880b4ad3a",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningSpotsPreviewScreen.js": {
+            "expectedSha256": "25a3befbf69ebdd7926c6c53c7f62e70a68ba50935f20b242a7b718607786577",
+            "actualSha256": "25a3befbf69ebdd7926c6c53c7f62e70a68ba50935f20b242a7b718607786577",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningSpotsPreviewScreen.scss": {
+            "expectedSha256": "87584fdefaaa03039f44896fc2015ae7b236b4fc8d5ee68626d8004c1162b308",
+            "actualSha256": "87584fdefaaa03039f44896fc2015ae7b236b4fc8d5ee68626d8004c1162b308",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/UploadFileForSigningScreen.js": {
+            "expectedSha256": "10e03b14af2221a23c53dab4e999809327d59efe822d2ea5b773a75fc1851c12",
+            "actualSha256": "10e03b14af2221a23c53dab4e999809327d59efe822d2ea5b773a75fc1851c12",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/UploadFileForSigningScreen.scss": {
+            "expectedSha256": "ba9584c74101ab9613dbcd378d82e0abb553a61438479f8ed4666fa0bdca94e4",
+            "actualSha256": "ba9584c74101ab9613dbcd378d82e0abb553a61438479f8ed4666fa0bdca94e4",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/CompletedPackageCopy.js": {
+            "expectedSha256": "c2b9175e4a602a8ebc820847b4a1dad0e89b932284b5b2b1184bd4810c630d77",
+            "actualSha256": "c2b9175e4a602a8ebc820847b4a1dad0e89b932284b5b2b1184bd4810c630d77",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/PublicPackageSigning.js": {
+            "expectedSha256": "c3e7c41fbaec5ef1fe640eddefc213898c39a5d93861c328b41dd2eb18133d31",
+            "actualSha256": "c3e7c41fbaec5ef1fe640eddefc213898c39a5d93861c328b41dd2eb18133d31",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/SignaturePad.js": {
+            "expectedSha256": "b646e4b0e94e1731d17ed3c9c0f0a64c95370c2613dd0d562927d5a735bc2bcb",
+            "actualSha256": "b646e4b0e94e1731d17ed3c9c0f0a64c95370c2613dd0d562927d5a735bc2bcb",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/completedPackageCopy.scss": {
+            "expectedSha256": "8a7d718424624b796f5f5df0b3b69cea388cc5dedafd2c7beed11653dfc4ae3d",
+            "actualSha256": "8a7d718424624b796f5f5df0b3b69cea388cc5dedafd2c7beed11653dfc4ae3d",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/publicPackageSigning.scss": {
+            "expectedSha256": "57ffd7691bad8ef2121d0c9a736a9917642847167fff48c357d14a4f8807ca19",
+            "actualSha256": "57ffd7691bad8ef2121d0c9a736a9917642847167fff48c357d14a4f8807ca19",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/v2SigningCanvasAdapter.js": {
+            "expectedSha256": "d05e3e3aabe9cdf8d510d122654ccb2072db1ace80de3a34b946ef76ed754073",
+            "actualSha256": "d05e3e3aabe9cdf8d510d122654ccb2072db1ace80de3a34b946ef76ed754073",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/signerDeliveryUtils.js": {
+            "expectedSha256": "8fffbf0c9a19a6a3133371f850e1dc7194a46b166397085bef7bb36cba4ebf0c",
+            "actualSha256": "8fffbf0c9a19a6a3133371f850e1dc7194a46b166397085bef7bb36cba4ebf0c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ApprovalReviewerField.js": {
+            "expectedSha256": "c19bc183d3c56652d29ca3313befb084886f3754ea6958bb4a750c75124ac19f",
+            "actualSha256": "c19bc183d3c56652d29ca3313befb084886f3754ea6958bb4a750c75124ac19f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/BatchComposer.js": {
+            "expectedSha256": "40fda60d5b4d3fa6e1a2fe57ea5c7e6f4cd7c9a93e982ac03e3a6da224dbf552",
+            "actualSha256": "40fda60d5b4d3fa6e1a2fe57ea5c7e6f4cd7c9a93e982ac03e3a6da224dbf552",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/BulkActionsWorkspace.js": {
+            "expectedSha256": "fdcd4f38266e5d838dbd34dc0aa2f34d875ec78614f3163a46647388c6315cd5",
+            "actualSha256": "fdcd4f38266e5d838dbd34dc0aa2f34d875ec78614f3163a46647388c6315cd5",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/CaseContextPicker.js": {
+            "expectedSha256": "b776a31b221ab0189491cfa18a766c29d53071924764b1ec0e20f8b55d7e0439",
+            "actualSha256": "b776a31b221ab0189491cfa18a766c29d53071924764b1ec0e20f8b55d7e0439",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/CaseSigningFlow.js": {
+            "expectedSha256": "56836fdadbe50416d377de629f38a943c62ffb34a1bb25a361a0a0c426ddd997",
+            "actualSha256": "56836fdadbe50416d377de629f38a943c62ffb34a1bb25a361a0a0c426ddd997",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ClientSendContext.js": {
+            "expectedSha256": "236122dffc4f7423ac911d0277b10ce00cb2ac2f880d5b88ca4be0c953379b91",
+            "actualSha256": "236122dffc4f7423ac911d0277b10ce00cb2ac2f880d5b88ca4be0c953379b91",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ClientSigningFlow.js": {
+            "expectedSha256": "056a4e1d09f3d20c656847380bfcf411d2f48e68ec4aca48c80be2a867f2d72b",
+            "actualSha256": "056a4e1d09f3d20c656847380bfcf411d2f48e68ec4aca48c80be2a867f2d72b",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/CompletionMarkDialog.js": {
+            "expectedSha256": "2ff2bff67f2675f4f43c159c52353c9033ecfa3a14f6c2a55c45a81b27bb4b9e",
+            "actualSha256": "2ff2bff67f2675f4f43c159c52353c9033ecfa3a14f6c2a55c45a81b27bb4b9e",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/DraftRecoveryList.js": {
+            "expectedSha256": "c0f9788db847b78fac2baf591be8ac5dfcc44907128388138d647140814744cf",
+            "actualSha256": "c0f9788db847b78fac2baf591be8ac5dfcc44907128388138d647140814744cf",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/NativeTemplateBuilder.js": {
+            "expectedSha256": "af498f44ad20cd5321a05211b99bfcca783bd697bc8a4f5fc5491588e9ef396b",
+            "actualSha256": "af498f44ad20cd5321a05211b99bfcca783bd697bc8a4f5fc5491588e9ef396b",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/PackageApprovalDialog.js": {
+            "expectedSha256": "5061efd320d0c13e5314605a9f8bf647fed5ca928bf10f991049425d39ce17bd",
+            "actualSha256": "5061efd320d0c13e5314605a9f8bf647fed5ca928bf10f991049425d39ce17bd",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/PackageComposer.js": {
+            "expectedSha256": "497bee76b11f15574fd42bf78d2ccf252a2e1d53dba923bb6bfed35e663fd57c",
+            "actualSha256": "497bee76b11f15574fd42bf78d2ccf252a2e1d53dba923bb6bfed35e663fd57c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/PackageLifecycleDialog.js": {
+            "expectedSha256": "7765876c60b589298a7a822215318da25b63f9ca343a1d62a23b6eeaf0fb0bb2",
+            "actualSha256": "7765876c60b589298a7a822215318da25b63f9ca343a1d62a23b6eeaf0fb0bb2",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/PackageReplacementDialog.js": {
+            "expectedSha256": "7d513b34b1852174f39623388277d06fc4d3de0f8b2e501b0f9e5e71e7ed4be8",
+            "actualSha256": "7d513b34b1852174f39623388277d06fc4d3de0f8b2e501b0f9e5e71e7ed4be8",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ParticipantActionDialog.js": {
+            "expectedSha256": "cded137133f1924a26c0d04ccbacaee8c156205e4f16cae15892b9620a5b67e4",
+            "actualSha256": "cded137133f1924a26c0d04ccbacaee8c156205e4f16cae15892b9620a5b67e4",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ParticipantContactDialog.js": {
+            "expectedSha256": "6b9b58259802e9dceeb87d2f2da11493340889e8d7b150d7bd55e9e7e7a880e4",
+            "actualSha256": "6b9b58259802e9dceeb87d2f2da11493340889e8d7b150d7bd55e9e7e7a880e4",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ParticipantDirectoryFields.js": {
+            "expectedSha256": "99be15dc96be66dbc4bf259535bb987407757f21803f0fd6305ff983ac7cb632",
+            "actualSha256": "99be15dc96be66dbc4bf259535bb987407757f21803f0fd6305ff983ac7cb632",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/PublicBatchSigning.js": {
+            "expectedSha256": "86ec1f92747a4e7016f90b2adfe2a2b188e43fa3ed4247f05de8241c1e63e20f",
+            "actualSha256": "86ec1f92747a4e7016f90b2adfe2a2b188e43fa3ed4247f05de8241c1e63e20f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/RecipientFields.js": {
+            "expectedSha256": "4d9f38203e802b1c71f45ae12161af7370f1ddc386740151c005b49a0c1c6b3c",
+            "actualSha256": "4d9f38203e802b1c71f45ae12161af7370f1ddc386740151c005b49a0c1c6b3c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SelectedTemplateEntry.js": {
+            "expectedSha256": "e9d699699537a3712c8bd74c93fbaf1e1e7529a22c75064e86e79a9f479d194d",
+            "actualSha256": "e9d699699537a3712c8bd74c93fbaf1e1e7529a22c75064e86e79a9f479d194d",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SharedSignerSummary.js": {
+            "expectedSha256": "a21136bb73ac263dc5ccd6826e13257c74a22b7d6cdf19cdd12feb033659f830",
+            "actualSha256": "a21136bb73ac263dc5ccd6826e13257c74a22b7d6cdf19cdd12feb033659f830",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SigningBackButton.js": {
+            "expectedSha256": "cbe47e58cf143278268b5eada5da5e217f6966445e561f32ca565d3241d09631",
+            "actualSha256": "cbe47e58cf143278268b5eada5da5e217f6966445e561f32ca565d3241d09631",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SigningPackagesHub.js": {
+            "expectedSha256": "216926fca2a646c8c99c503c1b7428cef75765231c45d3452f4c9f63da1890e2",
+            "actualSha256": "216926fca2a646c8c99c503c1b7428cef75765231c45d3452f4c9f63da1890e2",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js": {
+            "expectedSha256": "c88848992d94649c879f525b9f5ad5db395f432b20805e5ca7bfefcb119b0e85",
+            "actualSha256": "c88848992d94649c879f525b9f5ad5db395f432b20805e5ca7bfefcb119b0e85",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SigningSelect.js": {
+            "expectedSha256": "8a9a4f79bb78fed9c4b6cced2a6f037e575fa1ab0fa45795f664293cd994b024",
+            "actualSha256": "8a9a4f79bb78fed9c4b6cced2a6f037e575fa1ab0fa45795f664293cd994b024",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TaskIssueDialog.js": {
+            "expectedSha256": "92d60395a381db2a52ec132cd3361f258ec2d12e2ceb95235ce982522c3be088",
+            "actualSha256": "92d60395a381db2a52ec132cd3361f258ec2d12e2ceb95235ce982522c3be088",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TaskIssues.scss": {
+            "expectedSha256": "101f833ea357a857b22792681be6abc1a144e2d5982a08d2919387f00473227f",
+            "actualSha256": "101f833ea357a857b22792681be6abc1a144e2d5982a08d2919387f00473227f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateArchiveConfirmation.js": {
+            "expectedSha256": "cf2c56560a0fcc5a505e7e5ccca9360f278450666f3d91d03df11373afcae57b",
+            "actualSha256": "cf2c56560a0fcc5a505e7e5ccca9360f278450666f3d91d03df11373afcae57b",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateBuilder.js": {
+            "expectedSha256": "2e7c339518cdf012ab1d2f8d7daf088ae8ceef0cd865d6b358e6332fbd8a33ab",
+            "actualSha256": "2e7c339518cdf012ab1d2f8d7daf088ae8ceef0cd865d6b358e6332fbd8a33ab",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateDataKeys.js": {
+            "expectedSha256": "a72e61546e168580a04d5222a8be0681aecf3a4ecf1b491523a2628efd5b1ba9",
+            "actualSha256": "a72e61546e168580a04d5222a8be0681aecf3a4ecf1b491523a2628efd5b1ba9",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateDataValueInput.js": {
+            "expectedSha256": "dca1ab5b68aa1ff254109a0ea112159baf55f1c35200e903e390f562403b90ca",
+            "actualSha256": "dca1ab5b68aa1ff254109a0ea112159baf55f1c35200e903e390f562403b90ca",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateDocumentCondition.js": {
+            "expectedSha256": "02d89ec6a8dc46668c6b8751993da5baadec8f26adda0b0d9d8a56c8a7810e79",
+            "actualSha256": "02d89ec6a8dc46668c6b8751993da5baadec8f26adda0b0d9d8a56c8a7810e79",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateRoles.js": {
+            "expectedSha256": "dda9fa6229507d4e9ff68f9b9c39314b1a569093120394c3f19a4424dad7bac4",
+            "actualSha256": "dda9fa6229507d4e9ff68f9b9c39314b1a569093120394c3f19a4424dad7bac4",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplatesWorkspace.js": {
+            "expectedSha256": "714aaa9e5de271217cacd9398db0dcd4cee4d45719c49819ecd7501a6f93e933",
+            "actualSha256": "714aaa9e5de271217cacd9398db0dcd4cee4d45719c49819ecd7501a6f93e933",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/WorkbookImport.js": {
+            "expectedSha256": "7c8c3b70acf779702ab96db95f3db58c6b2c17b4f2ad84e2c108a0607da2ed4f",
+            "actualSha256": "7c8c3b70acf779702ab96db95f3db58c6b2c17b4f2ad84e2c108a0607da2ed4f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/_selectArrow.scss": {
+            "expectedSha256": "bc0a656382549a322a5036d1137097cf271ff6ae3139726b1d7bfba829ff281a",
+            "actualSha256": "bc0a656382549a322a5036d1137097cf271ff6ae3139726b1d7bfba829ff281a",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/documentDataValue.js": {
+            "expectedSha256": "d9a4a7cea29c8348c1d7ba4627a41df645eace8b024953e851308167036b8250",
+            "actualSha256": "d9a4a7cea29c8348c1d7ba4627a41df645eace8b024953e851308167036b8250",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/nativeTemplateAdapter.js": {
+            "expectedSha256": "5a7ee5fdcd1db96906109744edc4bf805a370fc9c7d115c47f89c7ccec06d038",
+            "actualSha256": "5a7ee5fdcd1db96906109744edc4bf805a370fc9c7d115c47f89c7ccec06d038",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/signingBackButton.scss": {
+            "expectedSha256": "78b82f365f0a0dc9523cb1cebc6f6ad6c6f24db9cdba88bb0dcebdf37eb758c2",
+            "actualSha256": "78b82f365f0a0dc9523cb1cebc6f6ad6c6f24db9cdba88bb0dcebdf37eb758c2",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/signingCompose.scss": {
+            "expectedSha256": "c8e8f1ae5d3d9dffdf09c89e24a3224c02b6cd24487cda21c8b33153597aec63",
+            "actualSha256": "c8e8f1ae5d3d9dffdf09c89e24a3224c02b6cd24487cda21c8b33153597aec63",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/signingPackages.scss": {
+            "expectedSha256": "7939ed098ac5a19a9cbb7b32fbe3bd3aee585d8fbe6d252af692a7a4a4fcd471",
+            "actualSha256": "7939ed098ac5a19a9cbb7b32fbe3bd3aee585d8fbe6d252af692a7a4a4fcd471",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/signingSelect.scss": {
+            "expectedSha256": "3b8fc5ffb04426440a7a8e2b2bfb2b9e7571be5430aa6ff5ea7d0f0cbb275644",
+            "actualSha256": "3b8fc5ffb04426440a7a8e2b2bfb2b9e7571be5430aa6ff5ea7d0f0cbb275644",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/templateConditions.js": {
+            "expectedSha256": "d8e765f65e62f5a6919aafae38470888cf515afc9ecfc91c234850c9939147bd",
+            "actualSha256": "d8e765f65e62f5a6919aafae38470888cf515afc9ecfc91c234850c9939147bd",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/templates.scss": {
+            "expectedSha256": "7961e93ea83224d0675969de87459358f20d5347f23b942c2c27742585fbdf22",
+            "actualSha256": "7961e93ea83224d0675969de87459358f20d5347f23b942c2c27742585fbdf22",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/useSigningDraft.js": {
+            "expectedSha256": "9b0c88adbb2e13181efe4588b5fd33107728a3d58fe16252588ad42711b7a31f",
+            "actualSha256": "9b0c88adbb2e13181efe4588b5fd33107728a3d58fe16252588ad42711b7a31f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/useSigningLocale.js": {
+            "expectedSha256": "dc6464889dab401ff9c3d10c5408dfef698e7f3f94c0fc9bd168775c5a31227e",
+            "actualSha256": "dc6464889dab401ff9c3d10c5408dfef698e7f3f94c0fc9bd168775c5a31227e",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/utils/signingSpotGeometry.js": {
+            "expectedSha256": "a0b23d9c4dba659e83df13c344ea6f24e3caf076c18c0ae818b46a59cb5e34cf",
+            "actualSha256": "a0b23d9c4dba659e83df13c344ea6f24e3caf076c18c0ae818b46a59cb5e34cf",
+            "worktreeMatchesCommit": true
+          }
+        }
+      },
+      "billingJavaScript": {
+        "comparedPaths": [
+          "backend/controllers/billingController.js",
+          "backend/lib/billing/firmBillingService.js",
+          "backend/lib/billing/selfServiceRenewal.js",
+          "backend/lib/billing/selfServiceUpgrade.js",
+          "backend/lib/payments/takbullClient.js",
+          "frontend/src/api/billingApi.js",
+          "frontend/src/components/billing/TakbullCheckoutDialog.js",
+          "frontend/src/screens/billingScreen/PlanUsageScreen.js",
+          "frontend/src/screens/billingScreen/PlansPricingScreen.js"
+        ],
+        "differentFromShared": []
+      },
+      "localePreservation": [
+        {
+          "language": "he",
+          "clientUniqueKeyCount": 0,
+          "lostClientUniqueKeys": [],
+          "paymentUnconfirmedMatchesShared": true
+        },
+        {
+          "language": "en",
+          "clientUniqueKeyCount": 0,
+          "lostClientUniqueKeys": [],
+          "paymentUnconfirmedMatchesShared": true
+        },
+        {
+          "language": "ar",
+          "clientUniqueKeyCount": 0,
+          "lostClientUniqueKeys": [],
+          "paymentUnconfirmedMatchesShared": true
+        }
+      ],
+      "clientOnlyWholeFiles": {
+        "count": 24,
+        "unchangedCount": 24,
+        "differences": [],
+        "allowedDifferences": [],
+        "unexpectedDifferences": []
+      },
+      "sharedOnlyWholeFiles": {
+        "count": 98,
+        "differences": []
+      }
+    },
+    {
+      "tenant": "Melamedia",
+      "clientBase": "4a766a35921263260c3139632378444e6550a5e3",
+      "candidateHead": "2378c2803ead8babcf0712dea8ab5f9e96c3b0e7",
+      "mergeBase": "53d177eea8bcdcb882ade913f4afa15c6011da4b",
+      "ancestorChecks": {
+        "4a766a35921263260c3139632378444e6550a5e3": true,
+        "176ff60a377136ce6a01b43c1defd23f2fe0674b": true
+      },
+      "protectedManifest": {
+        "requiredAncestor": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+        "requiredAncestorIsAncestor": true,
+        "entryCount": 103,
+        "manifestIdenticalToClientBase": true,
+        "mismatchedHashes": [],
+        "worktreeDrift": [],
+        "entries": {
+          "backend/controllers/signingFileController.js": {
+            "expectedSha256": "7771f32d5013837a2fdbf644d0240953c8ab82e37dd66fc0d80c1617dd0f659e",
+            "actualSha256": "7771f32d5013837a2fdbf644d0240953c8ab82e37dd66fc0d80c1617dd0f659e",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingGeometry.js": {
+            "expectedSha256": "31aef464c70d9e9bdc432951d8e8db175072af7337eb556530764224fa3268c4",
+            "actualSha256": "31aef464c70d9e9bdc432951d8e8db175072af7337eb556530764224fa3268c4",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/canonical.js": {
+            "expectedSha256": "35a3122f3b82aeff80a5b8c44865e2eb4081225ba4e9c33680d850baa3624ccf",
+            "actualSha256": "35a3122f3b82aeff80a5b8c44865e2eb4081225ba4e9c33680d850baa3624ccf",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/compiler.js": {
+            "expectedSha256": "26a3830609f1cf050f371bb1cb2dfba03739c43e52c4bf39dceee898b968478c",
+            "actualSha256": "26a3830609f1cf050f371bb1cb2dfba03739c43e52c4bf39dceee898b968478c",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/dataRenderer.js": {
+            "expectedSha256": "36f566839b3c466dba5bbbbd5ecdc34681a635d4d2ae2698251286ae5a33114b",
+            "actualSha256": "36f566839b3c466dba5bbbbd5ecdc34681a635d4d2ae2698251286ae5a33114b",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/errors.js": {
+            "expectedSha256": "d875a5b3b091663ba6085056cda65fb0a43b77c169a31f92099b411a64edc8f3",
+            "actualSha256": "d875a5b3b091663ba6085056cda65fb0a43b77c169a31f92099b411a64edc8f3",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/limits.js": {
+            "expectedSha256": "d69b0b2b574dd7410b7f6e02812e789fc3631e8e88e03cd506a8ff6282f6fa4b",
+            "actualSha256": "d69b0b2b574dd7410b7f6e02812e789fc3631e8e88e03cd506a8ff6282f6fa4b",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/personalEvidence.js": {
+            "expectedSha256": "62451ddf5d3951bcfe8fcf82318917b82de85dec65e196cc3199a4560ef03eda",
+            "actualSha256": "62451ddf5d3951bcfe8fcf82318917b82de85dec65e196cc3199a4560ef03eda",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/recipientBindings.js": {
+            "expectedSha256": "8fb8f88c30257e598aadb9626bb01470f1b997eeae03d3b48856e7dad211dfc0",
+            "actualSha256": "8fb8f88c30257e598aadb9626bb01470f1b997eeae03d3b48856e7dad211dfc0",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/recipientLayout.js": {
+            "expectedSha256": "074af44b4adbbf0e41eebc15bbfe9637f52f4c6aede0e3021e41dcabfe09373c",
+            "actualSha256": "074af44b4adbbf0e41eebc15bbfe9637f52f4c6aede0e3021e41dcabfe09373c",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/signerFieldValue.js": {
+            "expectedSha256": "b182e643c594318c08c4227bd029e2ebd5a47ee5eeb05b7f3995cd16f2a2d996",
+            "actualSha256": "b182e643c594318c08c4227bd029e2ebd5a47ee5eeb05b7f3995cd16f2a2d996",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/signingOrder.js": {
+            "expectedSha256": "4307034929ff7b213303e8fced9632be3be1f4cfab5f813e6ffa05311e7c669b",
+            "actualSha256": "4307034929ff7b213303e8fced9632be3be1f4cfab5f813e6ffa05311e7c669b",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/sourceCache.js": {
+            "expectedSha256": "8dc9d45f39d5544fe1fb1240b62913cc6c61b4248f54b771956dde043c8dba4d",
+            "actualSha256": "8dc9d45f39d5544fe1fb1240b62913cc6c61b4248f54b771956dde043c8dba4d",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/stamp.js": {
+            "expectedSha256": "df65a135e86a83ed08af425015d83790a21ef721024f6780c6199780c62d7e4f",
+            "actualSha256": "df65a135e86a83ed08af425015d83790a21ef721024f6780c6199780c62d7e4f",
+            "worktreeMatchesCommit": true
+          },
+          "backend/lib/signingV2/workbook.js": {
+            "expectedSha256": "cf957102bed3cdf1bbb15bbb92eef097ffbb2dc11e65a56ba3e4dd0aed7bdf6a",
+            "actualSha256": "cf957102bed3cdf1bbb15bbb92eef097ffbb2dc11e65a56ba3e4dd0aed7bdf6a",
+            "worktreeMatchesCommit": true
+          },
+          "backend/routes/signingFileRoutes.js": {
+            "expectedSha256": "d84f90435c2f060f876e733b292b521a8796c2f9c0c7384ea0247748c89f3b9c",
+            "actualSha256": "d84f90435c2f060f876e733b292b521a8796c2f9c0c7384ea0247748c89f3b9c",
+            "worktreeMatchesCommit": true
+          },
+          "backend/routes/signingV2PublicRoutes.js": {
+            "expectedSha256": "82779cb281f9cf9969581cce55ce2ccbe9f7ce20a4de3b0b921d51365c018d58",
+            "actualSha256": "82779cb281f9cf9969581cce55ce2ccbe9f7ce20a4de3b0b921d51365c018d58",
+            "worktreeMatchesCommit": true
+          },
+          "backend/routes/signingV2Routes.js": {
+            "expectedSha256": "e3541a4f6902894a80724d190cecf514ce9028725fd96b5d8c4bc5e9cbfad003",
+            "actualSha256": "e3541a4f6902894a80724d190cecf514ce9028725fd96b5d8c4bc5e9cbfad003",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/api/signingFilesApi.js": {
+            "expectedSha256": "7d499b703f1f0ec220495614551364ed0b8f1b3ec3495a029d094c0dfe63d16d",
+            "actualSha256": "7d499b703f1f0ec220495614551364ed0b8f1b3ec3495a029d094c0dfe63d16d",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/api/signingPublicApi.js": {
+            "expectedSha256": "30ea3b036ae92aaefc8c16d1d1c89221b65c7966d72868e64455611d69976b1c",
+            "actualSha256": "30ea3b036ae92aaefc8c16d1d1c89221b65c7966d72868e64455611d69976b1c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/LawyerStampPopup.js": {
+            "expectedSha256": "d6edf4b25d7338276e3c3006199621720d11f86c891878a1a92cc8a6024aa821",
+            "actualSha256": "d6edf4b25d7338276e3c3006199621720d11f86c891878a1a92cc8a6024aa821",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/LawyerStampPopup.scss": {
+            "expectedSha256": "30b9e7ce8f5f2567072620668744f63cca98c153810c31e620fdc0f87bc0be5c",
+            "actualSha256": "30b9e7ce8f5f2567072620668744f63cca98c153810c31e620fdc0f87bc0be5c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/SignatureCanvas.js": {
+            "expectedSha256": "a24c23bd80d6d00b3f470c3cb6d74f00b9f34a8d3173f5b1bc2732603f48f2c2",
+            "actualSha256": "a24c23bd80d6d00b3f470c3cb6d74f00b9f34a8d3173f5b1bc2732603f48f2c2",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/SignatureSpotMarker.js": {
+            "expectedSha256": "f7f36033937ac23741e08222766774281c6230514acab66d031923af35bdd9aa",
+            "actualSha256": "f7f36033937ac23741e08222766774281c6230514acab66d031923af35bdd9aa",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/SigningFileCard.js": {
+            "expectedSha256": "06d365fe6a8d29fdd3a7214b14cc7c9c7742bf7a50813bdb8b2f0db7a03aed14",
+            "actualSha256": "06d365fe6a8d29fdd3a7214b14cc7c9c7742bf7a50813bdb8b2f0db7a03aed14",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/SigningTabButton.js": {
+            "expectedSha256": "eef0c48c00a188ca49abd12f740512c001b3b4c8b0d72a419d9e7fa0b3ea0117",
+            "actualSha256": "eef0c48c00a188ca49abd12f740512c001b3b4c8b0d72a419d9e7fa0b3ea0117",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/fieldToolbar/AddFieldPanel.js": {
+            "expectedSha256": "0627a169601f3a48a13e18e77798487aed23f21f70c597b75a411bd32e139f4d",
+            "actualSha256": "0627a169601f3a48a13e18e77798487aed23f21f70c597b75a411bd32e139f4d",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/fieldToolbar/FloatingAddField.js": {
+            "expectedSha256": "527fe75b8f42e6ff45acf1d0ced2372f30b284fa71c3677bf5371aa64225b70c",
+            "actualSha256": "527fe75b8f42e6ff45acf1d0ced2372f30b284fa71c3677bf5371aa64225b70c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/fieldToolbar/addFieldPanel.scss": {
+            "expectedSha256": "7aa116c56fcdde03e822273cabc797cc62515006a6ec44cac287f2b3700f42c7",
+            "actualSha256": "7aa116c56fcdde03e822273cabc797cc62515006a6ec44cac287f2b3700f42c7",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/fieldToolbar/fieldContextMenu.scss": {
+            "expectedSha256": "070885516569011a0aa83b1b828bda117e59caac0485dc03e24385783536832f",
+            "actualSha256": "070885516569011a0aa83b1b828bda117e59caac0485dc03e24385783536832f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/fieldToolbar/fieldToolbar.scss": {
+            "expectedSha256": "680974e6b601496e32d4862afc621e05e53bca4ef32d472062e216265979c298",
+            "actualSha256": "680974e6b601496e32d4862afc621e05e53bca4ef32d472062e216265979c298",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/pdfViewer/PdfOverlay.js": {
+            "expectedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "actualSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/pdfViewer/PdfPage.js": {
+            "expectedSha256": "5842587ff4060c25ba9b7fa04eeb092a1e57854abb162c10ff3419d473c31f60",
+            "actualSha256": "5842587ff4060c25ba9b7fa04eeb092a1e57854abb162c10ff3419d473c31f60",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/pdfViewer/PdfViewer.js": {
+            "expectedSha256": "e7ed2617c99ea88ba814fea688ea939b2bdd2134d818bf1795336c5d5d86d68d",
+            "actualSha256": "e7ed2617c99ea88ba814fea688ea939b2bdd2134d818bf1795336c5d5d86d68d",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/personalStampPdf.js": {
+            "expectedSha256": "fae010adbcc8dceb8bd1a98eb767e013694e877e537741d00ad6c1218c1fb629",
+            "actualSha256": "fae010adbcc8dceb8bd1a98eb767e013694e877e537741d00ad6c1218c1fb629",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/signFiles.scss": {
+            "expectedSha256": "9823a20d3f11cc72fd89754b48c3392121789cfbf465d24669e157d7ee420126",
+            "actualSha256": "9823a20d3f11cc72fd89754b48c3392121789cfbf465d24669e157d7ee420126",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/signatureSpots/SignatureSpot.js": {
+            "expectedSha256": "74a75dfd85b12a034ea534b4e17c8eaa57c98366d3eb6226ef1e3d32dacfd13a",
+            "actualSha256": "74a75dfd85b12a034ea534b4e17c8eaa57c98366d3eb6226ef1e3d32dacfd13a",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/components/specializedComponents/signFiles/signatureSpots/SignatureSpotsLayer.js": {
+            "expectedSha256": "9dd0e0d33fc421c949325bf9069642c1a4f76d5e18a9b6410d97832cde94ea7e",
+            "actualSha256": "9dd0e0d33fc421c949325bf9069642c1a4f76d5e18a9b6410d97832cde94ea7e",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/PublicSigningScreen.js": {
+            "expectedSha256": "eb8aca9c76f90eb06b65d8ebe9b4e331b7aef5aa92fef0eea053d0e17b0f0259",
+            "actualSha256": "eb8aca9c76f90eb06b65d8ebe9b4e331b7aef5aa92fef0eea053d0e17b0f0259",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/PublicSigningScreen.scss": {
+            "expectedSha256": "69d8afabcbb62971bf55b390ba618aeb2e2320a01c78cdd4248a6ebb2f8a0141",
+            "actualSha256": "69d8afabcbb62971bf55b390ba618aeb2e2320a01c78cdd4248a6ebb2f8a0141",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/ShortSignRedirectScreen.js": {
+            "expectedSha256": "05ab1c08b2e67271b70381c79ba96b77246c3edd43a3468e0006819fe95d8a85",
+            "actualSha256": "05ab1c08b2e67271b70381c79ba96b77246c3edd43a3468e0006819fe95d8a85",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningManagerScreen.js": {
+            "expectedSha256": "67b7bc39d033cc43b70c8416309423835c020cfd55915f5a599f8dd9ea4154f0",
+            "actualSha256": "67b7bc39d033cc43b70c8416309423835c020cfd55915f5a599f8dd9ea4154f0",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningManagerScreen.scss": {
+            "expectedSha256": "911793cfc7bf3fc38d670d84c3cc1ea1265536b880c792b03d4319e55df16972",
+            "actualSha256": "911793cfc7bf3fc38d670d84c3cc1ea1265536b880c792b03d4319e55df16972",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningScreen.js": {
+            "expectedSha256": "46ea8c556e9b79b12e7c29ec8d38fb352a8432517319a54955e0d83288c84b24",
+            "actualSha256": "46ea8c556e9b79b12e7c29ec8d38fb352a8432517319a54955e0d83288c84b24",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningScreen.scss": {
+            "expectedSha256": "b2eccc113f0f7fa6719e9d2d8d281c1e058e340cf1b345dce8f0a91880b4ad3a",
+            "actualSha256": "b2eccc113f0f7fa6719e9d2d8d281c1e058e340cf1b345dce8f0a91880b4ad3a",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningSpotsPreviewScreen.js": {
+            "expectedSha256": "25a3befbf69ebdd7926c6c53c7f62e70a68ba50935f20b242a7b718607786577",
+            "actualSha256": "25a3befbf69ebdd7926c6c53c7f62e70a68ba50935f20b242a7b718607786577",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/SigningSpotsPreviewScreen.scss": {
+            "expectedSha256": "87584fdefaaa03039f44896fc2015ae7b236b4fc8d5ee68626d8004c1162b308",
+            "actualSha256": "87584fdefaaa03039f44896fc2015ae7b236b4fc8d5ee68626d8004c1162b308",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/UploadFileForSigningScreen.js": {
+            "expectedSha256": "c88a944dfa1c8adb37f5679a6c62c137aab74bae683593e56d481b09097d6348",
+            "actualSha256": "c88a944dfa1c8adb37f5679a6c62c137aab74bae683593e56d481b09097d6348",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/UploadFileForSigningScreen.scss": {
+            "expectedSha256": "9c281ea9a26ed4a2cbd0b3341abc7cf99eadb93d00ae9bf90b81175c1ec17c69",
+            "actualSha256": "9c281ea9a26ed4a2cbd0b3341abc7cf99eadb93d00ae9bf90b81175c1ec17c69",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/CompletedPackageCopy.js": {
+            "expectedSha256": "c2b9175e4a602a8ebc820847b4a1dad0e89b932284b5b2b1184bd4810c630d77",
+            "actualSha256": "c2b9175e4a602a8ebc820847b4a1dad0e89b932284b5b2b1184bd4810c630d77",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/PublicPackageSigning.js": {
+            "expectedSha256": "c3e7c41fbaec5ef1fe640eddefc213898c39a5d93861c328b41dd2eb18133d31",
+            "actualSha256": "c3e7c41fbaec5ef1fe640eddefc213898c39a5d93861c328b41dd2eb18133d31",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/SignaturePad.js": {
+            "expectedSha256": "b646e4b0e94e1731d17ed3c9c0f0a64c95370c2613dd0d562927d5a735bc2bcb",
+            "actualSha256": "b646e4b0e94e1731d17ed3c9c0f0a64c95370c2613dd0d562927d5a735bc2bcb",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/completedPackageCopy.scss": {
+            "expectedSha256": "8a7d718424624b796f5f5df0b3b69cea388cc5dedafd2c7beed11653dfc4ae3d",
+            "actualSha256": "8a7d718424624b796f5f5df0b3b69cea388cc5dedafd2c7beed11653dfc4ae3d",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/publicPackageSigning.scss": {
+            "expectedSha256": "57ffd7691bad8ef2121d0c9a736a9917642847167fff48c357d14a4f8807ca19",
+            "actualSha256": "57ffd7691bad8ef2121d0c9a736a9917642847167fff48c357d14a4f8807ca19",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/publicV2/v2SigningCanvasAdapter.js": {
+            "expectedSha256": "d05e3e3aabe9cdf8d510d122654ccb2072db1ace80de3a34b946ef76ed754073",
+            "actualSha256": "d05e3e3aabe9cdf8d510d122654ccb2072db1ace80de3a34b946ef76ed754073",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/signerDeliveryUtils.js": {
+            "expectedSha256": "8fffbf0c9a19a6a3133371f850e1dc7194a46b166397085bef7bb36cba4ebf0c",
+            "actualSha256": "8fffbf0c9a19a6a3133371f850e1dc7194a46b166397085bef7bb36cba4ebf0c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ApprovalReviewerField.js": {
+            "expectedSha256": "c19bc183d3c56652d29ca3313befb084886f3754ea6958bb4a750c75124ac19f",
+            "actualSha256": "c19bc183d3c56652d29ca3313befb084886f3754ea6958bb4a750c75124ac19f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/BatchComposer.js": {
+            "expectedSha256": "40fda60d5b4d3fa6e1a2fe57ea5c7e6f4cd7c9a93e982ac03e3a6da224dbf552",
+            "actualSha256": "40fda60d5b4d3fa6e1a2fe57ea5c7e6f4cd7c9a93e982ac03e3a6da224dbf552",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/BulkActionsWorkspace.js": {
+            "expectedSha256": "fdcd4f38266e5d838dbd34dc0aa2f34d875ec78614f3163a46647388c6315cd5",
+            "actualSha256": "fdcd4f38266e5d838dbd34dc0aa2f34d875ec78614f3163a46647388c6315cd5",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/CaseContextPicker.js": {
+            "expectedSha256": "b776a31b221ab0189491cfa18a766c29d53071924764b1ec0e20f8b55d7e0439",
+            "actualSha256": "b776a31b221ab0189491cfa18a766c29d53071924764b1ec0e20f8b55d7e0439",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/CaseSigningFlow.js": {
+            "expectedSha256": "56836fdadbe50416d377de629f38a943c62ffb34a1bb25a361a0a0c426ddd997",
+            "actualSha256": "56836fdadbe50416d377de629f38a943c62ffb34a1bb25a361a0a0c426ddd997",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ClientSendContext.js": {
+            "expectedSha256": "236122dffc4f7423ac911d0277b10ce00cb2ac2f880d5b88ca4be0c953379b91",
+            "actualSha256": "236122dffc4f7423ac911d0277b10ce00cb2ac2f880d5b88ca4be0c953379b91",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ClientSigningFlow.js": {
+            "expectedSha256": "056a4e1d09f3d20c656847380bfcf411d2f48e68ec4aca48c80be2a867f2d72b",
+            "actualSha256": "056a4e1d09f3d20c656847380bfcf411d2f48e68ec4aca48c80be2a867f2d72b",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/CompletionMarkDialog.js": {
+            "expectedSha256": "2ff2bff67f2675f4f43c159c52353c9033ecfa3a14f6c2a55c45a81b27bb4b9e",
+            "actualSha256": "2ff2bff67f2675f4f43c159c52353c9033ecfa3a14f6c2a55c45a81b27bb4b9e",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/DraftRecoveryList.js": {
+            "expectedSha256": "c0f9788db847b78fac2baf591be8ac5dfcc44907128388138d647140814744cf",
+            "actualSha256": "c0f9788db847b78fac2baf591be8ac5dfcc44907128388138d647140814744cf",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/NativeTemplateBuilder.js": {
+            "expectedSha256": "af498f44ad20cd5321a05211b99bfcca783bd697bc8a4f5fc5491588e9ef396b",
+            "actualSha256": "af498f44ad20cd5321a05211b99bfcca783bd697bc8a4f5fc5491588e9ef396b",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/PackageApprovalDialog.js": {
+            "expectedSha256": "5061efd320d0c13e5314605a9f8bf647fed5ca928bf10f991049425d39ce17bd",
+            "actualSha256": "5061efd320d0c13e5314605a9f8bf647fed5ca928bf10f991049425d39ce17bd",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/PackageComposer.js": {
+            "expectedSha256": "497bee76b11f15574fd42bf78d2ccf252a2e1d53dba923bb6bfed35e663fd57c",
+            "actualSha256": "497bee76b11f15574fd42bf78d2ccf252a2e1d53dba923bb6bfed35e663fd57c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/PackageLifecycleDialog.js": {
+            "expectedSha256": "7765876c60b589298a7a822215318da25b63f9ca343a1d62a23b6eeaf0fb0bb2",
+            "actualSha256": "7765876c60b589298a7a822215318da25b63f9ca343a1d62a23b6eeaf0fb0bb2",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/PackageReplacementDialog.js": {
+            "expectedSha256": "7d513b34b1852174f39623388277d06fc4d3de0f8b2e501b0f9e5e71e7ed4be8",
+            "actualSha256": "7d513b34b1852174f39623388277d06fc4d3de0f8b2e501b0f9e5e71e7ed4be8",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ParticipantActionDialog.js": {
+            "expectedSha256": "cded137133f1924a26c0d04ccbacaee8c156205e4f16cae15892b9620a5b67e4",
+            "actualSha256": "cded137133f1924a26c0d04ccbacaee8c156205e4f16cae15892b9620a5b67e4",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ParticipantContactDialog.js": {
+            "expectedSha256": "6b9b58259802e9dceeb87d2f2da11493340889e8d7b150d7bd55e9e7e7a880e4",
+            "actualSha256": "6b9b58259802e9dceeb87d2f2da11493340889e8d7b150d7bd55e9e7e7a880e4",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/ParticipantDirectoryFields.js": {
+            "expectedSha256": "99be15dc96be66dbc4bf259535bb987407757f21803f0fd6305ff983ac7cb632",
+            "actualSha256": "99be15dc96be66dbc4bf259535bb987407757f21803f0fd6305ff983ac7cb632",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/PublicBatchSigning.js": {
+            "expectedSha256": "86ec1f92747a4e7016f90b2adfe2a2b188e43fa3ed4247f05de8241c1e63e20f",
+            "actualSha256": "86ec1f92747a4e7016f90b2adfe2a2b188e43fa3ed4247f05de8241c1e63e20f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/RecipientFields.js": {
+            "expectedSha256": "4d9f38203e802b1c71f45ae12161af7370f1ddc386740151c005b49a0c1c6b3c",
+            "actualSha256": "4d9f38203e802b1c71f45ae12161af7370f1ddc386740151c005b49a0c1c6b3c",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SelectedTemplateEntry.js": {
+            "expectedSha256": "e9d699699537a3712c8bd74c93fbaf1e1e7529a22c75064e86e79a9f479d194d",
+            "actualSha256": "e9d699699537a3712c8bd74c93fbaf1e1e7529a22c75064e86e79a9f479d194d",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SharedSignerSummary.js": {
+            "expectedSha256": "a21136bb73ac263dc5ccd6826e13257c74a22b7d6cdf19cdd12feb033659f830",
+            "actualSha256": "a21136bb73ac263dc5ccd6826e13257c74a22b7d6cdf19cdd12feb033659f830",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SigningBackButton.js": {
+            "expectedSha256": "cbe47e58cf143278268b5eada5da5e217f6966445e561f32ca565d3241d09631",
+            "actualSha256": "cbe47e58cf143278268b5eada5da5e217f6966445e561f32ca565d3241d09631",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SigningPackagesHub.js": {
+            "expectedSha256": "216926fca2a646c8c99c503c1b7428cef75765231c45d3452f4c9f63da1890e2",
+            "actualSha256": "216926fca2a646c8c99c503c1b7428cef75765231c45d3452f4c9f63da1890e2",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js": {
+            "expectedSha256": "c88848992d94649c879f525b9f5ad5db395f432b20805e5ca7bfefcb119b0e85",
+            "actualSha256": "c88848992d94649c879f525b9f5ad5db395f432b20805e5ca7bfefcb119b0e85",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/SigningSelect.js": {
+            "expectedSha256": "8a9a4f79bb78fed9c4b6cced2a6f037e575fa1ab0fa45795f664293cd994b024",
+            "actualSha256": "8a9a4f79bb78fed9c4b6cced2a6f037e575fa1ab0fa45795f664293cd994b024",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TaskIssueDialog.js": {
+            "expectedSha256": "92d60395a381db2a52ec132cd3361f258ec2d12e2ceb95235ce982522c3be088",
+            "actualSha256": "92d60395a381db2a52ec132cd3361f258ec2d12e2ceb95235ce982522c3be088",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TaskIssues.scss": {
+            "expectedSha256": "101f833ea357a857b22792681be6abc1a144e2d5982a08d2919387f00473227f",
+            "actualSha256": "101f833ea357a857b22792681be6abc1a144e2d5982a08d2919387f00473227f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateArchiveConfirmation.js": {
+            "expectedSha256": "cf2c56560a0fcc5a505e7e5ccca9360f278450666f3d91d03df11373afcae57b",
+            "actualSha256": "cf2c56560a0fcc5a505e7e5ccca9360f278450666f3d91d03df11373afcae57b",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateBuilder.js": {
+            "expectedSha256": "2e7c339518cdf012ab1d2f8d7daf088ae8ceef0cd865d6b358e6332fbd8a33ab",
+            "actualSha256": "2e7c339518cdf012ab1d2f8d7daf088ae8ceef0cd865d6b358e6332fbd8a33ab",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateDataKeys.js": {
+            "expectedSha256": "a72e61546e168580a04d5222a8be0681aecf3a4ecf1b491523a2628efd5b1ba9",
+            "actualSha256": "a72e61546e168580a04d5222a8be0681aecf3a4ecf1b491523a2628efd5b1ba9",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateDataValueInput.js": {
+            "expectedSha256": "dca1ab5b68aa1ff254109a0ea112159baf55f1c35200e903e390f562403b90ca",
+            "actualSha256": "dca1ab5b68aa1ff254109a0ea112159baf55f1c35200e903e390f562403b90ca",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateDocumentCondition.js": {
+            "expectedSha256": "02d89ec6a8dc46668c6b8751993da5baadec8f26adda0b0d9d8a56c8a7810e79",
+            "actualSha256": "02d89ec6a8dc46668c6b8751993da5baadec8f26adda0b0d9d8a56c8a7810e79",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplateRoles.js": {
+            "expectedSha256": "dda9fa6229507d4e9ff68f9b9c39314b1a569093120394c3f19a4424dad7bac4",
+            "actualSha256": "dda9fa6229507d4e9ff68f9b9c39314b1a569093120394c3f19a4424dad7bac4",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/TemplatesWorkspace.js": {
+            "expectedSha256": "714aaa9e5de271217cacd9398db0dcd4cee4d45719c49819ecd7501a6f93e933",
+            "actualSha256": "714aaa9e5de271217cacd9398db0dcd4cee4d45719c49819ecd7501a6f93e933",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/WorkbookImport.js": {
+            "expectedSha256": "7c8c3b70acf779702ab96db95f3db58c6b2c17b4f2ad84e2c108a0607da2ed4f",
+            "actualSha256": "7c8c3b70acf779702ab96db95f3db58c6b2c17b4f2ad84e2c108a0607da2ed4f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/_selectArrow.scss": {
+            "expectedSha256": "bc0a656382549a322a5036d1137097cf271ff6ae3139726b1d7bfba829ff281a",
+            "actualSha256": "bc0a656382549a322a5036d1137097cf271ff6ae3139726b1d7bfba829ff281a",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/documentDataValue.js": {
+            "expectedSha256": "d9a4a7cea29c8348c1d7ba4627a41df645eace8b024953e851308167036b8250",
+            "actualSha256": "d9a4a7cea29c8348c1d7ba4627a41df645eace8b024953e851308167036b8250",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/nativeTemplateAdapter.js": {
+            "expectedSha256": "5a7ee5fdcd1db96906109744edc4bf805a370fc9c7d115c47f89c7ccec06d038",
+            "actualSha256": "5a7ee5fdcd1db96906109744edc4bf805a370fc9c7d115c47f89c7ccec06d038",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/signingBackButton.scss": {
+            "expectedSha256": "78b82f365f0a0dc9523cb1cebc6f6ad6c6f24db9cdba88bb0dcebdf37eb758c2",
+            "actualSha256": "78b82f365f0a0dc9523cb1cebc6f6ad6c6f24db9cdba88bb0dcebdf37eb758c2",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/signingCompose.scss": {
+            "expectedSha256": "c8e8f1ae5d3d9dffdf09c89e24a3224c02b6cd24487cda21c8b33153597aec63",
+            "actualSha256": "c8e8f1ae5d3d9dffdf09c89e24a3224c02b6cd24487cda21c8b33153597aec63",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/signingPackages.scss": {
+            "expectedSha256": "7939ed098ac5a19a9cbb7b32fbe3bd3aee585d8fbe6d252af692a7a4a4fcd471",
+            "actualSha256": "7939ed098ac5a19a9cbb7b32fbe3bd3aee585d8fbe6d252af692a7a4a4fcd471",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/signingSelect.scss": {
+            "expectedSha256": "3b8fc5ffb04426440a7a8e2b2bfb2b9e7571be5430aa6ff5ea7d0f0cbb275644",
+            "actualSha256": "3b8fc5ffb04426440a7a8e2b2bfb2b9e7571be5430aa6ff5ea7d0f0cbb275644",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/templateConditions.js": {
+            "expectedSha256": "d8e765f65e62f5a6919aafae38470888cf515afc9ecfc91c234850c9939147bd",
+            "actualSha256": "d8e765f65e62f5a6919aafae38470888cf515afc9ecfc91c234850c9939147bd",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/templates.scss": {
+            "expectedSha256": "7961e93ea83224d0675969de87459358f20d5347f23b942c2c27742585fbdf22",
+            "actualSha256": "7961e93ea83224d0675969de87459358f20d5347f23b942c2c27742585fbdf22",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/useSigningDraft.js": {
+            "expectedSha256": "9b0c88adbb2e13181efe4588b5fd33107728a3d58fe16252588ad42711b7a31f",
+            "actualSha256": "9b0c88adbb2e13181efe4588b5fd33107728a3d58fe16252588ad42711b7a31f",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/screens/signingScreen/templates/useSigningLocale.js": {
+            "expectedSha256": "dc6464889dab401ff9c3d10c5408dfef698e7f3f94c0fc9bd168775c5a31227e",
+            "actualSha256": "dc6464889dab401ff9c3d10c5408dfef698e7f3f94c0fc9bd168775c5a31227e",
+            "worktreeMatchesCommit": true
+          },
+          "frontend/src/utils/signingSpotGeometry.js": {
+            "expectedSha256": "a0b23d9c4dba659e83df13c344ea6f24e3caf076c18c0ae818b46a59cb5e34cf",
+            "actualSha256": "a0b23d9c4dba659e83df13c344ea6f24e3caf076c18c0ae818b46a59cb5e34cf",
+            "worktreeMatchesCommit": true
+          }
+        }
+      },
+      "billingJavaScript": {
+        "comparedPaths": [
+          "backend/controllers/billingController.js",
+          "backend/lib/billing/firmBillingService.js",
+          "backend/lib/billing/selfServiceRenewal.js",
+          "backend/lib/billing/selfServiceUpgrade.js",
+          "backend/lib/payments/takbullClient.js",
+          "frontend/src/api/billingApi.js",
+          "frontend/src/components/billing/TakbullCheckoutDialog.js",
+          "frontend/src/screens/billingScreen/PlanUsageScreen.js",
+          "frontend/src/screens/billingScreen/PlansPricingScreen.js"
+        ],
+        "differentFromShared": []
+      },
+      "localePreservation": [
+        {
+          "language": "he",
+          "clientUniqueKeyCount": 12,
+          "lostClientUniqueKeys": [],
+          "paymentUnconfirmedMatchesShared": true
+        },
+        {
+          "language": "en",
+          "clientUniqueKeyCount": 12,
+          "lostClientUniqueKeys": [],
+          "paymentUnconfirmedMatchesShared": true
+        },
+        {
+          "language": "ar",
+          "clientUniqueKeyCount": 12,
+          "lostClientUniqueKeys": [],
+          "paymentUnconfirmedMatchesShared": true
+        }
+      ],
+      "clientOnlyWholeFiles": {
+        "count": 52,
+        "unchangedCount": 52,
+        "differences": [],
+        "allowedDifferences": [],
+        "unexpectedDifferences": []
+      },
+      "sharedOnlyWholeFiles": {
+        "count": 21,
+        "differences": []
+      }
+    }
+  ],
+  "limits": [
+    "No claim of executing or independently reviewing all runtime gates; root aggregates those separate logs.",
+    "Whole-file unique-path preservation does not substitute for semantic review of overlapping changes. Targeted Melamed controls/tagged-case review is summarized in README.",
+    "Root's separate fixture inspection reports: Current temporary worktree expects a relative Word HTTP fixture that is absent. A historical protected-workspace fixture exists but hardcodes old source and destructively resets public on named socket55491, so it is not reusable unchanged for these candidates or borrowable. This is an environment/source-binding fixture gap, not a product defect or a claim that no historical fixture exists anywhere.",
+    "Complete signup release fixture/config and profile PostgreSQL opt-in fixture are unavailable to this task. No new PostgreSQL roles/access or environment restoration authorized.",
+    "Actual converter environment, provider sandbox payment/document type and document email delivery remain unqualified by this source review.",
+    "Mor live frontend identity observation remains separately unresolved; local source agreement is not deployment identity."
+  ]
+}

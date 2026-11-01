@@ -2,6 +2,7 @@
 const crypto=require('node:crypto');
 const sdk=require('./vendor/index.cjs');
 const scope=require('../tenant/databaseScope');
+const {billingOperationsEnabled,assertBillingOperationsEnabled}=require('../billing/billingOperations');
 const {CONSENT_VERSION,UUID,hash,fail,getConfig:readConfig,normalizeRecipient,officeKey}=require('./config');
 
 // No database or provider is opened by importing this module. Disabled releases
@@ -10,6 +11,7 @@ function createSystemMessagesService({database,env=process.env,now=()=>new Date(
     const db=()=>database || require('../../config/db');
     const getConfig=()=>readConfig(env);
     const clock=()=>new Date(now());
+    const financialMessage=row=>['payment_received','subscription_update'].includes(row?.event_family);
     const identity=(officeId,config)=>{
         const key=officeKey(officeId,config);
         if (config.mode==='sharedsignup') {
@@ -175,6 +177,7 @@ function createSystemMessagesService({database,env=process.env,now=()=>new Date(
             consentEventId:consent.consent_event_id,prepared,occurredAt:timestamp,expiresAt:expiry});
     }
     async function enqueuePaymentReceived(client,{intent,occurredAt}={}) {
+        if (!billingOperationsEnabled(env)) return {skipped:true,reason:'billing_operations_paused'};
         const config=getConfig();
         if (!config.captureEnabled) return {skipped:true,reason:'disabled'};
         if (!UUID.test(String(intent?.id || ''))) fail('SYSTEM_MESSAGES_PAYMENT_REQUIRED');
@@ -193,6 +196,7 @@ function createSystemMessagesService({database,env=process.env,now=()=>new Date(
             occurredAt:settledAt,message:{kind:'payment_received',amountCents,currency:'ILS',reference:'payment:'+saved.id}});
     }
     async function enqueueSubscriptionUpdate(client,{officeId=null,ownerUserId,sourceId,status,planLabel,periodEndsOn,occurredAt}={}) {
+        if (!billingOperationsEnabled(env)) return {skipped:true,reason:'billing_operations_paused'};
         const config=getConfig();
         if (!config.captureEnabled) return {skipped:true,reason:'disabled'};
         identity(officeId,config);
@@ -214,8 +218,12 @@ function createSystemMessagesService({database,env=process.env,now=()=>new Date(
         const client=await db().connect();
         try {
             await client.query('BEGIN');
+            // Leave financial reservations byte-for-byte unchanged during a
+            // billing pause; unrelated consent/messages may keep dispatching.
+            const financialFilter=billingOperationsEnabled(env)?'':" AND event_family NOT IN ('payment_received','subscription_update')";
             const row=(await client.query(`SELECT * FROM central_system_message_outbox WHERE deployment_id=$1
                 AND ((status='pending' AND next_attempt_at<=$2) OR (status='sending' AND lease_until<=$2))
+                ${financialFilter}
                 ORDER BY created_at,id LIMIT 1 FOR UPDATE SKIP LOCKED`,[config.deploymentId,clock()])).rows[0];
             if (!row) {await client.query('COMMIT');return null;}
             row.lease_id=randomUUID();
@@ -230,6 +238,7 @@ function createSystemMessagesService({database,env=process.env,now=()=>new Date(
         } catch(error) {await client.query('ROLLBACK');throw error;} finally {client.release();}
     }
     async function dispatchClaim(config,claimed) {
+        if (financialMessage(claimed) && !billingOperationsEnabled(env)) return 'paused';
         const client=await db().connect();
         try {
             await client.query('BEGIN');
@@ -289,6 +298,7 @@ function createSystemMessagesService({database,env=process.env,now=()=>new Date(
             // action lock for the bounded intake POST so an opt-out cannot commit
             // between the final check and dispatch. No WhatsApp provider is local.
             const secret=env.CENTRAL_SYSTEM_MESSAGES_HMAC_KEY;
+            if (financialMessage(row)) assertBillingOperationsEnabled(env);
             const transport=clientFactory({deployment:config.deploymentId,secret,timeoutMs:10_000});
             const result=await transport.attempt(prepared);
             await client.query('UPDATE central_system_message_outbox SET attempt_count=attempt_count+1 WHERE id=$1',[row.id]);

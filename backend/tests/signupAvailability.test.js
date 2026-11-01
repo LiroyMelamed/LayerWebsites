@@ -18,13 +18,14 @@ test('closed shared signup cannot create an order or office; status exposes no c
   const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),mod={exports:{}};
   const filename=path.resolve(__dirname,'../lib/tenant/signupService.js');
   vm.runInNewContext(fs.readFileSync(filename,'utf8'),{module:mod,process:{env:{}},require(id){
+   if(id==='../billing/billingOperations')return require('../lib/billing/billingOperations');
    if(id==='./signupAvailability')return require('../lib/tenant/signupAvailability');
    if(id==='./databaseScope')return require('../lib/tenant/databaseScope');
    if(id==='node:crypto')return require(id);
    return {};
   }});
   for(const [name,arg] of [['createSignupIntent',{}],['createSignupCheckout','synthetic'],['provisionTenantFromSignup','synthetic']])await assert.rejects(mod.exports[name](arg),{code:'SIGNUP_NOT_AVAILABLE'});
-  const config=await fetch(base+'/config');assert.equal(config.status,200);assert.match(config.headers.get('cache-control'),/no-store/);assert.deepEqual(await config.json(),{available:false,setupAmountIls:1,trialMonths:3,consentVersion:'signup-1ils-3months-v2'});
+  const config=await fetch(base+'/config');assert.equal(config.status,200);assert.match(config.headers.get('cache-control'),/no-store/);assert.deepEqual(await config.json(),{available:false,setupAmountIls:1,trialMonths:3,consentVersion:'signup-1ils-3months-v2',systemMessages:{available:false,consentVersion:require('../lib/systemMessages').CONSENT_VERSION}});
   for(const path of ['/start','/synthetic/checkout','/synthetic/complete']){const r=await fetch(base+path,{method:'POST'});assert.equal(r.status,503);assert.equal((await r.json()).error,'SIGNUP_NOT_AVAILABLE');}
   const sync=await fetch(base+'/synthetic/sync',{method:'POST'});assert.equal(sync.status,503);assert.equal((await sync.json()).error,'SIGNUP_NOT_AVAILABLE');assert.equal(calls,0);
   const status=await (await fetch(base+'/synthetic/status')).json();assert.deepEqual(Object.keys(status).sort(),['id','loginUrl','slug','status','trialMonths'].sort());

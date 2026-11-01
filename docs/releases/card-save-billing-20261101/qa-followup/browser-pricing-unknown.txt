@@ -1,0 +1,86 @@
+- complementary:
+  - strong: LOCAL QA — actual screens, synthetic API + iframe; no credentials or provider I/O
+  - text: Scenario
+  - combobox "Scenario":
+    - option "success"
+    - option "decline"
+    - option "unknown" [selected]
+    - option "no-debt"
+  - button "Reset scenario"
+  - button "PlanUsage screen"
+  - button "PlansPricing screen"
+  - button "Send forged parent message"
+  - generic "Synthetic payment and access status": scenario=unknown | status=past_due | due=1353 | savedCard=true | paid=false | pending=true | checkouts=1 | confirmations=1 | verificationFee=1 | simulatedSubscriptionCharges=0
+  - generic "Synthetic API counters": "{ \"scenario\": \"unknown\", \"checkouts\": 1, \"confirmations\": 1, \"confirmBodies\": [ { \"intentId\": \"synthetic-intent-1\", \"uniqId\": \"synthetic-order-1\" } ], \"fee\": 1, \"subscriptionCharges\": 0, \"savedCard\": true, \"paid\": false, \"pending\": true, \"calls\": [ { \"method\": \"GET\", \"path\": \"/api/billing/system-message-consent\" }, { \"method\": \"GET\", \"path\": \"/api/billing/plan\" }, { \"method\": \"GET\", \"path\": \"/api/billing/usage\" }, { \"method\": \"GET\", \"path\": \"/api/billing/lock-status\" }, { \"method\": \"GET\", \"path\": \"/api/billing/system-message-consent\" }, { \"method\": \"GET\", \"path\": \"/api/billing/plan\" }, { \"method\": \"GET\", \"path\": \"/api/billing/lock-status\" }, { \"method\": \"POST\", \"path\": \"/api/billing/package\" }, { \"method\": \"POST\", \"path\": \"/api/billing/checkout/confirm\" }, { \"method\": \"GET\", \"path\": \"/api/billing/plan\" }, { \"method\": \"GET\", \"path\": \"/api/billing/lock-status\" } ], \"messages\": [], \"completed\": [ \"synthetic-intent-1\" ], \"accountStatus\": \"past_due\", \"collectibleDebt\": 1353 }"
+- main:
+  - paragraph: חבילות ותמחור
+  - paragraph: כל מה שמשלמים עליו — מוסבר בצורה ברורה. תשלום שנתי חוסך 10%.
+  - paragraph: מחשבון מחיר
+  - paragraph: בחרו את ההרכב שמתאים למשרד וקבלו פירוט מחיר ברור.
+  - paragraph: המערכת – כלול תמיד
+  - paragraph: כולל ניהול תיקים, לקוחות ומסמכים.
+  - paragraph: פלטפורמות
+  - button "אתר":
+    - paragraph: אתר
+  - button "אפליקציה":
+    - paragraph: אפליקציה
+  - button "אתר + אפליקציה" [pressed]:
+    - paragraph: אתר + אפליקציה
+  - list:
+    - paragraph: דפדפן + אפליקציה
+    - paragraph: חווית לקוח מלאה
+  - paragraph: חבילת משאבים
+  - button "בסיסי":
+    - paragraph: בסיסי
+  - button "פרו" [pressed]:
+    - paragraph: פרו
+  - button "ארגוני":
+    - paragraph: ארגוני
+  - list:
+    - paragraph: עד 5 מנהלי מערכת
+    - paragraph: עד 2000 SMS בחודש
+    - paragraph: "נפח אחסון: 1 GB"
+  - paragraph: חבילת חתימות
+  - button "ללא חתימות":
+    - paragraph: ללא חתימות
+  - button "500 חתימות" [pressed]:
+    - paragraph: 500 חתימות
+  - button "1500 חתימות":
+    - paragraph: 1500 חתימות
+  - button "5000 חתימות":
+    - paragraph: 5000 חתימות
+  - button "חתימות ללא הגבלה":
+    - paragraph: חתימות ללא הגבלה
+  - list:
+    - paragraph: עד 500 חתימות בחודש
+    - paragraph: כולל OTP
+    - paragraph: כולל קובץ ראיות
+  - paragraph: תשלום
+  - button "חודשי" [pressed]:
+    - paragraph: חודשי
+  - button "שנתי · 10% הנחה":
+    - paragraph: שנתי · 10% הנחה
+  - paragraph: סה״כ לחודש
+  - paragraph: סה״כ
+  - paragraph: 972 ₪
+  - paragraph: או 10,498 ₪ לשנה · 10% הנחה
+  - table "פירוט מחיר":
+    - row "מערכת 296 ₪":
+      - cell "מערכת"
+      - cell "296 ₪"
+    - 'row "פלטפורמה: אתר + אפליקציה 296 ₪"':
+      - 'cell "פלטפורמה: אתר + אפליקציה"'
+      - cell "296 ₪"
+    - 'row "חבילת משאבים: פרו 211 ₪"':
+      - 'cell "חבילת משאבים: פרו"'
+      - cell "211 ₪"
+    - 'row "חבילת חתימות: 500 חתימות 169 ₪"':
+      - 'cell "חבילת חתימות: 500 חתימות"'
+      - cell "169 ₪"
+  - paragraph: תוצאת התשלום עדיין לא אושרה. יש לבדוק את מצב המנוי לפני ניסיון נוסף.
+  - button "שמירה ותשלום":
+    - paragraph: שמירה ותשלום
+- region "Notifications":
+  - dialog "תוצאת התשלום עדיין לא אושרה. יש לבדוק את מצב המנוי לפני ניסיון נוסף.":
+    - heading "תוצאת התשלום עדיין לא אושרה. יש לבדוק את מצב המנוי לפני ניסיון נוסף." [level=2]
+    - button:

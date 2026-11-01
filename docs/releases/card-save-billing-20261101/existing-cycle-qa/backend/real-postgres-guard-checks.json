@@ -1,0 +1,22 @@
+{
+  "atUtc": "2026-11-01T21:51:14.696Z",
+  "guardSha256": "a9e1d4378872758b9196641b9807405c2a52cc2cf902d984d30e039a7b074615",
+  "checks": [
+    {
+      "name": "externalTCP",
+      "blockedBeforeSocket": true
+    },
+    {
+      "name": "applicationDB",
+      "blockedBeforeSocket": true
+    },
+    {
+      "name": "signupDB",
+      "blockedBeforeSocket": true
+    },
+    {
+      "name": "nativeFetch",
+      "blockedBeforeRequest": true
+    }
+  ]
+}

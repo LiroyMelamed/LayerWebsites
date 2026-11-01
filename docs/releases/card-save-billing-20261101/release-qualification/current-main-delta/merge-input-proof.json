@@ -1,0 +1,61 @@
+{
+  "candidate": "6fab2887d056262cf52ddb773a377e5ad804f0d7",
+  "parentQualifiedCandidate": "9dd9cb3607ee79434fcfb1aed5a40773e5713789",
+  "upstreamMain": "4917ca1a3d25e4224bd64fa8c05048285c0741dd",
+  "changedPaths": [
+    "backend/lib/qaOutboundNoop.js",
+    "backend/services/notifications/notificationOrchestrator.js",
+    "backend/services/signingV2/runtime.js",
+    "backend/tests/qaOutboundNoop.recovery.test.js",
+    "backend/tests/signingV2.completedCopyNotification.test.js",
+    "backend/tests/signingV2.transportOutcomes.test.js",
+    "backend/utils/smooveEmailCampaignService.js"
+  ],
+  "compileInputEquality": [
+    {
+      "path": "frontend",
+      "previous": "04066315bbbeadb53b182c394bc2cb52c1e42738",
+      "candidate": "04066315bbbeadb53b182c394bc2cb52c1e42738",
+      "same": true
+    },
+    {
+      "path": "scripts",
+      "previous": "ab4df8decbc40cc6238f4d86c3f3c62c7bb37acc",
+      "candidate": "ab4df8decbc40cc6238f4d86c3f3c62c7bb37acc",
+      "same": true
+    },
+    {
+      "path": "package.json",
+      "previous": "39f75f2adf788115941ed268deeb876bd112abed",
+      "candidate": "39f75f2adf788115941ed268deeb876bd112abed",
+      "same": true
+    },
+    {
+      "path": "package-lock.json",
+      "previous": "6f90c9ab1a06452f1596006a49f1b4b17b5d53d2",
+      "candidate": "6f90c9ab1a06452f1596006a49f1b4b17b5d53d2",
+      "same": true
+    },
+    {
+      "path": "backend/package.json",
+      "previous": "7f45335ec5f566cc50be091125e1b41f232f88ad",
+      "candidate": "7f45335ec5f566cc50be091125e1b41f232f88ad",
+      "same": true
+    },
+    {
+      "path": "backend/package-lock.json",
+      "previous": "01079613fa64e99cd3c8ec8bc3e0c435d2bcbe2a",
+      "candidate": "01079613fa64e99cd3c8ec8bc3e0c435d2bcbe2a",
+      "same": true
+    },
+    {
+      "path": "docs/signing-v2/release-baseline.json",
+      "previous": "b7e2de8158b99dbc595414f3251a923d72ca531f",
+      "candidate": "b7e2de8158b99dbc595414f3251a923d72ca531f",
+      "same": true
+    }
+  ],
+  "allComparedCompileInputsIdentical": true,
+  "allDeltaPathsBackendOnly": true,
+  "basis": "Content-addressed Git object comparison; no fresh frontend suite/compile claimed."
+}

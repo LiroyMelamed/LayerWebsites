@@ -1,0 +1,13 @@
+{
+  "capturedAtUtc": "2026-11-01T14:04:32.385843+00:00",
+  "head": "176ff60a377136ce6a01b43c1defd23f2fe0674b",
+  "dependencyPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules",
+  "hashes": {
+    "sourcePackage": "5d355ae41df3f3df28baa094db3e337d1c1350cd013b0eba19f76322337511c2",
+    "sourceLock": "ed0b4c398ffe0d47a2d91e735ee48bf494a0b718534293b59056f91973a6a4ac",
+    "installedLock": "00cc3b9a309e871937202330da56da5744fedbaac7773c89447c4c943a049b05"
+  },
+  "checkedInstalledPackages": 1599,
+  "optionalAbsent": 10,
+  "requiredVersionMismatches": []
+}

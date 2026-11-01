@@ -1,0 +1,4 @@
+# Raw test/patch evidence preserves diagnostic and unified-diff whitespace.
+*.log -whitespace
+*.tap -whitespace
+compatibility/*.patch -whitespace

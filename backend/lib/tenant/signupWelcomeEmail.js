@@ -1,8 +1,10 @@
 'use strict';
+const { billingOperationsEnabled, assertBillingOperationsEnabled, isBillingOperationsPausedError } = require('../billing/billingOperations');
 const { renderWelcome, validEmail } = require('./signupWelcomeTemplate');
 const { withSystem } = require('./databaseScope');
 
 async function deliverWelcome(payload, id) {
+    assertBillingOperationsEnabled();
     const suppressed = require('../qaOutboundNoop').qaOutboundNoop('email');
     if (suppressed || (process.env.IS_PRODUCTION !== 'true' && process.env.FORCE_SEND_EMAIL_ALL !== 'true')) return { status:'simulated' };
     const { SMTP_HOST:host, SMTP_USER:user, SMTP_PASS:pass, SMTP_FROM_EMAIL:from } = process.env;
@@ -27,6 +29,7 @@ async function deliverWelcome(payload, id) {
 
 function createWelcomeDispatcher({ database = require('../../config/db'), deliver = deliverWelcome } = {}) {
     async function flush(id = null) {
+        if (!billingOperationsEnabled()) return { processed: 0, skipped: true, reason: 'billing_operations_paused' };
         return withSystem(async () => {
             // A process can die after SMTP acceptance. Such reservations require
             // inspection of provider logs before an explicit manual retry.
@@ -43,7 +46,10 @@ function createWelcomeDispatcher({ database = require('../../config/db'), delive
                 const row = claim.rows[0]; if (!row) break;
                 let result;
                 try { result=await deliver(row.welcome_email,row.id); }
-                catch (_) { result={status:'uncertain',code:'UNEXPECTED_DELIVERY_ERROR'}; }
+                catch (error) {
+                    if (isBillingOperationsPausedError(error)) throw error;
+                    result={status:'uncertain',code:'UNEXPECTED_DELIVERY_ERROR'};
+                }
                 const retry = result.status==='retry' || result.status==='simulated';
                 const status = result.status==='sent' ? 'sent' : result.status==='uncertain' ? 'uncertain' : retry && row.welcome_email_attempts<5 ? 'pending':'failed';
                 await database.query(`UPDATE signup_intents SET welcome_email_status=$2,welcome_email_error=$3,welcome_email_updated_at=now(),
@@ -60,9 +66,10 @@ function createWelcomeDispatcher({ database = require('../../config/db'), delive
 let dispatcher;
 function flushWelcome(id) { dispatcher ||= createWelcomeDispatcher(); return dispatcher.flush(id); }
 function startWelcomeWorker() {
+    if (!billingOperationsEnabled()) return;
     if (!require('./tenantContext').isMultiTenantMode() || !require('./signupAvailability').signupAvailable()) return;
     let running=false;
-    const tick=async()=>{if(running)return;running=true;try{await flushWelcome();}catch(_){console.error('[signup-welcome] worker failed');}finally{running=false;}};
+    const tick=async()=>{if(running||!billingOperationsEnabled())return;running=true;try{await flushWelcome();}catch(_){console.error('[signup-welcome] worker failed');}finally{running=false;}};
     const timer=setInterval(tick,60000); timer.unref?.();
     setTimeout(tick,5000).unref?.();
 }

@@ -1,0 +1,79 @@
+{
+  "candidate": "6fab2887d056262cf52ddb773a377e5ad804f0d7",
+  "testSourceSha256": "8d3e2b4fe4d96b0f6ccad74a736b1d38dbe293e4ba453d2fa9d19c550d34f19c",
+  "passedTests": 14,
+  "failedTests": 0,
+  "caseNames": [
+    {
+      "line": 95,
+      "name": "billing maintenance gate preserves unset behavior and fails closed for every configured non-enable value"
+    },
+    {
+      "line": 113,
+      "name": "paused financial operations perform no dispatch, reservation, settlement or mail side effect"
+    },
+    {
+      "line": 121,
+      "name": "all native and injected Takbull fetch boundaries stop before network or documents"
+    },
+    {
+      "line": 146,
+      "name": "legacy checkout, all charge kinds, package changes, callbacks and settlement stop before first query"
+    },
+    {
+      "line": 167,
+      "name": "shared renewal, owner retry, due scheduler and upgrade do not start transactions or mark debt failed"
+    },
+    {
+      "line": 190,
+      "name": "initial signup, checkout, sync and verified provisioning stop before consent, tenant, token or welcome changes"
+    },
+    {
+      "line": 201,
+      "name": "signup status remains readable while paused and does not normalize or provision its state"
+    },
+    {
+      "line": 220,
+      "name": "PGlite paused callback replay and future active snapshot retain every row, token, reservation and outbox"
+    },
+    {
+      "line": 307,
+      "name": "failed-payment mail, queued welcome delivery and welcome worker stop before lookup, lease, SMTP or timers"
+    },
+    {
+      "line": 334,
+      "name": "financial message capture skips before queries and queued pending/stale financial families remain unchanged"
+    },
+    {
+      "line": 381,
+      "name": "GET and POST IPN return retryable 503 and preserve callback body for replay after resume"
+    },
+    {
+      "line": 414,
+      "name": "native HTTP GET and POST webhook requests expose 503 and Retry-After before provider or DB work"
+    },
+    {
+      "line": 440,
+      "name": "billing action and return controllers expose the same retryable pause, without redirect success"
+    },
+    {
+      "line": 458,
+      "name": "public signup create, checkout, sync and return preserve retryable payment state"
+    }
+  ],
+  "evidenceType": "Assertions verified by passing synthetic suite, not live telemetry",
+  "assertedPaymentProviderFetchCalls": 0,
+  "assertedPausedFinancialDispatchCalls": 0,
+  "assertedPausedFinancialCallbackSettlementCalls": 0,
+  "assertedPausedBillingAndWelcomeMailCalls": 0,
+  "assertedPausedFinancialRowsChanged": 0,
+  "readOnlySnapshotSELECTsAllowed": true,
+  "financialOutboxFamiliesHeldUnchanged": true,
+  "nonfinancialConsentWorkflowStillEligible": true,
+  "pausedHTTP": {
+    "status": 503,
+    "Retry-After": "60",
+    "providerRetryGuaranteed": false
+  },
+  "liveGateActivated": false
+}

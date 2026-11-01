@@ -1,0 +1,26 @@
+[
+  {
+    "path": "frontend/src/i18n/locales/ar.json",
+    "oldSha256": "bc7ea0220966468e2aad1d0ff7442e2641862ef7f0d9333240aa10d16c131064",
+    "mergedSha256": "fd07a3bc78f60973619b6a34730061243b2ea19d455c99fca9cbc983619c1ed9",
+    "oneAddedKey": "billing.paymentUnconfirmed",
+    "allOldValuesPreserved": true,
+    "allOldBytesPreservedByOneInsertion": true
+  },
+  {
+    "path": "frontend/src/i18n/locales/en.json",
+    "oldSha256": "d565f87b426b5234e84c7f753136cc65d1184482f736d4ecf26573933bc7e392",
+    "mergedSha256": "0410d0970f04b27b8a95eee4daeab3b7323f1a48391204a6c6785cc6d90152cc",
+    "oneAddedKey": "billing.paymentUnconfirmed",
+    "allOldValuesPreserved": true,
+    "allOldBytesPreservedByOneInsertion": true
+  },
+  {
+    "path": "frontend/src/i18n/locales/he.json",
+    "oldSha256": "e18ac956c52b3a1033f559dc412b900aebbf611e36b94b9cdeaebc8b09e6bad9",
+    "mergedSha256": "981a295d9450e43086336b67714277ecdba1c5a3d24fb3adc4c8cc47449430cc",
+    "oneAddedKey": "billing.paymentUnconfirmed",
+    "allOldValuesPreserved": true,
+    "allOldBytesPreservedByOneInsertion": true
+  }
+]

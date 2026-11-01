@@ -1,0 +1,2 @@
+# Preserve raw compiler/test evidence, including intentional whitespace in warnings.
+*.log -whitespace

@@ -1,0 +1,1277 @@
+TAP version 13
+# Subtest: tenant defaults: ashrafessa complimentary through 01/01/2027
+ok 1 - tenant defaults: ashrafessa complimentary through 01/01/2027
+  ---
+  duration_ms: 1.155459
+  type: 'test'
+  ...
+# Subtest: tenant defaults: morlevy complimentary through 01/01/2027
+ok 2 - tenant defaults: morlevy complimentary through 01/01/2027
+  ---
+  duration_ms: 0.09575
+  type: 'test'
+  ...
+# Subtest: tenant defaults: melamedlaw complimentary through 30/09/2026 (pay from 01/10/2026)
+ok 3 - tenant defaults: melamedlaw complimentary through 30/09/2026 (pay from 01/10/2026)
+  ---
+  duration_ms: 0.613833
+  type: 'test'
+  ...
+# Subtest: tenant defaults: melamedia is unbilled
+ok 4 - tenant defaults: melamedia is unbilled
+  ---
+  duration_ms: 0.11675
+  type: 'test'
+  ...
+# Subtest: billing lock exempts auth, webhooks, billing, public signing
+ok 5 - billing lock exempts auth, webhooks, billing, public signing
+  ---
+  duration_ms: 0.098958
+  type: 'test'
+  ...
+# Subtest: excluded seat phones include owner 0507299064 as last-9 507299064
+ok 6 - excluded seat phones include owner 0507299064 as last-9 507299064
+  ---
+  duration_ms: 0.388875
+  type: 'test'
+  ...
+# Subtest: complimentary firm is never locked even after a failed pay attempt
+ok 7 - complimentary firm is never locked even after a failed pay attempt
+  ---
+  duration_ms: 0.375375
+  type: 'test'
+  ...
+# Subtest: setup-style failure during complimentary does not lock
+ok 8 - setup-style failure during complimentary does not lock
+  ---
+  duration_ms: 0.07425
+  type: 'test'
+  ...
+# Subtest: after complimentary ends, expired grace locks the firm
+ok 9 - after complimentary ends, expired grace locks the firm
+  ---
+  duration_ms: 0.327459
+  type: 'test'
+  ...
+# Subtest: getBillingEmailBranding uses MelaMedia platform logo by default
+ok 10 - getBillingEmailBranding uses MelaMedia platform logo by default
+  ---
+  duration_ms: 0.837
+  type: 'test'
+  ...
+# Subtest: buildFailedPaymentHtml includes MelaMedia logo in wrapper
+ok 11 - buildFailedPaymentHtml includes MelaMedia logo in wrapper
+  ---
+  duration_ms: 9.711042
+  type: 'test'
+  ...
+# Subtest: parseBillingAlertEmails splits comma-separated owner alerts
+ok 12 - parseBillingAlertEmails splits comma-separated owner alerts
+  ---
+  duration_ms: 0.35075
+  type: 'test'
+  ...
+# Subtest: sendFailedPaymentEmails uses branding name in fromName
+ok 13 - sendFailedPaymentEmails uses branding name in fromName
+  ---
+  duration_ms: 0.623625
+  type: 'test'
+  ...
+# Subtest: missing tenant header cannot bypass the current customer identity billing lock
+ok 14 - missing tenant header cannot bypass the current customer identity billing lock
+  ---
+  duration_ms: 16.41025
+  type: 'test'
+  ...
+# Subtest: client lock status contains no payment reason, deadline, amount or pay link
+ok 15 - client lock status contains no payment reason, deadline, amount or pay link
+  ---
+  duration_ms: 1.58675
+  type: 'test'
+  ...
+# Subtest: verified authorized business owner receives recovery details
+ok 16 - verified authorized business owner receives recovery details
+  ---
+  duration_ms: 0.130834
+  type: 'test'
+  ...
+# [billing-renewal] Started. poll=15m tz=Asia/Jerusalem
+# [billing-renewal] self-service {"processed":0,"needsReview":0}
+# [billing-renewal] Started. poll=15m tz=Asia/Jerusalem
+# [billing-renewal] Scheduler disabled via BILLING_RENEWAL_SCHEDULER_ENABLED.
+# Subtest: scheduled signup renewals remain separate from dedicated billing across normalized flags
+ok 17 - scheduled signup renewals remain separate from dedicated billing across normalized flags
+  ---
+  duration_ms: 13.386625
+  type: 'test'
+  ...
+# Subtest: dedicated legacy card save collects the stored debt once, separately from ₪1
+ok 18 - dedicated legacy card save collects the stored debt once, separately from ₪1
+  ---
+  duration_ms: 1687.148333
+  type: 'test'
+  ...
+# Subtest: scoped legacy card save collects the stored debt once, separately from ₪1
+ok 19 - scoped legacy card save collects the stored debt once, separately from ₪1
+  ---
+  duration_ms: 994.604792
+  type: 'test'
+  ...
+# Subtest: dedicated legacy existing customer pays the due month on card save and the full agreed price at next monthly renewal
+ok 20 - dedicated legacy existing customer pays the due month on card save and the full agreed price at next monthly renewal
+  ---
+  duration_ms: 828.312916
+  type: 'test'
+  ...
+# Subtest: dedicated legacy declined card-save debt grants no free month; explicit recovery is followed by a full-price next renewal
+ok 21 - dedicated legacy declined card-save debt grants no free month; explicit recovery is followed by a full-price next renewal
+  ---
+  duration_ms: 869.160833
+  type: 'test'
+  ...
+# Subtest: dedicated legacy uncertain card-save charge grants no free month; the same verified transaction settles before next full-price renewal
+ok 22 - dedicated legacy uncertain card-save charge grants no free month; the same verified transaction settles before next full-price renewal
+  ---
+  duration_ms: 842.320875
+  type: 'test'
+  ...
+# Subtest: scoped legacy existing customer pays the due month on card save and the full agreed price at next monthly renewal
+ok 23 - scoped legacy existing customer pays the due month on card save and the full agreed price at next monthly renewal
+  ---
+  duration_ms: 921.741375
+  type: 'test'
+  ...
+# Subtest: scoped legacy declined card-save debt grants no free month; explicit recovery is followed by a full-price next renewal
+ok 24 - scoped legacy declined card-save debt grants no free month; explicit recovery is followed by a full-price next renewal
+  ---
+  duration_ms: 1213.198209
+  type: 'test'
+  ...
+# Subtest: scoped legacy uncertain card-save charge grants no free month; the same verified transaction settles before next full-price renewal
+ok 25 - scoped legacy uncertain card-save charge grants no free month; the same verified transaction settles before next full-price renewal
+  ---
+  duration_ms: 1001.709084
+  type: 'test'
+  ...
+# Subtest: card verification leaves nonbillable subscription unchanged: {"amount":0}
+ok 26 - card verification leaves nonbillable subscription unchanged: {"amount":0}
+  ---
+  duration_ms: 758.770542
+  type: 'test'
+  ...
+# Subtest: card verification leaves nonbillable subscription unchanged: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"}
+ok 27 - card verification leaves nonbillable subscription unchanged: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"}
+  ---
+  duration_ms: 730.549375
+  type: 'test'
+  ...
+# Subtest: card verification leaves nonbillable subscription unchanged: {"status":"complimentary","complimentaryUntil":"2026-12-01T12:00:00Z"}
+ok 28 - card verification leaves nonbillable subscription unchanged: {"status":"complimentary","complimentaryUntil":"2026-12-01T12:00:00Z"}
+  ---
+  duration_ms: 781.245167
+  type: 'test'
+  ...
+# Subtest: card verification leaves nonbillable subscription unchanged: {"billingEnabled":false}
+ok 29 - card verification leaves nonbillable subscription unchanged: {"billingEnabled":false}
+  ---
+  duration_ms: 843.155625
+  type: 'test'
+  ...
+# Subtest: card verification leaves nonbillable subscription unchanged: {"autoRenew":false,"status":"active","renewsAt":"2026-10-01T12:00:00Z"}
+ok 30 - card verification leaves nonbillable subscription unchanged: {"autoRenew":false,"status":"active","renewsAt":"2026-10-01T12:00:00Z"}
+  ---
+  duration_ms: 744.226166
+  type: 'test'
+  ...
+# Subtest: one definite decline retains debt/grace and callback replay never retries that setup attempt
+ok 31 - one definite decline retains debt/grace and callback replay never retries that setup attempt
+  ---
+  duration_ms: 1170.183958
+  type: 'test'
+  ...
+# Subtest: timeout charge outcome retains a reservation and prevents alternate charges or checkout
+ok 32 - timeout charge outcome retains a reservation and prevents alternate charges or checkout
+  ---
+  duration_ms: 861.653916
+  type: 'test'
+  ...
+# Subtest: ambiguous charge outcome retains a reservation and prevents alternate charges or checkout
+ok 33 - ambiguous charge outcome retains a reservation and prevents alternate charges or checkout
+  ---
+  duration_ms: 800.219958
+  type: 'test'
+  ...
+# Subtest: malformed charge outcome retains a reservation and prevents alternate charges or checkout
+ok 34 - malformed charge outcome retains a reservation and prevents alternate charges or checkout
+  ---
+  duration_ms: 860.009291
+  type: 'test'
+  ...
+# Subtest: an existing unresolved payment survives setup and blocks a second collection
+ok 35 - an existing unresolved payment survives setup and blocks a second collection
+  ---
+  duration_ms: 734.066125
+  type: 'test'
+  ...
+# Subtest: concurrent setup callbacks, explicit retry and maintenance dispatch at most one subscription charge
+ok 36 - concurrent setup callbacks, explicit retry and maintenance dispatch at most one subscription charge
+  ---
+  duration_ms: 733.226833
+  type: 'test'
+  ...
+# Subtest: unverified setup or missing trusted token cannot save a callback card or collect debt
+ok 37 - unverified setup or missing trusted token cannot save a callback card or collect debt
+  ---
+  duration_ms: 719.355916
+  type: 'test'
+  ...
+# Subtest: initial signup payment provisions the signup without entering card debt collection
+ok 38 - initial signup payment provisions the signup without entering card debt collection
+  ---
+  duration_ms: 740.809666
+  type: 'test'
+  ...
+# Subtest: a setup saved before the next bill cannot authorize that later bill when its callback replays
+ok 39 - a setup saved before the next bill cannot authorize that later bill when its callback replays
+  ---
+  duration_ms: 775.785875
+  type: 'test'
+  ...
+# Subtest: pre-fix succeeded setup without collection authorization cannot start a historical live bill
+ok 40 - pre-fix succeeded setup without collection authorization cannot start a historical live bill
+  ---
+  duration_ms: 651.985459
+  type: 'test'
+  ...
+# Subtest: a successful charge with unverifiable outcome remains reserved until its same transaction verifies
+ok 41 - a successful charge with unverifiable outcome remains reserved until its same transaction verifies
+  ---
+  duration_ms: 691.714583
+  type: 'test'
+  ...
+# Subtest: setup settlement rejects a stored intent from a different office before saving its card
+ok 42 - setup settlement rejects a stored intent from a different office before saving its card
+  ---
+  duration_ms: 1125.615833
+  type: 'test'
+  ...
+# Subtest: a setup authorized for an unresolved old cycle cannot collect a different later cycle
+ok 43 - a setup authorized for an unresolved old cycle cannot collect a different later cycle
+  ---
+  duration_ms: 797.127958
+  type: 'test'
+  ...
+# Subtest: hosted checkout racing setup collection reserves one payment route
+ok 44 - hosted checkout racing setup collection reserves one payment route
+  ---
+  duration_ms: 836.830333
+  type: 'test'
+  ...
+# Subtest: yearly debt collection uses its stored agreed monthly amount and existing annual rule
+ok 45 - yearly debt collection uses its stored agreed monthly amount and existing annual rule
+  ---
+  duration_ms: 920.141291
+  type: 'test'
+  ...
+# Subtest: setup return reports actual payment result for an active account with due debt: timeout
+ok 46 - setup return reports actual payment result for an active account with due debt: timeout
+  ---
+  duration_ms: 744.726792
+  type: 'test'
+  ...
+# Subtest: setup return reports actual payment result for an active account with due debt: success
+ok 47 - setup return reports actual payment result for an active account with due debt: success
+  ---
+  duration_ms: 802.844041
+  type: 'test'
+  ...
+# Subtest: browser cancellation preserves an uncertain hosted reservation; later confirmed payment settles once
+ok 48 - browser cancellation preserves an uncertain hosted reservation; later confirmed payment settles once
+  ---
+  duration_ms: 808.935834
+  type: 'test'
+  ...
+# Subtest: a missing card cannot downgrade a nonbillable account: {"amount":0}
+ok 49 - a missing card cannot downgrade a nonbillable account: {"amount":0}
+  ---
+  duration_ms: 714.503417
+  type: 'test'
+  ...
+# Subtest: a missing credentials cannot downgrade a nonbillable account: {"amount":0}
+ok 50 - a missing credentials cannot downgrade a nonbillable account: {"amount":0}
+  ---
+  duration_ms: 680.096959
+  type: 'test'
+  ...
+# Subtest: a missing card cannot downgrade a nonbillable account: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"}
+ok 51 - a missing card cannot downgrade a nonbillable account: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"}
+  ---
+  duration_ms: 679.950583
+  type: 'test'
+  ...
+# Subtest: a missing credentials cannot downgrade a nonbillable account: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"}
+ok 52 - a missing credentials cannot downgrade a nonbillable account: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"}
+  ---
+  duration_ms: 688.69225
+  type: 'test'
+  ...
+# Subtest: setup blocked by an unrelated pending payment cannot retry it after its later decline
+ok 53 - setup blocked by an unrelated pending payment cannot retry it after its later decline
+  ---
+  duration_ms: 882.030917
+  type: 'test'
+  ...
+# Subtest: provider document reference persists on the successful intent and history without assuming email delivery
+ok 54 - provider document reference persists on the successful intent and history without assuming email delivery
+  ---
+  duration_ms: 1367.641583
+  type: 'test'
+  ...
+# Subtest: expiry suspension after cancellation without an existing payment failure creates no debt on card save
+ok 55 - expiry suspension after cancellation without an existing payment failure creates no debt on card save
+  ---
+  duration_ms: 888.960208
+  type: 'test'
+  ...
+# Subtest: zero-price v2 agreement remains readable by plan, return and lock status snapshots
+ok 56 - zero-price v2 agreement remains readable by plan, return and lock status snapshots
+  ---
+  duration_ms: 841.198375
+  type: 'test'
+  ...
+# Subtest: due debt with missing card returns explicit failed payment instead of success-shaped snapshot
+ok 57 - due debt with missing card returns explicit failed payment instead of success-shaped snapshot
+  ---
+  duration_ms: 803.82025
+  type: 'test'
+  ...
+# Subtest: due debt with missing credentials returns explicit failed payment instead of success-shaped snapshot
+ok 58 - due debt with missing credentials returns explicit failed payment instead of success-shaped snapshot
+  ---
+  duration_ms: 596.480583
+  type: 'test'
+  ...
+# Subtest: hosted page timeout preserves a reservation and blocks alternate payment dispatch
+ok 59 - hosted page timeout preserves a reservation and blocks alternate payment dispatch
+  ---
+  duration_ms: 702.979666
+  type: 'test'
+  ...
+# Subtest: a lost hosted order reference cannot be reconciled with an unrelated approved order
+ok 60 - a lost hosted order reference cannot be reconciled with an unrelated approved order
+  ---
+  duration_ms: 1566.803084
+  type: 'test'
+  ...
+# Subtest: saved-card endpoint rejects unsupported setup kind before reserving or charging
+ok 61 - saved-card endpoint rejects unsupported setup kind before reserving or charging
+  ---
+  duration_ms: 1095.807084
+  type: 'test'
+  ...
+# Subtest: saved-card endpoint rejects unsupported unrecognized kind before reserving or charging
+ok 62 - saved-card endpoint rejects unsupported unrecognized kind before reserving or charging
+  ---
+  duration_ms: 914.187333
+  type: 'test'
+  ...
+# Subtest: saved-card endpoint rejects unsupported manual kind before reserving or charging
+ok 63 - saved-card endpoint rejects unsupported manual kind before reserving or charging
+  ---
+  duration_ms: 721.847
+  type: 'test'
+  ...
+# Subtest: manual annual charge reads the current agreed price under reservation lock
+ok 64 - manual annual charge reads the current agreed price under reservation lock
+  ---
+  duration_ms: 706.513667
+  type: 'test'
+  ...
+# Subtest: a disable committed before annual reservation prevents provider dispatch
+ok 65 - a disable committed before annual reservation prevents provider dispatch
+  ---
+  duration_ms: 639.497625
+  type: 'test'
+  ...
+# Subtest: a scheduled annual cycle cannot dispatch twice after its first settlement
+ok 66 - a scheduled annual cycle cannot dispatch twice after its first settlement
+  ---
+  duration_ms: 593.038625
+  type: 'test'
+  ...
+# Subtest: a paid monthly reservation retains its frozen period if current interval changed before reconciliation
+ok 67 - a paid monthly reservation retains its frozen period if current interval changed before reconciliation
+  ---
+  duration_ms: 618.930916
+  type: 'test'
+  ...
+# Subtest: legacy interval-only edits are blocked while a payment is unresolved
+ok 68 - legacy interval-only edits are blocked while a payment is unresolved
+  ---
+  duration_ms: 812.6115
+  type: 'test'
+  ...
+# Subtest: an interval-only legacy edit preserves its agreed monthly amount instead of repricing the catalogue
+ok 69 - an interval-only legacy edit preserves its agreed monthly amount instead of repricing the catalogue
+  ---
+  duration_ms: 718.240708
+  type: 'test'
+  ...
+# Subtest: success before transaction-reference persistence failure remains pending and cannot be redispatched
+ok 70 - success before transaction-reference persistence failure remains pending and cannot be redispatched
+  ---
+  duration_ms: 766.430167
+  type: 'test'
+  ...
+# Subtest: two different verified card setups race into at most one subscription payment and replays keep the current card
+ok 71 - two different verified card setups race into at most one subscription payment and replays keep the current card
+  ---
+  duration_ms: 736.994042
+  type: 'test'
+  ...
+# Subtest: an approved payment with missing provider document reference is not charged again to create a receipt
+ok 72 - an approved payment with missing provider document reference is not charged again to create a receipt
+  ---
+  duration_ms: 898.234958
+  type: 'test'
+  ...
+# Subtest: a dedicated deployment without configured billing contact never guesses an arbitrary administrator recipient
+ok 73 - a dedicated deployment without configured billing contact never guesses an arbitrary administrator recipient
+  ---
+  duration_ms: 1020.253459
+  type: 'test'
+  ...
+# Subtest: settling an earlier saved-token charge cannot replace a newer verified active card
+ok 74 - settling an earlier saved-token charge cannot replace a newer verified active card
+  ---
+  duration_ms: 727.751209
+  type: 'test'
+  ...
+# Subtest: hosted subscription verification binds the exact approved order and transaction without requiring a saved card
+ok 75 - hosted subscription verification binds the exact approved order and transaction without requiring a saved card
+  ---
+  duration_ms: 0.880166
+  type: 'test'
+  ...
+# Subtest: foreign order identity, price, currency and ambiguous approved transaction are rejected before transaction lookup
+ok 76 - foreign order identity, price, currency and ambiguous approved transaction are rejected before transaction lookup
+  ---
+  duration_ms: 2.487
+  type: 'test'
+  ...
+# Subtest: callback-like approval cannot replace independent transaction amount, identity and card evidence
+ok 77 - callback-like approval cannot replace independent transaction amount, identity and card evidence
+  ---
+  duration_ms: 1.102917
+  type: 'test'
+  ...
+# Subtest: unavailable provider reads and malformed expected prices never become verified receipts
+ok 78 - unavailable provider reads and malformed expected prices never become verified receipts
+  ---
+  duration_ms: 0.290459
+  type: 'test'
+  ...
+# Subtest: optional hosted token handling does not relax the one-shekel signup card-storage requirement
+ok 79 - optional hosted token handling does not relax the one-shekel signup card-storage requirement
+  ---
+  duration_ms: 1.103542
+  type: 'test'
+  ...
+# Subtest: existing named production and sandbox credentials remain separate
+ok 80 - existing named production and sandbox credentials remain separate
+  ---
+  duration_ms: 2.991
+  type: 'test'
+  ...
+# Subtest: legacy credentials retain compatibility; incomplete pairs do not become credentials
+ok 81 - legacy credentials retain compatibility; incomplete pairs do not become credentials
+  ---
+  duration_ms: 1.18575
+  type: 'test'
+  ...
+# Subtest: configured card verification amount remains available without accepting invalid amounts
+ok 82 - configured card verification amount remains available without accepting invalid amounts
+  ---
+  duration_ms: 2.871667
+  type: 'test'
+  ...
+# Subtest: checkout confirmation validates the provider return before exposing the refreshed snapshot
+ok 83 - checkout confirmation validates the provider return before exposing the refreshed snapshot
+  ---
+  duration_ms: 1.734125
+  type: 'test'
+  ...
+# Subtest: an uncertain card collection cannot be reported paid because the subscription was already active
+ok 84 - an uncertain card collection cannot be reported paid because the subscription was already active
+  ---
+  duration_ms: 1.194166
+  type: 'test'
+  ...
+# Subtest: saved-card controller rejects a setup-kind charge as a client error
+ok 85 - saved-card controller rejects a setup-kind charge as a client error
+  ---
+  duration_ms: 3.412333
+  type: 'test'
+  ...
+# Subtest: checkout confirmation rejects missing identifiers and failed validation without refreshing
+ok 86 - checkout confirmation rejects missing identifiers and failed validation without refreshing
+  ---
+  duration_ms: 1.217875
+  type: 'test'
+  ...
+# Subtest: case deletion keeps role permission checks ahead of all database mutations
+ok 87 - case deletion keeps role permission checks ahead of all database mutations
+  ---
+  duration_ms: 1.956875
+  type: 'test'
+  ...
+# Subtest: production hard deletion remains disabled by default
+ok 88 - production hard deletion remains disabled by default
+  ---
+  duration_ms: 1.483375
+  type: 'test'
+  ...
+# Subtest: explicit hard-delete permission never overrides linked legal data protection
+ok 89 - explicit hard-delete permission never overrides linked legal data protection
+  ---
+  duration_ms: 1.435834
+  type: 'test'
+  ...
+# Subtest: an empty case deletes in one locked transaction when explicitly enabled
+ok 90 - an empty case deletes in one locked transaction when explicitly enabled
+  ---
+  duration_ms: 1.028417
+  type: 'test'
+  ...
+# Subtest: database failure rolls back deletion and releases the connection
+ok 91 - database failure rolls back deletion and releases the connection
+  ---
+  duration_ms: 0.735
+  type: 'test'
+  ...
+# Subtest: monthly and discounted annual subscriptions produce monthly minor units
+ok 92 - monthly and discounted annual subscriptions produce monthly minor units
+  ---
+  duration_ms: 2.244375
+  type: 'test'
+  ...
+# Subtest: complimentary, suspended and disabled plans do not report list price as recurring revenue
+ok 93 - complimentary, suspended and disabled plans do not report list price as recurring revenue
+  ---
+  duration_ms: 0.1025
+  type: 'test'
+  ...
+# Subtest: invalid billing data fails instead of becoming a healthy zero
+ok 94 - invalid billing data fails instead of becoming a healthy zero
+  ---
+  duration_ms: 0.134666
+  type: 'test'
+  ...
+# Subtest: payments map real field names, units, enum and timestamp without provider/private fields
+ok 95 - payments map real field names, units, enum and timestamp without provider/private fields
+  ---
+  duration_ms: 0.4365
+  type: 'test'
+  ...
+# Subtest: missing payment values are rejected rather than silently fabricated
+ok 96 - missing payment values are rejected rather than silently fabricated
+  ---
+  duration_ms: 0.072375
+  type: 'test'
+  ...
+# Subtest: real route retains authentication and never reads billing for anonymous callers
+ok 97 - real route retains authentication and never reads billing for anonymous callers
+  ---
+  duration_ms: 5.24525
+  type: 'test'
+  ...
+# Subtest: real routes expose dependency failures as503 without exception details or fake empty data
+ok 98 - real routes expose dependency failures as503 without exception details or fake empty data
+  ---
+  duration_ms: 0.535959
+  type: 'test'
+  ...
+# Subtest: real payments route returns transformed data and genuine empty history
+ok 99 - real payments route returns transformed data and genuine empty history
+  ---
+  duration_ms: 0.359167
+  type: 'test'
+  ...
+# Subtest: evaluatePackageChange blocks cheaper signing when documents exceed pack
+ok 100 - evaluatePackageChange blocks cheaper signing when documents exceed pack
+  ---
+  duration_ms: 0.631625
+  type: 'test'
+  ...
+# Subtest: evaluatePackageChange allows upgrade even when over current quota
+ok 101 - evaluatePackageChange allows upgrade even when over current quota
+  ---
+  duration_ms: 0.073
+  type: 'test'
+  ...
+# Subtest: evaluatePackageChange blocks platform downgrade from site_app
+ok 102 - evaluatePackageChange blocks platform downgrade from site_app
+  ---
+  duration_ms: 0.060458
+  type: 'test'
+  ...
+# Subtest: evaluatePackageChange blocks resource downgrade when seats exceed
+ok 103 - evaluatePackageChange blocks resource downgrade when seats exceed
+  ---
+  duration_ms: 1.029459
+  type: 'test'
+  ...
+# Subtest: disabledOptionsForUsage marks cheaper signing packs
+ok 104 - disabledOptionsForUsage marks cheaper signing packs
+  ---
+  duration_ms: 0.200833
+  type: 'test'
+  ...
+# Subtest: resolvePricingLineItems default site_app + pro + 500 totals 972
+ok 105 - resolvePricingLineItems default site_app + pro + 500 totals 972
+  ---
+  duration_ms: 0.069041
+  type: 'test'
+  ...
+# Subtest: enterprise SMS monthly quota is 5000 not unlimited
+ok 106 - enterprise SMS monthly quota is 5000 not unlimited
+  ---
+  duration_ms: 0.037625
+  type: 'test'
+  ...
+# Subtest: recommendCheapestPackage: MelamedLaw-shaped usage needs enterprise 1353
+ok 107 - recommendCheapestPackage: MelamedLaw-shaped usage needs enterprise 1353
+  ---
+  duration_ms: 0.116959
+  type: 'test'
+  ...
+# Subtest: recommendCheapestPackage: MorLevi-shaped usage fits basic 845
+ok 108 - recommendCheapestPackage: MorLevi-shaped usage fits basic 845
+  ---
+  duration_ms: 0.134167
+  type: 'test'
+  ...
+# Subtest: recommendCheapestPackage: SMS above pro cap 2000 needs enterprise
+ok 109 - recommendCheapestPackage: SMS above pro cap 2000 needs enterprise
+  ---
+  duration_ms: 0.090417
+  type: 'test'
+  ...
+# Subtest: yearly billing is 10% off 12 months, rounded
+ok 110 - yearly billing is 10% off 12 months, rounded
+  ---
+  duration_ms: 0.07075
+  type: 'test'
+  ...
+# Subtest: new package choices reject a platform-free contract even from legacy none
+ok 111 - new package choices reject a platform-free contract even from legacy none
+  ---
+  duration_ms: 0.045708
+  type: 'test'
+  ...
+# [billing-lock] snapshot failed: db timeout
+# Subtest: requireBillingAccess allows when snapshot not locked
+ok 112 - requireBillingAccess allows when snapshot not locked
+  ---
+  duration_ms: 1.027083
+  type: 'test'
+  ...
+# Subtest: requireBillingAccess returns a neutral 503 without financial details when locked
+ok 113 - requireBillingAccess returns a neutral 503 without financial details when locked
+  ---
+  duration_ms: 1.030292
+  type: 'test'
+  ...
+# Subtest: requireBillingAccess fails closed when snapshot throws
+ok 114 - requireBillingAccess fails closed when snapshot throws
+  ---
+  duration_ms: 1.218792
+  type: 'test'
+  ...
+# Subtest: requireBillingAccess still exempts auth paths when snapshot throws
+ok 115 - requireBillingAccess still exempts auth paths when snapshot throws
+  ---
+  duration_ms: 0.691333
+  type: 'test'
+  ...
+# Subtest: only session identity lookup remains available for owner recovery navigation
+ok 116 - only session identity lookup remains available for owner recovery navigation
+  ---
+  duration_ms: 0.128917
+  type: 'test'
+  ...
+# [billing] PACKAGE_PERSIST_AFTER_CHARGE {
+#   code: 'PACKAGE_PERSIST_AFTER_CHARGE',
+#   platformId: 'site_app',
+#   resourceId: 'pro',
+#   signingId: '1500',
+#   billingInterval: 'monthly',
+#   message: 'disk full'
+# }
+# Subtest: savePackage does not persist package before failed upgrade charge
+ok 117 - savePackage does not persist package before failed upgrade charge
+  ---
+  duration_ms: 0.82975
+  type: 'test'
+  ...
+# Subtest: savePackage persists only after successful upgrade charge
+ok 118 - savePackage persists only after successful upgrade charge
+  ---
+  duration_ms: 0.865333
+  type: 'test'
+  ...
+# Subtest: savePackage throws when persist fails after successful charge
+ok 119 - savePackage throws when persist fails after successful charge
+  ---
+  duration_ms: 0.95675
+  type: 'test'
+  ...
+# Subtest: savePackage no-card upgrade opens checkout with pending package snapshot
+ok 120 - savePackage no-card upgrade opens checkout with pending package snapshot
+  ---
+  duration_ms: 0.313041
+  type: 'test'
+  ...
+# [takbull] Using legacy TAKBULL_API_KEY/TAKBULL_API_SECRET. Set TAKBULL_MODE plus PROD_TAKBULL_* and TEST_TAKBULL_* to avoid confusion.
+# [billing] UPGRADE_PACKAGE_RECOVERED {
+#   code: 'UPGRADE_PACKAGE_RECOVERED',
+#   intentId: '2609256a-0010-430c-a706-42bbb8c11a07',
+#   orderReference: 'lw-upgrade-2609256a0010430ca7',
+#   transactionId: 'txn-1-lw-upgrade-2609256a0010430ca7',
+#   platformId: 'site_app',
+#   resourceId: 'pro',
+#   signingId: '1500',
+#   upgradeOperationKey: 'legacy|site_app|pro|1500|monthly|200.00'
+# }
+# [billing] PACKAGE_PERSIST_AFTER_CHARGE {
+#   code: 'PACKAGE_PERSIST_AFTER_CHARGE',
+#   platformId: 'site_app',
+#   resourceId: 'pro',
+#   signingId: '1500',
+#   billingInterval: 'monthly',
+#   message: 'sync down'
+# }
+# [billing] UPGRADE_PACKAGE_RECOVERED {
+#   code: 'UPGRADE_PACKAGE_RECOVERED',
+#   intentId: '8aff7458-54ef-41db-be51-13a4cc09daa7',
+#   orderReference: 'lw-upgrade-8aff745854ef41dbbe',
+#   transactionId: 'txn-1-lw-upgrade-8aff745854ef41dbbe',
+#   platformId: 'site_app',
+#   resourceId: 'pro',
+#   signingId: '1500',
+#   upgradeOperationKey: 'legacy|site_app|pro|1500|monthly|200.00'
+# }
+# Subtest: buildUpgradeOperationKey is stable for the same logical upgrade
+ok 121 - buildUpgradeOperationKey is stable for the same logical upgrade
+  ---
+  duration_ms: 1.023542
+  type: 'test'
+  ...
+# Subtest: saved-card upgrade charges once then retry recovers without second provider charge
+ok 122 - saved-card upgrade charges once then retry recovers without second provider charge
+  ---
+  duration_ms: 10.206042
+  type: 'test'
+  ...
+# Subtest: failed charge allows a fresh provider charge on retry
+ok 123 - failed charge allows a fresh provider charge on retry
+  ---
+  duration_ms: 1.737792
+  type: 'test'
+  ...
+# Subtest: concurrent upgrade requests produce at most one provider charge
+ok 124 - concurrent upgrade requests produce at most one provider charge
+  ---
+  duration_ms: 2.109167
+  type: 'test'
+  ...
+# Subtest: an uncertain provider response keeps a committed reservation and blocks a second charge
+ok 125 - an uncertain provider response keeps a committed reservation and blocks a second charge
+  ---
+  duration_ms: 2.43
+  type: 'test'
+  ...
+# Subtest: a recorded provider transaction is independently verified on recovery instead of charging again
+ok 126 - a recorded provider transaction is independently verified on recovery instead of charging again
+  ---
+  duration_ms: 1.139667
+  type: 'test'
+  ...
+# Subtest: historical succeeded intent for a different package is not reused
+ok 127 - historical succeeded intent for a different package is not reused
+  ---
+  duration_ms: 0.459166
+  type: 'test'
+  ...
+# Subtest: already-applied package returns success without charging
+ok 128 - already-applied package returns success without charging
+  ---
+  duration_ms: 0.288208
+  type: 'test'
+  ...
+# Subtest: savePackage retry after PACKAGE_PERSIST passes upgradeOperation and avoids duplicate charge stub
+ok 129 - savePackage retry after PACKAGE_PERSIST passes upgradeOperation and avoids duplicate charge stub
+  ---
+  duration_ms: 0.622042
+  type: 'test'
+  ...
+# Subtest: repeated retries after paid-unapplied state still produce only one total charge
+ok 130 - repeated retries after paid-unapplied state still produce only one total charge
+  ---
+  duration_ms: 0.597958
+  type: 'test'
+  ...
+# Subtest: an existing pending intent without a known outcome remains reserved across retries
+ok 131 - an existing pending intent without a known outcome remains reserved across retries
+  ---
+  duration_ms: 0.33975
+  type: 'test'
+  ...
+# Subtest: complimentary interval-only savePackage does not pass upgradeOperation to charge
+ok 132 - complimentary interval-only savePackage does not pass upgradeOperation to charge
+  ---
+  duration_ms: 0.125833
+  type: 'test'
+  ...
+# Subtest: savePackage blocks fallback checkout for an unresolved payment
+ok 133 - savePackage blocks fallback checkout for an unresolved payment
+  ---
+  duration_ms: 0.430625
+  type: 'test'
+  ...
+# Subtest: savePackage does not persist an already atomic upgrade a second time
+ok 134 - savePackage does not persist an already atomic upgrade a second time
+  ---
+  duration_ms: 0.06875
+  type: 'test'
+  ...
+# Subtest: verified card save collects overdue agreed amount once across concurrent callbacks and replay
+ok 135 - verified card save collects overdue agreed amount once across concurrent callbacks and replay
+  ---
+  duration_ms: 1395.028334
+  type: 'test'
+  ...
+# Subtest: definite decline keeps debt and grace and setup replay cannot dispatch another attempt
+ok 136 - definite decline keeps debt and grace and setup replay cannot dispatch another attempt
+  ---
+  duration_ms: 784.700792
+  type: 'test'
+  ...
+# Subtest: timeout keeps the durable cycle pending and blocks setup and owner retries
+ok 137 - timeout keeps the durable cycle pending and blocks setup and owner retries
+  ---
+  duration_ms: 810.873875
+  type: 'test'
+  ...
+# Subtest: HTTP or malformed failure keeps the durable cycle pending and blocks setup and owner retries
+ok 138 - HTTP or malformed failure keeps the durable cycle pending and blocks setup and owner retries
+  ---
+  duration_ms: 805.895541
+  type: 'test'
+  ...
+# Subtest: missing result keeps the durable cycle pending and blocks setup and owner retries
+ok 139 - missing result keeps the durable cycle pending and blocks setup and owner retries
+  ---
+  duration_ms: 764.394542
+  type: 'test'
+  ...
+# Subtest: approval without transaction keeps the durable cycle pending and blocks setup and owner retries
+ok 140 - approval without transaction keeps the durable cycle pending and blocks setup and owner retries
+  ---
+  duration_ms: 1020.589334
+  type: 'test'
+  ...
+# Subtest: failed independent verification cannot settle or issue a payment notice
+ok 141 - failed independent verification cannot settle or issue a payment notice
+  ---
+  duration_ms: 1144.237209
+  type: 'test'
+  ...
+# Subtest: zero due amount skips provider and leaves billing state unpaid
+ok 142 - zero due amount skips provider and leaves billing state unpaid
+  ---
+  duration_ms: 828.827667
+  type: 'test'
+  ...
+# Subtest: unverified or another office setup cannot trigger debt collection
+ok 143 - unverified or another office setup cannot trigger debt collection
+  ---
+  duration_ms: 710.232
+  type: 'test'
+  ...
+# Subtest: new signup trial has no charge despite a verified replacement card
+ok 144 - new signup trial has no charge despite a verified replacement card
+  ---
+  duration_ms: 705.10875
+  type: 'test'
+  ...
+# Subtest: old setups and setups saved without debt cannot collect a later renewal cycle
+ok 145 - old setups and setups saved without debt cannot collect a later renewal cycle
+  ---
+  duration_ms: 751.7985
+  type: 'test'
+  ...
+# Subtest: normal scheduled renewal persists a non-null metadata object and charges once
+ok 146 - normal scheduled renewal persists a non-null metadata object and charges once
+  ---
+  duration_ms: 836.175542
+  type: 'test'
+  ...
+# Subtest: a card save blocked by an existing pending payment cannot later replay into a new charge
+ok 147 - a card save blocked by an existing pending payment cannot later replay into a new charge
+  ---
+  duration_ms: 821.196708
+  type: 'test'
+  ...
+# Subtest: canceled future renewal is preserved while explicit setup can recover existing past-due debt
+ok 148 - canceled future renewal is preserved while explicit setup can recover existing past-due debt
+  ---
+  duration_ms: 1043.927208
+  type: 'test'
+  ...
+# Subtest: an expired canceled active subscription does not invent renewal debt on card save
+ok 149 - an expired canceled active subscription does not invent renewal debt on card save
+  ---
+  duration_ms: 845.931542
+  type: 'test'
+  ...
+# Subtest: canceled access expiry without a prior payment failure is not collectible debt
+ok 150 - canceled access expiry without a prior payment failure is not collectible debt
+  ---
+  duration_ms: 749.619333
+  type: 'test'
+  ...
+# Subtest: verified setup collects one overdue month of ₪532, then the next scheduled cycle collects the full agreed price once
+ok 151 - verified setup collects one overdue month of ₪532, then the next scheduled cycle collects the full agreed price once
+  ---
+  duration_ms: 837.861792
+  type: 'test'
+  ...
+# Subtest: verified setup collects one overdue month of ₪1353, then the next scheduled cycle collects the full agreed price once
+ok 152 - verified setup collects one overdue month of ₪1353, then the next scheduled cycle collects the full agreed price once
+  ---
+  duration_ms: 779.411167
+  type: 'test'
+  ...
+# Subtest: a recorded three-calendar-month trial survives replacement card saving and then renews twice at the full price
+ok 153 - a recorded three-calendar-month trial survives replacement card saving and then renews twice at the full price
+  ---
+  duration_ms: 696.723583
+  type: 'test'
+  ...
+# Subtest: a declined setup collection grants no free month, explicit owner recovery pays it, and the next renewal charges the full price
+ok 154 - a declined setup collection grants no free month, explicit owner recovery pays it, and the next renewal charges the full price
+  ---
+  duration_ms: 721.989333
+  type: 'test'
+  ...
+# Subtest: timeout setup collection cannot grant a free month or dispatch another renewal after time advances
+ok 155 - timeout setup collection cannot grant a free month or dispatch another renewal after time advances
+  ---
+  duration_ms: 705.829708
+  type: 'test'
+  ...
+# Subtest: unverified approval setup collection cannot grant a free month or dispatch another renewal after time advances
+ok 156 - unverified approval setup collection cannot grant a free month or dispatch another renewal after time advances
+  ---
+  duration_ms: 746.506
+  type: 'test'
+  ...
+# Subtest: closed shared signup cannot create an order or office; status exposes no contact data
+ok 157 - closed shared signup cannot create an order or office; status exposes no contact data
+  ---
+  duration_ms: 41.009167
+  type: 'test'
+  ...
+# Subtest: hosted signup asks Takbull to return the browser; legacy iframe callers retain their contract
+ok 158 - hosted signup asks Takbull to return the browser; legacy iframe callers retain their contract
+  ---
+  duration_ms: 1.206625
+  type: 'test'
+  ...
+# {"event":"rate_limit_block","limiter":"signup-create","method":"POST","path":"/api/public/signup/start"}
+# Subtest: status polling cannot exhaust signup creation, checkout or verified-return budgets
+ok 159 - status polling cannot exhaust signup creation, checkout or verified-return budgets
+  ---
+  duration_ms: 52.824875
+  type: 'test'
+  ...
+# Subtest: billing lock permits public signup and separately authenticated business control only at proper boundaries
+ok 160 - billing lock permits public signup and separately authenticated business control only at proper boundaries
+  ---
+  duration_ms: 0.15425
+  type: 'test'
+  ...
+# Subtest: paid signup and renewal with real PostgreSQL office policies
+ok 161 - paid signup and renewal with real PostgreSQL office policies # SKIP
+  ---
+  duration_ms: 0.537292
+  type: 'test'
+  ...
+# Subtest: logo is mandatory; active, forged and corrupt files are rejected
+ok 162 - logo is mandatory; active, forged and corrupt files are rejected
+  ---
+  duration_ms: 2.635833
+  type: 'test'
+  ...
+# Subtest: size and dimension limits reject low quality, oversized and non-square files
+ok 163 - size and dimension limits reject low quality, oversized and non-square files
+  ---
+  duration_ms: 33.509625
+  type: 'test'
+  ...
+# Subtest: valid logo retains transparency and dimensions; output decodes and has stable content hash
+ok 164 - valid logo retains transparency and dimensions; output decodes and has stable content hash
+  ---
+  duration_ms: 9.507458
+  type: 'test'
+  ...
+# Subtest: high resolution JPEG is sanitized to PNG without upscaling or cropping
+ok 165 - high resolution JPEG is sanitized to PNG without upscaling or cropping
+  ---
+  duration_ms: 69.049542
+  type: 'test'
+  ...
+# Subtest: signup uses authenticated order and card transaction, not callback amount/token
+ok 166 - signup uses authenticated order and card transaction, not callback amount/token
+  ---
+  duration_ms: 13.273834
+  type: 'test'
+  ...
+# Subtest: signup rejects foreign, missing, wrong amount/currency/type and missing token evidence
+ok 167 - signup rejects foreign, missing, wrong amount/currency/type and missing token evidence
+  ---
+  duration_ms: 2.036917
+  type: 'test'
+  ...
+# Subtest: saved-token renewal requires exact independently read transaction evidence
+ok 168 - saved-token renewal requires exact independently read transaction evidence
+  ---
+  duration_ms: 0.313709
+  type: 'test'
+  ...
+# Subtest: three calendar months use Israel local time and clamp month ends through DST
+ok 169 - three calendar months use Israel local time and clamp month ends through DST
+  ---
+  duration_ms: 10.822125
+  type: 'test'
+  ...
+# Subtest: all 90 allowed signup choices use final prices and the existing annual discount
+ok 170 - all 90 allowed signup choices use final prices and the existing annual discount
+  ---
+  duration_ms: 2.197916
+  type: 'test'
+  ...
+# Subtest: website plus basic resources costs ₪532 final; historical system-only contracts remain unchanged
+ok 171 - website plus basic resources costs ₪532 final; historical system-only contracts remain unchanged
+  ---
+  duration_ms: 0.145667
+  type: 'test'
+  ...
+# Subtest: accepted plan changes use the agreed billing row, not an obsolete signup or live catalogue price
+ok 172 - accepted plan changes use the agreed billing row, not an obsolete signup or live catalogue price
+  ---
+  duration_ms: 0.053209
+  type: 'test'
+  ...
+# Subtest: invalid choices and missing new contract charge fail closed
+ok 173 - invalid choices and missing new contract charge fail closed
+  ---
+  duration_ms: 0.383292
+  type: 'test'
+  ...
+# Subtest: omitted or unchecked optional consent creates no grant and does not block signup
+ok 174 - omitted or unchecked optional consent creates no grant and does not block signup
+  ---
+  duration_ms: 0.542125
+  type: 'test'
+  ...
+# Subtest: explicit opt-in requires enabled shared signup and the exact separate consent copy
+ok 175 - explicit opt-in requires enabled shared signup and the exact separate consent copy
+  ---
+  duration_ms: 0.540916
+  type: 'test'
+  ...
+# Subtest: dedicated deployment cannot accidentally receive shared signup grants
+ok 176 - dedicated deployment cannot accidentally receive shared signup grants
+  ---
+  duration_ms: 0.09775
+  type: 'test'
+  ...
+# Subtest: existing signup and billing-only consent are never backfilled
+ok 177 - existing signup and billing-only consent are never backfilled
+  ---
+  duration_ms: 0.139709
+  type: 'test'
+  ...
+# Subtest: provisioning preserves actual capture time and queues only an active subscription update on the same client
+ok 178 - provisioning preserves actual capture time and queues only an active subscription update on the same client
+  ---
+  duration_ms: 9.850583
+  type: 'test'
+  ...
+# Subtest: consent/outbox failure propagates to the caller transaction rather than silently completing signup
+ok 179 - consent/outbox failure propagates to the caller transaction rather than silently completing signup
+  ---
+  duration_ms: 0.801625
+  type: 'test'
+  ...
+# Subtest: real producer accepts the provisioned signup UUID, persists consent and trial update atomically, and deduplicates replay
+ok 180 - real producer accepts the provisioned signup UUID, persists consent and trial update atomically, and deduplicates replay
+  ---
+  duration_ms: 1360.013042
+  type: 'test'
+  ...
+# Subtest: real signup intent stores separate server-captured consent and rejects changed consent on the same signup identity
+ok 181 - real signup intent stores separate server-captured consent and rejects changed consent on the same signup identity
+  ---
+  duration_ms: 862.0405
+  type: 'test'
+  ...
+# Subtest: welcome is RTL, escaped, includes login/OTP and frozen final annual price
+ok 182 - welcome is RTL, escaped, includes login/OTP and frozen final annual price
+  ---
+  duration_ms: 13.85875
+  type: 'test'
+  ...
+# Subtest: SMTP sends only to new owner from MelaMedia, deterministic ID, and distinguishes rejection from unknown delivery
+ok 183 - SMTP sends only to new owner from MelaMedia, deterministic ID, and distinguishes rejection from unknown delivery
+  ---
+  duration_ms: 41.204583
+  type: 'test'
+  ...
+# Subtest: verified settlement commits payment, package, audit and outbox once; replay is inert
+ok 184 - verified settlement commits payment, package, audit and outbox once; replay is inert
+  ---
+  duration_ms: 1331.554125
+  type: 'test'
+  ...
+# Subtest: outbox failure after insert rolls back the payment and package and permits one clean retry
+ok 185 - outbox failure after insert rolls back the payment and package and permits one clean retry
+  ---
+  duration_ms: 795.602083
+  type: 'test'
+  ...
+# Subtest: audit failure is transactional rather than silently losing the payment history
+ok 186 - audit failure is transactional rather than silently losing the payment history
+  ---
+  duration_ms: 787.202875
+  type: 'test'
+  ...
+# Subtest: a provider verification failure cannot activate a subscription or enqueue a notice
+ok 187 - a provider verification failure cannot activate a subscription or enqueue a notice
+  ---
+  duration_ms: 788.911292
+  type: 'test'
+  ...
+# Subtest: one-shekel card setup does not create a subscription-payment notice
+ok 188 - one-shekel card setup does not create a subscription-payment notice
+  ---
+  duration_ms: 729.658208
+  type: 'test'
+  ...
+# Subtest: a hosted callback cannot inject a card token absent from the independently verified transaction
+ok 189 - a hosted callback cannot inject a card token absent from the independently verified transaction
+  ---
+  duration_ms: 676.74575
+  type: 'test'
+  ...
+# Subtest: persisted office ownership defeats a tampered intent object
+ok 190 - persisted office ownership defeats a tampered intent object
+  ---
+  duration_ms: 674.1395
+  type: 'test'
+  ...
+# Subtest: an enclosing upgrade transaction owns commit and can roll back every settlement effect
+ok 191 - an enclosing upgrade transaction owns commit and can roll back every settlement effect
+  ---
+  duration_ms: 714.11025
+  type: 'test'
+  ...
+# Subtest: shared renewal: verified success and outbox commit together and a repeated request does not recharge
+ok 192 - shared renewal: verified success and outbox commit together and a repeated request does not recharge
+  ---
+  duration_ms: 1307.974167
+  type: 'test'
+  ...
+# Subtest: shared renewal: outbox failure rolls back final settlement but retains the charged reservation
+ok 193 - shared renewal: outbox failure rolls back final settlement but retains the charged reservation
+  ---
+  duration_ms: 1204.507583
+  type: 'test'
+  ...
+# Subtest: shared upgrade: verified success and outbox commit together and a repeated request does not recharge
+ok 194 - shared upgrade: verified success and outbox commit together and a repeated request does not recharge
+  ---
+  duration_ms: 867.966708
+  type: 'test'
+  ...
+# Subtest: shared upgrade: outbox failure rolls back final settlement but retains the charged reservation
+ok 195 - shared upgrade: outbox failure rolls back final settlement but retains the charged reservation
+  ---
+  duration_ms: 896.942791
+  type: 'test'
+  ...
+# Subtest: hosted checkout and saved-card charge request one provider-native document with recipient and amount
+ok 196 - hosted checkout and saved-card charge request one provider-native document with recipient and amount
+  ---
+  duration_ms: 3.080833
+  type: 'test'
+  ...
+# Subtest: 1 ILS card verification remains a real payment document and gets a line item without a supplied purpose
+ok 197 - 1 ILS card verification remains a real payment document and gets a line item without a supplied purpose
+  ---
+  duration_ms: 0.201166
+  type: 'test'
+  ...
+# Subtest: explicit receipt type or existing configured type is validated before any payment request
+ok 198 - explicit receipt type or existing configured type is validated before any payment request
+  ---
+  duration_ms: 0.594292
+  type: 'test'
+  ...
+# Subtest: zero, negative, or invalid amount never reaches a payment/document operation
+ok 199 - zero, negative, or invalid amount never reaches a payment/document operation
+  ---
+  duration_ms: 0.31875
+  type: 'test'
+  ...
+# Subtest: timeout is not retried and cannot trigger a separate document operation
+ok 200 - timeout is not retried and cannot trigger a separate document operation
+  ---
+  duration_ms: 0.36425
+  type: 'test'
+  ...
+# Subtest: HTTP errors, malformed responses, and unbound provider errors remain uncertain
+ok 201 - HTTP errors, malformed responses, and unbound provider errors remain uncertain
+  ---
+  duration_ms: 0.578541
+  type: 'test'
+  ...
+# Subtest: document error after an approved charge is uncertain and never a safe new-charge signal
+ok 202 - document error after an approved charge is uncertain and never a safe new-charge signal
+  ---
+  duration_ms: 0.234417
+  type: 'test'
+  ...
+# Subtest: only a matching terminal failed card charge permits retry; mismatches and unavailable reads remain uncertain
+ok 203 - only a matching terminal failed card charge permits retry; mismatches and unavailable reads remain uncertain
+  ---
+  duration_ms: 1.074125
+  type: 'test'
+  ...
+# Subtest: document reference does not assert email delivery or mistake zero document ID for a receipt
+ok 204 - document reference does not assert email delivery or mistake zero document ID for a receipt
+  ---
+  duration_ms: 0.0975
+  type: 'test'
+  ...
+1..204
+# tests 204
+# suites 0
+# pass 203
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 48842.799875

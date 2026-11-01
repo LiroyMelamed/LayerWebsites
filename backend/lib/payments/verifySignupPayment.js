@@ -1,10 +1,13 @@
 'use strict';
+const { assertBillingOperationsEnabled } = require('../billing/billingOperations');
 
 // Provider reads bind a hosted order to its approved card transaction. Callback
 // fields and ValidateNotification alone are not the card/transaction authority.
 async function verifyHostedPayment(credentials, reference, expectedOrder, amount, fetcher=fetch, requireToken=false) {
+    assertBillingOperationsEnabled();
     if (!reference || !expectedOrder || !Number.isFinite(amount) || amount <= 0) throw Error('PAYMENT_VERIFICATION_REQUIRED');
     const read = async (name, query) => {
+        assertBillingOperationsEnabled();
         const response=await fetcher('https://api.takbull.co.il/api/ExtranalAPI/'+name+'?'+new URLSearchParams(query), {
             headers:{API_Key:credentials.apiKey,API_Secret:credentials.apiSecret},
             signal:AbortSignal.timeout(20000),redirect:'error',
@@ -26,9 +29,11 @@ async function verifyHostedPayment(credentials, reference, expectedOrder, amount
         expMonth:t.cardTokenExpirationMonth||null,expYear:t.cardTokenExpirationYear||null,cardBrand:t.cardtype||null} : null};
 }
 async function verifySignupPayment(credentials, reference, expectedOrder, fetcher=fetch) {
+    assertBillingOperationsEnabled();
     return verifyHostedPayment(credentials, reference, expectedOrder, 1, fetcher, true);
 }
 async function verifyChargedTransaction(credentials,id,amount,fetcher=fetch){
+    assertBillingOperationsEnabled();
     const response=await fetcher('https://api.takbull.co.il/api/ExtranalAPI/GetTransaction?'+new URLSearchParams({transactionInternalNumber:id}),{
         headers:{API_Key:credentials.apiKey,API_Secret:credentials.apiSecret},signal:AbortSignal.timeout(20000),redirect:'error'});
     if(!response.ok)throw Error('RENEWAL_PROVIDER_UNAVAILABLE');
