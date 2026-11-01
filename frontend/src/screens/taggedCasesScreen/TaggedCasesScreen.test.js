@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import TaggedCasesScreen from './TaggedCasesScreen';
-import casesApi, { casesTypeApi } from '../../api/casesApi';
+import mockCasesApi from '../../api/casesApi';
 
 let mockRows;
 let mockTypes;
@@ -9,7 +9,7 @@ const mockRefresh = jest.fn();
 jest.mock('../../api/casesApi', () => ({ __esModule: true,
     default: { getAllTaggedCases: jest.fn() }, casesTypeApi: { getAllCasesTypeForFilter: jest.fn() },
 }));
-jest.mock('../../hooks/useAutoHttpRequest', () => ({ __esModule: true, default: request => request === casesApi.getAllTaggedCases
+jest.mock('../../hooks/useAutoHttpRequest', () => ({ __esModule: true, default: request => request === mockCasesApi.getAllTaggedCases
     ? { result: mockRows, isPerforming: !Array.isArray(mockRows), performRequest: mockRefresh }
     : { result: mockTypes } }));
 jest.mock('../../providers/ScreenSizeProvider', () => ({ useScreenSize: () => ({ isSmallScreen: false }) }));
