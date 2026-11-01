@@ -47,7 +47,7 @@ async function testDatabase(t) {
 
 async function fixture(t, { tenantId = null, mode = 'success', status = 'past_due', amount = 1353,
     renewsAt = '2026-10-01T12:00:00Z', complimentaryUntil = null, billingEnabled = true,
-    autoRenew = true, interval = 'monthly', signup = false } = {}) {
+    autoRenew = true, interval = 'monthly', signup = false, legacyCustomerConfigured = true } = {}) {
     let currentNow = new Date(AT);
     class Clock extends Date {
         constructor(...args) { super(...(args.length ? args : [currentNow])); }
@@ -106,6 +106,21 @@ async function fixture(t, { tenantId = null, mode = 'success', status = 'past_du
         return release;
     };
     const trace = [];
+    let reservationHook = null, pageFailure = false, referenceWriteFailure = false, chargeWriteFailure = false;
+    let notificationResult = null, documentResult = null;
+    const approvedTransactions = new Map();
+    const setupOrders = new Map([['hosted-setup', { order: 'setup-order', token: 'verified-card' }]]);
+    const beforeQuery = async sql => {
+        if (reservationHook && /pg_advisory_xact_lock/.test(sql)) {
+            const hook = reservationHook; reservationHook = null; await hook();
+        }
+        if (referenceWriteFailure && /UPDATE firm_payment_intents SET takbull_uniq_id/.test(sql)) {
+            referenceWriteFailure = false; throw Error('SYNTHETIC_REFERENCE_WRITE_FAILURE');
+        }
+        if (chargeWriteFailure && /UPDATE firm_payment_intents\s+SET takbull_transaction_id/.test(sql)) {
+            chargeWriteFailure = false; throw Error('SYNTHETIC_CHARGE_WRITE_FAILURE');
+        }
+    };
     const query = async (sql, params) => {
         if (!postgres && /pg_advisory_xact_lock/.test(sql)) return { rows: [{}], rowCount: 1 };
         const result = await db.query(sql, params);
@@ -115,16 +130,16 @@ async function fixture(t, { tenantId = null, mode = 'success', status = 'past_du
         async connect() {
             if (postgres) {
                 const client = await db.connect();
-                return { query: async (sql, params) => { trace.push(String(sql)); return client.query(sql, params); },
+                return { query: async (sql, params) => { trace.push(String(sql)); await beforeQuery(sql); return client.query(sql, params); },
                     release: () => client.release() };
             }
             const unlock = await lease();
-            return { query: async (sql, params) => { trace.push(String(sql)); return query(sql, params); }, release: unlock };
+            return { query: async (sql, params) => { trace.push(String(sql)); await beforeQuery(sql); return query(sql, params); }, release: unlock };
         },
         async query(sql, params) {
-            if (postgres) { trace.push(String(sql)); return query(sql, params); }
+            if (postgres) { trace.push(String(sql)); await beforeQuery(sql); return query(sql, params); }
             const unlock = await lease();
-            try { trace.push(String(sql)); return await query(sql, params); }
+            try { trace.push(String(sql)); await beforeQuery(sql); return await query(sql, params); }
             finally { unlock(); }
         },
     };
@@ -144,14 +159,15 @@ async function fixture(t, { tenantId = null, mode = 'success', status = 'past_du
         if (chargeMode === 'ambiguous') return { ok: false, internalCode: 99, definitiveFailure: false };
         if (chargeMode === 'decline') return { ok: false, internalCode: 5, definitiveFailure: true, internalDescription: 'SYNTHETIC_DECLINE' };
         return { ok: true, transactionInternalNumber: 'charged-transaction-' + charges.length,
-            document: { created: true, id: 'synthetic-document', uniqId: 'synthetic-document-uniq', number: 'T-123', deliveryStatus: 'unknown' } };
+            document: documentResult || { created: true, id: 'synthetic-document', uniqId: 'synthetic-document-uniq', number: 'T-123', deliveryStatus: 'unknown' } };
     };
     const verifyHostedPayment = async (_credentials, reference, order, expected, _fetcher, requireToken) => {
         reads.push({ kind: 'hosted', reference, order, expected, requireToken });
         if (verificationFailure) throw Error('SYNTHETIC_VERIFICATION_FAILURE');
-        if (reference === 'hosted-setup') {
-            assert.equal(order, 'setup-order'); assert.equal(expected, 1); assert.equal(requireToken, true);
-            return { transactionId: 'verified-setup-transaction', tokenInfo: missingToken ? null : { token: 'verified-card', last4Digits: '1234' } };
+        if (setupOrders.has(reference)) {
+            const setup = setupOrders.get(reference);
+            assert.equal(order, setup.order); assert.equal(expected, 1); assert.equal(requireToken, true);
+            return { transactionId: 'verified-' + reference, tokenInfo: missingToken ? null : { token: setup.token, last4Digits: '1234' } };
         }
         const hostedOrder = hostedOrders.get(reference);
         assert.ok(hostedOrder?.paid, 'Only independently confirmed hosted orders can settle');
@@ -162,7 +178,9 @@ async function fixture(t, { tenantId = null, mode = 'success', status = 'past_du
     const module = { exports: {} };
     vm.runInNewContext(fs.readFileSync(filename, 'utf8'), {
         module, exports: module.exports, Buffer, URL, Date: Clock, setTimeout, clearTimeout,
-        process: { env: { NODE_ENV: 'test', MULTI_TENANT_MODE: tenantId ? 'true' : 'false' } },
+        process: { env: { NODE_ENV: 'test', MULTI_TENANT_MODE: tenantId ? 'true' : 'false',
+            ...(legacyCustomerConfigured ? { BILLING_CUSTOMER_EMAIL: 'owner@example.invalid',
+                BILLING_CUSTOMER_NAME: 'Synthetic owner', BILLING_CUSTOMER_PHONE: '0500000000' } : {}) } },
         console: { warn() {}, error() {}, log() {} },
         require(name) {
             if (name === '../../config/db') return pool;
@@ -177,6 +195,7 @@ async function fixture(t, { tenantId = null, mode = 'success', status = 'past_du
                 verifyChargedTransaction: async (_credentials, transaction, expected) => {
                     reads.push({ kind: 'charge', transaction, expected });
                     if (verificationFailure || chargeVerificationFailure) throw Error('SYNTHETIC_VERIFICATION_FAILURE');
+                    if (approvedTransactions.has(transaction)) { assert.equal(expected, approvedTransactions.get(transaction)); return true; }
                     assert.ok(transaction.startsWith('charged-transaction-')); assert.equal(expected, charges[0].amount);
                     return true;
                 },
@@ -191,10 +210,11 @@ async function fixture(t, { tenantId = null, mode = 'success', status = 'past_du
                 createTakbullPaymentPage: async input => {
                     hosted.push(input); const uniqId = 'new-page-' + hosted.length;
                     hostedOrders.set(uniqId, { ...input, paid: false });
+                    if (pageFailure) throw Error('SYNTHETIC_PAGE_TIMEOUT');
                     return { uniqId, redirectUrl: 'https://synthetic.invalid/checkout' };
                 },
-                validateTakbullNotification: async (_credentials, reference) => ({ ok: true,
-                    paid: reference === 'hosted-setup' || hostedOrders.get(reference)?.paid === true,
+                validateTakbullNotification: async (_credentials, reference) => notificationResult || ({ ok: true,
+                    paid: setupOrders.has(reference) || hostedOrders.get(reference)?.paid === true,
                     token: 'untrusted-callback-card', raw: { TransactionId: 'untrusted-callback-id' } }),
                 extractTokenFromValidated: () => null,
             };
@@ -204,6 +224,18 @@ async function fixture(t, { tenantId = null, mode = 'success', status = 'past_du
     const billing = module.exports;
     return { db, pool, billing, trace, charges, hosted, reads, notices, dispatchAccounts, emails, signups,
         setMode(value) { chargeMode = value; },
+        beforeReservation(fn) { reservationHook = fn; },
+        failPage(value) { pageFailure = value; },
+        failReferenceWrite(value) { referenceWriteFailure = value; },
+        failChargeWrite(value) { chargeWriteFailure = value; },
+        setNotification(value) { notificationResult = value; },
+        setDocument(value) { documentResult = value; },
+        approveTransaction(id, amount) { approvedTransactions.set(id, amount); },
+        async addSetup({ id, reference, order, token }) {
+            setupOrders.set(reference, { order, token });
+            await pool.query(`INSERT INTO firm_payment_intents(id,law_firm_tenant_id,kind,status,amount_ils,order_reference,takbull_uniq_id,package_snapshot)
+                VALUES($1,$2,'setup','pending',1,$3,$4,'{}')`, [id, tenantId, order, reference]);
+        },
         setCredentials(value) { credentialsEnabled = value; },
         markHostedPaid(reference) { assert.ok(hostedOrders.has(reference)); hostedOrders.get(reference).paid = true; },
         missingToken(value) { missingToken = value; },
@@ -237,6 +269,8 @@ for (const tenantId of [null, OFFICE]) {
         assert.equal(f.charges.length, 1); assert.equal(f.charges[0].amount, 1353);
         assert.equal(f.charges[0].cardExternalToken, 'verified-card');
         assert.equal(f.charges[0].customerEmail, 'owner@example.invalid');
+        assert.equal(f.charges[0].customerFullName, 'Synthetic owner');
+        assert.equal(f.charges[0].customerPhone, '0500000000');
         assert.deepEqual(debtFields(f.dispatchAccounts[0]), debtFields(before.account), 'Setup cannot activate, reprice or renew the unpaid subscription');
         const paid = await f.state();
         assert.equal(paid.account.status, 'active'); assert.ok(+paid.account.renews_at > +AT);
@@ -526,3 +560,163 @@ for (const missing of ['card', 'credentials']) {
         assert.equal(f.charges.length, 0);
     });
 }
+
+test('hosted page timeout preserves a reservation and blocks alternate payment dispatch', async t => {
+    const f = await fixture(t); f.failPage(true);
+    await assert.rejects(f.billing.createCheckout({ kind: 'retry' }), /SYNTHETIC_PAGE_TIMEOUT/);
+    assert.equal(f.hosted.length, 1);
+    const intent = (await f.state()).intents.find(row => row.kind === 'retry');
+    assert.equal(intent.status, 'pending'); assert.equal(intent.takbull_uniq_id, null);
+    assert.equal((await f.billing.chargeSavedCard({ kind: 'retry' })).pending, true);
+    await assert.rejects(f.billing.createCheckout({ kind: 'retry' }), { code: 'PAYMENT_RECONCILIATION_REQUIRED' });
+    assert.equal(f.hosted.length, 1); assert.equal(f.charges.length, 0);
+});
+
+test('a lost hosted order reference cannot be reconciled with an unrelated approved order', async t => {
+    const f = await fixture(t); f.failReferenceWrite(true);
+    await assert.rejects(f.billing.createCheckout({ kind: 'retry' }), /SYNTHETIC_REFERENCE_WRITE_FAILURE/);
+    const intent = (await f.state()).intents.find(row => row.kind === 'retry');
+    assert.equal(intent.takbull_uniq_id, null); assert.equal(f.hosted.length, 1);
+    f.setNotification({ ok: true, paid: true, raw: { TransactionId: 'foreign-approved-transaction' } });
+    f.approveTransaction('foreign-approved-transaction', 1353);
+    await assert.rejects(f.billing.handleTakbullNotification({ uniqId: 'foreign-hosted-order',
+        query: { order_reference: intent.order_reference } }), { message: 'PAYMENT_ORDER_IDENTITY_MISMATCH' });
+    const state = await f.state();
+    assert.equal(state.intents.find(row => row.id === intent.id).status, 'pending');
+    assert.equal(state.account.status, 'past_due'); assert.equal(state.notices.length, 0);
+    assert.equal(f.reads.filter(row => row.kind === 'charge').length, 0);
+    assert.equal((await f.billing.chargeSavedCard({ kind: 'retry' })).pending, true);
+    assert.equal(f.charges.length, 0);
+});
+
+for (const kind of ['setup', 'unrecognized', 'manual']) {
+    test(`saved-card endpoint rejects unsupported ${kind} kind before reserving or charging`, async t => {
+        const f = await fixture(t); const before = await f.state();
+        await assert.rejects(f.billing.chargeSavedCard({ kind }), { code: 'INVALID_PAYMENT_KIND' });
+        assert.equal(f.charges.length, 0);
+        assert.equal((await f.state()).intents.length, before.intents.length);
+        assert.deepEqual(debtFields((await f.state()).account), debtFields(before.account));
+    });
+}
+
+test('manual annual charge reads the current agreed price under reservation lock', async t => {
+    const f = await fixture(t);
+    f.beforeReservation(() => f.db.query('UPDATE firm_billing SET price_monthly_ils=100'));
+    const result = await f.billing.chargeSavedCard({ kind: 'annual' });
+    assert.equal(result.ok, true); assert.equal(f.charges.length, 1);
+    assert.equal(f.charges[0].amount, 1080);
+    assert.equal(Number((await f.state()).account.price_monthly_ils), 100);
+});
+
+test('a disable committed before annual reservation prevents provider dispatch', async t => {
+    const f = await fixture(t);
+    f.beforeReservation(() => f.db.query('UPDATE firm_billing SET billing_enabled=false'));
+    const result = await f.billing.chargeSavedCard({ kind: 'annual' });
+    assert.equal(result.skipped, true); assert.equal(f.charges.length, 0);
+});
+
+test('a scheduled annual cycle cannot dispatch twice after its first settlement', async t => {
+    const f = await fixture(t, { interval: 'yearly' });
+    const results = await Promise.all([f.billing.chargeSavedCard({ kind: 'annual', automatic: true }),
+        f.billing.chargeSavedCard({ kind: 'annual', automatic: true })]);
+    assert.equal(f.charges.length, 1);
+    assert.ok(results.some(row => row.ok === true));
+    assert.equal((await f.billing.chargeSavedCard({ kind: 'annual', automatic: true })).skipped, true);
+    assert.equal(f.charges.length, 1);
+});
+
+test('a paid monthly reservation retains its frozen period if current interval changed before reconciliation', async t => {
+    const f = await fixture(t, { mode: 'timeout' });
+    await assert.rejects(f.billing.chargeSavedCard({ kind: 'retry' }), /SYNTHETIC_TIMEOUT/);
+    const intent = (await f.state()).intents.find(row => row.kind === 'retry');
+    assert.equal(intent.package_snapshot.billingInterval, 'monthly');
+    await f.pool.query("UPDATE firm_billing SET billing_interval='yearly'");
+    f.approveTransaction('confirmed-monthly-transaction', 1353);
+    await f.billing.settleSuccessfulPayment({ intent, transactionId: 'confirmed-monthly-transaction' });
+    const state = await f.state();
+    assert.equal(state.account.billing_interval, 'monthly');
+    assert.ok(+state.account.renews_at < +new Date('2027-01-01T00:00:00Z'));
+    assert.equal(f.charges.length, 1); assert.equal(state.notices.length, 1);
+});
+
+test('legacy interval-only edits are blocked while a payment is unresolved', async t => {
+    const f = await fixture(t, { mode: 'timeout' });
+    await assert.rejects(f.billing.chargeSavedCard({ kind: 'retry' }), /SYNTHETIC_TIMEOUT/);
+    await assert.rejects(f.billing.savePackage({ platformId: 'site', resourceId: 'basic', signingId: 'none',
+        billingInterval: 'yearly', usage: {} }), { code: 'PAYMENT_RECONCILIATION_REQUIRED' });
+    assert.equal((await f.state()).account.billing_interval, 'monthly');
+});
+
+test('an interval-only legacy edit preserves its agreed monthly amount instead of repricing the catalogue', async t => {
+    const f = await fixture(t, { status: 'active', renewsAt: '2026-12-01T12:00:00Z' });
+    await f.billing.savePackage({ platformId: 'site', resourceId: 'basic', signingId: 'none',
+        billingInterval: 'yearly', usage: {} });
+    const state = await f.state();
+    assert.equal(Number(state.account.price_monthly_ils), 1353);
+    assert.equal(state.account.billing_interval, 'yearly'); assert.equal(f.charges.length, 0);
+});
+
+test('success before transaction-reference persistence failure remains pending and cannot be redispatched', async t => {
+    const f = await fixture(t); f.failChargeWrite(true);
+    await assert.rejects(f.billing.chargeSavedCard({ kind: 'retry' }), /SYNTHETIC_CHARGE_WRITE_FAILURE/);
+    assert.equal(f.charges.length, 1);
+    const intent = (await f.state()).intents.find(row => row.kind === 'retry');
+    assert.equal(intent.status, 'pending'); assert.equal(intent.takbull_transaction_id, null);
+    assert.equal((await f.billing.chargeSavedCard({ kind: 'retry' })).pending, true);
+    assert.equal(f.charges.length, 1); assert.equal((await f.state()).account.status, 'past_due');
+});
+
+test('two different verified card setups race into at most one subscription payment and replays keep the current card', async t => {
+    const f = await fixture(t);
+    const second = crypto.randomUUID();
+    await f.addSetup({ id: second, reference: 'hosted-setup-second', order: 'setup-order-second', token: 'second-card' });
+    await Promise.all([f.notify(), f.billing.handleTakbullNotification({ uniqId: 'hosted-setup-second' })]);
+    assert.equal(f.charges.length, 1);
+    let state = await f.state();
+    assert.equal(state.intents.filter(row => row.kind === 'setup' && row.status === 'succeeded').length, 2);
+    assert.equal(state.cards.filter(row => row.is_active).length, 1);
+    const current = state.cards.find(row => row.is_active).token_encrypted;
+    await Promise.all([f.notify(), f.billing.handleTakbullNotification({ uniqId: 'hosted-setup-second' })]);
+    state = await f.state();
+    assert.equal(f.charges.length, 1); assert.equal(state.cards.find(row => row.is_active).token_encrypted, current);
+    assert.equal(state.notices.length, 1);
+});
+
+test('an approved payment with missing provider document reference is not charged again to create a receipt', async t => {
+    const f = await fixture(t);
+    f.setDocument({ created: false, id: null, uniqId: null, number: null, deliveryStatus: 'unknown' });
+    await f.notify(); await f.notify();
+    const state = await f.state();
+    const paid = state.intents.find(row => row.kind !== 'setup' && row.id !== FOREIGN);
+    assert.equal(paid.status, 'succeeded'); assert.equal(paid.package_snapshot.providerDocument.created, false);
+    assert.equal(state.account.status, 'active'); assert.equal(f.charges.length, 1);
+});
+
+test('a dedicated deployment without configured billing contact never guesses an arbitrary administrator recipient', async t => {
+    const f = await fixture(t, { legacyCustomerConfigured: false });
+    await f.pool.query(`INSERT INTO users VALUES(1,NULL,'Synthetic platform operator','operator@example.invalid','0500000001','Admin')`);
+    await f.notify();
+    assert.equal(f.charges.length, 1);
+    assert.equal(f.charges[0].customerEmail == null, true);
+    assert.equal(f.charges[0].customerPhone == null, true);
+    assert.equal(f.charges[0].customerFullName == null, true);
+    assert.equal((await f.state()).account.status, 'active');
+});
+
+test('settling an earlier saved-token charge cannot replace a newer verified active card', async t => {
+    const f = await fixture(t);
+    const id = crypto.randomUUID();
+    await f.pool.query(`INSERT INTO firm_payment_intents(id,kind,status,amount_ils,order_reference,package_snapshot)
+        VALUES($1,'renewal','pending',1353,'older-card-charge','{"billingInterval":"monthly"}')`, [id]);
+    await f.pool.query("UPDATE firm_payment_methods SET token_encrypted='enc:v1:newer-verified-card',last4='9999' WHERE is_active");
+    f.approveTransaction('approved-existing-card-transaction', 1353);
+    const intent = (await f.pool.query('SELECT * FROM firm_payment_intents WHERE id=$1', [id])).rows[0];
+    await f.billing.settleSuccessfulPayment({ intent, transactionId: 'approved-existing-card-transaction',
+        tokenInfo: { token: 'older-card', last4Digits: '0000' } });
+    const state = await f.state();
+    assert.equal(state.intents.find(row => row.id === id).status, 'succeeded');
+    assert.equal(state.cards.filter(row => row.is_active).length, 1);
+    assert.equal(state.cards.find(row => row.is_active).token_encrypted, 'enc:v1:newer-verified-card');
+    assert.equal(state.cards.find(row => row.is_active).last4, '9999');
+    assert.equal(f.charges.length, 0); assert.equal(state.notices.length, 1);
+});

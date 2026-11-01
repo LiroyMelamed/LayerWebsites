@@ -38,8 +38,13 @@ was used to infer a new bill or changed by this work.
 
 Takbull hosted checkout and token charges request `CreateDocument:true` within
 the single payment operation, including an actually collected verification fee.
-The stored office owner's details (or the signup agreement contact) supply the
-recipient. No separate document-creation retry is attempted after an uncertain
+The stored shared-office owner's details or the signup agreement contact supply
+the recipient. Dedicated offices use an explicitly verified deployment contact:
+`BILLING_CUSTOMER_EMAIL`, optionally `BILLING_CUSTOMER_NAME` and
+`BILLING_CUSTOMER_PHONE` (name falls back to `FIRM_DISPLAY_NAME`). With no
+configured email the request omits it; an arbitrary administrator's inbox is
+never substituted. These variables were not changed on any live tenant.
+No separate document-creation retry is attempted after an uncertain
 payment. Safe provider document references are stored on the payment intent and
 exposed in billing history; a reference never establishes email delivery.
 
@@ -104,3 +109,18 @@ period, amount and recovery action require a separate approved reconciliation.
 Uncertain payments must be reconciled using provider evidence before retrying;
 this patch intentionally provides no automatic replay of an unknown charge or
 unknown document creation.
+
+## Wider payment and tenant reconciliation follow-up
+
+The later comprehensive QA includes stricter hosted-order binding, saved-card
+operation validation, fresh locked annual amounts and due checks, frozen paid
+periods, and pending-payment guards on package edits. Its current-source test
+results supersede the earlier backend counts above; see
+[`comprehensive-qa/README.md`](comprehensive-qa/README.md).
+
+The additional mailbox search found a contemporaneous 1 ILS purchase
+notification, not a fiscal document:
+[`receipt-search/README.md`](receipt-search/README.md).
+Current branch/deployment identity and the preservation-first consolidation
+plan are in [`version-audit/REPORT.md`](version-audit/REPORT.md). Shared code is
+not yet published or deployed to any tenant by this task.

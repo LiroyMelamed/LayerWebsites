@@ -231,6 +231,7 @@ exports.chargeNow = async (req, res) => {
         const result = await billing.chargeSavedCard({ kind: req.body?.kind || 'retry' });
         return res.status(200).json(result);
     } catch (e) {
+        if (e?.code === 'INVALID_PAYMENT_KIND') return res.status(400).json({ message: e.message, errorCode: e.code });
         console.error('chargeNow error:', e);
         return res.status(500).json({ message: e.message || 'שגיאה בחיוב' });
     }

@@ -534,6 +534,7 @@ test('already-applied package returns success without charging', async () => {
 });
 
 test('savePackage retry after PACKAGE_PERSIST passes upgradeOperation and avoids duplicate charge stub', async () => {
+    const poolMock = createBillingPoolMock();
     const stubs = {
         ensureBillingRow: billing.ensureBillingRow,
         getBillingRow: billing.getBillingRow,
@@ -601,6 +602,7 @@ test('savePackage retry after PACKAGE_PERSIST passes upgradeOperation and avoids
         assert.equal(retry.charged, false);
     } finally {
         Object.assign(billing, stubs);
+        poolMock.restore();
     }
 });
 
@@ -684,6 +686,7 @@ test('an existing pending intent without a known outcome remains reserved across
 });
 
 test('complimentary interval-only savePackage does not pass upgradeOperation to charge', async () => {
+    const poolMock = createBillingPoolMock();
     const stubs = {
         ensureBillingRow: billing.ensureBillingRow,
         getBillingRow: billing.getBillingRow,
@@ -725,6 +728,7 @@ test('complimentary interval-only savePackage does not pass upgradeOperation to 
         assert.equal(chargeCalled, false);
     } finally {
         Object.assign(billing, stubs);
+        poolMock.restore();
     }
 });
 

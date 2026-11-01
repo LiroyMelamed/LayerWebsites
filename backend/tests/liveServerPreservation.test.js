@@ -73,6 +73,21 @@ test('an uncertain card collection cannot be reported paid because the subscript
     assert.equal(res.body.cardVerified, true);
 });
 
+test('saved-card controller rejects a setup-kind charge as a client error', async () => {
+    const controller = load('controllers/billingController.js', {
+        '../lib/billing/firmBillingService': {
+            async chargeSavedCard({ kind }) {
+                assert.equal(kind, 'setup');
+                throw Object.assign(new Error('unsupported kind'), { code: 'INVALID_PAYMENT_KIND' });
+            },
+        },
+    });
+    const res = response();
+    await controller.chargeNow({ body: { kind: 'setup' } }, res);
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.body.errorCode, 'INVALID_PAYMENT_KIND');
+});
+
 test('checkout confirmation rejects missing identifiers and failed validation without refreshing', async () => {
     let calls = 0;
     const controller = load('controllers/billingController.js', {
