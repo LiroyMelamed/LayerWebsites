@@ -1,0 +1,15 @@
+{
+  "capturedAtUtc": "2026-11-01 14:16:04 UTC",
+  "command": "git ls-remote origin refs/heads/{main,AshrafEssa,MelamedLaw,MorLevi,Melamedia}",
+  "exitCode": 0,
+  "refs": {
+    "AshrafEssa": "c469ee2e0fb5bee403902c698f6621cb7a08cab3",
+    "MelamedLaw": "0631caf7b1c829673887e12c1d2e3ffc36c1715b",
+    "Melamedia": "4a766a35921263260c3139632378444e6550a5e3",
+    "MorLevi": "a50afb3fccaaee17633328ef62b5695336d73090",
+    "main": "53d177eea8bcdcb882ade913f4afa15c6011da4b"
+  },
+  "allSameAsIntegrationStartingPins": true,
+  "readOnly": true,
+  "push": false
+}

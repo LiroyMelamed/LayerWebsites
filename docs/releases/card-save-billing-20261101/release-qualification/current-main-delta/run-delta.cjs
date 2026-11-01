@@ -1,0 +1,28 @@
+"use strict";
+const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
+const {spawnSync,execFileSync}=require('node:child_process');
+const root=path.resolve(__dirname,'../../../../..'),out=__dirname;
+const git=(...a)=>execFileSync('git',a,{cwd:root,encoding:'utf8'}).trim();
+const sha=x=>crypto.createHash('sha256').update(x).digest('hex');
+const previous='9dd9cb3607ee79434fcfb1aed5a40773e5713789';
+const upstream='4917ca1a3d25e4224bd64fa8c05048285c0741dd';
+const files=['qaOutboundNoop.recovery.test.js','signingV2.completedCopyNotification.test.js','signingV2.transportOutcomes.test.js','systemMessageConsentController.test.js','systemMessagesOutbox.test.js','systemMessagesSdkRecovery.test.js'].map(x=>'backend/tests/'+x);
+const tracked=git('ls-files','-z','backend','frontend','scripts','docs/signing-v2/release-baseline.json').split('\0').filter(Boolean);
+const hashes=()=>Object.fromEntries(tracked.map(p=>[p,sha(fs.readFileSync(path.join(root,p)))]));
+const before=hashes(),candidate=git('rev-parse','HEAD');
+const env={PATH:process.env.PATH,HOME:process.env.HOME,TMPDIR:process.env.TMPDIR||'/tmp',LANG:'en_US.UTF-8',NODE_ENV:'test',NODE_PATH:'/tmp/layer-billing-lock-deps/node_modules',DB_DISABLE_CONNECT_TEST:'true'};
+const guard=path.join(root,'docs/releases/card-save-billing-20261101/comprehensive-qa/offline-network-guard.cjs');
+const args=['--require',guard,'--test','--test-reporter=tap','--test-concurrency=2',...files];
+const startedAt=new Date().toISOString();
+const run=spawnSync('python3',['/tmp/layer-billing-integration-20261101/tools/with-build-lock.py',process.execPath,...args],{cwd:root,env,encoding:'utf8',maxBuffer:20*1024*1024,timeout:900000});
+const log=(run.stdout||'')+(run.stderr||'');fs.writeFileSync(path.join(out,'delta-tests.tap'),log);
+const summary={};for(const key of ['tests','suites','pass','fail','cancelled','skipped','todo']){const m=log.match(new RegExp('^# '+key+' (\\d+)$','m'));summary[key]=m?Number(m[1]):null;}
+const guardRun=spawnSync(process.execPath,['scripts/check-signing-release.cjs'],{cwd:root,env,encoding:'utf8'});
+fs.writeFileSync(path.join(out,'source-release-guard.log'),(guardRun.stdout||'')+(guardRun.stderr||''));
+const changedPaths=git('diff','--name-only',previous,candidate).split('\n').filter(Boolean);
+const after=hashes();const changedDuringRun=tracked.filter(p=>before[p]!==after[p]);
+const trees={};for(const folder of ['backend','frontend','scripts'])trees[folder]={previous:git('rev-parse',previous+':'+folder),candidate:git('rev-parse',candidate+':'+folder)};
+const lockfiles=['backend/package-lock.json','frontend/package-lock.json'].map(p=>({path:p,sha256:sha(fs.readFileSync(path.join(root,p))),unchangedFromPrevious:git('rev-parse',previous+':'+p)===git('rev-parse',candidate+':'+p)}));
+const receipt={candidate,branch:git('branch','--show-current'),previousQualifiedSource:previous,upstreamMain:upstream,parents:git('show','-s','--format=%P','HEAD').split(' '),startedAt,finishedAt:new Date().toISOString(),node:process.version,files,args,exitCode:run.status,signal:run.signal,error:run.error?String(run.error):null,summary,logSha256:sha(log),sourceReleaseGuard:{exitCode:guardRun.status,stdout:guardRun.stdout,stderr:guardRun.stderr},changedPaths,trees,lockfiles,trackedSourceHashes:before,changedDuringRun,sourceStable:changedDuringRun.length===0,headAtFinish:git('rev-parse','HEAD'),frontendAndCompileInputsUnchanged:changedPaths.every(p=>p.startsWith('backend/')),fullFrontendSuiteRerun:false,frontendCompileRerun:false,networkBoundary:'existing offline guard blocks external sockets/fetch and application database ports; no application server boot or environment-file load',database:'synthetic in-memory only, no actual database fixture supplied',provider:'synthetic only; no native provider action',financialOperationsFlagSupplied:false};
+fs.writeFileSync(path.join(out,'evidence.json'),JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify({...receipt,trackedSourceHashes:undefined}));
+process.exitCode=run.status===0&&guardRun.status===0&&receipt.sourceStable&&candidate===receipt.headAtFinish?0:1;

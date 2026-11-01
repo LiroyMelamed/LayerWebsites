@@ -1,0 +1,84 @@
+{
+  "tenant": "AshrafEssa",
+  "scope": "Isolated local source qualification only; no live/provider/customer/production/deployment acceptance.",
+  "qualifiedSourceCandidate": "9eaebbdb6c23d56d974546e233b8905d19570ef5",
+  "branch": "codex/billing-final-ashraf-20261101",
+  "mainCutoff": "074df7520497a0cd6bd95ad70353201c905f0aa6",
+  "donor": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "latestClientHistory": "3359e65cdc082dbc50c30a0e1bd7284df854cf06",
+  "furtherDriftPolicy": "HOLD and separately qualify; do not chase beyond cutoff.",
+  "backend": {
+    "billingAndGate": {
+      "tests": 218,
+      "pass": 217,
+      "fail": 0,
+      "skipped": 1,
+      "cancelled": 0
+    },
+    "commonBoundaries": {
+      "tests": 125,
+      "pass": 124,
+      "fail": 0,
+      "skipped": 1,
+      "cancelled": 0
+    },
+    "transportConsentOutboxSdk": {
+      "tests": 40,
+      "pass": 40,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0
+    },
+    "passedTotal": 381,
+    "skippedTotal": 2,
+    "failedTotal": 0,
+    "actualPostgresExecutedHere": false
+  },
+  "frontend": {
+    "receiptSourceCandidate": "fc6f3b46378daa05b87f06ddfe6b2f58b97c6ab8",
+    "passed": 923,
+    "suites": 108,
+    "failed": 0,
+    "pending": 0,
+    "receiptSourceStable": true,
+    "carriedByExactInputProof": true,
+    "freshFullRunAtFinalSource": false,
+    "firstFullFailureRetained": "pinned-9dd/frontend-result.json",
+    "firstFullPassed": 918,
+    "firstFullFailed": 5,
+    "unchangedFocusedPassed": 75
+  },
+  "build": {
+    "receiptSourceCandidate": "7309eb636748a8081bbe159053bfba710ffd9bc0",
+    "artifactCount": 255,
+    "ownLogoMatches": true,
+    "recompiledAtFinalSource": false,
+    "carriedByExactInputProof": true,
+    "deploymentPayload": false,
+    "publicBrandingPathsVerified": 15,
+    "sourceLogoCopiesVerified": 4,
+    "ownIndexTitleMatches": true
+  },
+  "sourceAndDependencyProof": {
+    "frontendAndScriptsInputCount": 865,
+    "importedBackendHelperCount": 10,
+    "allCarryChecksValid": true,
+    "protectedReleaseFiles": 103,
+    "originalAndLatestClientPathsPreserved": 111,
+    "donorChangedSourcePathsExact": 41,
+    "expectedBillingDiffFromLatestClientPaths": 34,
+    "unexpectedClientSourceDiffPaths": 0,
+    "nodeVersion": "v24.14.0",
+    "dependencyDrift": false
+  },
+  "runtimeEditsBeyondMerges": false,
+  "conflicts": [],
+  "waivedPeriodPolicy": "Owner-waived periods were preserved; customer-specific evidence stays private outside Git.",
+  "externalLimitations": [
+    "Real PostgreSQL signup/renewal-office and client-profile suites skipped here; root owns those fixtures.",
+    "No provider sandbox, real financial document, mail, full tenant provisioning or current-production acceptance.",
+    "Pause gate proves protected new-process boundaries; external existing hosted pages, in-flight requests and older processes require operational controls."
+  ],
+  "liveOperations": false,
+  "pushOrDeployment": false
+}

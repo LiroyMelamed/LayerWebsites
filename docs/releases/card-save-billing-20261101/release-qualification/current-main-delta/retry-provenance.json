@@ -1,0 +1,23 @@
+{
+  "initialAttempt": "attempt1-evidence.json",
+  "initialOutcome": "38 passed, 2 failed solely at synthetic loopback listen with sandbox EPERM; no product assertion failures",
+  "retry": "evidence.json",
+  "retrySourceChanged": false,
+  "retrySelectionChanged": false,
+  "retryBoundaryChanged": false,
+  "localListenerExecution": "Normal require_escalated approved for the identical synthetic group; external/application-DB network guard retained",
+  "finalOutcome": {
+    "tests": 40,
+    "suites": 0,
+    "pass": 40,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "sourceReleaseGuardFiles": 103,
+  "sourceReleaseGuardExitCode": 0,
+  "runnerSha256": "91d787dfe4faf32e1b1b3003a8c556e4463088e462d0dc8925cb3106f9d58ebc",
+  "allOutstandingBlocksForThisDeltaResolved": true,
+  "releaseAuthorization": "No push, deployment, financial activation, customer data change, provider operation, actual document or message was performed."
+}

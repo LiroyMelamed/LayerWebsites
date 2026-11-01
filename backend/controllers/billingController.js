@@ -1,3 +1,4 @@
+const { respondIfBillingPaused } = require('../lib/billing/billingOperations');
 const { getLimitsForFirm } = require('../lib/limits/getLimitsForFirm');
 const { getUsageForFirm } = require('../lib/limits/getUsageForFirm');
 const { enforcementMode } = require('../lib/limits/enforceFirmLimits');
@@ -53,6 +54,7 @@ exports.getLockStatus = async (req, res) => {
             payUrl: snap.payUrl,
         });
     } catch (e) {
+        if (respondIfBillingPaused(res, e)) return;
         console.error('getLockStatus error:', e);
         return res.status(503).json({ errorCode: 'SERVICE_TEMPORARILY_UNAVAILABLE', message: 'השירות אינו זמין כרגע. נסו שוב מאוחר יותר.' });
     }
@@ -106,6 +108,7 @@ exports.getCurrentPlan = async (req, res) => {
             ...billingPayload(snap),
         });
     } catch (e) {
+        if (respondIfBillingPaused(res, e)) return;
         console.error('getCurrentPlan error:', e);
         return res.status(500).json({ message: 'שגיאה בשליפת תוכנית' });
     }
@@ -124,6 +127,7 @@ exports.getCurrentUsage = async (req, res) => {
         }
         return res.status(200).json(usage);
     } catch (e) {
+        if (respondIfBillingPaused(res, e)) return;
         console.error('getCurrentUsage error:', e);
         return res.status(500).json({ message: 'שגיאה בשליפת נתוני שימוש' });
     }
@@ -147,6 +151,7 @@ exports.listPlans = async (req, res) => {
             ...billingPayload(snap),
         });
     } catch (e) {
+        if (respondIfBillingPaused(res, e)) return;
         console.error('listPlans error:', e);
         return res.status(500).json({ message: 'שגיאה בשליפת רשימת תוכניות' });
     }
@@ -168,6 +173,7 @@ exports.savePackage = async (req, res) => {
         });
         return res.status(200).json(result);
     } catch (e) {
+        if (respondIfBillingPaused(res, e)) return;
         if (e?.code === 'PACKAGE_DOWNGRADE_BLOCKED') {
             return res.status(409).json({
                 message: e.message,
@@ -198,6 +204,7 @@ exports.createCheckout = async (req, res) => {
         });
         return res.status(200).json(checkout);
     } catch (e) {
+        if (respondIfBillingPaused(res, e)) return;
         if (e?.code === 'TAKBULL_NOT_CONFIGURED') {
             return res.status(503).json({ message: e.message, errorCode: e.code });
         }
@@ -213,13 +220,15 @@ exports.confirmCheckout = async (req, res) => {
         if (!intentId && !uniqId) {
             return res.status(400).json({ message: 'חסר מזהה תשלום' });
         }
-        await billing.handleTakbullReturn({ uniqId, intentId });
+        const result = await billing.handleTakbullReturn({ uniqId, intentId });
         const snap = await billing.getBillingSnapshot();
         return res.status(200).json({
-            success: true,
+            success: result?.paid === true,
+            cardVerified: result?.cardVerified === true,
             ...billingPayload(snap),
         });
     } catch (e) {
+        if (respondIfBillingPaused(res, e)) return;
         console.error('confirmCheckout error:', e);
         return res.status(500).json({ message: e.message || 'שגיאה באימות התשלום' });
     }
@@ -230,6 +239,8 @@ exports.chargeNow = async (req, res) => {
         const result = await billing.chargeSavedCard({ kind: req.body?.kind || 'retry' });
         return res.status(200).json(result);
     } catch (e) {
+        if (respondIfBillingPaused(res, e)) return;
+        if (e?.code === 'INVALID_PAYMENT_KIND') return res.status(400).json({ message: e.message, errorCode: e.code });
         console.error('chargeNow error:', e);
         return res.status(500).json({ message: e.message || 'שגיאה בחיוב' });
     }
@@ -243,6 +254,7 @@ exports.cancelSubscription = async (req, res) => {
             ...billingPayload(snap),
         });
     } catch (e) {
+        if (respondIfBillingPaused(res, e)) return;
         if (e?.code === 'NO_BILLING') {
             return res.status(404).json({ message: e.message });
         }
@@ -258,6 +270,7 @@ exports.takbullReturn = async (req, res) => {
         const result = await billing.handleTakbullReturn({ uniqId, intentId });
         return res.redirect(302, result.redirectUrl);
     } catch (e) {
+        if (respondIfBillingPaused(res, e)) return;
         console.error('takbullReturn error:', e);
         return res.status(500).send(getHebrewMessage('INTERNAL_ERROR'));
     }
@@ -269,6 +282,7 @@ exports.takbullCancel = async (req, res) => {
         const result = await billing.handleTakbullCancel({ intentId });
         return res.redirect(302, result.redirectUrl);
     } catch (e) {
+        if (respondIfBillingPaused(res, e)) return;
         console.error('takbullCancel error:', e);
         return res.status(500).send(getHebrewMessage('INTERNAL_ERROR'));
     }

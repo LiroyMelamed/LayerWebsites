@@ -1,3 +1,4 @@
+const { billingOperationsEnabled, assertBillingOperationsEnabled, isBillingOperationsPausedError } = require('./billingOperations');
 const crypto = require('node:crypto');
 const pool = require('../../config/db');
 const { encryptSecret, decryptSecret } = require('./secrets');
@@ -107,6 +108,7 @@ async function getBillingRow(database = pool) {
 }
 
 async function ensureBillingRow(database = pool) {
+    assertBillingOperationsEnabled();
     const existing = await getBillingRow(database);
     if (existing) return existing;
 
@@ -165,6 +167,7 @@ async function ensureBillingRow(database = pool) {
 }
 
 async function updateBilling(fields, database = pool) {
+    assertBillingOperationsEnabled();
     const sets = [];
     const vals = [];
     let i = 1;
@@ -218,6 +221,7 @@ async function getActiveCard() {
 }
 
 async function saveCardFromToken(tokenInfo, database = pool) {
+    assertBillingOperationsEnabled();
     if (!tokenInfo?.token) return null;
     const encrypted = encryptSecret(tokenInfo.token);
     const tenantId = getCurrentTenantId();
@@ -269,6 +273,7 @@ function publicCard(card) {
 }
 
 async function expireGraceIfNeeded(row, now = new Date()) {
+    assertBillingOperationsEnabled();
     const flags = computeFlags(row, now);
     if (flags.stillComplimentary) {
         if (row.status === 'past_due' || row.status === 'suspended' || row.graceUntil) {
@@ -294,7 +299,7 @@ async function listPaymentHistory(limit = 25) {
     try {
         const res = await pool.query(
             `SELECT id, kind, status, amount_ils, currency, purpose, error_message,
-                    created_at, settled_at, takbull_transaction_id
+                    created_at, settled_at, takbull_transaction_id, package_snapshot->'providerDocument' AS provider_document
              FROM firm_payment_intents
              WHERE law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid
              ORDER BY created_at DESC
@@ -312,6 +317,7 @@ async function listPaymentHistory(limit = 25) {
             createdAt: row.created_at,
             settledAt: row.settled_at,
             transactionId: row.takbull_transaction_id,
+            document: row.provider_document || null,
         }));
     } catch (e) {
         if (isRelationMissingError(e)) return [];
@@ -320,7 +326,8 @@ async function listPaymentHistory(limit = 25) {
 }
 
 async function getBillingSnapshot() {
-    let row = await ensureBillingRow();
+    const operationsEnabled = billingOperationsEnabled();
+    let row = operationsEnabled ? await ensureBillingRow() : await getBillingRow();
     if (!row) {
         return {
             available: false,
@@ -334,7 +341,7 @@ async function getBillingSnapshot() {
             upcomingPayment: null,
         };
     }
-    row = await expireGraceIfNeeded(row);
+    if (operationsEnabled) row = await expireGraceIfNeeded(row);
     const flags = computeFlags(row);
     const pkg = resolvePricingLineItems({
         platformId: row.platformId,
@@ -345,7 +352,7 @@ async function getBillingSnapshot() {
     const card = publicCard(await getActiveCard());
     const payments = await listPaymentHistory();
     const billingInterval = normalizeBillingInterval(row.billingInterval);
-    const agreedMonthly = getCurrentTenantId() ? row.priceMonthlyIls : pkg.total;
+    const agreedMonthly = row.priceMonthlyIls;
     const priceYearlyIls = yearlyTotalIls(agreedMonthly);
     let nextChargeIls = billingInterval === 'yearly' ? priceYearlyIls : Number(agreedMonthly || 0);
     let signupPriceIsFinal = false;
@@ -355,7 +362,8 @@ async function getBillingSnapshot() {
             [getCurrentTenantId()]
         )).rows[0];
         if (agreement) {
-            nextChargeIls = require('./signupQuote').renewalAmount({ price_monthly_ils: agreedMonthly, billing_interval: billingInterval }, agreement);
+            nextChargeIls = Number(agreedMonthly) === 0 ? 0
+                : require('./signupQuote').renewalAmount({ price_monthly_ils: agreedMonthly, billing_interval: billingInterval }, agreement);
             signupPriceIsFinal = true;
         }
     }
@@ -399,6 +407,7 @@ async function getBillingSnapshot() {
 }
 
 async function syncTenantSubscription(pkg, database = pool) {
+    assertBillingOperationsEnabled();
     const quotas = quotasForPackage(pkg);
     try {
         await database.query(
@@ -421,6 +430,7 @@ async function syncTenantSubscription(pkg, database = pool) {
 }
 
 async function recordEvent(intentId, eventType, payload, database = pool) {
+    assertBillingOperationsEnabled();
     try {
         await database.query(
             `INSERT INTO firm_payment_events (intent_id, event_type, payload) VALUES ($1, $2, $3::jsonb)`,
@@ -445,6 +455,7 @@ function cancelAddress() {
 }
 
 async function createIntent({ kind, amountIls, purpose, packageSnapshot }, dbClient) {
+    assertBillingOperationsEnabled();
     const id = crypto.randomUUID();
     const orderReference = `lw-${kind}-${id.replace(/-/g, '').slice(0, 18)}`;
     const q = dbClient?.query?.bind(dbClient) || pool.query.bind(pool);
@@ -551,6 +562,7 @@ async function findPendingUpgradeIntentForUpdate(operationKey, dbClient) {
 }
 
 async function recoverPaidUpgradeIntent(intent, logContext = {}) {
+    assertBillingOperationsEnabled();
     const target = parseIntentPackageSnapshot(intent?.package_snapshot);
     console.error('[billing] UPGRADE_PACKAGE_RECOVERED', {
         code: 'UPGRADE_PACKAGE_RECOVERED',
@@ -607,40 +619,39 @@ async function findIntentById(id) {
 }
 
 async function markPaymentFailed({ intent, errorMessage, skipEmail } = {}) {
-    const row = await ensureBillingRow();
+    assertBillingOperationsEnabled();
+    const client = await pool.connect();
     const now = new Date();
-    const alreadyPastDue = row.status === 'past_due' || row.status === 'suspended';
-    const graceUntil = alreadyPastDue && row.graceUntil
-        ? row.graceUntil
-        : new Date(now.getTime() + GRACE_MS);
-
-    if (intent?.id) {
-        await pool.query(
-            `UPDATE firm_payment_intents
-             SET status = 'failed', error_message = $2, updated_at = now()
-             WHERE id = $1 AND status = 'pending'`,
-            [intent.id, String(errorMessage || 'payment_failed').slice(0, 500)]
-        );
-        await recordEvent(intent.id, 'payment_failed', { errorMessage });
-    }
-
-    const flags = computeFlags(row, now);
-    const setupIntent = String(intent?.kind || '') === 'setup';
-    if (!flags.billingEnabled || flags.stillComplimentary || setupIntent) {
-        await updateBilling({ last_payment_error: String(errorMessage || '').slice(0, 500) });
-        return getBillingSnapshot();
-    }
-
-    const nextStatus = row.status === 'suspended' ? 'suspended' : 'past_due';
-    await updateBilling({
-        status: nextStatus,
-        grace_until: graceUntil,
-        last_failed_at: now,
-        last_payment_error: String(errorMessage || '').slice(0, 500),
-    });
+    let row, graceUntil, notify = false;
+    try {
+        await client.query('BEGIN');
+        await ensureBillingRow(client);
+        const scope = billingScopeSql();
+        await client.query(`SELECT id FROM firm_billing WHERE ${scope.clause} FOR UPDATE`, scope.param ? [scope.param] : []);
+        row = await getBillingRow(client);
+        let failed = true;
+        if (intent?.id) {
+            failed = (await client.query(`UPDATE firm_payment_intents
+                SET status='failed',error_message=$2,updated_at=now()
+                WHERE id=$1 AND status='pending' AND law_firm_tenant_id IS NOT DISTINCT FROM $3::uuid RETURNING id`,
+            [intent.id, String(errorMessage || 'payment_failed').slice(0, 500), getCurrentTenantId()])).rowCount > 0;
+            if (failed) await recordEvent(intent.id, 'payment_failed', { errorMessage }, client);
+        }
+        // A stale failure cannot undo a payment already settled by a webhook.
+        if (failed && intent?.kind !== 'setup' && subscriptionAmountDue(row, now) > 0) {
+            const alreadyPastDue = row.status === 'past_due' || row.status === 'suspended';
+            graceUntil = row.graceUntil || new Date(now.getTime() + GRACE_MS);
+            await updateBilling({ status: row.status === 'suspended' ? 'suspended' : 'past_due',
+                grace_until: graceUntil, last_failed_at: row.lastFailedAt || now,
+                last_payment_error: String(errorMessage || '').slice(0, 500) }, client);
+            notify = !skipEmail && !alreadyPastDue;
+        }
+        await client.query('COMMIT');
+    } catch (error) { await client.query('ROLLBACK'); throw error; }
+    finally { client.release(); }
 
     // Notify once when entering past_due — not on every scheduler retry.
-    if (!skipEmail && !alreadyPastDue) {
+    if (notify) {
         const card = await getActiveCard();
         try {
             await sendFailedPaymentEmails({
@@ -676,6 +687,7 @@ function parseIntentPackageSnapshot(raw) {
 }
 
 async function applyIntentPackageSnapshot(intent, database = pool) {
+    assertBillingOperationsEnabled();
     const pending = parseIntentPackageSnapshot(intent?.package_snapshot);
     if (!pending) return false;
     const priced = resolvePricingLineItems(pending);
@@ -698,7 +710,54 @@ async function hasSelfServiceAgreement() {
         AND consent_version IN ('signup-1ils-3months-v1','signup-1ils-3months-v2') LIMIT 1`, [tenantId])).rowCount > 0;
 }
 
-async function settleSuccessfulPayment({ intent, tokenInfo, transactionId, transactionClient } = {}) {
+// Saving a card authorizes recovery of an existing bill, never a future cycle.
+function subscriptionAmountDue(row, now = new Date()) {
+    if (!row || !row.billingEnabled || computeFlags(row, now).stillComplimentary) return 0;
+    const overdue = row.status === 'past_due' || row.status === 'suspended';
+    // Cancellation can suspend access at the end of a paid period without
+    // creating an invoice. Recover only an already recorded payment failure.
+    if (row.autoRenew === false && (!overdue || !row.lastFailedAt)) return 0;
+    const dueAt = row.renewsAt && new Date(row.renewsAt).getTime();
+    if (!overdue && (!Number.isFinite(dueAt) || dueAt > now.getTime())) return 0;
+    const monthly = Number(row.priceMonthlyIls);
+    const amount = normalizeBillingInterval(row.billingInterval) === 'yearly' ? yearlyTotalIls(monthly) : monthly;
+    if (!Number.isFinite(amount) || amount < 0) throw new Error('INVALID_BILLING_AMOUNT');
+    return amount;
+}
+
+async function getBillingCustomer(database = pool) {
+    const tenantId = getCurrentTenantId();
+    if (!tenantId) {
+        // Dedicated offices have no authoritative owner mapping. A platform
+        // operator or the first admin is not necessarily the invoice customer.
+        return { customerFullName: String(process.env.BILLING_CUSTOMER_NAME || process.env.FIRM_DISPLAY_NAME || '').trim() || null,
+            customerEmail: String(process.env.BILLING_CUSTOMER_EMAIL || '').trim() || null,
+            customerPhone: String(process.env.BILLING_CUSTOMER_PHONE || '').trim() || null };
+    }
+    // Shared offices use their stored owner, never the staff member initiating checkout.
+    const result = await database.query(`SELECT u.name,u.email,u.phonenumber FROM users u
+        JOIN law_firm_tenants t ON t.owner_user_id=u.userid
+        WHERE t.id=$1 AND u.law_firm_tenant_id=$1 LIMIT 1`, [tenantId]);
+    const owner = result.rows[0];
+    return { customerFullName: owner?.name || null, customerEmail: owner?.email || null,
+        customerPhone: owner?.phonenumber || null };
+}
+
+async function collectAfterCardSetup(intentId) {
+    assertBillingOperationsEnabled();
+    try {
+        return await chargeSavedCard({ kind: 'retry', cardSetupIntentId: intentId, dueOnly: true });
+    } catch (error) {
+        if (isBillingOperationsPausedError(error)) throw error;
+        // The card verification remains committed. A charge reservation, if one
+        // exists, stays pending so callbacks/retries cannot dispatch it again.
+        console.error('[billing] card debt collection requires review', { intentId, code: error?.code || 'PAYMENT_RECONCILIATION_REQUIRED' });
+        return { ok: false, pending: true, reason: 'payment_requires_review' };
+    }
+}
+
+async function settleSuccessfulPayment({ intent, tokenInfo, transactionId, transactionClient, document } = {}) {
+    assertBillingOperationsEnabled();
     if (intent?.signup_intent_id) {
         if (intent?.id) {
             await pool.query(
@@ -707,9 +766,10 @@ async function settleSuccessfulPayment({ intent, tokenInfo, transactionId, trans
                      takbull_transaction_id = COALESCE($2, takbull_transaction_id),
                      settled_at = now(),
                      updated_at = now(),
-                     error_message = NULL
+                     error_message = NULL,
+                     package_snapshot=COALESCE(package_snapshot,'{}'::jsonb)||$3::jsonb
                  WHERE id = $1`,
-                [intent.id, transactionId || null]
+                [intent.id, transactionId || null, JSON.stringify(document ? { providerDocument: document } : {})]
             );
         }
         const { completeSignupFromPaymentIntent } = require('../tenant/signupService');
@@ -717,35 +777,11 @@ async function settleSuccessfulPayment({ intent, tokenInfo, transactionId, trans
         return { signup: true, provisioned };
     }
 
-    // A card-verification fee is never payment for an overdue subscription.
-    // Save the replacement card and receipt atomically, without changing access,
-    // grace, the agreed price, the renewal date or other unresolved payments.
-    if (intent?.kind === 'setup' && await hasSelfServiceAgreement()) {
-        if (Number(intent.amount_ils) !== 1 || !tokenInfo?.token || !encryptSecret(tokenInfo.token).startsWith('enc:v1:')) {
-            throw new Error('CARD_VERIFICATION_REQUIRED');
-        }
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
-            await client.query('SELECT id FROM firm_billing WHERE law_firm_tenant_id=$1 FOR UPDATE', [getCurrentTenantId()]);
-            const existing = (await client.query('SELECT status FROM firm_payment_intents WHERE id=$1 FOR UPDATE', [intent.id])).rows[0];
-            if (!existing) throw new Error('PAYMENT_NOT_FOUND');
-            if (existing.status !== 'succeeded') {
-                await saveCardFromToken(tokenInfo, client);
-                await client.query(`UPDATE firm_payment_intents SET status='succeeded',takbull_transaction_id=$2,
-                    settled_at=now(),updated_at=now(),error_message=null WHERE id=$1`, [intent.id, transactionId]);
-                await client.query(`INSERT INTO firm_payment_events(intent_id,event_type,payload)
-                    VALUES($1,'card_verified','{}'::jsonb)`, [intent.id]);
-            }
-            await client.query('COMMIT');
-        } catch (error) { await client.query('ROLLBACK'); throw error; }
-        finally { client.release(); }
-        return getBillingSnapshot();
-    }
-
     if (!intent?.id) throw new Error('PAYMENT_INTENT_REQUIRED');
     const client = transactionClient || await pool.connect();
     const ownTransaction = !transactionClient;
+    let cardSetup = false;
+    let collectSetupDebt = false;
     try {
         if (ownTransaction) await client.query('BEGIN');
         await ensureBillingRow(client);
@@ -755,6 +791,8 @@ async function settleSuccessfulPayment({ intent, tokenInfo, transactionId, trans
             WHERE id=$1 AND law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid FOR UPDATE`,
         [intent.id, getCurrentTenantId()])).rows[0];
         if (!stored) throw new Error('PAYMENT_INTENT_SCOPE_MISMATCH');
+        cardSetup = stored.kind === 'setup';
+        collectSetupDebt = cardSetup && stored.package_snapshot?.cardCollectionDue === true;
         if (stored.status !== 'succeeded') {
             if (stored.status !== 'pending') throw new Error('PAYMENT_RESERVATION_CHANGED');
             const credentials = getTakbullCredentialsFromEnv();
@@ -768,37 +806,48 @@ async function settleSuccessfulPayment({ intent, tokenInfo, transactionId, trans
                 transactionId = verified.transactionId;
                 tokenInfo = verified.tokenInfo;
             } else {
+                if (cardSetup) throw new Error('CARD_VERIFICATION_REQUIRED');
                 transactionId = transactionId || stored.takbull_transaction_id;
                 if (!transactionId) throw new Error('PAYMENT_VERIFICATION_REQUIRED');
                 await verifier.verifyChargedTransaction(credentials, transactionId, expectedAmount);
             }
+            if (cardSetup && (!tokenInfo?.token || !encryptSecret(tokenInfo.token).startsWith('enc:v1:'))) {
+                throw new Error('CARD_VERIFICATION_REQUIRED');
+            }
+            const setupAccount = cardSetup ? await getBillingRow(client) : null;
+            const setupDecision = { ...(cardSetup ? { cardCollectionDue: subscriptionAmountDue(setupAccount) > 0,
+                cardCollectionCycleAt: setupAccount.renewsAt ? new Date(setupAccount.renewsAt).toISOString() : null } : {}),
+                ...(document ? { providerDocument: document } : {}) };
+            collectSetupDebt = setupDecision.cardCollectionDue === true;
             const settled = (await client.query(`UPDATE firm_payment_intents
-                SET status='succeeded',takbull_transaction_id=$2,settled_at=now(),updated_at=now(),error_message=null
-                WHERE id=$1 AND status='pending' RETURNING *`, [stored.id, transactionId])).rows[0];
+                SET status='succeeded',takbull_transaction_id=$2,settled_at=now(),updated_at=now(),error_message=null,
+                    package_snapshot=COALESCE(package_snapshot,'{}'::jsonb)||$3::jsonb
+                WHERE id=$1 AND status='pending' RETURNING *`, [stored.id, transactionId, JSON.stringify(setupDecision)])).rows[0];
             if (!settled) throw new Error('PAYMENT_RESERVATION_CHANGED');
             await recordEvent(stored.id, stored.kind === 'setup' ? 'card_verified' : 'payment_succeeded', { transactionId }, client);
-            await client.query(`UPDATE firm_payment_intents SET status='cancelled',updated_at=now()
-                WHERE status='pending' AND id<>$1 AND law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid
-                AND signup_intent_id IS NULL AND signup_cycle_at IS NULL`, [stored.id, getCurrentTenantId()]);
-            if (tokenInfo?.token) await saveCardFromToken(tokenInfo, client);
-            await applyIntentPackageSnapshot(stored, client);
-            const row = await getBillingRow(client);
-            const pkg = resolvePricingLineItems({platformId:row.platformId,resourceId:row.resourceId,signingId:row.signingId});
-            const flags = computeFlags(row);
-            const interval = normalizeBillingInterval(stored.kind === 'annual' ? 'yearly' : row.billingInterval);
-            const paidAnnual = stored.kind === 'annual' || (interval === 'yearly' && stored.kind !== 'setup');
-            let renewsAt;
-            if (paidAnnual) {
-                const times = [Date.now(), ...[row.renewsAt,row.complimentaryUntil].filter(Boolean).map(value => +new Date(value))];
-                renewsAt = addCalendarYear(new Date(Math.max(...times.filter(Number.isFinite))));
-            } else if (flags.stillComplimentary) renewsAt = row.complimentaryUntil || addCalendarMonth(new Date());
-            else renewsAt = addCalendarMonth(new Date());
-            await updateBilling({status:flags.stillComplimentary?'complimentary':'active',billing_interval:interval,
-                grace_until:null,last_payment_error:null,last_failed_at:null,last_paid_at:new Date(),
-                renews_at:renewsAt,price_monthly_ils:pkg.total}, client);
-            // The outbox shares the exact successful transition transaction. Its
-            // default-off implementation does not query uninstalled tables.
-            await require('../systemMessages').enqueuePaymentReceived(client, {intent:settled});
+            // Only a freshly verified hosted card can replace the active card.
+            // An older token charge may finish after a newer card was saved.
+            if (stored.takbull_uniq_id && tokenInfo?.token) await saveCardFromToken(tokenInfo, client);
+            if (!cardSetup) {
+                await applyIntentPackageSnapshot(stored, client);
+                const row = await getBillingRow(client);
+                const flags = computeFlags(row);
+                const interval = normalizeBillingInterval(stored.kind === 'annual' ? 'yearly'
+                    : stored.package_snapshot?.billingInterval || row.billingInterval);
+                const paidAnnual = stored.kind === 'annual' || (interval === 'yearly' && stored.kind !== 'setup');
+                let renewsAt;
+                if (paidAnnual) {
+                    const times = [Date.now(), ...[row.renewsAt,row.complimentaryUntil].filter(Boolean).map(value => +new Date(value))];
+                    renewsAt = addCalendarYear(new Date(Math.max(...times.filter(Number.isFinite))));
+                } else if (flags.stillComplimentary) renewsAt = row.complimentaryUntil || addCalendarMonth(new Date());
+                else renewsAt = addCalendarMonth(new Date());
+                await updateBilling({status:flags.stillComplimentary?'complimentary':'active',billing_interval:interval,
+                    grace_until:null,last_payment_error:null,last_failed_at:null,last_paid_at:new Date(),
+                    renews_at:renewsAt}, client);
+                // The outbox shares the exact successful transition transaction. Its
+                // default-off implementation does not query uninstalled tables.
+                await require('../systemMessages').enqueuePaymentReceived(client, {intent:settled});
+            }
         }
         if (ownTransaction) await client.query('COMMIT');
     } catch (error) {
@@ -806,10 +855,12 @@ async function settleSuccessfulPayment({ intent, tokenInfo, transactionId, trans
         throw error;
     } finally { if (ownTransaction) client.release(); }
     // An outer upgrade transaction reads its snapshot only after committing.
+    if (collectSetupDebt && ownTransaction) await collectAfterCardSetup(intent.id);
     return ownTransaction ? getBillingSnapshot() : null;
 }
 
 async function createCheckout({ kind, customer, pendingPackage } = {}) {
+    assertBillingOperationsEnabled();
     const creds = getTakbullCredentialsFromEnv();
     if (!creds) {
         const err = new Error('סליקת Takbull לא הוגדרה');
@@ -854,23 +905,34 @@ async function createCheckout({ kind, customer, pendingPackage } = {}) {
         purpose,
         packageSnapshot: pendingSelection
             ? { ...pricedPending, billingInterval: interval }
-            : { ...snap.package, billingInterval: interval },
+            : { billingInterval: interval, billingCycleAt: snap.renewsAt || null },
     };
     let intent;
-    if (!isSetup && await hasSelfServiceAgreement()) {
+    if (!isSetup) {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
-            await client.query('SELECT id FROM firm_billing WHERE law_firm_tenant_id=$1 FOR UPDATE', [getCurrentTenantId()]);
-            const unresolved = await client.query(`SELECT id FROM firm_payment_intents WHERE law_firm_tenant_id=$1
+            const scope = billingScopeSql();
+            await client.query(`SELECT id FROM firm_billing WHERE ${scope.clause} FOR UPDATE`, scope.param ? [scope.param] : []);
+            const unresolved = await client.query(`SELECT id FROM firm_payment_intents WHERE law_firm_tenant_id IS NOT DISTINCT FROM $1::uuid
                 AND status='pending' AND kind<>'setup' AND signup_intent_id IS NULL LIMIT 1`, [getCurrentTenantId()]);
             if (unresolved.rowCount) throw Object.assign(new Error('תשלום קודם עדיין בבדיקה. אין לשלם שוב עד לבירור.'), { code: 'PAYMENT_RECONCILIATION_REQUIRED' });
+            if (!pendingSelection && kind !== 'annual') {
+                const current = await getBillingRow(client);
+                if (subscriptionAmountDue(current) === 0 || +new Date(current.renewsAt) !== +new Date(snap.renewsAt)) {
+                    throw Object.assign(new Error('אין חיוב שמגיע לתשלום'), { code: 'NO_AMOUNT' });
+                }
+                if (subscriptionAmountDue(current) !== amount || normalizeBillingInterval(current.billingInterval) !== interval) {
+                    throw Object.assign(new Error('פרטי המנוי השתנו. יש לרענן לפני התשלום'), { code: 'BILLING_CHANGED' });
+                }
+            }
             intent = await createIntent(checkoutIntent, client);
             await client.query('COMMIT');
         } catch (error) { await client.query('ROLLBACK'); throw error; }
         finally { client.release(); }
     } else intent = await createIntent(checkoutIntent);
 
+    const owner = await getBillingCustomer();
     const page = await createTakbullPaymentPage({
         credentials: creds,
         orderReference: intent.order_reference,
@@ -881,9 +943,7 @@ async function createCheckout({ kind, customer, pendingPackage } = {}) {
         ipnAddress: ipnAddress(),
         purpose,
         saveToken: true,
-        customerFullName: customer?.name || null,
-        customerPhone: customer?.phone || null,
-        customerEmail: customer?.email || null,
+        ...owner,
     });
 
     await pool.query(
@@ -901,9 +961,14 @@ async function createCheckout({ kind, customer, pendingPackage } = {}) {
     };
 }
 
-async function chargeSavedCard({ kind, amountOverride, skipEmail, upgradeOperation, automatic = false } = {}) {
+async function chargeSavedCard({ kind, amountOverride, skipEmail, upgradeOperation, automatic = false, cardSetupIntentId, dueOnly = false } = {}) {
+    assertBillingOperationsEnabled();
+    if ((kind != null && !['retry', 'renewal', 'annual', 'upgrade'].includes(kind))
+        || (kind === 'upgrade' && !upgradeOperation?.targetPackage)) {
+        throw Object.assign(new Error('סוג החיוב אינו נתמך'), { code: 'INVALID_PAYMENT_KIND' });
+    }
     if (getCurrentTenantId() && !upgradeOperation?.targetPackage) {
-        const result=await require('./selfServiceRenewal').signupRenewal.renew(getCurrentTenantId(), { retryFailed: !automatic && kind === 'retry' });
+        const result=await require('./selfServiceRenewal').signupRenewal.renew(getCurrentTenantId(), { retryFailed: !automatic && kind === 'retry', cardSetupIntentId });
         if(result.handled)return {ok:result.status==='succeeded',...result,snapshot:await getBillingSnapshot()};
     }
     if (upgradeOperation?.targetPackage) {
@@ -925,22 +990,26 @@ async function chargeSavedCard({ kind, amountOverride, skipEmail, upgradeOperati
     if (snap.stillComplimentary && kind !== 'setup' && kind !== 'annual') {
         return { skipped: true, reason: 'complimentary', snapshot: snap };
     }
+    if ((dueOnly || kind !== 'annual') && subscriptionAmountDue(snap) === 0) {
+        return { skipped: true, reason: 'nothing_due', charged: false, snapshot: snap };
+    }
     if (!creds) {
-        return markPaymentFailed({ errorMessage: 'סליקת Takbull לא הוגדרה', skipEmail });
+        return { ok: false, charged: false, snapshot: await markPaymentFailed({ errorMessage: 'סליקת Takbull לא הוגדרה', skipEmail }) };
     }
     if (!card?.tokenEncrypted) {
-        return markPaymentFailed({ errorMessage: 'לא שמור כרטיס אשראי', skipEmail });
+        return { ok: false, charged: false, snapshot: await markPaymentFailed({ errorMessage: 'לא שמור כרטיס אשראי', skipEmail }) };
     }
 
-    const interval = normalizeBillingInterval(
+    let interval = normalizeBillingInterval(
         kind === 'annual' ? 'yearly' : snap.billingInterval
     );
-    const amount = Number(
+    let amount = Number(
         amountOverride != null
             ? amountOverride
-            : (interval === 'yearly' ? snap.priceYearlyIls : snap.package.total || 0)
+            : (interval === 'yearly' ? snap.priceYearlyIls : snap.priceMonthlyIls || 0)
     );
-    if (amount <= 0) {
+    if (!Number.isFinite(amount) || amount < 0) throw new Error('INVALID_BILLING_AMOUNT');
+    if (amount === 0) {
         return { skipped: true, reason: 'zero_amount', snapshot: snap };
     }
 
@@ -948,39 +1017,80 @@ async function chargeSavedCard({ kind, amountOverride, skipEmail, upgradeOperati
     try {
         token = decryptSecret(card.tokenEncrypted);
     } catch (e) {
-        return markPaymentFailed({ errorMessage: 'לא ניתן לפענח את הכרטיס השמור', skipEmail });
+        return { ok: false, charged: false, snapshot: await markPaymentFailed({ errorMessage: 'לא ניתן לפענח את הכרטיס השמור', skipEmail }) };
     }
 
     const reservation = await withUpgradeOperationLock(`billing:${getCurrentTenantId() || 'legacy'}`, async client => {
+        const scope = billingScopeSql();
+        await client.query(`SELECT id FROM firm_billing WHERE ${scope.clause} FOR UPDATE`, scope.param ? [scope.param] : []);
+        const current = await getBillingRow(client);
+        if (!current?.billingEnabled) return { skipped: true, reason: 'billing_disabled' };
+        if (automatic && normalizeBillingInterval(current.billingInterval) !== interval) return { skipped: true, reason: 'billing_changed' };
+        interval = normalizeBillingInterval(kind === 'annual' ? 'yearly' : current.billingInterval);
+        if (cardSetupIntentId) {
+            const setup = (await client.query(`SELECT id,package_snapshot FROM firm_payment_intents WHERE id=$1
+                AND law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid AND kind='setup' AND status='succeeded'
+                AND signup_intent_id IS NULL`, [cardSetupIntentId, getCurrentTenantId()])).rows[0];
+            if (!setup) throw new Error('CARD_VERIFICATION_REQUIRED');
+            if (setup.package_snapshot?.cardCollectionDue !== true
+                || (setup.package_snapshot.cardCollectionCycleAt || null) !== (current.renewsAt ? new Date(current.renewsAt).toISOString() : null)) {
+                return { skipped: true, reason: 'setup_collection_not_due' };
+            }
+            const prior = (await client.query(`SELECT * FROM firm_payment_intents
+                WHERE law_firm_tenant_id IS NOT DISTINCT FROM $1::uuid
+                AND package_snapshot->>'cardSetupIntentId'=$2 ORDER BY created_at LIMIT 1`,
+            [getCurrentTenantId(), cardSetupIntentId])).rows[0];
+            if (prior) return { intent: prior, reservedPreviously: true };
+        }
         const pending = (await client.query(`SELECT * FROM firm_payment_intents
             WHERE status='pending' AND kind<>'setup' AND signup_intent_id IS NULL
             AND law_firm_tenant_id IS NOT DISTINCT FROM $1::uuid ORDER BY created_at LIMIT 1 FOR UPDATE`,
         [getCurrentTenantId()])).rows[0];
-        if (pending) return {intent:pending,reservedPreviously:true};
+        if (pending) {
+            if (cardSetupIntentId) await client.query(`UPDATE firm_payment_intents
+                SET package_snapshot=package_snapshot||'{"cardCollectionDue":false}'::jsonb,updated_at=now() WHERE id=$1`, [cardSetupIntentId]);
+            return {intent:pending,reservedPreviously:true};
+        }
+        if (automatic && current.autoRenew === false) return { skipped: true, reason: 'renewal_cancelled' };
+        if (dueOnly || automatic || kind !== 'annual') {
+            amount = subscriptionAmountDue(current);
+            if (amount === 0) return { skipped: true, reason: 'nothing_due' };
+        } else {
+            // Annual prepayment is explicit, but its amount must still come
+            // from the current agreement while the account is locked.
+            amount = yearlyTotalIls(Number(current.priceMonthlyIls));
+            if (!Number.isFinite(amount) || amount < 0) throw new Error('INVALID_BILLING_AMOUNT');
+            if (amount === 0) return { skipped: true, reason: 'zero_amount' };
+        }
         return {intent:await createIntent({
             kind: kind === 'annual' ? 'annual' : (kind || 'renewal'),
             amountIls: amount,
             purpose: interval === 'yearly' ? 'מנוי שנתי — מערכת עורכי דין (10% הנחה)' : 'מנוי חודשי — מערכת עורכי דין',
-            packageSnapshot: { ...snap.package, billingInterval: interval },
+            packageSnapshot: { billingInterval: interval,
+                billingCycleAt: current.renewsAt || null, ...(cardSetupIntentId ? { cardSetupIntentId } : {}) },
         }, client)};
     });
+    if (reservation.skipped) return { ...reservation, charged: false, snapshot: await getBillingSnapshot() };
     const intent = reservation.intent;
     if (reservation.reservedPreviously) {
+        if (intent.status !== 'pending') return {ok:intent.status==='succeeded',alreadyApplied:true,charged:false,intentId:intent.id,snapshot:await getBillingSnapshot()};
         if (!intent.takbull_transaction_id) return {ok:false,pending:true,charged:false,intentId:intent.id,snapshot:snap};
         const snapshot = await settleSuccessfulPayment({intent,transactionId:intent.takbull_transaction_id});
         return {ok:true,charged:false,finalizedPending:true,appliedAtomically:true,intentId:intent.id,snapshot};
     }
 
+    const owner = await getBillingCustomer();
     const dispatch = () => chargeTakbullTokenFn({
         credentials: creds,
         orderReference: intent.order_reference,
-        amount,
+        amount: Number(intent.amount_ils),
         currency: 'ILS',
         cardExternalToken: token,
         ipnAddress: ipnAddress(),
         redirectAddress: returnAddress(),
         cancelReturnAddress: cancelAddress(),
         purpose: interval === 'yearly' ? 'מנוי שנתי — מערכת עורכי דין (10% הנחה)' : 'מנוי חודשי — מערכת עורכי דין',
+        ...owner,
     });
 
     let charged;
@@ -1003,12 +1113,14 @@ async function chargeSavedCard({ kind, amountOverride, skipEmail, upgradeOperati
 
     await pool.query(
         `UPDATE firm_payment_intents
-         SET takbull_transaction_id = $2, updated_at = now()
+         SET takbull_transaction_id = COALESCE($2,takbull_transaction_id),
+             package_snapshot=COALESCE(package_snapshot,'{}'::jsonb)||$3::jsonb, updated_at = now()
          WHERE id = $1`,
-        [intent.id, charged.transactionInternalNumber]
+        [intent.id, charged?.transactionInternalNumber || null, JSON.stringify(charged?.document ? { providerDocument: charged.document } : {})]
     );
 
-    if (!charged.ok) {
+    if (charged?.ok !== true) {
+        if (charged?.definitiveFailure !== true) return {ok:false,pending:true,charged:false,intentId:intent.id,snapshot:await getBillingSnapshot()};
         const msg = charged.internalDescription || `Takbull ${charged.internalCode}`;
         await markPaymentFailed({ intent, errorMessage: msg, skipEmail });
         return { ok: false, errorMessage: msg, snapshot: await getBillingSnapshot() };
@@ -1019,7 +1131,7 @@ async function chargeSavedCard({ kind, amountOverride, skipEmail, upgradeOperati
         tokenInfo: charged.token,
         transactionId: charged.transactionInternalNumber,
     });
-    return { ok: true, snapshot };
+    return { ok: true, charged: true, appliedAtomically: true, intentId: intent.id, snapshot };
 }
 
 async function chargeSavedCardForPackageUpgrade({
@@ -1028,6 +1140,7 @@ async function chargeSavedCardForPackageUpgrade({
     skipEmail,
     upgradeOperation,
 } = {}) {
+    assertBillingOperationsEnabled();
     if (await hasSelfServiceAgreement()) {
         const result = await require('./selfServiceUpgrade').chargeSelfServiceUpgrade({
             tenantId: getCurrentTenantId(), target: upgradeOperation.targetPackage,
@@ -1047,10 +1160,10 @@ async function chargeSavedCardForPackageUpgrade({
         return { skipped: true, reason: 'complimentary', snapshot: snap };
     }
     if (!creds) {
-        return markPaymentFailed({ errorMessage: 'סליקת Takbull לא הוגדרה', skipEmail });
+        return { ok: false, charged: false, snapshot: await markPaymentFailed({ errorMessage: 'סליקת Takbull לא הוגדרה', skipEmail }) };
     }
     if (!card?.tokenEncrypted) {
-        return markPaymentFailed({ errorMessage: 'לא שמור כרטיס אשראי', skipEmail });
+        return { ok: false, charged: false, snapshot: await markPaymentFailed({ errorMessage: 'לא שמור כרטיס אשראי', skipEmail }) };
     }
 
     const target = upgradeOperation.targetPackage;
@@ -1066,7 +1179,7 @@ async function chargeSavedCardForPackageUpgrade({
     try {
         token = decryptSecret(card.tokenEncrypted);
     } catch (e) {
-        return markPaymentFailed({ errorMessage: 'לא ניתן לפענח את הכרטיס השמור', skipEmail });
+        return { ok: false, charged: false, snapshot: await markPaymentFailed({ errorMessage: 'לא ניתן לפענח את הכרטיס השמור', skipEmail }) };
     }
 
     const operationKey = buildUpgradeOperationKey({
@@ -1096,6 +1209,8 @@ async function chargeSavedCardForPackageUpgrade({
     // Commit the reservation before contacting the provider. A process crash or
     // failed local settlement must leave an unresolved payment, never a new charge.
     const operation = await withUpgradeOperationLock(`billing:${getCurrentTenantId() || 'legacy'}`, async (client) => {
+        const scope = billingScopeSql();
+        await client.query(`SELECT id FROM firm_billing WHERE ${scope.clause} FOR UPDATE`, scope.param ? [scope.param] : []);
         const rowLocked = await getBillingRow(client);
         if (billingRowMatchesPackage(rowLocked, target)) return { alreadyApplied:true };
         const paidUnapplied = await findSucceededUnappliedUpgradeIntent(operationKey, client);
@@ -1118,12 +1233,15 @@ async function chargeSavedCardForPackageUpgrade({
         return {ok:true,charged:false,finalizedPending:true,appliedAtomically:true,intentId:intent.id,snapshot};
     }
     chargeProviderCallCount += 1;
+    const owner = await getBillingCustomer();
     const charged = await chargeTakbullTokenFn({credentials:creds,orderReference:intent.order_reference,
         amount,currency:'ILS',cardExternalToken:token,ipnAddress:ipnAddress(),
-        redirectAddress:returnAddress(),cancelReturnAddress:cancelAddress(),purpose});
-    await pool.query('UPDATE firm_payment_intents SET takbull_transaction_id=$2,updated_at=now() WHERE id=$1',
-        [intent.id,charged.transactionInternalNumber || null]);
-    if (!charged.ok) {
+        redirectAddress:returnAddress(),cancelReturnAddress:cancelAddress(),purpose,...owner});
+    await pool.query(`UPDATE firm_payment_intents SET takbull_transaction_id=COALESCE($2,takbull_transaction_id),
+        package_snapshot=COALESCE(package_snapshot,'{}'::jsonb)||$3::jsonb,updated_at=now() WHERE id=$1`,
+        [intent.id,charged?.transactionInternalNumber || null,JSON.stringify(charged?.document ? {providerDocument:charged.document} : {})]);
+    if (charged?.ok !== true) {
+        if (charged?.definitiveFailure !== true) return {ok:false,pending:true,charged:false,intentId:intent.id,snapshot:await getBillingSnapshot()};
         const msg = charged.internalDescription || `Takbull ${charged.internalCode}`;
         await markPaymentFailed({intent,errorMessage:msg,skipEmail});
         return {ok:false,errorMessage:msg,snapshot:await getBillingSnapshot()};
@@ -1133,6 +1251,7 @@ async function chargeSavedCardForPackageUpgrade({
 }
 
 async function savePackage({ platformId, resourceId, signingId, billingInterval, usage, customer } = {}) {
+    assertBillingOperationsEnabled();
     const api = module.exports;
     const row = await api.ensureBillingRow();
     const current = {
@@ -1164,29 +1283,27 @@ async function savePackage({ platformId, resourceId, signingId, billingInterval,
         && evaluation.priceIncreased;
 
     async function persistPackageRow() {
-        if (await hasSelfServiceAgreement()) {
-            const client = await pool.connect();
-            try {
-                await client.query('BEGIN');
-                await client.query('SELECT id FROM firm_billing WHERE law_firm_tenant_id=$1 FOR UPDATE', [getCurrentTenantId()]);
-                await require('./selfServiceUpgrade').assertNoPendingPayment(client, getCurrentTenantId());
-                await client.query(`UPDATE firm_billing SET platform_id=$2,resource_id=$3,signing_id=$4,
-                    price_monthly_ils=$5,billing_interval=$6,updated_at=now() WHERE law_firm_tenant_id=$1`,
-                [getCurrentTenantId(), pkg.platformId, pkg.resourceId, pkg.signingId, pkg.total, interval]);
-                await syncTenantSubscription(pkg, client);
-                await client.query('COMMIT');
-            } catch (error) { await client.query('ROLLBACK'); throw error; }
-            finally { client.release(); }
-            return;
-        }
-        await api.updateBilling({
-            platform_id: pkg.platformId,
-            resource_id: pkg.resourceId,
-            signing_id: pkg.signingId,
-            price_monthly_ils: pkg.total,
-            billing_interval: interval,
-        });
-        await api.syncTenantSubscription(pkg);
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            const scope = billingScopeSql();
+            await client.query(`SELECT id FROM firm_billing WHERE ${scope.clause} FOR UPDATE`, scope.param ? [scope.param] : []);
+            const pending = await client.query(`SELECT id FROM firm_payment_intents
+                WHERE law_firm_tenant_id IS NOT DISTINCT FROM $1::uuid AND status='pending'
+                AND kind<>'setup' AND signup_intent_id IS NULL LIMIT 1`, [getCurrentTenantId()]);
+            if (pending.rowCount) throw Object.assign(new Error('תשלום קודם עדיין בבדיקה. אין לשנות את החבילה עד לבירור.'), { code: 'PAYMENT_RECONCILIATION_REQUIRED' });
+            await api.updateBilling({
+                platform_id: pkg.platformId,
+                resource_id: pkg.resourceId,
+                signing_id: pkg.signingId,
+                // An interval-only save is not acceptance of a new catalogue price.
+                ...(packChanged ? { price_monthly_ils: pkg.total } : {}),
+                billing_interval: interval,
+            }, client);
+            await api.syncTenantSubscription(pkg, client);
+            await client.query('COMMIT');
+        } catch (error) { await client.query('ROLLBACK'); throw error; }
+        finally { client.release(); }
     }
 
     if (requiresPaymentBeforePersist) {
@@ -1322,6 +1439,7 @@ async function savePackage({ platformId, resourceId, signingId, billingInterval,
 }
 
 async function handleTakbullNotification({ uniqId, query } = {}) {
+    assertBillingOperationsEnabled();
     const creds = getTakbullCredentialsFromEnv();
     if (!creds || !uniqId) {
         return { ok: false, reason: 'missing_creds_or_uniq' };
@@ -1333,12 +1451,15 @@ async function handleTakbullNotification({ uniqId, query } = {}) {
         intent = await findIntentByOrderReference(query.order_reference);
     }
     if(!intent)return {ok:false,paid:false,reason:'unknown_order'};
+    // A callback-supplied reference cannot bind a different approved order to
+    // this reservation, including a checkout whose provider-ID write was lost.
+    if (intent.takbull_uniq_id !== uniqId) throw Object.assign(new Error('PAYMENT_ORDER_IDENTITY_MISMATCH'), { code: 'PAYMENT_ORDER_IDENTITY_MISMATCH' });
 
     if(intent?.signup_intent_id) {
         if(!validated.ok||!validated.paid) return {ok:true,paid:false};
         if(intent.takbull_uniq_id!==uniqId)throw new Error('SIGNUP_PAYMENT_IDENTITY_MISMATCH');
         const verified=await require('../payments/verifySignupPayment').verifySignupPayment(creds,uniqId,intent.order_reference);
-        await settleSuccessfulPayment({intent,tokenInfo:verified.tokenInfo,transactionId:verified.transactionId});
+        await settleSuccessfulPayment({intent,tokenInfo:verified.tokenInfo,transactionId:verified.transactionId,document:validated.document});
         return {ok:true,paid:true};
     }
 
@@ -1349,11 +1470,10 @@ async function handleTakbullNotification({ uniqId, query } = {}) {
         return runWithTenant({id:intent.law_firm_tenant_id},()=>handleTakbullNotification({uniqId,query}));
     }
 
-    if (intent.kind === 'setup' && await hasSelfServiceAgreement()) {
+    if (intent.kind === 'setup') {
         if (!validated.ok || !validated.paid) return { ok: true, paid: false };
         if (intent.takbull_uniq_id !== uniqId) throw new Error('SIGNUP_PAYMENT_IDENTITY_MISMATCH');
-        const verified = await require('../payments/verifySignupPayment').verifySignupPayment(creds, uniqId, intent.order_reference);
-        await settleSuccessfulPayment({ intent, tokenInfo: verified.tokenInfo, transactionId: verified.transactionId });
+        await settleSuccessfulPayment({ intent, document: validated.document });
         return { ok: true, paid: true, cardVerified: true };
     }
 
@@ -1377,48 +1497,46 @@ async function handleTakbullNotification({ uniqId, query } = {}) {
             intent,
             tokenInfo,
             transactionId: txId,
+            document: validated.document,
         });
         return { ok: true, paid: true };
     }
 
-    if (intent && intent.status === 'pending') {
-        await markPaymentFailed({
-            intent,
-            errorMessage: validated.internalDescription || 'התשלום לא אושר',
-        });
-    }
+    // An unpaid notification may be delayed, incomplete or still processing.
+    // Keep the reservation until an authoritative terminal result is known.
     return { ok: true, paid: false };
 }
 
 async function handleTakbullReturn({ uniqId, intentId } = {}) {
+    assertBillingOperationsEnabled();
+    let result = null;
     if (uniqId) {
-        await handleTakbullNotification({ uniqId });
+        result = await handleTakbullNotification({ uniqId });
     } else if (intentId) {
         const intent = await findIntentById(intentId);
         if (intent?.takbull_uniq_id) {
-            await handleTakbullNotification({ uniqId: intent.takbull_uniq_id });
+            result = await handleTakbullNotification({ uniqId: intent.takbull_uniq_id });
         }
     }
     const snap = await getBillingSnapshot();
-    const paid = snap.status === 'active' || snap.status === 'complimentary';
+    const paid = result?.paid === true && (!result.cardVerified || subscriptionAmountDue(snap) === 0);
     const dest = `${getFrontendBaseUrl()}/AdminStack/PlanUsage?paid=${paid ? '1' : '0'}`;
-    return { snapshot: snap, redirectUrl: dest };
+    return { snapshot: snap, paid, cardVerified: result?.cardVerified === true, redirectUrl: dest };
 }
 
 async function handleTakbullCancel({ intentId } = {}) {
+    assertBillingOperationsEnabled();
     if (intentId) {
         const intent = await findIntentById(intentId);
-        if (intent && intent.status === 'pending') {
-            await pool.query(
-                `UPDATE firm_payment_intents SET status = 'cancelled', updated_at = now() WHERE id = $1`,
-                [intentId]
-            );
-        }
+        // A browser cancellation is not evidence that the provider did not
+        // collect money. Keep the reservation and reconcile the hosted order.
+        if (intent?.takbull_uniq_id) await handleTakbullNotification({ uniqId: intent.takbull_uniq_id });
     }
     return { redirectUrl: `${getFrontendBaseUrl()}/AdminStack/PlanUsage?paid=0` };
 }
 
 async function runBillingMaintenance({ now = new Date() } = {}) {
+    if (!billingOperationsEnabled()) return { skipped: true, reason: 'billing_operations_paused' };
     if(getCurrentTenantId()){
         const result=await require('./selfServiceRenewal').signupRenewal.renew(getCurrentTenantId());
         if(result.handled)return result;
@@ -1474,7 +1592,7 @@ async function runBillingMaintenance({ now = new Date() } = {}) {
 }
 
 async function getDisabledOptions(usage) {
-    const row = await ensureBillingRow();
+    const row = billingOperationsEnabled() ? await ensureBillingRow() : await getBillingRow();
     return disabledOptionsForUsage({
         current: {
             platformId: row?.platformId,
@@ -1486,6 +1604,7 @@ async function getDisabledOptions(usage) {
 }
 
 async function cancelSubscription() {
+    assertBillingOperationsEnabled();
     const row = await ensureBillingRow();
     if (!row) {
         const err = new Error('לא נמצא מנוי');

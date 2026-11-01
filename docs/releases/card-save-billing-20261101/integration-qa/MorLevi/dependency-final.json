@@ -1,0 +1,18 @@
+{
+  "frontend": {
+    "resolvedDependencyPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules",
+    "sourceLockSha256": "ed0b4c398ffe0d47a2d91e735ee48bf494a0b718534293b59056f91973a6a4ac",
+    "installedLockSha256": "00cc3b9a309e871937202330da56da5744fedbaac7773c89447c4c943a049b05",
+    "checkedPackages": 1599,
+    "optionalAbsentCount": 10,
+    "requiredMismatches": []
+  },
+  "backend": {
+    "resolvedDependencyPath": "/private/tmp/layer-billing-lock-deps/node_modules",
+    "sourceLockSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+    "installedLockSha256": "6050ef6083317866bc68181efba905733c39b1de665b1564002a97d56a126f4b",
+    "checkedPackages": 520,
+    "optionalAbsentCount": 36,
+    "requiredMismatches": []
+  }
+}

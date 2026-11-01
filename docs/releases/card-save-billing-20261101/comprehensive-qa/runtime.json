@@ -1,0 +1,18 @@
+{
+  "node": "v24.14.0",
+  "postgres": "17.11 (existing isolated billing test cluster)",
+  "pglite": "0.5.10",
+  "sharp": "0.35.4",
+  "broadFiles": 26,
+  "broadPassed": 191,
+  "broadFailed": 0,
+  "broadSkipped": 1,
+  "standalonePglitePassed": 51,
+  "standalonePgliteFailed": 0,
+  "realPostgresPassed": 51,
+  "realPostgresFailed": 0,
+  "realPostgresSkipped": 0,
+  "providerWrites": 0,
+  "realEmailSent": 0,
+  "productionDataWrites": 0
+}

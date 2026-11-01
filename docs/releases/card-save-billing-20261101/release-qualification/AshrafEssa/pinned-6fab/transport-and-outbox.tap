@@ -1,0 +1,262 @@
+TAP version 13
+# {"event":"qa_outbound_suppressed","channel":"sms"}
+# {"event":"qa_outbound_suppressed","channel":"sms"}
+# {"event":"qa_outbound_suppressed","channel":"email"}
+# {"event":"qa_outbound_suppressed","channel":"email"}
+# {"event":"qa_outbound_suppressed","channel":"email"}
+# {"event":"qa_outbound_suppressed","channel":"push"}
+# {"event":"qa_outbound_suppressed","channel":"push"}
+# {"event":"qa_outbound_suppressed","channel":"email"}
+# {"event":"qa_outbound_suppressed","channel":"email"}
+# {"event":"qa_outbound_suppressed","channel":"email"}
+# {"event":"qa_outbound_suppressed","channel":"email"}
+# Subtest: disabled mode preserves normal transports; guard rejects other tenants
+ok 1 - disabled mode preserves normal transports; guard rejects other tenants
+  ---
+  duration_ms: 0.813959
+  type: 'test'
+  ...
+# Subtest: all public SMS/email/push entry points stop before provider, DB, templates, or attachment IO
+ok 2 - all public SMS/email/push entry points stop before provider, DB, templates, or attachment IO
+  ---
+  duration_ms: 2.263667
+  type: 'test'
+  ...
+# Subtest: QA email opt-in requires every addressed recipient and reaches normal transport only for allowed recipients
+ok 3 - QA email opt-in requires every addressed recipient and reaches normal transport only for allowed recipients
+  ---
+  duration_ms: 0.718
+  type: 'test'
+  ...
+# Subtest: completed copies use the incumbent signed-document campaign and scoped links with no admin CC
+ok 4 - completed copies use the incumbent signed-document campaign and scoped links with no admin CC
+  ---
+  duration_ms: 0.489958
+  type: 'test'
+  ...
+# Subtest: suppressed QA invitations never acknowledge a real provider send
+ok 5 - suppressed QA invitations never acknowledge a real provider send
+  ---
+  duration_ms: 0.238042
+  type: 'test'
+  ...
+# Subtest: OTP delivery requires a real transport result
+ok 6 - OTP delivery requires a real transport result
+  ---
+  duration_ms: 0.16625
+  type: 'test'
+  ...
+# Subtest: the notification orchestrator preserves transport simulation and provider receipt metadata
+ok 7 - the notification orchestrator preserves transport simulation and provider receipt metadata
+  ---
+  duration_ms: 1.624042
+  type: 'test'
+  ...
+# Subtest: disabled configuration performs no contact lookup or consent read
+ok 8 - disabled configuration performs no contact lookup or consent read
+  ---
+  duration_ms: 0.425708
+  type: 'test'
+  ...
+# Subtest: dedicated consent uses configured account owner and current database phone, never JWT phone
+ok 9 - dedicated consent uses configured account owner and current database phone, never JWT phone
+  ---
+  duration_ms: 0.499416
+  type: 'test'
+  ...
+# Subtest: another platform admin cannot choose the configured owner or register consent for them
+ok 10 - another platform admin cannot choose the configured owner or register consent for them
+  ---
+  duration_ms: 0.628708
+  type: 'test'
+  ...
+# Subtest: browser-supplied recipient, office, or owner fields are rejected before any transaction
+ok 11 - browser-supplied recipient, office, or owner fields are rejected before any transaction
+  ---
+  duration_ms: 0.132625
+  type: 'test'
+  ...
+# Subtest: non-boolean grants, stale copy versions and missing action UUID are rejected
+ok 12 - non-boolean grants, stale copy versions and missing action UUID are rejected
+  ---
+  duration_ms: 0.095792
+  type: 'test'
+  ...
+# Subtest: shared consent requires validated current office ownership and exact DB office binding
+ok 13 - shared consent requires validated current office ownership and exact DB office binding
+  ---
+  duration_ms: 0.126916
+  type: 'test'
+  ...
+# Subtest: a changed or missing database owner cannot save consent
+ok 14 - a changed or missing database owner cannot save consent
+  ---
+  duration_ms: 0.059875
+  type: 'test'
+  ...
+# Subtest: withdrawal is persisted as false; failure rolls the whole local action back
+ok 15 - withdrawal is persisted as false; failure rolls the whole local action back
+  ---
+  duration_ms: 0.090667
+  type: 'test'
+  ...
+# Subtest: transactional legal system-message outbox (synthetic PostgreSQL only)
+    # Subtest: off by default does not query schema or contact a provider
+    ok 1 - off by default does not query schema or contact a provider
+      ---
+      duration_ms: 1.245667
+      type: 'test'
+      ...
+    # Subtest: trusted deployment, runtime mode and explicit owner configuration are mandatory
+    ok 2 - trusted deployment, runtime mode and explicit owner configuration are mandatory
+      ---
+      duration_ms: 6.647125
+      type: 'test'
+      ...
+    # Subtest: migration rejects NULL-office tricks and copies explicit private app grants
+    ok 3 - migration rejects NULL-office tricks and copies explicit private app grants
+      ---
+      duration_ms: 10.006833
+      type: 'test'
+      ...
+    # Subtest: no billing consent, platform-admin list or setup payment grants messaging
+    ok 4 - no billing consent, platform-admin list or setup payment grants messaging
+      ---
+      duration_ms: 14.809917
+      type: 'test'
+      ...
+    # Subtest: settlement and exact prepared payment roll back together; pending cannot enqueue
+    ok 5 - settlement and exact prepared payment roll back together; pending cannot enqueue
+      ---
+      duration_ms: 9.675917
+      type: 'test'
+      ...
+    # Subtest: stable UUID/bytes/amount and source dedupe survive settlement replay
+    ok 6 - stable UUID/bytes/amount and source dedupe survive settlement replay
+      ---
+      duration_ms: 16.411959
+      type: 'test'
+      ...
+    # Subtest: withdrawal cancels pending and old grant/action replay never restores it
+    ok 7 - withdrawal cancels pending and old grant/action replay never restores it
+      ---
+      duration_ms: 16.730292
+      type: 'test'
+      ...
+    # Subtest: old or future capture time cannot overwrite consent or become fresh on provision
+    ok 8 - old or future capture time cannot overwrite consent or become fresh on provision
+      ---
+      duration_ms: 13.10225
+      type: 'test'
+      ...
+    # Subtest: missing optional owner/contact never rolls back a verified unconsented payment
+    ok 9 - missing optional owner/contact never rolls back a verified unconsented payment
+      ---
+      duration_ms: 15.998958
+      type: 'test'
+      ...
+    # Subtest: changed phone requires fresh consent and revokes former grant without transferring it
+    ok 10 - changed phone requires fresh consent and revokes former grant without transferring it
+      ---
+      duration_ms: 26.058667
+      type: 'test'
+      ...
+    # Subtest: consent acknowledgement precedes payment; Central receipt is enqueue only
+    ok 11 - consent acknowledgement precedes payment; Central receipt is enqueue only
+      ---
+      duration_ms: 25.679375
+      type: 'test'
+      ...
+    # Subtest: timeout/429 retry retains exact same event and respects off switch
+    ok 12 - timeout/429 retry retains exact same event and respects off switch
+      ---
+      duration_ms: 29.033834
+      type: 'test'
+      ...
+    # Subtest: lost receipt after Central acceptance recovers same UUID after five minutes
+    ok 13 - lost receipt after Central acceptance recovers same UUID after five minutes
+      ---
+      duration_ms: 20.624208
+      type: 'test'
+      ...
+    # Subtest: never-accepted stale source/consent is retained for reconciliation without rewriting
+    ok 14 - never-accepted stale source/consent is retained for reconciliation without rewriting
+      ---
+      duration_ms: 14.378416
+      type: 'test'
+      ...
+    # Subtest: original settlement/capture time is not silently refreshed for an old source
+    ok 15 - original settlement/capture time is not silently refreshed for an old source
+      ---
+      duration_ms: 17.555583
+      type: 'test'
+      ...
+    # Subtest: definite Central rejection is retained without a replacement event or automatic retry
+    ok 16 - definite Central rejection is retained without a replacement event or automatic retry
+      ---
+      duration_ms: 10.252791
+      type: 'test'
+      ...
+    # Subtest: fresh explicit withdrawal bypasses an old stale withdrawal and reaches Central
+    ok 17 - fresh explicit withdrawal bypasses an old stale withdrawal and reaches Central
+      ---
+      duration_ms: 18.351709
+      type: 'test'
+      ...
+    # Subtest: stale signup consent requires a new owner action, without blocking real payment
+    ok 18 - stale signup consent requires a new owner action, without blocking real payment
+      ---
+      duration_ms: 22.458542
+      type: 'test'
+      ...
+    # Subtest: automatic worker requires explicit background/dispatch gates and has one unref timer
+    ok 19 - automatic worker requires explicit background/dispatch gates and has one unref timer
+      ---
+      duration_ms: 5.423
+      type: 'test'
+      ...
+    # Subtest: phone change, owner removal and source change cancel without payment POST
+    ok 20 - phone change, owner removal and source change cancel without payment POST
+      ---
+      duration_ms: 44.498166
+      type: 'test'
+      ...
+    # Subtest: different deployment config cannot route an old prepared event
+    ok 21 - different deployment config cannot route an old prepared event
+      ---
+      duration_ms: 16.9535
+      type: 'test'
+      ...
+    # Subtest: shared office scope, owner binding and actual RLS isolate consent histories
+    ok 22 - shared office scope, owner binding and actual RLS isolate consent histories
+      ---
+      duration_ms: 9.406
+      type: 'test'
+      ...
+    1..22
+ok 16 - transactional legal system-message outbox (synthetic PostgreSQL only)
+  ---
+  duration_ms: 1452.00675
+  type: 'test'
+  ...
+# Subtest: real SDK lost HTTP receipt recovers original payment UUID and bytes after five minutes
+ok 17 - real SDK lost HTTP receipt recovers original payment UUID and bytes after five minutes
+  ---
+  duration_ms: 1377.894875
+  type: 'test'
+  ...
+# Subtest: real process crash after committed claim and before network recovers only original event after lease
+ok 18 - real process crash after committed claim and before network recovers only original event after lease
+  ---
+  duration_ms: 1109.043375
+  type: 'test'
+  ...
+1..18
+# tests 40
+# suites 0
+# pass 40
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2678.405125

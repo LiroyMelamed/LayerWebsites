@@ -1,0 +1,17 @@
+{
+  "checks": [
+    {
+      "kind": "outbound-fetch",
+      "blocked": true
+    },
+    {
+      "kind": "outbound-tcp",
+      "blocked": true
+    },
+    {
+      "kind": "application-db-port",
+      "blocked": true
+    }
+  ],
+  "allBlocked": true
+}

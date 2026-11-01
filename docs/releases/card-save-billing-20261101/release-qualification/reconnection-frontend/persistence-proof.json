@@ -1,0 +1,566 @@
+{
+  "startedAtUtc": "2026-11-01T23:16:18.928344+00:00",
+  "finishedAtUtc": "2026-11-01T23:16:22.350800+00:00",
+  "status": "PASS_PERSISTED_FRONTEND_EVIDENCE_AND_ARTIFACTS",
+  "rootHeadAtStart": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "rootHeadAtFinish": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "frozenCommonRuntime": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "frozenUpstreamMain": "074df7520497a0cd6bd95ad70353201c905f0aa6",
+  "main": {
+    "actualTestCommit": "9dd9cb3607ee79434fcfb1aed5a40773e5713789",
+    "frontendSummary": {
+      "success": true,
+      "numTotalTests": 920,
+      "numPassedTests": 920,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "numPassedTestSuites": 107,
+      "numFailedTestSuites": 0
+    },
+    "actualBuildCommit": "9dd9cb3607ee79434fcfb1aed5a40773e5713789",
+    "buildArtifactCount": 253,
+    "logs": [
+      {
+        "path": "/tmp/layer-billing-main-current-20261101/docs/releases/card-save-billing-20261101/release-qualification/main-frontend/frontend-tests.log",
+        "expectedSha256": "10d9f6a5e1a73078967a23f28d57e12613904596ced6ceb0a66f8443c27ff00d",
+        "actualSha256": "10d9f6a5e1a73078967a23f28d57e12613904596ced6ceb0a66f8443c27ff00d",
+        "bytes": 1026449,
+        "matches": true
+      },
+      {
+        "path": "/tmp/layer-billing-main-current-20261101/docs/releases/card-save-billing-20261101/release-qualification/main-frontend/production-build.log",
+        "expectedSha256": "aa7de947fb956348cd5e4d2984aea196de550f8b75e517d57dc250226b8b5019",
+        "actualSha256": "aa7de947fb956348cd5e4d2984aea196de550f8b75e517d57dc250226b8b5019",
+        "bytes": 27656,
+        "matches": true
+      }
+    ],
+    "dependencies": {
+      "frontend": {
+        "root": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules",
+        "expectedInstalledLockSha256": "00cc3b9a309e871937202330da56da5744fedbaac7773c89447c4c943a049b05",
+        "actualInstalledLockSha256": "00cc3b9a309e871937202330da56da5744fedbaac7773c89447c4c943a049b05",
+        "status": "MATCH"
+      },
+      "backend": {
+        "root": "/private/tmp/layer-billing-lock-deps/node_modules",
+        "expectedInstalledLockSha256": "6050ef6083317866bc68181efba905733c39b1de665b1564002a97d56a126f4b",
+        "actualInstalledLockSha256": "6050ef6083317866bc68181efba905733c39b1de665b1564002a97d56a126f4b",
+        "status": "MATCH"
+      }
+    },
+    "compiledArtifacts": {
+      "path": "/tmp/layer-billing-release-qualification-20261101-frontend-cache/production-build-isolated",
+      "status": "ALL_EXPECTED_FILES_MATCH",
+      "expectedFiles": 253,
+      "presentFiles": 253,
+      "verifiedExpectedFiles": 253,
+      "missingFiles": [],
+      "mismatches": [],
+      "unrecordedExtraFiles": [],
+      "sourceArchive": {
+        "path": "/tmp/layer-billing-release-qualification-20261101-frontend-cache/frozen-build-isolated.tar",
+        "status": "MATCH",
+        "sha256": "6d0b37b5ae69c80d8a2d31a229dddab9c7c9c3248c0512d3227960ad6d9aa345"
+      },
+      "compilerCacheWrapper": {
+        "path": "/tmp/layer-billing-release-qualification-20261101-frontend-cache/frozen-build-isolated/frontend/craco.config.js",
+        "status": "MATCH",
+        "sha256": "c7a99bbeff6dba5338a6816fe7031823b52215c76f50ef03052a8362857d98b2"
+      }
+    },
+    "persistedProvenance": [
+      {
+        "file": "input-equivalence-6fab.json",
+        "qualifiedCommit": "9dd9cb3607ee79434fcfb1aed5a40773e5713789",
+        "donorCommit": "6fab2887d056262cf52ddb773a377e5ad804f0d7",
+        "status": "VERIFIED_SOURCE_AND_RECEIPT_BINDING",
+        "frontendFiles": 834,
+        "scripts": 28,
+        "helpers": 10
+      },
+      {
+        "file": "input-equivalence-6a3bd299.json",
+        "qualifiedCommit": "9dd9cb3607ee79434fcfb1aed5a40773e5713789",
+        "donorCommit": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+        "status": "VERIFIED_SOURCE_AND_RECEIPT_BINDING",
+        "frontendFiles": 834,
+        "scripts": 28,
+        "helpers": 10
+      }
+    ]
+  },
+  "clients": [
+    {
+      "tenant": "Melamedia",
+      "qualifiedRuntimeCommit": "efe1ee371ad96bc76963ac1848076055cb83066b",
+      "mainCutoff": "074df7520497a0cd6bd95ad70353201c905f0aa6",
+      "clientCutoff": "545779e4b99e111959f4684167dfdf46da1f3186",
+      "finalDonor": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+      "cutoffAncestry": {
+        "commonRuntime": {
+          "commit": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+          "isAncestor": true
+        },
+        "mainCutoff": {
+          "commit": "074df7520497a0cd6bd95ad70353201c905f0aa6",
+          "isAncestor": true
+        },
+        "clientCutoff": {
+          "commit": "545779e4b99e111959f4684167dfdf46da1f3186",
+          "isAncestor": true
+        }
+      },
+      "actualFrontendCommit": "7c3131f2b87bcbf69d2e0fb2650aa6d6ab7aef51",
+      "actualBuildCommit": "7c3131f2b87bcbf69d2e0fb2650aa6d6ab7aef51",
+      "frontendSummary": {
+        "success": true,
+        "numTotalTests": 960,
+        "numPassedTests": 960,
+        "numFailedTests": 0,
+        "numPendingTests": 0,
+        "numPassedTestSuites": 112,
+        "numFailedTestSuites": 0
+      },
+      "buildArtifactCount": 256,
+      "logs": [
+        {
+          "path": "/tmp/layer-billing-main-current-20261101/docs/releases/card-save-billing-20261101/release-qualification/Melamedia/frontend.log",
+          "expectedSha256": "097c32057f04d0ca23be45cb1cfdc45eacaf64dd7590889b3a726146ac5a4bdf",
+          "actualSha256": "097c32057f04d0ca23be45cb1cfdc45eacaf64dd7590889b3a726146ac5a4bdf",
+          "bytes": 1277745,
+          "matches": true
+        },
+        {
+          "path": "/tmp/layer-billing-main-current-20261101/docs/releases/card-save-billing-20261101/release-qualification/Melamedia/build.log",
+          "expectedSha256": "2d549eb00f03e8e81bffe3c8bc8e5c39dc39aa1f2ebc5ea8cf5f6c50019ba0c6",
+          "actualSha256": "2d549eb00f03e8e81bffe3c8bc8e5c39dc39aa1f2ebc5ea8cf5f6c50019ba0c6",
+          "bytes": 31110,
+          "matches": true
+        }
+      ],
+      "dependencies": {
+        "backend": {
+          "root": "/private/tmp/layer-billing-lock-deps/node_modules",
+          "expectedInstalledLockSha256": "6050ef6083317866bc68181efba905733c39b1de665b1564002a97d56a126f4b",
+          "actualInstalledLockSha256": "6050ef6083317866bc68181efba905733c39b1de665b1564002a97d56a126f4b",
+          "status": "MATCH"
+        },
+        "frontend": {
+          "root": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules",
+          "expectedInstalledLockSha256": "00cc3b9a309e871937202330da56da5744fedbaac7773c89447c4c943a049b05",
+          "actualInstalledLockSha256": "00cc3b9a309e871937202330da56da5744fedbaac7773c89447c4c943a049b05",
+          "status": "MATCH"
+        }
+      },
+      "carryReceipts": [
+        {
+          "label": "frontend",
+          "actualReceiptCommit": "7c3131f2b87bcbf69d2e0fb2650aa6d6ab7aef51",
+          "qualifiedRuntimeCommit": "efe1ee371ad96bc76963ac1848076055cb83066b",
+          "receiptSha256": "966d415c4b9f9415d4bfdb15a051a6d846a37b66fab0ec35646b9a96ee4aa70a",
+          "sourceInputCount": 879,
+          "sourceInputMapSha256": "6dffdbef09d143a1b7ae6c23e9e21b78164463f78bde6a5011c60ad0b72bcd6f",
+          "status": "SOURCE_PACKAGE_HELPER_RECEIPT_BINDING_VERIFIED",
+          "freshExecutionAtFinalCandidate": false
+        },
+        {
+          "label": "build",
+          "actualReceiptCommit": "7c3131f2b87bcbf69d2e0fb2650aa6d6ab7aef51",
+          "qualifiedRuntimeCommit": "efe1ee371ad96bc76963ac1848076055cb83066b",
+          "receiptSha256": "8cd2238f16d1ae177e3272eb1fef91d61bc7c6631f849703ee171e2723650851",
+          "sourceInputCount": 879,
+          "sourceInputMapSha256": "6dffdbef09d143a1b7ae6c23e9e21b78164463f78bde6a5011c60ad0b72bcd6f",
+          "status": "SOURCE_PACKAGE_HELPER_RECEIPT_BINDING_VERIFIED",
+          "freshExecutionAtFinalCandidate": false
+        }
+      ],
+      "compiledArtifacts": {
+        "path": "/tmp/layer-billing-release-clients-20261101/cache/Melamedia/production-build",
+        "status": "ALL_EXPECTED_FILES_MATCH",
+        "expectedFiles": 256,
+        "presentFiles": 256,
+        "verifiedExpectedFiles": 256,
+        "missingFiles": [],
+        "mismatches": [],
+        "unrecordedExtraFiles": [],
+        "sourceArchive": {
+          "path": "/tmp/layer-billing-release-clients-20261101/cache/Melamedia/source.tar",
+          "status": "MATCH",
+          "sha256": "ad8d21a6c5fd27a11f3e12b4aa953a7564cb6d444b3f126e7eefe77deda1ce2c"
+        },
+        "compilerCacheWrapper": {
+          "path": "/tmp/layer-billing-release-clients-20261101/cache/Melamedia/frozen-build/frontend/craco.config.js",
+          "status": "MATCH",
+          "sha256": "9d4f217dd0aca988230c283568c3aa12fea85f25aa1980d5f07ac1e5cd0deb81"
+        }
+      },
+      "compiledOwnLogoSourceSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264"
+    },
+    {
+      "tenant": "MelamedLaw",
+      "qualifiedRuntimeCommit": "21d51f5766e5df0b0ac497fce4cc9d16bdd8bbf5",
+      "mainCutoff": "074df7520497a0cd6bd95ad70353201c905f0aa6",
+      "clientCutoff": "d6ef0c9a6aaa2f7f53b8b501575b973e0ffff092",
+      "finalDonor": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+      "cutoffAncestry": {
+        "commonRuntime": {
+          "commit": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+          "isAncestor": true
+        },
+        "mainCutoff": {
+          "commit": "074df7520497a0cd6bd95ad70353201c905f0aa6",
+          "isAncestor": true
+        },
+        "clientCutoff": {
+          "commit": "d6ef0c9a6aaa2f7f53b8b501575b973e0ffff092",
+          "isAncestor": true
+        }
+      },
+      "actualFrontendCommit": "cc3d2fecc6f02230f88485c55d38295d5aff1e75",
+      "actualBuildCommit": "cc3d2fecc6f02230f88485c55d38295d5aff1e75",
+      "frontendSummary": {
+        "success": true,
+        "numTotalTests": 938,
+        "numPassedTests": 938,
+        "numFailedTests": 0,
+        "numPendingTests": 0,
+        "numPassedTestSuites": 110,
+        "numFailedTestSuites": 0
+      },
+      "buildArtifactCount": 253,
+      "logs": [
+        {
+          "path": "/tmp/layer-billing-main-current-20261101/docs/releases/card-save-billing-20261101/release-qualification/MelamedLaw/frontend.log",
+          "expectedSha256": "951e5588e9857910184a7d0f06c227db42a90f79d6a6a37f4886c16d31f7719e",
+          "actualSha256": "951e5588e9857910184a7d0f06c227db42a90f79d6a6a37f4886c16d31f7719e",
+          "bytes": 1320083,
+          "matches": true
+        },
+        {
+          "path": "/tmp/layer-billing-main-current-20261101/docs/releases/card-save-billing-20261101/release-qualification/MelamedLaw/build.log",
+          "expectedSha256": "bed5b43fed19dbc6d9d2eb221b8818b8978ba43bd2a94b8ee25997049227c639",
+          "actualSha256": "bed5b43fed19dbc6d9d2eb221b8818b8978ba43bd2a94b8ee25997049227c639",
+          "bytes": 26879,
+          "matches": true
+        }
+      ],
+      "dependencies": {
+        "backend": {
+          "root": "/private/tmp/layer-billing-lock-deps/node_modules",
+          "expectedInstalledLockSha256": "6050ef6083317866bc68181efba905733c39b1de665b1564002a97d56a126f4b",
+          "actualInstalledLockSha256": "6050ef6083317866bc68181efba905733c39b1de665b1564002a97d56a126f4b",
+          "status": "MATCH"
+        },
+        "frontend": {
+          "root": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules",
+          "expectedInstalledLockSha256": "00cc3b9a309e871937202330da56da5744fedbaac7773c89447c4c943a049b05",
+          "actualInstalledLockSha256": "00cc3b9a309e871937202330da56da5744fedbaac7773c89447c4c943a049b05",
+          "status": "MATCH"
+        }
+      },
+      "carryReceipts": [
+        {
+          "label": "frontend",
+          "actualReceiptCommit": "cc3d2fecc6f02230f88485c55d38295d5aff1e75",
+          "qualifiedRuntimeCommit": "21d51f5766e5df0b0ac497fce4cc9d16bdd8bbf5",
+          "receiptSha256": "e5015a592b98a8499970ec8cdf23019fb18265fdcf0945b89075547ab741d04f",
+          "sourceInputCount": 873,
+          "sourceInputMapSha256": "a5efba50af898e0519ac393e759e4bfdd1c2059ba446266075d5bd8346885286",
+          "status": "SOURCE_PACKAGE_HELPER_RECEIPT_BINDING_VERIFIED",
+          "freshExecutionAtFinalCandidate": false
+        },
+        {
+          "label": "build",
+          "actualReceiptCommit": "cc3d2fecc6f02230f88485c55d38295d5aff1e75",
+          "qualifiedRuntimeCommit": "21d51f5766e5df0b0ac497fce4cc9d16bdd8bbf5",
+          "receiptSha256": "13ea8f0aa5c54bd8b2df8b768d4067460a850bdd5fae898a667db1cedb13d0a5",
+          "sourceInputCount": 873,
+          "sourceInputMapSha256": "a5efba50af898e0519ac393e759e4bfdd1c2059ba446266075d5bd8346885286",
+          "status": "SOURCE_PACKAGE_HELPER_RECEIPT_BINDING_VERIFIED",
+          "freshExecutionAtFinalCandidate": false
+        }
+      ],
+      "compiledArtifacts": {
+        "path": "/tmp/layer-billing-release-clients-20261101/cache/MelamedLaw/production-build",
+        "status": "ALL_EXPECTED_FILES_MATCH",
+        "expectedFiles": 253,
+        "presentFiles": 253,
+        "verifiedExpectedFiles": 253,
+        "missingFiles": [],
+        "mismatches": [],
+        "unrecordedExtraFiles": [],
+        "sourceArchive": {
+          "path": "/tmp/layer-billing-release-clients-20261101/cache/MelamedLaw/source.tar",
+          "status": "MATCH",
+          "sha256": "821207b5f00c85e22a0bbd03abb0b08e1dff85ae086162baf7644e7088b616f7"
+        },
+        "compilerCacheWrapper": {
+          "path": "/tmp/layer-billing-release-clients-20261101/cache/MelamedLaw/frozen-build/frontend/craco.config.js",
+          "status": "MATCH",
+          "sha256": "4875ab13d419b1badafa9a69fd3bb5ad07ad3fc35fb60634cfc9a47fab0c5c6e"
+        }
+      },
+      "compiledOwnLogoSourceSha256": "1fa5005cdee840cfc3efebcfef300507b5b467536c6cc6fc1e0ef6505ba52db1"
+    },
+    {
+      "tenant": "MorLevi",
+      "qualifiedRuntimeCommit": "b05d66f9f7873753e520c554f4b2c1c540e6682b",
+      "mainCutoff": "074df7520497a0cd6bd95ad70353201c905f0aa6",
+      "clientCutoff": "586f93e5ac5148ba5ec0059cb5430ebbc4e92e6c",
+      "finalDonor": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+      "cutoffAncestry": {
+        "commonRuntime": {
+          "commit": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+          "isAncestor": true
+        },
+        "mainCutoff": {
+          "commit": "074df7520497a0cd6bd95ad70353201c905f0aa6",
+          "isAncestor": true
+        },
+        "clientCutoff": {
+          "commit": "586f93e5ac5148ba5ec0059cb5430ebbc4e92e6c",
+          "isAncestor": true
+        }
+      },
+      "actualFrontendCommit": "3217781317b54b3143d8bfba29475f2ab42485bd",
+      "actualBuildCommit": "3217781317b54b3143d8bfba29475f2ab42485bd",
+      "frontendSummary": {
+        "success": true,
+        "numTotalTests": 923,
+        "numPassedTests": 923,
+        "numFailedTests": 0,
+        "numPendingTests": 0,
+        "numPassedTestSuites": 108,
+        "numFailedTestSuites": 0
+      },
+      "buildArtifactCount": 253,
+      "logs": [
+        {
+          "path": "/tmp/layer-billing-main-current-20261101/docs/releases/card-save-billing-20261101/release-qualification/MorLevi/frontend.log",
+          "expectedSha256": "5f88b51b188ce60abfc0e7b22b04390206152de7cde33c354168be10f72ab1a3",
+          "actualSha256": "5f88b51b188ce60abfc0e7b22b04390206152de7cde33c354168be10f72ab1a3",
+          "bytes": 1266850,
+          "matches": true
+        },
+        {
+          "path": "/tmp/layer-billing-main-current-20261101/docs/releases/card-save-billing-20261101/release-qualification/MorLevi/build.log",
+          "expectedSha256": "0223f61d49374e700c40d576af7fb5263a7ce1062a5c4060de7bbbb6454701d3",
+          "actualSha256": "0223f61d49374e700c40d576af7fb5263a7ce1062a5c4060de7bbbb6454701d3",
+          "bytes": 26870,
+          "matches": true
+        }
+      ],
+      "dependencies": {
+        "backend": {
+          "root": "/private/tmp/layer-billing-lock-deps/node_modules",
+          "expectedInstalledLockSha256": "6050ef6083317866bc68181efba905733c39b1de665b1564002a97d56a126f4b",
+          "actualInstalledLockSha256": "6050ef6083317866bc68181efba905733c39b1de665b1564002a97d56a126f4b",
+          "status": "MATCH"
+        },
+        "frontend": {
+          "root": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules",
+          "expectedInstalledLockSha256": "00cc3b9a309e871937202330da56da5744fedbaac7773c89447c4c943a049b05",
+          "actualInstalledLockSha256": "00cc3b9a309e871937202330da56da5744fedbaac7773c89447c4c943a049b05",
+          "status": "MATCH"
+        }
+      },
+      "carryReceipts": [
+        {
+          "label": "frontend",
+          "actualReceiptCommit": "3217781317b54b3143d8bfba29475f2ab42485bd",
+          "qualifiedRuntimeCommit": "b05d66f9f7873753e520c554f4b2c1c540e6682b",
+          "receiptSha256": "8dfb5cb805a8bbde7e3ffa2967a012e9daaab92466635e8fbb8ae17455fea44b",
+          "sourceInputCount": 865,
+          "sourceInputMapSha256": "3964c78121a8a654b05a1905268971c1ecf7b91ab4f47fc894747c36b3f80a1d",
+          "status": "SOURCE_PACKAGE_HELPER_RECEIPT_BINDING_VERIFIED",
+          "freshExecutionAtFinalCandidate": false
+        },
+        {
+          "label": "build",
+          "actualReceiptCommit": "3217781317b54b3143d8bfba29475f2ab42485bd",
+          "qualifiedRuntimeCommit": "b05d66f9f7873753e520c554f4b2c1c540e6682b",
+          "receiptSha256": "981a87172b447ae2ed50e86eb9e1e66c2c9e316c656351920b88d3f4bda444b5",
+          "sourceInputCount": 865,
+          "sourceInputMapSha256": "3964c78121a8a654b05a1905268971c1ecf7b91ab4f47fc894747c36b3f80a1d",
+          "status": "SOURCE_PACKAGE_HELPER_RECEIPT_BINDING_VERIFIED",
+          "freshExecutionAtFinalCandidate": false
+        }
+      ],
+      "compiledArtifacts": {
+        "path": "/tmp/layer-billing-release-clients-20261101/cache/MorLevi/production-build",
+        "status": "ALL_EXPECTED_FILES_MATCH",
+        "expectedFiles": 253,
+        "presentFiles": 253,
+        "verifiedExpectedFiles": 253,
+        "missingFiles": [],
+        "mismatches": [],
+        "unrecordedExtraFiles": [],
+        "sourceArchive": {
+          "path": "/tmp/layer-billing-release-clients-20261101/cache/MorLevi/source.tar",
+          "status": "MATCH",
+          "sha256": "54d1e9fc111d70882824c269c54d3b1ae495622f176d9ef2b88236798b71062f"
+        },
+        "compilerCacheWrapper": {
+          "path": "/tmp/layer-billing-release-clients-20261101/cache/MorLevi/frozen-build/frontend/craco.config.js",
+          "status": "MATCH",
+          "sha256": "7ef141a9ea79aa6d13b54c052410242a4f14b0c02400d2f9fcb8bde581a2deb3"
+        }
+      },
+      "compiledOwnLogoSourceSha256": "df1a1a097e081dcae854f1d9798985f31b0a94375c3b6dfa41aa9c172b6d3888"
+    },
+    {
+      "tenant": "AshrafEssa",
+      "qualifiedRuntimeCommit": "9eaebbdb6c23d56d974546e233b8905d19570ef5",
+      "mainCutoff": "074df7520497a0cd6bd95ad70353201c905f0aa6",
+      "clientCutoff": "3359e65cdc082dbc50c30a0e1bd7284df854cf06",
+      "finalDonor": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+      "cutoffAncestry": {
+        "commonRuntime": {
+          "commit": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+          "isAncestor": true
+        },
+        "mainCutoff": {
+          "commit": "074df7520497a0cd6bd95ad70353201c905f0aa6",
+          "isAncestor": true
+        },
+        "clientCutoff": {
+          "commit": "3359e65cdc082dbc50c30a0e1bd7284df854cf06",
+          "isAncestor": true
+        }
+      },
+      "actualFrontendCommit": "fc6f3b46378daa05b87f06ddfe6b2f58b97c6ab8",
+      "actualBuildCommit": "7309eb636748a8081bbe159053bfba710ffd9bc0",
+      "frontendSummary": {
+        "success": true,
+        "numTotalTests": 923,
+        "numPassedTests": 923,
+        "numFailedTests": 0,
+        "numPendingTests": 0,
+        "numPassedTestSuites": 108,
+        "numFailedTestSuites": 0
+      },
+      "buildArtifactCount": 255,
+      "logs": [
+        {
+          "path": "/tmp/layer-billing-main-current-20261101/docs/releases/card-save-billing-20261101/release-qualification/AshrafEssa/frontend.log",
+          "expectedSha256": "dedc06addbba2afee3fb7ebdc6fc9901210f42f73deac195b629a1a871fef6e7",
+          "actualSha256": "dedc06addbba2afee3fb7ebdc6fc9901210f42f73deac195b629a1a871fef6e7",
+          "bytes": 1268277,
+          "matches": true
+        },
+        {
+          "path": "/tmp/layer-billing-main-current-20261101/docs/releases/card-save-billing-20261101/release-qualification/AshrafEssa/build.log",
+          "expectedSha256": "312bb3eb7849775742fa189b881a6e3edc3cfd9edbefd8af9b98702ef85948d3",
+          "actualSha256": "312bb3eb7849775742fa189b881a6e3edc3cfd9edbefd8af9b98702ef85948d3",
+          "bytes": 26878,
+          "matches": true
+        }
+      ],
+      "dependencies": {
+        "backend": {
+          "root": "/private/tmp/layer-billing-lock-deps/node_modules",
+          "expectedInstalledLockSha256": "6050ef6083317866bc68181efba905733c39b1de665b1564002a97d56a126f4b",
+          "actualInstalledLockSha256": "6050ef6083317866bc68181efba905733c39b1de665b1564002a97d56a126f4b",
+          "status": "MATCH"
+        },
+        "frontend": {
+          "root": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules",
+          "expectedInstalledLockSha256": "00cc3b9a309e871937202330da56da5744fedbaac7773c89447c4c943a049b05",
+          "actualInstalledLockSha256": "00cc3b9a309e871937202330da56da5744fedbaac7773c89447c4c943a049b05",
+          "status": "MATCH"
+        }
+      },
+      "carryReceipts": [
+        {
+          "label": "frontend",
+          "actualReceiptCommit": "fc6f3b46378daa05b87f06ddfe6b2f58b97c6ab8",
+          "qualifiedRuntimeCommit": "9eaebbdb6c23d56d974546e233b8905d19570ef5",
+          "receiptSha256": "fb3973c88b33f4bcae8e92a8496d8b6b770e55b5088becb19ac1e5fa18f223b9",
+          "sourceInputCount": 865,
+          "sourceInputMapSha256": "3f4f305ae8bcb212599bce87e1a718b308fcf8aea3a5616e0a22546774dce526",
+          "status": "SOURCE_PACKAGE_HELPER_RECEIPT_BINDING_VERIFIED",
+          "freshExecutionAtFinalCandidate": false
+        },
+        {
+          "label": "build",
+          "actualReceiptCommit": "7309eb636748a8081bbe159053bfba710ffd9bc0",
+          "qualifiedRuntimeCommit": "9eaebbdb6c23d56d974546e233b8905d19570ef5",
+          "receiptSha256": "860026faf589a3fcba4cfb0a3d768bf20a047f2a7e4c1b55c522bb45e2e4cb07",
+          "sourceInputCount": 865,
+          "sourceInputMapSha256": "3f4f305ae8bcb212599bce87e1a718b308fcf8aea3a5616e0a22546774dce526",
+          "status": "SOURCE_PACKAGE_HELPER_RECEIPT_BINDING_VERIFIED",
+          "freshExecutionAtFinalCandidate": false
+        }
+      ],
+      "compiledArtifacts": {
+        "path": "/tmp/layer-billing-release-clients-20261101/cache/AshrafEssa/production-build",
+        "status": "ALL_EXPECTED_FILES_MATCH",
+        "expectedFiles": 255,
+        "presentFiles": 255,
+        "verifiedExpectedFiles": 255,
+        "missingFiles": [],
+        "mismatches": [],
+        "unrecordedExtraFiles": [],
+        "sourceArchive": {
+          "path": "/tmp/layer-billing-release-clients-20261101/cache/AshrafEssa/source.tar",
+          "status": "MATCH",
+          "sha256": "d1ac6af3d27a4839888e006be55eea03fff83c03934a0ddafc00746dbbeb5261"
+        },
+        "compilerCacheWrapper": {
+          "path": "/tmp/layer-billing-release-clients-20261101/cache/AshrafEssa/frozen-build/frontend/craco.config.js",
+          "status": "MATCH",
+          "sha256": "05e8acb579474f2c444d1e4c97e299ae530c9e08803475032d76b1e54d269d11"
+        }
+      },
+      "compiledOwnLogoSourceSha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b"
+    }
+  ],
+  "lostTemporaryCaches": [],
+  "issues": [],
+  "evidenceFileHashes": {
+    "docs/releases/card-save-billing-20261101/release-qualification/freeze-cutoff.json": "9f6424abd8b8917381958e1c71054f85a4f0ce75af84e3ce74bb45dc43fa99df",
+    "docs/releases/card-save-billing-20261101/release-qualification/main-frontend/frontend-tests-receipt.json": "2cb3026db7d5e47640c41f5c4f6a28dbab35a6db9b97a8e4d00da97ee5f86197",
+    "docs/releases/card-save-billing-20261101/release-qualification/main-frontend/production-build-receipt.json": "68c6b25f16605470be3e235dd3f6892a1f5f5cdfb2013bc99be1f0294a9b6e9a",
+    "docs/releases/card-save-billing-20261101/release-qualification/main-frontend/frontend-tests-result.json": "b6fb3c0ada38279e1cac1f1eb5ce4e323ff31d7fff580e4ae5bb4fff561b8a52",
+    "docs/releases/card-save-billing-20261101/release-qualification/main-frontend/jest-discovery-proof.json": "24a43a2e24626bd9bc70aa64354bb998387f556545ab1ded513453dc2c9736c4",
+    "docs/releases/card-save-billing-20261101/release-qualification/main-frontend/frontend-tests.log": "10d9f6a5e1a73078967a23f28d57e12613904596ced6ceb0a66f8443c27ff00d",
+    "docs/releases/card-save-billing-20261101/release-qualification/main-frontend/production-build.log": "aa7de947fb956348cd5e4d2984aea196de550f8b75e517d57dc250226b8b5019",
+    "docs/releases/card-save-billing-20261101/release-qualification/main-frontend/input-equivalence-6fab.json": "8046810d3372e3e8e664806ec4c98dff10c51c8972e935e16076cf2c57f22460",
+    "docs/releases/card-save-billing-20261101/release-qualification/main-frontend/input-equivalence-6a3bd299.json": "0410de640364e9c6e43ad224a0a3b896f5e1fd2dfa4b3d07b2edf6cb24d96adb",
+    "docs/releases/card-save-billing-20261101/release-qualification/Melamedia/qualification-summary.json": "d0c634909178aa2f03cb5b64689deb9e6b61ebfd1bf47a1785d5b144797dcaaf",
+    "docs/releases/card-save-billing-20261101/release-qualification/Melamedia/frontend.json": "966d415c4b9f9415d4bfdb15a051a6d846a37b66fab0ec35646b9a96ee4aa70a",
+    "docs/releases/card-save-billing-20261101/release-qualification/Melamedia/build.json": "8cd2238f16d1ae177e3272eb1fef91d61bc7c6631f849703ee171e2723650851",
+    "docs/releases/card-save-billing-20261101/release-qualification/Melamedia/frontend-build-carry.json": "f13161e009ab66834d828eacb05fe34e748187aecf73fd8dae6f979f7218af35",
+    "docs/releases/card-save-billing-20261101/release-qualification/Melamedia/frontend-result.json": "e9e12669c7e9ba9a55d840c6f3accbdf830ca21bd2b8ae219e7ff2cdfb812014",
+    "docs/releases/card-save-billing-20261101/release-qualification/Melamedia/frontend-import-scope.json": "65bfc3f727aff7fa6de9b29a9d15fa3fdc146c3df6519bcbe3b1e0e56fb98f07",
+    "docs/releases/card-save-billing-20261101/release-qualification/Melamedia/frontend.log": "097c32057f04d0ca23be45cb1cfdc45eacaf64dd7590889b3a726146ac5a4bdf",
+    "docs/releases/card-save-billing-20261101/release-qualification/Melamedia/build.log": "2d549eb00f03e8e81bffe3c8bc8e5c39dc39aa1f2ebc5ea8cf5f6c50019ba0c6",
+    "docs/releases/card-save-billing-20261101/release-qualification/MelamedLaw/qualification-summary.json": "7f0e3d5ecea1b681607df8e85d386e1a6c7835648166f0fb4779f194348031f1",
+    "docs/releases/card-save-billing-20261101/release-qualification/MelamedLaw/frontend.json": "e5015a592b98a8499970ec8cdf23019fb18265fdcf0945b89075547ab741d04f",
+    "docs/releases/card-save-billing-20261101/release-qualification/MelamedLaw/build.json": "13ea8f0aa5c54bd8b2df8b768d4067460a850bdd5fae898a667db1cedb13d0a5",
+    "docs/releases/card-save-billing-20261101/release-qualification/MelamedLaw/frontend-build-carry.json": "4bc002832cbd566bc5d26bbebbaa2cafa315ccc48804e4f884c8f7c2d493a94d",
+    "docs/releases/card-save-billing-20261101/release-qualification/MelamedLaw/frontend-result.json": "6bf23355927ad0d04cb5bb46566ab46d815a402b331eded56a784c24f5478282",
+    "docs/releases/card-save-billing-20261101/release-qualification/MelamedLaw/frontend-import-scope.json": "2edc6e8ca89a22fa33c12e974f0db972d2c914cdec01e298ad30bb98cb74fc3b",
+    "docs/releases/card-save-billing-20261101/release-qualification/MelamedLaw/frontend.log": "951e5588e9857910184a7d0f06c227db42a90f79d6a6a37f4886c16d31f7719e",
+    "docs/releases/card-save-billing-20261101/release-qualification/MelamedLaw/build.log": "bed5b43fed19dbc6d9d2eb221b8818b8978ba43bd2a94b8ee25997049227c639",
+    "docs/releases/card-save-billing-20261101/release-qualification/MorLevi/qualification-summary.json": "96a6e883f55f21b58c3f2fb385c461029cb282af679a35fa595a304d7d927421",
+    "docs/releases/card-save-billing-20261101/release-qualification/MorLevi/frontend.json": "8dfb5cb805a8bbde7e3ffa2967a012e9daaab92466635e8fbb8ae17455fea44b",
+    "docs/releases/card-save-billing-20261101/release-qualification/MorLevi/build.json": "981a87172b447ae2ed50e86eb9e1e66c2c9e316c656351920b88d3f4bda444b5",
+    "docs/releases/card-save-billing-20261101/release-qualification/MorLevi/frontend-build-carry.json": "b0b5fa47d7e01582b2acc8b354162e0e6828c9488984fa01487ab723c0c8981f",
+    "docs/releases/card-save-billing-20261101/release-qualification/MorLevi/frontend-result.json": "3af80bab5b150bf77a4d000d543e3cc5789281413ab1e609b65b805a6f01db82",
+    "docs/releases/card-save-billing-20261101/release-qualification/MorLevi/frontend-import-scope.json": "77c6861a9eb53da467c341b5d0587a5ff2c2c30b4787d67ee0c2245799894c17",
+    "docs/releases/card-save-billing-20261101/release-qualification/MorLevi/frontend.log": "5f88b51b188ce60abfc0e7b22b04390206152de7cde33c354168be10f72ab1a3",
+    "docs/releases/card-save-billing-20261101/release-qualification/MorLevi/build.log": "0223f61d49374e700c40d576af7fb5263a7ce1062a5c4060de7bbbb6454701d3",
+    "docs/releases/card-save-billing-20261101/release-qualification/AshrafEssa/qualification-summary.json": "ef454d761ce76a93781d94c7ea1771e2be9b5efad524a61ff8ad3676516573a6",
+    "docs/releases/card-save-billing-20261101/release-qualification/AshrafEssa/frontend.json": "fb3973c88b33f4bcae8e92a8496d8b6b770e55b5088becb19ac1e5fa18f223b9",
+    "docs/releases/card-save-billing-20261101/release-qualification/AshrafEssa/build.json": "860026faf589a3fcba4cfb0a3d768bf20a047f2a7e4c1b55c522bb45e2e4cb07",
+    "docs/releases/card-save-billing-20261101/release-qualification/AshrafEssa/frontend-build-carry.json": "88b621542e3397b480cb688f0f67d7457a72243c7a30e22bbd8373551250195d",
+    "docs/releases/card-save-billing-20261101/release-qualification/AshrafEssa/frontend-result.json": "57fa7ebf1b95da83b25b2b65a02243387352c7c67693cca20fd099ab79913f02",
+    "docs/releases/card-save-billing-20261101/release-qualification/AshrafEssa/frontend-import-scope.json": "77c6861a9eb53da467c341b5d0587a5ff2c2c30b4787d67ee0c2245799894c17",
+    "docs/releases/card-save-billing-20261101/release-qualification/AshrafEssa/frontend.log": "dedc06addbba2afee3fb7ebdc6fc9901210f42f73deac195b629a1a871fef6e7",
+    "docs/releases/card-save-billing-20261101/release-qualification/AshrafEssa/build.log": "312bb3eb7849775742fa189b881a6e3edc3cfd9edbefd8af9b98702ef85948d3"
+  },
+  "concurrentEvidenceChanges": [],
+  "scope": "Read-only persistence/source/receipt/artifact verification after reconnection. No application tests, compile, provider, database, network, new refs, HEAD/product/dependency mutation or deployment. Original execution receipts stay pinned to their recorded commits; carry proofs are input equivalence, not fresh execution."
+}

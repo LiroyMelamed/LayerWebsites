@@ -1,0 +1,6 @@
+Owned isolated billing PostgreSQL cleanup
+2026-11-01T13:46:46.467295+00:00
+Stopped only the pre-existing owned fixture cluster on loopback55449 using pg_ctl fast stop (exit0).
+pg_ctl status exit=3: pg_ctl: no server running
+lsof listener check exit=1, outputEmpty=True
+No signup55440, production, provider, mail or customer resource was changed.

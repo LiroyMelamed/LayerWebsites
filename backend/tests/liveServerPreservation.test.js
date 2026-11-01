@@ -9,7 +9,10 @@ function load(file, modules = {}, env = {}) {
     vm.runInNewContext(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), {
         module, exports: module.exports, process: { env }, global: {},
         console: { warn() {}, error() {}, log() {} },
-        require(name) { return modules[name] || {}; },
+        require(name) {
+            if (name === '../lib/billing/billingOperations') return load('lib/billing/billingOperations.js', {}, env);
+            return modules[name] || {};
+        },
     }, { filename: file });
     return module.exports;
 }
@@ -46,7 +49,7 @@ test('checkout confirmation validates the provider return before exposing the re
     const calls = [];
     const controller = load('controllers/billingController.js', {
         '../lib/billing/firmBillingService': {
-            async handleTakbullReturn(input) { calls.push(['validate', input.intentId]); },
+            async handleTakbullReturn(input) { calls.push(['validate', input.intentId]); return { paid: true, cardVerified: true }; },
             async getBillingSnapshot() { calls.push(['snapshot']); return { setupCheckoutAmountIls: 2, takbullMode: 'test' }; },
         },
     });
@@ -56,6 +59,36 @@ test('checkout confirmation validates the provider return before exposing the re
     assert.deepEqual(calls, [['validate', 'synthetic-intent'], ['snapshot']]);
     assert.equal(res.body.billing.setupCheckoutAmountIls, 2);
     assert.equal(res.body.billing.takbullMode, 'test');
+    assert.equal(res.body.success, true);
+});
+
+test('an uncertain card collection cannot be reported paid because the subscription was already active', async () => {
+    const controller = load('controllers/billingController.js', {
+        '../lib/billing/firmBillingService': {
+            async handleTakbullReturn() { return { paid: false, cardVerified: true }; },
+            async getBillingSnapshot() { return { status: 'active' }; },
+        },
+    });
+    const res = response();
+    await controller.confirmCheckout({ body: { intentId: 'synthetic-intent' } }, res);
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.success, false);
+    assert.equal(res.body.cardVerified, true);
+});
+
+test('saved-card controller rejects a setup-kind charge as a client error', async () => {
+    const controller = load('controllers/billingController.js', {
+        '../lib/billing/firmBillingService': {
+            async chargeSavedCard({ kind }) {
+                assert.equal(kind, 'setup');
+                throw Object.assign(new Error('unsupported kind'), { code: 'INVALID_PAYMENT_KIND' });
+            },
+        },
+    });
+    const res = response();
+    await controller.chargeNow({ body: { kind: 'setup' } }, res);
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.body.errorCode, 'INVALID_PAYMENT_KIND');
 });
 
 test('checkout confirmation rejects missing identifiers and failed validation without refreshing', async () => {

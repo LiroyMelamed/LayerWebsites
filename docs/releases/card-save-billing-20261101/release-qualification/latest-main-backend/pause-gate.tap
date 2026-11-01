@@ -1,0 +1,95 @@
+TAP version 13
+# Subtest: billing maintenance gate preserves unset behavior and fails closed for every configured non-enable value
+ok 1 - billing maintenance gate preserves unset behavior and fails closed for every configured non-enable value
+  ---
+  duration_ms: 1.083208
+  type: 'test'
+  ...
+# Subtest: paused financial operations perform no dispatch, reservation, settlement or mail side effect
+    # Subtest: all native and injected Takbull fetch boundaries stop before network or documents
+    ok 1 - all native and injected Takbull fetch boundaries stop before network or documents
+      ---
+      duration_ms: 2.97975
+      type: 'test'
+      ...
+    # Subtest: legacy checkout, all charge kinds, package changes, callbacks and settlement stop before first query
+    ok 2 - legacy checkout, all charge kinds, package changes, callbacks and settlement stop before first query
+      ---
+      duration_ms: 8.614542
+      type: 'test'
+      ...
+    # Subtest: shared renewal, owner retry, due scheduler and upgrade do not start transactions or mark debt failed
+    ok 3 - shared renewal, owner retry, due scheduler and upgrade do not start transactions or mark debt failed
+      ---
+      duration_ms: 5.170583
+      type: 'test'
+      ...
+    # Subtest: initial signup, checkout, sync and verified provisioning stop before consent, tenant, token or welcome changes
+    ok 4 - initial signup, checkout, sync and verified provisioning stop before consent, tenant, token or welcome changes
+      ---
+      duration_ms: 3.168875
+      type: 'test'
+      ...
+    # Subtest: signup status remains readable while paused and does not normalize or provision its state
+    ok 5 - signup status remains readable while paused and does not normalize or provision its state
+      ---
+      duration_ms: 1.338
+      type: 'test'
+      ...
+    # Subtest: PGlite paused callback replay and future active snapshot retain every row, token, reservation and outbox
+    ok 6 - PGlite paused callback replay and future active snapshot retain every row, token, reservation and outbox
+      ---
+      duration_ms: 1938.266083
+      type: 'test'
+      ...
+    # Subtest: failed-payment mail, queued welcome delivery and welcome worker stop before lookup, lease, SMTP or timers
+    ok 7 - failed-payment mail, queued welcome delivery and welcome worker stop before lookup, lease, SMTP or timers
+      ---
+      duration_ms: 5.725625
+      type: 'test'
+      ...
+    # Subtest: financial message capture skips before queries and queued pending/stale financial families remain unchanged
+    ok 8 - financial message capture skips before queries and queued pending/stale financial families remain unchanged
+      ---
+      duration_ms: 1387.8135
+      type: 'test'
+      ...
+    # Subtest: GET and POST IPN return retryable 503 and preserve callback body for replay after resume
+    ok 9 - GET and POST IPN return retryable 503 and preserve callback body for replay after resume
+      ---
+      duration_ms: 3.673916
+      type: 'test'
+      ...
+    # Subtest: native HTTP GET and POST webhook requests expose 503 and Retry-After before provider or DB work
+    ok 10 - native HTTP GET and POST webhook requests expose 503 and Retry-After before provider or DB work
+      ---
+      duration_ms: 120.256458
+      type: 'test'
+      ...
+    # Subtest: billing action and return controllers expose the same retryable pause, without redirect success
+    ok 11 - billing action and return controllers expose the same retryable pause, without redirect success
+      ---
+      duration_ms: 2.598583
+      type: 'test'
+      ...
+    # Subtest: public signup create, checkout, sync and return preserve retryable payment state
+    ok 12 - public signup create, checkout, sync and return preserve retryable payment state
+      ---
+      duration_ms: 2.635833
+      type: 'test'
+      ...
+    1..12
+ok 2 - paused financial operations perform no dispatch, reservation, settlement or mail side effect
+  ---
+  duration_ms: 3485.860458
+  type: 'test'
+  ...
+1..2
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3650.167375

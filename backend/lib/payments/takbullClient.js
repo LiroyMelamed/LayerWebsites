@@ -1,3 +1,4 @@
+const { assertBillingOperationsEnabled } = require('../billing/billingOperations');
 /**
  * Takbull External API client (sandbox + production share the same host).
  * Ported from Melamotion for LayerWebsites firm billing.
@@ -35,6 +36,88 @@ function pickStringField(record, keys) {
         if (typeof v === 'number' && Number.isFinite(v)) return String(v);
     }
     return null;
+}
+
+// Ask Takbull to create the payment document as part of the single payment
+// operation. Never issue a second DocumentApi/Create request after a timeout:
+// that endpoint has no documented idempotency contract. The merchant's existing
+// document/tax/email settings remain authoritative unless explicitly overridden.
+function paymentDocumentOptions(input) {
+    const createDocument = input.createDocument !== false;
+    if (!createDocument) return { CreateDocument: false };
+    const configuredType = input.documentType ?? process.env.TAKBULL_DOCUMENT_TYPE;
+    if (configuredType == null || String(configuredType).trim() === '') return { CreateDocument: true };
+    const documentType = Number(configuredType);
+    if (![320, 400].includes(documentType)) {
+        throw new Error('TAKBULL_DOCUMENT_TYPE must be 320 (tax invoice/receipt) or 400 (receipt).');
+    }
+    return { CreateDocument: true, DocumentType: documentType };
+}
+
+function applyCustomer(body, input) {
+    if (!input.customerFullName && !input.customerPhone && !input.customerEmail && !input.customerAddress) return;
+    body.CustomerFullName = input.customerFullName || undefined;
+    body.CustomerPhoneNumber = input.customerPhone || undefined;
+    const address = asRecord(input.customerAddress);
+    body.Customer = {
+        CustomerFullName: input.customerFullName || undefined,
+        PhoneNumber: input.customerPhone || undefined,
+        Email: input.customerEmail || undefined,
+        ...(input.customerAddress ? { Address: {
+            Address1: address.address1 || undefined,
+            Address2: address.address2 || undefined,
+            City: address.city || undefined,
+            Country: address.country || undefined,
+            Zip: address.zip || undefined,
+        } } : {}),
+    };
+}
+
+function extractTakbullDocument(raw) {
+    const rec = asRecord(raw);
+    const id = pickStringField(rec, ['documentId', 'DocumentId', 'invoiceId', 'InvoiceId']);
+    const uniqId = pickStringField(rec, ['invoiceUniqId', 'InvoiceUniqId', 'documentUniqId', 'DocumentUniqId']);
+    const number = pickStringField(rec, ['documentNumber', 'DocumentNumber']);
+    const hasReference = Boolean((id && id !== '0') || uniqId || (number && number !== '0'));
+    return {
+        created: rec.isDocumentCreated === true || hasReference ? true : (rec.isDocumentCreated === false ? false : null),
+        id: id && id !== '0' ? id : null,
+        uniqId,
+        number: number && number !== '0' ? number : null,
+        // A document reference is not an email delivery acknowledgment.
+        deliveryStatus: 'unknown',
+    };
+}
+
+function requirePositiveAmount(input) {
+    if (!Number.isFinite(Number(input.amount)) || Number(input.amount) <= 0) {
+        throw new Error('Takbull payment amount must be positive.');
+    }
+}
+
+async function isConfirmedFailedTransaction(input, transactionId) {
+    assertBillingOperationsEnabled();
+    if (!transactionId) return false;
+    try {
+        const response = await fetch(`${TAKBULL_API_BASE}/api/ExtranalAPI/GetTransaction?${new URLSearchParams({ transactionInternalNumber: transactionId })}`, {
+            headers: authHeaders(requireCreds(input.credentials)),
+            signal: AbortSignal.timeout(20000),
+            redirect: 'error',
+        });
+        if (!response.ok) return false;
+        const t = asRecord(await response.json());
+        // A failed document request can follow an approved charge. Only the
+        // matching terminal card transaction can permit a new payment attempt.
+        return String(t.transactionId) === transactionId
+            && t.currency === input.currency.toUpperCase()
+            && Number(t.amount) === Number(input.amount)
+            && Number(t.transactionType) === 10 && Number(t.paymentMethod) === 3
+            && [2, 6].includes(Number(t.status))
+            && t.statusCode != null && String(t.statusCode).trim() !== ''
+            && Number.isFinite(Number(t.statusCode)) && Number(t.statusCode) !== 0;
+    } catch (_) {
+        return false;
+    }
 }
 
 function paymentGatewayUrl(uniqId) {
@@ -84,6 +167,8 @@ function extractTokenFromValidated(raw) {
 }
 
 async function createTakbullPaymentPage(input) {
+    assertBillingOperationsEnabled();
+    requirePositiveAmount(input);
     const body = {
         order_reference: input.orderReference,
         OrderTotalSum: input.amount,
@@ -93,19 +178,19 @@ async function createTakbullPaymentPage(input) {
         PaymentMethodType: 3,
         DisplayType: input.returnMode === 'redirect' ? 'redirect' : 'iframe',
         PostProcessMethod: input.returnMode === 'redirect' ? '0' : '1',
-        CreateDocument: false,
+        ...paymentDocumentOptions(input),
         SaveToken: input.saveToken !== false,
         RedirectAddress: input.redirectAddress,
         CancelReturnAddress: input.cancelReturnAddress,
         IPNAddress: input.ipnAddress,
     };
 
-    if (input.purpose) {
+    if (input.purpose || body.CreateDocument) {
         body.Products = [
             {
                 SKU: String(input.orderReference).slice(0, 40),
-                ProductName: input.purpose,
-                Description: input.purpose,
+                ProductName: input.purpose || 'תשלום מנוי',
+                Description: input.purpose || 'תשלום מנוי',
                 Price: input.amount,
                 Quantity: 1,
                 CurrencyCode: body.Currency,
@@ -113,20 +198,14 @@ async function createTakbullPaymentPage(input) {
         ];
     }
 
-    if (input.customerFullName || input.customerPhone || input.customerEmail) {
-        body.CustomerFullName = input.customerFullName || undefined;
-        body.CustomerPhoneNumber = input.customerPhone || undefined;
-        body.Customer = {
-            CustomerFullName: input.customerFullName || undefined,
-            PhoneNumber: input.customerPhone || undefined,
-            Email: input.customerEmail || undefined,
-        };
-    }
+    applyCustomer(body, input);
 
     const res = await fetch(`${TAKBULL_API_BASE}/api/ExtranalAPI/GetTakbullPaymentPageRedirectUrl`, {
         method: 'POST',
-        headers: authHeaders(input.credentials),
+        headers: authHeaders(requireCreds(input.credentials)),
         body: JSON.stringify(body),
+        signal: AbortSignal.timeout(20000),
+        redirect: 'error',
     });
 
     const raw = asRecord(await res.json().catch(() => ({})));
@@ -153,6 +232,7 @@ async function createTakbullPaymentPage(input) {
 }
 
 async function validateTakbullNotification(credentials, uniqId) {
+    assertBillingOperationsEnabled();
     const creds = requireCreds(credentials);
     const res = await fetch(`${TAKBULL_API_BASE}/api/ExtranalAPI/ValidateNotification`, {
         method: 'POST',
@@ -208,6 +288,7 @@ async function validateTakbullNotification(credentials, uniqId) {
         internalCode,
         internalDescription,
         raw,
+        document: extractTakbullDocument(raw),
     };
     result.paid = isTakbullPaymentPaid(result);
 
@@ -224,6 +305,8 @@ async function validateTakbullNotification(credentials, uniqId) {
 }
 
 async function chargeTakbullToken(input) {
+    assertBillingOperationsEnabled();
+    requirePositiveAmount(input);
     const currency = input.currency.toUpperCase() === 'ILS' ? 'ILS' : input.currency.toUpperCase();
     const body = {
         order_reference: input.orderReference,
@@ -232,7 +315,7 @@ async function chargeTakbullToken(input) {
         Language: 'he',
         DealType: 1,
         PaymentMethodType: 3,
-        CreateDocument: false,
+        ...paymentDocumentOptions(input),
         SaveToken: false,
         MaxNumberOfPayments: 1,
         IPNAddress: input.ipnAddress,
@@ -241,12 +324,12 @@ async function chargeTakbullToken(input) {
         CreditCard: { CardExternalToken: input.cardExternalToken },
     };
 
-    if (input.purpose) {
+    if (input.purpose || body.CreateDocument) {
         body.Products = [
             {
                 SKU: String(input.orderReference).slice(0, 40),
-                ProductName: input.purpose,
-                Description: input.purpose,
+                ProductName: input.purpose || 'תשלום מנוי',
+                Description: input.purpose || 'תשלום מנוי',
                 Price: input.amount,
                 Quantity: 1,
                 CurrencyCode: currency,
@@ -254,20 +337,14 @@ async function chargeTakbullToken(input) {
         ];
     }
 
-    if (input.customerFullName || input.customerPhone || input.customerEmail) {
-        body.CustomerFullName = input.customerFullName || undefined;
-        body.CustomerPhoneNumber = input.customerPhone || undefined;
-        body.Customer = {
-            CustomerFullName: input.customerFullName || undefined,
-            PhoneNumber: input.customerPhone || undefined,
-            Email: input.customerEmail || undefined,
-        };
-    }
+    applyCustomer(body, input);
 
     const res = await fetch(`${TAKBULL_API_BASE}/api/ExtranalAPI/ChargeToken`, {
         method: 'POST',
-        headers: authHeaders(input.credentials),
+        headers: authHeaders(requireCreds(input.credentials)),
         body: JSON.stringify(body),
+        signal: AbortSignal.timeout(20000),
+        redirect: 'error',
     });
 
     const raw = asRecord(await res.json().catch(() => ({})));
@@ -284,17 +361,22 @@ async function chargeTakbullToken(input) {
                 ? raw.InternalDescription
                 : null;
     const transactionInternalNumber =
-        pickStringField(raw, ['transactionInternalNumber', 'TransactionInternalNumber', 'transactionInternalId']) ||
+        pickStringField(raw, ['transactionInternalNumber', 'TransactionInternalNumber', 'transactionInternalId', 'TransactionInternalId']) ||
         null;
     const orderStatus = typeof raw.orderStatus === 'number' ? raw.orderStatus : null;
 
+    const ok = res.ok && internalCode === 0;
+    const definitiveFailure = !ok && await isConfirmedFailedTransaction(input, transactionInternalNumber);
     return {
-        ok: res.ok && internalCode === 0,
+        ok,
+        definitiveFailure,
         internalCode,
         internalDescription,
         transactionInternalNumber,
         orderStatus,
         raw,
+        documentRequested: body.CreateDocument,
+        document: extractTakbullDocument(raw),
         token: extractTokenFromValidated(raw),
     };
 }
@@ -311,6 +393,7 @@ module.exports = {
     paymentGatewayUrl,
     isTakbullPaymentPaid,
     extractTokenFromValidated,
+    extractTakbullDocument,
     createTakbullPaymentPage,
     validateTakbullNotification,
     chargeTakbullToken,

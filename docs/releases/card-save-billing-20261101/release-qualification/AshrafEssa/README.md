@@ -1,0 +1,23 @@
+# AshrafEssa isolated billing qualification
+
+**PASS for pinned source `9eaebbdb6c23d56d974546e233b8905d19570ef5`, at main cutoff `074df7520497a0cd6bd95ad70353201c905f0aa6`.** The candidate includes latest client history `3359e65cdc082dbc50c30a0e1bd7284df854cf06` and shared billing donor `6a3bd299227291feb0065ae3afa89a1f3ba2967a`. Further source drift requires HOLD and separate qualification; no newer revision is claimed here.
+
+Real merges of the shared donors and client history completed without conflicts or manual runtime edits. The final application/test delta consists of `backend/lib/qaOutboundNoop.js` and its recovery test relative to the previously qualified source. Merging the latest client history then introduced no content changes. The final source differs from that client by exactly **34 expected shared billing paths**, with **zero unexpected client-source differences**.
+
+- Billing and pause gate: **217 passed, 1 skipped, 0 failed**, 27 files.
+- Common profile, identity, portal, auth and Word boundaries: **124 passed, 1 skipped, 0 failed**, 10 files.
+- Transport, consent, outbox and SDK recovery: **40/40 passed**, six files and no skips.
+- Full frontend receipt at `fc6f3b46`: **923/923 passed, 108/108 suites**, no skipped tests, with `REACT_APP_APP_NAME=ashrafessa`. This remains pinned to its actual source; exact input equivalence carries it to the final candidate.
+- Protected release guard: **103/103**. Original and latest-client branding, PM2, defaults and source preimages: **111/111 preserved**. All **41** changed application/test files match final shared-donor bytes.
+- Frozen production compile at `7309eb63`: **PASS**, **255** hashed artifacts. The existing branding script ran only in an owned export, with a synthetic loopback API and no `.env` files. Fifteen public branding/association paths, four copied source logos and the index title match AshrafEssa.
+- Input equivalence: **PASS** for **865** tracked frontend/scripts inputs, exact Git trees, **10** conservatively imported backend helpers, four package inputs, exact dependency trees/locks, PDF worker, original CRACO, frozen compiler wrapper and log hashes. There was no fresh frontend run or recompile at the final source, and no production payload acceptance is claimed.
+
+Final backend and transport checks ran under the same exclusive global resource mutex used by frontend/compiler work. All receipts report stable source. The two skipped PostgreSQL suites require separate paid-signup/renewal-office and profile fixtures; they were not enabled here and remain root-owned. This local report does not establish provider sandbox, real document/mail delivery, complete tenant provisioning or current-production acceptance.
+
+The first full frontend run had **918/923 pass and five failures across four suites**. Original failure evidence and the unchanged focused rerun (**75/75 passed**) remain under [pinned-9dd](pinned-9dd/README.md). A subsequent unchanged full run passed all 923 tests at `fc6f3b46`; its complete audit remains under [pinned-6fab](pinned-6fab/README.md). The eight involved test/component files matched the client base and donor; that alone does not diagnose the initial failures. No assertions, fixtures, timeout values or production source were weakened.
+
+The 14 pause-gate cases use synthetic providers, PGlite and guarded local HTTP. They prove protected new-process entry points stop before DB mutation, provider dispatch and financial mail, and IPN GET/POST return retryable 503. They do not establish cancellation of existing external hosted pages, in-flight provider requests or older running processes. Root retains operational draining and replay prerequisites.
+
+No live provider, customer database, mail, production configuration, push or deployment was used. **Owner-waived periods were preserved; customer-specific evidence stays private outside Git.**
+
+Evidence: [summary](qualification-summary.json), [source provenance](provenance.json), [backend](backend.json), [transport/outbox](transport.json), [full frontend](frontend.json), [frozen build](build.json), [input equivalence](frontend-build-carry.json), [branding](branding-build-proof.json), [preservation](preservation.json), [client history](latest-client-history-binding.json), [donor parity](donor-source-parity.json), [source guard](source-guard.json), [exact dependencies](dependencies.json), [report integrity](report-integrity.json). Reproduction runners and the conservative import inspector are copied alongside the receipts. Backend network access is blocked by the native test guard; frontend/build use OS deny-network sandboxing.

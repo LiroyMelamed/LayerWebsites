@@ -1,0 +1,187 @@
+{
+  "clientBase": "a50afb3fccaaee17633328ef62b5695336d73090",
+  "incoming": "176ff60a",
+  "conflictCount": 30,
+  "paths": [
+    {
+      "path": "backend/lib/billing/firmBillingService.js",
+      "oursSha256": "87940c6244f5f33debe25b2b040d1eb68c49aee023f089f07d87e8518cce9433",
+      "incomingSha256": "5f6ecd8d26503d7a79a082809907df309da0c19b875fbb31e5f87facb2280e80",
+      "numstat": "255\t160\tbackend/lib/billing/firmBillingService.js"
+    },
+    {
+      "path": "backend/lib/tenant/isolationSchema.js",
+      "oursSha256": "e1689d475509994de72e1c1d62e71d65c23de0f38f3fccd128c5b0e94b9a2942",
+      "incomingSha256": "0e130d5256501dafc94b8cb093d251ebb670af813a34a61e9b394b656fe16527",
+      "numstat": "1\t1\tbackend/lib/tenant/isolationSchema.js"
+    },
+    {
+      "path": "backend/lib/wordTemplates/README.md",
+      "oursSha256": "51a3c17dec63f8f45bbe5ebca24c2df86ae8f5f7ddbec4d9d6521c972fe045b5",
+      "incomingSha256": "a5f66558300855bbb47deb9adf85842c19b756eecf84bf46fde313700fbb5ffb",
+      "numstat": "85\t9\tbackend/lib/wordTemplates/README.md"
+    },
+    {
+      "path": "backend/lib/wordTemplates/clientValues.js",
+      "oursSha256": "804be7038531b5d52b982a010643b6b0b68015b3e2f0fe9fb012ca6269389b1a",
+      "incomingSha256": "61e74d00f597d9cf819a00a9ffa1f1412d2ad87871dd123fe776e0316414c290",
+      "numstat": "21\t3\tbackend/lib/wordTemplates/clientValues.js"
+    },
+    {
+      "path": "backend/lib/wordTemplates/index.js",
+      "oursSha256": "35bfc7b884b17002a4a9bedc6f158c9312ed522746bdc867966667c106c08696",
+      "incomingSha256": "c9a49dedf27f83d0d1c3fbb9db204f1fc83a8f773ae1f4d6bc8f4351decec2b4",
+      "numstat": "32\t6\tbackend/lib/wordTemplates/index.js"
+    },
+    {
+      "path": "backend/routes/signingWordRoutes.js",
+      "oursSha256": "3be75124694478f28ca551d0e0674fdbd4bfcfc829ccd74c8adeb91fe355ee9a",
+      "incomingSha256": "b8f45411ebe72cf78fb78db1209243fd84b6b8154eb0aef9a1b26415297ce089",
+      "numstat": "18\t1\tbackend/routes/signingWordRoutes.js"
+    },
+    {
+      "path": "backend/services/signingV2/wordTemplates.js",
+      "oursSha256": "528c51e32b1f69e374bcca3d7bd432ccc2d53696a8f891d7da0543bba4977ed0",
+      "incomingSha256": "066c12dcefd5d0f347e94510335818352c94a00caa9e196a6bba9d3fd6e262d9",
+      "numstat": "145\t13\tbackend/services/signingV2/wordTemplates.js"
+    },
+    {
+      "path": "backend/tests/savePackage.idempotency.test.js",
+      "oursSha256": "9fe490f332cd2198acdc7aec1f7178a772eace96b462a90b5c4f2400a964bf46",
+      "incomingSha256": "d8575a94aa487819cb0515c45bbaefcc792f7ea3ef1a7afc1439afc3b32f4ace",
+      "numstat": "7\t2\tbackend/tests/savePackage.idempotency.test.js"
+    },
+    {
+      "path": "backend/tests/signingWordRoutes.test.js",
+      "oursSha256": "168207cab804551efb46280b2572ec5d273990d19267401016ac3e54fa5121a7",
+      "incomingSha256": "03ae7c8316016c1805c4c006aa38ec534902fc452cab3193932c42e3c7ae6570",
+      "numstat": "45\t8\tbackend/tests/signingWordRoutes.test.js"
+    },
+    {
+      "path": "backend/tests/systemMessageBillingSettlement.test.js",
+      "oursSha256": "7b2c83194bd7180597f6df6c308c9f8fad8cf9725deab63d9010e1d21e6dc319",
+      "incomingSha256": "e574d96cf9b1d2d4028485fe2bf0babad17a2e9304376cdb26b73138046e8c71",
+      "numstat": "5\t1\tbackend/tests/systemMessageBillingSettlement.test.js"
+    },
+    {
+      "path": "backend/tests/systemMessageSharedSettlement.test.js",
+      "oursSha256": "3d15a5c1b82d5170858c0452e0155101302444982024d122e792abbbd167f015",
+      "incomingSha256": "959cb0c476bc6c13f67b301dfdf577ba34ad6c7d75a81779ac6eee5a6ebfb44b",
+      "numstat": "10\t3\tbackend/tests/systemMessageSharedSettlement.test.js"
+    },
+    {
+      "path": "docs/legal-system-messages.md",
+      "oursSha256": "5b51215a884fe6b4046410572a7d2cec960d8c692debcb6ef0a0f1a373abea96",
+      "incomingSha256": "c1d4bfedb82f3b24f5208ea10bde2d0c083ea38ec349b1f33f6b5093e0d97e91",
+      "numstat": "0\t38\tdocs/legal-system-messages.md"
+    },
+    {
+      "path": "docs/signing-v2/release-baseline.json",
+      "oursSha256": "4a7b430f4b08b99946dc2e1b2ccabfa58e632a140d1cb9fd2f8250c9a9f412f3",
+      "incomingSha256": "91fd27bf1c355d35dfbd3dfa4a49af8ecd01ff00ee3fffddbf354af745d1d60e",
+      "numstat": "10\t10\tdocs/signing-v2/release-baseline.json"
+    },
+    {
+      "path": "frontend/src/api/wordTemplatesApi.js",
+      "oursSha256": "88c88121cd5e3d2ad98b7faba0713fb00b1e020d5a5019c32f0e75994ef18a6c",
+      "incomingSha256": "63f23be822d493e810b4f5b3cda827c9309b2aff1a6b723c7102215af76211a0",
+      "numstat": "6\t0\tfrontend/src/api/wordTemplatesApi.js"
+    },
+    {
+      "path": "frontend/src/components/styledComponents/cases/CaseFullView.js",
+      "oursSha256": "26622581664a26c22e1a84d42d7dd39220c4dd909a99cad28be786fe96fcdba6",
+      "incomingSha256": "9bf2b63b9d094e445c7a1eeaff0be53bbf876a425bd170175e9f74dbe8a24024",
+      "numstat": "31\t0\tfrontend/src/components/styledComponents/cases/CaseFullView.js"
+    },
+    {
+      "path": "frontend/src/i18n/locales/ar.json",
+      "oursSha256": "39a3165b39db5f6e10d972c2c1972c9aa02e465706620033036c9fb2569a79be",
+      "incomingSha256": "6b5573b4a23af0e7d8d53c7bd3b698bffb0b6e0e359a97e9c08ec58c1deb9c17",
+      "numstat": "151\t15\tfrontend/src/i18n/locales/ar.json"
+    },
+    {
+      "path": "frontend/src/i18n/locales/en.json",
+      "oursSha256": "05a2be2d30af22151b31e0f537c880c54d942bb7361d2e4f9196e1f6ddd28fdd",
+      "incomingSha256": "44c0754f55aa69d73657fc4db978c70078cc9086b577e19a6bf4e929d29a32d7",
+      "numstat": "151\t15\tfrontend/src/i18n/locales/en.json"
+    },
+    {
+      "path": "frontend/src/i18n/locales/he.json",
+      "oursSha256": "e43c810d44e6ab2a44f439d1ad82ab8eb964b6cb5b0bab0490803ecfee14471e",
+      "incomingSha256": "94da47ffa57f96d7a76c689c47176a70395c110f511f83de1dbd73308eedd51f",
+      "numstat": "151\t15\tfrontend/src/i18n/locales/he.json"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/SigningManagerScreen.js",
+      "oursSha256": "66af00bcd6fa0cbfdcab34262708ee449a329c9b456902a5f12dff37a9e2df5e",
+      "incomingSha256": "67b7bc39d033cc43b70c8416309423835c020cfd55915f5a599f8dd9ea4154f0",
+      "numstat": "42\t8\tfrontend/src/screens/signingScreen/SigningManagerScreen.js"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/UploadFileForSigningScreen.js",
+      "oursSha256": "0696f8b37b7e9a545fdd7cfdd667ed9baa854716c1a496ad43eaa0570152aaea",
+      "incomingSha256": "10e03b14af2221a23c53dab4e999809327d59efe822d2ea5b773a75fc1851c12",
+      "numstat": "13\t6\tfrontend/src/screens/signingScreen/UploadFileForSigningScreen.js"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/UploadFileForSigningScreen.wordFlow.test.js",
+      "oursSha256": "5561405b4a817916200421d84d6658c20b586768247bcd7c2cf19231a10fe1ca",
+      "incomingSha256": "1b0662b220adedde4ac04fe26d668662cef7edad7bf15ba7316357e5531ba1b5",
+      "numstat": "22\t1\tfrontend/src/screens/signingScreen/UploadFileForSigningScreen.wordFlow.test.js"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/templates/PackageComposer.js",
+      "oursSha256": "4fe70ead33055e1184074c8aab1fce92d540f0e86c014bde8c82e6d6400ddde9",
+      "incomingSha256": "497bee76b11f15574fd42bf78d2ccf252a2e1d53dba923bb6bfed35e663fd57c",
+      "numstat": "136\t16\tfrontend/src/screens/signingScreen/templates/PackageComposer.js"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/templates/TemplatesWorkspace.js",
+      "oursSha256": "7b70f8b3ae3747a81cf392f924527688b99e8fe656088fe5c908ba3bf482b6e9",
+      "incomingSha256": "714aaa9e5de271217cacd9398db0dcd4cee4d45719c49819ecd7501a6f93e933",
+      "numstat": "11\t3\tfrontend/src/screens/signingScreen/templates/TemplatesWorkspace.js"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/templates/TemplatesWorkspace.wordEntry.test.js",
+      "oursSha256": "4584adfe6ffd6c78ba20d4b627647dca5d2a3b617b19eac4049f76408c61282f",
+      "incomingSha256": "83d644e2b4c0196ec3a4cbb6c9093051e4d9dbbc0ac8fca2c4d0e1ff360e5e31",
+      "numstat": "34\t4\tfrontend/src/screens/signingScreen/templates/TemplatesWorkspace.wordEntry.test.js"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/word/WordRecordPicker.js",
+      "oursSha256": "d7b0a9c9df1b09d9a5606858d03d0f35f25a08e9b5e16a4a81a5bfa8a89a52c9",
+      "incomingSha256": "74ba2fc9829ba8137e7325e4f6e4efe5ce003c60f985fd57a62dbd5f929d44d0",
+      "numstat": "4\t3\tfrontend/src/screens/signingScreen/word/WordRecordPicker.js"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/word/WordRecordPicker.test.js",
+      "oursSha256": "c6bc0366415f7ae7aeba5fb451a74656391c6ca617d7c0422ea6a14f7479d480",
+      "incomingSha256": "ca2bfea825ea4b5ee9faf9e73213fdb9e6a0728396ce958f147d61f16750ef52",
+      "numstat": "14\t7\tfrontend/src/screens/signingScreen/word/WordRecordPicker.test.js"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/word/WordTemplatesWorkspace.js",
+      "oursSha256": "0fecf3204ca30969d819024b89218d0944e34a9731155210f282e5f141e75dd6",
+      "incomingSha256": "ac4dbac360e8e307c1a13673558d69c1faeb5e6ad86e82925679b0168e538c8d",
+      "numstat": "329\t89\tfrontend/src/screens/signingScreen/word/WordTemplatesWorkspace.js"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/word/WordTemplatesWorkspace.scss",
+      "oursSha256": "e628bd61d3ca838fe40f0bbdb7b24dffb6c3327b1569ee688f34fbe6c47d0d8b",
+      "incomingSha256": "085f6e198152481319fb558591f4c57d1cffe1c431ec635f58cdfc08825df4f9",
+      "numstat": "94\t28\tfrontend/src/screens/signingScreen/word/WordTemplatesWorkspace.scss"
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/word/WordTemplatesWorkspace.test.js",
+      "oursSha256": "76fca4415709f51b7562ca33e94e58648158fe733534edb9d582bdc18017d4dc",
+      "incomingSha256": "4732577dcdffe5e1e7953edfc3ab20f3163fd272ce97e222ba88dee24ed8ebc0",
+      "numstat": "405\t61\tfrontend/src/screens/signingScreen/word/WordTemplatesWorkspace.test.js"
+    },
+    {
+      "path": "frontend/src/screens/signup/SignupScreen.js",
+      "oursSha256": "9fc9b21f4e768a77de949d00b6e9815f0f7db1a9c9b61b96e50308a764ed329e",
+      "incomingSha256": "a1bbf2616120aeddc9ebde06e9555569136e1a620dbfc64b8bdd3ba19ce83d84",
+      "numstat": "3\t0\tfrontend/src/screens/signup/SignupScreen.js"
+    }
+  ]
+}

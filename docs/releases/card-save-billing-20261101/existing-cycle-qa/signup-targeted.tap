@@ -1,0 +1,30 @@
+✔ verified card save collects overdue agreed amount once across concurrent callbacks and replay (1345.567333ms)
+✔ definite decline keeps debt and grace and setup replay cannot dispatch another attempt (746.384958ms)
+✔ timeout keeps the durable cycle pending and blocks setup and owner retries (649.094334ms)
+✔ HTTP or malformed failure keeps the durable cycle pending and blocks setup and owner retries (715.182792ms)
+✔ missing result keeps the durable cycle pending and blocks setup and owner retries (684.340375ms)
+✔ approval without transaction keeps the durable cycle pending and blocks setup and owner retries (740.376708ms)
+✔ failed independent verification cannot settle or issue a payment notice (715.773708ms)
+✔ zero due amount skips provider and leaves billing state unpaid (656.418084ms)
+✔ unverified or another office setup cannot trigger debt collection (911.614666ms)
+✔ new signup trial has no charge despite a verified replacement card (800.140333ms)
+✔ old setups and setups saved without debt cannot collect a later renewal cycle (750.649291ms)
+✔ normal scheduled renewal persists a non-null metadata object and charges once (783.490209ms)
+✔ a card save blocked by an existing pending payment cannot later replay into a new charge (769.52375ms)
+✔ canceled future renewal is preserved while explicit setup can recover existing past-due debt (767.420208ms)
+✔ an expired canceled active subscription does not invent renewal debt on card save (749.833084ms)
+✔ canceled access expiry without a prior payment failure is not collectible debt (784.20675ms)
+✔ verified setup collects one overdue month of ₪532, then the next scheduled cycle collects the full agreed price once (751.169167ms)
+✔ verified setup collects one overdue month of ₪1353, then the next scheduled cycle collects the full agreed price once (867.469208ms)
+✔ a recorded three-calendar-month trial survives replacement card saving and then renews twice at the full price (736.53825ms)
+✔ a declined setup collection grants no free month, explicit owner recovery pays it, and the next renewal charges the full price (749.694125ms)
+✔ timeout setup collection cannot grant a free month or dispatch another renewal after time advances (726.4125ms)
+✔ unverified approval setup collection cannot grant a free month or dispatch another renewal after time advances (757.34325ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17267.295083

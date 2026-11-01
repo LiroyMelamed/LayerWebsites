@@ -1,0 +1,3 @@
+# Preserve hashed raw test/compiler output, including formatter whitespace.
+frontend-tests.log -whitespace
+production-compile.log -whitespace

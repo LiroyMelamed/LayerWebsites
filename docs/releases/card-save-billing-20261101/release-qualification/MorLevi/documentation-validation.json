@@ -1,0 +1,191 @@
+{
+  "atUtc": "2026-11-01T23:01:09.107087+00:00",
+  "qualifiedRuntimeCandidate": "b05d66f9f7873753e520c554f4b2c1c540e6682b",
+  "markdownFiles": [
+    "README.md",
+    "pinned-6fab/README.md"
+  ],
+  "localMarkdownLinks": [
+    {
+      "file": "README.md",
+      "target": "frontend-build-carry.json",
+      "exists": true
+    },
+    {
+      "file": "README.md",
+      "target": "pinned-6fab/",
+      "exists": true
+    },
+    {
+      "file": "README.md",
+      "target": "pinned-9dd/",
+      "exists": true
+    },
+    {
+      "file": "README.md",
+      "target": "build.log",
+      "exists": true
+    },
+    {
+      "file": "README.md",
+      "target": "backend.json",
+      "exists": true
+    },
+    {
+      "file": "README.md",
+      "target": "transport.json",
+      "exists": true
+    },
+    {
+      "file": "README.md",
+      "target": "frontend.json",
+      "exists": true
+    },
+    {
+      "file": "README.md",
+      "target": "build.json",
+      "exists": true
+    },
+    {
+      "file": "README.md",
+      "target": "frontend-build-carry.json",
+      "exists": true
+    },
+    {
+      "file": "README.md",
+      "target": "preservation.json",
+      "exists": true
+    },
+    {
+      "file": "README.md",
+      "target": "donor-binding.json",
+      "exists": true
+    },
+    {
+      "file": "README.md",
+      "target": "latest-client-binding.json",
+      "exists": true
+    },
+    {
+      "file": "README.md",
+      "target": "source-guard.json",
+      "exists": true
+    },
+    {
+      "file": "README.md",
+      "target": "merge.json",
+      "exists": true
+    },
+    {
+      "file": "README.md",
+      "target": "documentation-validation.json",
+      "exists": true
+    },
+    {
+      "file": "pinned-6fab/README.md",
+      "target": "frontend-build-carry.json",
+      "exists": true
+    },
+    {
+      "file": "pinned-6fab/README.md",
+      "target": "pinned-9dd/",
+      "exists": true
+    },
+    {
+      "file": "pinned-6fab/README.md",
+      "target": "build.log",
+      "exists": true
+    },
+    {
+      "file": "pinned-6fab/README.md",
+      "target": "backend.json",
+      "exists": true
+    },
+    {
+      "file": "pinned-6fab/README.md",
+      "target": "transport.json",
+      "exists": true
+    },
+    {
+      "file": "pinned-6fab/README.md",
+      "target": "frontend.json",
+      "exists": true
+    },
+    {
+      "file": "pinned-6fab/README.md",
+      "target": "build.json",
+      "exists": true
+    },
+    {
+      "file": "pinned-6fab/README.md",
+      "target": "frontend-build-carry.json",
+      "exists": true
+    },
+    {
+      "file": "pinned-6fab/README.md",
+      "target": "preservation.json",
+      "exists": true
+    },
+    {
+      "file": "pinned-6fab/README.md",
+      "target": "donor-binding.json",
+      "exists": true
+    },
+    {
+      "file": "pinned-6fab/README.md",
+      "target": "source-guard.json",
+      "exists": true
+    },
+    {
+      "file": "pinned-6fab/README.md",
+      "target": "merge.json",
+      "exists": true
+    }
+  ],
+  "brokenLinks": [],
+  "validJsonFiles": [
+    "backend.json",
+    "build.json",
+    "dependencies.json",
+    "documentation-validation.json",
+    "donor-binding.json",
+    "frontend-build-carry.json",
+    "frontend-import-scope.json",
+    "frontend-result.json",
+    "frontend.json",
+    "latest-client-binding.json",
+    "merge.json",
+    "pinned-6fab/backend.json",
+    "pinned-6fab/build.json",
+    "pinned-6fab/dependencies.json",
+    "pinned-6fab/donor-binding.json",
+    "pinned-6fab/frontend-build-carry.json",
+    "pinned-6fab/frontend-import-scope.json",
+    "pinned-6fab/frontend-result.json",
+    "pinned-6fab/frontend.json",
+    "pinned-6fab/merge.json",
+    "pinned-6fab/pinned-9dd/backend.json",
+    "pinned-6fab/pinned-9dd/dependencies.json",
+    "pinned-6fab/pinned-9dd/donor-binding.json",
+    "pinned-6fab/pinned-9dd/merge.json",
+    "pinned-6fab/pinned-9dd/preservation.json",
+    "pinned-6fab/pinned-9dd/source-guard.json",
+    "pinned-6fab/preservation.json",
+    "pinned-6fab/qualification-summary.json",
+    "pinned-6fab/source-guard.json",
+    "pinned-6fab/transport.json",
+    "pinned-9dd/backend.json",
+    "pinned-9dd/dependencies.json",
+    "pinned-9dd/donor-binding.json",
+    "pinned-9dd/merge.json",
+    "pinned-9dd/preservation.json",
+    "pinned-9dd/source-guard.json",
+    "preservation.json",
+    "qualification-summary.json",
+    "source-guard.json",
+    "transport.json"
+  ],
+  "privacyFindings": [],
+  "allValid": true,
+  "scope": "Own public client evidence folder only; historical relative-link context retained; no runtime edits"
+}

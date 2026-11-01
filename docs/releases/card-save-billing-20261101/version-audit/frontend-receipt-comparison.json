@@ -1,0 +1,34 @@
+{
+  "observedAtUtc": "2026-11-01T13:36:30.679198+00:00",
+  "scope": "Static byte comparison to source-bound preserved publication receipts; not runtime acceptance",
+  "rows": [
+    {
+      "tenant": "ashrafessa",
+      "asset": "/static/js/main.e87a2837.js",
+      "expectedSha256": "77bcd5beaa27fa742399472012e0c297168058f535ad396b650b925c89043bde",
+      "actualSha256": "77bcd5beaa27fa742399472012e0c297168058f535ad396b650b925c89043bde",
+      "matches": true
+    },
+    {
+      "tenant": "ashrafessa",
+      "asset": "/static/css/main.9c198d3e.css",
+      "expectedSha256": "4eb46e107bba0591e34e631220b5a9ca3500a46b7de734d96b640807757e3f63",
+      "actualSha256": "4eb46e107bba0591e34e631220b5a9ca3500a46b7de734d96b640807757e3f63",
+      "matches": true
+    },
+    {
+      "tenant": "melamedia",
+      "asset": "/static/js/main.d1cc1564.js",
+      "expectedSha256": "b03ef3ddf0dd5f52ae18dfd070d5463e0deac246a2efab5dc26ccb1d877e2667",
+      "actualSha256": "b03ef3ddf0dd5f52ae18dfd070d5463e0deac246a2efab5dc26ccb1d877e2667",
+      "matches": true
+    },
+    {
+      "tenant": "melamedia",
+      "asset": "/static/css/main.424bb572.css",
+      "expectedSha256": "5bb5886f3f7716f0f277b58c75a389413d7ea40c4ad868571475dc9a4889c962",
+      "actualSha256": "5bb5886f3f7716f0f277b58c75a389413d7ea40c4ad868571475dc9a4889c962",
+      "matches": true
+    }
+  ]
+}
