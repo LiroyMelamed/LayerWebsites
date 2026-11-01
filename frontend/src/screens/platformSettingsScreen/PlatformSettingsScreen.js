@@ -84,6 +84,7 @@ const SMS_SENDER_NAME_KEY = "INFORU_SENDER_PHONE"; // alphanumeric name — dire
 const SMS_SENDER_NUMBER_KEY = "INFORU_SENDER_NUMBER"; // phone — request/activate flow
 // Internal / legacy messaging keys not shown as editable rows
 const INTERNAL_MESSAGING_KEYS = [
+    SMS_SENDER_NUMBER_KEY, // provider-managed; keep the active value out of tenant settings
     "SMOOVE_SENDER_PHONE", // legacy key — same as name fallback
     "INFORU_SENDER_PHONE_PENDING",
     "INFORU_SENDER_PHONE_PENDING_REQUESTED_AT",
@@ -2162,21 +2163,6 @@ export default function PlatformSettingsScreen() {
                     [SMS_SENDER_NAME_KEY]: {
                         ...categorySettings.SMOOVE_SENDER_PHONE,
                         label: categorySettings.SMOOVE_SENDER_PHONE.label || "שם שולח SMS",
-                    },
-                };
-                settingKeys = Object.keys(categorySettings);
-            }
-            // Ensure phone-number row exists even before migration is reflected
-            if (!categorySettings[SMS_SENDER_NUMBER_KEY]) {
-                categorySettings = {
-                    ...categorySettings,
-                    [SMS_SENDER_NUMBER_KEY]: {
-                        category: "messaging",
-                        key: SMS_SENDER_NUMBER_KEY,
-                        valueType: "string",
-                        label: "מספר שולח SMS",
-                        description: "מספר טלפון שמוצג כשולח SMS (מאומת ב-InforU). שינוי דורש אישור צוות טכני.",
-                        effectiveValue: "",
                     },
                 };
                 settingKeys = Object.keys(categorySettings);
