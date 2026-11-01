@@ -107,7 +107,7 @@ function PageMarks({ host, page, bindings, selection, activeBindingId, onSelectB
     </div>;
 }
 
-export default function WordSourceViewer({ authoring, pdfFile, bindings, selection, activeBindingId, onSelectBinding, disabled, onSelect, onError, fieldLabel, text }) {
+export default function WordSourceViewer({ authoring, pdfFile, paragraphs = [], bindings, selection, activeBindingId, onSelectBinding, disabled, onSelect, onError, fieldLabel, text }) {
     const root = useRef(null); const generation = useRef(0); const callbacks = useRef({ onSelect, onError });
     callbacks.current = { onSelect, onError };
     const identity = `${authoring.renderId}:${authoring.mapHash}`;
@@ -131,7 +131,7 @@ export default function WordSourceViewer({ authoring, pdfFile, bindings, selecti
     useEffect(() => () => { generation.current += 1; }, []);
 
     const pageError = useCallback(pageNumber => {
-        root.current?.querySelectorAll(`[data-page-number="${pageNumber}"] [data-word-item]`).forEach(span => { delete span.dataset.wordItem; });
+        root.current?.querySelectorAll(`[data-page-number="${pageNumber}"] [data-word-item], [data-page-number="${pageNumber}"] [data-word-neutral-rtl]`).forEach(span => { delete span.dataset.wordItem; delete span.dataset.wordNeutralRtl; });
         root.current?.querySelectorAll(`[data-page-number="${pageNumber}"] [data-word-verified]`).forEach(layer => { delete layer.dataset.wordVerified; });
         setPageStates(previous => ({ ...previous, [pageNumber]: 'error' }));
         callbacks.current.onError?.('authoringMismatch');
@@ -151,11 +151,11 @@ export default function WordSourceViewer({ authoring, pdfFile, bindings, selecti
             const proxy = await pdfProxy.getPage(pageNumber);
             verifyPageGeometry(page, proxy, authoring.geometryTolerance);
             if (token !== generation.current || !root.current?.contains(host)) return;
-            tagVerifiedTextLayer(host, page);
+            tagVerifiedTextLayer(host, page, paragraphs);
             setPageRevisions(previous => ({ ...previous, [pageNumber]: (previous[pageNumber] || 0) + 1 }));
             setPageStates(previous => previous[pageNumber] === 'verified' ? previous : ({ ...previous, [pageNumber]: 'verified' }));
         } catch { if (token === generation.current && root.current?.contains(host)) pageError(pageNumber); }
-    }, [authoring, pageError, setPageStates]);
+    }, [authoring, paragraphs, pageError, setPageStates]);
 
     const readSelection = useCallback(event => {
         if (disabled || !root.current) return;

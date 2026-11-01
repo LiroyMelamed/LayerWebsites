@@ -397,7 +397,7 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
                         <div className="lw-signing-pdfViewerWrapper">
                             <div className="lw-signing-pdfViewerRow lw-word__visualRow">
                                 <div className="lw-signing-pdfViewerMain">
-                                    <WordSourceViewer key={authoring.data.renderId} authoring={authoring.data} pdfFile={authoring.pdfFile} bindings={bindings} selection={selection}
+                                    <WordSourceViewer key={authoring.data.renderId} authoring={authoring.data} pdfFile={authoring.pdfFile} paragraphs={paragraphs} bindings={bindings} selection={selection}
                                         activeBindingId={activeBindingId} onSelectBinding={selectBinding} disabled={busy || !!authoringError} onSelect={resolveVisualSelection}
                                         onError={message => { cancelSelection(); setAuthoringError(message); }} fieldLabel={fieldLabel} text={text} />
                                 </div>

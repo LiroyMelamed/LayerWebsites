@@ -203,3 +203,22 @@ test('saved labels are accessible controls; selecting one never reuses native te
         Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });
     }
 });
+
+test('only an actually verified RTL neutral layer receives caret presentation and a later mismatch removes it', async () => {
+    const authoring = create(); const paragraph = { part: 'word/document.xml', id: 'p0', text: '\u05e9\u05dd ____', editable: true, textHash: hash('\u05e9\u05dd ____') };
+    authoring.pages[0].items.forEach((item, index) => {
+        item.text = '__'; item.dir = 'ltr'; item.segments = [{ itemStart: 0, itemEnd: 2, sourceStart: 3 + index * 2,
+            sourceEnd: 5 + index * 2, part: paragraph.part, paragraphId: paragraph.id, paragraphHash: paragraph.textHash }];
+    });
+    authoring.pages[0].textContentHash = hash(JSON.stringify(authoring.pages[0].items.map(item => [item.text, item.dir, item.transform, item.width, item.height, item.hasEOL])));
+    const before = JSON.parse(JSON.stringify(authoring)); const onError = jest.fn();
+    mockContent = { items: authoring.pages[0].items.map(({ text, ...rest }) => ({ ...rest, str: text })) };
+    render(<WordSourceViewer authoring={authoring} paragraphs={[paragraph]} pdfFile={new Blob(['%PDF'])} bindings={[]}
+        onSelect={jest.fn()} onError={onError} fieldLabel={value => value} text={value => value} />);
+    await waitFor(() => expect(screen.getByTestId('source-page').querySelectorAll('[data-word-neutral-rtl="true"]')).toHaveLength(2));
+    expect(authoring).toEqual(before); expect(onError).not.toHaveBeenCalled();
+    mockContent.items[1].str = 'Different'; await act(async () => mockVerifyPage());
+    expect(onError).toHaveBeenCalledWith('authoringMismatch');
+    expect(screen.getByTestId('source-page').querySelector('[data-word-neutral-rtl]')).toBeNull();
+    expect(screen.getByTestId('source-page').querySelector('[data-word-verified]')).toBeNull();
+});
