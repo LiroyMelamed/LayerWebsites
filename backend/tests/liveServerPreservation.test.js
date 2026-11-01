@@ -46,7 +46,7 @@ test('checkout confirmation validates the provider return before exposing the re
     const calls = [];
     const controller = load('controllers/billingController.js', {
         '../lib/billing/firmBillingService': {
-            async handleTakbullReturn(input) { calls.push(['validate', input.intentId]); },
+            async handleTakbullReturn(input) { calls.push(['validate', input.intentId]); return { paid: true, cardVerified: true }; },
             async getBillingSnapshot() { calls.push(['snapshot']); return { setupCheckoutAmountIls: 2, takbullMode: 'test' }; },
         },
     });
@@ -56,6 +56,21 @@ test('checkout confirmation validates the provider return before exposing the re
     assert.deepEqual(calls, [['validate', 'synthetic-intent'], ['snapshot']]);
     assert.equal(res.body.billing.setupCheckoutAmountIls, 2);
     assert.equal(res.body.billing.takbullMode, 'test');
+    assert.equal(res.body.success, true);
+});
+
+test('an uncertain card collection cannot be reported paid because the subscription was already active', async () => {
+    const controller = load('controllers/billingController.js', {
+        '../lib/billing/firmBillingService': {
+            async handleTakbullReturn() { return { paid: false, cardVerified: true }; },
+            async getBillingSnapshot() { return { status: 'active' }; },
+        },
+    });
+    const res = response();
+    await controller.confirmCheckout({ body: { intentId: 'synthetic-intent' } }, res);
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.success, false);
+    assert.equal(res.body.cardVerified, true);
 });
 
 test('checkout confirmation rejects missing identifiers and failed validation without refreshing', async () => {

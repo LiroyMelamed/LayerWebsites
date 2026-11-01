@@ -123,7 +123,7 @@ async function fixture(t, { officeId = null, storedOfficeId = officeId, kind = '
         async verifyHostedPayment(_credentials, reference, expectedOrder, amount, _fetch, requireToken) {
             verification.push({ reference, expectedOrder, amount, requireToken, kind: 'hosted' });
             if (failVerification) throw Error('SYNTHETIC_UNVERIFIED_PAYMENT');
-            return { transactionId: 'synthetic-transaction' };
+            return { transactionId: 'synthetic-transaction', ...(requireToken ? { tokenInfo: { token: 'synthetic-card' } } : {}) };
         },
     };
     const module = { exports: {} };
@@ -233,8 +233,12 @@ test('a provider verification failure cannot activate a subscription or enqueue 
 
 test('one-shekel card setup does not create a subscription-payment notice', async t => {
     const f = await fixture(t, { kind: 'setup' });
+    await f.db.query("UPDATE firm_payment_intents SET takbull_uniq_id='synthetic-hosted-order' WHERE id=$1", [INTENT]);
+    await f.db.query("UPDATE firm_billing SET status='active',grace_until=null,renews_at=now()+interval '1 month'");
+    const before = (await f.state()).account;
     await f.billing.settleSuccessfulPayment({ intent: await f.intent(), transactionId: 'synthetic-transaction', tokenInfo: { token: 'synthetic-card' } });
     assert.equal((await f.state()).outbox.length, 0);
+    assert.equal(+(await f.state()).account.renews_at, +before.renews_at);
 });
 
 test('a hosted callback cannot inject a card token absent from the independently verified transaction', async t => {

@@ -213,10 +213,11 @@ exports.confirmCheckout = async (req, res) => {
         if (!intentId && !uniqId) {
             return res.status(400).json({ message: 'חסר מזהה תשלום' });
         }
-        await billing.handleTakbullReturn({ uniqId, intentId });
+        const result = await billing.handleTakbullReturn({ uniqId, intentId });
         const snap = await billing.getBillingSnapshot();
         return res.status(200).json({
-            success: true,
+            success: result?.paid === true,
+            cardVerified: result?.cardVerified === true,
             ...billingPayload(snap),
         });
     } catch (e) {

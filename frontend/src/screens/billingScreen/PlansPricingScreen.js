@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
+import { useBillingLock } from "../../providers/BillingLockProvider";
 
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
@@ -35,14 +36,15 @@ export const PlansPricingScreenName = "/PlansPricing";
 export default function PlansPricingScreen() {
     const { t } = useTranslation();
     const { isSmallScreen } = useScreenSize();
+    const { refresh: refreshLock } = useBillingLock();
     const navigate = useNavigate();
     const defaults = useMemo(() => getPricingSelectionDefaults(), []);
     const [selection, setSelection] = useState(defaults);
     const [busy, setBusy] = useState(false);
     const [message, setMessage] = useState("");
-    const [checkoutUrl, setCheckoutUrl] = useState(null);
+    const [checkout, setCheckout] = useState(null);
 
-    const { result: plan } = useAutoHttpRequest(billingApi.getPlan, {
+    const { result: plan, performRequest: reloadPlan } = useAutoHttpRequest(billingApi.getPlan, {
         onFailure: () => {},
     });
 
@@ -76,17 +78,17 @@ export default function PlansPricingScreen() {
                 return;
             }
             if (saved.data?.checkout?.redirectUrl) {
-                setCheckoutUrl(saved.data.checkout.redirectUrl);
+                setCheckout(saved.data.checkout);
                 return;
             }
             if (saved.data?.snapshot?.card) {
                 showAppToast({ type: 'success', text: t('planPricing.savedOk') });
-                navigate(`${AdminStackName}${PlanUsageScreenName}?paid=1`);
+                navigate(`${AdminStackName}${PlanUsageScreenName}${saved.data?.charged === true ? '?paid=1' : ''}`);
                 return;
             }
             const checkout = await billingApi.createCheckout({ kind: 'setup' });
             if (checkout?.success && checkout.data?.redirectUrl) {
-                setCheckoutUrl(checkout.data.redirectUrl);
+                setCheckout(checkout.data);
                 return;
             }
             const text = checkout?.data?.message || checkout?.message || t('planPricing.checkoutFailed');
@@ -137,17 +139,23 @@ export default function PlansPricingScreen() {
                 />
             </SimpleScrollView>
             <TakbullCheckoutDialog
-                open={Boolean(checkoutUrl)}
-                gatewayUrl={checkoutUrl}
-                onClose={() => setCheckoutUrl(null)}
+                open={Boolean(checkout?.redirectUrl)}
+                gatewayUrl={checkout?.redirectUrl}
+                intentId={checkout?.intentId}
+                uniqId={checkout?.uniqId}
+                onClose={() => setCheckout(null)}
                 onPaid={() => {
                     billingApi.invalidateCaches();
-                    setCheckoutUrl(null);
+                    void refreshLock();
+                    setCheckout(null);
                     showAppToast({ type: 'success', text: t('planUsage.paySuccess') });
                     navigate(`${AdminStackName}${PlanUsageScreenName}?paid=1`);
                 }}
                 onFailed={(description) => {
-                    setCheckoutUrl(null);
+                    billingApi.invalidateCaches();
+                    void reloadPlan([]);
+                    void refreshLock();
+                    setCheckout(null);
                     const text = description || t('planUsage.payFailed');
                     setMessage(text);
                     showAppToast({ type: 'error', text });

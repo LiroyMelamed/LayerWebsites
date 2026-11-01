@@ -155,7 +155,7 @@ function createBillingPoolMock() {
             return { rows: [{ ...intent }], rowCount: 1 };
         }
 
-        if (s.startsWith('UPDATE firm_payment_intents') && /takbull_transaction_id\s*=\s*\$2/.test(s)) {
+        if (s.startsWith('UPDATE firm_payment_intents') && /takbull_transaction_id\s*=\s*(?:COALESCE\()?\$2/.test(s)) {
             const intent = state.intents.find((i) => i.id === params[0]);
             if (intent) intent.takbull_transaction_id = params[1];
             return { rows: [], rowCount: 1 };
@@ -172,7 +172,7 @@ function createBillingPoolMock() {
             return { rows: [], rowCount: 0 };
         }
 
-        if (s.includes("SET status = 'failed'")) {
+        if (/SET status\s*=\s*'failed'/.test(s)) {
             const intent = state.intents.find((i) => i.id === params[0]);
             if (intent && intent.status === 'pending') intent.status = 'failed';
             return { rows: [], rowCount: 1 };
@@ -354,6 +354,7 @@ test('failed charge allows a fresh provider charge on retry', async () => {
         calls += 1;
         return {
             ok: false,
+            definitiveFailure: true,
             internalDescription: 'declined',
             internalCode: 1,
             transactionInternalNumber: `fail-${calls}`,

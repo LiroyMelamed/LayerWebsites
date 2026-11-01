@@ -70,7 +70,7 @@ export default function PlanUsageScreen() {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const { refresh: refreshLock } = useBillingLock();
-    const [checkoutUrl, setCheckoutUrl] = useState(null);
+    const [checkout, setCheckout] = useState(null);
     const [payBusy, setPayBusy] = useState(false);
     const [payNotice, setPayNotice] = useState(null);
 
@@ -175,9 +175,13 @@ export default function PlanUsageScreen() {
                 showAppToast({ type: "info", text: t("planUsage.chargeSkipped") });
                 return;
             }
-            if (!res?.success || res?.data?.ok === false) {
-                toastFromApiError(res, t("planUsage.chargeFailed"));
-                setPayNotice({ type: "error", text: t("planUsage.chargeFailed") });
+            if (!res?.success || res?.data?.ok !== true) {
+                const text = res?.data?.pending ? t('billing.paymentUnconfirmed') : t('planUsage.chargeFailed');
+                toastFromApiError(res, text);
+                setPayNotice({ type: "error", text });
+                billingApi.invalidateCaches();
+                void reloadPlan([]);
+                void refreshLock();
                 return;
             }
             showAppToast({ type: "success", text: t("planUsage.chargeOk") });
@@ -197,7 +201,7 @@ export default function PlanUsageScreen() {
         try {
             const res = await billingApi.createCheckout({ kind });
             if (res?.success && res.data?.redirectUrl) {
-                setCheckoutUrl(res.data.redirectUrl);
+                setCheckout(res.data);
                 return;
             }
             toastFromApiError(res, t("planUsage.checkoutFailed"));
@@ -590,20 +594,25 @@ export default function PlanUsageScreen() {
                 )}
             </SimpleScrollView>
             <TakbullCheckoutDialog
-                open={Boolean(checkoutUrl)}
-                gatewayUrl={checkoutUrl}
-                onClose={() => setCheckoutUrl(null)}
+                open={Boolean(checkout?.redirectUrl)}
+                gatewayUrl={checkout?.redirectUrl}
+                intentId={checkout?.intentId}
+                uniqId={checkout?.uniqId}
+                onClose={() => setCheckout(null)}
                 onPaid={() => {
                     billingApi.invalidateCaches();
                     void reloadPlan([]);
                     void refreshLock();
-                    setCheckoutUrl(null);
+                    setCheckout(null);
                     const text = t('planUsage.paySuccess');
                     setPayNotice({ type: 'success', text });
                     showAppToast({ type: 'success', text });
                 }}
                 onFailed={(description) => {
-                    setCheckoutUrl(null);
+                    billingApi.invalidateCaches();
+                    void reloadPlan([]);
+                    void refreshLock();
+                    setCheckout(null);
                     const text = description || t('planUsage.payFailed');
                     setPayNotice({ type: 'error', text });
                     showAppToast({ type: 'error', text });

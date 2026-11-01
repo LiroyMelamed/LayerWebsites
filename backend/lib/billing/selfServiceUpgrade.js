@@ -51,15 +51,20 @@ async function chargeSelfServiceUpgrade({ tenantId, target, interval, amount, ch
     finally { client.release(); }
 
     try {
+        const owner = (await pool.query(`SELECT admin_email,admin_name,admin_phone FROM signup_intents
+            WHERE law_firm_tenant_id=$1 AND status='completed' LIMIT 1`, [tenantId])).rows[0];
         const result = await charge({ credentials, orderReference: intent.order_reference, amount, currency: 'ILS',
             cardExternalToken: decryptSecret(card.token_encrypted),
-            ipnAddress: getPublicApiBaseUrl() + '/api/webhooks/payments/takbull', purpose: intent.purpose });
-        if (!result.ok) {
+            ipnAddress: getPublicApiBaseUrl() + '/api/webhooks/payments/takbull', purpose: intent.purpose,
+            customerEmail: owner?.admin_email, customerFullName: owner?.admin_name, customerPhone: owner?.admin_phone });
+        if (result?.ok === false && result.definitiveFailure === true) {
             await pool.query("UPDATE firm_payment_intents SET status='failed',error_message='החיוב נדחה; החבילה הקיימת נשמרה',updated_at=now() WHERE id=$1 AND status='pending'", [intent.id]);
             throw Object.assign(new Error('החיוב נדחה. החבילה הקיימת נשמרה ולא בוצע שינוי.'), { code: 'PAYMENT_DECLINED' });
         }
-        if (!result.transactionInternalNumber) throw Error('UPGRADE_OUTCOME_UNKNOWN');
-        await pool.query('UPDATE firm_payment_intents SET takbull_transaction_id=$2,updated_at=now() WHERE id=$1', [intent.id, result.transactionInternalNumber]);
+        if (result?.ok !== true || !result.transactionInternalNumber) throw Error('UPGRADE_OUTCOME_UNKNOWN');
+        await pool.query(`UPDATE firm_payment_intents SET takbull_transaction_id=$2,
+            package_snapshot=package_snapshot||$3::jsonb,updated_at=now() WHERE id=$1`,
+        [intent.id, result.transactionInternalNumber, JSON.stringify(result.document ? { providerDocument: result.document } : {})]);
         await verifyChargedTransaction(credentials, result.transactionInternalNumber, amount);
         const settle = await pool.connect();
         try {
