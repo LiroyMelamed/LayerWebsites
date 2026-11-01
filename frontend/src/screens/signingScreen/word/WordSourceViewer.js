@@ -8,9 +8,10 @@ import SigningSelect from '../templates/SigningSelect';
 import { itemTuple, selectorForTextItem, selectorFromDom, sha256Bytes, tagVerifiedTextLayer, verifyPageGeometry, verifyPageItems } from './wordAuthoringSelection';
 import { layoutSourceChips } from './wordSourceChipLayout';
 
-function PageMarks({ host, page, bindings, selection, fieldLabel, text, revision, displayWidth }) {
+function PageMarks({ host, page, bindings, selection, activeBindingId, onSelectBinding, disabled, fieldLabel, text, revision, displayWidth }) {
     const [marks, setMarks] = useState([]);
     const overlay = useRef(null);
+    const focusedBinding = useRef(null);
     const [layout, setLayout] = useState({ marks: null, positions: [] });
     useEffect(() => {
         if (!host || !page || !revision) { setMarks([]); return undefined; }
@@ -73,18 +74,28 @@ function PageMarks({ host, page, bindings, selection, fieldLabel, text, revision
         return () => observer?.disconnect();
     }, [marks, host, page, displayWidth]);
     const positions = layout.marks === marks ? layout.positions : [];
-    return <div ref={overlay} className="lw-word-source__marks" aria-hidden="true">
-        <svg className="lw-word-source__leaders">{positions.map((position, index) => position.leader &&
+    useEffect(() => {
+        if (!activeBindingId) { focusedBinding.current = null; return; }
+        if (!positions.length || focusedBinding.current === activeBindingId) return;
+        const chip = Array.from(overlay.current?.querySelectorAll('[data-word-binding-id]') || []).find(node => node.dataset.wordBindingId === activeBindingId);
+        if (chip) { focusedBinding.current = activeBindingId; chip.focus({ preventScroll: true }); chip.scrollIntoView?.({ block: 'nearest', inline: 'nearest' }); }
+    }, [activeBindingId, marks, positions]);
+    return <div ref={overlay} className="lw-word-source__marks">
+        <svg className="lw-word-source__leaders" aria-hidden="true">{positions.map((position, index) => position.leader &&
             <line key={marks[index].id} {...position.leader} className={marks[index].pending ? 'is-pending' : undefined} />)}</svg>
         {marks.map((mark, index) => <React.Fragment key={mark.id}>
-            {mark.boxes.map((box, boxIndex) => <span key={boxIndex} className={`lw-word-source__mark${mark.pending ? ' is-pending' : ''}`} style={box} />)}
-            <span data-word-chip="" className={`lw-word-source__chip${mark.pending ? ' is-pending' : ''}`}
-                style={{ left: positions[index]?.left || 0, top: positions[index]?.top || 0, visibility: positions[index] ? 'visible' : 'hidden' }}>{mark.label}</span>
+            {mark.boxes.map((box, boxIndex) => <span key={boxIndex} aria-hidden="true" className={`lw-word-source__mark${mark.pending ? ' is-pending' : ''}${activeBindingId === mark.id ? ' is-active' : ''}`} style={box} />)}
+            {mark.pending ? <span data-word-chip="" aria-hidden="true" className="lw-word-source__chip is-pending"
+                style={{ left: positions[index]?.left || 0, top: positions[index]?.top || 0, visibility: positions[index] ? 'visible' : 'hidden' }}>{mark.label}</span> :
+                <button type="button" data-word-chip="" data-word-binding-id={mark.id} disabled={disabled} aria-pressed={activeBindingId === mark.id}
+                    aria-label={text('editReplacement', { field: mark.label })} onClick={() => onSelectBinding?.(mark.id)}
+                    className={`lw-word-source__chip${activeBindingId === mark.id ? ' is-active' : ''}`}
+                    style={{ left: positions[index]?.left || 0, top: positions[index]?.top || 0, visibility: positions[index] ? 'visible' : 'hidden' }}>{mark.label}</button>}
         </React.Fragment>)}
     </div>;
 }
 
-export default function WordSourceViewer({ authoring, pdfFile, bindings, selection, disabled, onSelect, onError, fieldLabel, text }) {
+export default function WordSourceViewer({ authoring, pdfFile, bindings, selection, activeBindingId, onSelectBinding, disabled, onSelect, onError, fieldLabel, text }) {
     const root = useRef(null); const generation = useRef(0); const callbacks = useRef({ onSelect, onError });
     callbacks.current = { onSelect, onError };
     const identity = `${authoring.renderId}:${authoring.mapHash}`;
@@ -136,7 +147,7 @@ export default function WordSourceViewer({ authoring, pdfFile, bindings, selecti
 
     const readSelection = useCallback(event => {
         if (disabled || !root.current) return;
-        if (event?.target?.closest?.('button, input, textarea, select') || document.activeElement === accessibleText.current) return;
+        if (event?.target?.closest?.('button, input, textarea, select, summary') || (!event && document.activeElement?.closest?.('[data-word-binding-id]')) || document.activeElement === accessibleText.current) return;
         const selection = window.getSelection();
         if (!selection?.anchorNode || !root.current.contains(selection.anchorNode)) return;
         if (selection.isCollapsed && selectionMode === 'range') return;
@@ -154,8 +165,9 @@ export default function WordSourceViewer({ authoring, pdfFile, bindings, selecti
     const layer = useMemo(() => ({ onPageTextReady: verifyLayer, onPageError: pageError,
         renderPageOverlay: ({ pageNumber, host, displayWidth }) => <PageMarks host={host}
             page={authoring.pages.find(page => page.pageNum === pageNumber)} bindings={bindings} selection={selection} fieldLabel={fieldLabel} text={text}
+            activeBindingId={activeBindingId} onSelectBinding={onSelectBinding} disabled={disabled}
             revision={pageStates[pageNumber] === 'verified' ? `${identity}:${pageRevisions[pageNumber] || 0}` : null} displayWidth={displayWidth} />,
-    }), [verifyLayer, pageError, authoring.pages, bindings, selection, fieldLabel, text, pageStates, pageRevisions, identity]);
+    }), [verifyLayer, pageError, authoring.pages, bindings, selection, fieldLabel, text, pageStates, pageRevisions, identity, activeBindingId, onSelectBinding, disabled]);
     const accessibleItems = authoring.pages.filter(page => pageStates[page.pageNum] === 'verified').flatMap(page =>
         page.items.filter(item => item.text && item.segments.length && !item.readOnlyReason).map(item => ({ ...item, pageNum: page.pageNum })));
     const accessibleItem = accessibleItems.find(item => item.id === accessibleItemId) || accessibleItems[0];
@@ -169,6 +181,10 @@ export default function WordSourceViewer({ authoring, pdfFile, bindings, selecti
     }
     return <div className="lw-word-source" ref={root} data-disabled={disabled ? 'true' : undefined}
         onMouseUp={readSelection} onKeyUp={readSelection} onTouchEnd={readSelection}>
+        {selectionError && <StatusNotice><p>{text('selectionInvalid')}</p></StatusNotice>}
+        {Object.values(pageStates).includes('error') && <StatusNotice><p>{text('authoringMismatch')}</p></StatusNotice>}
+        <PdfViewer pdfFile={pdfFile} spots={[]} signers={[]} authoringLayer={layer} />
+        <details className="lw-word__advanced lw-word__selectionOptions"><summary>{text('selectionOptions')}</summary>
         <div className="lw-word__actions" role="group" aria-label={text('selectionMode')}>
             <SegmentedSwitch ariaLabel={text('selectionMode')} value={selectionMode} onChange={setSelectionMode}
                 options={[{ value: 'range', label: text('replaceSelection'), disabled }, { value: 'insert', label: text('insertAtBoundary'), disabled }]} />
@@ -178,8 +194,6 @@ export default function WordSourceViewer({ authoring, pdfFile, bindings, selecti
         </div>
         <p>{text(selectionMode === 'insert' ? 'insertionHelp' : 'visualSelectionHelp')}</p>
         {authoring.diagnostics?.length > 0 && <p>{text('partiallySupportedSource')}</p>}
-        {selectionError && <StatusNotice><p>{text('selectionInvalid')}</p></StatusNotice>}
-        {Object.values(pageStates).includes('error') && <StatusNotice><p>{text('authoringMismatch')}</p></StatusNotice>}
         <details className="lw-word__advanced"><summary>{text('keyboardSelection')}</summary><p>{text('keyboardSelectionHelp')}</p>
             <label>{text('textExcerpt')}<SigningSelect value={accessibleItem?.id || ''} disabled={disabled || !accessibleItems.length}
                 onChange={event => setAccessibleItemId(event.target.value)}>
@@ -189,6 +203,6 @@ export default function WordSourceViewer({ authoring, pdfFile, bindings, selecti
             <SimpleTextArea textareaRef={accessibleText} title={text('selectExcerptText')} key={accessibleItem?.id} readOnly aria-label={text('selectExcerptText')} value={accessibleItem?.text || ''} disabled={disabled || !accessibleItem} />
             <SecondaryButton disabled={disabled || !accessibleItem} onPress={chooseAccessibleRange}>{text('confirmTextSelection')}</SecondaryButton>
         </details>
-        <PdfViewer pdfFile={pdfFile} spots={[]} signers={[]} authoringLayer={layer} />
+        </details>
     </div>;
 }

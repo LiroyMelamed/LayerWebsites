@@ -49,6 +49,18 @@
   &__pickerSelection { overflow-wrap: anywhere; }
   &__notice { color: var(--lw-color-primary, #2a4365); padding-block: v.$space-3; }
   &__visualRow { align-items: start; }
+  &__editor { margin-block-start: v.$space-4; padding-block-start: v.$space-4; }
+  &__editorHeader { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: v.$space-3; margin-block-end: v.$space-3;
+    h2, p { margin: 0; } }
+  &__editorActions { display: flex; flex-wrap: wrap; gap: v.$space-3; }
+  &__saveState { color: var(--lw-color-primary, #2a4365); font-size: .8125rem; }
+  &__selectionBar { display: flex; align-items: center; flex-wrap: wrap; gap: v.$space-3; margin-block: v.$space-3;
+    > .lw-word__selected { flex: 1 1 16rem; min-inline-size: 0; } .lw-word__check { margin: 0; } }
+  &__selectionHint { margin-block-end: v.$space-3; }
+  &__settings, &__bindingDetails, &__selectionOptions { border-block-start: 1px solid var(--lw-color-secondary-highlighted, #edf2f7); margin-block-start: v.$space-3; }
+  &__settings > section { max-inline-size: 42rem; display: grid; gap: v.$space-4; padding-block: v.$space-3; }
+  &__bindings li.is-active { background: var(--lw-color-secondary-highlighted, #edf2f7); }
+  &__editor .lw-signing-pdfViewerMain { min-inline-size: 0; }
   &__visualRow > &__mappingForm { flex: 0 0 18rem; max-inline-size: 22rem; padding: v.$space-4; }
   &__dataPanel { display: grid; gap: v.$space-3; > label { display: grid; gap: v.$space-2; } .lw-addFieldPanel { inline-size: 100%; max-block-size: 25rem; overflow-y: auto; } }
   &__selectedField { overflow-wrap: anywhere; }
@@ -65,6 +77,9 @@
     .lw-simpleInput { min-block-size: 2.75rem; }
     &__visualRow { flex-direction: column; }
     &__visualRow > &__mappingForm { flex: 0 0 auto; max-inline-size: none; inline-size: 100%; box-sizing: border-box; }
+    &__visualRow > &__mappingForm { order: -1; padding: v.$space-3; }
+    &__editorHeader { align-items: start; }
+    &__editorActions { inline-size: 100%; > .lw-simpleButton { flex: 1 1 auto; } }
     &__dataPanel .lw-addFieldPanel { max-block-size: 14rem; }
   }
 }
@@ -94,4 +109,9 @@
   &__mark { position: absolute; border: 1px solid var(--lw-color-primary, #2a4365); box-sizing: border-box; background: color-mix(in srgb, var(--lw-color-primary, #2a4365) 18%, transparent); min-inline-size: 3px; &.is-pending { border-style: dashed; background: color-mix(in srgb, var(--lw-color-primary, #2a4365) 28%, transparent); } }
   &__chip { position: absolute; box-sizing: border-box; white-space: nowrap; max-inline-size: min(16rem, 100%); overflow: hidden; text-overflow: ellipsis; font-size: .75rem; line-height: 1.4;
     padding-inline: v.$space-2; border: 1px solid var(--lw-color-primary, #2a4365); border-radius: .25rem; background: var(--lw-color-primary, #2a4365); color: var(--lw-color-white, #fff); }
+  &__mark.is-active { background: color-mix(in srgb, var(--lw-color-primary, #2a4365) 32%, transparent); }
+  button.lw-word-source__chip { appearance: none; font-family: inherit; font-size: .75rem; font-weight: inherit; line-height: 1.4; padding-block: 0; margin: 0; cursor: pointer; pointer-events: auto; text-align: start;
+    &:hover, &.is-active { background: var(--lw-color-white, #fff); color: var(--lw-color-primary, #2a4365); }
+    &.is-active { outline: 2px solid var(--lw-color-primary, #2a4365); outline-offset: 1px; }
+    &:disabled { cursor: default; pointer-events: none; opacity: .65; } }
 }
