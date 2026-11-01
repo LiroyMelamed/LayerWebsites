@@ -1,3 +1,4 @@
+const { assertBillingOperationsEnabled, isBillingOperationsPausedError } = require('../billing/billingOperations');
 const { validEmail } = require('./signupWelcomeTemplate');
 const { flushWelcome } = require('./signupWelcomeEmail');
 const { saveSignupLogo } = require('./signupLogo');
@@ -48,6 +49,7 @@ function mapSignupRow(row) {
 }
 
 async function createSignupIntent(payload) {
+    assertBillingOperationsEnabled();
     assertSignupAvailable();
     if (payload.billingConsent !== true || payload.consentVersion !== CONSENT_VERSION) {
         throw Object.assign(new Error('יש לאשר חיוב שקל ושמירת כרטיס לחידוש לאחר שלושה חודשים'), { code: 'CONSENT_REQUIRED' });
@@ -148,6 +150,7 @@ function signupIpnUrl() {
 }
 
 async function createSignupCheckout(intentId) {
+    assertBillingOperationsEnabled();
     assertSignupAvailable();
     const creds = getTakbullCredentialsFromEnv();
     if (!creds || !getProviderSecretsKey()) throw Object.assign(new Error('ההרשמה בתשלום עדיין אינה זמינה'), { code: 'TAKBULL_NOT_CONFIGURED' });
@@ -184,6 +187,7 @@ async function createSignupCheckout(intentId) {
 }
 
 async function provisionTenantFromSignup(signupIntentId, { tokenInfo } = {}) {
+    assertBillingOperationsEnabled();
     assertSignupAvailable();
     const client = await pool.connect();
     try {
@@ -312,6 +316,7 @@ async function provisionTenantFromSignup(signupIntentId, { tokenInfo } = {}) {
 
         const loginUrl = `${getFrontendBaseUrl()}/${tenant.slug}/admin`;
         try {
+            assertBillingOperationsEnabled();
             await sendMessage(
                 signup.admin_phone,
                 `ברוכים הבאים למערכת המשפטית של MelaMedia! המשרד שלכם מוכן. התחברות: ${loginUrl}`
@@ -323,6 +328,7 @@ async function provisionTenantFromSignup(signupIntentId, { tokenInfo } = {}) {
         return { tenantId: tenant.id, slug: tenant.slug, adminUserId, loginUrl };
     } catch (e) {
         await client.query('ROLLBACK');
+        if (isBillingOperationsPausedError(e)) throw e;
         // Leave a verified payment retryable after an atomic provisioning rollback.
         await pool.query("UPDATE signup_intents SET error_message=$2,updated_at=now() WHERE id=$1 AND status<>'completed'",
             [signupIntentId, 'השלמת ההרשמה דורשת בדיקה']).catch(() => {});
@@ -333,6 +339,7 @@ async function provisionTenantFromSignup(signupIntentId, { tokenInfo } = {}) {
 }
 
 async function completeSignupFromPaymentIntent(paymentIntentId, tokenInfo) {
+    assertBillingOperationsEnabled();
     const res = await pool.query(
         `SELECT signup_intent_id FROM firm_payment_intents WHERE id = $1 LIMIT 1`,
         [paymentIntentId]
@@ -343,6 +350,7 @@ async function completeSignupFromPaymentIntent(paymentIntentId, tokenInfo) {
 }
 
 async function syncSignup(intentId) {
+    assertBillingOperationsEnabled();
     const intent = await getSignupIntent(intentId);
     if (!intent) throw Object.assign(new Error('SIGNUP_NOT_FOUND'), {code:'SIGNUP_NOT_FOUND'});
     if (intent.status === 'completed') return intent;

@@ -1,0 +1,205 @@
+PASS src/screens/signingScreen/templates/CaseStageAutomationPanel.test.js (5.048 s)
+  ● Console
+
+    console.info
+      🌐 i18next is made possible by our own product, Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+
+      at I18n.init (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/i18next/dist/cjs/i18next.js:1781:90)
+
+    console.error
+      Warning: `ReactDOMTestUtils.act` is deprecated in favor of `React.act`. Import `act` from `react` instead of `react-dom/test-utils`. See https://react.dev/warnings/react-dom-test-utils for more info.
+
+      53 |     const api = { list: jest.fn().mockResolvedValue(data), preview: jest.fn().mockResolvedValue(valid()), save: jest.fn().mockResolvedValue({}), retry: jest.fn().mockResolvedValue({}), ...overrides };
+      54 |     const packagesApi = { templates: jest.fn().mockResolvedValue({ templates: [template] }), caseContext: jest.fn().mockResolvedValue({ people: contacts }), create: jest.fn() };
+    > 55 |     const view = render(<I18nextProvider i18n={i18n}>
+         |                        ^
+      56 |         <CaseStageAutomationPanel key="case-41" caseId={41} canEdit={canEdit} initiallyOpen api={api} packagesApi={packagesApi} />
+      57 |     </I18nextProvider>);
+      58 |     await screen.findByRole('heading', { name: /Saved court filing/ });
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:71:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:45:7)
+      at actWithWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:1736:7)
+      at ../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@testing-library/react/dist/act-compat.js:63:25
+      at renderRoot (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@testing-library/react/dist/pure.js:159:26)
+      at render (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@testing-library/react/dist/pure.js:246:10)
+      at setup (src/screens/signingScreen/templates/CaseStageAutomationPanel.test.js:55:24)
+      at src/screens/signingScreen/templates/CaseStageAutomationPanel.test.js:81:40
+
+PASS src/screens/signingScreen/templates/TemplateBuilder.test.js
+  ● Console
+
+    console.info
+      🌐 i18next is made possible by our own product, Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+
+      at I18n.init (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/i18next/dist/cjs/i18next.js:1781:90)
+
+    console.error
+      Warning: `ReactDOMTestUtils.act` is deprecated in favor of `React.act`. Import `act` from `react` instead of `react-dom/test-utils`. See https://react.dev/warnings/react-dom-test-utils for more info.
+
+      23 |     api.save.mockReturnValue(new Promise(resolve => { finish = resolve; }));
+      24 |     const saved = jest.fn();
+    > 25 |     const { container } = render(<I18nextProvider i18n={i18n}><TemplateBuilder template={template()} onSaved={saved} onBack={jest.fn()} /></I18nextProvider>);
+         |                                 ^
+      26 |     const t = key => i18n.t(`signingV2.builder.${key}`);
+      27 |     // Verify direction on the actual editor root, independent of translated text.
+      28 |     // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:71:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:45:7)
+      at actWithWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:1736:7)
+      at ../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@testing-library/react/dist/act-compat.js:63:25
+      at renderRoot (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@testing-library/react/dist/pure.js:159:26)
+      at render (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@testing-library/react/dist/pure.js:246:10)
+      at src/screens/signingScreen/templates/TemplateBuilder.test.js:25:33
+
+    console.error
+      Warning: An update to TemplateBuilder inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at TemplateBuilder (/private/tmp/layer-billing-integration-20261101/MorLevi/frontend/src/screens/signingScreen/templates/TemplateBuilder.js:43:43)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+      199 |         setBusy(true);setError('');
+      200 |         try { const result = await service.save(draft, template?.id, template?.version);onSaved(result.template); }
+    > 201 |         catch (e) { setError(e.message); } finally { saving.current = false; setBusy(false); }
+          |                                                                              ^
+      202 |     }
+      203 |     return <><section className="lw-templates" dir={direction}>
+      204 |         <SigningBackButton onPress={leave} disabled={busy}>{t('back')}</SigningBackButton>
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setBusy (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at save (src/screens/signingScreen/templates/TemplateBuilder.js:201:78)
+
+    console.error
+      Warning: An update to TemplateBuilder inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at TemplateBuilder (/private/tmp/layer-billing-integration-20261101/MorLevi/frontend/src/screens/signingScreen/templates/TemplateBuilder.js:43:43)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+      199 |         setBusy(true);setError('');
+      200 |         try { const result = await service.save(draft, template?.id, template?.version);onSaved(result.template); }
+    > 201 |         catch (e) { setError(e.message); } finally { saving.current = false; setBusy(false); }
+          |                                                                              ^
+      202 |     }
+      203 |     return <><section className="lw-templates" dir={direction}>
+      204 |         <SigningBackButton onPress={leave} disabled={busy}>{t('back')}</SigningBackButton>
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setBusy (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at save (src/screens/signingScreen/templates/TemplateBuilder.js:201:78)
+
+    console.error
+      Warning: An update to TemplateBuilder inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at TemplateBuilder (/private/tmp/layer-billing-integration-20261101/MorLevi/frontend/src/screens/signingScreen/templates/TemplateBuilder.js:43:43)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+      199 |         setBusy(true);setError('');
+      200 |         try { const result = await service.save(draft, template?.id, template?.version);onSaved(result.template); }
+    > 201 |         catch (e) { setError(e.message); } finally { saving.current = false; setBusy(false); }
+          |                                                                              ^
+      202 |     }
+      203 |     return <><section className="lw-templates" dir={direction}>
+      204 |         <SigningBackButton onPress={leave} disabled={busy}>{t('back')}</SigningBackButton>
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setBusy (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at save (src/screens/signingScreen/templates/TemplateBuilder.js:201:78)
+
+    console.error
+      Warning: An update to TemplateBuilder inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at TemplateBuilder (/private/tmp/layer-billing-integration-20261101/MorLevi/frontend/src/screens/signingScreen/templates/TemplateBuilder.js:43:43)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+      120 |         if (!template || !document || pdfFiles[document.id]) return undefined;
+      121 |         let cancelled = false;
+    > 122 |         service.pdf(template.id, document.id).then(blob => { if (!cancelled) setPdfFiles(prev => ({ ...prev, [document.id]: blob })); }).catch(e => { if (!cancelled) setError(e.message); });
+          |                                                                              ^
+      123 |         return () => { cancelled = true; };
+      124 |     }, [template, document, pdfFiles, service]);
+      125 |     useEffect(() => {
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setPdfFiles (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at src/screens/signingScreen/templates/TemplateBuilder.js:122:78
+
+PASS src/screens/signingScreen/SigningScreen.clientPortal.test.js
+  ● Console
+
+    console.error
+      Warning: `ReactDOMTestUtils.act` is deprecated in favor of `React.act`. Import `act` from `react` instead of `react-dom/test-utils`. See https://react.dev/warnings/react-dom-test-utils for more info.
+
+      28 | const ok = files => ({ status: 200, data: { files } });
+      29 | function show(search = '?fileId=17&open=sign') {
+    > 30 |     return render(<MemoryRouter initialEntries={['/office/ClientStack/SigningScreen' + search]}><SigningScreen /></MemoryRouter>);
+         |                  ^
+      31 | }
+      32 | beforeEach(() => {
+      33 |     jest.clearAllMocks();
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:71:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:45:7)
+      at actWithWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:1736:7)
+      at ../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@testing-library/react/dist/act-compat.js:63:25
+      at renderRoot (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@testing-library/react/dist/pure.js:159:26)
+      at render (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@testing-library/react/dist/pure.js:246:10)
+      at show (src/screens/signingScreen/SigningScreen.clientPortal.test.js:30:18)
+      at Object.<anonymous> (src/screens/signingScreen/SigningScreen.clientPortal.test.js:44:5)
+      at TestScheduler.scheduleTests (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@jest/core/build/runJest.js:404:19)
+      at _run10000 (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@jest/core/build/cli/index.js:320:7)
+      at runCLI (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@jest/core/build/cli/index.js:173:3)
+
+
+Test Suites: 3 passed, 3 total
+Tests:       37 passed, 37 total
+Snapshots:   0 total
+Time:        7.179 s, estimated 45 s
+Ran all test suites within paths "src/screens/signingScreen/templates/CaseStageAutomationPanel.test.js", "src/screens/signingScreen/templates/TemplateBuilder.test.js", "src/screens/signingScreen/SigningScreen.clientPortal.test.js".
+Test results written to: ../../../../../tmp/layer-billing-integration-20261101/MorLevi/docs/releases/card-save-billing-20261101/integration-qa/MorLevi/frontend-focused.json

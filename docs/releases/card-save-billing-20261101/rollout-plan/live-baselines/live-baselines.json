@@ -1,0 +1,456 @@
+{
+  "startedAtUtc": "2026-11-01T22:05:21.460578+00:00",
+  "scope": "Existing lock-protected source/process/static metadata and pure unauthenticated health/static GETs. No customer DB, billing endpoint, provider, scheduler, application-module execution, source/ref/configuration change, restart, access or new lock. Idm excluded.",
+  "staticServer": {
+    "exit": 0,
+    "capturedAtUtc": "2026-11-01T22:05:23.712734+00:00",
+    "rows": [
+      {
+        "tenant": "morlevy",
+        "staticRoot": "/var/www/morlevy",
+        "status": "READ_ONLY_LOCKED_STATIC_METADATA",
+        "assets": {
+          "main.js": {
+            "path": "/static/js/main.15483ae9.js",
+            "sha256": "9a7e53efcc315979251fdfd5215161e0a00751331ba0bb80db1917833e661281",
+            "bytes": 1920836
+          },
+          "main.css": {
+            "path": "/static/css/main.42e8b4df.css",
+            "sha256": "1f46257b0dc85897caf35388b1d6898e330e126aa4c9fec75f3df0486f0afcd2",
+            "bytes": 243695
+          }
+        },
+        "asset-manifest.json": {
+          "sha256": "701c12dea0b77a2823415d6a36de9bb0d29f55a10ae37327632e37db147da9aa",
+          "bytes": 15913,
+          "mtimeUtc": "2026-11-01T22:00:11.249613+00:00",
+          "main": "/static/js/main.15483ae9.js",
+          "css": "/static/css/main.42e8b4df.css"
+        },
+        "index.html": {
+          "sha256": "624a600c5287e83d89a73f3a45965bf51cdc9aba82a48fbcac60cad7506a9899",
+          "bytes": 7912,
+          "mtimeUtc": "2026-11-01T22:00:11.249613+00:00"
+        }
+      },
+      {
+        "tenant": "ashrafessa",
+        "staticRoot": "/var/www/ashrafessa",
+        "status": "READ_ONLY_LOCKED_STATIC_METADATA",
+        "assets": {
+          "main.js": {
+            "path": "/static/js/main.b15bba80.js",
+            "sha256": "7e948bc3de129c8417db4cd7fb4da5c3952c1b0be7d3d7a530fb2c5c3bd7fd3d",
+            "bytes": 1905456
+          },
+          "main.css": {
+            "path": "/static/css/main.42e8b4df.css",
+            "sha256": "1f46257b0dc85897caf35388b1d6898e330e126aa4c9fec75f3df0486f0afcd2",
+            "bytes": 243695
+          }
+        },
+        "asset-manifest.json": {
+          "sha256": "4cbb0e7150688d038a174fe922b4bae50316a437a16bcc893edfcd8815993529",
+          "bytes": 16083,
+          "mtimeUtc": "2026-11-01T21:59:51.151908+00:00",
+          "main": "/static/js/main.b15bba80.js",
+          "css": "/static/css/main.42e8b4df.css"
+        },
+        "index.html": {
+          "sha256": "74119c645e44b9e646b02e056e9ba3100db78cc252c48eecb932b660b013acb6",
+          "bytes": 8062,
+          "mtimeUtc": "2026-11-01T21:59:51.152908+00:00"
+        }
+      },
+      {
+        "tenant": "melamedia",
+        "staticRoot": "/var/www/melamedia",
+        "status": "READ_ONLY_LOCKED_STATIC_METADATA",
+        "assets": {
+          "main.js": {
+            "path": "/static/js/main.ae388fc0.js",
+            "sha256": "fc1ad2bdaed19addd19554da0c451d8f346d28edfa17eaa272bc9afea3cbf5fd",
+            "bytes": 1912587
+          },
+          "main.css": {
+            "path": "/static/css/main.9bf17f76.css",
+            "sha256": "4d30484d8b3bf5ac6030c336ce9c97efa411319e591023a9cc00253399d04b3b",
+            "bytes": 243719
+          }
+        },
+        "asset-manifest.json": {
+          "sha256": "caf65131a5c99f25a624954fb1a7a7252972f23a729644e3a930c29904acaed7",
+          "bytes": 16083,
+          "mtimeUtc": "2026-11-01T21:56:21.062581+00:00",
+          "main": "/static/js/main.ae388fc0.js",
+          "css": "/static/css/main.9bf17f76.css"
+        },
+        "index.html": {
+          "sha256": "647fa89d259aa983335012867ea80c221585eef93a94cc25b47fc401e3aca5b7",
+          "bytes": 7060,
+          "mtimeUtc": "2026-11-01T21:56:21.063581+00:00"
+        }
+      }
+    ]
+  },
+  "publicMelamedia": {
+    "tenant": "Melamedia",
+    "frontendOrigin": "https://melamedia.mela-media.co.il",
+    "healthUrl": "https://api-melamedia.mela-media.co.il/health",
+    "capturedAtUtc": "2026-11-01T22:05:21.475298+00:00",
+    "health": {
+      "httpStatus": 200,
+      "ok": true,
+      "scope": "unauthenticated /health only; no tenant headers/cookies; no DB/provider probe"
+    },
+    "manifest": {
+      "httpStatus": 200,
+      "sha256": "caf65131a5c99f25a624954fb1a7a7252972f23a729644e3a930c29904acaed7",
+      "bytes": 16083,
+      "main": "/static/js/main.ae388fc0.js",
+      "css": "/static/css/main.9bf17f76.css"
+    },
+    "assets": {
+      "main.js": {
+        "path": "/static/js/main.ae388fc0.js",
+        "httpStatus": 200,
+        "sha256": "fc1ad2bdaed19addd19554da0c451d8f346d28edfa17eaa272bc9afea3cbf5fd",
+        "bytes": 1912587
+      },
+      "main.css": {
+        "path": "/static/css/main.9bf17f76.css",
+        "httpStatus": 200,
+        "sha256": "4d30484d8b3bf5ac6030c336ce9c97efa411319e591023a9cc00253399d04b3b",
+        "bytes": 243719
+      }
+    },
+    "completedAtUtc": "2026-11-01T22:05:24.722136+00:00"
+  },
+  "publicAshrafEssa": {
+    "tenant": "AshrafEssa",
+    "frontendOrigin": "https://ashrafessa.mela-media.co.il",
+    "healthUrl": "https://api-ashrafessa.mela-media.co.il/health",
+    "capturedAtUtc": "2026-11-01T22:05:21.472909+00:00",
+    "health": {
+      "httpStatus": 200,
+      "ok": true,
+      "scope": "unauthenticated /health only; no tenant headers/cookies; no DB/provider probe"
+    },
+    "manifest": {
+      "httpStatus": 200,
+      "sha256": "4cbb0e7150688d038a174fe922b4bae50316a437a16bcc893edfcd8815993529",
+      "bytes": 16083,
+      "main": "/static/js/main.b15bba80.js",
+      "css": "/static/css/main.42e8b4df.css"
+    },
+    "assets": {
+      "main.js": {
+        "path": "/static/js/main.b15bba80.js",
+        "httpStatus": 200,
+        "sha256": "7e948bc3de129c8417db4cd7fb4da5c3952c1b0be7d3d7a530fb2c5c3bd7fd3d",
+        "bytes": 1905456
+      },
+      "main.css": {
+        "path": "/static/css/main.42e8b4df.css",
+        "httpStatus": 200,
+        "sha256": "1f46257b0dc85897caf35388b1d6898e330e126aa4c9fec75f3df0486f0afcd2",
+        "bytes": 243695
+      }
+    },
+    "completedAtUtc": "2026-11-01T22:05:24.803395+00:00"
+  },
+  "backend": {
+    "exit": 0,
+    "capturedAtUtc": "2026-11-01T22:05:25.161915+00:00",
+    "rows": [
+      {
+        "tenant": "melamedlaw",
+        "sourceDirectory": "/root/LayerWebsites",
+        "status": "READ_ONLY_LOCKED_SOURCE_METADATA",
+        "head": {
+          "exit": 0,
+          "output": "5f3a4459256c225be14386178e3cec827e3c79e2",
+          "errorBytes": 0
+        },
+        "branch": {
+          "exit": 0,
+          "output": "MelamedLaw",
+          "errorBytes": 0
+        },
+        "trackedChanges": {
+          "exit": 0,
+          "output": "",
+          "errorBytes": 0
+        },
+        "stagedChanges": {
+          "exit": 0,
+          "output": "",
+          "errorBytes": 0
+        },
+        "sourceSha256": {
+          "backend/controllers/billingController.js": "473143d1bdae02f869ce9219e29da0ea46fb6a60b7006504d8cb5755cfea6b11",
+          "backend/lib/billing/firmBillingService.js": "87940c6244f5f33debe25b2b040d1eb68c49aee023f089f07d87e8518cce9433",
+          "backend/lib/billing/selfServiceRenewal.js": "0aad4e1301f0165c8a431253350121a576340eafc9f12ff7e3c3dd724b335fc4",
+          "backend/lib/billing/selfServiceUpgrade.js": "7f0f297dec96f761537c8e0cd3e15e57958c53f7c18b1ccd6cadf33cbdee268b",
+          "backend/lib/payments/takbullClient.js": "378c668978f4cd197a5de02f30343b82b1abb76f592177abd39df7c6e5906d24",
+          "frontend/src/api/billingApi.js": "c30bdcbe9820d33a8f6b1b4a799158acbf18691c61cad8f18a17fac39e0e3c99",
+          "frontend/src/components/billing/TakbullCheckoutDialog.js": "13e2bf8489ee46dbf9b635c6f104a0553e574abd23babe5d216f8dd77593bd36",
+          "frontend/src/screens/billingScreen/PlanUsageScreen.js": "2ebcc5e7792c5eae1116c016fbe3e5cd57e648832c7f725095df85cbefd8b70f",
+          "frontend/src/screens/billingScreen/PlansPricingScreen.js": "f429fb6230fda9687a0c0f247c4445e00b2f3dcb744d9c466b93604c95d97caf"
+        },
+        "protectedSource": {
+          "manifestSha256": "62e0e2780c6b4de631768b6c64ca09b4eea8c95c94ee3403d14a01b05f751fd4",
+          "expectedEntries": 103,
+          "checkedEntries": 103,
+          "mismatches": [],
+          "requiredAncestor": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+          "requiredAncestorPresent": true,
+          "scope": "checkout source only, not loaded backend or static frontend binding"
+        },
+        "processes": [
+          {
+            "name": "melamed-backend",
+            "status": "online",
+            "cwd": "/root/LayerWebsites/backend",
+            "script": "/root/LayerWebsites/backend/server.js",
+            "startedAtMs": 1793558775305,
+            "gitShaEnv": null
+          }
+        ]
+      },
+      {
+        "tenant": "morlevy",
+        "sourceDirectory": "/root/MorLevi",
+        "status": "READ_ONLY_LOCKED_SOURCE_METADATA",
+        "head": {
+          "exit": 0,
+          "output": "08f1a9889274b035d9bc307337563ad8c7016cb8",
+          "errorBytes": 0
+        },
+        "branch": {
+          "exit": 0,
+          "output": "MorLevi",
+          "errorBytes": 0
+        },
+        "trackedChanges": {
+          "exit": 0,
+          "output": "",
+          "errorBytes": 0
+        },
+        "stagedChanges": {
+          "exit": 0,
+          "output": "",
+          "errorBytes": 0
+        },
+        "sourceSha256": {
+          "backend/controllers/billingController.js": "473143d1bdae02f869ce9219e29da0ea46fb6a60b7006504d8cb5755cfea6b11",
+          "backend/lib/billing/firmBillingService.js": "87940c6244f5f33debe25b2b040d1eb68c49aee023f089f07d87e8518cce9433",
+          "backend/lib/billing/selfServiceRenewal.js": "0aad4e1301f0165c8a431253350121a576340eafc9f12ff7e3c3dd724b335fc4",
+          "backend/lib/billing/selfServiceUpgrade.js": "7f0f297dec96f761537c8e0cd3e15e57958c53f7c18b1ccd6cadf33cbdee268b",
+          "backend/lib/payments/takbullClient.js": "378c668978f4cd197a5de02f30343b82b1abb76f592177abd39df7c6e5906d24",
+          "frontend/src/api/billingApi.js": "c30bdcbe9820d33a8f6b1b4a799158acbf18691c61cad8f18a17fac39e0e3c99",
+          "frontend/src/components/billing/TakbullCheckoutDialog.js": "13e2bf8489ee46dbf9b635c6f104a0553e574abd23babe5d216f8dd77593bd36",
+          "frontend/src/screens/billingScreen/PlanUsageScreen.js": "2ebcc5e7792c5eae1116c016fbe3e5cd57e648832c7f725095df85cbefd8b70f",
+          "frontend/src/screens/billingScreen/PlansPricingScreen.js": "f429fb6230fda9687a0c0f247c4445e00b2f3dcb744d9c466b93604c95d97caf"
+        },
+        "protectedSource": {
+          "manifestSha256": "4972adc1c1807ad7f35dbd7e324ed9340626b95936bb7ca6b149c4471eb77dd9",
+          "expectedEntries": 103,
+          "checkedEntries": 103,
+          "mismatches": [],
+          "requiredAncestor": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+          "requiredAncestorPresent": true,
+          "scope": "checkout source only, not loaded backend or static frontend binding"
+        },
+        "processes": [
+          {
+            "name": "morlevy-api",
+            "status": "online",
+            "cwd": "/root/MorLevi/backend",
+            "script": "/root/MorLevi/backend/server.js",
+            "startedAtMs": 1793557359079,
+            "gitShaEnv": null
+          }
+        ]
+      },
+      {
+        "tenant": "ashrafessa",
+        "sourceDirectory": "/root/AshrafEssa",
+        "status": "READ_ONLY_LOCKED_SOURCE_METADATA",
+        "head": {
+          "exit": 0,
+          "output": "ab271c535a996e5db4bcfc333c3b60dd332c3781",
+          "errorBytes": 0
+        },
+        "branch": {
+          "exit": 0,
+          "output": "AshrafEssa",
+          "errorBytes": 0
+        },
+        "trackedChanges": {
+          "exit": 0,
+          "output": "",
+          "errorBytes": 0
+        },
+        "stagedChanges": {
+          "exit": 0,
+          "output": "",
+          "errorBytes": 0
+        },
+        "sourceSha256": {
+          "backend/controllers/billingController.js": "473143d1bdae02f869ce9219e29da0ea46fb6a60b7006504d8cb5755cfea6b11",
+          "backend/lib/billing/firmBillingService.js": "87940c6244f5f33debe25b2b040d1eb68c49aee023f089f07d87e8518cce9433",
+          "backend/lib/billing/selfServiceRenewal.js": "0aad4e1301f0165c8a431253350121a576340eafc9f12ff7e3c3dd724b335fc4",
+          "backend/lib/billing/selfServiceUpgrade.js": "7f0f297dec96f761537c8e0cd3e15e57958c53f7c18b1ccd6cadf33cbdee268b",
+          "backend/lib/payments/takbullClient.js": "378c668978f4cd197a5de02f30343b82b1abb76f592177abd39df7c6e5906d24",
+          "frontend/src/api/billingApi.js": "c30bdcbe9820d33a8f6b1b4a799158acbf18691c61cad8f18a17fac39e0e3c99",
+          "frontend/src/components/billing/TakbullCheckoutDialog.js": "13e2bf8489ee46dbf9b635c6f104a0553e574abd23babe5d216f8dd77593bd36",
+          "frontend/src/screens/billingScreen/PlanUsageScreen.js": "2ebcc5e7792c5eae1116c016fbe3e5cd57e648832c7f725095df85cbefd8b70f",
+          "frontend/src/screens/billingScreen/PlansPricingScreen.js": "f429fb6230fda9687a0c0f247c4445e00b2f3dcb744d9c466b93604c95d97caf"
+        },
+        "protectedSource": {
+          "manifestSha256": "4972adc1c1807ad7f35dbd7e324ed9340626b95936bb7ca6b149c4471eb77dd9",
+          "expectedEntries": 103,
+          "checkedEntries": 103,
+          "mismatches": [],
+          "requiredAncestor": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+          "requiredAncestorPresent": true,
+          "scope": "checkout source only, not loaded backend or static frontend binding"
+        },
+        "processes": [
+          {
+            "name": "ashrafessa-api",
+            "status": "online",
+            "cwd": "/root/AshrafEssa/backend",
+            "script": "/root/AshrafEssa/backend/server.js",
+            "startedAtMs": 1793553799710,
+            "gitShaEnv": null
+          }
+        ]
+      },
+      {
+        "tenant": "melamedia",
+        "sourceDirectory": "/root/Melamedia",
+        "status": "READ_ONLY_LOCKED_SOURCE_METADATA",
+        "head": {
+          "exit": 0,
+          "output": "ca31b04ea2957e78eb7f57edcff468baa6e6332d",
+          "errorBytes": 0
+        },
+        "branch": {
+          "exit": 0,
+          "output": "",
+          "errorBytes": 0
+        },
+        "trackedChanges": {
+          "exit": 0,
+          "output": "",
+          "errorBytes": 0
+        },
+        "stagedChanges": {
+          "exit": 0,
+          "output": "",
+          "errorBytes": 0
+        },
+        "sourceSha256": {
+          "backend/controllers/billingController.js": "473143d1bdae02f869ce9219e29da0ea46fb6a60b7006504d8cb5755cfea6b11",
+          "backend/lib/billing/firmBillingService.js": "87940c6244f5f33debe25b2b040d1eb68c49aee023f089f07d87e8518cce9433",
+          "backend/lib/billing/selfServiceRenewal.js": "0aad4e1301f0165c8a431253350121a576340eafc9f12ff7e3c3dd724b335fc4",
+          "backend/lib/billing/selfServiceUpgrade.js": "7f0f297dec96f761537c8e0cd3e15e57958c53f7c18b1ccd6cadf33cbdee268b",
+          "backend/lib/payments/takbullClient.js": "378c668978f4cd197a5de02f30343b82b1abb76f592177abd39df7c6e5906d24",
+          "frontend/src/api/billingApi.js": "c30bdcbe9820d33a8f6b1b4a799158acbf18691c61cad8f18a17fac39e0e3c99",
+          "frontend/src/components/billing/TakbullCheckoutDialog.js": "13e2bf8489ee46dbf9b635c6f104a0553e574abd23babe5d216f8dd77593bd36",
+          "frontend/src/screens/billingScreen/PlanUsageScreen.js": "2ebcc5e7792c5eae1116c016fbe3e5cd57e648832c7f725095df85cbefd8b70f",
+          "frontend/src/screens/billingScreen/PlansPricingScreen.js": "f429fb6230fda9687a0c0f247c4445e00b2f3dcb744d9c466b93604c95d97caf"
+        },
+        "protectedSource": {
+          "manifestSha256": "6056c5c19e711a2e1810a5179806b0674d16bb953042636ecb2b4e8ef1c29c21",
+          "expectedEntries": 103,
+          "checkedEntries": 103,
+          "mismatches": [],
+          "requiredAncestor": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+          "requiredAncestorPresent": true,
+          "scope": "checkout source only, not loaded backend or static frontend binding"
+        },
+        "processes": [
+          {
+            "name": "melamedia-api",
+            "status": "online",
+            "cwd": "/root/Melamedia/backend",
+            "script": "/root/Melamedia/backend/server.js",
+            "startedAtMs": 1793551474189,
+            "gitShaEnv": null
+          }
+        ]
+      }
+    ]
+  },
+  "publicMorLevi": {
+    "tenant": "MorLevi",
+    "frontendOrigin": "https://morlevy.mela-media.co.il",
+    "healthUrl": "https://api-morlevy.mela-media.co.il/health",
+    "capturedAtUtc": "2026-11-01T22:05:21.470412+00:00",
+    "health": {
+      "httpStatus": 200,
+      "ok": true,
+      "scope": "unauthenticated /health only; no tenant headers/cookies; no DB/provider probe"
+    },
+    "manifest": {
+      "httpStatus": 200,
+      "sha256": "701c12dea0b77a2823415d6a36de9bb0d29f55a10ae37327632e37db147da9aa",
+      "bytes": 15913,
+      "main": "/static/js/main.15483ae9.js",
+      "css": "/static/css/main.42e8b4df.css"
+    },
+    "assets": {
+      "main.js": {
+        "path": "/static/js/main.15483ae9.js",
+        "httpStatus": 200,
+        "sha256": "9a7e53efcc315979251fdfd5215161e0a00751331ba0bb80db1917833e661281",
+        "bytes": 1920836
+      },
+      "main.css": {
+        "path": "/static/css/main.42e8b4df.css",
+        "httpStatus": 200,
+        "sha256": "1f46257b0dc85897caf35388b1d6898e330e126aa4c9fec75f3df0486f0afcd2",
+        "bytes": 243695
+      }
+    },
+    "completedAtUtc": "2026-11-01T22:05:25.269964+00:00"
+  },
+  "publicMelamedLaw": {
+    "tenant": "MelamedLaw",
+    "frontendOrigin": "https://client.melamedlaw.co.il",
+    "healthUrl": "https://api.calls.melamedlaw.co.il/health",
+    "capturedAtUtc": "2026-11-01T22:05:21.465534+00:00",
+    "health": {
+      "httpStatus": 200,
+      "ok": true,
+      "scope": "unauthenticated /health only; no tenant headers/cookies; no DB/provider probe"
+    },
+    "manifest": {
+      "httpStatus": 200,
+      "sha256": "51c5d0f452d6d695da115473bb0e9bf07f56f8a906222cf46056fe702d8312a1",
+      "bytes": 15913,
+      "main": "/static/js/main.93266448.js",
+      "css": "/static/css/main.42e8b4df.css"
+    },
+    "assets": {
+      "main.js": {
+        "path": "/static/js/main.93266448.js",
+        "httpStatus": 200,
+        "sha256": "e51a99a317131fe2816cb518617ad5332e9b28e0ca9005309fbd61c9c60b77ed",
+        "bytes": 1921633
+      },
+      "main.css": {
+        "path": "/static/css/main.42e8b4df.css",
+        "httpStatus": 200,
+        "sha256": "1f46257b0dc85897caf35388b1d6898e330e126aa4c9fec75f3df0486f0afcd2",
+        "bytes": 243695
+      }
+    },
+    "completedAtUtc": "2026-11-01T22:05:25.422766+00:00"
+  },
+  "completedAtUtc": "2026-11-01T22:05:25.422959+00:00"
+}

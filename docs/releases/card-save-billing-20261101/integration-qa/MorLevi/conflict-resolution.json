@@ -1,0 +1,180 @@
+{
+  "review": "Reviewed common source/Ashraf lineage and zero client-only locale keys; additive authoring table retained. protected baseline copied unchanged only with its exact protected shared units.",
+  "resolved": [
+    {
+      "path": "backend/lib/wordTemplates/README.md",
+      "conflictHunks": 3,
+      "resolvedSha256": "a5f66558300855bbb47deb9adf85842c19b756eecf84bf46fde313700fbb5ffb",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "backend/lib/wordTemplates/clientValues.js",
+      "conflictHunks": 3,
+      "resolvedSha256": "61e74d00f597d9cf819a00a9ffa1f1412d2ad87871dd123fe776e0316414c290",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "backend/lib/wordTemplates/index.js",
+      "conflictHunks": 5,
+      "resolvedSha256": "c9a49dedf27f83d0d1c3fbb9db204f1fc83a8f773ae1f4d6bc8f4351decec2b4",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "backend/routes/signingWordRoutes.js",
+      "conflictHunks": 4,
+      "resolvedSha256": "b8f45411ebe72cf78fb78db1209243fd84b6b8154eb0aef9a1b26415297ce089",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "backend/services/signingV2/wordTemplates.js",
+      "conflictHunks": 14,
+      "resolvedSha256": "066c12dcefd5d0f347e94510335818352c94a00caa9e196a6bba9d3fd6e262d9",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "backend/tests/signingWordRoutes.test.js",
+      "conflictHunks": 6,
+      "resolvedSha256": "03ae7c8316016c1805c4c006aa38ec534902fc452cab3193932c42e3c7ae6570",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "backend/tests/systemMessageBillingSettlement.test.js",
+      "conflictHunks": 2,
+      "resolvedSha256": "e574d96cf9b1d2d4028485fe2bf0babad17a2e9304376cdb26b73138046e8c71",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "backend/tests/systemMessageSharedSettlement.test.js",
+      "conflictHunks": 4,
+      "resolvedSha256": "959cb0c476bc6c13f67b301dfdf577ba34ad6c7d75a81779ac6eee5a6ebfb44b",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "docs/legal-system-messages.md",
+      "conflictHunks": 2,
+      "resolvedSha256": "c1d4bfedb82f3b24f5208ea10bde2d0c083ea38ec349b1f33f6b5093e0d97e91",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "docs/signing-v2/release-baseline.json",
+      "conflictHunks": 5,
+      "resolvedSha256": "91fd27bf1c355d35dfbd3dfa4a49af8ecd01ff00ee3fffddbf354af745d1d60e",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "frontend/src/api/wordTemplatesApi.js",
+      "conflictHunks": 1,
+      "resolvedSha256": "63f23be822d493e810b4f5b3cda827c9309b2aff1a6b723c7102215af76211a0",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "frontend/src/i18n/locales/ar.json",
+      "conflictHunks": 8,
+      "resolvedSha256": "6b5573b4a23af0e7d8d53c7bd3b698bffb0b6e0e359a97e9c08ec58c1deb9c17",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "frontend/src/i18n/locales/en.json",
+      "conflictHunks": 8,
+      "resolvedSha256": "44c0754f55aa69d73657fc4db978c70078cc9086b577e19a6bf4e929d29a32d7",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "frontend/src/i18n/locales/he.json",
+      "conflictHunks": 8,
+      "resolvedSha256": "94da47ffa57f96d7a76c689c47176a70395c110f511f83de1dbd73308eedd51f",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/SigningManagerScreen.js",
+      "conflictHunks": 2,
+      "resolvedSha256": "67b7bc39d033cc43b70c8416309423835c020cfd55915f5a599f8dd9ea4154f0",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/UploadFileForSigningScreen.js",
+      "conflictHunks": 2,
+      "resolvedSha256": "10e03b14af2221a23c53dab4e999809327d59efe822d2ea5b773a75fc1851c12",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/UploadFileForSigningScreen.wordFlow.test.js",
+      "conflictHunks": 2,
+      "resolvedSha256": "1b0662b220adedde4ac04fe26d668662cef7edad7bf15ba7316357e5531ba1b5",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/templates/PackageComposer.js",
+      "conflictHunks": 1,
+      "resolvedSha256": "497bee76b11f15574fd42bf78d2ccf252a2e1d53dba923bb6bfed35e663fd57c",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/templates/TemplatesWorkspace.js",
+      "conflictHunks": 2,
+      "resolvedSha256": "714aaa9e5de271217cacd9398db0dcd4cee4d45719c49819ecd7501a6f93e933",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/templates/TemplatesWorkspace.wordEntry.test.js",
+      "conflictHunks": 4,
+      "resolvedSha256": "83d644e2b4c0196ec3a4cbb6c9093051e4d9dbbc0ac8fca2c4d0e1ff360e5e31",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/word/WordRecordPicker.js",
+      "conflictHunks": 2,
+      "resolvedSha256": "74ba2fc9829ba8137e7325e4f6e4efe5ce003c60f985fd57a62dbd5f929d44d0",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/word/WordRecordPicker.test.js",
+      "conflictHunks": 4,
+      "resolvedSha256": "ca2bfea825ea4b5ee9faf9e73213fdb9e6a0728396ce958f147d61f16750ef52",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/word/WordTemplatesWorkspace.js",
+      "conflictHunks": 12,
+      "resolvedSha256": "ac4dbac360e8e307c1a13673558d69c1faeb5e6ad86e82925679b0168e538c8d",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/word/WordTemplatesWorkspace.scss",
+      "conflictHunks": 1,
+      "resolvedSha256": "085f6e198152481319fb558591f4c57d1cffe1c431ec635f58cdfc08825df4f9",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/word/WordTemplatesWorkspace.test.js",
+      "conflictHunks": 2,
+      "resolvedSha256": "4732577dcdffe5e1e7953edfc3ab20f3163fd272ce97e222ba88dee24ed8ebc0",
+      "equalsIncomingFile": true,
+      "strategy": "Review existing common Word/product update; keep auto-merged non-conflicting source and incoming conflict hunks. No baseline regeneration."
+    }
+  ]
+}

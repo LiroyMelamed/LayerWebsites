@@ -1,0 +1,13 @@
+# Current-main delta qualification — 1 November 2026
+
+Runtime merge `6fab2887d056262cf52ddb773a377e5ad804f0d7` on local branch `codex/billing-current-main-20261101` combines qualified billing source `9dd9cb3607ee79434fcfb1aed5a40773e5713789` with current-main source `4917ca1a3d25e4224bd64fa8c05048285c0741dd`. The merge was clean and changed exactly seven backend paths; it did not alter the billing fix or pause-gate implementation.
+
+The unchanged six-file synthetic selection passed **40/40, zero failures or skips** on the approved loopback-listener retry. It includes `qaOutboundNoop.recovery`, `signingV2.completedCopyNotification`, `signingV2.transportOutcomes`, `systemMessageConsentController`, `systemMessagesOutbox` and `systemMessagesSdkRecovery`. The last selection exercises the actual SDK against a local Central stub, including a lost HTTP receipt and a real child-process crash after a committed synthetic claim. This is local SDK recovery evidence, not provider delivery or webhook-redelivery evidence.
+
+The first execution passed 38 cases and could not bind its two loopback SDK fixtures because the execution sandbox denied local `listen` with `EPERM`. Its evidence is preserved as `attempt1-*`. The identical selection then passed with normal approved local-listener execution and the same external/application-database network guard. No source, assertions, fixtures or dependency installation changed to obtain the pass. See [retry provenance](retry-provenance.json), [final receipt](evidence.json) and [raw TAP](delta-tests.tap).
+
+The original signing release manifest passed **103/103** without edits before and after this run. The candidate HEAD and all tracked backend/frontend/scripts source inputs remained stable throughout. Backend dependencies use the existing exact-lock installation; lockfiles and manifests remain unchanged.
+
+[Git object comparisons](merge-input-proof.json) establish that the complete frontend tree, scripts tree, root/backend package manifests and lockfiles, and signing release manifest are byte-identical to `9dd9cb36`. The only delta is the seven enumerated backend paths. No fresh full frontend suite or compile is claimed here; refer to the separate qualification on the identical frontend/compile inputs.
+
+This evidence was produced without a separate audit commit and is consolidated by the parent release index. The runtime merge is committed locally. No push, deployment, provider call, live application/database access, charge, document, real message or production configuration change occurred. This delta does not close the deployment's separate QA/sandbox/backup/rollback/drain and callback-recovery holds.

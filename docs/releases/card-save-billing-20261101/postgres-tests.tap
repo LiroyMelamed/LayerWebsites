@@ -1,0 +1,43 @@
+✔ dedicated legacy card save collects the stored debt once, separately from ₪1 (36.647417ms)
+✔ scoped legacy card save collects the stored debt once, separately from ₪1 (23.024ms)
+✔ card verification leaves nonbillable subscription unchanged: {"amount":0} (13.574916ms)
+✔ card verification leaves nonbillable subscription unchanged: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"} (13.120542ms)
+✔ card verification leaves nonbillable subscription unchanged: {"status":"complimentary","complimentaryUntil":"2026-12-01T12:00:00Z"} (13.288792ms)
+✔ card verification leaves nonbillable subscription unchanged: {"billingEnabled":false} (14.503583ms)
+✔ card verification leaves nonbillable subscription unchanged: {"autoRenew":false,"status":"active","renewsAt":"2026-10-01T12:00:00Z"} (13.008666ms)
+✔ one definite decline retains debt/grace and callback replay never retries that setup attempt (19.913125ms)
+✔ timeout charge outcome retains a reservation and prevents alternate charges or checkout (18.888125ms)
+✔ ambiguous charge outcome retains a reservation and prevents alternate charges or checkout (17.807375ms)
+✔ malformed charge outcome retains a reservation and prevents alternate charges or checkout (17.860333ms)
+✔ an existing unresolved payment survives setup and blocks a second collection (14.361709ms)
+✔ concurrent setup callbacks, explicit retry and maintenance dispatch at most one subscription charge (18.780208ms)
+✔ unverified setup or missing trusted token cannot save a callback card or collect debt (12.841333ms)
+✔ initial signup payment provisions the signup without entering card debt collection (10.658667ms)
+✔ a setup saved before the next bill cannot authorize that later bill when its callback replays (14.208625ms)
+✔ pre-fix succeeded setup without collection authorization cannot start a historical live bill (11.858292ms)
+✔ a successful charge with unverifiable outcome remains reserved until its same transaction verifies (20.040416ms)
+✔ setup settlement rejects a stored intent from a different office before saving its card (12.030333ms)
+✔ a setup authorized for an unresolved old cycle cannot collect a different later cycle (14.701375ms)
+✔ hosted checkout racing setup collection reserves one payment route (14.20125ms)
+✔ yearly debt collection uses its stored agreed monthly amount and existing annual rule (14.889958ms)
+✔ setup return reports actual payment result for an active account with due debt: timeout (14.480375ms)
+✔ setup return reports actual payment result for an active account with due debt: success (15.626667ms)
+✔ browser cancellation preserves an uncertain hosted reservation; later confirmed payment settles once (17.455917ms)
+✔ a missing card cannot downgrade a nonbillable account: {"amount":0} (12.203292ms)
+✔ a missing credentials cannot downgrade a nonbillable account: {"amount":0} (13.097167ms)
+✔ a missing card cannot downgrade a nonbillable account: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"} (12.204542ms)
+✔ a missing credentials cannot downgrade a nonbillable account: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"} (11.70225ms)
+✔ setup blocked by an unrelated pending payment cannot retry it after its later decline (14.9605ms)
+✔ provider document reference persists on the successful intent and history without assuming email delivery (16.026208ms)
+✔ expiry suspension after cancellation without an existing payment failure creates no debt on card save (12.8525ms)
+✔ zero-price v2 agreement remains readable by plan, return and lock status snapshots (13.052166ms)
+✔ due debt with missing card returns explicit failed payment instead of success-shaped snapshot (12.304417ms)
+✔ due debt with missing credentials returns explicit failed payment instead of success-shaped snapshot (12.04775ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 35
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 580.46075

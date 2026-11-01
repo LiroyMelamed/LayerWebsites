@@ -1,0 +1,3 @@
+# Unified diff context includes a single space on unchanged empty lines.
+# Preserve this evidence byte-for-byte without treating context as source whitespace.
+compatibility-production.patch -whitespace

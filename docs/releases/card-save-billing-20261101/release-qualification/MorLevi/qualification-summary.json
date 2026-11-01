@@ -1,0 +1,51 @@
+{
+  "atUtc": "2026-11-01T23:00:38.216199+00:00",
+  "status": "PASS_LOCAL_PINNED_SOURCE",
+  "tenant": "MorLevi",
+  "branch": "codex/billing-final-mor-20261101",
+  "qualifiedRuntimeCandidate": "b05d66f9f7873753e520c554f4b2c1c540e6682b",
+  "sharedMainCutoff": "074df7520497a0cd6bd95ad70353201c905f0aa6",
+  "latestClientCutoff": "586f93e5ac5148ba5ec0059cb5430ebbc4e92e6c",
+  "finalDonor": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "furtherDriftPolicy": "HOLD; no ref chasing",
+  "billing": {
+    "tests": 218,
+    "pass": 217,
+    "fail": 0,
+    "skipped": 1,
+    "cancelled": 0
+  },
+  "common": {
+    "tests": 125,
+    "pass": 124,
+    "fail": 0,
+    "skipped": 1,
+    "cancelled": 0
+  },
+  "transport": {
+    "tests": 40,
+    "pass": 40,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "frontend": {
+    "success": true,
+    "numTotalTests": 923,
+    "numPassedTests": 923,
+    "numFailedTests": 0,
+    "numPendingTests": 0,
+    "numPassedTestSuites": 108,
+    "numFailedTestSuites": 0
+  },
+  "frontendCompileSource": "3217781317b54b3143d8bfba29475f2ab42485bd",
+  "buildArtifacts": 253,
+  "carriedFrontendBuildInputsValid": true,
+  "preservedClientPaths": 111,
+  "sourceGuardFiles": 103,
+  "boundDonorPaths": 41,
+  "latestClientBoundPaths": 7,
+  "latestClientIsAncestor": true,
+  "runtimeAdaptations": [],
+  "scope": "isolated local qualification only; no provider/customer/live/deploy acceptance"
+}

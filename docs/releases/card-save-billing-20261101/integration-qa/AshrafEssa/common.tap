@@ -1,0 +1,550 @@
+TAP version 13
+# Subtest: client profile migration and controller persist on isolated PostgreSQL
+ok 1 - client profile migration and controller persist on isolated PostgreSQL # SKIP
+  ---
+  duration_ms: 0.644625
+  type: 'test'
+  ...
+# Subtest: exact customer read rejects missing authentication before DB lookup
+ok 2 - exact customer read rejects missing authentication before DB lookup
+  ---
+  duration_ms: 15.201708
+  type: 'test'
+  ...
+# Subtest: customer identity cannot invoke the office clients-view endpoint
+ok 3 - customer identity cannot invoke the office clients-view endpoint
+  ---
+  duration_ms: 2.883208
+  type: 'test'
+  ...
+# Subtest: same-tenant authorized read returns exact profile and no-store cache policy
+ok 4 - same-tenant authorized read returns exact profile and no-store cache policy
+  ---
+  duration_ms: 1.768917
+  type: 'test'
+  ...
+# Subtest: cross-tenant target is absent even when query/body attempts a tenant override
+ok 5 - cross-tenant target is absent even when query/body attempts a tenant override
+  ---
+  duration_ms: 4.728084
+  type: 'test'
+  ...
+# Subtest: dedicated null-tenant admin cannot read a shared tenant customer
+ok 6 - dedicated null-tenant admin cannot read a shared tenant customer
+  ---
+  duration_ms: 2.839625
+  type: 'test'
+  ...
+# Subtest: role-mode staff without clients view is denied before exact-data query
+ok 7 - role-mode staff without clients view is denied before exact-data query
+  ---
+  duration_ms: 1.909458
+  type: 'test'
+  ...
+# Subtest: role-mode clients viewer can read only its tenant profile
+ok 8 - role-mode clients viewer can read only its tenant profile
+  ---
+  duration_ms: 2.509916
+  type: 'test'
+  ...
+# Subtest: exact customer read does not expose Admin target profile
+ok 9 - exact customer read does not expose Admin target profile
+  ---
+  duration_ms: 1.266375
+  type: 'test'
+  ...
+# Subtest: exact customer read does not expose Deleted target profile
+ok 10 - exact customer read does not expose Deleted target profile
+  ---
+  duration_ms: 2.290083
+  type: 'test'
+  ...
+# Subtest: invalid exact ID is rejected before target-data lookup
+ok 11 - invalid exact ID is rejected before target-data lookup
+  ---
+  duration_ms: 2.779709
+  type: 'test'
+  ...
+# Subtest: the exact profile route honors a billing rejection before any target-data lookup
+ok 12 - the exact profile route honors a billing rejection before any target-data lookup
+  ---
+  duration_ms: 2.815333
+  type: 'test'
+  ...
+# Subtest: human identity and organization registration retain independent values and leading zeroes
+ok 13 - human identity and organization registration retain independent values and leading zeroes
+  ---
+  duration_ms: 1.63125
+  type: 'test'
+  ...
+# Subtest: legacy omission is distinct from explicit null reset; defaults do not invent nationality
+ok 14 - legacy omission is distinct from explicit null reset; defaults do not invent nationality
+  ---
+  duration_ms: 0.368375
+  type: 'test'
+  ...
+# Subtest: reject numeric ID without exposing its value
+ok 15 - reject numeric ID without exposing its value
+  ---
+  duration_ms: 0.186
+  type: 'test'
+  ...
+# Subtest: reject oversized ID without exposing its value
+ok 16 - reject oversized ID without exposing its value
+  ---
+  duration_ms: 0.040917
+  type: 'test'
+  ...
+# Subtest: reject oversized address without exposing its value
+ok 17 - reject oversized address without exposing its value
+  ---
+  duration_ms: 0.042416
+  type: 'test'
+  ...
+# Subtest: reject array instead of object without exposing its value
+ok 18 - reject array instead of object without exposing its value
+  ---
+  duration_ms: 0.03125
+  type: 'test'
+  ...
+# Subtest: reject new version without exposing its value
+ok 19 - reject new version without exposing its value
+  ---
+  duration_ms: 0.026792
+  type: 'test'
+  ...
+# Subtest: reject unknown property without exposing its value
+ok 20 - reject unknown property without exposing its value
+  ---
+  duration_ms: 0.027958
+  type: 'test'
+  ...
+# Subtest: reject unsupported capacity without exposing its value
+ok 21 - reject unsupported capacity without exposing its value
+  ---
+  duration_ms: 0.033792
+  type: 'test'
+  ...
+# Subtest: reject line break in identity without exposing its value
+ok 22 - reject line break in identity without exposing its value
+  ---
+  duration_ms: 0.073916
+  type: 'test'
+  ...
+# Subtest: reject bidi override in identity without exposing its value
+ok 23 - reject bidi override in identity without exposing its value
+  ---
+  duration_ms: 0.038792
+  type: 'test'
+  ...
+# Subtest: reject organization name duplicate without exposing its value
+ok 24 - reject organization name duplicate without exposing its value
+  ---
+  duration_ms: 0.032416
+  type: 'test'
+  ...
+# Subtest: conflicting request spellings are rejected instead of losing data
+ok 25 - conflicting request spellings are rejected instead of losing data
+  ---
+  duration_ms: 0.06125
+  type: 'test'
+  ...
+# Subtest: create persists profile; current-self reads it while broad lists omit identity data; transport is fake
+ok 26 - create persists profile; current-self reads it while broad lists omit identity data; transport is fake
+  ---
+  duration_ms: 2.452458
+  type: 'test'
+  ...
+# Subtest: legacy create without new fields remains valid
+ok 27 - legacy create without new fields remains valid
+  ---
+  duration_ms: 0.96425
+  type: 'test'
+  ...
+# Subtest: legacy update preserves profile while explicit reset clears it
+ok 28 - legacy update preserves profile while explicit reset clears it
+  ---
+  duration_ms: 2.518833
+  type: 'test'
+  ...
+# Subtest: update stores an international passport without coercion and preserves organization separate from contact
+ok 29 - update stores an international passport without coercion and preserves organization separate from contact
+  ---
+  duration_ms: 0.4355
+  type: 'test'
+  ...
+# Subtest: addCustomer rejects invalid profile before any database/transport operation
+ok 30 - addCustomer rejects invalid profile before any database/transport operation
+  ---
+  duration_ms: 0.371958
+  type: 'test'
+  ...
+# Subtest: updateCustomerById rejects invalid profile before any database/transport operation
+ok 31 - updateCustomerById rejects invalid profile before any database/transport operation
+  ---
+  duration_ms: 0.553917
+  type: 'test'
+  ...
+# Subtest: updateCurrentCustomer rejects invalid profile before any database/transport operation
+ok 32 - updateCurrentCustomer rejects invalid profile before any database/transport operation
+  ---
+  duration_ms: 0.875125
+  type: 'test'
+  ...
+# Subtest: organization profile requires the sole incumbent company-name field
+ok 33 - organization profile requires the sole incumbent company-name field
+  ---
+  duration_ms: 0.699125
+  type: 'test'
+  ...
+# Subtest: current-profile update targets authenticated identity and leaves omitted profile untouched
+ok 34 - current-profile update targets authenticated identity and leaves omitted profile untouched
+  ---
+  duration_ms: 1.186333
+  type: 'test'
+  ...
+# Subtest: current-profile update binds validated profile without writing a different user ID
+ok 35 - current-profile update binds validated profile without writing a different user ID
+  ---
+  duration_ms: 1.198375
+  type: 'test'
+  ...
+# Subtest: customer User stays customer and does not load staff schema
+ok 36 - customer User stays customer and does not load staff schema
+  ---
+  duration_ms: 1.987417
+  type: 'test'
+  ...
+# Subtest: customer Client stays customer and does not load staff schema
+ok 37 - customer Client stays customer and does not load staff schema
+  ---
+  duration_ms: 0.391083
+  type: 'test'
+  ...
+# Subtest: customer ExternalSigner stays customer and does not load staff schema
+ok 38 - customer ExternalSigner stays customer and does not load staff schema
+  ---
+  duration_ms: 0.302959
+  type: 'test'
+  ...
+# Subtest: stale customer JWT after DB role Admin cannot bypass loader
+ok 39 - stale customer JWT after DB role Admin cannot bypass loader
+  ---
+  duration_ms: 0.337084
+  type: 'test'
+  ...
+# Subtest: stale customer JWT after DB role Lawyer cannot bypass loader
+ok 40 - stale customer JWT after DB role Lawyer cannot bypass loader
+  ---
+  duration_ms: 0.288209
+  type: 'test'
+  ...
+# Subtest: stale customer JWT after DB role Staff cannot bypass loader
+ok 41 - stale customer JWT after DB role Staff cannot bypass loader
+  ---
+  duration_ms: 0.611125
+  type: 'test'
+  ...
+# Subtest: stale customer JWT after DB role Deleted cannot bypass loader
+ok 42 - stale customer JWT after DB role Deleted cannot bypass loader
+  ---
+  duration_ms: 0.257417
+  type: 'test'
+  ...
+# Subtest: cross requested tenant customer denied; correct tenant allowed
+ok 43 - cross requested tenant customer denied; correct tenant allowed
+  ---
+  duration_ms: 0.515875
+  type: 'test'
+  ...
+# Subtest: removed customer is unauthorized
+ok 44 - removed customer is unauthorized
+  ---
+  duration_ms: 0.289917
+  type: 'test'
+  ...
+# Subtest: staff Admin retains schema fail closed
+ok 45 - staff Admin retains schema fail closed
+  ---
+  duration_ms: 0.356625
+  type: 'test'
+  ...
+# Subtest: staff Lawyer retains schema fail closed
+ok 46 - staff Lawyer retains schema fail closed
+  ---
+  duration_ms: 0.504333
+  type: 'test'
+  ...
+# Subtest: staff Staff retains schema fail closed
+ok 47 - staff Staff retains schema fail closed
+  ---
+  duration_ms: 0.763375
+  type: 'test'
+  ...
+# Subtest: actual HS256 signed public optional User remains usable
+ok 48 - actual HS256 signed public optional User remains usable
+  ---
+  duration_ms: 2.086834
+  type: 'test'
+  ...
+# Subtest: actual HS256 signed public optional Client remains usable
+ok 49 - actual HS256 signed public optional Client remains usable
+  ---
+  duration_ms: 0.841584
+  type: 'test'
+  ...
+# Subtest: actual HS256 signed public optional ExternalSigner remains usable
+ok 50 - actual HS256 signed public optional ExternalSigner remains usable
+  ---
+  duration_ms: 1.450083
+  type: 'test'
+  ...
+# Subtest: invalid optional token never supplies identity eyJhbGciOiJI
+ok 51 - invalid optional token never supplies identity eyJhbGciOiJI
+  ---
+  duration_ms: 1.473334
+  type: 'test'
+  ...
+# Subtest: invalid optional token never supplies identity eyJhbGciOiJI
+ok 52 - invalid optional token never supplies identity eyJhbGciOiJI
+  ---
+  duration_ms: 0.657792
+  type: 'test'
+  ...
+# Subtest: invalid optional token never supplies identity eyJhbGciOiJI
+ok 53 - invalid optional token never supplies identity eyJhbGciOiJI
+  ---
+  duration_ms: 0.537458
+  type: 'test'
+  ...
+# Subtest: invalid optional token never supplies identity malformed
+ok 54 - invalid optional token never supplies identity malformed
+  ---
+  duration_ms: 0.419
+  type: 'test'
+  ...
+# Subtest: optional valid staff JWT missing schema denies before handler
+ok 55 - optional valid staff JWT missing schema denies before handler
+  ---
+  duration_ms: 0.641084
+  type: 'test'
+  ...
+# Subtest: customer enum change uses current DB role User without staff promotion
+ok 56 - customer enum change uses current DB role User without staff promotion
+  ---
+  duration_ms: 0.31825
+  type: 'test'
+  ...
+# Subtest: customer enum change uses current DB role Client without staff promotion
+ok 57 - customer enum change uses current DB role Client without staff promotion
+  ---
+  duration_ms: 1.380792
+  type: 'test'
+  ...
+# Subtest: customer enum change uses current DB role ExternalSigner without staff promotion
+ok 58 - customer enum change uses current DB role ExternalSigner without staff promotion
+  ---
+  duration_ms: 0.563209
+  type: 'test'
+  ...
+# Subtest: refresh keeps current DB customer User and rotates token
+ok 59 - refresh keeps current DB customer User and rotates token
+  ---
+  duration_ms: 2.272542
+  type: 'test'
+  ...
+# Subtest: refresh keeps current DB customer Client and rotates token
+ok 60 - refresh keeps current DB customer Client and rotates token
+  ---
+  duration_ms: 0.58625
+  type: 'test'
+  ...
+# Subtest: refresh keeps current DB customer ExternalSigner and rotates token
+ok 61 - refresh keeps current DB customer ExternalSigner and rotates token
+  ---
+  duration_ms: 0.601334
+  type: 'test'
+  ...
+# Subtest: refresh invalid denied before rotation
+ok 62 - refresh invalid denied before rotation
+  ---
+  duration_ms: 0.391583
+  type: 'test'
+  ...
+# Subtest: refresh revoked denied before rotation
+ok 63 - refresh revoked denied before rotation
+  ---
+  duration_ms: 0.260791
+  type: 'test'
+  ...
+# Subtest: refresh expired denied before rotation
+ok 64 - refresh expired denied before rotation
+  ---
+  duration_ms: 0.581833
+  type: 'test'
+  ...
+# Subtest: missing refresh rejected before database
+ok 65 - missing refresh rejected before database
+  ---
+  duration_ms: 0.851625
+  type: 'test'
+  ...
+# Subtest: legacy Admin receives same firm manager capabilities
+ok 66 - legacy Admin receives same firm manager capabilities
+  ---
+  duration_ms: 0.871916
+  type: 'test'
+  ...
+# Subtest: legacy Lawyer receives same firm manager capabilities
+ok 67 - legacy Lawyer receives same firm manager capabilities
+  ---
+  duration_ms: 0.156
+  type: 'test'
+  ...
+# Subtest: professional Lawyer title retained separately
+ok 68 - professional Lawyer title retained separately
+  ---
+  duration_ms: 0.0885
+  type: 'test'
+  ...
+# Subtest: custom Admin explicit deny is preserved
+ok 69 - custom Admin explicit deny is preserved
+  ---
+  duration_ms: 0.218834
+  type: 'test'
+  ...
+# Subtest: custom Lawyer explicit deny is preserved
+ok 70 - custom Lawyer explicit deny is preserved
+  ---
+  duration_ms: 0.106583
+  type: 'test'
+  ...
+# Subtest: Staff is not promoted to office Admin
+ok 71 - Staff is not promoted to office Admin
+  ---
+  duration_ms: 0.093167
+  type: 'test'
+  ...
+# Subtest: User is not promoted to office Admin
+ok 72 - User is not promoted to office Admin
+  ---
+  duration_ms: 0.056541
+  type: 'test'
+  ...
+# Subtest: PlatformAdmin is not promoted to office Admin
+ok 73 - PlatformAdmin is not promoted to office Admin
+  ---
+  duration_ms: 0.055041
+  type: 'test'
+  ...
+# Subtest: Lawyer cannot gain platform admin from development Admin fallback
+ok 74 - Lawyer cannot gain platform admin from development Admin fallback
+  ---
+  duration_ms: 1.546792
+  type: 'test'
+  ...
+# Subtest: authenticated request normalizes only legacy capabilities after permission load
+ok 75 - authenticated request normalizes only legacy capabilities after permission load
+  ---
+  duration_ms: 13.987709
+  type: 'test'
+  ...
+# Subtest: shared database mode never widens Lawyer to global Admin
+ok 76 - shared database mode never widens Lawyer to global Admin
+  ---
+  duration_ms: 0.077833
+  type: 'test'
+  ...
+# Subtest: optional public signing auth loads permissions before legacy parity
+ok 77 - optional public signing auth loads permissions before legacy parity
+  ---
+  duration_ms: 1.536875
+  type: 'test'
+  ...
+# Subtest: Admin and Lawyer with identical custom matrix have identical allow/deny results
+ok 78 - Admin and Lawyer with identical custom matrix have identical allow/deny results
+  ---
+  duration_ms: 0.380583
+  type: 'test'
+  ...
+# Subtest: public signer identity override cannot bypass custom role for either title
+ok 79 - public signer identity override cannot bypass custom role for either title
+  ---
+  duration_ms: 0.064666
+  type: 'test'
+  ...
+# Subtest: default all-target wrapper checks exact commits and deploys only the four active targets
+ok 80 - default all-target wrapper checks exact commits and deploys only the four active targets
+  ---
+  duration_ms: 8520.237583
+  type: 'test'
+  ...
+# Subtest: dry-run lists only active targets and invokes no deployment child
+ok 81 - dry-run lists only active targets and invokes no deployment child
+  ---
+  duration_ms: 672.130625
+  type: 'test'
+  ...
+# Subtest: a failed release guard prevents every deployment child
+ok 82 - a failed release guard prevents every deployment child
+  ---
+  duration_ms: 226.639208
+  type: 'test'
+  ...
+# Subtest: a malformed active candidate is rejected before any deployment child
+ok 83 - a malformed active candidate is rejected before any deployment child
+  ---
+  duration_ms: 57.449833
+  type: 'test'
+  ...
+# Subtest: no tenant arguments merge and push only the Melamedia QA branch
+ok 84 - no tenant arguments merge and push only the Melamedia QA branch
+  ---
+  duration_ms: 2886.405459
+  type: 'test'
+  ...
+# Subtest: explicit client selection still works and --no-push keeps it local
+ok 85 - explicit client selection still works and --no-push keeps it local
+  ---
+  duration_ms: 3304.656167
+  type: 'test'
+  ...
+# Subtest: each of the four active branches remains explicitly addressable
+ok 86 - each of the four active branches remains explicitly addressable
+  ---
+  duration_ms: 489.352541
+  type: 'test'
+  ...
+# Subtest: retired Idm is rejected before any Git/network action: idm
+ok 87 - retired Idm is rejected before any Git/network action: idm
+  ---
+  duration_ms: 17.875958
+  type: 'test'
+  ...
+# Subtest: retired Idm is rejected before any Git/network action: Idm
+ok 88 - retired Idm is rejected before any Git/network action: Idm
+  ---
+  duration_ms: 20.597542
+  type: 'test'
+  ...
+# Subtest: retired Idm is rejected before any Git/network action: melamedia idm
+ok 89 - retired Idm is rejected before any Git/network action: melamedia idm
+  ---
+  duration_ms: 11.786458
+  type: 'test'
+  ...
+# Subtest: retired Idm is rejected before any Git/network action: --dry-run idm
+ok 90 - retired Idm is rejected before any Git/network action: --dry-run idm
+  ---
+  duration_ms: 15.873458
+  type: 'test'
+  ...
+1..90
+# tests 90
+# suites 0
+# pass 89
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 16855.730875

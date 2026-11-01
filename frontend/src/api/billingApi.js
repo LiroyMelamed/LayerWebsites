@@ -96,6 +96,15 @@ const billingApi = {
         return ApiUtils.post(`${base}/checkout`, body || {});
     },
 
+    confirmCheckout: async ({ intentId, uniqId } = {}) => {
+        invalidateBillingCaches();
+        try {
+            return await ApiUtils.post(`${base}/checkout/confirm`, { intentId, uniqId });
+        } finally {
+            invalidateBillingCaches();
+        }
+    },
+
     chargeNow: async (body) => {
         invalidateBillingCaches();
         return ApiUtils.post(`${base}/charge`, body || {});

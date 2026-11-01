@@ -1,0 +1,84 @@
+{
+  "atUtc": "2026-11-01T14:05:38.444081+00:00",
+  "originalTenantCommit": "c469ee2e0fb5bee403902c698f6621cb7a08cab3",
+  "unifiedInput": "176ff60a377136ce6a01b43c1defd23f2fe0674b",
+  "mergeCommit": "97b73f91041b0a8d74e07e94fa4d36cdca914f65",
+  "mergeParents": [
+    "c469ee2e0fb5bee403902c698f6621cb7a08cab3",
+    "176ff60a377136ce6a01b43c1defd23f2fe0674b"
+  ],
+  "mergeConflicts": 0,
+  "ancestorChecks": {
+    "c469ee2e0fb5bee403902c698f6621cb7a08cab3": true,
+    "176ff60a377136ce6a01b43c1defd23f2fe0674b": true
+  },
+  "preservation": {
+    "publicBranding": {
+      "paths": [
+        "frontend/public"
+      ],
+      "fileCount": 138,
+      "baseTreeListSha256": "1a48c8bd4e1b84c764d5cc1072c82f983602be68d49a420e9fa8d4fa886e7d3a",
+      "candidateTreeListSha256": "1a48c8bd4e1b84c764d5cc1072c82f983602be68d49a420e9fa8d4fa886e7d3a",
+      "unchanged": true
+    },
+    "sourceLogos": {
+      "paths": [
+        "frontend/src/assets/images/logos"
+      ],
+      "fileCount": 4,
+      "baseTreeListSha256": "ef0acf657332d02afb9bb5bb18c3b872b3c03bd95e9a75116d82af6aeb99e0d6",
+      "candidateTreeListSha256": "ef0acf657332d02afb9bb5bb18c3b872b3c03bd95e9a75116d82af6aeb99e0d6",
+      "unchanged": true
+    },
+    "tenantRuntimeConfig": {
+      "paths": [
+        "backend/ecosystem.config.js",
+        "backend/lib/billing/tenantBillingDefaults.js"
+      ],
+      "fileCount": 2,
+      "baseTreeListSha256": "290a04f059f54cf45c2f045c80bda9652b74410be5b1deb90f6c23c446ecd5f2",
+      "candidateTreeListSha256": "290a04f059f54cf45c2f045c80bda9652b74410be5b1deb90f6c23c446ecd5f2",
+      "unchanged": true
+    },
+    "signingManifest": {
+      "paths": [
+        "docs/signing-v2/release-baseline.json"
+      ],
+      "fileCount": 1,
+      "baseTreeListSha256": "45f3be3d5b17ec58ed423c45b61d6559394c3dea174d74a899f83204ba10841f",
+      "candidateTreeListSha256": "45f3be3d5b17ec58ed423c45b61d6559394c3dea174d74a899f83204ba10841f",
+      "unchanged": true
+    },
+    "trackedFrontendEnvironmentFiles": {
+      "paths": [],
+      "unchanged": true
+    }
+  },
+  "dependencyVerification": {
+    "frontend": {
+      "sourceLockSha256": "ed0b4c398ffe0d47a2d91e735ee48bf494a0b718534293b59056f91973a6a4ac",
+      "installedLockSha256": "00cc3b9a309e871937202330da56da5744fedbaac7773c89447c4c943a049b05",
+      "dependencyRealPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules",
+      "requiredPackagesChecked": 1595,
+      "mismatchCount": 0,
+      "mismatches": []
+    },
+    "backend": {
+      "sourceLockSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+      "installedLockSha256": "6050ef6083317866bc68181efba905733c39b1de665b1564002a97d56a126f4b",
+      "dependencyRealPath": "/private/tmp/layer-billing-lock-deps/node_modules",
+      "requiredPackagesChecked": 512,
+      "mismatchCount": 0,
+      "mismatches": []
+    }
+  },
+  "signingSourceGuardObserved": {
+    "command": "node scripts/check-signing-release.cjs HEAD",
+    "exitCode": 0,
+    "commit": "97b73f91041b0a8d74e07e94fa4d36cdca914f65",
+    "protectedFiles": 103
+  },
+  "liveDataOrSettingsReadOrChanged": false,
+  "note": "Git source preservation does not independently validate customer database business settings, secrets or loaded runtime."
+}

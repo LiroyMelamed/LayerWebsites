@@ -1,0 +1,69 @@
+{
+  "atUtc": "2026-11-01T22:49:38.445897+00:00",
+  "tenant": "MelamedLaw",
+  "qualifiedRuntimeCommit": "693921c7c20879f3b14e855a958579b1fda9c30b",
+  "currentSharedMain": "4917ca1a3d25e4224bd64fa8c05048285c0741dd",
+  "currentClientBaseline": "5e2da32b3ebad7b77ace52d50227584a94e1e3ed",
+  "finalDonor": "6fab2887d056262cf52ddb773a377e5ad804f0d7",
+  "backend": {
+    "billing-and-gate": {
+      "tests": 218,
+      "pass": 217,
+      "fail": 0,
+      "skipped": 1,
+      "cancelled": 0
+    },
+    "common": {
+      "tests": 125,
+      "pass": 124,
+      "fail": 0,
+      "skipped": 1,
+      "cancelled": 0
+    }
+  },
+  "transport": {
+    "tests": 40,
+    "pass": 40,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "frontend": {
+    "success": true,
+    "numTotalTests": 938,
+    "numPassedTests": 938,
+    "numFailedTests": 0,
+    "numPendingTests": 0,
+    "numPassedTestSuites": 110,
+    "numFailedTestSuites": 0
+  },
+  "frontendExecutedAt": "cc3d2fecc6f02230f88485c55d38295d5aff1e75",
+  "buildExecutedAt": "cc3d2fecc6f02230f88485c55d38295d5aff1e75",
+  "buildArtifactCount": 253,
+  "buildOwnLogoMatches": true,
+  "freshCompileAtFinalRuntime": false,
+  "frontBuildCarryValid": true,
+  "frontScriptsInputCount": 873,
+  "importedBackendHelpers": 10,
+  "preservedClientPaths": 111,
+  "protectedSourceFiles": 103,
+  "donorChangedPaths": 41,
+  "runtimeEditsOutsideMerges": false,
+  "testEditsOutsideMerges": false,
+  "productionOrProviderOrCustomerOperations": 0,
+  "qualification": "PASS_LOCAL_PINNED_SOURCE_WITH_EXPLICIT_ENVIRONMENT_SKIPS",
+  "remainingGates": [
+    "Full signup designated QA database/config",
+    "Independent client-profile PostgreSQL fixture",
+    "Authorized provider sandbox/document type/delivery confirmation",
+    "Operational drain/durable callbacks/verified rollback and release authorization"
+  ],
+  "reproductionToolSha256": {
+    "qualify-client.py": "b4e1e3bea91a47c78359bc9d0a8d891ab9b5d65726e0f03fb10f35054fceea1e",
+    "with-build-lock.py": "02187bcd053957d63c496d2ce4201071897a000fa3797c5fa2fb256502ac55da",
+    "prove-frontend-carry.py": "2e7d24e5c33afae524adb156a00bb7e328b3003e27fcc7a2d77edfac1467267b",
+    "qualify-final-client.py": "ac81af37700db43dd10511eff9723b4aa9c941b262ed2d6beca973a979589a99",
+    "inspect-frontend-imports.cjs": "a5b5406411230dee6601c6fa85e236183747c496e516bd14a1a72a910a617bd4"
+  },
+  "localeMerge": "Three locales each add only billing.paymentUnconfirmed through one byte insertion; all original client bytes/values preserved."
+}

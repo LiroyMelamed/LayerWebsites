@@ -1,0 +1,606 @@
+TAP version 13
+# {"event":"auth_missing_token","method":"GET","path":"/secure"}
+# Subtest: auth middleware returns consistent JSON on missing token
+ok 1 - auth middleware returns consistent JSON on missing token
+  ---
+  duration_ms: 13.010459
+  type: 'test'
+  ...
+# {"event":"auth_invalid_token","method":"GET","path":"/secure"}
+# Subtest: auth middleware returns consistent JSON on invalid token
+ok 2 - auth middleware returns consistent JSON on invalid token
+  ---
+  duration_ms: 3.970583
+  type: 'test'
+  ...
+# Subtest: client profile migration and controller persist on isolated PostgreSQL
+ok 3 - client profile migration and controller persist on isolated PostgreSQL # SKIP
+  ---
+  duration_ms: 0.446625
+  type: 'test'
+  ...
+# Subtest: exact customer read rejects missing authentication before DB lookup
+ok 4 - exact customer read rejects missing authentication before DB lookup
+  ---
+  duration_ms: 10.369416
+  type: 'test'
+  ...
+# Subtest: customer identity cannot invoke the office clients-view endpoint
+ok 5 - customer identity cannot invoke the office clients-view endpoint
+  ---
+  duration_ms: 4.723042
+  type: 'test'
+  ...
+# Subtest: same-tenant authorized read returns exact profile and no-store cache policy
+ok 6 - same-tenant authorized read returns exact profile and no-store cache policy
+  ---
+  duration_ms: 2.566959
+  type: 'test'
+  ...
+# Subtest: cross-tenant target is absent even when query/body attempts a tenant override
+ok 7 - cross-tenant target is absent even when query/body attempts a tenant override
+  ---
+  duration_ms: 1.276208
+  type: 'test'
+  ...
+# Subtest: dedicated null-tenant admin cannot read a shared tenant customer
+ok 8 - dedicated null-tenant admin cannot read a shared tenant customer
+  ---
+  duration_ms: 2.629166
+  type: 'test'
+  ...
+# Subtest: role-mode staff without clients view is denied before exact-data query
+ok 9 - role-mode staff without clients view is denied before exact-data query
+  ---
+  duration_ms: 1.635375
+  type: 'test'
+  ...
+# Subtest: role-mode clients viewer can read only its tenant profile
+ok 10 - role-mode clients viewer can read only its tenant profile
+  ---
+  duration_ms: 1.590875
+  type: 'test'
+  ...
+# Subtest: exact customer read does not expose Admin target profile
+ok 11 - exact customer read does not expose Admin target profile
+  ---
+  duration_ms: 1.529958
+  type: 'test'
+  ...
+# Subtest: exact customer read does not expose Deleted target profile
+ok 12 - exact customer read does not expose Deleted target profile
+  ---
+  duration_ms: 1.142416
+  type: 'test'
+  ...
+# Subtest: invalid exact ID is rejected before target-data lookup
+ok 13 - invalid exact ID is rejected before target-data lookup
+  ---
+  duration_ms: 1.577375
+  type: 'test'
+  ...
+# Subtest: the exact profile route honors a billing rejection before any target-data lookup
+ok 14 - the exact profile route honors a billing rejection before any target-data lookup
+  ---
+  duration_ms: 1.86275
+  type: 'test'
+  ...
+# Subtest: human identity and organization registration retain independent values and leading zeroes
+ok 15 - human identity and organization registration retain independent values and leading zeroes
+  ---
+  duration_ms: 2.23325
+  type: 'test'
+  ...
+# Subtest: legacy omission is distinct from explicit null reset; defaults do not invent nationality
+ok 16 - legacy omission is distinct from explicit null reset; defaults do not invent nationality
+  ---
+  duration_ms: 8.332083
+  type: 'test'
+  ...
+# Subtest: reject numeric ID without exposing its value
+ok 17 - reject numeric ID without exposing its value
+  ---
+  duration_ms: 0.49175
+  type: 'test'
+  ...
+# Subtest: reject oversized ID without exposing its value
+ok 18 - reject oversized ID without exposing its value
+  ---
+  duration_ms: 0.05725
+  type: 'test'
+  ...
+# Subtest: reject oversized address without exposing its value
+ok 19 - reject oversized address without exposing its value
+  ---
+  duration_ms: 0.049667
+  type: 'test'
+  ...
+# Subtest: reject array instead of object without exposing its value
+ok 20 - reject array instead of object without exposing its value
+  ---
+  duration_ms: 0.033833
+  type: 'test'
+  ...
+# Subtest: reject new version without exposing its value
+ok 21 - reject new version without exposing its value
+  ---
+  duration_ms: 0.034541
+  type: 'test'
+  ...
+# Subtest: reject unknown property without exposing its value
+ok 22 - reject unknown property without exposing its value
+  ---
+  duration_ms: 0.03325
+  type: 'test'
+  ...
+# Subtest: reject unsupported capacity without exposing its value
+ok 23 - reject unsupported capacity without exposing its value
+  ---
+  duration_ms: 0.040125
+  type: 'test'
+  ...
+# Subtest: reject line break in identity without exposing its value
+ok 24 - reject line break in identity without exposing its value
+  ---
+  duration_ms: 0.084875
+  type: 'test'
+  ...
+# Subtest: reject bidi override in identity without exposing its value
+ok 25 - reject bidi override in identity without exposing its value
+  ---
+  duration_ms: 0.042542
+  type: 'test'
+  ...
+# Subtest: reject organization name duplicate without exposing its value
+ok 26 - reject organization name duplicate without exposing its value
+  ---
+  duration_ms: 0.03475
+  type: 'test'
+  ...
+# Subtest: conflicting request spellings are rejected instead of losing data
+ok 27 - conflicting request spellings are rejected instead of losing data
+  ---
+  duration_ms: 0.39525
+  type: 'test'
+  ...
+# Subtest: create persists profile; current-self reads it while broad lists omit identity data; transport is fake
+ok 28 - create persists profile; current-self reads it while broad lists omit identity data; transport is fake
+  ---
+  duration_ms: 4.333666
+  type: 'test'
+  ...
+# Subtest: legacy create without new fields remains valid
+ok 29 - legacy create without new fields remains valid
+  ---
+  duration_ms: 1.969292
+  type: 'test'
+  ...
+# Subtest: legacy update preserves profile while explicit reset clears it
+ok 30 - legacy update preserves profile while explicit reset clears it
+  ---
+  duration_ms: 0.998292
+  type: 'test'
+  ...
+# Subtest: update stores an international passport without coercion and preserves organization separate from contact
+ok 31 - update stores an international passport without coercion and preserves organization separate from contact
+  ---
+  duration_ms: 0.888416
+  type: 'test'
+  ...
+# Subtest: addCustomer rejects invalid profile before any database/transport operation
+ok 32 - addCustomer rejects invalid profile before any database/transport operation
+  ---
+  duration_ms: 2.380542
+  type: 'test'
+  ...
+# Subtest: updateCustomerById rejects invalid profile before any database/transport operation
+ok 33 - updateCustomerById rejects invalid profile before any database/transport operation
+  ---
+  duration_ms: 1.46075
+  type: 'test'
+  ...
+# Subtest: updateCurrentCustomer rejects invalid profile before any database/transport operation
+ok 34 - updateCurrentCustomer rejects invalid profile before any database/transport operation
+  ---
+  duration_ms: 1.114583
+  type: 'test'
+  ...
+# Subtest: organization profile requires the sole incumbent company-name field
+ok 35 - organization profile requires the sole incumbent company-name field
+  ---
+  duration_ms: 0.7725
+  type: 'test'
+  ...
+# Subtest: current-profile update targets authenticated identity and leaves omitted profile untouched
+ok 36 - current-profile update targets authenticated identity and leaves omitted profile untouched
+  ---
+  duration_ms: 0.899708
+  type: 'test'
+  ...
+# Subtest: current-profile update binds validated profile without writing a different user ID
+ok 37 - current-profile update binds validated profile without writing a different user ID
+  ---
+  duration_ms: 0.868209
+  type: 'test'
+  ...
+# Subtest: current customer database lookup validates context without granting an office role
+ok 38 - current customer database lookup validates context without granting an office role
+  ---
+  duration_ms: 3.092375
+  type: 'test'
+  ...
+# Subtest: legacy customer scope requires both validated identity and the server-owned legacy database boundary
+ok 39 - legacy customer scope requires both validated identity and the server-owned legacy database boundary
+  ---
+  duration_ms: 1.919333
+  type: 'test'
+  ...
+# Subtest: package discovery in validated legacy scope retains exact actor and office matching
+ok 40 - package discovery in validated legacy scope retains exact actor and office matching
+  ---
+  duration_ms: 1.340625
+  type: 'test'
+  ...
+# Subtest: a request tenant cannot replace the authenticated client tenant
+ok 41 - a request tenant cannot replace the authenticated client tenant
+  ---
+  duration_ms: 1.442041
+  type: 'test'
+  ...
+# Subtest: unknown sequential indices never produce an actionable client item
+ok 42 - unknown sequential indices never produce an actionable client item
+  ---
+  duration_ms: 0.268583
+  type: 'test'
+  ...
+# Subtest: expiry includes the exact deadline used by signing submission
+ok 43 - expiry includes the exact deadline used by signing submission
+  ---
+  duration_ms: 2.744667
+  type: 'test'
+  ...
+# Subtest: personal completion survives later global expiry, rejection or cancellation
+ok 44 - personal completion survives later global expiry, rejection or cancellation
+  ---
+  duration_ms: 0.547917
+  type: 'test'
+  ...
+# Subtest: invalid non-null expiry cannot advertise an unfinished document as ready
+ok 45 - invalid non-null expiry cannot advertise an unfinished document as ready
+  ---
+  duration_ms: 0.397542
+  type: 'test'
+  ...
+# Subtest: signing discovery and metadata failures are propagated instead of reporting an empty list
+ok 46 - signing discovery and metadata failures are propagated instead of reporting an empty list
+  ---
+  duration_ms: 0.701416
+  type: 'test'
+  ...
+# Subtest: attachment database failures return an error, never an empty success
+ok 47 - attachment database failures return an error, never an empty success
+  ---
+  duration_ms: 1.658292
+  type: 'test'
+  ...
+# Subtest: attachment handler denies unauthenticated, staff, external and wrong-tenant callers before querying
+ok 48 - attachment handler denies unauthenticated, staff, external and wrong-tenant callers before querying
+  ---
+  duration_ms: 1.704417
+  type: 'test'
+  ...
+# Subtest: customer User stays customer and does not load staff schema
+ok 49 - customer User stays customer and does not load staff schema
+  ---
+  duration_ms: 4.277583
+  type: 'test'
+  ...
+# Subtest: customer Client stays customer and does not load staff schema
+ok 50 - customer Client stays customer and does not load staff schema
+  ---
+  duration_ms: 1.270708
+  type: 'test'
+  ...
+# Subtest: customer ExternalSigner stays customer and does not load staff schema
+ok 51 - customer ExternalSigner stays customer and does not load staff schema
+  ---
+  duration_ms: 0.342792
+  type: 'test'
+  ...
+# Subtest: stale customer JWT after DB role Admin cannot bypass loader
+ok 52 - stale customer JWT after DB role Admin cannot bypass loader
+  ---
+  duration_ms: 0.856041
+  type: 'test'
+  ...
+# Subtest: stale customer JWT after DB role Lawyer cannot bypass loader
+ok 53 - stale customer JWT after DB role Lawyer cannot bypass loader
+  ---
+  duration_ms: 0.653416
+  type: 'test'
+  ...
+# Subtest: stale customer JWT after DB role Staff cannot bypass loader
+ok 54 - stale customer JWT after DB role Staff cannot bypass loader
+  ---
+  duration_ms: 2.22175
+  type: 'test'
+  ...
+# Subtest: stale customer JWT after DB role Deleted cannot bypass loader
+ok 55 - stale customer JWT after DB role Deleted cannot bypass loader
+  ---
+  duration_ms: 1.488417
+  type: 'test'
+  ...
+# Subtest: cross requested tenant customer denied; correct tenant allowed
+ok 56 - cross requested tenant customer denied; correct tenant allowed
+  ---
+  duration_ms: 2.277959
+  type: 'test'
+  ...
+# Subtest: removed customer is unauthorized
+ok 57 - removed customer is unauthorized
+  ---
+  duration_ms: 1.028875
+  type: 'test'
+  ...
+# Subtest: staff Admin retains schema fail closed
+ok 58 - staff Admin retains schema fail closed
+  ---
+  duration_ms: 1.465875
+  type: 'test'
+  ...
+# Subtest: staff Lawyer retains schema fail closed
+ok 59 - staff Lawyer retains schema fail closed
+  ---
+  duration_ms: 1.380125
+  type: 'test'
+  ...
+# Subtest: staff Staff retains schema fail closed
+ok 60 - staff Staff retains schema fail closed
+  ---
+  duration_ms: 0.496
+  type: 'test'
+  ...
+# Subtest: actual HS256 signed public optional User remains usable
+ok 61 - actual HS256 signed public optional User remains usable
+  ---
+  duration_ms: 3.292583
+  type: 'test'
+  ...
+# Subtest: actual HS256 signed public optional Client remains usable
+ok 62 - actual HS256 signed public optional Client remains usable
+  ---
+  duration_ms: 1.561708
+  type: 'test'
+  ...
+# Subtest: actual HS256 signed public optional ExternalSigner remains usable
+ok 63 - actual HS256 signed public optional ExternalSigner remains usable
+  ---
+  duration_ms: 0.587333
+  type: 'test'
+  ...
+# Subtest: invalid optional token never supplies identity eyJhbGciOiJI
+ok 64 - invalid optional token never supplies identity eyJhbGciOiJI
+  ---
+  duration_ms: 1.353834
+  type: 'test'
+  ...
+# Subtest: invalid optional token never supplies identity eyJhbGciOiJI
+ok 65 - invalid optional token never supplies identity eyJhbGciOiJI
+  ---
+  duration_ms: 1.281375
+  type: 'test'
+  ...
+# Subtest: invalid optional token never supplies identity eyJhbGciOiJI
+ok 66 - invalid optional token never supplies identity eyJhbGciOiJI
+  ---
+  duration_ms: 2.761583
+  type: 'test'
+  ...
+# Subtest: invalid optional token never supplies identity malformed
+ok 67 - invalid optional token never supplies identity malformed
+  ---
+  duration_ms: 1.836125
+  type: 'test'
+  ...
+# Subtest: optional valid staff JWT missing schema denies before handler
+ok 68 - optional valid staff JWT missing schema denies before handler
+  ---
+  duration_ms: 1.290083
+  type: 'test'
+  ...
+# Subtest: customer enum change uses current DB role User without staff promotion
+ok 69 - customer enum change uses current DB role User without staff promotion
+  ---
+  duration_ms: 1.992417
+  type: 'test'
+  ...
+# Subtest: customer enum change uses current DB role Client without staff promotion
+ok 70 - customer enum change uses current DB role Client without staff promotion
+  ---
+  duration_ms: 1.096042
+  type: 'test'
+  ...
+# Subtest: customer enum change uses current DB role ExternalSigner without staff promotion
+ok 71 - customer enum change uses current DB role ExternalSigner without staff promotion
+  ---
+  duration_ms: 0.589625
+  type: 'test'
+  ...
+# Subtest: feature OFF returns Word and stage 404 before trusted identity, policy, actor or service execution
+ok 72 - feature OFF returns Word and stage 404 before trusted identity, policy, actor or service execution
+  ---
+  duration_ms: 61.904958
+  type: 'test'
+  ...
+# Subtest: enabled Word and stage entries reject unauthenticated requests before policy and service execution
+ok 73 - enabled Word and stage entries reject unauthenticated requests before policy and service execution
+  ---
+  duration_ms: 18.125458
+  type: 'test'
+  ...
+# Subtest: incumbent signing policy rejection still fences both new feature families
+ok 74 - incumbent signing policy rejection still fences both new feature families
+  ---
+  duration_ms: 7.779042
+  type: 'test'
+  ...
+# Subtest: Word authoring requires upload permission and resolves the current trusted actor rather than body context
+ok 75 - Word authoring requires upload permission and resolves the current trusted actor rather than body context
+  ---
+  duration_ms: 6.273208
+  type: 'test'
+  ...
+# Subtest: every stage mutation requires signing upload AND case edit before resolving an actor or executing service work
+ok 76 - every stage mutation requires signing upload AND case edit before resolving an actor or executing service work
+  ---
+  duration_ms: 15.03
+  type: 'test'
+  ...
+# Subtest: current actor tenant mismatch and unvalidated permission context deny both features despite trusted upload grants
+ok 77 - current actor tenant mismatch and unvalidated permission context deny both features despite trusted upload grants
+  ---
+  duration_ms: 11.215542
+  type: 'test'
+  ...
+# Subtest: ordinary read-only signing and stage listing retain view permission without new upload or case-edit requirements
+ok 78 - ordinary read-only signing and stage listing retain view permission without new upload or case-edit requirements
+  ---
+  duration_ms: 8.252834
+  type: 'test'
+  ...
+# Subtest: Word HTTP operational errors still reach the real sanitized request reporter and central error response
+ok 79 - Word HTTP operational errors still reach the real sanitized request reporter and central error response
+  ---
+  duration_ms: 3.729375
+  type: 'test'
+  ...
+# Subtest: normal permission denials are forwarded without generating operational error alerts
+ok 80 - normal permission denials are forwarded without generating operational error alerts
+  ---
+  duration_ms: 3.177292
+  type: 'test'
+  ...
+# Subtest: actual app keeps linked raw-HMAC mount before the general JSON parser and retains billing consent routing
+ok 81 - actual app keeps linked raw-HMAC mount before the general JSON parser and retains billing consent routing
+  ---
+  duration_ms: 0.948125
+  type: 'test'
+  ...
+# Subtest: native document files retain full Word provenance for the Word PDF and ordinary PDFs in a mixed draft
+ok 82 - native document files retain full Word provenance for the Word PDF and ordinary PDFs in a mixed draft
+  ---
+  duration_ms: 1960.211917
+  type: 'test'
+  ...
+# Subtest: native document files reject missing, forged and mismatched stored Word provenance before reading bytes
+ok 83 - native document files reject missing, forged and mismatched stored Word provenance before reading bytes
+  ---
+  duration_ms: 1079.149375
+  type: 'test'
+  ...
+# Subtest: native Word PDF reads recheck actor, context, record access and current mapping before storage
+ok 84 - native Word PDF reads recheck actor, context, record access and current mapping before storage
+  ---
+  duration_ms: 1010.516625
+  type: 'test'
+  ...
+# Subtest: native PDF reads preserve ordinary non-Word access and reject corrupt stored PDF bytes
+ok 85 - native PDF reads preserve ordinary non-Word access and reject corrupt stored PDF bytes
+  ---
+  duration_ms: 981.481833
+  type: 'test'
+  ...
+# Subtest: Word origin uses actual native draft/source SQL and remains author-private despite all-firm management
+ok 86 - Word origin uses actual native draft/source SQL and remains author-private despite all-firm management
+  ---
+  duration_ms: 1267.438916
+  type: 'test'
+  ...
+# Subtest: lower draft APIs reject stripped, mutated, substituted and fake Word origins before writing
+ok 87 - lower draft APIs reject stripped, mutated, substituted and fake Word origins before writing
+  ---
+  duration_ms: 954.011916
+  type: 'test'
+  ...
+# Subtest: native reads, publication and new sends recheck persisted client, case and role access without requiring upload for reads
+ok 88 - native reads, publication and new sends recheck persisted client, case and role access without requiring upload for reads
+  ---
+  duration_ms: 1186.822542
+  type: 'test'
+  ...
+# Subtest: source mapping/version/archive drift blocks new native work and direct submissions, preserving frozen rows
+ok 89 - source mapping/version/archive drift blocks new native work and direct submissions, preserving frozen rows
+  ---
+  duration_ms: 1100.456916
+  type: 'test'
+  ...
+# Subtest: ordinary incomplete/native drafts and all-firm reads remain valid without Word tables
+ok 90 - ordinary incomplete/native drafts and all-firm reads remain valid without Word tables
+  ---
+  duration_ms: 1333.687375
+  type: 'test'
+  ...
+# Subtest: Word package associations stay pinned to the private filled preview in preview, create and direct submission paths
+ok 91 - Word package associations stay pinned to the private filled preview in preview, create and direct submission paths
+  ---
+  duration_ms: 956.928583
+  type: 'test'
+  ...
+# Subtest: every Word route resolves signing.upload scope before service access and disables caching
+ok 92 - every Word route resolves signing.upload scope before service access and disables caching
+  ---
+  duration_ms: 2.213792
+  type: 'test'
+  ...
+# Subtest: failed authorization never reaches storage or the materialization service
+ok 93 - failed authorization never reaches storage or the materialization service
+  ---
+  duration_ms: 0.290375
+  type: 'test'
+  ...
+# Subtest: the HTTP idempotency header overrides any forged body key
+ok 94 - the HTTP idempotency header overrides any forged body key
+  ---
+  duration_ms: 0.105959
+  type: 'test'
+  ...
+# Subtest: protected PDF response uses fixed safe disposition rather than customer names or public URLs
+ok 95 - protected PDF response uses fixed safe disposition rather than customer names or public URLs
+  ---
+  duration_ms: 0.317208
+  type: 'test'
+  ...
+# Subtest: converter operational failures have accurate safe HTTP status and no source/process details
+ok 96 - converter operational failures have accurate safe HTTP status and no source/process details
+  ---
+  duration_ms: 1.521125
+  type: 'test'
+  ...
+# Subtest: authoring routes keep exact private source/render/body bindings and fixed route precedence
+ok 97 - authoring routes keep exact private source/render/body bindings and fixed route precedence
+  ---
+  duration_ms: 0.825291
+  type: 'test'
+  ...
+# Subtest: native draft bridge is injectable without provider imports and header overrides a forged body key
+ok 98 - native draft bridge is injectable without provider imports and header overrides a forged body key
+  ---
+  duration_ms: 0.22875
+  type: 'test'
+  ...
+# Subtest: private upload reads reject oversized, truncated or growing objects before import
+ok 99 - private upload reads reject oversized, truncated or growing objects before import
+  ---
+  duration_ms: 0.903459
+  type: 'test'
+  ...
+1..99
+# tests 99
+# suites 0
+# pass 98
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 12484.739792

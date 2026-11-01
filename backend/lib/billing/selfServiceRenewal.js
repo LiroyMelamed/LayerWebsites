@@ -1,4 +1,5 @@
 'use strict';
+const {billingOperationsEnabled,assertBillingOperationsEnabled,isBillingOperationsPausedError}=require('./billingOperations');
 const crypto=require('node:crypto');
 const pool=require('../../config/db');
 const {decryptSecret}=require('./secrets');
@@ -10,6 +11,7 @@ const {renewalAmount}=require('./signupQuote');
 
 function createSignupRenewal({database=pool,charge=chargeTakbullToken,verify=verifyChargedTransaction,credentials=getTakbullCredentialsFromEnv,now=()=>new Date()}={}) {
     async function markPastDue(tenantId) {
+        assertBillingOperationsEnabled();
         const failedAt=now();
         // A retry or provider uncertainty must not reset the first grace window.
         await database.query(`UPDATE firm_billing SET
@@ -19,54 +21,88 @@ function createSignupRenewal({database=pool,charge=chargeTakbullToken,verify=ver
             WHERE law_firm_tenant_id=$1 AND billing_enabled AND renews_at<=$2
             AND (complimentary_until IS NULL OR complimentary_until<=$2)`,[tenantId,failedAt]);
     }
-    async function renew(tenantId, { retryFailed = false } = {}) {
-        const c=await database.connect();let intent,account,card;
+    async function renew(tenantId, { retryFailed = false, cardSetupIntentId = null } = {}) {
+        if(!billingOperationsEnabled())return {handled:true,skipped:true,status:'paused',reason:'billing_operations_paused'};
+        const c=await database.connect();let intent,account,card,consent;
+        const canCollectCancelledDebt = row => Boolean(cardSetupIntentId && row?.last_failed_at && ['past_due','suspended'].includes(row?.status));
         try {
             await c.query('BEGIN');
             account=(await c.query(`SELECT b.* FROM firm_billing b WHERE law_firm_tenant_id=$1 FOR UPDATE`,[tenantId])).rows[0];
-            const consent=(await c.query("SELECT id,consent_version,recurring_amount_ils FROM signup_intents WHERE law_firm_tenant_id=$1 AND status='completed' AND consent_version IN ('signup-1ils-3months-v1','signup-1ils-3months-v2')",[tenantId])).rows[0];
+            consent=(await c.query("SELECT id,consent_version,recurring_amount_ils,admin_email,admin_name,admin_phone FROM signup_intents WHERE law_firm_tenant_id=$1 AND status='completed' AND consent_version IN ('signup-1ils-3months-v1','signup-1ils-3months-v2') LIMIT 1",[tenantId])).rows[0];
             if(!consent){await c.query('COMMIT');return {handled:false};}
-            if(!account?.billing_enabled||account.auto_renew===false||!account.renews_at||new Date(account.renews_at)>now()||new Date(account.complimentary_until||0)>now()) {
+            if(cardSetupIntentId) {
+                const setup=(await c.query(`SELECT id,package_snapshot FROM firm_payment_intents WHERE id=$1 AND law_firm_tenant_id=$2
+                    AND kind='setup' AND status='succeeded' AND signup_intent_id IS NULL`,[cardSetupIntentId,tenantId])).rows[0];
+                if(!setup)throw Error('CARD_SETUP_VERIFICATION_REQUIRED');
+                // Account locking serializes callbacks and owner retries. A failed
+                // collection linked to this setup cannot be dispatched again by replay.
+                const linked=(await c.query(`SELECT id,status FROM firm_payment_intents WHERE law_firm_tenant_id=$1
+                    AND package_snapshot->>'cardSetupIntentId'=$2 ORDER BY created_at DESC LIMIT 1`,[tenantId,cardSetupIntentId])).rows[0];
+                if(linked){await c.query('COMMIT');return {handled:true,skipped:true,status:linked.status,intentId:linked.id};}
+                const cycleAt=+new Date(setup.package_snapshot?.cardCollectionCycleAt||NaN);
+                if(setup.package_snapshot?.cardCollectionDue!==true||!Number.isFinite(cycleAt)||cycleAt!==+new Date(account?.renews_at||NaN)){
+                    await c.query('COMMIT');return {handled:true,skipped:true,reason:'card_setup_has_no_current_debt'};
+                }
+            }
+            if(!account?.billing_enabled||(account.auto_renew===false&&!canCollectCancelledDebt(account))||!account.renews_at||new Date(account.renews_at)>now()||new Date(account.complimentary_until||0)>now()) {
                 await c.query('COMMIT');return {handled:true,skipped:true,reason:'not_due_or_cancelled'};
             }
             const unresolved=(await c.query(`SELECT id FROM firm_payment_intents WHERE law_firm_tenant_id=$1
                 AND status='pending' AND kind<>'setup' AND signup_intent_id IS NULL LIMIT 1`,[tenantId])).rows[0];
-            if(unresolved){await c.query('COMMIT');return {handled:true,skipped:true,status:'pending'};}
+            if(unresolved){
+                // This card save did not authorize a second in-flight payment.
+                // Seal the decision so a later decline cannot make callback replay
+                // dispatch a new charge after the existing reservation resolves.
+                if(cardSetupIntentId)await c.query(`UPDATE firm_payment_intents SET
+                    package_snapshot=package_snapshot||'{"cardCollectionDue":false}'::jsonb,updated_at=now()
+                    WHERE id=$1 AND law_firm_tenant_id=$2`,[cardSetupIntentId,tenantId]);
+                await c.query('COMMIT');return {handled:true,skipped:true,status:'pending'};
+            }
             const prior=(await c.query(`SELECT status FROM firm_payment_intents WHERE law_firm_tenant_id=$1 AND signup_cycle_at=$2
                 ORDER BY (status <> 'failed') DESC,created_at DESC LIMIT 1`,[tenantId,account.renews_at])).rows[0];
             // Only an explicit owner retry can follow a definite decline. A pending
             // or uncertain outcome remains reserved, including concurrent retries.
             if(prior && !(retryFailed && prior.status==='failed')){await c.query('COMMIT');return {handled:true,skipped:true,status:prior.status};}
+            // A zero-price agreement has nothing to collect. It is not a paid
+            // renewal and must not move the billing period or clear an old error.
+            if(account.price_monthly_ils!=null&&Number(account.price_monthly_ils)===0){
+                await c.query('COMMIT');return {handled:true,skipped:true,reason:'zero_amount'};
+            }
+            const amount=renewalAmount(account,consent);
+            if(amount===0){await c.query('COMMIT');return {handled:true,skipped:true,reason:'zero_amount'};}
+            if(!Number.isFinite(amount)||amount<=0)throw Error('SIGNUP_BILLING_AMOUNT_REQUIRED');
             card=(await c.query('SELECT token_encrypted FROM firm_payment_methods WHERE law_firm_tenant_id=$1 AND is_active',[tenantId])).rows[0];
             if(!card||!credentials())throw Error('SIGNUP_BILLING_NOT_CONFIGURED');
-            const amount=renewalAmount(account,consent);
-            if(!Number.isFinite(amount)||amount<=0)throw Error('SIGNUP_BILLING_AMOUNT_REQUIRED');
-            intent=(await c.query(`INSERT INTO firm_payment_intents(id,law_firm_tenant_id,kind,status,amount_ils,order_reference,signup_cycle_at,purpose)
-                VALUES($1,$2,'renewal','pending',$3,$4,$5,'חידוש מנוי משפטית') RETURNING *`,[crypto.randomUUID(),tenantId,amount,'signup-renewal-'+crypto.randomUUID(),account.renews_at])).rows[0];
+            intent=(await c.query(`INSERT INTO firm_payment_intents(id,law_firm_tenant_id,kind,status,amount_ils,order_reference,signup_cycle_at,purpose,package_snapshot)
+                VALUES($1,$2,'renewal','pending',$3,$4,$5,'חידוש מנוי משפטית',$6) RETURNING *`,[crypto.randomUUID(),tenantId,amount,'signup-renewal-'+crypto.randomUUID(),account.renews_at,
+                JSON.stringify(cardSetupIntentId?{cardSetupIntentId}:{})])).rows[0];
             await c.query('COMMIT');
-        } catch(e){await c.query('ROLLBACK');if(account)await markPastDue(tenantId);throw e;} finally {c.release();}
+        } catch(e){await c.query('ROLLBACK');if(account&&e.message!=='CARD_SETUP_VERIFICATION_REQUIRED')await markPastDue(tenantId);throw e;} finally {c.release();}
         try {
             // Cancellation and final dispatch share the account lock. A committed
             // intent survives a crash even if the provider result remains unknown.
             const dispatch=await database.connect();let result;
             try{
                 await dispatch.query('BEGIN');
-                const current=(await dispatch.query('SELECT billing_enabled,auto_renew FROM firm_billing WHERE law_firm_tenant_id=$1 FOR UPDATE',[tenantId])).rows[0];
-                if(!current?.billing_enabled||current.auto_renew===false){
+                const current=(await dispatch.query('SELECT billing_enabled,auto_renew,status,last_failed_at FROM firm_billing WHERE law_firm_tenant_id=$1 FOR UPDATE',[tenantId])).rows[0];
+                if(!current?.billing_enabled||(current.auto_renew===false&&!canCollectCancelledDebt(current))){
                     await dispatch.query("UPDATE firm_payment_intents SET status='cancelled',updated_at=now() WHERE id=$1",[intent.id]);
                     await dispatch.query('COMMIT');return {handled:true,skipped:true,reason:'cancelled_before_dispatch'};
                 }
                 result=await charge({credentials:credentials(),orderReference:intent.order_reference,amount:Number(intent.amount_ils),currency:'ILS',
-                    cardExternalToken:decryptSecret(card.token_encrypted),ipnAddress:getPublicApiBaseUrl()+'/api/webhooks/payments/takbull',purpose:'חידוש מנוי MelaMedia משפטית'});
-                if(result.transactionInternalNumber)await dispatch.query('UPDATE firm_payment_intents SET takbull_transaction_id=$2,updated_at=now() WHERE id=$1',[intent.id,result.transactionInternalNumber]);
+                    cardExternalToken:decryptSecret(card.token_encrypted),ipnAddress:getPublicApiBaseUrl()+'/api/webhooks/payments/takbull',purpose:'חידוש מנוי MelaMedia משפטית',
+                    customerEmail:consent.admin_email||undefined,customerFullName:consent.admin_name||undefined,customerPhone:consent.admin_phone||undefined});
+                if(result?.transactionInternalNumber)await dispatch.query(`UPDATE firm_payment_intents SET takbull_transaction_id=$2,
+                    package_snapshot=package_snapshot||$3::jsonb,updated_at=now() WHERE id=$1`,[intent.id,result.transactionInternalNumber,
+                    JSON.stringify(result.document?{providerDocument:result.document}:{})]);
                 await dispatch.query('COMMIT');
             }catch(e){await dispatch.query('ROLLBACK');throw e;}finally{dispatch.release();}
-            if(!result.ok){
-                await database.query("UPDATE firm_payment_intents SET status='failed',error_message='החיוב נדחה. נדרש טיפול לפני ניסיון נוסף',updated_at=now() WHERE id=$1",[intent.id]);
+            if(result?.ok===false&&result.definitiveFailure===true){
+                await database.query("UPDATE firm_payment_intents SET status='failed',error_message='החיוב נדחה. נדרש טיפול לפני ניסיון נוסף',updated_at=now() WHERE id=$1 AND status='pending'",[intent.id]);
                 await markPastDue(tenantId);
                 return {handled:true,status:'failed'};
             }
-            if(!result.transactionInternalNumber)throw Error('SIGNUP_RENEWAL_OUTCOME_UNKNOWN');
+            if(result?.ok!==true||!result.transactionInternalNumber)throw Error('SIGNUP_RENEWAL_OUTCOME_UNKNOWN');
             await verify(credentials(),result.transactionInternalNumber,Number(intent.amount_ils));
             const client=await database.connect();
             try {
@@ -82,6 +118,7 @@ function createSignupRenewal({database=pool,charge=chargeTakbullToken,verify=ver
             } catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
             return {handled:true,status:'succeeded'};
         } catch(e){
+            if(isBillingOperationsPausedError(e))throw e;
             await markPastDue(tenantId);
             // The committed cycle remains reserved after a timeout or crash.
             await database.query("UPDATE firm_payment_intents SET error_message='תוצאת החיוב דורשת בירור; אין לחייב שוב',updated_at=now() WHERE id=$1 AND status='pending'",[intent.id]);
@@ -89,6 +126,7 @@ function createSignupRenewal({database=pool,charge=chargeTakbullToken,verify=ver
         }
     }
     async function due(){
+        if(!billingOperationsEnabled())return [];
         const rows=(await require('../tenant/databaseScope').withSystem(()=>database.query(`SELECT b.law_firm_tenant_id id FROM firm_billing b JOIN signup_intents s ON s.law_firm_tenant_id=b.law_firm_tenant_id
           WHERE s.status='completed' AND s.consent_version IN ('signup-1ils-3months-v1','signup-1ils-3months-v2') AND b.billing_enabled AND b.auto_renew AND b.renews_at<=$1
           AND (b.complimentary_until IS NULL OR b.complimentary_until<=$1) ORDER BY b.renews_at LIMIT 100`,[now()]))).rows;

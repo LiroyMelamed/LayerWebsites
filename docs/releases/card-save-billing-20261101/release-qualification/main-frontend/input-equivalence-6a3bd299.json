@@ -1,0 +1,217 @@
+{
+  "capturedAtUtc": "2026-11-01T22:52:17.111Z",
+  "result": "PASS_EQUIVALENT_FRONTEND_INPUTS_NOT_FRESH_DONOR_EXECUTION",
+  "qualifiedCommit": "9dd9cb3607ee79434fcfb1aed5a40773e5713789",
+  "donorCommit": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "previousDonorCommit": "6fab2887d056262cf52ddb773a377e5ad804f0d7",
+  "outputRoot": "/tmp/layer-billing-main-current-20261101",
+  "outputRootHeadAtCapture": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "headAtCapture": "9dd9cb3607ee79434fcfb1aed5a40773e5713789",
+  "nodeVersion": "v24.14.0",
+  "nodePlatform": "darwin",
+  "nodeArchitecture": "arm64",
+  "sourceGroups": {
+    "frontend": {
+      "fileCount": 834,
+      "baseTree": "04066315bbbeadb53b182c394bc2cb52c1e42738",
+      "donorTree": "04066315bbbeadb53b182c394bc2cb52c1e42738",
+      "byteMismatches": [],
+      "inputManifestSha256": "8755572bfae2dce054cdc152e66a5592630cfc699b934e1faaaaaaf821618025"
+    },
+    "scripts": {
+      "fileCount": 28,
+      "baseTree": "ab4df8decbc40cc6238f4d86c3f3c62c7bb37acc",
+      "donorTree": "ab4df8decbc40cc6238f4d86c3f3c62c7bb37acc",
+      "byteMismatches": [],
+      "inputManifestSha256": "bf963c5455511555dd7392e56a823a3151ae6f5158f48217c9b37c0668cf25ac"
+    }
+  },
+  "directBackendImports": [
+    {
+      "file": "frontend/src/screens/signingScreen/word/wordAuthoringSelection.test.js",
+      "line": 158,
+      "method": "require",
+      "specifier": "../../../../../backend/lib/wordTemplates",
+      "resolved": "backend/lib/wordTemplates/index.js"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/word/wordAuthoringSelection.test.js",
+      "line": 159,
+      "method": "require",
+      "specifier": "../../../../../backend/lib/wordTemplates/visual",
+      "resolved": "backend/lib/wordTemplates/visual.js"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/word/wordAuthoringSelection.test.js",
+      "line": 160,
+      "method": "require",
+      "specifier": "../../../../../backend/lib/wordTemplates/zip",
+      "resolved": "backend/lib/wordTemplates/zip.js"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/word/wordAuthoringSelection.test.js",
+      "line": 205,
+      "method": "require",
+      "specifier": "../../../../../backend/lib/wordTemplates/visual",
+      "resolved": "backend/lib/wordTemplates/visual.js"
+    }
+  ],
+  "parserErrors": [],
+  "reviewedDynamicImports": [
+    {
+      "file": "frontend/src/components/billing/SystemMessageConsent.test.js",
+      "line": 11,
+      "expression": "require('../../i18n/locales/' + mockLanguage + '.json')"
+    }
+  ],
+  "conservativeBackendHelperComparison": [
+    {
+      "file": "backend/lib/wordTemplates/README.md",
+      "baseSha256": "a5f66558300855bbb47deb9adf85842c19b756eecf84bf46fde313700fbb5ffb",
+      "donorSha256": "a5f66558300855bbb47deb9adf85842c19b756eecf84bf46fde313700fbb5ffb"
+    },
+    {
+      "file": "backend/lib/wordTemplates/catalog.js",
+      "baseSha256": "b3132bd87862efd3f13d3fc8494c959076e6053431025d9e830186a0bbd4a030",
+      "donorSha256": "b3132bd87862efd3f13d3fc8494c959076e6053431025d9e830186a0bbd4a030"
+    },
+    {
+      "file": "backend/lib/wordTemplates/clientValues.js",
+      "baseSha256": "61e74d00f597d9cf819a00a9ffa1f1412d2ad87871dd123fe776e0316414c290",
+      "donorSha256": "61e74d00f597d9cf819a00a9ffa1f1412d2ad87871dd123fe776e0316414c290"
+    },
+    {
+      "file": "backend/lib/wordTemplates/converter.js",
+      "baseSha256": "97dc314ac9278c0c431de127679165bcc20106085b3aaf84ce0ccab65addecab",
+      "donorSha256": "97dc314ac9278c0c431de127679165bcc20106085b3aaf84ce0ccab65addecab"
+    },
+    {
+      "file": "backend/lib/wordTemplates/errors.js",
+      "baseSha256": "bf3b2cfd18ebf398928de25b74af466669d6132ef8141c290e147dbe643b8e15",
+      "donorSha256": "bf3b2cfd18ebf398928de25b74af466669d6132ef8141c290e147dbe643b8e15"
+    },
+    {
+      "file": "backend/lib/wordTemplates/index.js",
+      "baseSha256": "c9a49dedf27f83d0d1c3fbb9db204f1fc83a8f773ae1f4d6bc8f4351decec2b4",
+      "donorSha256": "c9a49dedf27f83d0d1c3fbb9db204f1fc83a8f773ae1f4d6bc8f4351decec2b4"
+    },
+    {
+      "file": "backend/lib/wordTemplates/pdfWorker.cjs",
+      "baseSha256": "11eda06923c43f61c42e5453f0c9024be189d261a669f154e1a761a0f3da3dba",
+      "donorSha256": "11eda06923c43f61c42e5453f0c9024be189d261a669f154e1a761a0f3da3dba"
+    },
+    {
+      "file": "backend/lib/wordTemplates/visual.js",
+      "baseSha256": "8abce6fda3fb0eeb84aeaf2b0705b61693ec949cad3cdc39aec3705378542a1d",
+      "donorSha256": "8abce6fda3fb0eeb84aeaf2b0705b61693ec949cad3cdc39aec3705378542a1d"
+    },
+    {
+      "file": "backend/lib/wordTemplates/zip.js",
+      "baseSha256": "4cbc7c2d47e1a65237ed7e0090ef2f199ffee5ad7433869a74d2857a5a1d1b82",
+      "donorSha256": "4cbc7c2d47e1a65237ed7e0090ef2f199ffee5ad7433869a74d2857a5a1d1b82"
+    },
+    {
+      "file": "backend/utils/clientProfile.js",
+      "baseSha256": "4d299590b38634e02a1b821128934800376aed10c329030c7b574577b7bf698d",
+      "donorSha256": "4d299590b38634e02a1b821128934800376aed10c329030c7b574577b7bf698d"
+    }
+  ],
+  "packageInputs": {
+    "frontend/package.json": {
+      "baseSha256": "5d355ae41df3f3df28baa094db3e337d1c1350cd013b0eba19f76322337511c2",
+      "donorSha256": "5d355ae41df3f3df28baa094db3e337d1c1350cd013b0eba19f76322337511c2"
+    },
+    "frontend/package-lock.json": {
+      "baseSha256": "ed0b4c398ffe0d47a2d91e735ee48bf494a0b718534293b59056f91973a6a4ac",
+      "donorSha256": "ed0b4c398ffe0d47a2d91e735ee48bf494a0b718534293b59056f91973a6a4ac"
+    },
+    "backend/package.json": {
+      "baseSha256": "d8dc77f992e80a5cefef6f803551cd66e1d3993dac4419763848c6f9562ea519",
+      "donorSha256": "d8dc77f992e80a5cefef6f803551cd66e1d3993dac4419763848c6f9562ea519"
+    },
+    "backend/package-lock.json": {
+      "baseSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+      "donorSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651"
+    }
+  },
+  "installedDependencyProof": {
+    "frontend": {
+      "capturedInstalledLockSha256": "00cc3b9a309e871937202330da56da5744fedbaac7773c89447c4c943a049b05",
+      "currentInstalledLockSha256": "00cc3b9a309e871937202330da56da5744fedbaac7773c89447c4c943a049b05",
+      "checkedPackages": 1599,
+      "requiredVersionMismatches": []
+    },
+    "backend": {
+      "capturedInstalledLockSha256": "6050ef6083317866bc68181efba905733c39b1de665b1564002a97d56a126f4b",
+      "currentInstalledLockSha256": "6050ef6083317866bc68181efba905733c39b1de665b1564002a97d56a126f4b",
+      "checkedPackages": 520,
+      "requiredVersionMismatches": []
+    }
+  },
+  "changedDonorRuntimePaths": [
+    "backend/lib/qaOutboundNoop.js",
+    "backend/services/notifications/notificationOrchestrator.js",
+    "backend/services/signingV2/runtime.js",
+    "backend/tests/qaOutboundNoop.recovery.test.js",
+    "backend/tests/signingV2.completedCopyNotification.test.js",
+    "backend/tests/signingV2.transportOutcomes.test.js",
+    "backend/utils/smooveEmailCampaignService.js"
+  ],
+  "excludedAuditPathCount": 134,
+  "excludedAuditPathManifestSha256": "80f1f90a4458ec05cf08ba6582d2d9c308a88fd7e123426d298febb4757794eb",
+  "newDeltaFromPreviousDonor": {
+    "runtimePaths": [
+      "backend/lib/qaOutboundNoop.js",
+      "backend/tests/qaOutboundNoop.recovery.test.js"
+    ],
+    "excludedAuditPathCount": 134,
+    "excludedAuditPathManifestSha256": "80f1f90a4458ec05cf08ba6582d2d9c308a88fd7e123426d298febb4757794eb",
+    "backendQualification": "New two-path QA guard behavior requires the parent fresh backend agent gate; no frontend carry proves that behavior."
+  },
+  "originalQualificationReceipts": {
+    "frontend-tests-receipt.json": {
+      "sha256": "2cb3026db7d5e47640c41f5c4f6a28dbab35a6db9b97a8e4d00da97ee5f86197",
+      "candidateCommit": "9dd9cb3607ee79434fcfb1aed5a40773e5713789",
+      "exitCode": 0,
+      "sourceStable": true,
+      "summary": {
+        "success": true,
+        "numTotalTests": 920,
+        "numPassedTests": 920,
+        "numFailedTests": 0,
+        "numPendingTests": 0,
+        "numPassedTestSuites": 107,
+        "numFailedTestSuites": 0
+      }
+    },
+    "production-build-receipt.json": {
+      "sha256": "68c6b25f16605470be3e235dd3f6892a1f5f5cdfb2013bc99be1f0294a9b6e9a",
+      "candidateCommit": "9dd9cb3607ee79434fcfb1aed5a40773e5713789",
+      "exitCode": 0,
+      "sourceStable": true,
+      "summary": null
+    }
+  },
+  "compileInputProvenance": {
+    "frozenSourceArchiveSha256": "6d0b37b5ae69c80d8a2d31a229dddab9c7c9c3248c0512d3227960ad6d9aa345",
+    "originalCracoSha256": "d171a27f510ad65ed4bf65be63cc95e16f2c33c781efe1b1102d17dbfcfd8df8",
+    "temporaryCacheWrapperSha256": "c7a99bbeff6dba5338a6816fe7031823b52215c76f50ef03052a8362857d98b2",
+    "publicEnvironment": {
+      "CI": "false",
+      "NODE_ENV": "production",
+      "NODE_OPTIONS": "--max-old-space-size=4096",
+      "REACT_APP_API_BASE_URL": "http://127.0.0.1:55701/api",
+      "PUBLIC_URL": "",
+      "BUILD_PATH": "/tmp/layer-billing-release-qualification-20261101-frontend-cache/production-build-isolated",
+      "GENERATE_SOURCEMAP": "false"
+    },
+    "resourceCap": "minimizer parallelism2; Node heap4096MiB; local build mutex",
+    "network": "OS sandbox deny network*",
+    "noEnvFiles": true,
+    "pdfWorkerPackageVersion": "5.4.296",
+    "copiedPdfWorkerSha256": "dbcae78a691b3c501508f74b774c6066a57a14a76cefdc9e25ad86b651bb75d5",
+    "note": "These are the exact successful9dd compiler inputs/settings. Source and locked toolchain equivalence carries frontend-input qualification only; no6a3bd299 compiler invocation occurred."
+  },
+  "scope": "The actual frontend/test/script trees, imported backend Word helper superset, package inputs and installed toolchain are byte-equivalent. The existing successful frontend suite/compile receipts remain bound to9dd, and their frontend-input qualification may be carried to6a3bd299. No tests/compile were rerun on6a3bd299.",
+  "limitations": "Not backend qualification of the new two-path QA guard or earlier notification/runtime/email paths; parent fresh backend tests remain required. Not HTTP integration, provider behavior, browser, tenant/runtime/configuration or deployment acceptance. The parent owns fresh backend and tenant gates. No HEAD, source, branch or live state changed."
+}

@@ -1,0 +1,16 @@
+{
+  "candidate": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "parents": [
+    "f7c8e9abfe18c0a4bad36ac4be17e6de74c10af5",
+    "074df7520497a0cd6bd95ad70353201c905f0aa6"
+  ],
+  "previousQualifiedRuntime": "6fab2887d056262cf52ddb773a377e5ad804f0d7",
+  "changedBackendPaths": [
+    "backend/lib/qaOutboundNoop.js",
+    "backend/tests/qaOutboundNoop.recovery.test.js"
+  ],
+  "sha256": {
+    "backend/lib/qaOutboundNoop.js": "b9fbbd8d2ea1a676e381a3d549f916d29fb36e4dbb414c9e78b0f50ff7e89a40",
+    "backend/tests/qaOutboundNoop.recovery.test.js": "19130f115f8ba9aedbe38188aea1b0056e9da5f661d1b9bca06cc22bb6bed0a5"
+  }
+}

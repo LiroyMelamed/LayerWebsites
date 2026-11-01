@@ -1,0 +1,326 @@
+{
+  "startedAtUtc": "2026-11-01T21:56:28.232417+00:00",
+  "completedAtUtc": "2026-11-01T21:56:28.405225+00:00",
+  "scope": "Melamed-specific review patch with surgical locale adaptation; context/byte verification, not functional QA.",
+  "targetCommit": "5f3a4459256c225be14386178e3cec827e3c79e2",
+  "sharedMainBase": "e3ab31d3ef6ee94d375eaf5df5bdf57d2c14715a",
+  "candidateHeadAtCapture": "c21c897b00fb3a969bd977d62615e6325879a1fc",
+  "sharedPatchSha256": "08391d921d4f5c85071705be571c96dff3204565f1d40b4d368e320194403258",
+  "sharedPatchAllTargetResult": "4 PASS, MelamedLaw locale context FAIL",
+  "adaptedPatchFile": "melamed-billing-application-tests.patch",
+  "adaptedPatchSha256": "c41df4476d61e022aad82e1959b051b3937130a72845590eb75f34bb40c9414a",
+  "adaptedPatchBytes": 207120,
+  "pathCount": 24,
+  "nonLocalePatchSectionsIdenticalToShared": [
+    "backend/controllers/billingController.js",
+    "backend/lib/billing/firmBillingService.js",
+    "backend/lib/billing/selfServiceRenewal.js",
+    "backend/lib/billing/selfServiceUpgrade.js",
+    "backend/lib/payments/takbullClient.js",
+    "backend/tests/cardSetupDebtCollection.test.js",
+    "backend/tests/liveServerPreservation.test.js",
+    "backend/tests/savePackage.chargeOrder.test.js",
+    "backend/tests/savePackage.idempotency.test.js",
+    "backend/tests/selfServiceCardSetupCollection.test.js",
+    "backend/tests/signupAvailability.test.js",
+    "backend/tests/signupLifecycle.officeIsolation.integration.test.js",
+    "backend/tests/systemMessageBillingSettlement.test.js",
+    "backend/tests/systemMessageSharedSettlement.test.js",
+    "backend/tests/takbullDocuments.test.js",
+    "frontend/src/api/billingApi.confirmCheckout.test.js",
+    "frontend/src/api/billingApi.js",
+    "frontend/src/components/billing/TakbullCheckoutDialog.js",
+    "frontend/src/components/billing/TakbullCheckoutDialog.test.js",
+    "frontend/src/screens/billingScreen/PlanUsageScreen.js",
+    "frontend/src/screens/billingScreen/PlansPricingScreen.js"
+  ],
+  "archivedExistingPaths": [
+    "backend/controllers/billingController.js",
+    "backend/lib/billing/firmBillingService.js",
+    "backend/lib/billing/selfServiceRenewal.js",
+    "backend/lib/billing/selfServiceUpgrade.js",
+    "backend/lib/payments/takbullClient.js",
+    "backend/tests/liveServerPreservation.test.js",
+    "backend/tests/savePackage.chargeOrder.test.js",
+    "backend/tests/savePackage.idempotency.test.js",
+    "backend/tests/signupAvailability.test.js",
+    "backend/tests/signupLifecycle.officeIsolation.integration.test.js",
+    "backend/tests/systemMessageBillingSettlement.test.js",
+    "backend/tests/systemMessageSharedSettlement.test.js",
+    "frontend/src/api/billingApi.js",
+    "frontend/src/components/billing/TakbullCheckoutDialog.js",
+    "frontend/src/i18n/locales/ar.json",
+    "frontend/src/i18n/locales/en.json",
+    "frontend/src/i18n/locales/he.json",
+    "frontend/src/screens/billingScreen/PlanUsageScreen.js",
+    "frontend/src/screens/billingScreen/PlansPricingScreen.js"
+  ],
+  "newPatchPathsLeftAbsent": [
+    "backend/tests/cardSetupDebtCollection.test.js",
+    "backend/tests/selfServiceCardSetupCollection.test.js",
+    "backend/tests/takbullDocuments.test.js",
+    "frontend/src/api/billingApi.confirmCheckout.test.js",
+    "frontend/src/components/billing/TakbullCheckoutDialog.test.js"
+  ],
+  "archiveSha256": "9fc384601061943dcf88381844392db74b0bdf7345f9948425365a68ded17e03",
+  "check": {
+    "command": "git apply --check melamed-billing-application-tests.patch",
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "status": "PASS_CONTEXT_COMPATIBLE"
+  },
+  "disposableExportApply": {
+    "authorizedByParent": true,
+    "appliedOnlyToOwnedTemporaryExport": true,
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "temporaryExportRemoved": true
+  },
+  "localePreservation": [
+    {
+      "path": "frontend/src/i18n/locales/ar.json",
+      "oldSha256": "bc7ea0220966468e2aad1d0ff7442e2641862ef7f0d9333240aa10d16c131064",
+      "adaptedSha256": "fd07a3bc78f60973619b6a34730061243b2ea19d455c99fca9cbc983619c1ed9",
+      "addedKey": "billing.paymentUnconfirmed",
+      "newValueSha256": "eebf9d0591228172c3f05c42107c6cff3704e183fb7d7c5f488315d8449d484e",
+      "oneAddedKeyOnly": true,
+      "allOldValuesPreserved": true,
+      "allOldBytesPreservedByOneInsertion": true,
+      "insertionOffset": 3069,
+      "insertionBytes": 161
+    },
+    {
+      "path": "frontend/src/i18n/locales/en.json",
+      "oldSha256": "d565f87b426b5234e84c7f753136cc65d1184482f736d4ecf26573933bc7e392",
+      "adaptedSha256": "0410d0970f04b27b8a95eee4daeab3b7323f1a48391204a6c6785cc6d90152cc",
+      "addedKey": "billing.paymentUnconfirmed",
+      "newValueSha256": "125a45f343caabcfd75b43fe85f46ad013dfcd947da0b05eeef4ab00679e531d",
+      "oneAddedKeyOnly": true,
+      "allOldValuesPreserved": true,
+      "allOldBytesPreservedByOneInsertion": true,
+      "insertionOffset": 2299,
+      "insertionBytes": 132
+    },
+    {
+      "path": "frontend/src/i18n/locales/he.json",
+      "oldSha256": "e18ac956c52b3a1033f559dc412b900aebbf611e36b94b9cdeaebc8b09e6bad9",
+      "adaptedSha256": "981a295d9450e43086336b67714277ecdba1c5a3d24fb3adc4c8cc47449430cc",
+      "addedKey": "billing.paymentUnconfirmed",
+      "newValueSha256": "0728f4963f0c45e86864988b417de2ae836f56b9187a79864d9535ce765c9af4",
+      "oneAddedKeyOnly": true,
+      "allOldValuesPreserved": true,
+      "allOldBytesPreservedByOneInsertion": true,
+      "insertionOffset": 3664,
+      "insertionBytes": 152
+    }
+  ],
+  "postApplyFileVerification": [
+    {
+      "path": "backend/controllers/billingController.js",
+      "actualSha256": "820249f324388cb40fa7ac0827f90f9c76adbcb0806ada980d1d4d3f86381c97",
+      "expectedSha256": "820249f324388cb40fa7ac0827f90f9c76adbcb0806ada980d1d4d3f86381c97",
+      "exactBytesMatch": true,
+      "expectation": "candidate working tree"
+    },
+    {
+      "path": "backend/lib/billing/firmBillingService.js",
+      "actualSha256": "5f6ecd8d26503d7a79a082809907df309da0c19b875fbb31e5f87facb2280e80",
+      "expectedSha256": "5f6ecd8d26503d7a79a082809907df309da0c19b875fbb31e5f87facb2280e80",
+      "exactBytesMatch": true,
+      "expectation": "candidate working tree"
+    },
+    {
+      "path": "backend/lib/billing/selfServiceRenewal.js",
+      "actualSha256": "43261bd8aa023f370e24b1cd99d480f96a874ab8d3aaa3bcc4e396f5fa273273",
+      "expectedSha256": "43261bd8aa023f370e24b1cd99d480f96a874ab8d3aaa3bcc4e396f5fa273273",
+      "exactBytesMatch": true,
+      "expectation": "candidate working tree"
+    },
+    {
+      "path": "backend/lib/billing/selfServiceUpgrade.js",
+      "actualSha256": "b7b15b7b27912e91f067e6ddd0824f2d21d26adcd83cdb68c9dd934d1f9fe7b7",
+      "expectedSha256": "b7b15b7b27912e91f067e6ddd0824f2d21d26adcd83cdb68c9dd934d1f9fe7b7",
+      "exactBytesMatch": true,
+      "expectation": "candidate working tree"
+    },
+    {
+      "path": "backend/lib/payments/takbullClient.js",
+      "actualSha256": "27d11524a132c602ad5dbf1a66cee4f88c14759ffa6b76ed6a8cc252af4e6597",
+      "expectedSha256": "27d11524a132c602ad5dbf1a66cee4f88c14759ffa6b76ed6a8cc252af4e6597",
+      "exactBytesMatch": true,
+      "expectation": "candidate working tree"
+    },
+    {
+      "path": "backend/tests/cardSetupDebtCollection.test.js",
+      "actualSha256": "d1086bc9b5e19d56ab23af2dcf71de5d61ec61a00f48cd0529c842c382888378",
+      "expectedSha256": "d1086bc9b5e19d56ab23af2dcf71de5d61ec61a00f48cd0529c842c382888378",
+      "exactBytesMatch": true,
+      "expectation": "candidate working tree"
+    },
+    {
+      "path": "backend/tests/liveServerPreservation.test.js",
+      "actualSha256": "af5d34038b674f53e732e9647dbbf6829e54d2a07d5f22a0152b79db66a8e117",
+      "expectedSha256": "af5d34038b674f53e732e9647dbbf6829e54d2a07d5f22a0152b79db66a8e117",
+      "exactBytesMatch": true,
+      "expectation": "candidate working tree"
+    },
+    {
+      "path": "backend/tests/savePackage.chargeOrder.test.js",
+      "actualSha256": "8111e4f4c7cdf7b17dba620b150f1ddeab110d2549034db8bbb2d853145c47b4",
+      "expectedSha256": "8111e4f4c7cdf7b17dba620b150f1ddeab110d2549034db8bbb2d853145c47b4",
+      "exactBytesMatch": true,
+      "expectation": "candidate working tree"
+    },
+    {
+      "path": "backend/tests/savePackage.idempotency.test.js",
+      "actualSha256": "d8575a94aa487819cb0515c45bbaefcc792f7ea3ef1a7afc1439afc3b32f4ace",
+      "expectedSha256": "d8575a94aa487819cb0515c45bbaefcc792f7ea3ef1a7afc1439afc3b32f4ace",
+      "exactBytesMatch": true,
+      "expectation": "candidate working tree"
+    },
+    {
+      "path": "backend/tests/selfServiceCardSetupCollection.test.js",
+      "actualSha256": "26ed71b456d5f1d206093f1e20a82b49320f37d7de379396c33e45c5cf499f41",
+      "expectedSha256": "26ed71b456d5f1d206093f1e20a82b49320f37d7de379396c33e45c5cf499f41",
+      "exactBytesMatch": true,
+      "expectation": "candidate working tree"
+    },
+    {
+      "path": "backend/tests/signupAvailability.test.js",
+      "actualSha256": "8864d648ca37b074b8e49a570522f5e997a0ba61de0e6a0e24d76676a240dbda",
+      "expectedSha256": "8864d648ca37b074b8e49a570522f5e997a0ba61de0e6a0e24d76676a240dbda",
+      "exactBytesMatch": true,
+      "expectation": "candidate working tree"
+    },
+    {
+      "path": "backend/tests/signupLifecycle.officeIsolation.integration.test.js",
+      "actualSha256": "820acc67003577b9652e6d864b47d4aabb9d5e0986c4dbee3886b759ddbca079",
+      "expectedSha256": "820acc67003577b9652e6d864b47d4aabb9d5e0986c4dbee3886b759ddbca079",
+      "exactBytesMatch": true,
+      "expectation": "candidate working tree"
+    },
+    {
+      "path": "backend/tests/systemMessageBillingSettlement.test.js",
+      "actualSha256": "e574d96cf9b1d2d4028485fe2bf0babad17a2e9304376cdb26b73138046e8c71",
+      "expectedSha256": "e574d96cf9b1d2d4028485fe2bf0babad17a2e9304376cdb26b73138046e8c71",
+      "exactBytesMatch": true,
+      "expectation": "candidate working tree"
+    },
+    {
+      "path": "backend/tests/systemMessageSharedSettlement.test.js",
+      "actualSha256": "959cb0c476bc6c13f67b301dfdf577ba34ad6c7d75a81779ac6eee5a6ebfb44b",
+      "expectedSha256": "959cb0c476bc6c13f67b301dfdf577ba34ad6c7d75a81779ac6eee5a6ebfb44b",
+      "exactBytesMatch": true,
+      "expectation": "candidate working tree"
+    },
+    {
+      "path": "backend/tests/takbullDocuments.test.js",
+      "actualSha256": "0940270e94d2b9b761abb28d346a429e65de64246b669e8c8a0cb3ba479b3a08",
+      "expectedSha256": "0940270e94d2b9b761abb28d346a429e65de64246b669e8c8a0cb3ba479b3a08",
+      "exactBytesMatch": true,
+      "expectation": "candidate working tree"
+    },
+    {
+      "path": "frontend/src/api/billingApi.confirmCheckout.test.js",
+      "actualSha256": "5821537d6e93d740d077a510b3774bf508f70fe48660f419cd59058b02b216b0",
+      "expectedSha256": "5821537d6e93d740d077a510b3774bf508f70fe48660f419cd59058b02b216b0",
+      "exactBytesMatch": true,
+      "expectation": "candidate working tree"
+    },
+    {
+      "path": "frontend/src/api/billingApi.js",
+      "actualSha256": "22dc8579d0e6385ddf29cce631111d3cd3f9d34a94638ffbd78d1fdc7dca8b1a",
+      "expectedSha256": "22dc8579d0e6385ddf29cce631111d3cd3f9d34a94638ffbd78d1fdc7dca8b1a",
+      "exactBytesMatch": true,
+      "expectation": "candidate working tree"
+    },
+    {
+      "path": "frontend/src/components/billing/TakbullCheckoutDialog.js",
+      "actualSha256": "5f58fb9626f9f976874d5e0167031c3f09f67cd8ea36a00c5bbdbc76c60e78cc",
+      "expectedSha256": "5f58fb9626f9f976874d5e0167031c3f09f67cd8ea36a00c5bbdbc76c60e78cc",
+      "exactBytesMatch": true,
+      "expectation": "candidate working tree"
+    },
+    {
+      "path": "frontend/src/components/billing/TakbullCheckoutDialog.test.js",
+      "actualSha256": "80ac851e7ef0ca81976ff95d0777d54ef5776ba27fa6c2d036118546d145002e",
+      "expectedSha256": "80ac851e7ef0ca81976ff95d0777d54ef5776ba27fa6c2d036118546d145002e",
+      "exactBytesMatch": true,
+      "expectation": "candidate working tree"
+    },
+    {
+      "path": "frontend/src/i18n/locales/ar.json",
+      "actualSha256": "fd07a3bc78f60973619b6a34730061243b2ea19d455c99fca9cbc983619c1ed9",
+      "expectedSha256": "fd07a3bc78f60973619b6a34730061243b2ea19d455c99fca9cbc983619c1ed9",
+      "exactBytesMatch": true,
+      "expectation": "surgical target locale merge"
+    },
+    {
+      "path": "frontend/src/i18n/locales/en.json",
+      "actualSha256": "0410d0970f04b27b8a95eee4daeab3b7323f1a48391204a6c6785cc6d90152cc",
+      "expectedSha256": "0410d0970f04b27b8a95eee4daeab3b7323f1a48391204a6c6785cc6d90152cc",
+      "exactBytesMatch": true,
+      "expectation": "surgical target locale merge"
+    },
+    {
+      "path": "frontend/src/i18n/locales/he.json",
+      "actualSha256": "981a295d9450e43086336b67714277ecdba1c5a3d24fb3adc4c8cc47449430cc",
+      "expectedSha256": "981a295d9450e43086336b67714277ecdba1c5a3d24fb3adc4c8cc47449430cc",
+      "exactBytesMatch": true,
+      "expectation": "surgical target locale merge"
+    },
+    {
+      "path": "frontend/src/screens/billingScreen/PlanUsageScreen.js",
+      "actualSha256": "0d0b555e7b0887875908c4a4e57a00705124df9dfd6eee4ec9740fb77c6bfdf0",
+      "expectedSha256": "0d0b555e7b0887875908c4a4e57a00705124df9dfd6eee4ec9740fb77c6bfdf0",
+      "exactBytesMatch": true,
+      "expectation": "candidate working tree"
+    },
+    {
+      "path": "frontend/src/screens/billingScreen/PlansPricingScreen.js",
+      "actualSha256": "2db947f4ed9f429ced095db7a3ae89aeacaaf67ae08e2e1c6f541c5b40734302",
+      "expectedSha256": "2db947f4ed9f429ced095db7a3ae89aeacaaf67ae08e2e1c6f541c5b40734302",
+      "exactBytesMatch": true,
+      "expectation": "candidate working tree"
+    }
+  ],
+  "all21NonLocaleFilesEqualCandidate": true,
+  "allThreeLocalesEqualSurgicalMerge": true,
+  "sourceFilesSha256": {
+    "backend/controllers/billingController.js": "820249f324388cb40fa7ac0827f90f9c76adbcb0806ada980d1d4d3f86381c97",
+    "backend/lib/billing/firmBillingService.js": "5f6ecd8d26503d7a79a082809907df309da0c19b875fbb31e5f87facb2280e80",
+    "backend/lib/billing/selfServiceRenewal.js": "43261bd8aa023f370e24b1cd99d480f96a874ab8d3aaa3bcc4e396f5fa273273",
+    "backend/lib/billing/selfServiceUpgrade.js": "b7b15b7b27912e91f067e6ddd0824f2d21d26adcd83cdb68c9dd934d1f9fe7b7",
+    "backend/lib/payments/takbullClient.js": "27d11524a132c602ad5dbf1a66cee4f88c14759ffa6b76ed6a8cc252af4e6597",
+    "backend/tests/cardSetupDebtCollection.test.js": "d1086bc9b5e19d56ab23af2dcf71de5d61ec61a00f48cd0529c842c382888378",
+    "backend/tests/liveServerPreservation.test.js": "af5d34038b674f53e732e9647dbbf6829e54d2a07d5f22a0152b79db66a8e117",
+    "backend/tests/savePackage.chargeOrder.test.js": "8111e4f4c7cdf7b17dba620b150f1ddeab110d2549034db8bbb2d853145c47b4",
+    "backend/tests/savePackage.idempotency.test.js": "d8575a94aa487819cb0515c45bbaefcc792f7ea3ef1a7afc1439afc3b32f4ace",
+    "backend/tests/selfServiceCardSetupCollection.test.js": "26ed71b456d5f1d206093f1e20a82b49320f37d7de379396c33e45c5cf499f41",
+    "backend/tests/signupAvailability.test.js": "8864d648ca37b074b8e49a570522f5e997a0ba61de0e6a0e24d76676a240dbda",
+    "backend/tests/signupLifecycle.officeIsolation.integration.test.js": "820acc67003577b9652e6d864b47d4aabb9d5e0986c4dbee3886b759ddbca079",
+    "backend/tests/systemMessageBillingSettlement.test.js": "e574d96cf9b1d2d4028485fe2bf0babad17a2e9304376cdb26b73138046e8c71",
+    "backend/tests/systemMessageSharedSettlement.test.js": "959cb0c476bc6c13f67b301dfdf577ba34ad6c7d75a81779ac6eee5a6ebfb44b",
+    "backend/tests/takbullDocuments.test.js": "0940270e94d2b9b761abb28d346a429e65de64246b669e8c8a0cb3ba479b3a08",
+    "frontend/src/api/billingApi.confirmCheckout.test.js": "5821537d6e93d740d077a510b3774bf508f70fe48660f419cd59058b02b216b0",
+    "frontend/src/api/billingApi.js": "22dc8579d0e6385ddf29cce631111d3cd3f9d34a94638ffbd78d1fdc7dca8b1a",
+    "frontend/src/components/billing/TakbullCheckoutDialog.js": "5f58fb9626f9f976874d5e0167031c3f09f67cd8ea36a00c5bbdbc76c60e78cc",
+    "frontend/src/components/billing/TakbullCheckoutDialog.test.js": "80ac851e7ef0ca81976ff95d0777d54ef5776ba27fa6c2d036118546d145002e",
+    "frontend/src/i18n/locales/ar.json": "50c40b83edeb4284e217b60125943e2f979174c2680f8b6ba47f8e3c3fec26b5",
+    "frontend/src/i18n/locales/en.json": "b5d84b608012fa2ba75d24410aba389f068cd265800f4c0e184f1749b2dac37c",
+    "frontend/src/i18n/locales/he.json": "ed6f686c52a1c96baadfe3e9f9f4317401045a34a4ba56482b0baeccee6bea68",
+    "frontend/src/screens/billingScreen/PlanUsageScreen.js": "0d0b555e7b0887875908c4a4e57a00705124df9dfd6eee4ec9740fb77c6bfdf0",
+    "frontend/src/screens/billingScreen/PlansPricingScreen.js": "2db947f4ed9f429ced095db7a3ae89aeacaaf67ae08e2e1c6f541c5b40734302"
+  },
+  "sourceFilesStableDuringCheck": true,
+  "candidateHeadStableDuringCheck": true,
+  "uncommittedSelectedPathsAtCapture": [
+    "backend/tests/cardSetupDebtCollection.test.js",
+    "backend/tests/selfServiceCardSetupCollection.test.js"
+  ],
+  "networkOperations": 0,
+  "realSourceCheckoutOrRefMutations": 0,
+  "customerOrProviderOperations": 0
+}

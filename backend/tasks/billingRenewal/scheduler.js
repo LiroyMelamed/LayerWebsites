@@ -3,6 +3,7 @@
  */
 
 const { runBillingMaintenance } = require('../../lib/billing/firmBillingService');
+const { billingOperationsEnabled } = require('../../lib/billing/billingOperations');
 const { withLegacyOffice } = require('../../lib/tenant/databaseScope');
 const { runWithTenant, isMultiTenantMode } = require('../../lib/tenant/tenantContext');
 
@@ -25,6 +26,7 @@ function getTodayDateKeyInTz(timeZone, now = new Date()) {
 }
 
 function initBillingRenewalScheduler() {
+    if (!billingOperationsEnabled()) return { ok: true, enabled: false, reason: 'billing_operations_paused' };
     const enabled = String(process.env.BILLING_RENEWAL_SCHEDULER_ENABLED ?? 'true').toLowerCase();
     if (enabled !== 'true' && enabled !== '1') {
         console.log('[billing-renewal] Scheduler disabled via BILLING_RENEWAL_SCHEDULER_ENABLED.');
@@ -38,7 +40,7 @@ function initBillingRenewalScheduler() {
     let running = false;
 
     async function tick() {
-        if (running) return;
+        if (running || !billingOperationsEnabled()) return;
         running = true;
         try {
             const key = getTodayDateKeyInTz(tz);

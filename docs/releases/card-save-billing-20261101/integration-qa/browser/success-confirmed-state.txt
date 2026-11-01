@@ -1,0 +1,116 @@
+Browser tab: 3, Title: "Local billing browser QA", URL: "http://127.0.0.1:55701/AdminStack/PlanUsage".
+0 AXWebArea Local billing browser QA, URL: 127.0.0.1:55701/AdminStack/PlanUsage
+	1 container
+		2 container qa
+			3 text LOCAL QA — actual screens, synthetic API + iframe; no credentials or provider I/O
+			4 container
+				5 text Scenario 
+				6 pop up button (collapsed, settable) Scenario, Value: success, ID: scenario, Secondary Actions: Expand
+					7 menu
+						8 (selected) success
+						9 decline
+						10 unknown
+						11 no-debt
+			12 button Reset scenario, ID: reset
+			13 button PlanUsage screen, ID: plan
+			14 button PlansPricing screen, ID: pricing
+			15 button Send forged parent message, ID: spoof
+			16 container Description: Synthetic payment and access status, ID: qa-summary
+				42 text scenario=success | status=active | due=0 | savedCard=true | paid=true | pending=false | checkouts=1 | confirmations=1 | verificationFee=1 | simulatedSubscriptionCharges=1
+			18 container Description: Synthetic API counters, ID: qa-state
+				43 text {
+ "scenario": "success",
+ "checkouts": 1,
+ "confirmations": 1,
+ "confirmBodies": [
+  {
+   "intentId": "synthetic-intent-1",
+   "uniqId": "synthetic-order-1"
+  }
+ ],
+ "fee": 1,
+ "subscriptionCharges": 1,
+ "savedCard": true,
+ "paid": true,
+ "pending": false,
+ "calls": [
+  {
+   "method": "GET",
+   "path": "/api/billing/system-message-consent"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/plan"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/usage"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/lock-status"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/system-message-consent"
+  },
+  {
+   "method": "POST",
+   "path": "/api/billing/checkout"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/lock-status"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/lock-status"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/lock-status"
+  },
+  {
+   "method": "POST",
+   "path": "/api/billing/checkout/confirm"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/plan"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/lock-status"
+  }
+ ],
+ "messages": [],
+ "completed": [
+  "synthetic-intent-1"
+ ],
+ "accountStatus": "active",
+ "collectibleDebt": 0
+}
+		44 container
+			45 text התשלום בוצע בהצלחה התכנית שלך פעיל פרו · אתר + אפליקציה · 500 חתימות 1,353 ₪ לחודש אפשר לשלם שנה מראש ב־14,612 ₪ ולחסוך 10% איך לשלם
+			46 איך לשלם
+				47 radio button חודשי 1,353 ₪, Value: 1
+				48 radio button שנתי 14,612 ₪ 10% הנחה, Value: 0
+					49 text שנתי
+					50 text 14,612 ₪
+					51 text 10% הנחה
+			52 text החיוב הבא: 01/12/2026 · 1,353 ₪ לחודש כרטיס שמור: **** 1234 פירוט לחודש מערכת 296 ₪ פלטפורמה: אתר + אפליקציה 296 ₪ חבילת משאבים: פרו 211 ₪ חבילת חתימות: 500 חתימות 169 ₪
+			53 button שלמו שנה מראש
+				54 text שלמו שנה מראש
+			55 button שינוי חבילה
+				56 text שינוי חבילה
+			57 button חיוב הכרטיס השמור
+				58 text חיוב הכרטיס השמור
+			59 button החלפת כרטיס
+				60 text החלפת כרטיס
+			61 button ביטול מנוי
+				62 text ביטול מנוי
+			63 text חיובים עדיין אין חיובים. החיוב הראשון ב־01/12/2026. שמירה מסמכים (ליבה): 180 ימים מסמכים (מידע אישי): 180 ימים שימוש מסמכים (החודש) בשימוש: 0 מגבלה: 500 מסמכים 0 / 500 0 %
+			64 text אחסון (MB) בשימוש: 0 MB מגבלה: 1024 MB אחסון 0 / 1024 0 %
+			65 text ~ 0 MB בשימוש מנהלי מערכת בשימוש: 0 מגבלה: 5 מנהלי מערכת 0 / 5 0 %
+			66 text SMS (החודש) בשימוש: 0 מגבלה: 2000 SMS 0 / 2000 0 %
+		41 container Notifications

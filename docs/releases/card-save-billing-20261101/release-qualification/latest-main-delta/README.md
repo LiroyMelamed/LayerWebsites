@@ -1,0 +1,13 @@
+# Latest-main bounded delta qualification — 1 November 2026
+
+This receipt is pinned to runtime **`6a3bd299227291feb0065ae3afa89a1f3ba2967a`**, the isolated merge of upstream **`074df7520497a0cd6bd95ad70353201c905f0aa6`**. The accepted source cutoff is `074df752`; this QA does not chase subsequent remote changes. Earlier `6fab2887` delta evidence remains preserved separately.
+
+Relative to qualified `6fab2887`, the source delta is exactly two paths: `backend/lib/qaOutboundNoop.js` and its recovery test. The incoming correction binds recipient allowlists to their channel and compares complete normalized phone numbers instead of numeric suffixes. Three new assertions exercise mismatched-country, cross-channel email and push cases within the existing tests. Audit-document commits are excluded from the source-delta comparison.
+
+The same six-file selection passed **40/40, zero failures or skips**, using the existing external/application-database network guard, clean environment and shared heavy-work mutex. Normal approved execution allowed its synthetic loopback HTTP fixtures. There was one successful attempt, with no runtime, assertion, fixture or dependency changes by QA. The selection covers QA no-op recovery, completed-copy notification, transport outcomes, consent controller, transactional outbox and actual SDK lost-receipt/child-crash recovery against a local Central stub. It is not provider acceptance or delivery evidence.
+
+The original signing release guard passed **103/103** before and after the run; its protected manifest was unchanged. HEAD and all tracked backend/frontend/scripts inputs remained stable throughout. See [receipt and source hashes](evidence.json), [raw TAP](delta-tests.tap), [execution provenance](execution-provenance.json), and [guard output](source-release-guard.log).
+
+[Git input comparisons](merge-input-proof.json) show that frontend, scripts, root/backend package manifests and lockfiles, and the signing release manifest are byte-identical to `6fab2887`. The prior frontend/compiler equivalence chain remains valid for those unchanged inputs. **No fresh full frontend suite or production compile is claimed on `6a3bd299`.** This selected delta run also does not replace the separate broad backend/real-PostgreSQL qualification.
+
+No product source or HEAD change, push, deployment, application boot, live customer/database access, provider call, charge, document, real message or production configuration change occurred. Evidence is left uncommitted for the parent to consolidate. Existing deployment, sandbox, full-signup/profile fixture, backup/restore, rollback and operational financial-quiescence holds remain separate.

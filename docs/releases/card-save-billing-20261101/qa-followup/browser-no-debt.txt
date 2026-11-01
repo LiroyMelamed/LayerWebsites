@@ -1,0 +1,97 @@
+- complementary:
+  - strong: LOCAL QA — actual screens, synthetic API + iframe; no credentials or provider I/O
+  - text: Scenario
+  - combobox "Scenario":
+    - option "success"
+    - option "decline"
+    - option "unknown"
+    - option "no-debt" [selected]
+  - button "Reset scenario"
+  - button "PlanUsage screen"
+  - button "PlansPricing screen"
+  - button "Send forged parent message"
+  - generic "Synthetic payment and access status": scenario=no-debt | status=active | due=0 | savedCard=true | paid=false | pending=false | checkouts=1 | confirmations=1 | verificationFee=1 | simulatedSubscriptionCharges=0
+  - generic "Synthetic API counters": "{ \"scenario\": \"no-debt\", \"checkouts\": 1, \"confirmations\": 1, \"confirmBodies\": [ { \"intentId\": \"synthetic-intent-1\", \"uniqId\": \"synthetic-order-1\" } ], \"fee\": 1, \"subscriptionCharges\": 0, \"savedCard\": true, \"paid\": false, \"pending\": false, \"calls\": [ { \"method\": \"GET\", \"path\": \"/api/billing/system-message-consent\" }, { \"method\": \"GET\", \"path\": \"/api/billing/plan\" }, { \"method\": \"GET\", \"path\": \"/api/billing/usage\" }, { \"method\": \"GET\", \"path\": \"/api/billing/lock-status\" }, { \"method\": \"GET\", \"path\": \"/api/billing/system-message-consent\" }, { \"method\": \"POST\", \"path\": \"/api/billing/checkout\" }, { \"method\": \"POST\", \"path\": \"/api/billing/checkout/confirm\" }, { \"method\": \"GET\", \"path\": \"/api/billing/plan\" }, { \"method\": \"GET\", \"path\": \"/api/billing/lock-status\" } ], \"messages\": [], \"completed\": [ \"synthetic-intent-1\" ], \"accountStatus\": \"active\", \"collectibleDebt\": 0 }"
+- main:
+  - paragraph: התשלום בוצע בהצלחה
+  - paragraph: התכנית שלך
+  - generic: פעיל
+  - paragraph: פרו · אתר + אפליקציה · 500 חתימות
+  - paragraph: 1,353 ₪
+  - paragraph: לחודש
+  - paragraph: אפשר לשלם שנה מראש ב־14,612 ₪ ולחסוך 10%
+  - paragraph: איך לשלם
+  - radiogroup "איך לשלם":
+    - radio "חודשי 1,353 ₪" [checked]:
+      - generic: חודשי
+      - generic: 1,353 ₪
+    - radio "שנתי 14,612 ₪ 10% הנחה":
+      - generic: שנתי
+      - generic: 14,612 ₪
+      - generic: 10% הנחה
+  - paragraph: "החיוב הבא: 01/12/2026 · 1,353 ₪ לחודש"
+  - paragraph: "כרטיס שמור: **** 1234"
+  - paragraph: פירוט לחודש
+  - paragraph: מערכת
+  - paragraph: 296 ₪
+  - paragraph: "פלטפורמה: אתר + אפליקציה"
+  - paragraph: 296 ₪
+  - paragraph: "חבילת משאבים: פרו"
+  - paragraph: 211 ₪
+  - paragraph: "חבילת חתימות: 500 חתימות"
+  - paragraph: 169 ₪
+  - button "שלמו שנה מראש":
+    - paragraph: שלמו שנה מראש
+  - button "שינוי חבילה":
+    - paragraph: שינוי חבילה
+  - button "חיוב הכרטיס השמור":
+    - paragraph: חיוב הכרטיס השמור
+  - button "החלפת כרטיס":
+    - paragraph: החלפת כרטיס
+  - button "ביטול מנוי":
+    - paragraph: ביטול מנוי
+  - paragraph: חיובים
+  - paragraph: עדיין אין חיובים. החיוב הראשון ב־01/12/2026.
+  - paragraph: שמירה
+  - paragraph: "מסמכים (ליבה):"
+  - paragraph: 180 ימים
+  - paragraph: "מסמכים (מידע אישי):"
+  - paragraph: 180 ימים
+  - paragraph: שימוש
+  - paragraph: מסמכים (החודש)
+  - paragraph: "בשימוש:"
+  - paragraph: "0"
+  - paragraph: "מגבלה:"
+  - paragraph: "500"
+  - paragraph: מסמכים
+  - paragraph: 0/500
+  - paragraph: 0%
+  - paragraph: אחסון (MB)
+  - paragraph: "בשימוש:"
+  - paragraph: 0 MB
+  - paragraph: "מגבלה:"
+  - paragraph: 1024 MB
+  - paragraph: אחסון
+  - paragraph: 0/1024
+  - paragraph: 0%
+  - paragraph: ~ 0 MB בשימוש
+  - paragraph: מנהלי מערכת
+  - paragraph: "בשימוש:"
+  - paragraph: "0"
+  - paragraph: "מגבלה:"
+  - paragraph: "5"
+  - paragraph: מנהלי מערכת
+  - paragraph: 0/5
+  - paragraph: 0%
+  - paragraph: SMS (החודש)
+  - paragraph: "בשימוש:"
+  - paragraph: "0"
+  - paragraph: "מגבלה:"
+  - paragraph: "2000"
+  - paragraph: SMS
+  - paragraph: 0/2000
+  - paragraph: 0%
+- region "Notifications":
+  - dialog "התשלום בוצע בהצלחה":
+    - heading "התשלום בוצע בהצלחה" [level=2]
+    - button:

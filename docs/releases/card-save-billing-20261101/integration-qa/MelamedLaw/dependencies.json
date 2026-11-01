@@ -1,0 +1,112 @@
+{
+  "node": "v24.19.0",
+  "frontendDependencyPath": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules",
+  "frontendWantedLockSha256": "ed0b4c398ffe0d47a2d91e735ee48bf494a0b718534293b59056f91973a6a4ac",
+  "frontendInstalledLockSha256": "00cc3b9a309e871937202330da56da5744fedbaac7773c89447c4c943a049b05",
+  "versionDrift": [],
+  "omittedForeignOptionalPackages": [
+    {
+      "path": "node_modules/@napi-rs/canvas-android-arm64",
+      "optional": true,
+      "cpu": [
+        "arm64"
+      ],
+      "os": [
+        "android"
+      ]
+    },
+    {
+      "path": "node_modules/@napi-rs/canvas-darwin-x64",
+      "optional": true,
+      "cpu": [
+        "x64"
+      ],
+      "os": [
+        "darwin"
+      ]
+    },
+    {
+      "path": "node_modules/@napi-rs/canvas-linux-arm-gnueabihf",
+      "optional": true,
+      "cpu": [
+        "arm"
+      ],
+      "os": [
+        "linux"
+      ]
+    },
+    {
+      "path": "node_modules/@napi-rs/canvas-linux-arm64-gnu",
+      "optional": true,
+      "cpu": [
+        "arm64"
+      ],
+      "os": [
+        "linux"
+      ]
+    },
+    {
+      "path": "node_modules/@napi-rs/canvas-linux-arm64-musl",
+      "optional": true,
+      "cpu": [
+        "arm64"
+      ],
+      "os": [
+        "linux"
+      ]
+    },
+    {
+      "path": "node_modules/@napi-rs/canvas-linux-riscv64-gnu",
+      "optional": true,
+      "cpu": [
+        "riscv64"
+      ],
+      "os": [
+        "linux"
+      ]
+    },
+    {
+      "path": "node_modules/@napi-rs/canvas-linux-x64-gnu",
+      "optional": true,
+      "cpu": [
+        "x64"
+      ],
+      "os": [
+        "linux"
+      ]
+    },
+    {
+      "path": "node_modules/@napi-rs/canvas-linux-x64-musl",
+      "optional": true,
+      "cpu": [
+        "x64"
+      ],
+      "os": [
+        "linux"
+      ]
+    },
+    {
+      "path": "node_modules/@napi-rs/canvas-win32-arm64-msvc",
+      "optional": true,
+      "cpu": [
+        "arm64"
+      ],
+      "os": [
+        "win32"
+      ]
+    },
+    {
+      "path": "node_modules/@napi-rs/canvas-win32-x64-msvc",
+      "optional": true,
+      "cpu": [
+        "x64"
+      ],
+      "os": [
+        "win32"
+      ]
+    }
+  ],
+  "backendDependencyPath": "/Users/liroymelamed/Projects/LayerWebsites/backend/node_modules",
+  "backendSupplemental": "/tmp/layer-billing-deps/node_modules; PGlite0.5.10, Sharp0.35.4",
+  "sourceLockfilesUnchanged": true
+}
