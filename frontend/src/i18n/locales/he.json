@@ -2978,7 +2978,20 @@
         "fill": "מילוי פרטים מהלקוח או מהתיק"
       },
       "replaceRecipient": "החלפת חותם",
-      "searchRecipients": "חיפוש חותם לפי שם, אימייל או טלפון"
+      "searchRecipients": "חיפוש חותם לפי שם, אימייל או טלפון",
+      "recipient": {
+        "search": "חיפוש לפי שם, אימייל או טלפון",
+        "newPerson": "אדם חדש",
+        "changePerson": "החלפת אדם",
+        "editDetails": "עריכת פרטים",
+        "keepPerson": "השארת האדם הנוכחי",
+        "delivery": "שליחה: {{channel}}",
+        "changeDelivery": "שינוי אופן השליחה",
+        "advanced": "אפשרויות נוספות",
+        "manualDetails": "פרטי האדם",
+        "contextPeople": "אנשים המקושרים לשליחה",
+        "contextHelp": "בחרו במפורש מי יחתום בכל תפקיד מתוך האנשים המקושרים או באמצעות החיפוש."
+      }
     },
     "public": {
       "title": "חתימה על מסמכים",

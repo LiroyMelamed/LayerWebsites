@@ -2065,7 +2065,20 @@
         "fill": "Fill details from the client or case"
       },
       "replaceRecipient": "Change signer",
-      "searchRecipients": "Find a signer by name, email or phone"
+      "searchRecipients": "Find a signer by name, email or phone",
+      "recipient": {
+        "search": "Search name, email or phone",
+        "newPerson": "New person",
+        "changePerson": "Change person",
+        "editDetails": "Edit details",
+        "keepPerson": "Keep current person",
+        "delivery": "Delivery: {{channel}}",
+        "changeDelivery": "Change delivery method",
+        "advanced": "More options",
+        "manualDetails": "Person details",
+        "contextPeople": "People linked to this send",
+        "contextHelp": "Choose who signs each role from the linked people or search."
+      }
     },
     "public": {
       "title": "Sign documents",
