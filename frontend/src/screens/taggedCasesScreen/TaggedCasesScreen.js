@@ -37,10 +37,10 @@ export default function TaggedCasesScreen() {
 
     const { result: allCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
 
-    const taggedCaseRows = useMemo(() => Array.isArray(taggedCases) ? taggedCases : [], [taggedCases]);
-
     const displayTaggedCases = useMemo(() => {
-        let filtered = taggedCaseRows;
+        if (!Array.isArray(taggedCases)) return [];
+
+        let filtered = taggedCases;
 
         if (selectedCaseName) {
             filtered = filtered.filter(item =>
@@ -80,7 +80,7 @@ export default function TaggedCasesScreen() {
 
         return filtered;
     }, [
-        taggedCaseRows,
+        taggedCases,
         selectedCaseName,
         selectedCaseType,
         selectedStatus,
@@ -89,13 +89,13 @@ export default function TaggedCasesScreen() {
         selectedCompany,
     ]);
 
-    const caseNames = [...new Set(taggedCaseRows.map(c => c.CaseName).filter(Boolean))].sort();
-    const clientNames = [...new Set(taggedCaseRows.flatMap(c => {
+    const caseNames = [...new Set((taggedCases || []).map(c => c.CaseName).filter(Boolean))].sort();
+    const clientNames = [...new Set((taggedCases || []).flatMap(c => {
         if (Array.isArray(c.Users) && c.Users.length > 0) return c.Users.map(u => u.Name);
         return [c.CustomerName];
     }).filter(Boolean))].sort();
-    const managerNames = [...new Set(taggedCaseRows.map(c => c.CaseManager).filter(Boolean))].sort();
-    const companyNames = [...new Set(taggedCaseRows.map(c => c.CompanyName).filter(Boolean))].sort();
+    const managerNames = [...new Set((taggedCases || []).map(c => c.CaseManager).filter(Boolean))].sort();
+    const companyNames = [...new Set((taggedCases || []).map(c => c.CompanyName).filter(Boolean))].sort();
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
@@ -116,7 +116,7 @@ export default function TaggedCasesScreen() {
 
                     <ChooseButton
                         buttonText={t('cases.caseType')}
-                        items={(Array.isArray(allCasesTypes) ? allCasesTypes : []).map((ct) => ({ value: ct, label: ct }))}
+                        items={(allCasesTypes || []).map((ct) => ({ value: ct, label: ct }))}
                         className="lw-taggedCasesScreen__choose"
                         OnPressChoiceFunction={setSelectedCaseType}
                     />

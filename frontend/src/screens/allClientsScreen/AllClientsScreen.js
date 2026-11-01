@@ -47,7 +47,6 @@ export default function AllClientsScreen() {
         dateofbirth: c.DateOfBirth ?? c.dateofbirth,
         profilepicurl: c.ProfilePicUrl ?? c.profilepicurl,
         role: c.Role ?? c.role,
-        ClientProfile: c.ClientProfile ?? c.client_profile,
     })), [rawCustomers]);
 
     const displayList = useMemo(() => {

@@ -7,7 +7,6 @@ const { transaction } = require('./transaction');
 const { assertCases, assertClients, scopeParams, packageScopeSql } = require('./access');
 const { personScopeSql } = require('./people');
 const { lockAvailableOrigin } = require('./templateAvailability');
-const { assertWordDefinition, assertWordPackageContext, wordTemplateScopeSql } = require('./wordOrigin');
 const { approvalPlan, createRequests } = require('./approvals');
 const { job, enqueue } = require('./jobs');
 
@@ -67,7 +66,6 @@ async function loadDirectory(db, scope, definition, packages) {
         if (result.rowCount !== ids.length) fail('PARTICIPANT_NOT_AVAILABLE', 404);
         directory[key] = new Map(result.rows.map(row => [row.id, row]));
     }
-    await assertWordDefinition(db, scope, definition, { sources: directory.sources });
     return directory;
 }
 
@@ -110,14 +108,12 @@ async function createSubmissionInTransaction(db, scope, input, { reserveCapacity
     const templates = await db.query(`SELECT v.* FROM signing_template_versions v
         JOIN signing_templates t ON t.owner_context_id=v.owner_context_id AND t.id=v.template_id
         WHERE v.owner_context_id=$1 AND v.id=$2 AND v.state='published' AND NOT t.archived
-          AND ($3::boolean OR t.owner_userid=$4) AND ${wordTemplateScopeSql('$4')}
-          FOR SHARE OF v,t`, [scope.contextId, input.templateVersionId, scope.all, scope.userId]);
+          AND ($3::boolean OR t.owner_userid=$4) FOR SHARE OF v,t`, [scope.contextId, input.templateVersionId, scope.all, scope.userId]);
     if (!templates.rowCount) fail('NOT_FOUND', 404);
     const template = templates.rows[0];
     await lockAvailableOrigin(db, scope, template.definition);
     const definition = validateDefinition(template.definition);
     expect(digest(definition) === template.definition_hash, 'TEMPLATE_CHANGED');
-    await assertWordPackageContext(db, scope, definition, input.packages);
     const approval = await approvalPlan(db, scope, definition.policy, input.reviewerUserId);
     await assertCases(db, scope, [...new Set(input.packages.map(item => item.caseId).filter(Boolean))]);
     await assertClients(db, scope, [...new Set(input.packages.map(item => item.clientId).filter(Boolean))], true);

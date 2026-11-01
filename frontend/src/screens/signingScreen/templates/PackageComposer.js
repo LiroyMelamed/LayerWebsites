@@ -7,6 +7,8 @@ import PrimaryButton from '../../../components/styledComponents/buttons/PrimaryB
 import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
 import SegmentedSwitch from '../../../components/styledComponents/SegmentedSwitch';
 import SearchInput from '../../../components/specializedComponents/containers/SearchInput';
+import { Text12 } from '../../../components/specializedComponents/text/AllTextKindFile';
+import { colors } from '../../../constant/colors';
 import signingTemplatesApi from '../../../api/signingTemplatesApi';
 import SimpleCard from '../../../components/simpleComponents/SimpleCard';
 import BlockDateInput from '../../../components/simpleComponents/BlockDateInput';
@@ -23,7 +25,6 @@ import CaseContextPicker from './CaseContextPicker';
 import ClientSendContext from './ClientSendContext';
 import useSigningDraft from './useSigningDraft';
 import DraftRecoveryList from './DraftRecoveryList';
-import resolveWordTemplateContext, { isWordTemplate } from '../word/resolveWordTemplateContext';
 import './signingPackages.scss';
 import './signingCompose.scss';
 
@@ -68,131 +69,91 @@ function Field({ id, label, help, error, className = '', children }) {
     </div>;
 }
 
-// Search text is UI state only. Choosing a result is the single draft mutation.
-function RecipientPersonPicker({ id, onPick }) {
-    const { t, direction } = useSigningLocale();
-    const [query, setQuery] = useState('');
+function SuggestField({ id, label, value, error, errorText, dir, type, inputMode, maxLength, onValue, onPick }) {
     const [results, setResults] = useState([]);
     const [busy, setBusy] = useState(false);
     const timer = useRef(null);
-    const generation = useRef(0);
-    useEffect(() => () => { generation.current += 1; clearTimeout(timer.current); }, []);
-    const search = text => {
-        setQuery(text); setResults([]); clearTimeout(timer.current);
-        const current = ++generation.current;
+    const searchGeneration = useRef(0);
+    const selectionEcho = useRef(null);
+    useEffect(() => () => { searchGeneration.current += 1; clearTimeout(timer.current); }, []);
+    const search = next => {
+        // SearchInput echoes the selected value after onPick in the same event.
+        // Do not turn that echo into a manual edit of the pre-selection person.
+        if (selectionEcho.current === next) { selectionEcho.current = null; return; }
+        selectionEcho.current = null;
+        onValue(next);
+        const generation = ++searchGeneration.current;
+        setResults([]);
+        clearTimeout(timer.current);
+        const query = String(next || '').trim();
         timer.current = setTimeout(async () => {
             setBusy(true);
             try {
-                const data = await signingTemplatesApi.contacts(String(text || '').trim());
-                if (current === generation.current) setResults(Array.isArray(data?.contacts) ? data.contacts : []);
-            } catch { if (current === generation.current) setResults([]); }
-            finally { if (current === generation.current) setBusy(false); }
+                const data = await signingTemplatesApi.contacts(query);
+                if (generation === searchGeneration.current) setResults(Array.isArray(data?.contacts) ? data.contacts : []);
+            } catch { if (generation === searchGeneration.current) setResults([]); } finally { if (generation === searchGeneration.current) setBusy(false); }
         }, 150);
     };
-    return <SearchInput id={id} title={t('signingV2.compose.recipient.search')} aria-label={t('signingV2.compose.recipient.search')}
-        value={query} onSearch={search} maxLength={300} dir={direction} containerDir={direction}
-        isPerforming={busy} queryResult={results} clearOnSelect
-        getButtonTextFunction={item => [item.name, item.phone || item.email].filter(Boolean).join(' | ')}
-        getSelectValueFunction={item => item.name}
-        buttonPressFunction={(_text, item) => { generation.current += 1; clearTimeout(timer.current); onPick(item); }} />;
+    return <div className="lw-signingCompose__field">
+        <SearchInput id={id} title={label} aria-label={label} type={type} inputMode={inputMode} maxLength={maxLength}
+            dir={dir} containerDir={dir} value={value} error={errorText || undefined} timeToWaitInMilli={0}
+            aria-invalid={error ? true : undefined} aria-describedby={error ? `${id}-error` : undefined}
+            acceptExternalValueWhileFocused isPerforming={busy} queryResult={results}
+            getButtonTextFunction={item => [item.name, item.phone || item.email].filter(Boolean).join(' | ')}
+            getSelectValueFunction={item => String(item[type === 'email' ? 'email' : type === 'tel' ? 'phone' : 'name'] || '')}
+            buttonPressFunction={(text, item) => { selectionEcho.current = text; searchGeneration.current += 1; clearTimeout(timer.current); onPick(item); setResults([]); setBusy(false); }} onSearch={search} />
+        {errorText && <small id={`${id}-error`} className="lw-signingCompose__srError">{errorText}</small>}
+    </div>;
 }
 
-function PersonFields({ scope, roleKey, person, errors, onChange, compact, casePeople, peopleLabel, capacity, otherRoles = [] }) {
+function PersonFields({ scope, roleKey, person, errors, onChange, compact, casePeople, peopleLabel, capacity, otherRoles = [], bindContacts = false }) {
     const { t, direction, number } = useSigningLocale();
-    const [editing, setEditing] = useState(false);
-    const [changing, setChanging] = useState(false);
-    const [deliveryOpen, setDeliveryOpen] = useState(false);
-    const [advancedOpen, setAdvancedOpen] = useState(false);
-    const representative = capacity === 'representative';
-    const hasDetails = ['name', 'email', 'phone'].some(key => String(person[key] || '').trim());
-    const saved = !!(person.contactUserId || person.personId);
-    const invalidDetails = ['name', 'email', 'phone'].some(key => errors?.[key]);
-    const manual = editing || invalidDetails || (!saved && hasDetails);
-    const showPicker = !representative && (changing || (!manual && !saved));
-    // Reveal a newly invalid field for the error-summary focus target, but keep
-    // an explicit later Change person action available to fix it by replacement.
-    useEffect(() => { if (invalidDetails) setChanging(false); }, [errors, invalidDetails]);
     const choices = otherRoles.flatMap(role => Array.from({ length: role.max ?? 1 }, (_, index) => ({ key: role.key, occurrence: index, value: role.max > 1 ? `${role.key}|${index}` : role.key, label: role.max > 1 ? `${role.label} · ${number(index + 1)}` : role.label })));
     const linkedValue = person.sameAsRole ? (person.sameAsOccurrence != null ? `${person.sameAsRole}|${person.sameAsOccurrence}` : person.sameAsRole) : '';
+    const message = name => errors?.[name] ? t(`signingV2.compose.rowErrors.${errors[name]}`, { defaultValue: t('signingV2.compose.rowErrors.INVALID_ROW') }) : '';
     const pick = item => {
-        onChange(roleKey, '__person', { ...person, name: item?.name || '', email: item?.email || '', phone: item?.phone || '',
-            contactUserId: item?.id ?? item?.userId, personId: undefined, partyId: undefined, authorityId: undefined });
-        setChanging(false); setEditing(false);
+        if (bindContacts) {
+            onChange(roleKey, '__person', { ...person, name: item?.name || '', email: item?.email || '', phone: item?.phone || '', contactUserId: item?.id ?? item?.userId, personId: undefined, partyId: undefined, authorityId: undefined });
+            return;
+        }
+        onChange(roleKey, 'name', item?.name || '');
+        onChange(roleKey, 'email', item?.email || '');
+        onChange(roleKey, 'phone', item?.phone || '');
     };
-    const newPerson = () => {
-        onChange(roleKey, '__person', { ...person, name: '', email: '', phone: '', contactUserId: undefined,
-            personId: undefined, partyId: undefined, authorityId: undefined });
-        setChanging(false); setEditing(true);
-        requestAnimationFrame(() => document.getElementById(fieldId(scope, roleKey, 'name'))?.focus());
-    };
-    const manualField = (name, props = {}) => <Field key={name} id={fieldId(scope, roleKey, name)}
-        label={t(`signingV2.compose.fields.${name}`)} error={errors?.[name]}>
-        <input value={person[name] || ''} onChange={event => onChange(roleKey, name, event.target.value)} dir={direction} {...props} />
-    </Field>;
-    const hasAlias = (!representative && otherRoles.length > 0) || person.sameAsRole;
-    const channel = t(`signingV2.compose.channel.${person.channel || 'auto'}`);
+    const suggest = (name, extra) => <SuggestField key={name} id={fieldId(scope, roleKey, name)} label={t(`signingV2.compose.fields.${name}`)}
+        value={person[name]} error={errors?.[name]} errorText={message(name)}         onValue={value => onChange(roleKey, name, value)} onPick={pick} {...extra} />;
+    const choice = (name, first, values) => <SegmentedSwitch key={name} title={t(`signingV2.compose.fields.${name}`)} ariaLabel={t(`signingV2.compose.fields.${name}`)}
+        value={person[name]} onChange={value => onChange(roleKey, name, value)}
+        options={[{ value: '', label: first }, ...values.map(value => ({ value, label: t(`signingV2.compose.${name}.${value}`) }))]} />;
     return <div className={`lw-signingCompose__person${compact ? ' is-compact' : ''}`}>
+        {((capacity !== 'representative' && otherRoles.length > 0) || person.sameAsRole) && <Field id={fieldId(scope, roleKey, 'sameAsRole')}
+            label={t('signingV2.compose.identity.label')} error={errors?.sameAsRole} className="is-wide">
+            <SigningSelect value={linkedValue} onChange={event => { const [key, index] = event.target.value.split('|'); onChange(roleKey, 'sameAsRole', key); onChange(roleKey, 'sameAsOccurrence', index == null ? undefined : Number(index)); }}>
+                <option value="">{t('signingV2.compose.identity.separate')}</option>
+                {person.sameAsRole && !choices.some(role => role.value === linkedValue) && <option value={linkedValue}>{t('signingV2.compose.identity.unavailable')}</option>}
+                {choices.map(role => <option key={role.value} value={role.value}>{t('signingV2.compose.identity.sameAs', { role: role.label })}</option>)}
+            </SigningSelect>
+        </Field>}
         {person.sameAsRole ? <p className="lw-signingCompose__hintLine">{t('signingV2.compose.identity.linkedHelp')}</p> : <>
-            {representative ? <>
-                <div className="lw-signingCompose__identity">
-                    {manualField('name', { maxLength: 300 })}
-                    {manualField('email', { type: 'email', inputMode: 'email', maxLength: 254, dir: 'ltr' })}
-                    {manualField('phone', { type: 'tel', inputMode: 'tel', maxLength: 20, dir: 'ltr' })}
-                </div>
-                <ParticipantDirectoryFields person={person} roleKey={roleKey} capacity={capacity}
-                    onChange={value => onChange(roleKey, '__person', value)} />
-            </> : <>
-                {hasDetails && (!manual || changing) && <div className="lw-signingCompose__personSummary">
-                    <div><strong><bdi>{person.name}</bdi></strong>
-                        <span>{[person.email, person.phone].filter(Boolean).map((value, index) => <React.Fragment key={index}>{index > 0 && ' · '}<bdi dir="ltr">{value}</bdi></React.Fragment>)}</span></div>
-                    <div className="lw-signingCompose__personActions">
-                        <button type="button" className="lw-signingPackages__textButton" onClick={() => { setChanging(true); setEditing(false); }}>{t('signingV2.compose.recipient.changePerson')}</button>
-                        {!manual && !changing && <button type="button" className="lw-signingPackages__textButton" onClick={() => setEditing(true)}>{t('signingV2.compose.recipient.editDetails')}</button>}
-                    </div>
-                </div>}
-                {showPicker && <div className="lw-signingCompose__personLookup">
-                    {!!casePeople?.length && <div className="lw-signingCompose__contextPeople" role="group" aria-label={peopleLabel || t('signingV2.compose.recipient.contextPeople')}>
-                        {casePeople.map(item => <button type="button" key={item.id} onClick={() => pick(item)}>
-                            <strong><bdi>{item.name}</bdi></strong><span><bdi dir="ltr">{item.email || item.phone || t('signingV2.compose.context.noContact')}</bdi></span>
-                        </button>)}
-                    </div>}
-                    <RecipientPersonPicker id={fieldId(scope, roleKey, 'search')} onPick={pick} />
-                    <div className="lw-signingCompose__personActions">
-                        <button type="button" className="lw-signingPackages__textButton" onClick={newPerson}>{t('signingV2.compose.recipient.newPerson')}</button>
-                        {changing && hasDetails && <button type="button" className="lw-signingPackages__textButton" onClick={() => setChanging(false)}>{t('signingV2.compose.recipient.keepPerson')}</button>}
-                    </div>
-                </div>}
-                {manual && !changing && <div className="lw-signingCompose__identity" role="group" aria-label={t('signingV2.compose.recipient.manualDetails')}>
-                    {manualField('name', { maxLength: 300 })}
-                    {manualField('email', { type: 'email', inputMode: 'email', maxLength: 254, dir: 'ltr' })}
-                    {manualField('phone', { type: 'tel', inputMode: 'tel', maxLength: 20, dir: 'ltr' })}
-                    <button type="button" className="lw-signingPackages__textButton" onClick={() => { setChanging(true); setEditing(false); }}>{t('signingV2.compose.recipient.changePerson')}</button>
-                </div>}
-            </>}
-            <div className="lw-signingCompose__deliverySummary">
-                <span>{t('signingV2.compose.recipient.delivery', { channel })}</span>
-                <button type="button" className="lw-signingPackages__textButton" aria-expanded={deliveryOpen}
-                    onClick={() => setDeliveryOpen(value => !value)}>{t('signingV2.compose.recipient.changeDelivery')}</button>
-            </div>
-            {deliveryOpen && <div className="lw-signingCompose__choices">
-                <SegmentedSwitch title={t('signingV2.compose.fields.channel')} ariaLabel={t('signingV2.compose.fields.channel')}
-                    value={person.channel || ''} onChange={value => onChange(roleKey, 'channel', value)}
-                    options={['', 'email', 'sms', 'both'].map(value => ({ value, label: t(`signingV2.compose.channel.${value || 'auto'}`) }))} />
-            </div>}
+        {!!casePeople?.length && <Field id={fieldId(scope, roleKey, 'case-person')} label={peopleLabel || t('signingV2.compose.context.fill')} className="is-wide">
+            <SigningSelect value="" onChange={event => { const item = casePeople.find(candidate => String(candidate.id) === event.target.value); if (item) pick(item); }}>
+                <option value="">{t('signingV2.compose.context.choose')}</option>
+                {casePeople.map(item => <option key={item.id} value={item.id}>{item.name} · {item.email || item.phone || t('signingV2.compose.context.noContact')}</option>)}
+            </SigningSelect>
+        </Field>}
+        <div className="lw-signingCompose__identity">
+            {suggest('name', { maxLength: 300, dir: direction })}
+            {suggest('email', { type: 'email', inputMode: 'email', maxLength: 254, dir: 'ltr' })}
+            {suggest('phone', { type: 'tel', inputMode: 'tel', maxLength: 20, dir: 'ltr' })}
+            <Text12 className="lw-signingCompose__hint" color={colors.winter}>
+                {t('signingV2.compose.directoryHelp.all')}
+            </Text12>
+        </div>
+        <div className="lw-signingCompose__choices">
+            {choice('channel', t('signingV2.compose.channel.auto'), ['email', 'sms', 'both'])}
+        </div>
+        <ParticipantDirectoryFields person={person} roleKey={roleKey} capacity={capacity} onChange={value=>onChange(roleKey,'__person',value)} />
         </>}
-        {(hasAlias || !representative) && <details className="lw-signingCompose__recipientAdvanced" open={advancedOpen || !!person.sameAsRole || !!errors?.sameAsRole}
-            onToggle={event => setAdvancedOpen(event.currentTarget.open)}>
-            <summary>{t('signingV2.compose.recipient.advanced')}</summary>
-            {hasAlias && <Field id={fieldId(scope, roleKey, 'sameAsRole')} label={t('signingV2.compose.identity.label')} error={errors?.sameAsRole}>
-                <SigningSelect value={linkedValue} onChange={event => { const [key, index] = event.target.value.split('|'); onChange(roleKey, 'sameAsRole', key); onChange(roleKey, 'sameAsOccurrence', index == null ? undefined : Number(index)); }}>
-                    <option value="">{t('signingV2.compose.identity.separate')}</option>
-                    {person.sameAsRole && !choices.some(role => role.value === linkedValue) && <option value={linkedValue}>{t('signingV2.compose.identity.unavailable')}</option>}
-                    {choices.map(role => <option key={role.value} value={role.value}>{t('signingV2.compose.identity.sameAs', { role: role.label })}</option>)}
-                </SigningSelect>
-            </Field>}
-            {!person.sameAsRole && !representative && <ParticipantDirectoryFields person={person} roleKey={roleKey} capacity={capacity}
-                onChange={value => { onChange(roleKey, '__person', value); setChanging(false); setEditing(false); }} />}
-        </details>}
     </div>;
 }
 
@@ -435,13 +396,12 @@ function templateOrder(roles) {
 // as an ordinary package. It never creates or submits an ordinary draft.
 export { RolePeople, DocumentDataFields, SigningOrderFields, changePerson, blankRole, clean, templateOrder };
 
-export default function PackageComposer({ api = signingPackagesApi, onBack, onCreated, initialTemplateId, initialTemplateVersion, initialCaseId, initialClientId, backLabel, replacementContext, lockedDocumentContext = false }) {
+export default function PackageComposer({ api = signingPackagesApi, onBack, onCreated, initialTemplateId, initialTemplateVersion, initialCaseId, initialClientId, backLabel, replacementContext }) {
     const { t, direction, number, language, errorMessage, locale } = useSigningLocale();
     const heading = useRef(null);
     const errorSummary = useRef(null);
     const [step, setStep] = useState(replacementContext ? 'replacementOpening' : initialTemplateId ? 'opening' : 'template');
     const [replacementSource, setReplacementSource] = useState(replacementContext || null);
-    const [replacementOpenAttempt, setReplacementOpenAttempt] = useState(0);
     const [replacementConfirmed, setReplacementConfirmed] = useState(false);
     const [replacement, setReplacement] = useState(null);
     const [template, setTemplate] = useState(null);
@@ -467,14 +427,6 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const [clientContext, setClientContext] = useState(null);
     const [clientPending, setClientPending] = useState(!!initialClientId);
     const [clientRestored, setClientRestored] = useState(false);
-    const [wordContext, setWordContext] = useState({ status: 'idle' });
-    const wordContextModel = useRef({ status: 'idle' });
-    const wordContextGeneration = useRef(0);
-    const hydrateWordContextRef = useRef(null);
-    const wordContextRetry = useRef(null);
-    useEffect(() => () => { wordContextGeneration.current += 1; }, []);
-    const contextBlocked = wordContext.status === 'pending' || wordContext.status === 'error'
-        || (isWordTemplate(template) && (wordContext.status !== 'ready' || wordContext.versionId !== template.versionId));
     const contextPeople = useMemo(() => [...new Map([...(caseContext?.people || []), ...(clientContext ? [clientContext] : [])].map(person => [person.id, person])).values()], [caseContext, clientContext]);
     const peopleLabel = clientContext ? t('signingV2.compose.clientContext.fill') : undefined;
     const createKey = useRef(null);
@@ -482,41 +434,15 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const checking = useRef(false);
     const inputGeneration = useRef(0);
     const replacementDraftApi = useMemo(() => replacementContext ? { ...api, draft: undefined, saveDraft: undefined, submitDraft: undefined } : api, [api, replacementContext]);
-    const entryDraftApi = useMemo(() => {
-        if (!initialTemplateId || !replacementDraftApi.draft) return replacementDraftApi;
-        return { ...replacementDraftApi, draft: async id => {
-            const saved = await replacementDraftApi.draft(id);
-            // A URL recovery pointer must not replace the document explicitly
-            // selected by this entry. Resolve read-only; never import a source.
-            const catalog = await replacementDraftApi.templates();
-            const native = catalog.templates.filter(item => item.versionId === initialTemplateId || String(item.templateId) === String(initialTemplateId));
-            const candidates = native.length ? native : catalog.templates.filter(item => String(item.origin?.templateId) === String(initialTemplateId));
-            const selected = [...candidates].sort((a, b) => native.length ? b.version - a.version : (b.origin?.version || b.version) - (a.origin?.version || a.version))[0];
-            const legacy = (catalog.legacy || []).find(item => String(item.id) === String(initialTemplateId));
-            const version = legacy?.version ?? (native.length ? selected?.version : selected?.origin?.version ?? selected?.version);
-            if (!selected || selected.versionId !== saved.payload?.request?.templateVersionId
-                || (initialTemplateVersion != null && String(initialTemplateVersion) !== String(version))
-                || (legacy && selected.origin?.version !== legacy.version)) {
-                throw Object.assign(new Error('DRAFT_TEMPLATE_CHANGED'), { code: 'DRAFT_TEMPLATE_CHANGED' });
-            }
-            return saved;
-        } };
-    }, [replacementDraftApi, initialTemplateId, initialTemplateVersion]);
     useEffect(() => {
         if (!replacementContext) return undefined;
         let current = true;
         const open = async () => {
             try {
-                setError(null);
                 const content = replacementContext.content;
                 const selected = replacementContext.template || (await api.templates()).templates.find(item => item.versionId === content?.templateVersionId);
                 if (!selected || !Array.isArray(content?.rows) || content.rows.length !== 1) throw Object.assign(new Error('Replacement unavailable'), { code: 'REPLACEMENT_UNAVAILABLE' });
                 if (!current) return;
-                if (isWordTemplate(selected)) {
-                    setTemplate(selected);
-                    const resolved = await hydrateWordContextRef.current(selected, { caseId: content.caseId, clientId: content.clientId }, () => current);
-                    if (!resolved || !current) return;
-                }
                 const ordering = content.signingOrder || templateOrder(selected.roles);
                 const fallbackOrder = templateOrder(selected.roles);
                 setTemplate(selected); setName(content.name || selected.name); setShared(content.shared || {});
@@ -530,7 +456,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         };
         open();
         return () => { current = false; };
-    }, [api, replacementContext, replacementOpenAttempt]);
+    }, [api, replacementContext]);
 
     // Stable arrays keep memoized rows from re-rendering on every keystroke with 200 rows.
     const sendRoles = useMemo(() => (template?.roles || []).map(role => ({ ...role, audience: Object.hasOwn(roleAudience, role.key) ? roleAudience[role.key] : role.audience })), [template, roleAudience]);
@@ -553,39 +479,6 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     }, [rows]);
     const invalidate = () => { inputGeneration.current += 1; setCheck(null); setReplacementConfirmed(false); createKey.current = null; };
 
-    const updateWordContext = value => { wordContextModel.current = value; setWordContext(value); };
-    const cancelWordContext = () => {
-        wordContextGeneration.current += 1;
-        wordContextRetry.current = null;
-        const current = wordContextModel.current;
-        if (current.lockedClientId && !initialClientId) { setClientContext(null); setClientPending(false); }
-        if (current.lockedCaseId && !initialCaseId) { setCaseContext(null); setCasePending(false); }
-        updateWordContext({ status: 'idle' });
-    };
-    const hydrateWordContext = async (selected, explicit, isCurrent = () => true, additionalCaller = {}) => {
-        const generation = ++wordContextGeneration.current;
-        const previous = wordContextModel.current;
-        const caller = explicit || {
-            clientId: initialClientId ?? (previous.lockedClientId ? null : clientContext?.id),
-            caseId: initialCaseId ?? (previous.lockedCaseId ? null : caseContext?.id),
-        };
-        wordContextRetry.current = { selected, caller, isCurrent, additionalCaller };
-        updateWordContext({ ...previous, status: 'pending', versionId: selected.versionId });
-        invalidate();
-        try {
-            const resolved = await resolveWordTemplateContext(api, selected, caller, additionalCaller);
-            if (generation !== wordContextGeneration.current || !isCurrent()) return null;
-            setClientContext(resolved.clientContext); setClientPending(false); setClientRestored(true);
-            setCaseContext(resolved.caseContext); setCasePending(false); setCaseRestored(true);
-            updateWordContext({ status: 'ready', versionId: selected.versionId, ...resolved });
-            return resolved;
-        } catch (failure) {
-            if (generation === wordContextGeneration.current && isCurrent()) updateWordContext({ ...previous, status: 'error', versionId: selected.versionId, error: failure });
-            throw failure;
-        }
-    };
-    hydrateWordContextRef.current = hydrateWordContext;
-
     const applyTemplate = selected => {
         if (selected.versionId === template?.versionId) return;
         const roles = selected.roles.filter(role => role.audience !== 'shared');
@@ -599,8 +492,6 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         setOrderRoles(order.roles); setOrderGroups(order.groups);
         setName(current => current || selected.name);
         setImportNote(null); invalidate();
-        if (isWordTemplate(selected)) hydrateWordContext(selected).catch(() => {});
-        else cancelWordContext();
     };
     const chooseTemplate = selected => {
         if (selected.versionId === template?.versionId) return;
@@ -721,14 +612,13 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             },
         };
     };
-    const draftPayload = template && !contextBlocked ? { request: payload().body, editor: {
+    const draftPayload = template ? { request: payload().body, editor: {
         template, name, shared, roleAudience, rows, reviewerUserId, omitted: [...omitted], orderMode, orderRoles, orderGroups, source, importNote,
     } } : null;
-    const draft = useSigningDraft({ api: entryDraftApi, payload: draftPayload, active: !!template && !contextBlocked && !casePending && !clientPending && step !== 'done',
+    const draft = useSigningDraft({ api: replacementDraftApi, payload: draftPayload, active: !!template && !casePending && !clientPending && step !== 'done',
         validateRestore: saved => {
-            const word = isWordTemplate(saved?.editor?.template);
-            if ((initialClientId && (!word || saved?.request?.clientId != null) && String(saved?.request?.clientId) !== String(initialClientId))
-                || (initialCaseId && (!word || saved?.request?.caseId != null) && String(saved?.request?.caseId) !== String(initialCaseId))) {
+            if ((initialClientId && String(saved?.request?.clientId) !== String(initialClientId))
+                || (initialCaseId && String(saved?.request?.caseId) !== String(initialCaseId))) {
                 throw Object.assign(new Error('DRAFT_CONTEXT_CHANGED'), { code: 'DRAFT_CONTEXT_CHANGED' });
             }
         },
@@ -738,41 +628,10 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             if (!editor?.template || editor.template.versionId !== saved.request.templateVersionId || !Array.isArray(editor.rows)) {
                 throw Object.assign(new Error('INVALID_DRAFT'), { code: 'INVALID_DRAFT' });
             }
-            // Recover the immutable version's server origin, not a cached editor
-            // object which could omit or substitute Word provenance.
-            let selected;
-            if (typeof api.templateVersion === 'function') {
-                const { version } = await api.templateVersion(saved.request.templateVersionId);
-                if (version?.id === saved.request.templateVersionId && version.state === 'published') {
-                    selected = { ...editor.template, origin: version.definition?.origin || null };
-                }
-            } else {
-                const catalog = await api.templates();
-                selected = catalog.templates.find(item => item.versionId === saved.request.templateVersionId);
-            }
+            const restoredCase = saved.request.caseId ? await api.caseContext(saved.request.caseId) : null;
+            const restoredClient = saved.request.clientId ? await api.clientContext(saved.request.clientId) : null;
             if (!isCurrent()) return;
-            if (!selected) throw Object.assign(new Error('SELECTED_TEMPLATE_UNAVAILABLE'), { code: 'SELECTED_TEMPLATE_UNAVAILABLE' });
-            let restoredCase, restoredClient;
-            if (isWordTemplate(selected)) {
-                setTemplate(selected);
-                const resolved = await hydrateWordContext(selected, {
-                    clientId: saved.request.clientId, caseId: saved.request.caseId,
-                }, isCurrent, { clientId: initialClientId, caseId: initialCaseId });
-                if (!resolved || !isCurrent()) return;
-                restoredCase = resolved.caseContext; restoredClient = resolved.clientContext;
-            } else {
-                // A cached editor cannot label an ordinary draft as Word to
-                // bypass the incumbent explicit entry-context check.
-                if ((initialClientId && String(saved.request.clientId) !== String(initialClientId))
-                    || (initialCaseId && String(saved.request.caseId) !== String(initialCaseId))) {
-                    throw Object.assign(new Error('DRAFT_CONTEXT_CHANGED'), { code: 'DRAFT_CONTEXT_CHANGED' });
-                }
-                cancelWordContext();
-                restoredCase = saved.request.caseId ? await api.caseContext(saved.request.caseId) : null;
-                restoredClient = saved.request.clientId ? await api.clientContext(saved.request.clientId) : null;
-            }
-            if (!isCurrent()) return;
-            setTemplate(selected); setName(editor.name || ''); setShared(editor.shared || {});
+            setTemplate(editor.template); setName(editor.name || ''); setShared(editor.shared || {});
             setRoleAudience(editor.roleAudience || {}); setReviewerUserId(editor.reviewerUserId || null);
             setRows(editor.rows.map(row => ({ ...row, id: `row-${++localId}` })));
             setOmitted(new Set(editor.omitted || [])); setOrderMode(editor.orderMode || 'parallel');
@@ -782,7 +641,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             setCaseContext(restoredCase); setCasePending(false); setCaseRestored(true); invalidate(); setStep('recipients');
         } });
     const runCheck = async () => {
-        if (checking.current || contextBlocked || ['pending', 'error'].includes(wordContextModel.current.status) || casePending || clientPending) return;
+        if (checking.current || casePending || clientPending) return;
         setError(null);
         const { body, sentIds } = payload();
         if (!body.name) { setError({ code: 'RUN_NAME_REQUIRED' }); return; }
@@ -806,7 +665,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         } catch (failure) { if (generation === inputGeneration.current) setError(failure); } finally { checking.current = false; setBusy(null); }
     };
     const create = async () => {
-        if (creating.current || contextBlocked || ['pending', 'error'].includes(wordContextModel.current.status) || !check?.preview.valid || (replacementSource && !replacementConfirmed)) return;
+        if (creating.current || !check?.preview.valid || (replacementSource && !replacementConfirmed)) return;
         creating.current = true; setBusy('create'); setError(null);
         try {
             const created = replacementSource
@@ -826,7 +685,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             try { await draft.flush(); onBack?.(); } catch { setLeaving(true); }
         } else if (step !== 'done' && dirty && !leaving) setLeaving(true); else onBack?.();
     };
-    const restart = () => { cancelWordContext(); draft.reset(); setStep('template'); setTemplate(null); setRows([]); setShared({}); setName(''); setResult(null); setImportNote(null); invalidate(); };
+    const restart = () => { draft.reset(); setStep('template'); setTemplate(null); setRows([]); setShared({}); setName(''); setResult(null); setImportNote(null); invalidate(); };
     const refreshReplacement = async () => {
         if (busy || !replacementSource) return;
         setBusy('refresh'); setError(null);
@@ -856,32 +715,16 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const filledRows = rows.filter(rowFilled).length;
     const preview = check?.preview;
     const sharedNames = [...new Map((preview?.shared || []).map(item => [sharedIdentityKey(check?.body.shared, item.roleKey, item.occurrence), item.name])).values()].join(', ');
-    if (replacementSource && !contextBlocked && ['FORBIDDEN', 'NOT_FOUND', 'ACCESS_CHANGED'].includes(error?.code)) return <section className="lw-signingPackages lw-signingCompose" dir={direction}>
+    if (replacementSource && ['FORBIDDEN', 'NOT_FOUND', 'ACCESS_CHANGED'].includes(error?.code)) return <section className="lw-signingPackages lw-signingCompose" dir={direction}>
         <StatusNotice><p>{errorMessage(error)}</p></StatusNotice>
         <SigningBackButton onPress={onBack}>{backLabel || t('signingV2.compose.back')}</SigningBackButton>
     </section>;
 
-    if (contextBlocked) return <section className="lw-signingPackages lw-signingCompose" dir={direction}>
-        <SigningBackButton onPress={onBack}>{backLabel || t('signingV2.compose.back')}</SigningBackButton>
-        {wordContext.status === 'error' ? <StatusNotice><p>{t('signingWord.savedContextFailure')}</p>
-            <SecondaryButton onPress={() => {
-                if (replacementContext && step === 'replacementOpening') setReplacementOpenAttempt(value => value + 1);
-                else if (draft.status === 'loadError') draft.recover(draft.id);
-                else if (wordContextRetry.current) {
-                    const saved = wordContextRetry.current;
-                    hydrateWordContext(saved.selected, saved.caller, saved.isCurrent, saved.additionalCaller).catch(() => {});
-                }
-            }}>{t('common.retry')}</SecondaryButton>
-        </StatusNotice> : <p role="status">{t('signingWord.nativePreparing')}</p>}
-        <SecondaryButton onPress={restart}>{t('signingV2.compose.template.chooseAnother')}</SecondaryButton>
-    </section>;
-
     if (draft.status === 'loading' || draft.status === 'loadError') return <section className="lw-signingPackages lw-signingCompose" dir={direction}>
         {draft.status === 'loading' ? <p role="status">{t('signingV2.compose.draft.loading')}</p> : <StatusNotice>
-            <p>{t(draft.error?.code === 'DRAFT_TEMPLATE_CHANGED' ? 'signingV2.compose.errors.SELECTED_TEMPLATE_CHANGED'
-                : draft.error?.code === 'DRAFT_CONTEXT_CHANGED' ? 'signingV2.compose.draft.contextChanged' : 'signingV2.compose.draft.loadError')}</p>
+            <p>{t(draft.error?.code === 'DRAFT_CONTEXT_CHANGED' ? 'signingV2.compose.draft.contextChanged' : 'signingV2.compose.draft.loadError')}</p>
             <SecondaryButton onPress={() => draft.recover(draft.id)}>{t('common.retry')}</SecondaryButton>
-            <SigningBackButton onPress={() => { restart(); if (draft.error?.code === 'DRAFT_TEMPLATE_CHANGED' && initialTemplateId) setStep('opening'); }}>{t('signingV2.compose.draft.startNew')}</SigningBackButton>
+            <SigningBackButton onPress={restart}>{t('signingV2.compose.draft.startNew')}</SigningBackButton>
         </StatusNotice>}
     </section>;
 
@@ -915,19 +758,15 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             <p>{t('signingV2.replacement.reason')}: <bdi>{replacementSource.reason}</bdi></p>
         </StatusNotice>}
         <Stepper step={['opening', 'replacementOpening'].includes(step) ? 'template' : step} />
-        <div className="lw-signingCompose__contextStrip" hidden={step === 'review' || step === 'done'}>
         {!replacementSource && api.clientContext && (initialClientId || clientContext) && step !== 'done' && <SimpleCard className="lw-signingCompose__card lw-signingCompose__context" hidden={step === 'review'}>
             <ClientSendContext key={String(clientRestored)} api={api} initialClientId={clientRestored ? null : initialClientId} value={clientContext}
-                locked={!!wordContext.lockedClientId || (lockedDocumentContext && !!initialClientId)}
                 onPending={value => { setClientPending(value); if (value) invalidate(); }}
                 onChange={value => { setClientContext(value); invalidate(); }} />
         </SimpleCard>}
         {!replacementSource && api.caseContext && step !== 'done' && <SimpleCard className="lw-signingCompose__card lw-signingCompose__context" hidden={step === 'review'}>
-            <CaseContextPicker api={api} initialCaseId={caseRestored ? null : initialCaseId} value={caseContext} locked={!!wordContext.lockedCaseId || (lockedDocumentContext && !!initialCaseId)} onPending={value => { setCasePending(value); if (value) invalidate(); }}
+            <CaseContextPicker api={api} initialCaseId={caseRestored ? null : initialCaseId} value={caseContext} onPending={value => { setCasePending(value); if (value) invalidate(); }}
                 onChange={value => { setCaseContext(value); invalidate(); }} />
         </SimpleCard>}
-        {(clientContext || caseContext) && <p className="lw-signingCompose__contextHelp">{t('signingV2.compose.recipient.contextHelp')}</p>}
-        </div>
         {error && <StatusNotice><p>{t(`signingV2.compose.errors.${error.code}`, { defaultValue: errorMessage(error) })}</p></StatusNotice>}
         {replacementSource && ['VERSION_CHANGED', 'REPLACEMENT_CHANGED', 'REVISION_INACTIVE', 'PREVIEW_CHANGED'].includes(error?.code) && <SecondaryButton onPress={refreshReplacement} disabled={!!busy}>{t('signingV2.refresh')}</SecondaryButton>}
         {step === 'replacementOpening' && !error && <p role="status">{t('common.loading')}</p>}
@@ -1038,7 +877,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 {!replacementSource && <div className="lw-signingPackages__actions">
                     <SecondaryButton onPress={() => {
                         const row = blankRow(activeEach.length ? activeEach : eachRoles);
-                        pendingFocus.current = activeEach.length ? fieldId(row.id, activeEach[0].key, 'search') : fieldId(row.id, 'data', dataFields[0]?.key);
+                        pendingFocus.current = activeEach.length ? fieldId(row.id, activeEach[0].key, 'name') : fieldId(row.id, 'data', dataFields[0]?.key);
                         setRows(current => [...current, row]); invalidate();
                     }} disabled={rows.length >= MAX_ROWS || busy === 'upload'}>{t('signingV2.compose.rows.add')}</SecondaryButton>
                     <span className="lw-signingPackages__caption" aria-live="polite">{t('signingV2.compose.rows.count', { count: filledRows, formattedCount: number(filledRows), max: number(MAX_ROWS) })}</span>
