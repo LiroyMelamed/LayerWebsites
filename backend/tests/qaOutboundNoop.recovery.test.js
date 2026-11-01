@@ -15,6 +15,9 @@ test('disabled mode preserves normal transports; guard rejects other tenants', (
  setQa();process.env.QA_OUTBOUND_MODE='typo';assert.throws(()=>qaOutboundNoop('sms'),/isolated/);
  setQa();process.env.QA_OUTBOUND_ALLOW='0500000000';
  assert.equal(qaOutboundNoop('sms','+972500000000'),null);
+ assert.equal(qaOutboundNoop('sms','+1500000000').suppressed,true);
+ assert.equal(qaOutboundNoop('email','500000000@other.example.invalid').suppressed,true);
+ assert.equal(qaOutboundNoop('push','0500000000').suppressed,true);
  assert.equal(qaOutboundNoop('sms','+972501111111').mode,'qa-noop');
  delete process.env.QA_OUTBOUND_ALLOW;
 });
