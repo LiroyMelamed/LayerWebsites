@@ -2633,6 +2633,156 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                         </SimpleContainer>
                     )}
 
+                    {showReminderPicker && (
+                        <SimpleContainer className="lw-eventFormModal__reminders">
+                            {event?.reminderDeliveryWarning && <Text14 role="alert">{t("calendar.reminderDeliveryUncertain")}</Text14>}
+                            <TextBold14 color={NAVY}>{t("calendar.eventRemindersTitle")}</TextBold14>
+                            <Text12 color="#718096">{t("calendar.eventRemindersHint")}</Text12>
+
+                            <SimpleContainer className="lw-eventFormModal__reminderGroup">
+                                <TextBold14 color={NAVY}>{t("calendar.lawyerRemindersLabel")}</TextBold14>
+                                <SimpleContainer className="lw-eventFormModal__reminderChips">
+                                    {reminderPresets.map(({ minutes, labelKey }) => {
+                                        const active = lawyerReminderOffsets.includes(minutes);
+                                        return (
+                                            <SimpleButton
+                                                key={`lawyer-${minutes}`}
+                                                className={`lw-eventFormModal__reminderChip ${active ? "is-active" : ""}`}
+                                                onPress={() => toggleLawyerReminderOffset(minutes)}
+                                                aria-pressed={active}
+                                                tabIndex={-1}
+                                            >
+                                                <Text14>{t(labelKey)}</Text14>
+                                            </SimpleButton>
+                                        );
+                                    })}
+                                </SimpleContainer>
+                                {lawyerReminderOffsets.length === 0 && (
+                                    <Text12 color="#718096">{t("calendar.eventRemindersNone")}</Text12>
+                                )}
+                            </SimpleContainer>
+
+                            {hasClientRecipient && (
+                                <SimpleContainer className="lw-eventFormModal__reminderGroup">
+                                    <TextBold14 color={NAVY}>{t("calendar.clientRemindersLabel")}</TextBold14>
+                                    <SimpleContainer className="lw-eventFormModal__reminderChips">
+                                        {reminderPresets.map(({ minutes, labelKey }) => {
+                                            const active = clientReminderOffsets.includes(minutes);
+                                            return (
+                                                <SimpleButton
+                                                    key={`client-${minutes}`}
+                                                    className={`lw-eventFormModal__reminderChip ${active ? "is-active" : ""}`}
+                                                    onPress={() => toggleClientReminderOffset(minutes)}
+                                                    aria-pressed={active}
+                                                    tabIndex={-1}
+                                                >
+                                                    <Text14>{t(labelKey)}</Text14>
+                                                </SimpleButton>
+                                            );
+                                        })}
+                                    </SimpleContainer>
+                                    {clientReminderOffsets.length === 0 && (
+                                        <Text12 color="#718096">{t("calendar.eventRemindersNone")}</Text12>
+                                    )}
+                                </SimpleContainer>
+                            )}
+
+                            {anyReminderOffsets && (
+                                <SimpleContainer className="lw-eventFormModal__reminderChannels">
+                                    <TextBold14 color={NAVY}>{t("calendar.eventRemindersChannelsTitle")}</TextBold14>
+                                    <SimpleContainer className="lw-eventFormModal__reminderChips">
+                                        {reminderChannelOptions.map(({ key, labelKey }) => {
+                                            const active = !!reminderChannels[key];
+                                            return (
+                                                <SimpleButton
+                                                    key={key}
+                                                    className={`lw-eventFormModal__reminderChip ${active ? "is-active" : ""}`}
+                                                    onPress={() => toggleReminderChannel(key)}
+                                                    aria-pressed={active}
+                                                    tabIndex={-1}
+                                                >
+                                                    <Text14>{t(labelKey)}</Text14>
+                                                </SimpleButton>
+                                            );
+                                        })}
+                                    </SimpleContainer>
+                                </SimpleContainer>
+                            )}
+                            <SimpleContainer className="lw-eventFormModal__reminderChannels">
+                                {!isReminderEventType && showAudienceTargetChips && (
+                                    <>
+                                        <TextBold14 color={NAVY}>{t("calendar.reminderTargetsLabel")}</TextBold14>
+                                        <Text12 color="#718096">{t("calendar.reminderTargetsHint")}</Text12>
+                                        <SimpleContainer className="lw-eventFormModal__reminderChips">
+                                            <SimpleButton
+                                                className={`lw-eventFormModal__reminderChip ${reminderTargets.client ? "is-active" : ""}`}
+                                                onPress={() => toggleReminderTarget("client")}
+                                                aria-pressed={!!reminderTargets.client}
+                                                tabIndex={-1}
+                                            >
+                                                <Text14>{t("calendar.reminderTargetClient")}</Text14>
+                                            </SimpleButton>
+                                            <SimpleButton
+                                                className={`lw-eventFormModal__reminderChip ${reminderTargets.managers ? "is-active" : ""}`}
+                                                onPress={() => toggleReminderTarget("managers")}
+                                                aria-pressed={!!reminderTargets.managers}
+                                                tabIndex={-1}
+                                            >
+                                                <Text14>{t("calendar.reminderTargetManagers")}</Text14>
+                                            </SimpleButton>
+                                        </SimpleContainer>
+                                    </>
+                                )}
+                            </SimpleContainer>
+                            {reminderTargets.client && hasClientRecipient && (
+                                <SimpleContainer className="lw-eventFormModal__smsTemplates">
+                                    <Text12 color="#718096">
+                                        {t("calendar.inviteRemindersIndependentHint")}
+                                    </Text12>
+                                    <CalendarSmsTemplateEditor
+                                        title={t("calendar.clientReminderSmsLabel")}
+                                        hint={t("calendar.clientReminderSmsHint")}
+                                        value={clientReminderSms}
+                                        onChange={(next) => {
+                                            smsCustomizedRef.current = true;
+                                            setClientReminderSms(next);
+                                        }}
+                                        previewValues={smsPreviewValues}
+                                        previewRecipients={
+                                            clients.length
+                                                ? clients
+                                                : (leadName.trim() || leadPhone.trim()
+                                                    ? [{ name: leadName.trim(), phone: leadPhone.trim() }]
+                                                    : null)
+                                        }
+                                        excludeVars={["rsvpUrl"]}
+                                        defaultValue={smsTemplateDefaults.clientReminder}
+                                    />
+                                    {supportsCalendarInviteSms(eventType) && (
+                                    <CalendarSmsTemplateEditor
+                                        title={t("calendar.inviteSmsLabel")}
+                                        hint={t("calendar.inviteSmsHint")}
+                                        value={inviteSms}
+                                        onChange={(next) => {
+                                            smsCustomizedRef.current = true;
+                                            setInviteSms(next);
+                                        }}
+                                        previewValues={smsPreviewValues}
+                                        previewRecipients={
+                                            clients.length
+                                                ? clients
+                                                : (leadName.trim() || leadPhone.trim()
+                                                    ? [{ name: leadName.trim(), phone: leadPhone.trim() }]
+                                                    : null)
+                                        }
+                                        defaultValue={smsTemplateDefaults.invite}
+                                    />
+                                    )}
+                                </SimpleContainer>
+                            )}
+                        </SimpleContainer>
+                    )}
+
                     {/* ─── Managers: meeting attendees, or who is on leave ─── */}
                     {showManagersField && (
                     <SimpleContainer className="lw-eventFormModal__managersCol">
@@ -2932,157 +3082,6 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                 )}
                             </SimpleContainer>
                         )
-                    )}
-
-                    {/* Keep reminder settings after participant entry so client options appear below the selected client. */}
-                    {showReminderPicker && (
-                        <SimpleContainer className="lw-eventFormModal__reminders">
-                            {event?.reminderDeliveryWarning && <Text14 role="alert">{t("calendar.reminderDeliveryUncertain")}</Text14>}
-                            <TextBold14 color={NAVY}>{t("calendar.eventRemindersTitle")}</TextBold14>
-                            <Text12 color="#718096">{t("calendar.eventRemindersHint")}</Text12>
-
-                            <SimpleContainer className="lw-eventFormModal__reminderGroup">
-                                <TextBold14 color={NAVY}>{t("calendar.lawyerRemindersLabel")}</TextBold14>
-                                <SimpleContainer className="lw-eventFormModal__reminderChips">
-                                    {reminderPresets.map(({ minutes, labelKey }) => {
-                                        const active = lawyerReminderOffsets.includes(minutes);
-                                        return (
-                                            <SimpleButton
-                                                key={`lawyer-${minutes}`}
-                                                className={`lw-eventFormModal__reminderChip ${active ? "is-active" : ""}`}
-                                                onPress={() => toggleLawyerReminderOffset(minutes)}
-                                                aria-pressed={active}
-                                                tabIndex={-1}
-                                            >
-                                                <Text14>{t(labelKey)}</Text14>
-                                            </SimpleButton>
-                                        );
-                                    })}
-                                </SimpleContainer>
-                                {lawyerReminderOffsets.length === 0 && (
-                                    <Text12 color="#718096">{t("calendar.eventRemindersNone")}</Text12>
-                                )}
-                            </SimpleContainer>
-
-                            {hasClientRecipient && (
-                                <SimpleContainer className="lw-eventFormModal__reminderGroup">
-                                    <TextBold14 color={NAVY}>{t("calendar.clientRemindersLabel")}</TextBold14>
-                                    <SimpleContainer className="lw-eventFormModal__reminderChips">
-                                        {reminderPresets.map(({ minutes, labelKey }) => {
-                                            const active = clientReminderOffsets.includes(minutes);
-                                            return (
-                                                <SimpleButton
-                                                    key={`client-${minutes}`}
-                                                    className={`lw-eventFormModal__reminderChip ${active ? "is-active" : ""}`}
-                                                    onPress={() => toggleClientReminderOffset(minutes)}
-                                                    aria-pressed={active}
-                                                    tabIndex={-1}
-                                                >
-                                                    <Text14>{t(labelKey)}</Text14>
-                                                </SimpleButton>
-                                            );
-                                        })}
-                                    </SimpleContainer>
-                                    {clientReminderOffsets.length === 0 && (
-                                        <Text12 color="#718096">{t("calendar.eventRemindersNone")}</Text12>
-                                    )}
-                                </SimpleContainer>
-                            )}
-
-                            {anyReminderOffsets && (
-                                <SimpleContainer className="lw-eventFormModal__reminderChannels">
-                                    <TextBold14 color={NAVY}>{t("calendar.eventRemindersChannelsTitle")}</TextBold14>
-                                    <SimpleContainer className="lw-eventFormModal__reminderChips">
-                                        {reminderChannelOptions.map(({ key, labelKey }) => {
-                                            const active = !!reminderChannels[key];
-                                            return (
-                                                <SimpleButton
-                                                    key={key}
-                                                    className={`lw-eventFormModal__reminderChip ${active ? "is-active" : ""}`}
-                                                    onPress={() => toggleReminderChannel(key)}
-                                                    aria-pressed={active}
-                                                    tabIndex={-1}
-                                                >
-                                                    <Text14>{t(labelKey)}</Text14>
-                                                </SimpleButton>
-                                            );
-                                        })}
-                                    </SimpleContainer>
-                                </SimpleContainer>
-                            )}
-                            <SimpleContainer className="lw-eventFormModal__reminderChannels">
-                                {!isReminderEventType && showAudienceTargetChips && (
-                                    <>
-                                        <TextBold14 color={NAVY}>{t("calendar.reminderTargetsLabel")}</TextBold14>
-                                        <Text12 color="#718096">{t("calendar.reminderTargetsHint")}</Text12>
-                                        <SimpleContainer className="lw-eventFormModal__reminderChips">
-                                            <SimpleButton
-                                                className={`lw-eventFormModal__reminderChip ${reminderTargets.client ? "is-active" : ""}`}
-                                                onPress={() => toggleReminderTarget("client")}
-                                                aria-pressed={!!reminderTargets.client}
-                                                tabIndex={-1}
-                                            >
-                                                <Text14>{t("calendar.reminderTargetClient")}</Text14>
-                                            </SimpleButton>
-                                            <SimpleButton
-                                                className={`lw-eventFormModal__reminderChip ${reminderTargets.managers ? "is-active" : ""}`}
-                                                onPress={() => toggleReminderTarget("managers")}
-                                                aria-pressed={!!reminderTargets.managers}
-                                                tabIndex={-1}
-                                            >
-                                                <Text14>{t("calendar.reminderTargetManagers")}</Text14>
-                                            </SimpleButton>
-                                        </SimpleContainer>
-                                    </>
-                                )}
-                            </SimpleContainer>
-                            {reminderTargets.client && hasClientRecipient && (
-                                <SimpleContainer className="lw-eventFormModal__smsTemplates">
-                                    <Text12 color="#718096">
-                                        {t("calendar.inviteRemindersIndependentHint")}
-                                    </Text12>
-                                    <CalendarSmsTemplateEditor
-                                        title={t("calendar.clientReminderSmsLabel")}
-                                        hint={t("calendar.clientReminderSmsHint")}
-                                        value={clientReminderSms}
-                                        onChange={(next) => {
-                                            smsCustomizedRef.current = true;
-                                            setClientReminderSms(next);
-                                        }}
-                                        previewValues={smsPreviewValues}
-                                        previewRecipients={
-                                            clients.length
-                                                ? clients
-                                                : (leadName.trim() || leadPhone.trim()
-                                                    ? [{ name: leadName.trim(), phone: leadPhone.trim() }]
-                                                    : null)
-                                        }
-                                        excludeVars={["rsvpUrl"]}
-                                        defaultValue={smsTemplateDefaults.clientReminder}
-                                    />
-                                    {supportsCalendarInviteSms(eventType) && (
-                                    <CalendarSmsTemplateEditor
-                                        title={t("calendar.inviteSmsLabel")}
-                                        hint={t("calendar.inviteSmsHint")}
-                                        value={inviteSms}
-                                        onChange={(next) => {
-                                            smsCustomizedRef.current = true;
-                                            setInviteSms(next);
-                                        }}
-                                        previewValues={smsPreviewValues}
-                                        previewRecipients={
-                                            clients.length
-                                                ? clients
-                                                : (leadName.trim() || leadPhone.trim()
-                                                    ? [{ name: leadName.trim(), phone: leadPhone.trim() }]
-                                                    : null)
-                                        }
-                                        defaultValue={smsTemplateDefaults.invite}
-                                    />
-                                    )}
-                                </SimpleContainer>
-                            )}
-                        </SimpleContainer>
                     )}
 
                     {/* ─── Convert-lead CTA (edit mode + has lead data) ─── */}

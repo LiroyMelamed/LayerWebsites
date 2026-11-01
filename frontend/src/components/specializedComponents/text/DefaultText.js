@@ -6,12 +6,10 @@ export default function DefaultText({ controlId, children, shouldApplyClamping =
         return null;
     }
 
-    const clamp = shouldApplyClamping || (numberOfLines != null && numberOfLines > 0);
-
     const textStyle = {
         ...styles.text,
         ...style,
-        ...(clamp && {
+        ...(shouldApplyClamping && {
             display: '-webkit-box',
             WebkitBoxOrient: 'vertical',
             WebkitLineClamp: numberOfLines,

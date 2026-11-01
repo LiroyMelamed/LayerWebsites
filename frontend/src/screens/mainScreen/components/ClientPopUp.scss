@@ -106,101 +106,15 @@
     min-inline-size: 0;
 }
 
-.lw-clientPopup__partyType {
-    margin-block-end: v.$space-4;
-}
-
-.lw-clientPopup__documentProfile {
-    margin-block: v.$space-4;
-    border-block: 0.0625rem solid #e2e8f0;
-    padding-block: v.$space-3;
-    min-inline-size: 0;
-
-    > h3 {
-        color: #2a4365;
-        font-size: 1rem;
-        font-weight: 600;
-        margin-block: 0 v.$space-3;
-        overflow-wrap: anywhere;
-    }
-}
-
-.lw-clientPopup__profileHelp {
-    margin-block: 0 v.$space-4;
-    color: #4a5568;
-    line-height: 1.6;
-    overflow-wrap: anywhere;
-}
-
-.lw-clientPopup__profileGroup {
-    margin: 0;
-    padding: v.$space-3 0 0;
-    border: 0;
-    min-inline-size: 0;
-
-    + .lw-clientPopup__profileGroup {
-        border-block-start: 0.0625rem solid #e2e8f0;
-    }
-
-    > legend {
-        padding: 0;
-        color: #2d3748;
-        font-weight: 600;
-        overflow-wrap: anywhere;
-    }
-}
-
-.lw-clientPopup__profileFields {
-    margin: 0;
-    padding: 0;
-    border: 0;
-    min-inline-size: 0;
-
-    .lw-simpleInput {
-        min-block-size: 2.75rem;
-        block-size: auto;
-    }
-
-    .lw-simpleInput__field {
-        min-block-size: 2.75rem;
-        box-sizing: border-box;
-    }
-}
-
-.lw-clientPopup__profileSelect {
-    display: flex;
-    flex-direction: column;
-    gap: v.$space-2;
-    margin-block-end: v.$space-4;
-    min-inline-size: 0;
-
-    .lw-signingSelect {
-        inline-size: 100%;
-    }
-}
-
 .lw-clientPopup__actions {
     @include m.row(v.$space-2, wrap, center, center);
     justify-content: center;
     margin-block: v.$space-4;
 }
 
-.lw-clientPopup__readOnlyDetails {
-    margin: 0;
-    > div { margin-block-end: v.$space-3; }
-    dt { font-weight: 600; color: var(--lw-color-primary, #2a4365); }
-    dd { margin-inline-start: 0; overflow-wrap: anywhere; }
-}
-
 .lw-clientPopup__actions .lw-textButtonWithTwoOptionalIcons {
     min-block-size: 2.75rem;
     flex: 1 1 12rem;
-}
-
-@media (max-width: 30rem) {
-    .lw-clientPopup__documentProfile .lw-clientPopup__input {
-        flex-basis: 100%;
-    }
 }
 
 @media (max-width: v.$bp-narrow) {

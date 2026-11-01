@@ -3,18 +3,14 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import CaseFullView from './CaseFullView';
 import casesApi from '../../../api/casesApi';
 import useAutoHttpRequest from '../../../hooks/useAutoHttpRequest';
-const mockNavigate = jest.fn();
-let mockSigningAvailable = false, mockSigningUpload = true;
-jest.mock('react-router-dom', () => ({ ...jest.requireActual('react-router-dom'), useNavigate: () => mockNavigate }));
 
 jest.mock('react-i18next', () => ({ ...jest.requireActual('react-i18next'), useTranslation: () => ({ t: key => key }) }));
 jest.mock('../../../api/casesApi', () => ({ __esModule: true, default: { addCase: jest.fn(), updateCaseById: jest.fn(), deleteCaseById: jest.fn(), getCaseByName: jest.fn() }, casesTypeApi: { getCaseTypeByName: jest.fn() } }));
 jest.mock('../../../hooks/useAutoHttpRequest');
 jest.mock('../../../providers/PopUpProvider', () => ({ usePopup: () => ({ openPopup: jest.fn(), closePopup: jest.fn() }) }));
-jest.mock('../../../providers/FirmPermissionsProvider', () => ({ useFirmPermissions: () => ({ canAction: (area, action) => area === 'signing' && action === 'upload' ? mockSigningUpload : true }) }));
-jest.mock('../../../screens/signingScreen/templates/SigningPackagesHub', () => ({ useSigningV2Available: () => mockSigningAvailable }));
+jest.mock('../../../providers/FirmPermissionsProvider', () => ({ useFirmPermissions: () => ({ canAction: () => true }) }));
+jest.mock('../../../screens/signingScreen/templates/SigningPackagesHub', () => ({ useSigningV2Available: () => false }));
 jest.mock('../../../screens/signingScreen/templates/CaseSigningFlow', () => () => null);
-jest.mock('../../../screens/signingScreen/templates/CaseStageAutomationPanel', () => () => null);
 jest.mock('../../../screens/mainScreen/components/ClientPopUp', () => () => null);
 jest.mock('../popups/ConfirmationDialog', () => () => null);
 jest.mock('../../simpleComponents/SimplePopUp', () => () => null);
@@ -24,7 +20,6 @@ jest.mock('../../specializedComponents/containers/SearchInput', () => ({ title, 
 const draft = { CaseName: 'Synthetic case', CaseTypeName: 'Synthetic type', CaseTypeId: 2, CustomerName: 'Synthetic client', UserId: 1398, PhoneNumber: '0500000008', CustomerMail: 'test@example.invalid', CaseManager: 'Synthetic manager', CaseManagerId: 1397 };
 beforeEach(() => {
     jest.clearAllMocks();
-    mockSigningAvailable = false; mockSigningUpload = true;
     useAutoHttpRequest.mockReturnValue({ result: [], isPerforming: false, performRequest: jest.fn() });
     casesApi.addCase.mockResolvedValue({ status: 201, data: { caseId: 302 } });
     casesApi.updateCaseById.mockResolvedValue({ status: 200, data: {} });
@@ -76,34 +71,4 @@ test('court number may be omitted when opening a case', async () => {
     render(<CaseFullView initialDraft={draft} />);
     fireEvent.click(screen.getByRole('button', { name: 'cases.saveCase' }));
     await waitFor(() => expect(casesApi.addCase).toHaveBeenCalledWith(expect.objectContaining({ CourtCaseNumber: '', CurrentStage: 1 })));
-});
-
-test('Word case action uses saved context despite unsaved name edits and never saves the case', () => {
-    mockSigningAvailable = true;
-    const close = jest.fn();
-    render(<CaseFullView caseDetails={{ CaseId: 41, CaseName: 'Saved case', UserId: 71, CustomerName: 'Saved client' }} closePopUpFunction={close} />);
-    fireEvent.change(screen.getByLabelText('cases.caseNumber'), { target: { value: 'Unsaved case label' } });
-    fireEvent.click(screen.getByRole('button', { name: 'signingWord.openFromCase' }));
-    expect(mockNavigate).toHaveBeenCalledWith('/AdminStack/SigningManagerScreen?panel=templates&mode=word', { state: { wordInitialContext: {
-        caseRecord: { id: 41, label: 'Saved case' }, clientRecord: { id: 71, label: 'Saved client' },
-    } } });
-    expect(close).toHaveBeenCalledTimes(1);
-    expect(casesApi.addCase).not.toHaveBeenCalled(); expect(casesApi.updateCaseById).not.toHaveBeenCalled();
-});
-
-test('Word case action leaves multiple saved clients explicit instead of choosing the first', () => {
-    mockSigningAvailable = true;
-    render(<CaseFullView caseDetails={{ CaseId: 42, CaseName: 'Shared case', UserId: 71, CustomerName: 'First client',
-        Users: [{ UserId: 71, Name: 'First client' }, { UserId: 72, Name: 'Second client' }] }} />);
-    fireEvent.click(screen.getByRole('button', { name: 'signingWord.openFromCase' }));
-    expect(mockNavigate).toHaveBeenCalledWith(expect.any(String), { state: { wordInitialContext: { caseRecord: { id: 42, label: 'Shared case' } } } });
-    expect(casesApi.addCase).not.toHaveBeenCalled(); expect(casesApi.updateCaseById).not.toHaveBeenCalled();
-});
-
-test.each(['unsaved', 'noUpload'])('Word case entry is unavailable for %s context', condition => {
-    mockSigningAvailable = true;
-    if (condition === 'noUpload') mockSigningUpload = false;
-    render(<CaseFullView caseDetails={condition === 'unsaved' ? null : { CaseId: 41, CaseName: 'Saved case' }} />);
-    expect(screen.queryByRole('button', { name: 'signingWord.openFromCase' })).not.toBeInTheDocument();
-    expect(mockNavigate).not.toHaveBeenCalled();
 });

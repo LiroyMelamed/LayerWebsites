@@ -257,19 +257,12 @@ function FieldSettingsPopup({
     );
 }
 
-export default function UploadFileForSigningScreen({ onWordBack } = {}) {
+export default function UploadFileForSigningScreen() {
     const { t } = useTranslation();
     const { isSmallScreen } = useScreenSize();
     const navigate = useNavigate();
     const location = useLocation();
     const wordPreviewId = location.state?.wordPreviewId || null;
-    const wordReturnContext = location.state?.wordReturnContext || null;
-    const wordResumeDraft = location.state?.wordResumeDraft || null;
-    const returnToWord = useCallback(() => {
-        const state = { wordInitialContext: wordReturnContext, wordResumeDraft };
-        if (onWordBack) onWordBack(state);
-        else navigate(`${AdminStackName}${SigningManagerScreenName}?panel=templates&mode=word`, { state });
-    }, [navigate, onWordBack, wordReturnContext, wordResumeDraft]);
     const { openPopup, closePopup } = usePopup();
     const [otpFeatureEnabled, setOtpFeatureEnabled] = useState(false);
     const [otpDefaultRequire, setOtpDefaultRequire] = useState(true);
@@ -1536,7 +1529,7 @@ export default function UploadFileForSigningScreen({ onWordBack } = {}) {
                     {t(wordImport.status === 'error' ? 'signingWord.importFailed' : 'signingWord.importLoading')}
                 </p>
                 {wordImport.status === 'error' && <PrimaryButton onPress={wordImport.retry}>{t('common.retry')}</PrimaryButton>}
-                <SecondaryButton onPress={returnToWord}>{t('signingWord.returnToWord')}</SecondaryButton>
+                <SecondaryButton onPress={() => navigate(`${AdminStackName}${SigningManagerScreenName}?panel=templates`)}>{t('common.back')}</SecondaryButton>
             </SimpleContainer></SimpleScrollView>
         </SimpleScreen>
     );
@@ -1868,9 +1861,9 @@ export default function UploadFileForSigningScreen({ onWordBack } = {}) {
 
                         <SimpleContainer className="lw-uploadSigningScreen__actionsRow lw-uploadSigningScreen__actionsRow--inline">
                             <SecondaryButton
-                                onPress={fromWord ? returnToWord : () => navigate(AdminStackName + SigningManagerScreenName)}
+                                onPress={() => navigate(AdminStackName + SigningManagerScreenName)}
                             >
-                                {t(fromWord ? 'signingWord.returnToWord' : 'common.back')}
+                                {t('common.back')}
                             </SecondaryButton>
                             <PrimaryButton onPress={handleSubmit} disabled={loading} isPerforming={loading}>
                                 {loading ? t('signing.upload.sending') : t('signing.upload.sendToClient')}
@@ -1996,9 +1989,9 @@ export default function UploadFileForSigningScreen({ onWordBack } = {}) {
             {selectedFile && (
                 <SimpleContainer className="lw-uploadSigningScreen__stickySendBar">
                     <SecondaryButton
-                        onPress={fromWord ? returnToWord : () => navigate(AdminStackName + SigningManagerScreenName)}
+                        onPress={() => navigate(AdminStackName + SigningManagerScreenName)}
                     >
-                        {t(fromWord ? 'signingWord.returnToWord' : 'common.back')}
+                        {t('common.back')}
                     </SecondaryButton>
                     <PrimaryButton onPress={handleSubmit} disabled={loading} isPerforming={loading}>
                         {loading ? t('signing.upload.sending') : t('signing.upload.sendToClient')}

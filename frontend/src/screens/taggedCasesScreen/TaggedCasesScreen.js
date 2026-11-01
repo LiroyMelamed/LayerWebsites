@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SimpleScreen from '../../components/simpleComponents/SimpleScreen';
 import SimpleScrollView from '../../components/simpleComponents/SimpleScrollView';
 import { useScreenSize } from '../../providers/ScreenSizeProvider';
@@ -32,34 +32,46 @@ export default function TaggedCasesScreen() {
     const [selectedManager, setSelectedManager] = useState(null);
     const [selectedCompany, setSelectedCompany] = useState(null);
     const [selectedCaseName, setSelectedCaseName] = useState(null);
+    const [filteredTaggedCases, setFilteredTaggedCases] = useState(null);
 
     const { result: taggedCases, isPerforming: isPerformingTaggedCases, performRequest } = useAutoHttpRequest(casesApi.getAllTaggedCases);
 
     const { result: allCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
 
-    const taggedCaseRows = useMemo(() => Array.isArray(taggedCases) ? taggedCases : [], [taggedCases]);
+    // Apply initial 'open' filter when data first loads — intentionally only fires on taggedCases change
+    useEffect(() => {
+        if (taggedCases && taggedCases.length > 0) {
+            applyFilters(selectedCaseType, 'open', selectedClient, selectedManager, selectedCompany, selectedCaseName);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [taggedCases]);
 
-    const displayTaggedCases = useMemo(() => {
-        let filtered = taggedCaseRows;
+    const handleFilterByCaseName = (caseName) => {
+        setSelectedCaseName(caseName);
+        applyFilters(selectedCaseType, selectedStatus, selectedClient, selectedManager, selectedCompany, caseName);
+    };
 
-        if (selectedCaseName) {
+    const applyFilters = (typeFilter, statusFilter, clientFilter, managerFilter, companyFilter, caseNameFilter) => {
+        let filtered = taggedCases;
+
+        if (caseNameFilter) {
             filtered = filtered.filter(item =>
-                item.CaseName && item.CaseName.toLowerCase().includes(selectedCaseName.toLowerCase())
+                item.CaseName && item.CaseName.toLowerCase().includes(caseNameFilter.toLowerCase())
             );
         }
 
-        if (selectedCaseType) {
-            filtered = filtered.filter(item => item.CaseTypeName === selectedCaseType);
+        if (typeFilter) {
+            filtered = filtered.filter(item => item.CaseTypeName === typeFilter);
         }
 
-        if (selectedStatus === "open") {
+        if (statusFilter === "open") {
             filtered = filtered.filter(item => item.IsClosed === false);
-        } else if (selectedStatus === "closed") {
+        } else if (statusFilter === "closed") {
             filtered = filtered.filter(item => item.IsClosed === true);
         }
 
-        if (selectedClient) {
-            const q = selectedClient.toLowerCase();
+        if (clientFilter) {
+            const q = clientFilter.toLowerCase();
             filtered = filtered.filter(item => {
                 if (Array.isArray(item.Users) && item.Users.length > 0) {
                     return item.Users.some(u => u.Name && u.Name.toLowerCase().includes(q));
@@ -68,34 +80,55 @@ export default function TaggedCasesScreen() {
             });
         }
 
-        if (selectedManager) {
-            filtered = filtered.filter(item => item.CaseManager === selectedManager);
+        if (managerFilter) {
+            filtered = filtered.filter(item => item.CaseManager === managerFilter);
         }
 
-        if (selectedCompany) {
+        if (companyFilter) {
             filtered = filtered.filter(item =>
-                item.CompanyName && item.CompanyName.toLowerCase().includes(selectedCompany.toLowerCase())
+                item.CompanyName && item.CompanyName.toLowerCase().includes(companyFilter.toLowerCase())
             );
         }
 
-        return filtered;
-    }, [
-        taggedCaseRows,
-        selectedCaseName,
-        selectedCaseType,
-        selectedStatus,
-        selectedClient,
-        selectedManager,
-        selectedCompany,
-    ]);
+        if (!typeFilter && !statusFilter && !clientFilter && !managerFilter && !companyFilter && !caseNameFilter) {
+            setFilteredTaggedCases(null);
+        } else {
+            setFilteredTaggedCases(filtered);
+        }
+    };
 
-    const caseNames = [...new Set(taggedCaseRows.map(c => c.CaseName).filter(Boolean))].sort();
-    const clientNames = [...new Set(taggedCaseRows.flatMap(c => {
+    const handleFilterByType = (type) => {
+        setSelectedCaseType(type);
+        applyFilters(type, selectedStatus, selectedClient, selectedManager, selectedCompany, selectedCaseName);
+    };
+
+    const handleFilterByStatus = (status) => {
+        setSelectedStatus(status);
+        applyFilters(selectedCaseType, status, selectedClient, selectedManager, selectedCompany, selectedCaseName);
+    };
+
+    const handleFilterByClient = (client) => {
+        setSelectedClient(client);
+        applyFilters(selectedCaseType, selectedStatus, client, selectedManager, selectedCompany, selectedCaseName);
+    };
+
+    const handleFilterByManager = (manager) => {
+        setSelectedManager(manager);
+        applyFilters(selectedCaseType, selectedStatus, selectedClient, manager, selectedCompany, selectedCaseName);
+    };
+
+    const handleFilterByCompany = (company) => {
+        setSelectedCompany(company);
+        applyFilters(selectedCaseType, selectedStatus, selectedClient, selectedManager, company, selectedCaseName);
+    };
+
+    const caseNames = [...new Set((taggedCases || []).map(c => c.CaseName).filter(Boolean))].sort();
+    const clientNames = [...new Set((taggedCases || []).flatMap(c => {
         if (Array.isArray(c.Users) && c.Users.length > 0) return c.Users.map(u => u.Name);
         return [c.CustomerName];
     }).filter(Boolean))].sort();
-    const managerNames = [...new Set(taggedCaseRows.map(c => c.CaseManager).filter(Boolean))].sort();
-    const companyNames = [...new Set(taggedCaseRows.map(c => c.CompanyName).filter(Boolean))].sort();
+    const managerNames = [...new Set((taggedCases || []).map(c => c.CaseManager).filter(Boolean))].sort();
+    const companyNames = [...new Set((taggedCases || []).map(c => c.CompanyName).filter(Boolean))].sort();
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
@@ -110,22 +143,22 @@ export default function TaggedCasesScreen() {
                             { value: 'open', label: t('cases.openCases') },
                         ]}
                         className="lw-taggedCasesScreen__choose"
-                        OnPressChoiceFunction={setSelectedStatus}
+                        OnPressChoiceFunction={handleFilterByStatus}
                         defaultValue={'open'}
                     />
 
                     <ChooseButton
                         buttonText={t('cases.caseType')}
-                        items={(Array.isArray(allCasesTypes) ? allCasesTypes : []).map((ct) => ({ value: ct, label: ct }))}
+                        items={(allCasesTypes || []).map((ct) => ({ value: ct, label: ct }))}
                         className="lw-taggedCasesScreen__choose"
-                        OnPressChoiceFunction={setSelectedCaseType}
+                        OnPressChoiceFunction={handleFilterByType}
                     />
 
                     <ChooseButton
                         buttonText={t('cases.caseManager')}
                         items={managerNames.map((name) => ({ value: name, label: name }))}
                         className="lw-taggedCasesScreen__choose"
-                        OnPressChoiceFunction={setSelectedManager}
+                        OnPressChoiceFunction={handleFilterByManager}
                     />
                 </SimpleContainer>
 
@@ -134,7 +167,7 @@ export default function TaggedCasesScreen() {
                         items={caseNames}
                         placeholder={t('taggedCases.searchPinnedCaseTitle')}
                         titleFontSize={20}
-                        onSelect={setSelectedCaseName}
+                        onSelect={handleFilterByCaseName}
                         className="lw-taggedCasesScreen__search"
                     />
 
@@ -142,7 +175,7 @@ export default function TaggedCasesScreen() {
                         items={clientNames}
                         placeholder={t('cases.customerName')}
                         titleFontSize={20}
-                        onSelect={setSelectedClient}
+                        onSelect={handleFilterByClient}
                         className="lw-taggedCasesScreen__clientFilter"
                     />
 
@@ -150,13 +183,13 @@ export default function TaggedCasesScreen() {
                         items={companyNames}
                         placeholder={t('cases.companyName')}
                         titleFontSize={20}
-                        onSelect={setSelectedCompany}
+                        onSelect={handleFilterByCompany}
                         className="lw-taggedCasesScreen__companyFilter"
                     />
                 </SimpleContainer>
 
                 <PinnedCasesCard
-                    taggedCases={displayTaggedCases}
+                    taggedCases={filteredTaggedCases || taggedCases}
                     rePerformFunction={performRequest}
                     isPerforming={isPerformingTaggedCases}
                 />
