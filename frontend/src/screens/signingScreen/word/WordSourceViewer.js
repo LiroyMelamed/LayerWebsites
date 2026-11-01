@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import PdfViewer from '../../../components/specializedComponents/signFiles/pdfViewer/PdfViewer';
 import StatusNotice from '../../../components/ui/StatusNotice';
 import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
@@ -6,9 +6,12 @@ import SimpleTextArea from '../../../components/simpleComponents/SimpleTextArea'
 import SegmentedSwitch from '../../../components/styledComponents/SegmentedSwitch';
 import SigningSelect from '../templates/SigningSelect';
 import { itemTuple, selectorForTextItem, selectorFromDom, sha256Bytes, tagVerifiedTextLayer, verifyPageGeometry, verifyPageItems } from './wordAuthoringSelection';
+import { layoutSourceChips } from './wordSourceChipLayout';
 
 function PageMarks({ host, page, bindings, selection, fieldLabel, text, revision, displayWidth }) {
     const [marks, setMarks] = useState([]);
+    const overlay = useRef(null);
+    const [layout, setLayout] = useState({ marks: null, positions: [] });
     useEffect(() => {
         if (!host || !page || !revision) { setMarks([]); return undefined; }
         const measure = () => {
@@ -35,25 +38,50 @@ function PageMarks({ host, page, bindings, selection, fieldLabel, text, revision
                     });
                 });
                 if (boxes.length) {
-                    const first = boxes[0]; const pageWidth = displayWidth || 600;
-                    const leftRoom = first.left - 6; const rightEdge = first.left + first.width + 6;
-                    const labelStyle = leftRoom >= 120
-                        ? { left: leftRoom, top: first.top, transform: 'translateX(-100%)', maxWidth: leftRoom }
-                        : pageWidth - rightEdge >= 120
-                            ? { left: rightEdge, top: first.top, maxWidth: pageWidth - rightEdge }
-                            : { left: Math.max(0, Math.min(first.left, pageWidth - 150)), top: Math.max(0, first.top - 23) };
-                    next.push({ id: binding.id, label: binding.pending ? text(binding.kind === 'insert' ? 'insertionSelected' : 'selectedLocation') : fieldLabel(binding.field), pending: binding.pending, boxes, labelStyle });
+                    next.push({ id: binding.id, label: binding.pending ? text(binding.kind === 'insert' ? 'insertionSelected' : 'selectedLocation') : fieldLabel(binding.field), pending: binding.pending, boxes });
                 }
             });
             setMarks(next);
         };
-        measure(); const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
-        observer?.observe(host); return () => observer?.disconnect();
+        let active = true;
+        const measureActive = () => { if (active) measure(); };
+        measure(); const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measureActive);
+        observer?.observe(host);
+        document.fonts?.addEventListener?.('loadingdone', measureActive);
+        document.fonts?.ready?.then(measureActive);
+        return () => { active = false; observer?.disconnect(); document.fonts?.removeEventListener?.('loadingdone', measureActive); };
     }, [host, page, bindings, selection, fieldLabel, text, revision, displayWidth]);
-    return <div className="lw-word-source__marks" aria-hidden="true">{marks.map(mark => <React.Fragment key={mark.id}>
-        {mark.boxes.map((box, index) => <span key={index} className={`lw-word-source__mark${mark.pending ? ' is-pending' : ''}`} style={box} />)}
-        <span className={`lw-word-source__chip${mark.pending ? ' is-pending' : ''}`} style={mark.labelStyle}>{mark.label}</span>
-    </React.Fragment>)}</div>;
+    useLayoutEffect(() => {
+        if (!host || !page || !marks.length || !overlay.current) return undefined;
+        const chips = Array.from(overlay.current.querySelectorAll('[data-word-chip]'));
+        const measureLabels = () => {
+            const bounds = host.getBoundingClientRect();
+            const width = bounds.width || displayWidth || 600;
+            const height = bounds.height || page.height * width / page.width;
+            const measured = marks.map((mark, index) => {
+                const size = chips[index]?.getBoundingClientRect();
+                return { anchor: mark.boxes[0], width: size?.width || 0, height: size?.height || 0 };
+            });
+            if (measured.some(chip => chip.width <= 0 || chip.height <= 0)) return;
+            const positions = layoutSourceChips(measured, width, height);
+            setLayout(previous => previous.marks === marks && JSON.stringify(previous.positions) === JSON.stringify(positions)
+                ? previous : { marks, positions });
+        };
+        measureLabels();
+        const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measureLabels);
+        chips.forEach(chip => observer?.observe(chip));
+        return () => observer?.disconnect();
+    }, [marks, host, page, displayWidth]);
+    const positions = layout.marks === marks ? layout.positions : [];
+    return <div ref={overlay} className="lw-word-source__marks" aria-hidden="true">
+        <svg className="lw-word-source__leaders">{positions.map((position, index) => position.leader &&
+            <line key={marks[index].id} {...position.leader} className={marks[index].pending ? 'is-pending' : undefined} />)}</svg>
+        {marks.map((mark, index) => <React.Fragment key={mark.id}>
+            {mark.boxes.map((box, boxIndex) => <span key={boxIndex} className={`lw-word-source__mark${mark.pending ? ' is-pending' : ''}`} style={box} />)}
+            <span data-word-chip="" className={`lw-word-source__chip${mark.pending ? ' is-pending' : ''}`}
+                style={{ left: positions[index]?.left || 0, top: positions[index]?.top || 0, visibility: positions[index] ? 'visible' : 'hidden' }}>{mark.label}</span>
+        </React.Fragment>)}
+    </div>;
 }
 
 export default function WordSourceViewer({ authoring, pdfFile, bindings, selection, disabled, onSelect, onError, fieldLabel, text }) {

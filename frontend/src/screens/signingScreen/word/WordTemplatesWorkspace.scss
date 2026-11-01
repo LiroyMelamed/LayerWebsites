@@ -89,7 +89,9 @@
   [data-main-rotation='270'] { transform: rotate(270deg) translateX(-100%); }
   &[data-disabled='true'] .textLayer { pointer-events: none; user-select: none; }
   &__marks { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+  &__leaders { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; overflow: visible;
+    line { stroke: var(--lw-color-primary, #2a4365); stroke-width: 1; &.is-pending { stroke-dasharray: 3 2; } } }
   &__mark { position: absolute; border: 1px solid var(--lw-color-primary, #2a4365); box-sizing: border-box; background: color-mix(in srgb, var(--lw-color-primary, #2a4365) 18%, transparent); min-inline-size: 3px; &.is-pending { border-style: dashed; background: color-mix(in srgb, var(--lw-color-primary, #2a4365) 28%, transparent); } }
-  &__chip { position: absolute; white-space: nowrap; max-inline-size: 16rem; overflow: hidden; text-overflow: ellipsis; font-size: .75rem; line-height: 1.4;
+  &__chip { position: absolute; box-sizing: border-box; white-space: nowrap; max-inline-size: min(16rem, 100%); overflow: hidden; text-overflow: ellipsis; font-size: .75rem; line-height: 1.4;
     padding-inline: v.$space-2; border: 1px solid var(--lw-color-primary, #2a4365); border-radius: .25rem; background: var(--lw-color-primary, #2a4365); color: var(--lw-color-white, #fff); }
 }
