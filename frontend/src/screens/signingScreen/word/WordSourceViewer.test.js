@@ -109,3 +109,58 @@ test('reverified replacement text layers restore marks after a responsive page r
     await waitFor(() => expect(view.container.querySelector('.lw-word-source__mark')).toHaveStyle({ left: '40px', top: '80px', width: '35px' }));
     expect(screen.getByText('client.fullName')).toBeInTheDocument();
 });
+
+test('dense saved and pending chip labels separate after resize while exact source highlights and selection stay unchanged', async () => {
+    const authoring = create(); mockContent = { items: authoring.pages[0].items.map(({ text, ...rest }) => ({ ...rest, str: text })) };
+    let pageWidth = 390; let scale = 1;
+    const resizeCallbacks = new Set();
+    const originalObserver = global.ResizeObserver;
+    const originalBounds = HTMLElement.prototype.getBoundingClientRect;
+    global.ResizeObserver = class {
+        constructor(callback) { this.callback = callback; resizeCallbacks.add(callback); }
+        observe() {}
+        disconnect() { resizeCallbacks.delete(this.callback); }
+    };
+    HTMLElement.prototype.getBoundingClientRect = function () {
+        if (this.matches('[data-word-chip]')) return { left: 0, top: 0, width: this.classList.contains('is-pending') ? 94 : 105, height: 19 };
+        if (this.dataset.testid === 'source-page') return { left: 0, top: 0, width: pageWidth, height: 520 * scale };
+        return originalBounds.call(this);
+    };
+    Range.prototype.getClientRects.mockImplementation(function () {
+        const second = this.startContainer.parentElement.dataset.wordItem === 'p1_i1';
+        return [{ left: 170 * scale, top: (second ? 61 : 50) * scale, width: 14 * scale, height: 8 * scale }];
+    });
+    const bindings = [{ id: 'name', kind: 'range', field: 'client.fullName', part: 'word/document.xml', paragraphId: 'p0', start: 3, end: 8 },
+        { id: 'id', kind: 'range', field: 'client.identityNumber', part: 'word/document.xml', paragraphId: 'p0', start: 12, end: 17 }];
+    const selection = { kind: 'range', anchor: { part: 'word/document.xml', paragraphId: 'p0', start: 0, end: 3 } };
+    const before = JSON.parse(JSON.stringify({ bindings, selection }));
+    const onSelect = jest.fn();
+    let view;
+    try {
+        view = render(<WordSourceViewer authoring={authoring} pdfFile={new Blob(['%PDF'])} bindings={bindings} selection={selection}
+            onSelect={onSelect} fieldLabel={value => value} text={value => value} />);
+        await waitFor(() => expect(view.container.querySelectorAll('[data-word-chip]')).toHaveLength(3));
+        const readLabels = () => Array.from(view.container.querySelectorAll('[data-word-chip]')).map(node =>
+            ({ left: parseFloat(node.style.left), top: parseFloat(node.style.top), width: node.classList.contains('is-pending') ? 94 : 105, height: 19 }));
+        const expectNoOverlap = () => readLabels().forEach((a, index, all) => all.slice(index + 1).forEach(b =>
+            expect(a.left + a.width + 3 <= b.left || b.left + b.width + 3 <= a.left || a.top + a.height + 3 <= b.top || b.top + b.height + 3 <= a.top).toBe(true)));
+        await waitFor(expectNoOverlap);
+        expect(view.container.querySelector('.lw-word-source__mark')).toHaveStyle({ left: '170px', top: '50px', width: '14px', height: '8px' });
+        expect(view.container.querySelector('line')).toHaveAttribute('x1', '177');
+        pageWidth = 320; scale = 0.8;
+        await act(async () => { resizeCallbacks.forEach(callback => callback()); });
+        await waitFor(expectNoOverlap);
+        expect(view.container.querySelector('.lw-word-source__mark')).toHaveStyle({ left: '136px', top: '40px', height: '6.4px' });
+        expect(parseFloat(view.container.querySelector('.lw-word-source__mark').style.width)).toBeCloseTo(11.2);
+        readLabels().forEach(box => { expect(box.left).toBeGreaterThanOrEqual(0); expect(box.left + box.width).toBeLessThanOrEqual(320); });
+        const item = screen.getByTestId('source-page').querySelector('[data-word-item="p1_i1"]');
+        const range = document.createRange(); range.selectNodeContents(item); const native = window.getSelection(); native.removeAllRanges(); native.addRange(range);
+        fireEvent.mouseUp(item);
+        expect(onSelect).toHaveBeenCalledWith({ kind: 'range', start: { itemId: 'p1_i1', offset: 0 }, end: { itemId: 'p1_i1', offset: 8 } });
+        expect({ bindings, selection }).toEqual(before);
+    } finally {
+        view?.unmount();
+        global.ResizeObserver = originalObserver;
+        HTMLElement.prototype.getBoundingClientRect = originalBounds;
+    }
+});

@@ -16,11 +16,11 @@ const tenantA = '00000000-0000-0000-0000-000000000001';
 const tenantB = '00000000-0000-0000-0000-000000000002';
 const profile = normalizeClientProfile({ identity: { number: '001234567' } });
 
-function fixture(actorPatch = {}, targetPatch = {}) {
+function fixture(actorPatch = {}, targetPatch = {}, { billingStatus = 0 } = {}) {
     const actor = { userid: 7, role: 'Admin', law_firm_tenant_id: tenantA, ...actorPatch };
     const target = { userid: 42, role: 'User', name: 'Synthetic customer', law_firm_tenant_id: tenantA,
         client_profile: profile, ...targetPatch };
-    const calls = [];
+    const calls = [], billingChecks = [];
     const pool = { query: async (sql, params) => {
         calls.push({ sql, params });
         if (sql.includes('WHERE userid=$1 AND law_firm_tenant_id')) {
@@ -47,7 +47,18 @@ function fixture(actorPatch = {}, targetPatch = {}) {
     const attach = load('middlewares/attachFirmPermissions.js');
     const auth = load('middlewares/authMiddleware.js', { './attachFirmPermissions': attach, jsonwebtoken: jwt,
         dotenv: { config() {} }, '../utils/rateLimiter': { consume: () => ({ allowed: true }) },
-        '../lib/officeRole': { applyLegacyOfficeRole() {} } });
+        '../lib/officeRole': { applyLegacyOfficeRole() {} },
+        // Tenant status is a fixture too: importing the real service would
+        // initialize config/db and load an application .env during this unit test.
+        '../lib/tenant/tenantService': { getTenantById: async id => ({
+            id, slug: 'fixture-office', isActive: true, ownerUserId: actor.userid,
+        }) },
+        // Billing behavior has its own suite. Keep the current auth boundary in
+        // this route fixture without contacting a real billing database.
+        './requireBillingAccess': { requireBillingAccess: (req, _res, next) => {
+            billingChecks.push(req.firmTenantId);
+            return next(billingStatus ? { httpStatus: billingStatus, errorCode: 'TEST_BILLING_BLOCKED' } : undefined);
+        } } });
     const controller = load('controllers/customerController.js');
     const routes = [];
     const router = {};
@@ -78,7 +89,7 @@ function fixture(actorPatch = {}, targetPatch = {}) {
         });
         return response;
     };
-    return { read, token, calls };
+    return { read, token, calls, billingChecks };
 }
 
 test('exact customer read rejects missing authentication before DB lookup', async () => {
@@ -127,4 +138,15 @@ for (const role of ['Admin', 'Deleted']) test(`exact customer read does not expo
 test('invalid exact ID is rejected before target-data lookup', async () => {
     const f = fixture(); const response = await f.read('0', { token: f.token });
     assert.equal(response.status, 422); assert.equal(f.calls.length, 1);
+});
+
+
+test('the exact profile route honors a billing rejection before any target-data lookup', async () => {
+    const f = fixture({}, {}, { billingStatus: 503 });
+    const response = await f.read('42', { token: f.token });
+    assert.equal(response.status, 503);
+    assert.equal(response.body.code, 'TEST_BILLING_BLOCKED');
+    assert.deepEqual(f.billingChecks, [tenantA]);
+    assert.equal(f.calls.length, 1);
+    assert.equal(f.calls.some(call => call.sql.includes('WHERE userid=$1 AND law_firm_tenant_id')), false);
 });
