@@ -314,7 +314,7 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
     const overrideFields = uniqueFields.filter(value => !requiredManualFields.includes(value));
     const missingManualFields = requiredManualFields.some(value => !String(inputs.manualValues[value] || '').trim());
     function generatePreview() {
-        if (!source || dirty || !bindings.length || !validReferences || missingManualFields || !converterAvailable) return;
+        if (!source || dirty || !validReferences || missingManualFields || !converterAvailable) return;
         clearPreview(); const token = generation.current; const snapshot = latestDraft.current;
         run(async () => {
             const payload = { expectedVersion: snapshot.source.version, bindingsHash: snapshot.source.bindingsHash, inputs: {
@@ -384,6 +384,7 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
                             <SecondaryButton disabled={busy} onPress={() => switchMode('use')}>{text('previewTemplate')}</SecondaryButton>
                         </div>
                     </div>
+                    <p className="lw-word__muted">{text('signatureFlowHelp')}</p>
                     {authoringLoading && <div className="lw-word__loading lw-word__documentLoading" role="status" aria-live="polite" aria-busy="true">
                         <SimpleLoader /><Text14>{text('authoringLoading')}</Text14>
                     </div>}
@@ -495,7 +496,7 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
                 {dirty && <p>{text('saveFirst')}</p>}
                 {!bindings.length && <p>{text('noMappedFields')}</p>}
                 {missingManualFields && <p className="lw-word__muted">{text('completeRequiredValues')}</p>}
-                <div className="lw-word__actions"><PrimaryButton disabled={busy || dirty || !bindings.length || !validReferences || missingManualFields || !converterAvailable} onPress={generatePreview}>{text('preview')}</PrimaryButton></div>
+                <div className="lw-word__actions"><PrimaryButton disabled={busy || dirty || !validReferences || missingManualFields || !converterAvailable} onPress={generatePreview}>{text('preview')}</PrimaryButton></div>
             </section>
             {preview && <section className="lw-word__section" aria-label={text('finalPreview')}>
                 <h2 ref={previewHeading} tabIndex={-1}><TextBold18>{text('finalPreview')}</TextBold18></h2><Text14>{text('freshGeometry')}</Text14>
