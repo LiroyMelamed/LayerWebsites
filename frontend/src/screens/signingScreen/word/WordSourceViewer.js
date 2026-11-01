@@ -1,26 +1,17 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PdfViewer from '../../../components/specializedComponents/signFiles/pdfViewer/PdfViewer';
 import StatusNotice from '../../../components/ui/StatusNotice';
 import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
-import SimpleTextArea from '../../../components/simpleComponents/SimpleTextArea';
-import SegmentedSwitch from '../../../components/styledComponents/SegmentedSwitch';
 import SigningSelect from '../templates/SigningSelect';
 import { itemTuple, selectorForTextItem, selectorFromDom, sha256Bytes, tagVerifiedTextLayer, verifyPageGeometry, verifyPageItems } from './wordAuthoringSelection';
-import { layoutSourceChips } from './wordSourceChipLayout';
 
-function PageMarks({ host, page, bindings, selection, activeBindingId, onSelectBinding, disabled, fieldLabel, text, revision, displayWidth, viewportWidth }) {
-    const [measurement, setMeasurement] = useState({ marks: [], width: 0, viewportWidth });
-    const { marks } = measurement;
-    const overlay = useRef(null);
-    const focusedBinding = useRef(null);
-    const focusedSelection = useRef(null);
-    const [layout, setLayout] = useState({ marks: null, positions: [] });
+function PageMarks({ host, page, bindings, fieldLabel, revision, displayWidth }) {
+    const [marks, setMarks] = useState([]);
     useEffect(() => {
-        if (!host || !page || !revision) { setMeasurement({ marks: [], width: 0, viewportWidth }); return undefined; }
+        if (!host || !page || !revision) { setMarks([]); return undefined; }
         const measure = () => {
             const origin = host.getBoundingClientRect(); const next = [];
-            const visibleMarks = selection ? [...bindings, { ...selection.anchor, id: 'pending-selection', kind: selection.kind, pending: true }] : bindings;
-            visibleMarks.forEach(binding => {
+            bindings.forEach(binding => {
                 const boxes = [];
                 page.items.forEach(item => {
                     const span = Array.from(host.querySelectorAll('[data-word-item]')).find(node => node.dataset.wordItem === item.id);
@@ -40,91 +31,24 @@ function PageMarks({ host, page, bindings, selection, activeBindingId, onSelectB
                         });
                     });
                 });
-                if (boxes.length) {
-                    next.push({ id: binding.id, label: binding.pending ? text(binding.kind === 'insert' ? 'insertionSelected' : 'selectedLocation') : fieldLabel(binding.field), pending: binding.pending, boxes });
-                }
+                if (boxes.length) next.push({ id: binding.id, label: fieldLabel(binding.field), boxes });
             });
-            setMeasurement({ marks: next, width: origin.width || displayWidth || 600, viewportWidth });
+            setMarks(next);
         };
-        let active = true;
-        const measureActive = () => { if (active) measure(); };
-        measure(); const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measureActive);
-        observer?.observe(host);
-        document.fonts?.addEventListener?.('loadingdone', measureActive);
-        document.fonts?.ready?.then(measureActive);
-        return () => { active = false; observer?.disconnect(); document.fonts?.removeEventListener?.('loadingdone', measureActive); };
-    }, [host, page, bindings, selection, fieldLabel, text, revision, displayWidth, viewportWidth]);
-    useLayoutEffect(() => {
-        if (!host || !page || !marks.length || !overlay.current) return undefined;
-        const chips = Array.from(overlay.current.querySelectorAll('[data-word-chip]'));
-        const measureLabels = () => {
-            const bounds = host.getBoundingClientRect();
-            const width = bounds.width || displayWidth || 600;
-            const height = bounds.height || page.height * width / page.width;
-            const measured = marks.map((mark, index) => {
-                const size = chips[index]?.getBoundingClientRect();
-                return { anchor: mark.boxes[0], width: size?.width || 0, height: size?.height || 0 };
-            });
-            if (measured.some(chip => chip.width <= 0 || chip.height <= 0)) return;
-            const positions = layoutSourceChips(measured, width, height);
-            setLayout(previous => previous.marks === marks && JSON.stringify(previous.positions) === JSON.stringify(positions)
-                ? previous : { marks, positions });
-        };
-        measureLabels();
-        const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measureLabels);
-        chips.forEach(chip => observer?.observe(chip));
-        return () => observer?.disconnect();
-    }, [marks, host, page, displayWidth]);
-    const positions = layout.marks === marks ? layout.positions : [];
-    useEffect(() => {
-        if (!activeBindingId) { focusedBinding.current = null; return; }
-        const key = `${activeBindingId}:${Math.round(measurement.width * 100)}:${measurement.viewportWidth}`;
-        if (!positions.length || measurement.viewportWidth !== viewportWidth || focusedBinding.current?.key === key) return;
-        const chip = Array.from(overlay.current?.querySelectorAll('[data-word-binding-id]') || []).find(node => node.dataset.wordBindingId === activeBindingId);
-        const firstChip = Array.from(host.closest('.lw-word-source')?.querySelectorAll('[data-word-binding-id]') || []).find(node => node.dataset.wordBindingId === activeBindingId);
-        if (chip && chip === firstChip) {
-            if (focusedBinding.current?.id !== activeBindingId) chip.focus({ preventScroll: true });
-            focusedBinding.current = { id: activeBindingId, key };
-            chip.scrollIntoView?.({ block: viewportWidth <= 768 ? 'center' : 'nearest', inline: 'nearest' });
-        }
-    }, [activeBindingId, marks, positions, measurement, viewportWidth, host]);
-    useEffect(() => {
-        if (!selection) { focusedSelection.current = null; return; }
-        if (viewportWidth > 768 || measurement.viewportWidth !== viewportWidth || !positions.length) return;
-        const key = JSON.stringify([selection.anchor, Math.round(measurement.width * 100), measurement.viewportWidth]);
-        if (focusedSelection.current === key) return;
-        const highlight = overlay.current?.querySelector('.lw-word-source__mark.is-pending');
-        if (highlight && highlight === host.closest('.lw-word-source')?.querySelector('.lw-word-source__mark.is-pending')) {
-            focusedSelection.current = key; highlight.scrollIntoView?.({ block: 'center', inline: 'nearest' });
-        }
-    }, [selection, marks, positions, host, measurement, viewportWidth]);
-    return <div ref={overlay} className="lw-word-source__marks">
-        <svg className="lw-word-source__leaders" aria-hidden="true">{positions.map((position, index) => position.leader &&
-            <line key={marks[index].id} {...position.leader} className={marks[index].pending ? 'is-pending' : undefined} />)}</svg>
-        {marks.map((mark, index) => <React.Fragment key={mark.id}>
-            {mark.boxes.map((box, boxIndex) => <span key={boxIndex} aria-hidden="true" className={`lw-word-source__mark${mark.pending ? ' is-pending' : ''}${activeBindingId === mark.id ? ' is-active' : ''}`} style={box} />)}
-            {mark.pending ? <span data-word-chip="" aria-hidden="true" className="lw-word-source__chip is-pending"
-                style={{ left: positions[index]?.left || 0, top: positions[index]?.top || 0, visibility: positions[index] ? 'visible' : 'hidden' }}>{mark.label}</span> :
-                <button type="button" data-word-chip="" data-word-binding-id={mark.id} disabled={disabled} aria-pressed={activeBindingId === mark.id}
-                    aria-label={text('editReplacement', { field: mark.label })} onClick={() => onSelectBinding?.(mark.id)}
-                    className={`lw-word-source__chip${activeBindingId === mark.id ? ' is-active' : ''}`}
-                    style={{ left: positions[index]?.left || 0, top: positions[index]?.top || 0, visibility: positions[index] ? 'visible' : 'hidden' }}>{mark.label}</button>}
-        </React.Fragment>)}
-    </div>;
+        measure(); const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
+        observer?.observe(host); return () => observer?.disconnect();
+    }, [host, page, bindings, fieldLabel, revision, displayWidth]);
+    return <div className="lw-word-source__marks" aria-hidden="true">{marks.map(mark => <React.Fragment key={mark.id}>
+        {mark.boxes.map((box, index) => <span key={index} className="lw-word-source__mark" style={box} />)}
+        <span className="lw-word-source__chip" style={{ left: mark.boxes[0].left, top: Math.max(0, mark.boxes[0].top - 23) }}>{mark.label}</span>
+    </React.Fragment>)}</div>;
 }
 
-export default function WordSourceViewer({ authoring, pdfFile, paragraphs = [], bindings, selection, activeBindingId, onSelectBinding, disabled, onSelect, onError, fieldLabel, text }) {
+export default function WordSourceViewer({ authoring, pdfFile, bindings, disabled, onSelect, onError, fieldLabel, text }) {
     const root = useRef(null); const generation = useRef(0); const callbacks = useRef({ onSelect, onError });
-    const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth);
-    useEffect(() => {
-        const resize = () => setViewportWidth(window.innerWidth);
-        window.addEventListener('resize', resize);
-        return () => window.removeEventListener('resize', resize);
-    }, []);
     callbacks.current = { onSelect, onError };
     const identity = `${authoring.renderId}:${authoring.mapHash}`;
     const [pageState, setPageState] = useState(() => ({ identity, pages: {} }));
-    const [pageRevisions, setPageRevisions] = useState({});
     const pageStates = pageState.identity === identity ? pageState.pages : {};
     const [selectionMode, setSelectionMode] = useState('range');
     const [affinity, setAffinity] = useState('after');
@@ -143,7 +67,7 @@ export default function WordSourceViewer({ authoring, pdfFile, paragraphs = [], 
     useEffect(() => () => { generation.current += 1; }, []);
 
     const pageError = useCallback(pageNumber => {
-        root.current?.querySelectorAll(`[data-page-number="${pageNumber}"] [data-word-item], [data-page-number="${pageNumber}"] [data-word-neutral-rtl]`).forEach(span => { delete span.dataset.wordItem; delete span.dataset.wordNeutralRtl; });
+        root.current?.querySelectorAll(`[data-page-number="${pageNumber}"] [data-word-item]`).forEach(span => { delete span.dataset.wordItem; });
         root.current?.querySelectorAll(`[data-page-number="${pageNumber}"] [data-word-verified]`).forEach(layer => { delete layer.dataset.wordVerified; });
         setPageStates(previous => ({ ...previous, [pageNumber]: 'error' }));
         callbacks.current.onError?.('authoringMismatch');
@@ -163,15 +87,14 @@ export default function WordSourceViewer({ authoring, pdfFile, paragraphs = [], 
             const proxy = await pdfProxy.getPage(pageNumber);
             verifyPageGeometry(page, proxy, authoring.geometryTolerance);
             if (token !== generation.current || !root.current?.contains(host)) return;
-            tagVerifiedTextLayer(host, page, paragraphs);
-            setPageRevisions(previous => ({ ...previous, [pageNumber]: (previous[pageNumber] || 0) + 1 }));
+            tagVerifiedTextLayer(host, page);
             setPageStates(previous => previous[pageNumber] === 'verified' ? previous : ({ ...previous, [pageNumber]: 'verified' }));
         } catch { if (token === generation.current && root.current?.contains(host)) pageError(pageNumber); }
-    }, [authoring, paragraphs, pageError, setPageStates]);
+    }, [authoring, pageError, setPageStates]);
 
     const readSelection = useCallback(event => {
         if (disabled || !root.current) return;
-        if (event?.target?.closest?.('button, input, textarea, select, summary') || (!event && document.activeElement?.closest?.('[data-word-binding-id], .lw-word__mappingForm')) || document.activeElement === accessibleText.current) return;
+        if (event?.target?.closest?.('button, input, textarea, select') || document.activeElement === accessibleText.current) return;
         const selection = window.getSelection();
         if (!selection?.anchorNode || !root.current.contains(selection.anchorNode)) return;
         if (selection.isCollapsed && selectionMode === 'range') return;
@@ -188,10 +111,9 @@ export default function WordSourceViewer({ authoring, pdfFile, paragraphs = [], 
     }, [readSelection]);
     const layer = useMemo(() => ({ onPageTextReady: verifyLayer, onPageError: pageError,
         renderPageOverlay: ({ pageNumber, host, displayWidth }) => <PageMarks host={host}
-            page={authoring.pages.find(page => page.pageNum === pageNumber)} bindings={bindings} selection={selection} fieldLabel={fieldLabel} text={text}
-            activeBindingId={activeBindingId} onSelectBinding={onSelectBinding} disabled={disabled} viewportWidth={viewportWidth}
-            revision={pageStates[pageNumber] === 'verified' ? `${identity}:${pageRevisions[pageNumber] || 0}` : null} displayWidth={displayWidth} />,
-    }), [verifyLayer, pageError, authoring.pages, bindings, selection, fieldLabel, text, pageStates, pageRevisions, identity, activeBindingId, onSelectBinding, disabled, viewportWidth]);
+            page={authoring.pages.find(page => page.pageNum === pageNumber)} bindings={bindings} fieldLabel={fieldLabel}
+            revision={pageStates[pageNumber] === 'verified' ? identity : null} displayWidth={displayWidth} />,
+    }), [verifyLayer, pageError, authoring.pages, bindings, fieldLabel, pageStates, identity]);
     const accessibleItems = authoring.pages.filter(page => pageStates[page.pageNum] === 'verified').flatMap(page =>
         page.items.filter(item => item.text && item.segments.length && !item.readOnlyReason).map(item => ({ ...item, pageNum: page.pageNum })));
     const accessibleItem = accessibleItems.find(item => item.id === accessibleItemId) || accessibleItems[0];
@@ -205,28 +127,26 @@ export default function WordSourceViewer({ authoring, pdfFile, paragraphs = [], 
     }
     return <div className="lw-word-source" ref={root} data-disabled={disabled ? 'true' : undefined}
         onMouseUp={readSelection} onKeyUp={readSelection} onTouchEnd={readSelection}>
-        {selectionError && <StatusNotice><p>{text('selectionInvalid')}</p></StatusNotice>}
-        {Object.values(pageStates).includes('error') && <StatusNotice><p>{text('authoringMismatch')}</p></StatusNotice>}
-        <PdfViewer pdfFile={pdfFile} spots={[]} signers={[]} authoringLayer={layer} />
-        <details className="lw-word__advanced lw-word__selectionOptions"><summary>{text('selectionOptions')}</summary>
         <div className="lw-word__actions" role="group" aria-label={text('selectionMode')}>
-            <SegmentedSwitch ariaLabel={text('selectionMode')} value={selectionMode} onChange={setSelectionMode}
-                options={[{ value: 'range', label: text('replaceSelection'), disabled }, { value: 'insert', label: text('insertAtBoundary'), disabled }]} />
-            {selectionMode === 'insert' && <label>{text('insertionAffinity')}<SigningSelect aria-label={text('insertionAffinity')} value={affinity} disabled={disabled} onChange={event => setAffinity(event.target.value)}>
+            <SecondaryButton disabled={disabled} aria-pressed={selectionMode === 'range'} onPress={() => setSelectionMode('range')}>{text('replaceSelection')}</SecondaryButton>
+            <SecondaryButton disabled={disabled} aria-pressed={selectionMode === 'insert'} onPress={() => setSelectionMode('insert')}>{text('insertAtBoundary')}</SecondaryButton>
+            {selectionMode === 'insert' && <label>{text('insertionAffinity')}<select value={affinity} disabled={disabled} onChange={event => setAffinity(event.target.value)}>
                 <option value="before">{text('beforeSelection')}</option><option value="after">{text('afterSelection')}</option>
-            </SigningSelect></label>}
+            </select></label>}
         </div>
         <p>{text(selectionMode === 'insert' ? 'insertionHelp' : 'visualSelectionHelp')}</p>
         {authoring.diagnostics?.length > 0 && <p>{text('partiallySupportedSource')}</p>}
+        {selectionError && <StatusNotice><p>{text('selectionInvalid')}</p></StatusNotice>}
+        {Object.values(pageStates).includes('error') && <StatusNotice><p>{text('authoringMismatch')}</p></StatusNotice>}
         <details className="lw-word__advanced"><summary>{text('keyboardSelection')}</summary><p>{text('keyboardSelectionHelp')}</p>
             <label>{text('textExcerpt')}<SigningSelect value={accessibleItem?.id || ''} disabled={disabled || !accessibleItems.length}
                 onChange={event => setAccessibleItemId(event.target.value)}>
                 {!accessibleItems.length && <option value="">{text('authoringLoading')}</option>}
                 {accessibleItems.map((item, index) => <option key={item.id} value={item.id}>{text('pageExcerpt', { page: item.pageNum, number: index + 1 })}: {item.text.slice(0, 80)}</option>)}
             </SigningSelect></label>
-            <SimpleTextArea textareaRef={accessibleText} title={text('selectExcerptText')} key={accessibleItem?.id} readOnly aria-label={text('selectExcerptText')} value={accessibleItem?.text || ''} disabled={disabled || !accessibleItem} />
+            <textarea ref={accessibleText} key={accessibleItem?.id} readOnly aria-label={text('selectExcerptText')} value={accessibleItem?.text || ''} disabled={disabled || !accessibleItem} />
             <SecondaryButton disabled={disabled || !accessibleItem} onPress={chooseAccessibleRange}>{text('confirmTextSelection')}</SecondaryButton>
         </details>
-        </details>
+        <PdfViewer pdfFile={pdfFile} spots={[]} signers={[]} authoringLayer={layer} />
     </div>;
 }

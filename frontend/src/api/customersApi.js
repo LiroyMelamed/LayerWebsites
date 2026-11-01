@@ -7,7 +7,6 @@ const GET_CURRENT_CUSTOMER = "Customers/GetCurrentCustomer";
 const UPDATE_CUSTOMER = "Customers/UpdateCustomer/";
 const DELETE_CUSTOMER = "Customers/DeleteCustomer/";
 const GET_ALL_CUSTOMERS = "Customers/GetCustomers";
-const GET_CUSTOMER_BY_ID = "Customers/GetCustomer/";
 const ADD_CUSTOMER = "Customers/AddCustomer";
 
 export const customersApi = {
@@ -17,10 +16,6 @@ export const customersApi = {
 
     getCurrentCustomer: async () => {
         return await ApiUtils.get(GET_CURRENT_CUSTOMER);
-    },
-
-    getCustomerById: async (customerId) => {
-        return await ApiUtils.get(`${GET_CUSTOMER_BY_ID}${encodeURIComponent(customerId)}`);
     },
 
     getCustomersByName: async (userName, options = {}) => {

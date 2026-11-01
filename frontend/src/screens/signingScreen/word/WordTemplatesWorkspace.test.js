@@ -7,9 +7,7 @@ let mockPdfReadyCallbacks = [];
 
 jest.mock('../../../api/wordTemplatesApi', () => ({ __esModule: true, default: { list: jest.fn(), create: jest.fn(), load: jest.fn(), save: jest.fn(), preview: jest.fn(), pdf: jest.fn(), authoringRender: jest.fn(), authoringPdf: jest.fn(), resolveSelection: jest.fn() } }));
 jest.mock('./wordAuthoringSelection', () => ({ ...jest.requireActual('./wordAuthoringSelection'), verifyPdfBlob: jest.fn(blob => Promise.resolve(blob)) }));
-jest.mock('./WordSourceViewer', () => ({ onSelect, onError, authoring, bindings, activeBindingId, onSelectBinding }) => <div data-testid="original-pdf">
-    <button onClick={() => onError('authoringMismatch')}>failPage</button>
-    {bindings.map(item => <button key={item.id} aria-pressed={activeBindingId === item.id} onClick={() => onSelectBinding(item.id)}>marker {item.id}</button>)}
+jest.mock('./WordSourceViewer', () => ({ onSelect, authoring }) => <div data-testid="original-pdf">
     <button onClick={() => onSelect({ kind: 'range', start: { itemId: 'p1-i0', offset: 7 }, end: { itemId: 'p1-i0', offset: 13 } })}>chooseBlank</button>
     <button onClick={() => onSelect({ kind: 'insert', start: { itemId: authoring.pages[0].items[0].id,
         offset: authoring.pages[0].items[0].text.length }, affinity: 'before' })}>chooseEndInsertion</button>
@@ -21,7 +19,7 @@ jest.mock('./WordSourceViewer', () => ({ onSelect, onError, authoring, bindings,
             item.text.length, item.text.length, 'insert', 'after'));
     }}>chooseEndCaret</button>
 </div>);
-jest.mock('./WordDataFieldPanel', () => ({ value, onChange, definitions, disabled }) => <label>field<select disabled={disabled} value={value} onChange={event => onChange(event.target.value)}>{definitions.map(item => <option key={item.key} value={item.key}>{item.key}</option>)}</select></label>);
+jest.mock('./WordDataFieldPanel', () => ({ value, onChange, definitions }) => <label>field<select value={value} onChange={event => onChange(event.target.value)}>{definitions.map(item => <option key={item.key} value={item.key}>{item.key}</option>)}</select></label>);
 jest.mock('../../../utils/fileUploadUtils', () => ({ uploadFileToR2: jest.fn() }));
 jest.mock('../templates/useSigningLocale', () => () => ({ direction: 'rtl', number: String, t: (key, values = {}) => key.replace(/^signingWord\./, '') + (values.role ? ` ${values.role}` : '') + (values.field ? ` ${values.field}` : '') }));
 jest.mock('../templates/SigningBackButton', () => ({ onPress, children }) => <button onClick={onPress}>{children}</button>);
@@ -53,10 +51,6 @@ async function open(saved = source(), props = {}, manage = false) {
     await waitFor(() => expect(screen.getByLabelText('clientId')).toBeInTheDocument());
     if (manage) { fireEvent.click(screen.getByText('manageTemplates')); await waitFor(() => expect(screen.getByText('chooseBlank')).toBeInTheDocument()); }
     return result;
-}
-async function chooseReplacement(value = 'client.fullName') {
-    await waitFor(() => expect(screen.getByLabelText('field')).toBeEnabled());
-    fireEvent.change(screen.getByLabelText('field'), { target: { value } });
 }
 const context = (client = 22, caseId = 31) => ({ clientRecord: { id: client, label: `Client ${client}` }, caseRecord: { id: caseId, label: `Case ${caseId}` } });
 beforeEach(() => {
@@ -121,15 +115,14 @@ test('explicit manage mode imports DOCX, safely maps a blank and saves version w
     fireEvent.change(screen.getByLabelText('upload'), { target: { files: [new File(['docx'], 'Rental.docx')] } }); fireEvent.click(screen.getByText('import'));
     await waitFor(() => expect(api.create).toHaveBeenCalledWith({ fileKey: 'private/original.docx', name: 'Rental', roles: [] }));
     await waitFor(() => expect(screen.getByTestId('original-pdf')).toBeInTheDocument()); expect(document.querySelector('script')).toBeNull();
-    fireEvent.click(screen.getByText('chooseBlank')); await chooseReplacement();
+    fireEvent.click(screen.getByText('chooseBlank')); await waitFor(() => expect(screen.getByText('bind')).toBeEnabled()); fireEvent.click(screen.getByText('bind'));
     api.save.mockImplementation((id, payload) => Promise.resolve({ source: { ...source(), ...payload, id, version: 4 } })); fireEvent.click(screen.getByText('save'));
     await waitFor(() => expect(api.save).toHaveBeenCalled()); const [id, payload] = api.save.mock.calls[0];
     expect(id).toBe('source-a'); expect(payload.expectedVersion).toBe(3); expect(payload.sourceHash).toBe('a'.repeat(64));
     expect(payload).toEqual(expect.objectContaining({ bindingSchemaVersion: 2, authoringRenderId: 'render-a', authoringMapHash: 'e'.repeat(64) }));
     expect(payload.bindings).toEqual([expect.objectContaining({ selector: { kind: 'range', start: { itemId: 'p1-i0', offset: 7 }, end: { itemId: 'p1-i0', offset: 13 } }, field: 'client.fullName', required: true })]);
     expect(payload).not.toHaveProperty('inputs'); expect(payload).not.toHaveProperty('pdf');
-    fireEvent.click(screen.getByText('templateHelp'));
-    expect(screen.getByText('finalSigningFieldsHelp')).toBeVisible();
+    expect(screen.getByText('finalSigningFieldsHelp')).toBeInTheDocument();
 });
 
 test('preview sends explicit string overrides and references; final PDF load and review are both required', async () => {
@@ -150,7 +143,7 @@ test('preview sends explicit string overrides and references; final PDF load and
 
 test('conflict preserves edits and switching out of manage confirms or discards unsaved template changes', async () => {
     const onDraftChange = jest.fn(); await open(source(), { onDraftChange }, true);
-    fireEvent.click(screen.getByText('chooseBlank')); await chooseReplacement();
+    fireEvent.click(screen.getByText('chooseBlank')); await waitFor(() => expect(screen.getByText('bind')).toBeEnabled()); fireEvent.click(screen.getByText('bind'));
     api.save.mockRejectedValue({ status: 409 }); fireEvent.click(screen.getByText('save'));
     await waitFor(() => expect(screen.getByText('conflict')).toBeInTheDocument()); expect(screen.getByText('removeBinding')).toBeInTheDocument();
     fireEvent.click(screen.getByText('useTemplates')); expect(screen.getByRole('dialog')).toBeInTheDocument(); fireEvent.click(screen.getByText('keepEditing'));
@@ -168,7 +161,7 @@ test('late preview response after unmount cannot create a URL or continue', asyn
 });
 
 test('overlapping mappings remain rejected and invalid record references cannot produce a preview', async () => {
-    await open(mapped(), {}, true); fireEvent.click(screen.getByText('chooseBlank')); await chooseReplacement();
+    await open(mapped(), {}, true); fireEvent.click(screen.getByText('chooseBlank')); await waitFor(() => expect(screen.getByText('bind')).toBeEnabled()); fireEvent.click(screen.getByText('bind'));
     expect(screen.getByText('selectionOverlap')).toBeInTheDocument(); fireEvent.click(screen.getByText('useTemplates'));
     fireEvent.change(screen.getByLabelText('clientId'), { target: { value: '1.5' } }); expect(screen.getByText('preview')).toBeDisabled(); expect(api.preview).not.toHaveBeenCalled();
 });
@@ -270,7 +263,6 @@ test('reopening a412 conflict loads the current saved source before rendering an
     expect(api.load).toHaveBeenCalledTimes(2); expect(api.load).toHaveBeenLastCalledWith(latest.id);
     expect(api.authoringRender).toHaveBeenLastCalledWith(latest.id, { expectedVersion: 4, sourceHash: latest.sourceHash });
     expect(screen.queryByText('conflict')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('templateSettings'));
     expect(screen.getByLabelText('name')).toHaveValue(latest.name);
     expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ source: latest, bindings: latest.bindings, dirty: false,
         inputs: expect.objectContaining({ clientId: '23', caseId: '32', clientRecord: { id: '23', label: 'Selected 23' }, caseRecord: { id: '32', label: 'Selected 32' } }) }));
@@ -284,7 +276,6 @@ test('reopen confirms before discarding dirty edits and cancellation preserves e
     api.authoringRender.mockRejectedValueOnce({ status: 412 });
     await open(mapped(), { initialContext: context(), onDraftChange });
     fireEvent.click(screen.getByText('manageTemplates')); await screen.findByText('conflict');
-    fireEvent.click(screen.getByText('templateSettings'));
     fireEvent.change(screen.getByLabelText('name'), { target: { value: 'Unsaved local name' } });
     api.load.mockResolvedValue({ source: latest });
     fireEvent.click(screen.getByText('retryAuthoring'));
@@ -394,7 +385,8 @@ test.each([
     });
     await open(original, {}, true);
     fireEvent.click(screen.getByText(control));
-    await chooseReplacement(); fireEvent.click(screen.getByText('save'));
+    await waitFor(() => expect(screen.getByText('bind')).toBeEnabled());
+    fireEvent.click(screen.getByText('bind')); fireEvent.click(screen.getByText('save'));
     await waitFor(() => expect(api.save).toHaveBeenCalledTimes(1));
     expect(api.save.mock.calls[0][1].bindings[0].selector).toEqual({ kind: 'insert', start: { itemId: 'p1-i0', offset }, affinity });
     await screen.findByText('saved');
@@ -406,210 +398,4 @@ test.each([
     expect(within(list).queryByText('beforeSelection')).not.toBeInTheDocument();
     expect(within(list).queryByText('afterSelection')).not.toBeInTheDocument();
     expect(api.preview).not.toHaveBeenCalled();
-});
-
-test('a data-field click adds the chosen field to the verified selection in one action', async () => {
-    const onDraftChange = jest.fn(); await open(source(), { onDraftChange }, true);
-    fireEvent.click(screen.getByText('chooseBlank'));
-    await chooseReplacement('client.identityNumber');
-    expect(screen.getByText('fieldAdded')).toBeInTheDocument();
-    expect(screen.queryByLabelText('field')).not.toBeInTheDocument();
-    expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: true,
-        bindings: [expect.objectContaining({ field: 'client.identityNumber', start: 7, end: 13, authoringRenderId: 'render-a' })] }));
-    expect(api.save).not.toHaveBeenCalled();
-    expect(screen.queryByLabelText('replacementPicker')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('bindingsSummary'));
-    expect(screen.getAllByText('removeBinding')).toHaveLength(1);
-});
-
-test('opening a slow template keeps a visible loading status through source loading and authoring', async () => {
-    let loaded, prepared;
-    api.list.mockResolvedValue({ sources: [source()], converterAvailable: true });
-    api.load.mockImplementation(() => new Promise(resolve => { loaded = resolve; }));
-    const prepare = api.authoringRender.getMockImplementation();
-    api.authoringRender.mockImplementation((...args) => new Promise(resolve => { prepared = async () => resolve(await prepare(...args)); }));
-    render(<WordTemplatesWorkspace />); fireEvent.click(screen.getByText('manageTemplates'));
-    await screen.findByRole('option', { name: source().name });
-    fireEvent.change(screen.getByLabelText('library'), { target: { value: source().id } });
-    expect(screen.getByRole('status')).toHaveTextContent('loadingSource');
-    expect(screen.getByRole('status')).toHaveAttribute('aria-busy', 'true');
-    await act(async () => loaded({ source: source() }));
-    expect(screen.getByRole('status')).toHaveTextContent('authoringLoading');
-    await act(async () => prepared());
-    await screen.findByTestId('original-pdf');
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
-});
-
-
-test('field controls wait for verified selection and a page error cancels the pending selection status', async () => {
-    let resolve;
-    const implementation = api.resolveSelection.getMockImplementation();
-    api.resolveSelection.mockImplementation((...args) => new Promise(done => { resolve = async () => done(await implementation(...args)); }));
-    await open(source(), {}, true);
-    fireEvent.click(screen.getByText('chooseBlank'));
-    expect(screen.getByText('resolvingSelection')).toBeInTheDocument();
-    expect(screen.queryByLabelText('field')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('required')).toBeDisabled();
-    await act(async () => resolve());
-    expect(screen.getByLabelText('field')).toBeEnabled();
-    expect(screen.queryByText('resolvingSelection')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('chooseBlank'));
-    fireEvent.click(screen.getByText('failPage'));
-    expect(screen.queryByText('resolvingSelection')).not.toBeInTheDocument();
-    await act(async () => resolve());
-    expect(screen.queryByLabelText('field')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('field')).not.toBeInTheDocument();
-    expect(screen.queryByText('replacementSelection')).not.toBeInTheDocument();
-    expect(screen.queryByText('removeBinding')).not.toBeInTheDocument();
-});
-
-test('the document comes before collapsed template settings and role setup; opening settings does not dirty the template', async () => {
-    const onDraftChange = jest.fn(); await open(source(), { onDraftChange }, true);
-    const documentView = screen.getByTestId('original-pdf');
-    for (const label of ['templateSettings', 'roles', 'templateHelp', 'bindingsSummary']) {
-        const summary = screen.getByText(label); expect(summary.closest('details')).not.toHaveAttribute('open');
-        expect(documentView.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    }
-    expect(screen.queryByLabelText('field')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('templateSettings')); expect(screen.getByLabelText('name')).toBeVisible();
-    fireEvent.click(screen.getByText('roles')); expect(screen.getByText('addRole')).toBeVisible();
-    expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: false }));
-    fireEvent.click(screen.getByText('addRole'));
-    expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: true, roles: [expect.objectContaining({ key: 'role1' })] }));
-    fireEvent.click(screen.getByText('useTemplates')); expect(screen.getByRole('dialog')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('keepEditing')); expect(screen.getByText('unsavedChanges')).toBeInTheDocument();
-});
-
-test('cancelling a pending or verified selection never dirties the source and rejects a late response', async () => {
-    const onDraftChange = jest.fn(); const implementation = api.resolveSelection.getMockImplementation(); let finish;
-    api.resolveSelection.mockImplementationOnce((...args) => new Promise(done => { finish = async () => done(await implementation(...args)); }));
-    await open(source(), { onDraftChange }, true); fireEvent.click(screen.getByText('chooseBlank'));
-    expect(screen.getByLabelText('required')).toBeDisabled(); expect(screen.queryByLabelText('field')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('cancelSelection')); await act(async () => finish());
-    expect(screen.queryByLabelText('replacementSelection')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('field')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('chooseBlank')); await screen.findByLabelText('field'); fireEvent.click(screen.getByText('cancelSelection'));
-    expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: false, bindings: [] }));
-    expect(api.save).not.toHaveBeenCalled();
-});
-
-test('editing an existing marker changes only its replacement metadata and saves the exact original selector', async () => {
-    const selector = { kind: 'range', start: { itemId: 'p1-i0', offset: 7 }, end: { itemId: 'p1-i0', offset: 13 } };
-    const original = { ...binding('client.fullName', 'bound'), selector, kind: 'range', authoringRenderId: 'render-a',
-        sourceHash: 'a'.repeat(64), paragraphHash: 'c'.repeat(64) };
-    const saved = { ...source(), bindings: [original] }; const onDraftChange = jest.fn();
-    await open(saved, { onDraftChange }, true);
-    fireEvent.click(screen.getByText('marker bound')); await screen.findByLabelText('field');
-    expect(screen.getByText('marker bound')).toHaveAttribute('aria-pressed', 'true');
-    fireEvent.click(screen.getByText('cancelSelection'));
-    expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: false, bindings: [original] }));
-    fireEvent.click(screen.getByText('bindingsSummary'));
-    fireEvent.click(within(screen.getByRole('list', { name: 'bindings' })).getByRole('button', { name: 'fieldLabel fields.fullName' }));
-    fireEvent.click(screen.getByLabelText('required')); await chooseReplacement('client.identityNumber');
-    const changed = { ...original, required: false, field: 'client.identityNumber' };
-    expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: true, bindings: [changed] }));
-    expect(api.resolveSelection).not.toHaveBeenCalled(); expect(screen.queryByLabelText('field')).not.toBeInTheDocument();
-    api.save.mockResolvedValue({ source: { ...saved, version: 4, bindings: [changed] } }); fireEvent.click(screen.getByText('save'));
-    await waitFor(() => expect(api.save).toHaveBeenCalledTimes(1));
-    expect(api.save.mock.calls[0][1].bindings).toEqual([{ id: 'bound', selector, field: 'client.identityNumber', required: false }]);
-    await screen.findByText('saved'); expect(screen.getByText('allChangesSaved')).toBeInTheDocument();
-    api.load.mockResolvedValue({ source: { ...saved, version: 4, bindings: [changed] } });
-    fireEvent.change(screen.getByLabelText('library'), { target: { value: saved.id } });
-    await waitFor(() => expect(api.load).toHaveBeenCalledTimes(2));
-    expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: false, bindings: [changed] }));
-});
-
-test('an invalid server selection leaves no replacement picker and a page mismatch disables saved-field edits and saving', async () => {
-    const onDraftChange = jest.fn(); await open(mapped(), { onDraftChange }, true);
-    api.resolveSelection.mockResolvedValueOnce({ selection: { kind: 'range', selectedText: 'wrong' } });
-    fireEvent.click(screen.getByText('chooseBlank')); await screen.findByText('selectionInvalid');
-    expect(screen.queryByLabelText('field')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('failPage')); await screen.findByText('authoringMismatch');
-    fireEvent.click(screen.getByText('marker client.identityNumber'));
-    expect(screen.queryByLabelText('field')).not.toBeInTheDocument(); expect(screen.getByText('save')).toBeDisabled();
-    fireEvent.click(screen.getByText('bindingsSummary'));
-    expect(within(screen.getByRole('list', { name: 'bindings' })).getByText('removeBinding')).toBeDisabled();
-    expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: false, bindings: mapped().bindings }));
-});
-
-test('the document area announces preparation until both the deferred authoring map and verified PDF are ready', async () => {
-    const prepare = api.authoringRender.getMockImplementation(); let finishMap, finishPdf;
-    api.authoringRender.mockImplementationOnce((...args) => new Promise(done => { finishMap = async () => done(await prepare(...args)); }));
-    api.authoringPdf.mockImplementationOnce(() => new Promise(done => { finishPdf = done; }));
-    await open(source()); fireEvent.click(screen.getByText('manageTemplates'));
-    const editor = screen.getByRole('region', { name: 'mapping' });
-    const expectPreparing = () => {
-        const status = within(editor).getByRole('status');
-        expect(status).toHaveTextContent('authoringLoading'); expect(status).toHaveAttribute('aria-live', 'polite');
-        expect(status).toHaveAttribute('aria-busy', 'true'); expect(status).toBeVisible();
-        expect(within(editor).queryByTestId('original-pdf')).not.toBeInTheDocument();
-        expect(within(editor).queryByLabelText('field')).not.toBeInTheDocument();
-        expect(within(editor).getByText('save')).toBeDisabled();
-    };
-    await waitFor(() => expect(api.authoringRender).toHaveBeenCalledTimes(1)); expectPreparing();
-    await act(async () => finishMap());
-    await waitFor(() => expect(api.authoringPdf).toHaveBeenCalledTimes(1)); expectPreparing();
-    await act(async () => finishPdf(new Blob(['%PDF-original'], { type: 'application/pdf' })));
-    await within(editor).findByTestId('original-pdf');
-    expect(within(editor).queryByRole('status')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('chooseBlank')); await chooseReplacement('client.fullName');
-    expect(screen.getByText('save')).toBeEnabled();
-});
-
-test('the temporary picker keeps its quote, required setting and cancel together and reserves editor space only while active', async () => {
-    await open(source(), {}, true); const editor = screen.getByRole('region', { name: 'mapping' });
-    expect(editor).not.toHaveClass('lw-word__editor--choosing');
-    fireEvent.click(screen.getByText('chooseBlank')); await screen.findByLabelText('field');
-    const picker = screen.getByLabelText('replacementPicker');
-    expect(editor).toHaveClass('lw-word__editor--choosing'); expect(within(picker).getByText('______')).toBeInTheDocument();
-    expect(within(picker).getByLabelText('required')).toBeEnabled();
-    expect(screen.getByTestId('original-pdf').compareDocumentPosition(picker) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    fireEvent.click(within(picker).getByText('cancelSelection'));
-    expect(editor).not.toHaveClass('lw-word__editor--choosing'); expect(screen.queryByLabelText('replacementPicker')).not.toBeInTheDocument();
-    expect(api.save).not.toHaveBeenCalled();
-});
-
-test('authoring admission busy feedback preserves the source and offers an explicit retry', async () => {
-    const onDraftChange = jest.fn(); api.authoringRender.mockRejectedValueOnce({ status: 429, code: 'WORD_CONVERSION_BUSY' });
-    await open(source(), { onDraftChange }); fireEvent.click(screen.getByText('manageTemplates'));
-    await screen.findByText('converterBusy');
-    expect(screen.queryByTestId('original-pdf')).not.toBeInTheDocument(); expect(screen.queryByLabelText('field')).not.toBeInTheDocument();
-    expect(screen.getByText('save')).toBeDisabled(); expect(api.authoringPdf).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByText('retryAuthoring')); await screen.findByTestId('original-pdf');
-    expect(api.authoringRender).toHaveBeenCalledTimes(2); expect(screen.queryByText('converterBusy')).not.toBeInTheDocument();
-    expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ source: source(), dirty: false, bindings: [] }));
-    expect(api.save).not.toHaveBeenCalled();
-});
-
-test('a busy preview request shows retry-later feedback without dropping chosen records or inventing a PDF', async () => {
-    const onDraftChange = jest.fn(); api.preview.mockRejectedValueOnce({ status: 429, code: 'WORD_CONVERSION_BUSY' });
-    await open(mapped(), { initialContext: context(), onDraftChange });
-    fireEvent.click(screen.getByText('preview')); await screen.findByText('converterBusy');
-    expect(screen.queryByTestId('final-pdf')).not.toBeInTheDocument(); expect(api.pdf).not.toHaveBeenCalled();
-    expect(screen.getByText('preview')).toBeEnabled();
-    expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: false, bindings: mapped().bindings,
-        inputs: expect.objectContaining({ clientId: '22', caseId: '31' }) }));
-    fireEvent.click(screen.getByText('preview')); await screen.findByTestId('final-pdf');
-    expect(api.preview).toHaveBeenCalledTimes(2); expect(screen.queryByText('converterBusy')).not.toBeInTheDocument();
-});
-
-test('a signature-only Word source prepares the exact empty-data payload and requires PDF readiness plus review before continuing', async () => {
-    const onContinue = jest.fn(); const saved = { ...source(), roles: [{ key: 'dataRole', label: 'Data role' }] };
-    await open(saved, { onContinue });
-    expect(screen.getByText('noMappedFields')).toBeVisible();
-    expect(screen.getByText('preview')).toBeEnabled();
-    expect(screen.queryByLabelText('roleClientId Data role')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('preview')); await screen.findByTestId('final-pdf');
-    expect(api.preview).toHaveBeenCalledWith(saved.id, { expectedVersion: saved.version, bindingsHash: saved.bindingsHash,
-        inputs: { manualValues: {}, roleClientIds: {} } }, expect.any(String));
-    expect(api.preview.mock.calls[0][1]).not.toHaveProperty('bindings');
-    expect(api.preview.mock.calls[0][1].inputs).not.toHaveProperty('signers');
-    expect(screen.getByText('continue')).toBeDisabled(); expect(screen.getByLabelText('previewAcknowledgement')).toBeDisabled();
-    fireEvent.click(screen.getByText('continue')); expect(onContinue).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByText('pdf-loaded')); expect(screen.getByText('continue')).toBeDisabled();
-    fireEvent.click(screen.getByText('continue')); expect(onContinue).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByLabelText('previewAcknowledgement')); fireEvent.click(screen.getByText('continue'));
-    expect(onContinue).toHaveBeenCalledWith(expect.objectContaining({ id: 'preview-a', sourceId: saved.id,
-        sourceVersion: saved.version, pdfHash: 'd'.repeat(64), fileBlob: expect.any(Blob), requiresFreshSigningGeometry: true }));
-    expect(api.create).not.toHaveBeenCalled(); expect(api.save).not.toHaveBeenCalled();
 });

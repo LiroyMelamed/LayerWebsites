@@ -198,32 +198,19 @@ test('ordinary read-only signing and stage listing retain view permission withou
     assert.equal(f.calls.filter(row => row.name === 'read.submissions').length, 1);
 });
 
-test('Word HTTP admission busy retains retry metadata through central errors without operational alerts', async t => {
+test('Word HTTP operational errors still reach the real sanitized request reporter and central error response', async t => {
     const error = Object.assign(new Error('private synthetic converter stderr'), { name: 'WordTemplateError', code: 'WORD_CONVERSION_BUSY' });
     const f = fixture(t, { wordError: error });
-    const response = await hit(f.app, 'post', '/word', 'upload', { secret: 'private synthetic body' }).expect(429);
+    const response = await hit(f.app, 'post', '/word', 'upload', { secret: 'private synthetic body' }).expect(503);
     assert.equal(response.body.errorCode, 'WORD_CONVERSION_BUSY');
     assert.equal(response.body.messageKey, 'signingWord.requestFailed');
-    assert.equal(response.headers['retry-after'], '2');
-    assert.equal(response.body.retryable, true);
-    assert.equal(response.body.retryAfterSeconds, 2);
     assert.equal(response.body.details, undefined);
-    assert.equal(f.queries.some(row => row.sql.startsWith('INSERT INTO signing_error_alerts')), false);
-    assert.ok(!JSON.stringify(response.body).includes('converter stderr'));
-});
-
-test('Word HTTP operational failures retain the real sanitized request reporter', async t => {
-    const error = Object.assign(new Error('private synthetic converter stderr'), { name: 'WordTemplateError', code: 'WORD_CONVERSION_FAILED' });
-    const f = fixture(t, { wordError: error });
-    const response = await hit(f.app, 'post', '/word', 'upload', { secret: 'private synthetic body' }).expect(500);
     const alert = f.queries.find(row => row.sql.startsWith('INSERT INTO signing_error_alerts'));
-    assert.ok(alert, 'actual failures must retain the incumbent office error reporter');
-    assert.equal(alert.values[2], 'WORD_CONVERSION_FAILED');
+    assert.ok(alert, 'new subrouter errors must retain the incumbent office error reporter');
+    assert.equal(alert.values[2], 'WORD_CONVERSION_BUSY');
     assert.match(alert.values[1], /^office:POST:/);
     assert.ok(!JSON.stringify(alert).includes('private synthetic'));
     assert.ok(!JSON.stringify(response.body).includes('converter stderr'));
-    assert.equal(response.body.retryable, false);
-    assert.equal(response.headers['retry-after'], undefined);
 });
 
 test('normal permission denials are forwarded without generating operational error alerts', async t => {
