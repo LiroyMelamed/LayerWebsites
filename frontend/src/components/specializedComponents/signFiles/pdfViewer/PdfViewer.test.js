@@ -236,7 +236,7 @@ test('Word authoring text and overlays are opt-in; the incumbent signing viewer 
 
 // Adds the authoring-enabled resize path to QA's existing geometry/bitmap cases.
 test('a narrow measured PDF grows then shrinks while overlay scale follows the actual bitmap and authoring stays opt-in', async () => {
-    const measure = responsivePdfMeasurements(324); measure.bitmap(240);
+    const measure = responsivePdfMeasurements(324); measure.bitmap(308);
     const originalSpot = Object.freeze({ pageNum: 1, x: 195, y: 396, width: 161, height: 28 }); const spots = [originalSpot];
     const onUpdateSpot = jest.fn();
     const { container, rerender } = render(<div className="lw-signing-pdfViewerMain"><PdfViewer pdfSource={source} spots={spots} onUpdateSpot={onUpdateSpot} /></div>);
@@ -245,22 +245,20 @@ test('a narrow measured PDF grows then shrinks while overlay scale follows the a
     // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
     const inner = container.querySelector('.lw-signing-pageInner');
     const mount = screen.getByTestId('document').getAttribute('data-mount-id');
-    expect(inner.style.width).toBe('308px'); expect(mockSpotsLayerProps.scale).toBeCloseTo(240 / 800, 8);
+    expect(inner.style.width).toBe('308px'); expect(mockSpotsLayerProps.scale).toBeCloseTo(308 / 800, 8);
     expect(mockPageProps.get(1).renderTextLayer).toBe(false);
     const renderPageOverlay = jest.fn(({ pageNumber }) => <span>readable-authoring-page-{pageNumber}</span>);
     const authoringLayer = { renderPageOverlay };
     rerender(<div className="lw-signing-pdfViewerMain"><PdfViewer pdfSource={source} spots={spots} onUpdateSpot={onUpdateSpot} authoringLayer={authoringLayer} /></div>);
     measure.resize(696);
-    expect(inner.style.width).toBe('680px'); expect(inner).toHaveAttribute('data-measured-width', '240');
-    expect(mockSpotsLayerProps.scale).toBeCloseTo(240 / 800, 8); expect(mockPageProps.get(1).renderTextLayer).toBe(true);
-    expect(renderPageOverlay).toHaveBeenLastCalledWith(expect.objectContaining({ pageNumber: 1, displayWidth: 240 }));
+    expect(inner.style.width).toBe('680px'); expect(inner).toHaveAttribute('data-measured-width', '308');
+    expect(mockSpotsLayerProps.scale).toBeCloseTo(308 / 800, 8); expect(mockPageProps.get(1).renderTextLayer).toBe(true);
+    expect(renderPageOverlay).toHaveBeenLastCalledWith(expect.objectContaining({ pageNumber: 1, displayWidth: 680 }));
     measure.bitmap(680); measure.finishRender();
     expect(inner).toHaveAttribute('data-measured-width', '680'); expect(mockSpotsLayerProps.scale).toBeCloseTo(680 / 800, 8);
-    expect(renderPageOverlay).toHaveBeenLastCalledWith(expect.objectContaining({ pageNumber: 1, displayWidth: 680 }));
     measure.resize(324); measure.finishRender();
     expect(inner.style.width).toBe('308px'); expect(inner).toHaveAttribute('data-measured-width', '308');
     expect(mockSpotsLayerProps.scale).toBeCloseTo(308 / 800, 8); expect(mockSpotsLayerProps.spots[0]).toBe(originalSpot);
-    expect(renderPageOverlay).toHaveBeenLastCalledWith(expect.objectContaining({ pageNumber: 1, displayWidth: 308 }));
     expect(screen.getByTestId('document').getAttribute('data-mount-id')).toBe(mount); expect(onUpdateSpot).not.toHaveBeenCalled();
     expect(originalSpot).toEqual({ pageNum: 1, x: 195, y: 396, width: 161, height: 28 });
 });

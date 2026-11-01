@@ -40,7 +40,7 @@ test('one mapping worker per process rejects concurrent extraction and retains a
     const first = f.visual.buildAuthoringMapBounded({ version: 1 }, bytes);
     await assert.rejects(f.visual.extractPdfPagesBounded(bytes), error => {
         assert.equal(error.code, 'WORD_AUTHORING_BUSY');
-        assert.equal(wordRouteError(error).httpStatus, 429); return true;
+        assert.equal(wordRouteError(error).httpStatus, 503); return true;
     });
     assert.equal(f.workers.length, 1);
     let finishCleanup;

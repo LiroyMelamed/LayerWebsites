@@ -11,13 +11,13 @@ const model = () => ({ schemaVersion: 2, mapVersion: 1, offsetUnit: 'utf16', ren
     textContentOptions: { disableNormalization: false, includeMarkedContent: false },
     pages: [{ pageNum: 1, width: 600, height: 800, rotation: 0, userUnit: 1, viewBox: [0, 0, 600, 800], viewportTransform: [1, 0, 0, -1, 0, 800],
         textContentHash: 'f'.repeat(64), items: [item('p1-i0', 0), item('p1-i1', 11)] }] });
-function dom(data = model(), paragraphs = []) {
+function dom(data = model()) {
     const host = document.createElement('div'); const layer = document.createElement('div'); layer.className = 'textLayer'; host.append(layer);
     data.pages[0].items.forEach(value => {
         if (value.text) { const span = document.createElement('span'); span.setAttribute('role', 'presentation'); span.textContent = value.text; layer.append(span); }
         if (value.hasEOL) { const br = document.createElement('br'); br.setAttribute('role', 'presentation'); layer.append(br); }
     });
-    document.body.append(host); tagVerifiedTextLayer(host, data.pages[0], paragraphs);
+    document.body.append(host); tagVerifiedTextLayer(host, data.pages[0]);
     return { host, spans: Array.from(layer.querySelectorAll('span')) };
 }
 function selection(start, from, end = start, to = from) {
@@ -185,67 +185,4 @@ test.each([
     expect(() => selectorForTextItem(data, 'p1_i0', offset, offset, 'range')).toThrow();
     expect(selectorForTextItem(data, 'p1_i0', offset, offset, 'insert', affinity)).toEqual(selector);
     expect(() => visual.resolveSelection(data, { ...selector, affinity: side })).toThrow();
-});
-
-function neutralBlank(text = '\u05e9\u05dd \u05d4\u05e9\u05d5\u05db\u05e8 ____') {
-    const start = text.indexOf('____'); const paragraph = { part: 'word/document.xml', id: 'p0', text, textHash: hash(text), editable: true, selectionRanges: [{ start: 0, end: text.length }] };
-    const data = model();
-    data.pages[0].items = [0, 1].map(index => ({ ...item(`blank-${index}`, start + index * 2), order: index, text: '__', dir: 'ltr',
-        transform: [11, 0, 0, 11, index ? 740 : 758, 700], width: 17, hasEOL: index === 1,
-        segments: [{ itemStart: 0, itemEnd: 2, part: paragraph.part, paragraphId: paragraph.id,
-            sourceStart: start + index * 2, sourceEnd: start + index * 2 + 2, paragraphHash: paragraph.textHash }] }));
-    data.paragraphs = [paragraph];
-    return { data, paragraph };
-}
-
-test.each(['\u05e9\u05dd \u05d4\u05e9\u05d5\u05db\u05e8 ____', '\u0627\u0633\u0645 ____', '123 \u05e9\u05dd ____'])('verified split neutral blanks adopt RTL caret direction only from the exact source paragraph: %s', text => {
-    const { data, paragraph } = neutralBlank(text); const before = JSON.parse(JSON.stringify(data));
-    const { host, spans } = dom(data, [paragraph]);
-    expect(spans.every(span => span.dataset.wordNeutralRtl === 'true')).toBe(true);
-    const visual = require('../../../../../backend/lib/wordTemplates/visual');
-    const resolved = visual.resolveSelection(data, selectorFromDom(host, selection(spans[0], 0, spans[1], 2), data));
-    expect(resolved).toMatchObject({ selectedText: '____', anchor: { start: paragraph.text.indexOf('____'), end: paragraph.text.indexOf('____') + 4 } });
-    expect(() => visual.resolveSelection(data, selectorFromDom(host, selection(spans[0], 2, spans[1], 0), data))).toThrow();
-    expect(data).toEqual(before); expect(data.pages[0].items.map(value => value.dir)).toEqual(['ltr', 'ltr']);
-    expect(selectorFromDom(host, selection(spans[0], 0, spans[1], 2), data)).toEqual({ kind: 'range',
-        start: { itemId: 'blank-0', offset: 0 }, end: { itemId: 'blank-1', offset: 2 } });
-    expect(selectorFromDom(host, selection(spans[0], 2, spans[1], 0), data)).toEqual({ kind: 'range',
-        start: { itemId: 'blank-0', offset: 2 }, end: { itemId: 'blank-1', offset: 0 } });
-    // Presentation must never expand/rewrite an actually empty logical range.
-    expect(selectorForAnchor(data, { part: paragraph.part, paragraphId: paragraph.id,
-        start: paragraph.text.indexOf('____'), end: paragraph.text.indexOf('____') + 4 })).toEqual({ kind: 'range',
-        start: { itemId: 'blank-0', offset: 0 }, end: { itemId: 'blank-1', offset: 2 } });
-});
-
-test.each(['Name ____', 'Name \u05e9\u05dd ____', '123 ____', '____', '\u200f\u05e9\u05dd ____'])('LTR, no-strong-text and explicit bidi-control paragraphs do not receive a caret override: %s', text => {
-    const { data, paragraph } = neutralBlank(text); const { spans } = dom(data, [paragraph]);
-    expect(spans.some(span => span.hasAttribute('data-word-neutral-rtl'))).toBe(false);
-});
-
-test.each(['digits', 'mixed', 'missing metadata', 'duplicate metadata', 'wrong hash', 'readonly paragraph', 'unmapped', 'readonly item', 'atomic', 'gap', 'ambiguous', 'different paragraph', 'different source text', 'vertical direction'])('neutral-caret correction fails closed for %s', kind => {
-    const { data, paragraph } = neutralBlank(); let paragraphs = [paragraph]; const value = data.pages[0].items[0];
-    if (kind === 'digits') value.text = '12';
-    if (kind === 'mixed') value.text = '_A';
-    if (kind === 'missing metadata') paragraphs = [];
-    if (kind === 'duplicate metadata') paragraphs.push({ ...paragraph });
-    if (kind === 'wrong hash') paragraph.textHash = '0'.repeat(64);
-    if (kind === 'readonly paragraph') paragraph.editable = false;
-    if (kind === 'unmapped') value.segments = [];
-    if (kind === 'readonly item') value.readOnlyReason = 'unsupported';
-    if (kind === 'atomic') value.segments[0].sourceEnd += 1;
-    if (kind === 'gap') value.segments[0].itemStart = 1;
-    if (kind === 'ambiguous') value.segments.push({ ...value.segments[0] });
-    if (kind === 'different paragraph') value.segments[0].paragraphId = 'other';
-    if (kind === 'different source text') paragraph.text = paragraph.text.replace('____', 'AB__');
-    if (kind === 'vertical direction') value.dir = 'ttb';
-    const { spans } = dom(data, paragraphs);
-    expect(spans[0]).not.toHaveAttribute('data-word-neutral-rtl');
-});
-
-test('reverification removes a neutral-caret flag when the exact paragraph metadata is unavailable', () => {
-    const { data, paragraph } = neutralBlank(); const { host, spans } = dom(data, [paragraph]);
-    expect(spans[0]).toHaveAttribute('data-word-neutral-rtl', 'true');
-    tagVerifiedTextLayer(host, data.pages[0]);
-    expect(spans[0]).not.toHaveAttribute('data-word-neutral-rtl');
-    expect(spans[0]).toHaveAttribute('data-word-item', 'blank-0');
 });

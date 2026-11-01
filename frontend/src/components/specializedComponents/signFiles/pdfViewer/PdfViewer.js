@@ -108,7 +108,6 @@ function LazyPdfPage({
 
     const placeholderHeight = Math.round(renderWidth * (pageAspect || FALLBACK_PAGE_ASPECT));
     const hasStableMeasure = measuredWidth >= 50;
-    const displayWidth = hasStableMeasure ? measuredWidth : renderWidth;
     const overlayScale = (hasStableMeasure ? spotSpaceScale(measuredWidth) : 0)
         || (renderWidth / BASE_RENDER_WIDTH);
 
@@ -136,7 +135,7 @@ function LazyPdfPage({
                             onGetTextError={authoringLayer ? textError : undefined}
                             onRenderTextLayerError={authoringLayer ? textError : undefined}
                         />
-                        {authoringLayer?.renderPageOverlay?.({ pageNumber, displayWidth, host: pageBoxRef.current })}
+                        {authoringLayer?.renderPageOverlay?.({ pageNumber, displayWidth: renderWidth, host: pageBoxRef.current })}
                         <SignatureSpotsLayer
                             pageNumber={pageNumber}
                             spots={spots}

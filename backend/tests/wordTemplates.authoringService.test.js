@@ -53,9 +53,8 @@ async function fixture(t, { birthDate = true, court = false } = {}) {
         async write(key, bytes) { if (objects.has(key)) assert.deepEqual(objects.get(key), bytes); objects.set(key, Buffer.from(bytes)); },
         async verify(key, size, digest) { assert.equal(objects.get(key).length, size); assert.equal(hash(objects.get(key)), digest); },
         async read(key, size) { assert.ok(objects.has(key)); assert.equal(objects.get(key).length, size); return Buffer.from(objects.get(key)); } };
-    const conversions = [], conversionBytes = [];
+    const conversions = [];
     const convertDocxToPdf = async bytes => {
-        conversionBytes.push(Buffer.from(bytes));
         conversions.push(core.importDocx(bytes));
         const pdf = await PDFDocument.create(); pdf.addPage([600, 800]); const buffer = Buffer.from(await pdf.save());
         return { buffer, format: 'pdf', sourceHash: hash(bytes), outputHash: hash(buffer), requiresFreshSigningGeometry: true, pageCount: 1 };
@@ -68,7 +67,7 @@ async function fixture(t, { birthDate = true, court = false } = {}) {
         const key = `users/1/${randomUUID()}.docx`; uploads.set(key, docx(text));
         return service.importSource(pool, scope, { name: 'Synthetic ready Word source', fileKey: key }, dependencies);
     }
-    return { pg, pool, trace, storage, conversions, conversionBytes, dependencies, imported };
+    return { pg, pool, trace, storage, conversions, dependencies, imported };
 }
 const selector = (start, end) => ({ kind: 'range', start: { itemId: 'item0', offset: start }, end: { itemId: 'item0', offset: end } });
 
@@ -188,80 +187,4 @@ test('cached authoring response refuses a concurrent metadata-version advance du
     } };
     await assert.rejects(service.authoringRender(racingPool, scope, source.id, { expectedVersion: 1, sourceHash: source.sourceHash }, f.dependencies), error('VERSION_CHANGED'));
     assert.equal(f.conversions.length, 1, 'Cached response does not reconvert');
-});
-
-test('signature-only Word preview converts exact original bytes and retains replay, PDF and signing provenance', async t => {
-    const f = await fixture(t), source = await f.imported('Please sign this unchanged document.');
-    assert.deepEqual(source.bindings, []);
-    const original = (await f.pg.query('SELECT object_key FROM signing_word_sources WHERE id=$1', [source.id])).rows[0];
-    const originalBytes = Buffer.from(f.storage.objects.get(original.object_key));
-    const input = { expectedVersion: 1, bindingsHash: source.bindingsHash, idempotencyKey: randomUUID(),
-        inputs: { roleClientIds: {}, manualValues: {} } };
-    const preview = await service.preview(f.pool, scope, source.id, input, f.dependencies);
-    assert.equal(preview.requiresFreshSigningGeometry, true);
-    assert.equal(f.conversionBytes.length, 1);
-    assert.deepEqual(f.conversionBytes[0], originalBytes, 'No empty-mapping package rewrite reaches the converter');
-    const stored = (await f.pg.query('SELECT * FROM signing_word_previews WHERE id=$1', [preview.id])).rows[0];
-    assert.equal(stored.filled_docx_sha256, source.sourceHash);
-    assert.equal(stored.source_sha256, source.sourceHash);
-    assert.equal(stored.bindings_hash, source.bindingsHash);
-    assert.equal(stored.values_hash, digest({}));
-    const replay = await service.preview(f.pool, scope, source.id, input, f.dependencies);
-    assert.equal(replay.id, preview.id); assert.equal(f.conversionBytes.length, 1);
-    const material = await service.signingMaterial(f.pool, scope, preview.id, f.dependencies);
-    assert.equal(hash(material.bytes), preview.pdfHash);
-    assert.deepEqual(material.origin, { kind: 'word_preview', previewId: preview.id, sourceId: source.id, sourceVersion: 1,
-        sourceHash: source.sourceHash, bindingsHash: source.bindingsHash, filledDocxHash: source.sourceHash,
-        valuesHash: digest({}), inputsHash: stored.inputs_hash, pdfHash: preview.pdfHash, authorUserId: scope.userId });
-    await assert.rejects(service.preview(f.pool, scope, source.id, { ...input,
-        inputs: { clientId: 3, roleClientIds: {}, manualValues: {} } }, f.dependencies), error('IDEMPOTENCY_CONFLICT'));
-    await assert.rejects(service.preview(f.pool, scope, source.id, { ...input, idempotencyKey: randomUUID(),
-        inputs: { roleClientIds: {}, manualValues: { 'client.fullName': 'Unmapped input' } } }, f.dependencies), error('INVALID_WORD_INPUTS'));
-    assert.equal(f.conversionBytes.length, 1, 'Rejected inputs do not convert or create a second preview');
-});
-
-test('signature-only Word previews retain private context, current references, source/PDF hashes and version guards', async t => {
-    const f = await fixture(t), source = await f.imported('Signature without replacement fields.');
-    const input = { expectedVersion: 1, bindingsHash: source.bindingsHash, idempotencyKey: randomUUID(),
-        inputs: { clientId: 3, caseId: 9, roleClientIds: {}, manualValues: {} } };
-    const preview = await service.preview(f.pool, scope, source.id, input, f.dependencies);
-    for (const foreign of [{ ...scope, userId: 2 }, { ...scope, contextId: randomUUID() }]) {
-        await assert.rejects(service.preview(f.pool, foreign, source.id, { ...input, idempotencyKey: randomUUID() }, f.dependencies), error('NOT_FOUND'));
-        await assert.rejects(service.signingMaterial(f.pool, foreign, preview.id, f.dependencies), error('NOT_FOUND'));
-    }
-    await f.pg.query("UPDATE users SET role='Deleted' WHERE userid=3");
-    await assert.rejects(service.preview(f.pool, scope, source.id, input, f.dependencies), error('NOT_FOUND'));
-    await assert.rejects(service.signingMaterial(f.pool, scope, preview.id, f.dependencies), error('NOT_FOUND'));
-    await f.pg.query("UPDATE users SET role='Client' WHERE userid=3");
-    const row = (await f.pg.query('SELECT * FROM signing_word_previews WHERE id=$1', [preview.id])).rows[0];
-    const pdf = Buffer.from(f.storage.objects.get(row.object_key));
-    f.storage.objects.set(row.object_key, Buffer.alloc(pdf.length));
-    await assert.rejects(service.preview(f.pool, scope, source.id, input, f.dependencies), error('ARTIFACT_HASH_MISMATCH'));
-    await assert.rejects(service.signingMaterial(f.pool, scope, preview.id, f.dependencies), error('ARTIFACT_HASH_MISMATCH'));
-    f.storage.objects.set(row.object_key, pdf);
-    await service.save(f.pool, scope, source.id, { expectedVersion: 1, sourceHash: source.sourceHash,
-        name: source.name, roles: [], bindings: [] }, f.dependencies);
-    await assert.rejects(service.preview(f.pool, scope, source.id, { ...input, idempotencyKey: randomUUID() }, f.dependencies), error('VERSION_CHANGED'));
-    await assert.rejects(service.signingMaterial(f.pool, scope, preview.id, f.dependencies), error('WORD_PREVIEW_STALE'));
-    assert.equal(f.conversionBytes.length, 1);
-});
-
-test('signature-only Word preview rejects changed source bytes and a concurrent source-version advance before saving', async t => {
-    const f = await fixture(t), source = await f.imported('Verify original source before signing.');
-    const input = { expectedVersion: 1, bindingsHash: source.bindingsHash, idempotencyKey: randomUUID(),
-        inputs: { roleClientIds: {}, manualValues: {} } };
-    const row = (await f.pg.query('SELECT object_key FROM signing_word_sources WHERE id=$1', [source.id])).rows[0];
-    const bytes = Buffer.from(f.storage.objects.get(row.object_key));
-    f.storage.objects.set(row.object_key, Buffer.alloc(bytes.length));
-    await assert.rejects(service.preview(f.pool, scope, source.id, input, f.dependencies), error('ARTIFACT_HASH_MISMATCH'));
-    assert.equal(f.conversionBytes.length, 0);
-    f.storage.objects.set(row.object_key, bytes);
-    await assert.rejects(service.preview(f.pool, scope, source.id, input, { ...f.dependencies,
-        async convertDocxToPdf(original) {
-            assert.deepEqual(original, bytes);
-            await service.save(f.pool, scope, source.id, { expectedVersion: 1, sourceHash: source.sourceHash,
-                name: source.name, roles: [], bindings: [] }, f.dependencies);
-            return f.dependencies.convertDocxToPdf(original);
-        } }), error('VERSION_CHANGED'));
-    assert.equal((await f.pg.query('SELECT count(*)::int AS n FROM signing_word_previews')).rows[0].n, 0);
 });

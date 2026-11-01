@@ -281,7 +281,7 @@ async function preview(pool, scope, id, input, { storage, convertDocxToPdf } = {
     expect(typeof input.idempotencyKey === 'string' && /^[A-Za-z0-9_-]{8,128}$/u.test(input.idempotencyKey), 'INVALID_IDEMPOTENCY_KEY');
     const row = await source(pool, scope, id);
     if (Number(row.version) !== input.expectedVersion || row.bindings_hash !== input.bindingsHash) fail('VERSION_CHANGED', 412);
-    expect(Array.isArray(row.bindings), 'WORD_BINDINGS_REQUIRED');
+    expect(Array.isArray(row.bindings) && row.bindings.length > 0, 'WORD_BINDINGS_REQUIRED');
     const inputs = inputsFor(row, input);
     const fields = new Set(row.bindings.map(binding => binding.field));
     const inputsHash = digest({ sourceId: id, sourceHash: row.source_sha256, version: Number(row.version), bindingsHash: row.bindings_hash, inputs });
@@ -300,12 +300,7 @@ async function preview(pool, scope, id, input, { storage, convertDocxToPdf } = {
     const values = await resolveValues(pool, scope, inputs, false, fields);
     const valuesHash = digest(values);
     const bytes = await sourceBytes(row, storage);
-    // A Word document may need signatures without any data replacements. Its
-    // verified original bytes still produce a fresh PDF and the same immutable
-    // preview provenance; empty mappings must not rewrite the DOCX package.
-    const filled = row.bindings.length
-        ? word(() => materializeDocx(bytes, { sourceHash: row.source_sha256, bindings: row.bindings, values }))
-        : { buffer: bytes, outputHash: row.source_sha256 };
+    const filled = word(() => materializeDocx(bytes, { sourceHash: row.source_sha256, bindings: row.bindings, values }));
     const convert = convertDocxToPdf || require('../../lib/wordTemplates/converter').convertDocxToPdf;
     // Operational conversion errors retain their type/code for the route's
     // HTTP classification and administrator alert pipeline.
