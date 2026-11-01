@@ -1,5 +1,10 @@
 # Card saving and due subscription collection
 
+Latest follow-up: [existing customer's one due month and next full-price
+renewal](existing-cycle-qa/README.md), on current shared main `e3ab31d3` plus the
+retained billing fix. Twelve new continuous clock-driven regressions close the
+previous next-month proof gap. No accumulated-debt feature was added.
+
 Status: local implementation, separate main/client integrations and synthetic-
 provider verification; **not pushed or deployed**. Current combined gates and
 exact branch pins are in [integration QA](integration-qa/README.md).

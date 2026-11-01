@@ -90,11 +90,14 @@ async function fixture(t, { amount = 532, autoRenew = true, status = 'past_due' 
         },
     };
     let clock = new Date('2026-11-01T12:00:00Z');
-    let outcome = { ok: true, transactionInternalNumber: 'synthetic-transaction',
-        document: { created: true, id: 'synthetic-document', uniqId: null, number: '123', deliveryStatus: 'unknown' },
-        raw: { cardToken: 'provider-raw-must-not-be-persisted' } };
+    const successfulOutcome = (_input, sequence) => ({ ok: true, transactionInternalNumber: `synthetic-transaction-${sequence}`,
+        document: { created: true, id: sequence === 1 ? 'synthetic-document' : `synthetic-document-${sequence}`,
+            uniqId: null, number: String(122 + sequence), deliveryStatus: 'unknown' },
+        raw: { cardToken: 'provider-raw-must-not-be-persisted' } });
+    let outcome = successfulOutcome;
     let verificationFails = false;
-    const calls = [], verified = [];
+    const calls = [], verified = [], dispatchAccounts = [];
+    const successfulTransactions = new Map();
     const module = { exports: {} };
     vm.runInNewContext(fs.readFileSync(filename, 'utf8'), {
         module, exports: module.exports, Date,
@@ -118,17 +121,25 @@ async function fixture(t, { amount = 532, autoRenew = true, status = 'past_due' 
         credentials: () => ({ apiKey: 'synthetic', apiSecret: 'synthetic' }),
         charge: async input => {
             calls.push(input);
+            dispatchAccounts.push((await db.query('SELECT * FROM firm_billing WHERE law_firm_tenant_id=$1', [OFFICE])).rows[0]);
             if (outcome instanceof Error) throw outcome;
-            return outcome;
+            const result = typeof outcome === 'function' ? await outcome(input, calls.length) : outcome;
+            if (result?.ok === true && result.transactionInternalNumber) {
+                successfulTransactions.set(result.transactionInternalNumber, Number(input.amount));
+            }
+            return result;
         },
         verify: async (_credentials, transactionId, expectedAmount) => {
             verified.push({ transactionId, expectedAmount });
+            assert.equal(successfulTransactions.has(transactionId), true, 'Only the dispatched synthetic transaction can verify');
+            assert.equal(Number(expectedAmount), successfulTransactions.get(transactionId), 'Verify the exact dispatched amount');
             if (verificationFails) throw Error('SYNTHETIC_VERIFICATION_FAILURE');
         },
     });
     return {
-        db, service, calls, verified,
+        db, service, calls, verified, dispatchAccounts,
         outcome(value) { outcome = value; },
+        succeed() { outcome = successfulOutcome; },
         failVerification(value) { verificationFails = value; },
         clock(value) { clock = value; },
         async state() {
@@ -305,3 +316,162 @@ test('canceled access expiry without a prior payment failure is not collectible 
     assert.equal(f.calls.length, 0);
     assert.equal((await f.state()).account.last_paid_at, null);
 });
+
+for (const amount of [532, 1353]) {
+    test(`verified setup collects one overdue month of ₪${amount}, then the next scheduled cycle collects the full agreed price once`, async t => {
+        const f = await fixture(t, { amount });
+        const before = (await f.state()).account;
+        const first = await Promise.all(Array.from({ length: 3 }, () => f.service.renew(OFFICE,
+            { retryFailed: true, cardSetupIntentId: SETUP })));
+        assert.ok(first.some(result => result.status === 'succeeded'));
+        assert.equal(f.calls.length, 1);
+        assert.equal(f.calls[0].amount, amount);
+        assert.equal(f.dispatchAccounts[0].status, 'past_due');
+        assert.equal(+f.dispatchAccounts[0].renews_at, +before.renews_at);
+        assert.equal(f.dispatchAccounts[0].last_paid_at, null, 'A saved card must not grant a free paid period before collection');
+        let state = await f.state();
+        assert.equal(state.account.status, 'active');
+        assert.equal(Number(state.account.price_monthly_ils), amount);
+        assert.equal(new Date(state.account.renews_at).toISOString(), '2026-12-01T12:00:00.000Z');
+        assert.equal(state.collections.length, 1);
+        assert.equal(Number(state.collections[0].amount_ils), amount);
+        assert.equal(state.collections[0].package_snapshot.cardSetupIntentId, SETUP);
+        assert.equal(state.notices.length, 1);
+
+        f.clock('2026-12-01T11:59:59.999Z');
+        assert.equal((await f.service.renew(OFFICE)).reason, 'not_due_or_cancelled');
+        await f.service.renew(OFFICE, { retryFailed: true, cardSetupIntentId: SETUP });
+        assert.equal(f.calls.length, 1);
+
+        f.clock('2026-12-01T12:00:00.000Z');
+        const second = await Promise.all([
+            f.service.renew(OFFICE), f.service.renew(OFFICE),
+            f.service.renew(OFFICE, { retryFailed: true, cardSetupIntentId: SETUP }),
+        ]);
+        assert.ok(second.some(result => result.status === 'succeeded'));
+        assert.deepEqual(f.calls.map(call => call.amount), [amount, amount]);
+        assert.equal(new Set(f.calls.map(call => call.orderReference)).size, 2);
+        assert.equal(f.verified.length, 2);
+        assert.equal(new Set(f.verified.map(row => row.transactionId)).size, 2);
+        assert.deepEqual(f.verified.map(row => row.expectedAmount), [amount, amount]);
+        state = await f.state();
+        assert.equal(state.collections.length, 2);
+        assert.equal(state.collections.filter(row => row.status === 'succeeded').length, 2);
+        assert.equal(new Date(state.account.renews_at).toISOString(), '2027-01-01T12:00:00.000Z');
+        assert.equal(Number(state.account.price_monthly_ils), amount);
+        assert.equal(state.account.status, 'active');
+        assert.equal(state.account.grace_until, null);
+        assert.equal(state.notices.length, 2);
+        await f.service.renew(OFFICE);
+        await f.service.renew(OFFICE, { retryFailed: true, cardSetupIntentId: SETUP });
+        assert.equal(f.calls.length, 2, 'Neither the completed cycle nor the old setup may dispatch a third charge');
+    });
+}
+
+test('a recorded three-calendar-month trial survives replacement card saving and then renews twice at the full price', async t => {
+    const f = await fixture(t, { amount: 1353, status: 'complimentary' });
+    const trialEnd = '2027-02-01T12:00:00.000Z'; // Three calendar months after the fixture's 1 November start.
+    await f.db.query(`UPDATE firm_billing SET complimentary_until=$1,renews_at=$1,
+        last_failed_at=null,last_payment_error=null,grace_until=null`, [trialEnd]);
+    await f.db.query(`UPDATE firm_payment_intents SET package_snapshot=$2 WHERE id=$1`,
+        [SETUP, JSON.stringify({ cardCollectionDue: false, cardCollectionCycleAt: trialEnd })]);
+    assert.equal((await f.service.renew(OFFICE, { retryFailed: true, cardSetupIntentId: SETUP })).reason,
+        'card_setup_has_no_current_debt');
+    f.clock('2027-02-01T11:59:59.999Z');
+    assert.equal((await f.service.renew(OFFICE)).reason, 'not_due_or_cancelled');
+    assert.equal(f.calls.length, 0);
+    let state = await f.state();
+    assert.equal(state.account.status, 'complimentary');
+    assert.equal(new Date(state.account.complimentary_until).toISOString(), trialEnd);
+    assert.equal(new Date(state.account.renews_at).toISOString(), trialEnd);
+    assert.equal(state.account.last_paid_at, null);
+
+    f.clock(trialEnd);
+    await Promise.all([f.service.renew(OFFICE), f.service.renew(OFFICE)]);
+    state = await f.state();
+    assert.equal(f.calls.length, 1);
+    assert.equal(f.calls[0].amount, 1353);
+    assert.equal(new Date(state.account.renews_at).toISOString(), '2027-03-01T12:00:00.000Z');
+    assert.equal(new Date(state.account.complimentary_until).toISOString(), trialEnd);
+    assert.equal(state.account.status, 'active');
+    assert.equal(state.notices.length, 1);
+
+    f.clock('2027-03-01T12:00:00.000Z');
+    await Promise.all([f.service.renew(OFFICE), f.service.renew(OFFICE),
+        f.service.renew(OFFICE, { retryFailed: true, cardSetupIntentId: SETUP })]);
+    state = await f.state();
+    assert.deepEqual(f.calls.map(call => call.amount), [1353, 1353]);
+    assert.equal(new Set(f.verified.map(row => row.transactionId)).size, 2);
+    assert.equal(new Date(state.account.renews_at).toISOString(), '2027-04-01T11:00:00.000Z');
+    assert.equal(Number(state.account.price_monthly_ils), 1353);
+    assert.equal(state.collections.filter(row => row.status === 'succeeded').length, 2);
+    assert.equal(state.notices.length, 2);
+});
+
+test('a declined setup collection grants no free month, explicit owner recovery pays it, and the next renewal charges the full price', async t => {
+    const f = await fixture(t, { amount: 1353 });
+    const before = (await f.state()).account;
+    f.outcome({ ok: false, definitiveFailure: true, internalCode: 5, transactionInternalNumber: 'declined-cycle-transaction' });
+    assert.equal((await f.service.renew(OFFICE, { retryFailed: true, cardSetupIntentId: SETUP })).status, 'failed');
+    let state = await f.state();
+    assert.equal(state.account.status, 'past_due');
+    assert.equal(+state.account.renews_at, +before.renews_at);
+    assert.equal(+state.account.grace_until, +before.grace_until);
+    assert.equal(state.account.last_paid_at, null);
+    assert.equal(state.notices.length, 0);
+    f.succeed();
+    assert.equal((await f.service.renew(OFFICE, { retryFailed: true, cardSetupIntentId: SETUP })).status, 'failed');
+    assert.equal(f.calls.length, 1, 'Callback replay does not retry a declined collection');
+
+    assert.equal((await f.service.renew(OFFICE, { retryFailed: true })).status, 'succeeded');
+    state = await f.state();
+    assert.deepEqual(f.calls.map(call => call.amount), [1353, 1353]);
+    assert.equal(f.verified.length, 1);
+    assert.equal(new Date(state.account.renews_at).toISOString(), '2026-12-01T12:00:00.000Z');
+    assert.equal(state.notices.length, 1);
+
+    f.clock('2026-12-01T12:00:00.000Z');
+    await Promise.all([f.service.renew(OFFICE), f.service.renew(OFFICE),
+        f.service.renew(OFFICE, { retryFailed: true, cardSetupIntentId: SETUP })]);
+    state = await f.state();
+    assert.deepEqual(f.calls.map(call => call.amount), [1353, 1353, 1353]);
+    assert.equal(f.verified.length, 2);
+    assert.equal(new Set(f.verified.map(row => row.transactionId)).size, 2);
+    assert.equal(state.collections.filter(row => row.status === 'failed').length, 1);
+    assert.equal(state.collections.filter(row => row.status === 'succeeded').length, 2);
+    assert.equal(new Date(state.account.renews_at).toISOString(), '2027-01-01T12:00:00.000Z');
+    assert.equal(Number(state.account.price_monthly_ils), 1353);
+    assert.equal(state.notices.length, 2);
+});
+
+for (const mode of ['timeout', 'unverified approval']) {
+    test(`${mode} setup collection cannot grant a free month or dispatch another renewal after time advances`, async t => {
+        const f = await fixture(t, { amount: 1353 });
+        const before = (await f.state()).account;
+        if (mode === 'timeout') f.outcome(new Error('SYNTHETIC_TIMEOUT'));
+        else f.failVerification(true);
+        await assert.rejects(f.service.renew(OFFICE, { retryFailed: true, cardSetupIntentId: SETUP }));
+        let state = await f.state();
+        assert.equal(state.account.status, 'past_due');
+        assert.equal(+state.account.renews_at, +before.renews_at);
+        assert.equal(+state.account.grace_until, +before.grace_until);
+        assert.equal(state.account.last_paid_at, null);
+        assert.equal(state.collections[0].status, 'pending');
+        assert.equal(state.notices.length, 0);
+        f.succeed(); f.failVerification(false);
+        f.clock('2026-12-01T12:00:00.000Z');
+        const results = await Promise.all([
+            f.service.renew(OFFICE),
+            f.service.renew(OFFICE, { retryFailed: true }),
+            f.service.renew(OFFICE, { retryFailed: true, cardSetupIntentId: SETUP }),
+        ]);
+        assert.ok(results.every(result => result.status === 'pending'));
+        state = await f.state();
+        assert.equal(f.calls.length, 1, 'Unknown collection must be reconciled; advancing time is not permission to charge again');
+        assert.equal(state.collections.length, 1);
+        assert.equal(state.collections[0].status, 'pending');
+        assert.equal(+state.account.renews_at, +before.renews_at);
+        assert.equal(state.account.last_paid_at, null);
+        assert.equal(state.notices.length, 0);
+    });
+}

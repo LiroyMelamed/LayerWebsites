@@ -196,7 +196,10 @@ async function fixture(t, { tenantId = null, mode = 'success', status = 'past_du
                     reads.push({ kind: 'charge', transaction, expected });
                     if (verificationFailure || chargeVerificationFailure) throw Error('SYNTHETIC_VERIFICATION_FAILURE');
                     if (approvedTransactions.has(transaction)) { assert.equal(expected, approvedTransactions.get(transaction)); return true; }
-                    assert.ok(transaction.startsWith('charged-transaction-')); assert.equal(expected, charges[0].amount);
+                    assert.ok(transaction.startsWith('charged-transaction-'));
+                    const chargeIndex = Number(transaction.slice('charged-transaction-'.length)) - 1;
+                    assert.ok(Number.isInteger(chargeIndex) && chargeIndex >= 0 && charges[chargeIndex], 'Transaction must identify a recorded provider attempt');
+                    assert.equal(expected, charges[chargeIndex].amount);
                     return true;
                 },
             };
@@ -284,6 +287,145 @@ for (const tenantId of [null, OFFICE]) {
         await f.notify(); await f.billing.handleTakbullReturn({ intentId: SETUP });
         await f.billing.chargeSavedCard({ kind: 'retry' });
         assert.equal(f.charges.length, 1); assert.equal((await f.state()).notices.length, 1);
+    });
+}
+
+for (const tenantId of [null, OFFICE]) {
+    const scopeName = tenantId ? 'scoped legacy' : 'dedicated legacy';
+
+    test(`${scopeName} existing customer pays the due month on card save and the full agreed price at next monthly renewal`, async t => {
+        const f = await fixture(t, { tenantId });
+        const unpaid = await f.state();
+        await f.notify();
+        const first = await f.state();
+        assert.deepEqual(debtFields(f.dispatchAccounts[0]), debtFields(unpaid.account), 'Card verification cannot grant a paid month before the subscription payment');
+        assert.equal(Number(first.intents.find(row => row.id === SETUP).amount_ils), 1);
+        assert.equal(first.intents.find(row => row.id === SETUP).status, 'succeeded');
+        assert.deepEqual(f.charges.map(charge => charge.amount), [1353]);
+        assert.equal(first.account.status, 'active');
+        assert.equal(Number(first.account.price_monthly_ils), 1353);
+        assert.equal(new Date(first.account.renews_at).toISOString(), '2026-12-01T12:00:00.000Z');
+        assert.equal(first.notices.length, 1);
+
+        const nextDue = new Date(first.account.renews_at);
+        const justBefore = new Date(+nextDue - 1);
+        f.advanceTo(justBefore);
+        assert.equal((await f.billing.runBillingMaintenance({ now: justBefore })).reason, 'not_due');
+        await f.notify();
+        assert.deepEqual(f.charges.map(charge => charge.amount), [1353]);
+
+        f.advanceTo(nextDue);
+        await f.notify();
+        assert.equal(f.charges.length, 1, 'The old setup callback cannot authorize a future monthly bill');
+        await Promise.all([
+            f.billing.runBillingMaintenance({ now: nextDue }),
+            f.billing.runBillingMaintenance({ now: nextDue }),
+            f.billing.chargeSavedCard({ kind: 'retry' }),
+            f.notify(),
+        ]);
+        const renewed = await f.state();
+        assert.deepEqual(f.charges.map(charge => charge.amount), [1353, 1353]);
+        assert.equal(f.charges[1].cardExternalToken, 'verified-card');
+        assert.equal(Number(renewed.account.price_monthly_ils), 1353);
+        assert.equal(renewed.account.status, 'active');
+        assert.equal(new Date(renewed.account.renews_at).toISOString(), '2027-01-01T12:00:00.000Z');
+        assert.equal(renewed.events.filter(row => row.event_type === 'card_verified').length, 1);
+        assert.equal(renewed.events.filter(row => row.event_type === 'payment_succeeded').length, 2);
+        assert.equal(renewed.notices.length, 2);
+        assert.deepEqual(renewed.notices.map(row => Number(row.amount_ils)).sort(), [1353, 1353]);
+        assert.equal(renewed.intents.filter(row => row.kind !== 'setup' && row.id !== FOREIGN && row.status === 'succeeded').length, 2);
+        const nextSnapshot = await f.billing.getBillingSnapshot();
+        assert.equal(nextSnapshot.nextChargeIls, 1353);
+        assert.equal(new Date(nextSnapshot.renewsAt).toISOString(), '2027-01-01T12:00:00.000Z');
+        await f.billing.runBillingMaintenance({ now: nextDue });
+        await f.notify();
+        assert.equal(f.charges.length, 2);
+    });
+
+    test(`${scopeName} declined card-save debt grants no free month; explicit recovery is followed by a full-price next renewal`, async t => {
+        const f = await fixture(t, { tenantId, mode: 'decline' });
+        const unpaid = await f.state();
+        await f.notify();
+        const declined = await f.state();
+        assert.deepEqual(f.charges.map(charge => charge.amount), [1353]);
+        assert.equal(declined.account.status, 'past_due');
+        assert.equal(+declined.account.renews_at, +unpaid.account.renews_at);
+        assert.equal(declined.account.last_paid_at, null);
+        assert.equal(declined.notices.length, 0);
+        await f.notify(); await f.notify();
+        assert.equal(f.charges.length, 1, 'Callback replay must not retry a definite decline');
+
+        f.setMode('success');
+        assert.equal((await f.billing.chargeSavedCard({ kind: 'retry' })).ok, true);
+        const recovered = await f.state();
+        assert.deepEqual(f.charges.map(charge => charge.amount), [1353, 1353]);
+        assert.equal(recovered.account.status, 'active');
+        assert.equal(new Date(recovered.account.renews_at).toISOString(), '2026-12-01T12:00:00.000Z');
+        assert.equal(recovered.notices.length, 1);
+
+        const nextDue = new Date(recovered.account.renews_at);
+        f.advanceTo(new Date(+nextDue - 1));
+        assert.equal((await f.billing.runBillingMaintenance({ now: new Date(+nextDue - 1) })).reason, 'not_due');
+        f.advanceTo(nextDue);
+        await f.notify();
+        assert.equal(f.charges.length, 2);
+        await Promise.all([
+            f.billing.runBillingMaintenance({ now: nextDue }),
+            f.billing.runBillingMaintenance({ now: nextDue }),
+        ]);
+        const renewed = await f.state();
+        assert.deepEqual(f.charges.map(charge => charge.amount), [1353, 1353, 1353]);
+        assert.equal(renewed.intents.filter(row => row.kind !== 'setup' && row.id !== FOREIGN && row.status === 'failed').length, 1);
+        assert.equal(renewed.events.filter(row => row.event_type === 'payment_succeeded').length, 2);
+        assert.equal(renewed.notices.length, 2);
+        assert.equal(Number(renewed.account.price_monthly_ils), 1353);
+        assert.equal(new Date(renewed.account.renews_at).toISOString(), '2027-01-01T12:00:00.000Z');
+    });
+
+    test(`${scopeName} uncertain card-save charge grants no free month; the same verified transaction settles before next full-price renewal`, async t => {
+        const f = await fixture(t, { tenantId });
+        const unpaid = await f.state();
+        f.failChargeVerification(true);
+        await f.notify();
+        const uncertain = await f.state();
+        assert.equal(f.charges.length, 1);
+        assert.equal(uncertain.account.status, 'past_due');
+        assert.equal(+uncertain.account.renews_at, +unpaid.account.renews_at);
+        assert.equal(uncertain.account.last_paid_at, null);
+        assert.equal(uncertain.notices.length, 0);
+        const reserved = uncertain.intents.find(row => row.kind !== 'setup' && row.id !== FOREIGN);
+        assert.equal(reserved.status, 'pending');
+        assert.equal(reserved.takbull_transaction_id, 'charged-transaction-1');
+        await f.notify();
+        await assert.rejects(f.billing.chargeSavedCard({ kind: 'retry' }), /SYNTHETIC_VERIFICATION_FAILURE/);
+        assert.equal(f.charges.length, 1, 'An uncertain outcome must never dispatch another charge');
+
+        f.failChargeVerification(false);
+        await f.notify();
+        const verified = await f.state();
+        assert.equal(f.charges.length, 1, 'Recovery verifies and settles the original provider transaction');
+        assert.equal(verified.intents.find(row => row.id === reserved.id).status, 'succeeded');
+        assert.equal(verified.account.status, 'active');
+        assert.equal(new Date(verified.account.renews_at).toISOString(), '2026-12-01T12:00:00.000Z');
+        assert.equal(verified.notices.length, 1);
+
+        const nextDue = new Date(verified.account.renews_at);
+        f.advanceTo(new Date(+nextDue - 1));
+        assert.equal((await f.billing.runBillingMaintenance({ now: new Date(+nextDue - 1) })).reason, 'not_due');
+        f.advanceTo(nextDue);
+        await f.notify();
+        assert.equal(f.charges.length, 1, 'The old setup callback does not renew a later billing cycle');
+        await Promise.all([
+            f.billing.runBillingMaintenance({ now: nextDue }),
+            f.billing.chargeSavedCard({ kind: 'retry' }),
+            f.notify(),
+        ]);
+        const renewed = await f.state();
+        assert.deepEqual(f.charges.map(charge => charge.amount), [1353, 1353]);
+        assert.equal(Number(renewed.account.price_monthly_ils), 1353);
+        assert.equal(new Date(renewed.account.renews_at).toISOString(), '2027-01-01T12:00:00.000Z');
+        assert.equal(renewed.events.filter(row => row.event_type === 'payment_succeeded').length, 2);
+        assert.equal(renewed.notices.length, 2);
     });
 }
 
