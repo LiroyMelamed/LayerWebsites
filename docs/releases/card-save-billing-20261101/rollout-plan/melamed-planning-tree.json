@@ -1,0 +1,27 @@
+{
+  "atUtc": "2026-11-01T22:08:43.724918+00:00",
+  "target": "5e2da32b3ebad7b77ace52d50227584a94e1e3ed",
+  "proposedTree": "5764d2f0b98dfed77e951ffa9b08261d2f01f8c9",
+  "patchSha256": "c41df4476d61e022aad82e1959b051b3937130a72845590eb75f34bb40c9414a",
+  "checkExit": 0,
+  "onlyTemporaryIndexChanged": true,
+  "noCommitRefOrCheckoutChange": true,
+  "localeChecks": [
+    {
+      "locale": "he",
+      "onlyNewKey": "billing.paymentUnconfirmed",
+      "existingValuesPreserved": true
+    },
+    {
+      "locale": "en",
+      "onlyNewKey": "billing.paymentUnconfirmed",
+      "existingValuesPreserved": true
+    },
+    {
+      "locale": "ar",
+      "onlyNewKey": "billing.paymentUnconfirmed",
+      "existingValuesPreserved": true
+    }
+  ],
+  "functionalQualification": "NOT RUN on this new target; planning source tree only"
+}

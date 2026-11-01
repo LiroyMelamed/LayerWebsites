@@ -1,5 +1,10 @@
 # Card saving and due subscription collection
 
+Current operations: [safe staged rollout plan](rollout-plan/README.md).
+Planning/read-only checks do not authorize release or payment activation.
+Owner-waived historical periods must stay waived; the earlier individual
+recovery proposal has been withdrawn and is retained privately as cancelled.
+
 Latest follow-up: [existing customer's one due month and next full-price
 renewal](existing-cycle-qa/README.md), on current shared main `e3ab31d3` plus the
 retained billing fix. Twelve new continuous clock-driven regressions close the

@@ -1,0 +1,127 @@
+{
+  "atUtc": "2026-11-01T22:15:19.904510+00:00",
+  "status": "PLANNING_ONLY_BLOCKED_NOT_APPROVED",
+  "candidateDonor": "5d5e6c635e27655f4cfdd8463cd161827f752d84",
+  "observedMain": "9f01a42dcf85ec36a1e4a6d980c86f44e1eab5e9",
+  "targets": [
+    {
+      "target": "Melamedia",
+      "observedGitTip": "615078693afd117e2d488f5c5355f1338d622ad8",
+      "observedBackendCheckout": "ca31b04e",
+      "observedFrontendSource": "61507869",
+      "backendTreeMatchesGitTip": true,
+      "proposedSourceTree": "f1a563cbe8dd1e03837334c95f472fbf7c8618e9",
+      "proposalMethod": "merge-tree Git-object simulation",
+      "releaseCommit": null,
+      "finalQualifiedArtifact": null,
+      "approvedSql": [],
+      "approval": null,
+      "qualification": "NOT_RUN_ON_THIS_FINAL_SOURCE"
+    },
+    {
+      "target": "AshrafEssa",
+      "observedGitTip": "bc964428a38bfa63a62b3ef6a5782c9b2e86d28a",
+      "observedBackendCheckout": "ab271c53",
+      "observedFrontendSource": "bc964428",
+      "backendTreeMatchesGitTip": true,
+      "proposedSourceTree": "cfec2b0273f28a60f2974742853ce18244abe2f9",
+      "proposalMethod": "merge-tree Git-object simulation",
+      "releaseCommit": null,
+      "finalQualifiedArtifact": null,
+      "approvedSql": [],
+      "approval": null,
+      "qualification": "NOT_RUN_ON_THIS_FINAL_SOURCE"
+    },
+    {
+      "target": "MelamedLaw",
+      "observedGitTip": "5e2da32b3ebad7b77ace52d50227584a94e1e3ed",
+      "observedBackendCheckout": "5f3a4459",
+      "observedFrontendSource": "5f3a4459",
+      "backendTreeMatchesGitTip": true,
+      "proposedSourceTree": "5764d2f0b98dfed77e951ffa9b08261d2f01f8c9",
+      "proposalMethod": "surgical locale patch in temporary index",
+      "releaseCommit": null,
+      "finalQualifiedArtifact": null,
+      "approvedSql": [],
+      "approval": null,
+      "qualification": "NOT_RUN_ON_THIS_FINAL_SOURCE"
+    },
+    {
+      "target": "MorLevi",
+      "observedGitTip": "f5220552918507a8b34b30cb7fb0cc41f3f0710b",
+      "observedBackendCheckout": "08f1a988",
+      "observedFrontendSource": "f5220552",
+      "backendTreeMatchesGitTip": true,
+      "proposedSourceTree": "8bcd70617de1b305f2d79ed2546ff61b847ddce2",
+      "proposalMethod": "merge-tree Git-object simulation",
+      "releaseCommit": null,
+      "finalQualifiedArtifact": null,
+      "approvedSql": [],
+      "approval": null,
+      "qualification": "NOT_RUN_ON_THIS_FINAL_SOURCE"
+    }
+  ],
+  "financialMode": "NO_PROVIDER_OPERATION_AUTHORIZED",
+  "financialWriteGate": {
+    "verified": false,
+    "schedulerFlagAloneSufficient": false,
+    "mustCover": [
+      "scheduled renewals",
+      "card setup and hosted checkout",
+      "saved-card retry/annual/upgrade",
+      "callbacks and payment return/reconciliation"
+    ],
+    "currentTaskChangedGateOrConfig": false
+  },
+  "currentPermissions": [
+    "local planning and Git-object simulation",
+    "safe read-only source/process/static/health observations"
+  ],
+  "forbidden": [
+    "push",
+    "deployment",
+    "process/config changes",
+    "customer billing writes",
+    "provider calls",
+    "charges",
+    "documents",
+    "email",
+    "recovery of owner-waived periods"
+  ],
+  "waivedPeriodPolicy": "PRESERVE_NO_RECOVERY_NO_DATA_CORRECTION",
+  "individualRecoveryProposal": "CANCELLED_NOT_PENDING_APPROVAL",
+  "readOnlyChecks": {
+    "capturedAtUtc": "2026-11-01T22:05:21Z/2026-11-01T22:05:25Z",
+    "healthPassed": 4,
+    "publicArtifactHashesMatched": 12,
+    "protectedSourceEntriesPerTarget": 103,
+    "loadedRuntimeBinding": "UNPROVEN_GIT_SHA_UNSET",
+    "customerDbQueries": 0,
+    "providerCalls": 0,
+    "mutations": 0
+  },
+  "releaseHolds": [
+    "exact merged source qualification on current main",
+    "reviewed global billing quiescence gate for code-only deployment",
+    "qualified restricted deployment/startup/SQL contract",
+    "complete signup QA fixture",
+    "owned profile PostgreSQL fixture",
+    "independent current sandbox non-settlement identity",
+    "document type/customer recipient/delivery verification",
+    "per-tenant schema/app-role/config audit",
+    "fresh DB-only backup/readback/restore proof",
+    "minimum three complete rollback artifacts",
+    "final explicit source/infrastructure/financial activation approvals"
+  ],
+  "backupProof": "NOT_CHECKED_NOT_CREATED",
+  "restoreOrRollbackRehearsal": "NOT_RUN",
+  "releaseOrder": [
+    "Melamedia",
+    "AshrafEssa",
+    "MorLevi",
+    "MelamedLaw"
+  ],
+  "excludedTargets": [
+    "Idm"
+  ]
+}

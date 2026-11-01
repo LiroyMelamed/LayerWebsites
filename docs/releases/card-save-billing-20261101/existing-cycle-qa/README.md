@@ -1,5 +1,11 @@
 # Existing customer's due month, then a full-price monthly renewal
 
+Current operational instruction: preserve every owner-waived period and do not
+perform retrospective recovery or customer-data correction for it. The earlier
+individual recovery proposal is cancelled, not pending approval. See the
+[rollout plan](../rollout-plan/README.md); this test evidence does not override
+that later instruction.
+
 Scope follows the owner's latest clarification: **one existing monthly debt**,
 not accumulated arrears. Saving a verified card must collect that month's agreed
 amount rather than grant a free month. The next due cycle must collect the full
