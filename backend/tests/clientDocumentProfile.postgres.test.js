@@ -35,13 +35,21 @@ test('client profile migration and controller persist on isolated PostgreSQL', {
         await assert.rejects(db.query('UPDATE users SET client_profile=$1::jsonb WHERE userid=1', [JSON.stringify({ huge: 'A'.repeat(8192) })]), { code: '23514' });
     });
     const notifications = [];
+    let beforeUpdate;
+    const controllerPool = { async query(sql, params) {
+        if (beforeUpdate && sql.includes('UPDATE users')) {
+            const action = beforeUpdate; beforeUpdate = undefined;
+            await action();
+        }
+        return db.query(sql, params);
+    } };
     const filename = path.resolve(__dirname, '../controllers/customerController.js');
     const module = { exports: {} };
     vm.runInNewContext(fs.readFileSync(filename, 'utf8'), { module, console: { error() {}, warn() {} }, Date, Buffer,
         require(id) {
-            if (id === '../config/db') return db;
+            if (id === '../config/db') return controllerPool;
             if (id === '../utils/clientProfile') return require(id);
-            if (id === '../utils/phoneUtils') return { formatPhoneNumber: value => value || null };
+            if (id === '../utils/phoneUtils') return require(id);
             if (id === '../utils/paramValidation') return { requireInt: req => Number(req.params.customerId) };
             if (id === '../utils/pagination') return { getPagination: () => ({ enabled: false }) };
             if (id === '../utils/sendMessage') return { getWebsiteDomain: async () => 'example.invalid' };
@@ -125,6 +133,42 @@ test('client profile migration and controller persist on isolated PostgreSQL', {
         assert.equal((await db.query('SELECT name FROM users WHERE userid=$1', [idB])).rows[0].name, 'Contact B');
         const own = await call('updateCustomerById', { ...body, email: 'updated-a@example.invalid' }, idA, tenantA);
         assert.equal(own.statusCode, 200); assert.deepEqual(own.body.ClientProfile, profile);
+    });
+    let legacyId;
+    await t.test('legacy contacts retain exact PostgreSQL bytes and ExternalSigner role when document fields change', async () => {
+        legacyId = (await db.query(`INSERT INTO users(name,email,phonenumber,role,law_firm_tenant_id)
+            VALUES ($1,$2,$3,'ExternalSigner',$4) RETURNING userid`, ['Legacy contact', ' OLD INVALID EMAIL ', ' 0000001102 ', tenantA])).rows[0].userid;
+        const result = await call('updateCustomerById', { name: 'Edited contact', email: 'old invalid email', phoneNumber: '000-000-1102',
+            companyName: 'Legacy company', clientProfile: profile }, legacyId, tenantA);
+        assert.equal(result.statusCode, 200);
+        const row = (await db.query('SELECT * FROM users WHERE userid=$1', [legacyId])).rows[0];
+        assert.equal(row.phonenumber, ' 0000001102 '); assert.equal(row.email, ' OLD INVALID EMAIL ');
+        assert.equal(row.role, 'ExternalSigner'); assert.deepEqual(row.client_profile, profile);
+        const foreign = await call('updateCustomerById', { name: 'Foreign edit', email: 'old invalid email', phoneNumber: '0000001102' }, legacyId, tenantB);
+        assert.equal(foreign.statusCode, 404);
+    });
+    await t.test('changed invalid contacts remain rejected on actual PostgreSQL while valid phone transitions remain supported', async () => {
+        const invalidPhone = await call('updateCustomerById', { name: 'Invalid phone edit', phoneNumber: '0', email: 'old invalid email' }, legacyId, tenantA);
+        assert.equal(invalidPhone.statusCode, 400); assert.equal(invalidPhone.body.code, 'INVALID_PHONE');
+        const invalidEmail = await call('updateCustomerById', { name: 'Invalid email edit', phoneNumber: '0000001102', email: 'different invalid email' }, legacyId, tenantA);
+        assert.equal(invalidEmail.statusCode, 400); assert.equal(invalidEmail.body.code, 'INVALID_EMAIL');
+        const valid = await call('updateCustomerById', { name: 'Valid phone edit', phoneNumber: '03-5551234', email: 'old invalid email' }, legacyId, tenantA);
+        assert.equal(valid.statusCode, 200);
+        assert.equal((await db.query('SELECT role FROM users WHERE userid=$1', [legacyId])).rows[0].role, 'User');
+    });
+    await t.test('a second connection changing contacts after authorization prevents a stale profile write', async () => {
+        const secondActor = new Client({ host: socket, port: socket.endsWith('55488') ? 55488 : 55487, user: 'client_profile_test_owner', database: 'postgres' });
+        await secondActor.connect();
+        try {
+            beforeUpdate = () => secondActor.query(`UPDATE users SET phonenumber='0507654321',email='second-actor@example.invalid',role='ExternalSigner'
+                WHERE userid=$1 AND law_firm_tenant_id=$2`, [legacyId, tenantA]);
+            const stale = await call('updateCustomerById', { name: 'Stale actor profile', phoneNumber: '03-5551234', email: 'old invalid email', clientProfile: null }, legacyId, tenantA);
+            assert.equal(stale.statusCode, 409); assert.equal(stale.body.code, 'CUSTOMER_CONTACT_CHANGED');
+            const row = (await db.query('SELECT * FROM users WHERE userid=$1', [legacyId])).rows[0];
+            assert.equal(row.name, 'Valid phone edit'); assert.equal(row.phonenumber, '0507654321');
+            assert.equal(row.email, 'second-actor@example.invalid'); assert.equal(row.role, 'ExternalSigner');
+            assert.deepEqual(row.client_profile, profile);
+        } finally { beforeUpdate = undefined; await secondActor.end(); }
     });
     await t.test('the additive column respects an existing synthetic tenant RLS policy and role grants', async () => {
         // This verifies PostgreSQL column/RLS behavior only, not deployed tenant middleware.
