@@ -1,7 +1,8 @@
 # Card saving and due subscription collection
 
 Status: local implementation and synthetic-provider verification; **not deployed**.
-Product base: `origin/main` at `047567a8`. The reported MelamedLaw release
+Product base: `047567a8`; shared main has since advanced. See the refreshed
+[version audit](version-audit/REPORT.md) before integration. The reported MelamedLaw release
 `0631caf7` has the same legacy setup settlement defect. No customer billing data
 was used to infer a new bill or changed by this work.
 
@@ -57,12 +58,13 @@ Primary reference: [Takbull API documentation](https://api.takbull.co.il/ApiDocs
 
 ## Verification and reproduction
 
-Final backend gate: **122 passed, 0 failed, 1 skipped** in
-[`focused-tests.tap`](focused-tests.tap); the skipped test is the separately
-configured full signup/office-policy integration. The isolated HTTP identity
-regression also passed (1/1; Supertest required a local-listener sandbox allowance).
-The real PostgreSQL multi-client gate passed **35/35**, with no skips, in
-[`postgres-tests.tap`](postgres-tests.tap).
+Current backend gate: **191 passed, 0 failed, 1 skipped** across 26 files;
+the expanded real PostgreSQL multi-client gate passed **51/51**, with no skips.
+These counts overlap. The skipped test is the separately configured full
+signup/office-policy integration. Exact selection, pinned sources, full output
+and reproduction are in [`comprehensive-qa/README.md`](comprehensive-qa/README.md).
+The earlier 122-test / 35-PostgreSQL gates are retained as historical evidence in
+[`focused-tests.tap`](focused-tests.tap) and [`postgres-tests.tap`](postgres-tests.tap).
 Frontend Jest: **13/13** passed with mocked confirmation responses, spoofed
 messages and duplicate callbacks; see [`frontend-tests.log`](frontend-tests.log).
 The four changed frontend JavaScript files compile through the existing Babel
@@ -112,10 +114,10 @@ unknown document creation.
 
 ## Wider payment and tenant reconciliation follow-up
 
-The later comprehensive QA includes stricter hosted-order binding, saved-card
+The comprehensive QA includes stricter hosted-order binding, saved-card
 operation validation, fresh locked annual amounts and due checks, frozen paid
 periods, and pending-payment guards on package edits. Its current-source test
-results supersede the earlier backend counts above; see
+results are the current backend counts above; see
 [`comprehensive-qa/README.md`](comprehensive-qa/README.md).
 
 The additional mailbox search found a contemporaneous 1 ILS purchase

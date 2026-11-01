@@ -1,0 +1,251 @@
+{
+  "recordedAtUtc": "2026-11-01T13:49:55.965062+00:00",
+  "scope": "Fresh GitHub ls-remote and independent canonical ref reads; local immutable source comparison only, no fetch/refs/merge/deploy/customer operations",
+  "previousHistoricalMain": "047567a84101a6afc90fc36a84f5fd860ea24320",
+  "currentGitHubTipsVerified": {
+    "main": "53d177eea8bcdcb882ade913f4afa15c6011da4b",
+    "AshrafEssa": "c469ee2e0fb5bee403902c698f6621cb7a08cab3",
+    "MelamedLaw": "0631caf7b1c829673887e12c1d2e3ffc36c1715b",
+    "MorLevi": "a50afb3fccaaee17633328ef62b5695336d73090",
+    "Melamedia": "36c95fa0da76281b4fe92c8cb687d33332a5e8c8"
+  },
+  "canonicalRemoteTipsRead": {
+    "main": "53d177eea8bcdcb882ade913f4afa15c6011da4b",
+    "AshrafEssa": "c469ee2e0fb5bee403902c698f6621cb7a08cab3",
+    "MelamedLaw": "0631caf7b1c829673887e12c1d2e3ffc36c1715b",
+    "MorLevi": "a50afb3fccaaee17633328ef62b5695336d73090",
+    "Melamedia": "36c95fa0da76281b4fe92c8cb687d33332a5e8c8"
+  },
+  "billingCandidateCommit": "446aff92546f11280b5a8ff053676833ea86cd74",
+  "billingPatchBase": "047567a84101a6afc90fc36a84f5fd860ea24320",
+  "currentMainCommitsSinceBase": [
+    "53d177eea8bcdcb882ade913f4afa15c6011da4b\ttest: keep pinned case hook fixture hoist-safe",
+    "8c955aa68d7b1130df95cf592cdc837597ad620a\tfix: bound Word label placement work for dense templates",
+    "823d403ba8f342edb7c8697b72464380ce73e48b\tfix: preserve pinned case filters and shared dashboard text sizing",
+    "60232c7478d97ffd84058ff2c869797fd7376ae2\ttest: keep profile scope fixtures independent of application database setup",
+    "cf3bf14e1b9992db279a8a8990ca4a2bf1a56764\ttest: isolate profile scope checks at current billing boundary",
+    "82bb0e506fc88d631171554cdc77021c436d9f59\tfix: separate Word source labels on narrow pages",
+    "cba0ff8489dba940a2883bf23676d54ab5f6f25d\tfeat: share client document profile editing across tenant releases"
+  ],
+  "currentMainChangedPathsSinceBase": [
+    "backend/controllers/customerController.js",
+    "backend/routes/customerRoutes.js",
+    "backend/tests/clientDocumentProfile.postgres.test.js",
+    "backend/tests/clientDocumentProfile.readScope.test.js",
+    "backend/tests/clientDocumentProfile.test.js",
+    "frontend/src/api/customersApi.js",
+    "frontend/src/components/specializedComponents/text/DefaultText.js",
+    "frontend/src/components/specializedComponents/text/DefaultText.test.js",
+    "frontend/src/functions/validation/clientDocumentProfile.js",
+    "frontend/src/i18n/locales/ar.json",
+    "frontend/src/i18n/locales/en.json",
+    "frontend/src/i18n/locales/he.json",
+    "frontend/src/screens/allClientsScreen/AllClientsScreen.js",
+    "frontend/src/screens/mainScreen/components/ClientPopUp.documentProfile.test.js",
+    "frontend/src/screens/mainScreen/components/ClientPopUp.js",
+    "frontend/src/screens/mainScreen/components/ClientPopUp.scss",
+    "frontend/src/screens/mainScreen/components/ClientSigningEntry.test.js",
+    "frontend/src/screens/mainScreen/components/commandCenter/CommandCenter.scss",
+    "frontend/src/screens/signingScreen/word/WordSourceViewer.js",
+    "frontend/src/screens/signingScreen/word/WordSourceViewer.test.js",
+    "frontend/src/screens/signingScreen/word/WordTemplatesWorkspace.scss",
+    "frontend/src/screens/signingScreen/word/wordSourceChipLayout.js",
+    "frontend/src/screens/signingScreen/word/wordSourceChipLayout.test.js",
+    "frontend/src/screens/taggedCasesScreen/TaggedCasesScreen.js",
+    "frontend/src/screens/taggedCasesScreen/TaggedCasesScreen.test.js"
+  ],
+  "overlappingProductionPaths": [
+    "frontend/src/i18n/locales/ar.json",
+    "frontend/src/i18n/locales/en.json",
+    "frontend/src/i18n/locales/he.json"
+  ],
+  "localeHunkAndKeyAnalysis": [
+    {
+      "path": "frontend/src/i18n/locales/he.json",
+      "newMainChangedKeys": [
+        "customers.documentProfile.address",
+        "customers.documentProfile.city",
+        "customers.documentProfile.contactIdentity",
+        "customers.documentProfile.contactName",
+        "customers.documentProfile.country",
+        "customers.documentProfile.help",
+        "customers.documentProfile.identityCountry",
+        "customers.documentProfile.identityNumber",
+        "customers.documentProfile.identityType",
+        "customers.documentProfile.invalidProfile",
+        "customers.documentProfile.invalidText",
+        "customers.documentProfile.line1",
+        "customers.documentProfile.line2",
+        "customers.documentProfile.loadFailed",
+        "customers.documentProfile.loading",
+        "customers.documentProfile.national_id",
+        "customers.documentProfile.organization",
+        "customers.documentProfile.organizationIdentity",
+        "customers.documentProfile.other",
+        "customers.documentProfile.partyType",
+        "customers.documentProfile.passport",
+        "customers.documentProfile.person",
+        "customers.documentProfile.personIdentity",
+        "customers.documentProfile.postalCode",
+        "customers.documentProfile.registeredName",
+        "customers.documentProfile.registrationCompany",
+        "customers.documentProfile.registrationCountry",
+        "customers.documentProfile.registrationNonprofit",
+        "customers.documentProfile.registrationNumber",
+        "customers.documentProfile.registrationOther",
+        "customers.documentProfile.registrationPartnership",
+        "customers.documentProfile.registrationType",
+        "customers.documentProfile.requiredCompanyName",
+        "customers.documentProfile.title"
+      ],
+      "billingPatchChangedKeys": [
+        "billing.paymentUnconfirmed"
+      ],
+      "overlappingKeys": [],
+      "newMainOriginalLineHunks": [
+        {
+          "start": 411,
+          "count": 1
+        }
+      ],
+      "billingOriginalLineHunks": [
+        {
+          "start": 82,
+          "count": 0
+        }
+      ],
+      "overlappingOriginalLineHunks": []
+    },
+    {
+      "path": "frontend/src/i18n/locales/en.json",
+      "newMainChangedKeys": [
+        "customers.documentProfile.address",
+        "customers.documentProfile.city",
+        "customers.documentProfile.contactIdentity",
+        "customers.documentProfile.contactName",
+        "customers.documentProfile.country",
+        "customers.documentProfile.help",
+        "customers.documentProfile.identityCountry",
+        "customers.documentProfile.identityNumber",
+        "customers.documentProfile.identityType",
+        "customers.documentProfile.invalidProfile",
+        "customers.documentProfile.invalidText",
+        "customers.documentProfile.line1",
+        "customers.documentProfile.line2",
+        "customers.documentProfile.loadFailed",
+        "customers.documentProfile.loading",
+        "customers.documentProfile.national_id",
+        "customers.documentProfile.organization",
+        "customers.documentProfile.organizationIdentity",
+        "customers.documentProfile.other",
+        "customers.documentProfile.partyType",
+        "customers.documentProfile.passport",
+        "customers.documentProfile.person",
+        "customers.documentProfile.personIdentity",
+        "customers.documentProfile.postalCode",
+        "customers.documentProfile.registeredName",
+        "customers.documentProfile.registrationCompany",
+        "customers.documentProfile.registrationCountry",
+        "customers.documentProfile.registrationNonprofit",
+        "customers.documentProfile.registrationNumber",
+        "customers.documentProfile.registrationOther",
+        "customers.documentProfile.registrationPartnership",
+        "customers.documentProfile.registrationType",
+        "customers.documentProfile.requiredCompanyName",
+        "customers.documentProfile.title"
+      ],
+      "billingPatchChangedKeys": [
+        "billing.paymentUnconfirmed"
+      ],
+      "overlappingKeys": [],
+      "newMainOriginalLineHunks": [
+        {
+          "start": 390,
+          "count": 1
+        }
+      ],
+      "billingOriginalLineHunks": [
+        {
+          "start": 56,
+          "count": 0
+        }
+      ],
+      "overlappingOriginalLineHunks": []
+    },
+    {
+      "path": "frontend/src/i18n/locales/ar.json",
+      "newMainChangedKeys": [
+        "customers.documentProfile.address",
+        "customers.documentProfile.city",
+        "customers.documentProfile.contactIdentity",
+        "customers.documentProfile.contactName",
+        "customers.documentProfile.country",
+        "customers.documentProfile.help",
+        "customers.documentProfile.identityCountry",
+        "customers.documentProfile.identityNumber",
+        "customers.documentProfile.identityType",
+        "customers.documentProfile.invalidProfile",
+        "customers.documentProfile.invalidText",
+        "customers.documentProfile.line1",
+        "customers.documentProfile.line2",
+        "customers.documentProfile.loadFailed",
+        "customers.documentProfile.loading",
+        "customers.documentProfile.national_id",
+        "customers.documentProfile.organization",
+        "customers.documentProfile.organizationIdentity",
+        "customers.documentProfile.other",
+        "customers.documentProfile.partyType",
+        "customers.documentProfile.passport",
+        "customers.documentProfile.person",
+        "customers.documentProfile.personIdentity",
+        "customers.documentProfile.postalCode",
+        "customers.documentProfile.registeredName",
+        "customers.documentProfile.registrationCompany",
+        "customers.documentProfile.registrationCountry",
+        "customers.documentProfile.registrationNonprofit",
+        "customers.documentProfile.registrationNumber",
+        "customers.documentProfile.registrationOther",
+        "customers.documentProfile.registrationPartnership",
+        "customers.documentProfile.registrationType",
+        "customers.documentProfile.requiredCompanyName",
+        "customers.documentProfile.title"
+      ],
+      "billingPatchChangedKeys": [
+        "billing.paymentUnconfirmed"
+      ],
+      "overlappingKeys": [],
+      "newMainOriginalLineHunks": [
+        {
+          "start": 440,
+          "count": 1
+        }
+      ],
+      "billingOriginalLineHunks": [
+        {
+          "start": 86,
+          "count": 0
+        }
+      ],
+      "overlappingOriginalLineHunks": []
+    }
+  ],
+  "ancestryCountsVsCurrentMain": {
+    "AshrafEssa": [
+      "8",
+      "89"
+    ],
+    "MelamedLaw": [
+      "51",
+      "79"
+    ],
+    "MorLevi": [
+      "51",
+      "198"
+    ],
+    "Melamedia": [
+      "8",
+      "230"
+    ]
+  },
+  "historicalLiveInventoryPreserved": "live-versions-readonly.json (13:36UTC; no live inventory re-run in this follow-up)"
+}
