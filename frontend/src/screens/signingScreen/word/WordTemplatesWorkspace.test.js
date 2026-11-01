@@ -531,3 +531,27 @@ test('an invalid server selection leaves no replacement picker and a page mismat
     expect(within(screen.getByRole('list', { name: 'bindings' })).getByText('removeBinding')).toBeDisabled();
     expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: false, bindings: mapped().bindings }));
 });
+
+test('the document area announces preparation until both the deferred authoring map and verified PDF are ready', async () => {
+    const prepare = api.authoringRender.getMockImplementation(); let finishMap, finishPdf;
+    api.authoringRender.mockImplementationOnce((...args) => new Promise(done => { finishMap = async () => done(await prepare(...args)); }));
+    api.authoringPdf.mockImplementationOnce(() => new Promise(done => { finishPdf = done; }));
+    await open(source()); fireEvent.click(screen.getByText('manageTemplates'));
+    const editor = screen.getByRole('region', { name: 'mapping' });
+    const expectPreparing = () => {
+        const status = within(editor).getByRole('status');
+        expect(status).toHaveTextContent('authoringLoading'); expect(status).toHaveAttribute('aria-live', 'polite');
+        expect(status).toHaveAttribute('aria-busy', 'true'); expect(status).toBeVisible();
+        expect(within(editor).queryByTestId('original-pdf')).not.toBeInTheDocument();
+        expect(within(editor).queryByLabelText('field')).not.toBeInTheDocument();
+        expect(within(editor).getByText('save')).toBeDisabled();
+    };
+    await waitFor(() => expect(api.authoringRender).toHaveBeenCalledTimes(1)); expectPreparing();
+    await act(async () => finishMap());
+    await waitFor(() => expect(api.authoringPdf).toHaveBeenCalledTimes(1)); expectPreparing();
+    await act(async () => finishPdf(new Blob(['%PDF-original'], { type: 'application/pdf' })));
+    await within(editor).findByTestId('original-pdf');
+    expect(within(editor).queryByRole('status')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('chooseBlank')); await chooseReplacement('client.fullName');
+    expect(screen.getByText('save')).toBeEnabled();
+});

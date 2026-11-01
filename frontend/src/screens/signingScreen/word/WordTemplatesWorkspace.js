@@ -353,8 +353,8 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
         </header>
         {error && <StatusNotice><p>{text(error)}</p></StatusNotice>}
         {notice && <p role="status" className="lw-word__notice">{text(notice)}</p>}
-        {(busy || authoringLoading || !listLoaded) && <div className="lw-word__loading" role="status" aria-live="polite" aria-busy="true">
-            <SimpleLoader /><Text14>{text(busy ? busyMessage : authoringLoading ? 'authoringLoading' : 'loadingTemplates')}</Text14>
+        {(busy || !listLoaded) && !authoringLoading && <div className="lw-word__loading" role="status" aria-live="polite" aria-busy="true">
+            <SimpleLoader /><Text14>{text(busy ? busyMessage : 'loadingTemplates')}</Text14>
         </div>}
         <div className="lw-word__library">
             <label>{text('library')}<SigningSelect value={source?.id || ''} disabled={busy} onChange={event => openSource(event.target.value)}>
@@ -380,6 +380,9 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
                             <SecondaryButton disabled={busy} onPress={() => switchMode('use')}>{text('previewTemplate')}</SecondaryButton>
                         </div>
                     </div>
+                    {authoringLoading && <div className="lw-word__loading lw-word__documentLoading" role="status" aria-live="polite" aria-busy="true">
+                        <SimpleLoader /><Text14>{text('authoringLoading')}</Text14>
+                    </div>}
                     {authoringError && <StatusNotice><p>{text(authoringError)}</p>
                         <SecondaryButton disabled={authoringLoading || busy} onPress={() => openSource(source.id, { preserveDocumentInputs: true })}>{text('retryAuthoring')}</SecondaryButton>
                     </StatusNotice>}
