@@ -1,0 +1,413 @@
+{
+  "startedAtUtc": "2026-11-01T22:26:00.283332+00:00",
+  "backend": {
+    "sshExit": 0,
+    "atUtc": "2026-11-01T22:26:04.990029+00:00",
+    "scope": "Existing last-run/last-status report and bounded checkpoint directory-entry/stat metadata only; no payload read, inventory job, backup or restore",
+    "targets": {
+      "MelamedLaw": {
+        "lockStatus": "EXISTING_SHARED_LOCK",
+        "candidateDirectoryCount": 2,
+        "metadataEntries": [
+          {
+            "directoryNameSha256": "db35fcabbb4bb67bc4f3dbcb3da3e2fffc1b8ed0f899304a7dab822f66f36260",
+            "mtimeUtc": "2026-10-18T20:52:53.473350+00:00",
+            "directEntries": 9,
+            "directArchiveFiles": 2
+          },
+          {
+            "directoryNameSha256": "db35fcabbb4bb67bc4f3dbcb3da3e2fffc1b8ed0f899304a7dab822f66f36260",
+            "mtimeUtc": "2026-10-06T06:21:17.230874+00:00",
+            "directEntries": 8,
+            "directArchiveFiles": 2
+          }
+        ],
+        "completeInactiveRollbackCount": null,
+        "status": "HOLD_COMPLETE_INACTIVE_ROLLBACKS_NOT_CERTIFIED"
+      },
+      "MorLevi": {
+        "lockStatus": "EXISTING_SHARED_LOCK",
+        "candidateDirectoryCount": 2,
+        "metadataEntries": [
+          {
+            "directoryNameSha256": "584124eeb03df7ae91f1a4c94233354a91b7475e2db97dbb6a6770bba4df9e17",
+            "mtimeUtc": "2026-10-18T20:52:38.887557+00:00",
+            "directEntries": 9,
+            "directArchiveFiles": 2
+          },
+          {
+            "directoryNameSha256": "584124eeb03df7ae91f1a4c94233354a91b7475e2db97dbb6a6770bba4df9e17",
+            "mtimeUtc": "2026-10-06T06:21:24.508771+00:00",
+            "directEntries": 8,
+            "directArchiveFiles": 2
+          }
+        ],
+        "completeInactiveRollbackCount": null,
+        "status": "HOLD_COMPLETE_INACTIVE_ROLLBACKS_NOT_CERTIFIED"
+      },
+      "AshrafEssa": {
+        "lockStatus": "EXISTING_SHARED_LOCK",
+        "candidateDirectoryCount": 8,
+        "metadataEntries": [
+          {
+            "directoryNameSha256": "cb311ba095f1085db493310df76db5d4914ecdab939cb1906be0fdffda1e3bf6",
+            "mtimeUtc": "2026-10-28T15:28:10.453709+00:00",
+            "directEntries": 2,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "bc1bcf6533da5b6d82e3e77edbb7f9240ebf9b80f4047ce89b1c0d91f2c0c344",
+            "mtimeUtc": "2026-10-28T15:27:45.583957+00:00",
+            "directEntries": 2,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "ad6bb602d0d907321c1b5302c50cc0e18e4b53726911f65f046c3a31c1e8cdff",
+            "mtimeUtc": "2026-10-28T15:27:02.142389+00:00",
+            "directEntries": 2,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "cf059a079bed86f5a05d54725cf700a346019617fdf177ad844956cbd27c708d",
+            "mtimeUtc": "2026-10-28T14:24:19.620417+00:00",
+            "directEntries": 3,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "95fca1dcf9ed2432acb878bce43a50a6d3ee931642fc073989e4b7b12b1466c8",
+            "mtimeUtc": "2026-10-28T14:17:11.782147+00:00",
+            "directEntries": 2,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "f7b74f352ef6855f1aec67b352966aff31622d18d61ce12e044ffb5f7c883ab6",
+            "mtimeUtc": "2026-10-28T11:51:15.249700+00:00",
+            "directEntries": 6,
+            "directArchiveFiles": 1
+          },
+          {
+            "directoryNameSha256": "fdcf87f3d4073051873076cc768b0b47725e1f9752d437c5725b437ee6ec5e7d",
+            "mtimeUtc": "2026-10-18T20:53:04.135199+00:00",
+            "directEntries": 9,
+            "directArchiveFiles": 2
+          },
+          {
+            "directoryNameSha256": "fdcf87f3d4073051873076cc768b0b47725e1f9752d437c5725b437ee6ec5e7d",
+            "mtimeUtc": "2026-10-06T06:21:31.613671+00:00",
+            "directEntries": 8,
+            "directArchiveFiles": 2
+          }
+        ],
+        "completeInactiveRollbackCount": null,
+        "status": "HOLD_COMPLETE_INACTIVE_ROLLBACKS_NOT_CERTIFIED"
+      },
+      "Melamedia": {
+        "lockStatus": "EXISTING_SHARED_LOCK",
+        "candidateDirectoryCount": 0,
+        "metadataEntries": [],
+        "completeInactiveRollbackCount": null,
+        "status": "HOLD_COMPLETE_INACTIVE_ROLLBACKS_NOT_CERTIFIED"
+      }
+    },
+    "mutations": 0,
+    "archivePayloadReads": 0,
+    "last-status.json": {
+      "status": "success",
+      "reportSha256": "19727aa53d8fc64b3e056f608aeb7d19958f2cc2c7dbbfb9968f54283c0d39a0",
+      "utc": "2026-11-01T05:36:19.654585+00:00",
+      "targetProtectedMetadata": {
+        "MelamedLaw": {
+          "entries": 0,
+          "rollbackReserveReasonCount": 0
+        },
+        "MorLevi": {
+          "entries": 0,
+          "rollbackReserveReasonCount": 0
+        },
+        "AshrafEssa": {
+          "entries": 0,
+          "rollbackReserveReasonCount": 0
+        },
+        "Melamedia": {
+          "entries": 0,
+          "rollbackReserveReasonCount": 0
+        }
+      },
+      "targetHeldProjects": []
+    },
+    "last-run.json": {
+      "status": "EXISTING_REPORT_READ_ONLY",
+      "reportSha256": "98556e6855b371148aeedde13c70c3f2ddf4c420ceca6ecb60351de6a00ad97b",
+      "createdAt": 1793511331.3289146,
+      "completedAt": 1793511379.6497056,
+      "mode": "apply",
+      "healthy": true,
+      "targetProtectedMetadata": {
+        "MelamedLaw": {
+          "entries": 0,
+          "rollbackReserveReasonCount": 0
+        },
+        "MorLevi": {
+          "entries": 0,
+          "rollbackReserveReasonCount": 0
+        },
+        "AshrafEssa": {
+          "entries": 0,
+          "rollbackReserveReasonCount": 0
+        },
+        "Melamedia": {
+          "entries": 0,
+          "rollbackReserveReasonCount": 0
+        }
+      },
+      "targetHeldProjects": []
+    },
+    "newReadback": false,
+    "restoreExecuted": false
+  },
+  "frontend": {
+    "sshExit": 0,
+    "atUtc": "2026-11-01T22:26:07.359795+00:00",
+    "scope": "Existing last-run/last-status report and bounded checkpoint directory-entry/stat metadata only; no payload read, inventory job, backup or restore",
+    "targets": {
+      "MelamedLaw": {
+        "lockStatus": "EXISTING_SHARED_LOCK",
+        "candidateDirectoryCount": 9,
+        "metadataEntries": [
+          {
+            "directoryNameSha256": "58355b898b98ea900356ffeb492a03d998f59d2b70039100ec0847f7a7425ebe",
+            "mtimeUtc": "2026-11-01T21:56:21.086581+00:00",
+            "directEntries": 6,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "a60e6b4a46e331722dffb6ef7862cd6df257c1b7423e42b798f04f46e05ece8d",
+            "mtimeUtc": "2026-11-01T16:46:58.312207+00:00",
+            "directEntries": 6,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "7159dd36aea9aee3d3ddf3369f4fc57f34f217435d0b2ca8d6b8eabb96842528",
+            "mtimeUtc": "2026-11-01T15:46:45.933382+00:00",
+            "directEntries": 6,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "31bb517ca4a584d1d8bf77a4b9818f810a05a9fcdb4cd3196790d043489f8eb3",
+            "mtimeUtc": "2026-11-01T15:22:54.036304+00:00",
+            "directEntries": 6,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "83b620ff1ac0ffa510b41777ac0c65270f220d275640e3ce61cb273c3f1746f6",
+            "mtimeUtc": "2026-11-01T14:47:19.882439+00:00",
+            "directEntries": 6,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "bb726e30ac804fcec26bb146df519f035bc20d30762697e1acf6609186926027",
+            "mtimeUtc": "2026-11-01T14:02:29.066926+00:00",
+            "directEntries": 6,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "7f59e2f7bc8fd745ccba685e069d1ccfdd502f257c0e916e0f984ef2276f500a",
+            "mtimeUtc": "2026-10-28T15:44:39.762673+00:00",
+            "directEntries": 4,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "b1710c848955dfb2f41fbb0c0178fdf839f0d88de42fab912d9e0043ca31b010",
+            "mtimeUtc": "2026-10-28T15:28:50.533859+00:00",
+            "directEntries": 4,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "2d31dee6621bfeff1820d3d03f6a6c43f2b41d079c997c1928d770c4c1b4d8c7",
+            "mtimeUtc": "2026-10-28T13:14:07.275849+00:00",
+            "directEntries": 4,
+            "directArchiveFiles": 0
+          }
+        ],
+        "completeInactiveRollbackCount": null,
+        "status": "HOLD_COMPLETE_INACTIVE_ROLLBACKS_NOT_CERTIFIED"
+      },
+      "MorLevi": {
+        "lockStatus": "EXISTING_SHARED_LOCK",
+        "candidateDirectoryCount": 2,
+        "metadataEntries": [
+          {
+            "directoryNameSha256": "3cc6a010195b0d27c0a4afb4c48413c43810bb32ab14ac9675ca1a989c6caa3c",
+            "mtimeUtc": "2026-11-01T22:00:11.264613+00:00",
+            "directEntries": 6,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "362277554c58e49462d2ad305779464570004d92e9311090dbb2d826bb830f69",
+            "mtimeUtc": "2026-11-01T18:28:48.160640+00:00",
+            "directEntries": 6,
+            "directArchiveFiles": 0
+          }
+        ],
+        "completeInactiveRollbackCount": null,
+        "status": "HOLD_COMPLETE_INACTIVE_ROLLBACKS_NOT_CERTIFIED"
+      },
+      "AshrafEssa": {
+        "lockStatus": "EXISTING_SHARED_LOCK",
+        "candidateDirectoryCount": 5,
+        "metadataEntries": [
+          {
+            "directoryNameSha256": "1a1694216e29edd97c7ae2cbb534d1a436fc22a47a2326b620fa0f7ea453d9a9",
+            "mtimeUtc": "2026-11-01T21:59:51.166909+00:00",
+            "directEntries": 6,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "81554575b394dde9b9a7fa6082bc9f930ec18493c536a9f0b92e21da05d72aca",
+            "mtimeUtc": "2026-11-01T17:28:11.077239+00:00",
+            "directEntries": 6,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "5c529a79e9e3b1ac4eb448d4b643d643658fce804ccb4d7a032770989c4669e9",
+            "mtimeUtc": "2026-10-29T07:29:24.789253+00:00",
+            "directEntries": 4,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "9f50b10a1dde8343032c4e4af9846c09f7cba80cfee121c28fa3d38afcb5c1f4",
+            "mtimeUtc": "2026-10-28T15:31:49.538471+00:00",
+            "directEntries": 4,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "f7b74f352ef6855f1aec67b352966aff31622d18d61ce12e044ffb5f7c883ab6",
+            "mtimeUtc": "2026-10-28T12:12:05.023257+00:00",
+            "directEntries": 4,
+            "directArchiveFiles": 0
+          }
+        ],
+        "completeInactiveRollbackCount": null,
+        "status": "HOLD_COMPLETE_INACTIVE_ROLLBACKS_NOT_CERTIFIED"
+      },
+      "Melamedia": {
+        "lockStatus": "EXISTING_SHARED_LOCK",
+        "candidateDirectoryCount": 9,
+        "metadataEntries": [
+          {
+            "directoryNameSha256": "58355b898b98ea900356ffeb492a03d998f59d2b70039100ec0847f7a7425ebe",
+            "mtimeUtc": "2026-11-01T21:56:21.086581+00:00",
+            "directEntries": 6,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "a60e6b4a46e331722dffb6ef7862cd6df257c1b7423e42b798f04f46e05ece8d",
+            "mtimeUtc": "2026-11-01T16:46:58.312207+00:00",
+            "directEntries": 6,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "7159dd36aea9aee3d3ddf3369f4fc57f34f217435d0b2ca8d6b8eabb96842528",
+            "mtimeUtc": "2026-11-01T15:46:45.933382+00:00",
+            "directEntries": 6,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "31bb517ca4a584d1d8bf77a4b9818f810a05a9fcdb4cd3196790d043489f8eb3",
+            "mtimeUtc": "2026-11-01T15:22:54.036304+00:00",
+            "directEntries": 6,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "83b620ff1ac0ffa510b41777ac0c65270f220d275640e3ce61cb273c3f1746f6",
+            "mtimeUtc": "2026-11-01T14:47:19.882439+00:00",
+            "directEntries": 6,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "bb726e30ac804fcec26bb146df519f035bc20d30762697e1acf6609186926027",
+            "mtimeUtc": "2026-11-01T14:02:29.066926+00:00",
+            "directEntries": 6,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "7f59e2f7bc8fd745ccba685e069d1ccfdd502f257c0e916e0f984ef2276f500a",
+            "mtimeUtc": "2026-10-28T15:44:39.762673+00:00",
+            "directEntries": 4,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "b1710c848955dfb2f41fbb0c0178fdf839f0d88de42fab912d9e0043ca31b010",
+            "mtimeUtc": "2026-10-28T15:28:50.533859+00:00",
+            "directEntries": 4,
+            "directArchiveFiles": 0
+          },
+          {
+            "directoryNameSha256": "2d31dee6621bfeff1820d3d03f6a6c43f2b41d079c997c1928d770c4c1b4d8c7",
+            "mtimeUtc": "2026-10-28T13:14:07.275849+00:00",
+            "directEntries": 4,
+            "directArchiveFiles": 0
+          }
+        ],
+        "completeInactiveRollbackCount": null,
+        "status": "HOLD_COMPLETE_INACTIVE_ROLLBACKS_NOT_CERTIFIED"
+      }
+    },
+    "mutations": 0,
+    "archivePayloadReads": 0,
+    "last-status.json": {
+      "status": "deferred",
+      "reportSha256": "67f25999509eeeb334da2b8bc075f492171f526dc8142a579525b727df488776",
+      "utc": "2026-11-01T05:45:53.381373+00:00",
+      "targetProtectedMetadata": {
+        "MelamedLaw": {
+          "entries": 0,
+          "rollbackReserveReasonCount": 0
+        },
+        "MorLevi": {
+          "entries": 0,
+          "rollbackReserveReasonCount": 0
+        },
+        "AshrafEssa": {
+          "entries": 0,
+          "rollbackReserveReasonCount": 0
+        },
+        "Melamedia": {
+          "entries": 0,
+          "rollbackReserveReasonCount": 0
+        }
+      },
+      "targetHeldProjects": []
+    },
+    "last-run.json": {
+      "status": "EXISTING_REPORT_READ_ONLY",
+      "reportSha256": "9eb34b8eb202adc1bbc341365211d697a457bc4eb6e6dcc213e7ff57d36e3e34",
+      "createdAt": 1793510567.0079439,
+      "completedAt": 1793511953.191914,
+      "mode": "apply",
+      "healthy": false,
+      "targetProtectedMetadata": {
+        "MelamedLaw": {
+          "entries": 0,
+          "rollbackReserveReasonCount": 0
+        },
+        "MorLevi": {
+          "entries": 0,
+          "rollbackReserveReasonCount": 0
+        },
+        "AshrafEssa": {
+          "entries": 0,
+          "rollbackReserveReasonCount": 0
+        },
+        "Melamedia": {
+          "entries": 0,
+          "rollbackReserveReasonCount": 0
+        }
+      },
+      "targetHeldProjects": []
+    },
+    "newReadback": false,
+    "restoreExecuted": false
+  },
+  "completedAtUtc": "2026-11-01T22:26:07.450357+00:00"
+}

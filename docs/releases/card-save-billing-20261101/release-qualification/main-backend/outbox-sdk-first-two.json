@@ -1,0 +1,30 @@
+{
+  "name": "outbox-sdk",
+  "startedAtUtc": "2026-11-01T22:35:56.744Z",
+  "finishedAtUtc": "2026-11-01T22:36:00.835Z",
+  "files": [
+    "backend/tests/systemMessagesOutbox.test.js",
+    "backend/tests/systemMessagesSdkRecovery.test.js"
+  ],
+  "args": [
+    "--require",
+    "/private/tmp/layer-billing-debt-20261101/docs/releases/card-save-billing-20261101/comprehensive-qa/offline-network-guard.cjs",
+    "--test",
+    "--test-reporter=tap",
+    "--test-concurrency=2",
+    "backend/tests/systemMessagesOutbox.test.js",
+    "backend/tests/systemMessagesSdkRecovery.test.js"
+  ],
+  "exitCode": 0,
+  "signal": null,
+  "summary": {
+    "tests": 25,
+    "suites": 0,
+    "pass": 25,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "logSha256": "2aa9232d585003b0a6bc5a42ec00dcfc85c69aed1a41d3562f91f0dca8eac0aa"
+}
