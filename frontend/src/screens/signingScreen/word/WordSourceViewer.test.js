@@ -222,3 +222,42 @@ test('only an actually verified RTL neutral layer receives caret presentation an
     expect(screen.getByTestId('source-page').querySelector('[data-word-neutral-rtl]')).toBeNull();
     expect(screen.getByTestId('source-page').querySelector('[data-word-verified]')).toBeNull();
 });
+
+test('an active saved label recenters once after desktop-to-mobile resize without stealing input focus or changing its anchor', async () => {
+    const authoring = create(); mockContent = { items: authoring.pages[0].items.map(({ text, ...rest }) => ({ ...rest, str: text })) };
+    const originalBounds = HTMLElement.prototype.getBoundingClientRect; const originalScroll = HTMLElement.prototype.scrollIntoView;
+    const originalWidth = window.innerWidth; const originalObserver = global.ResizeObserver;
+    let pageWidth = 600; const callbacks = new Set();
+    global.ResizeObserver = class { constructor(callback) { this.callback = callback; callbacks.add(callback); } observe() {} disconnect() { callbacks.delete(this.callback); } };
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1200 });
+    HTMLElement.prototype.scrollIntoView = jest.fn();
+    HTMLElement.prototype.getBoundingClientRect = function () {
+        if (this.matches('[data-word-chip]')) return { left: 0, top: 0, width: 120, height: 19 };
+        if (this.dataset.testid === 'source-page') return { left: 0, top: 0, width: pageWidth, height: pageWidth * 4 / 3 };
+        return originalBounds.call(this);
+    };
+    const binding = { id: 'resize-name', kind: 'range', field: 'client.fullName', part: 'word/document.xml', paragraphId: 'p0', start: 3, end: 8 };
+    const before = JSON.parse(JSON.stringify(binding)); const onSelect = jest.fn(); let view; let input;
+    try {
+        view = render(<WordSourceViewer authoring={authoring} pdfFile={new Blob(['%PDF'])} bindings={[binding]} activeBindingId={binding.id}
+            onSelect={onSelect} fieldLabel={value => value} text={(key, values) => values?.field ? `${key} ${values.field}` : key} />);
+        const chip = await screen.findByRole('button', { name: 'editReplacement client.fullName' });
+        await waitFor(() => expect(chip).toHaveFocus());
+        expect(HTMLElement.prototype.scrollIntoView).toHaveBeenLastCalledWith({ block: 'nearest', inline: 'nearest' });
+        const focus = jest.spyOn(chip, 'focus'); HTMLElement.prototype.scrollIntoView.mockClear();
+        input = document.createElement('input'); document.body.append(input); input.focus();
+        pageWidth = 278; Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
+        fireEvent(window, new Event('resize'));
+        await waitFor(() => expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(1));
+        expect(HTMLElement.prototype.scrollIntoView).toHaveBeenLastCalledWith({ block: 'center', inline: 'nearest' });
+        expect(input).toHaveFocus(); expect(focus).not.toHaveBeenCalled();
+        await act(async () => { [...callbacks].forEach(callback => callback()); });
+        fireEvent(window, new Event('resize'));
+        expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(1);
+        expect(binding).toEqual(before); expect(onSelect).not.toHaveBeenCalled(); focus.mockRestore();
+    } finally {
+        view?.unmount(); input?.remove(); global.ResizeObserver = originalObserver;
+        HTMLElement.prototype.getBoundingClientRect = originalBounds; HTMLElement.prototype.scrollIntoView = originalScroll;
+        Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });
+    }
+});
