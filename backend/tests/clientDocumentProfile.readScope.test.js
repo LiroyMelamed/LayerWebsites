@@ -48,6 +48,11 @@ function fixture(actorPatch = {}, targetPatch = {}, { billingStatus = 0 } = {}) 
     const auth = load('middlewares/authMiddleware.js', { './attachFirmPermissions': attach, jsonwebtoken: jwt,
         dotenv: { config() {} }, '../utils/rateLimiter': { consume: () => ({ allowed: true }) },
         '../lib/officeRole': { applyLegacyOfficeRole() {} },
+        // Tenant status is a fixture too: importing the real service would
+        // initialize config/db and load an application .env during this unit test.
+        '../lib/tenant/tenantService': { getTenantById: async id => ({
+            id, slug: 'fixture-office', isActive: true, ownerUserId: actor.userid,
+        }) },
         // Billing behavior has its own suite. Keep the current auth boundary in
         // this route fixture without contacting a real billing database.
         './requireBillingAccess': { requireBillingAccess: (req, _res, next) => {
