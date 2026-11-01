@@ -1,0 +1,1536 @@
+{
+  "startedAtUtc": "2026-11-01T22:21:40.128661+00:00",
+  "scope": "Existing backup-health report metadata and catalog-only SELECTs, existing app role/DB mapping, read-only transaction and locks. No customer rows, provider, app modules, jobs, DB backup/restore, new access or mutation.",
+  "frontend": {
+    "sshExit": 0,
+    "capturedAtUtc": "2026-11-01T22:21:43.925854+00:00",
+    "backup": {
+      "status": "EXISTING_REPORT_READ_ONLY",
+      "reportSha256": "e3f2bd9d2a4864d9a32b9681f2a3a10f2bd0297cbc2c067e16a72c42f178d07d",
+      "reportedAtUtc": "2026-11-01T22:20:37.170311+00:00",
+      "ageSeconds": 66.755782,
+      "healthyReported": true,
+      "failureCount": 0,
+      "checkCount": 7,
+      "checkKeys": [
+        "age_hours",
+        "generation",
+        "offsite",
+        "project"
+      ],
+      "allChecksReportVerifiedReadback": true,
+      "freshWithinTwoHourReleaseGate": true,
+      "independentNewReadback": false,
+      "restoreExecuted": false,
+      "targetCheckSummaries": []
+    },
+    "mutations": 0
+  },
+  "backend": {
+    "sshExit": 0,
+    "capturedAtUtc": "2026-11-01T22:21:42.696793+00:00",
+    "backup": {
+      "status": "EXISTING_REPORT_READ_ONLY",
+      "reportSha256": "08027c5c51ca495e6c396b514b1a7dd35ecb356a131a93eb55a0f6d7826183d9",
+      "reportedAtUtc": "2026-11-01T22:20:39.472830+00:00",
+      "ageSeconds": 63.224177,
+      "healthyReported": true,
+      "failureCount": 0,
+      "checkCount": 8,
+      "checkKeys": [
+        "age_hours",
+        "generation",
+        "offsite",
+        "project"
+      ],
+      "allChecksReportVerifiedReadback": true,
+      "freshWithinTwoHourReleaseGate": true,
+      "independentNewReadback": false,
+      "restoreExecuted": false,
+      "targetCheckSummaries": [
+        {
+          "project": "melamedlaw-recovery",
+          "offsite": "verified_readback",
+          "age_hours": 19.69
+        },
+        {
+          "project": "morlevi-recovery",
+          "offsite": "verified_readback",
+          "age_hours": 19.69
+        },
+        {
+          "project": "ashrafessa-recovery",
+          "offsite": "verified_readback",
+          "age_hours": 19.69
+        },
+        {
+          "project": "melamedia-recovery",
+          "offsite": "verified_readback",
+          "age_hours": 19.69
+        }
+      ]
+    },
+    "schemaRows": [
+      {
+        "target": "MelamedLaw",
+        "atUtc": "2026-11-01T22:21:42.773Z",
+        "scope": "catalogs and grants only; no customer or billing rows",
+        "providerCalls": 0,
+        "customerRowQueries": 0,
+        "existingMappedAppRoleConfirmed": true,
+        "processOnline": true,
+        "transactionReadOnly": true,
+        "role": {
+          "superuser": false,
+          "bypass_rls": false,
+          "can_login": true
+        },
+        "tables": [
+          {
+            "name": "firm_billing",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "firm_payment_events",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "firm_payment_intents",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "firm_payment_methods",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "signing_owner_contexts",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "signing_word_authoring_renders",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": false,
+            "can_delete": false
+          },
+          {
+            "name": "signing_word_previews",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "signing_word_sources",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "signingfiles",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "signup_intents",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "users",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          }
+        ],
+        "profileColumn": [
+          {
+            "data_type": "jsonb",
+            "udt_name": "jsonb",
+            "is_nullable": "NO",
+            "column_default": "'{}'::jsonb"
+          }
+        ],
+        "constraints": [
+          {
+            "name": "signing_word_authoring_render_owner_context_id_created_by_i_key",
+            "type": "u",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "785bc5994cd022926f4f27484b714bfc381f37c7c8541c8102d0eaa6afe0e8ae"
+          },
+          {
+            "name": "signing_word_authoring_renders_created_by_fkey",
+            "type": "f",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "e1d4da8db683d93ece59f1b95abaac348b95589a5d9ce90e9fdbc3e6a8ecf274"
+          },
+          {
+            "name": "signing_word_authoring_renders_inputs_hash_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "65188bc6a68b73de1cc3f59545dbe9ff2be5cb9125b63c3e16ccb37e847f4881"
+          },
+          {
+            "name": "signing_word_authoring_renders_map_bytes_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "040f57a3dd684eccbfa19c2af7139a59bb068fcc13d922901557c946bb0f9a4a"
+          },
+          {
+            "name": "signing_word_authoring_renders_map_object_key_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "40e4ee0ace5e95d3784322fa96e23cb68d83aeabfffa17c94e9ca6a85bb40a0c"
+          },
+          {
+            "name": "signing_word_authoring_renders_map_sha256_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "2be46e097615f193898aa100e1fd17a0db276d6177220ad5af95eb7ed109415b"
+          },
+          {
+            "name": "signing_word_authoring_renders_model_version_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "92037585d5d8724a9cb7d53e511edb838f4941a7132a5ff2c58e27f17ada477b"
+          },
+          {
+            "name": "signing_word_authoring_renders_owner_context_id_fkey",
+            "type": "f",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "d2841cd3d5887a6f05a6862ccdfdb6e722c2709a290a59219dcfb4ae53911b07"
+          },
+          {
+            "name": "signing_word_authoring_renders_owner_context_id_source_id_fkey",
+            "type": "f",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "a80ff8a8590d6c87671a2043a9eae6846a389deb09c8fe9b7769c967bffaac4b"
+          },
+          {
+            "name": "signing_word_authoring_renders_page_count_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "14828abd375983243da5be4620ee31752544f2d227fa5a85dbf9872710aea60d"
+          },
+          {
+            "name": "signing_word_authoring_renders_pdf_bytes_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "83ba3b4c679a8756a521b209b2079a298b1df31ce1caa4a100ca20f76cec17e7"
+          },
+          {
+            "name": "signing_word_authoring_renders_pdf_object_key_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "ad8563bc686d726bc3727cbc429c9e217a5882f9d5e182ad9b3bfc387ac5dfce"
+          },
+          {
+            "name": "signing_word_authoring_renders_pdf_sha256_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "0fe2d51bf26983cea643f4d5d85b8fedec6a94923df7a3fdc44acefe1f79f13d"
+          },
+          {
+            "name": "signing_word_authoring_renders_pkey",
+            "type": "p",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "8c8464f42472e42ee190fc91ca8db79b5351d3a4609040516578d229c56f6fa5"
+          },
+          {
+            "name": "signing_word_authoring_renders_source_sha256_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "17d60170d0dc7c93f78501906bae57a0845add87307f1e55630193ad2ce651d3"
+          },
+          {
+            "name": "signing_word_authoring_renders_source_version_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "10a6924acc5a0ed962121749c1e6d05168e181e0eb9893505e672b21133049ef"
+          },
+          {
+            "name": "users_client_profile_bounded_object",
+            "type": "c",
+            "table": "users",
+            "definitionSha256": "2903f36ac8ca15d8f7fc9966f40c5060cefa407a3a44bd49ac65b73e698f1695",
+            "objectBound": true,
+            "sizeBound": true
+          }
+        ],
+        "authoringColumns": [
+          {
+            "column_name": "id",
+            "data_type": "uuid",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "owner_context_id",
+            "data_type": "uuid",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "source_id",
+            "data_type": "uuid",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "source_version",
+            "data_type": "integer",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "created_by",
+            "data_type": "integer",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "source_sha256",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "inputs_hash",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "pdf_sha256",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "pdf_object_key",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "pdf_bytes",
+            "data_type": "bigint",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "page_count",
+            "data_type": "integer",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "map_sha256",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "map_object_key",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "map_bytes",
+            "data_type": "bigint",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "model_version",
+            "data_type": "integer",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO"
+          }
+        ],
+        "authoringTriggers": [
+          {
+            "name": "signing_word_authoring_renders_immutable",
+            "enabled": "O",
+            "function": "signing_word_record_immutable",
+            "definitionSha256": "ab4855bbbe40227a38bd7da87b68c756b88fd0a848008c2ad44a3530325d1fdf",
+            "functionSha256": "3e8c5c33b1e56e58b6b09d08a7d856703d29277cb4a7b785b8677b7700830055"
+          }
+        ],
+        "policies": [],
+        "authoringIndexes": [
+          {
+            "name": "signing_word_authoring_render_owner_context_id_created_by_i_key",
+            "definitionSha256": "b354d9f31a92abc508f81689e6c29d34b399a641cf7d838e352638d1b29f847e",
+            "unique": true
+          },
+          {
+            "name": "signing_word_authoring_renders_pkey",
+            "definitionSha256": "a8d668ccbf6ebbec422c41b2659af4a41afee999c98eed9a530b01499fc5f817",
+            "unique": true
+          },
+          {
+            "name": "signing_word_authoring_renders_private_source",
+            "definitionSha256": "08b2d12fc6a03ba6924c864af92918a49a746a88941df26750895f9556afb91e",
+            "unique": false
+          }
+        ],
+        "checks": {
+          "allRequiredTablesPresent": true,
+          "profileJsonb": true,
+          "profileBoundedObject": true,
+          "authoringImmutableTrigger": true,
+          "appRoleSelectInsert": true,
+          "authoringInsertMatchesIncumbentSigningfiles": true,
+          "nonSuperuser": true,
+          "nonBypassRls": true
+        },
+        "status": "CATALOG_CHECKS_PASS",
+        "transactionEnded": "ROLLBACK",
+        "completedAtUtc": "2026-11-01T22:21:43.490Z",
+        "collectorExit": 0
+      },
+      {
+        "target": "MorLevi",
+        "atUtc": "2026-11-01T22:21:43.547Z",
+        "scope": "catalogs and grants only; no customer or billing rows",
+        "providerCalls": 0,
+        "customerRowQueries": 0,
+        "existingMappedAppRoleConfirmed": true,
+        "processOnline": true,
+        "transactionReadOnly": true,
+        "role": {
+          "superuser": false,
+          "bypass_rls": false,
+          "can_login": true
+        },
+        "tables": [
+          {
+            "name": "firm_billing",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "firm_payment_events",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "firm_payment_intents",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "firm_payment_methods",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "signing_owner_contexts",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "signing_word_authoring_renders",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": false,
+            "can_delete": false
+          },
+          {
+            "name": "signing_word_previews",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "signing_word_sources",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "signingfiles",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "signup_intents",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": false,
+            "can_insert": false,
+            "can_update": false,
+            "can_delete": false
+          },
+          {
+            "name": "users",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          }
+        ],
+        "profileColumn": [
+          {
+            "data_type": "jsonb",
+            "udt_name": "jsonb",
+            "is_nullable": "NO",
+            "column_default": "'{}'::jsonb"
+          }
+        ],
+        "constraints": [
+          {
+            "name": "signing_word_authoring_render_owner_context_id_created_by_i_key",
+            "type": "u",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "785bc5994cd022926f4f27484b714bfc381f37c7c8541c8102d0eaa6afe0e8ae"
+          },
+          {
+            "name": "signing_word_authoring_renders_created_by_fkey",
+            "type": "f",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "e1d4da8db683d93ece59f1b95abaac348b95589a5d9ce90e9fdbc3e6a8ecf274"
+          },
+          {
+            "name": "signing_word_authoring_renders_inputs_hash_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "65188bc6a68b73de1cc3f59545dbe9ff2be5cb9125b63c3e16ccb37e847f4881"
+          },
+          {
+            "name": "signing_word_authoring_renders_map_bytes_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "040f57a3dd684eccbfa19c2af7139a59bb068fcc13d922901557c946bb0f9a4a"
+          },
+          {
+            "name": "signing_word_authoring_renders_map_object_key_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "40e4ee0ace5e95d3784322fa96e23cb68d83aeabfffa17c94e9ca6a85bb40a0c"
+          },
+          {
+            "name": "signing_word_authoring_renders_map_sha256_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "2be46e097615f193898aa100e1fd17a0db276d6177220ad5af95eb7ed109415b"
+          },
+          {
+            "name": "signing_word_authoring_renders_model_version_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "92037585d5d8724a9cb7d53e511edb838f4941a7132a5ff2c58e27f17ada477b"
+          },
+          {
+            "name": "signing_word_authoring_renders_owner_context_id_fkey",
+            "type": "f",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "d2841cd3d5887a6f05a6862ccdfdb6e722c2709a290a59219dcfb4ae53911b07"
+          },
+          {
+            "name": "signing_word_authoring_renders_owner_context_id_source_id_fkey",
+            "type": "f",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "a80ff8a8590d6c87671a2043a9eae6846a389deb09c8fe9b7769c967bffaac4b"
+          },
+          {
+            "name": "signing_word_authoring_renders_page_count_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "14828abd375983243da5be4620ee31752544f2d227fa5a85dbf9872710aea60d"
+          },
+          {
+            "name": "signing_word_authoring_renders_pdf_bytes_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "83ba3b4c679a8756a521b209b2079a298b1df31ce1caa4a100ca20f76cec17e7"
+          },
+          {
+            "name": "signing_word_authoring_renders_pdf_object_key_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "ad8563bc686d726bc3727cbc429c9e217a5882f9d5e182ad9b3bfc387ac5dfce"
+          },
+          {
+            "name": "signing_word_authoring_renders_pdf_sha256_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "0fe2d51bf26983cea643f4d5d85b8fedec6a94923df7a3fdc44acefe1f79f13d"
+          },
+          {
+            "name": "signing_word_authoring_renders_pkey",
+            "type": "p",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "8c8464f42472e42ee190fc91ca8db79b5351d3a4609040516578d229c56f6fa5"
+          },
+          {
+            "name": "signing_word_authoring_renders_source_sha256_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "17d60170d0dc7c93f78501906bae57a0845add87307f1e55630193ad2ce651d3"
+          },
+          {
+            "name": "signing_word_authoring_renders_source_version_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "10a6924acc5a0ed962121749c1e6d05168e181e0eb9893505e672b21133049ef"
+          },
+          {
+            "name": "users_client_profile_bounded_object",
+            "type": "c",
+            "table": "users",
+            "definitionSha256": "2903f36ac8ca15d8f7fc9966f40c5060cefa407a3a44bd49ac65b73e698f1695",
+            "objectBound": true,
+            "sizeBound": true
+          }
+        ],
+        "authoringColumns": [
+          {
+            "column_name": "id",
+            "data_type": "uuid",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "owner_context_id",
+            "data_type": "uuid",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "source_id",
+            "data_type": "uuid",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "source_version",
+            "data_type": "integer",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "created_by",
+            "data_type": "integer",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "source_sha256",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "inputs_hash",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "pdf_sha256",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "pdf_object_key",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "pdf_bytes",
+            "data_type": "bigint",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "page_count",
+            "data_type": "integer",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "map_sha256",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "map_object_key",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "map_bytes",
+            "data_type": "bigint",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "model_version",
+            "data_type": "integer",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO"
+          }
+        ],
+        "authoringTriggers": [
+          {
+            "name": "signing_word_authoring_renders_immutable",
+            "enabled": "O",
+            "function": "signing_word_record_immutable",
+            "definitionSha256": "ab4855bbbe40227a38bd7da87b68c756b88fd0a848008c2ad44a3530325d1fdf",
+            "functionSha256": "3e8c5c33b1e56e58b6b09d08a7d856703d29277cb4a7b785b8677b7700830055"
+          }
+        ],
+        "policies": [],
+        "authoringIndexes": [
+          {
+            "name": "signing_word_authoring_render_owner_context_id_created_by_i_key",
+            "definitionSha256": "b354d9f31a92abc508f81689e6c29d34b399a641cf7d838e352638d1b29f847e",
+            "unique": true
+          },
+          {
+            "name": "signing_word_authoring_renders_pkey",
+            "definitionSha256": "a8d668ccbf6ebbec422c41b2659af4a41afee999c98eed9a530b01499fc5f817",
+            "unique": true
+          },
+          {
+            "name": "signing_word_authoring_renders_private_source",
+            "definitionSha256": "08b2d12fc6a03ba6924c864af92918a49a746a88941df26750895f9556afb91e",
+            "unique": false
+          }
+        ],
+        "checks": {
+          "allRequiredTablesPresent": true,
+          "profileJsonb": true,
+          "profileBoundedObject": true,
+          "authoringImmutableTrigger": true,
+          "appRoleSelectInsert": true,
+          "authoringInsertMatchesIncumbentSigningfiles": true,
+          "nonSuperuser": true,
+          "nonBypassRls": true
+        },
+        "status": "CATALOG_CHECKS_PASS",
+        "transactionEnded": "ROLLBACK",
+        "completedAtUtc": "2026-11-01T22:21:43.951Z",
+        "collectorExit": 0
+      },
+      {
+        "target": "AshrafEssa",
+        "atUtc": "2026-11-01T22:21:44.006Z",
+        "scope": "catalogs and grants only; no customer or billing rows",
+        "providerCalls": 0,
+        "customerRowQueries": 0,
+        "existingMappedAppRoleConfirmed": true,
+        "processOnline": true,
+        "transactionReadOnly": true,
+        "role": {
+          "superuser": false,
+          "bypass_rls": false,
+          "can_login": true
+        },
+        "tables": [
+          {
+            "name": "firm_billing",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "firm_payment_events",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "firm_payment_intents",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "firm_payment_methods",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "signing_owner_contexts",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "signing_word_authoring_renders",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": false,
+            "can_delete": false
+          },
+          {
+            "name": "signing_word_previews",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "signing_word_sources",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "signingfiles",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "signup_intents",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": false,
+            "can_insert": false,
+            "can_update": false,
+            "can_delete": false
+          },
+          {
+            "name": "users",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          }
+        ],
+        "profileColumn": [
+          {
+            "data_type": "jsonb",
+            "udt_name": "jsonb",
+            "is_nullable": "NO",
+            "column_default": "'{}'::jsonb"
+          }
+        ],
+        "constraints": [
+          {
+            "name": "signing_word_authoring_render_owner_context_id_created_by_i_key",
+            "type": "u",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "785bc5994cd022926f4f27484b714bfc381f37c7c8541c8102d0eaa6afe0e8ae"
+          },
+          {
+            "name": "signing_word_authoring_renders_created_by_fkey",
+            "type": "f",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "e1d4da8db683d93ece59f1b95abaac348b95589a5d9ce90e9fdbc3e6a8ecf274"
+          },
+          {
+            "name": "signing_word_authoring_renders_inputs_hash_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "65188bc6a68b73de1cc3f59545dbe9ff2be5cb9125b63c3e16ccb37e847f4881"
+          },
+          {
+            "name": "signing_word_authoring_renders_map_bytes_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "040f57a3dd684eccbfa19c2af7139a59bb068fcc13d922901557c946bb0f9a4a"
+          },
+          {
+            "name": "signing_word_authoring_renders_map_object_key_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "40e4ee0ace5e95d3784322fa96e23cb68d83aeabfffa17c94e9ca6a85bb40a0c"
+          },
+          {
+            "name": "signing_word_authoring_renders_map_sha256_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "2be46e097615f193898aa100e1fd17a0db276d6177220ad5af95eb7ed109415b"
+          },
+          {
+            "name": "signing_word_authoring_renders_model_version_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "92037585d5d8724a9cb7d53e511edb838f4941a7132a5ff2c58e27f17ada477b"
+          },
+          {
+            "name": "signing_word_authoring_renders_owner_context_id_fkey",
+            "type": "f",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "d2841cd3d5887a6f05a6862ccdfdb6e722c2709a290a59219dcfb4ae53911b07"
+          },
+          {
+            "name": "signing_word_authoring_renders_owner_context_id_source_id_fkey",
+            "type": "f",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "a80ff8a8590d6c87671a2043a9eae6846a389deb09c8fe9b7769c967bffaac4b"
+          },
+          {
+            "name": "signing_word_authoring_renders_page_count_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "14828abd375983243da5be4620ee31752544f2d227fa5a85dbf9872710aea60d"
+          },
+          {
+            "name": "signing_word_authoring_renders_pdf_bytes_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "83ba3b4c679a8756a521b209b2079a298b1df31ce1caa4a100ca20f76cec17e7"
+          },
+          {
+            "name": "signing_word_authoring_renders_pdf_object_key_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "ad8563bc686d726bc3727cbc429c9e217a5882f9d5e182ad9b3bfc387ac5dfce"
+          },
+          {
+            "name": "signing_word_authoring_renders_pdf_sha256_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "0fe2d51bf26983cea643f4d5d85b8fedec6a94923df7a3fdc44acefe1f79f13d"
+          },
+          {
+            "name": "signing_word_authoring_renders_pkey",
+            "type": "p",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "8c8464f42472e42ee190fc91ca8db79b5351d3a4609040516578d229c56f6fa5"
+          },
+          {
+            "name": "signing_word_authoring_renders_source_sha256_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "17d60170d0dc7c93f78501906bae57a0845add87307f1e55630193ad2ce651d3"
+          },
+          {
+            "name": "signing_word_authoring_renders_source_version_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "10a6924acc5a0ed962121749c1e6d05168e181e0eb9893505e672b21133049ef"
+          },
+          {
+            "name": "users_client_profile_bounded_object",
+            "type": "c",
+            "table": "users",
+            "definitionSha256": "2903f36ac8ca15d8f7fc9966f40c5060cefa407a3a44bd49ac65b73e698f1695",
+            "objectBound": true,
+            "sizeBound": true
+          }
+        ],
+        "authoringColumns": [
+          {
+            "column_name": "id",
+            "data_type": "uuid",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "owner_context_id",
+            "data_type": "uuid",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "source_id",
+            "data_type": "uuid",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "source_version",
+            "data_type": "integer",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "created_by",
+            "data_type": "integer",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "source_sha256",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "inputs_hash",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "pdf_sha256",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "pdf_object_key",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "pdf_bytes",
+            "data_type": "bigint",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "page_count",
+            "data_type": "integer",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "map_sha256",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "map_object_key",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "map_bytes",
+            "data_type": "bigint",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "model_version",
+            "data_type": "integer",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO"
+          }
+        ],
+        "authoringTriggers": [
+          {
+            "name": "signing_word_authoring_renders_immutable",
+            "enabled": "O",
+            "function": "signing_word_record_immutable",
+            "definitionSha256": "ab4855bbbe40227a38bd7da87b68c756b88fd0a848008c2ad44a3530325d1fdf",
+            "functionSha256": "3e8c5c33b1e56e58b6b09d08a7d856703d29277cb4a7b785b8677b7700830055"
+          }
+        ],
+        "policies": [],
+        "authoringIndexes": [
+          {
+            "name": "signing_word_authoring_render_owner_context_id_created_by_i_key",
+            "definitionSha256": "b354d9f31a92abc508f81689e6c29d34b399a641cf7d838e352638d1b29f847e",
+            "unique": true
+          },
+          {
+            "name": "signing_word_authoring_renders_pkey",
+            "definitionSha256": "a8d668ccbf6ebbec422c41b2659af4a41afee999c98eed9a530b01499fc5f817",
+            "unique": true
+          },
+          {
+            "name": "signing_word_authoring_renders_private_source",
+            "definitionSha256": "08b2d12fc6a03ba6924c864af92918a49a746a88941df26750895f9556afb91e",
+            "unique": false
+          }
+        ],
+        "checks": {
+          "allRequiredTablesPresent": true,
+          "profileJsonb": true,
+          "profileBoundedObject": true,
+          "authoringImmutableTrigger": true,
+          "appRoleSelectInsert": true,
+          "authoringInsertMatchesIncumbentSigningfiles": true,
+          "nonSuperuser": true,
+          "nonBypassRls": true
+        },
+        "status": "CATALOG_CHECKS_PASS",
+        "transactionEnded": "ROLLBACK",
+        "completedAtUtc": "2026-11-01T22:21:44.390Z",
+        "collectorExit": 0
+      },
+      {
+        "target": "Melamedia",
+        "atUtc": "2026-11-01T22:21:44.442Z",
+        "scope": "catalogs and grants only; no customer or billing rows",
+        "providerCalls": 0,
+        "customerRowQueries": 0,
+        "existingMappedAppRoleConfirmed": true,
+        "processOnline": true,
+        "transactionReadOnly": true,
+        "role": {
+          "superuser": false,
+          "bypass_rls": false,
+          "can_login": true
+        },
+        "tables": [
+          {
+            "name": "firm_billing",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "firm_payment_events",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "firm_payment_intents",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "firm_payment_methods",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "signing_owner_contexts",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "signing_word_authoring_renders",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": false,
+            "can_delete": false
+          },
+          {
+            "name": "signing_word_previews",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "signing_word_sources",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "signingfiles",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "signup_intents",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          },
+          {
+            "name": "users",
+            "kind": "r",
+            "rls": false,
+            "force_rls": false,
+            "can_select": true,
+            "can_insert": true,
+            "can_update": true,
+            "can_delete": true
+          }
+        ],
+        "profileColumn": [
+          {
+            "data_type": "jsonb",
+            "udt_name": "jsonb",
+            "is_nullable": "NO",
+            "column_default": "'{}'::jsonb"
+          }
+        ],
+        "constraints": [
+          {
+            "name": "signing_word_authoring_render_owner_context_id_created_by_i_key",
+            "type": "u",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "785bc5994cd022926f4f27484b714bfc381f37c7c8541c8102d0eaa6afe0e8ae"
+          },
+          {
+            "name": "signing_word_authoring_renders_created_by_fkey",
+            "type": "f",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "e1d4da8db683d93ece59f1b95abaac348b95589a5d9ce90e9fdbc3e6a8ecf274"
+          },
+          {
+            "name": "signing_word_authoring_renders_inputs_hash_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "65188bc6a68b73de1cc3f59545dbe9ff2be5cb9125b63c3e16ccb37e847f4881"
+          },
+          {
+            "name": "signing_word_authoring_renders_map_bytes_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "040f57a3dd684eccbfa19c2af7139a59bb068fcc13d922901557c946bb0f9a4a"
+          },
+          {
+            "name": "signing_word_authoring_renders_map_object_key_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "40e4ee0ace5e95d3784322fa96e23cb68d83aeabfffa17c94e9ca6a85bb40a0c"
+          },
+          {
+            "name": "signing_word_authoring_renders_map_sha256_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "2be46e097615f193898aa100e1fd17a0db276d6177220ad5af95eb7ed109415b"
+          },
+          {
+            "name": "signing_word_authoring_renders_model_version_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "92037585d5d8724a9cb7d53e511edb838f4941a7132a5ff2c58e27f17ada477b"
+          },
+          {
+            "name": "signing_word_authoring_renders_owner_context_id_fkey",
+            "type": "f",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "d2841cd3d5887a6f05a6862ccdfdb6e722c2709a290a59219dcfb4ae53911b07"
+          },
+          {
+            "name": "signing_word_authoring_renders_owner_context_id_source_id_fkey",
+            "type": "f",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "a80ff8a8590d6c87671a2043a9eae6846a389deb09c8fe9b7769c967bffaac4b"
+          },
+          {
+            "name": "signing_word_authoring_renders_page_count_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "14828abd375983243da5be4620ee31752544f2d227fa5a85dbf9872710aea60d"
+          },
+          {
+            "name": "signing_word_authoring_renders_pdf_bytes_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "83ba3b4c679a8756a521b209b2079a298b1df31ce1caa4a100ca20f76cec17e7"
+          },
+          {
+            "name": "signing_word_authoring_renders_pdf_object_key_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "ad8563bc686d726bc3727cbc429c9e217a5882f9d5e182ad9b3bfc387ac5dfce"
+          },
+          {
+            "name": "signing_word_authoring_renders_pdf_sha256_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "0fe2d51bf26983cea643f4d5d85b8fedec6a94923df7a3fdc44acefe1f79f13d"
+          },
+          {
+            "name": "signing_word_authoring_renders_pkey",
+            "type": "p",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "8c8464f42472e42ee190fc91ca8db79b5351d3a4609040516578d229c56f6fa5"
+          },
+          {
+            "name": "signing_word_authoring_renders_source_sha256_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "17d60170d0dc7c93f78501906bae57a0845add87307f1e55630193ad2ce651d3"
+          },
+          {
+            "name": "signing_word_authoring_renders_source_version_check",
+            "type": "c",
+            "table": "signing_word_authoring_renders",
+            "definitionSha256": "10a6924acc5a0ed962121749c1e6d05168e181e0eb9893505e672b21133049ef"
+          },
+          {
+            "name": "users_client_profile_bounded_object",
+            "type": "c",
+            "table": "users",
+            "definitionSha256": "2903f36ac8ca15d8f7fc9966f40c5060cefa407a3a44bd49ac65b73e698f1695",
+            "objectBound": true,
+            "sizeBound": true
+          }
+        ],
+        "authoringColumns": [
+          {
+            "column_name": "id",
+            "data_type": "uuid",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "owner_context_id",
+            "data_type": "uuid",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "source_id",
+            "data_type": "uuid",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "source_version",
+            "data_type": "integer",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "created_by",
+            "data_type": "integer",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "source_sha256",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "inputs_hash",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "pdf_sha256",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "pdf_object_key",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "pdf_bytes",
+            "data_type": "bigint",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "page_count",
+            "data_type": "integer",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "map_sha256",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "map_object_key",
+            "data_type": "text",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "map_bytes",
+            "data_type": "bigint",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "model_version",
+            "data_type": "integer",
+            "is_nullable": "NO"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO"
+          }
+        ],
+        "authoringTriggers": [
+          {
+            "name": "signing_word_authoring_renders_immutable",
+            "enabled": "O",
+            "function": "signing_word_record_immutable",
+            "definitionSha256": "ab4855bbbe40227a38bd7da87b68c756b88fd0a848008c2ad44a3530325d1fdf",
+            "functionSha256": "3e8c5c33b1e56e58b6b09d08a7d856703d29277cb4a7b785b8677b7700830055"
+          }
+        ],
+        "policies": [],
+        "authoringIndexes": [
+          {
+            "name": "signing_word_authoring_render_owner_context_id_created_by_i_key",
+            "definitionSha256": "b354d9f31a92abc508f81689e6c29d34b399a641cf7d838e352638d1b29f847e",
+            "unique": true
+          },
+          {
+            "name": "signing_word_authoring_renders_pkey",
+            "definitionSha256": "a8d668ccbf6ebbec422c41b2659af4a41afee999c98eed9a530b01499fc5f817",
+            "unique": true
+          },
+          {
+            "name": "signing_word_authoring_renders_private_source",
+            "definitionSha256": "08b2d12fc6a03ba6924c864af92918a49a746a88941df26750895f9556afb91e",
+            "unique": false
+          }
+        ],
+        "checks": {
+          "allRequiredTablesPresent": true,
+          "profileJsonb": true,
+          "profileBoundedObject": true,
+          "authoringImmutableTrigger": true,
+          "appRoleSelectInsert": true,
+          "authoringInsertMatchesIncumbentSigningfiles": true,
+          "nonSuperuser": true,
+          "nonBypassRls": true
+        },
+        "status": "CATALOG_CHECKS_PASS",
+        "transactionEnded": "ROLLBACK",
+        "completedAtUtc": "2026-11-01T22:21:44.919Z",
+        "collectorExit": 0
+      }
+    ],
+    "providerCalls": 0,
+    "customerRowQueries": 0,
+    "mutations": 0
+  },
+  "completedAtUtc": "2026-11-01T22:21:44.958253+00:00"
+}

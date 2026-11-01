@@ -1,0 +1,130 @@
+{
+  "tenant": "AshrafEssa",
+  "sourceCandidate": "7309eb636748a8081bbe159053bfba710ffd9bc0",
+  "publicBranding": [
+    {
+      "path": "manifest.json",
+      "present": true,
+      "expectedSha256": "b8de8a18ad1d29a42658dbab96679ed992dd513e7b0b5069741c2cc283fe9d64",
+      "actualSha256": "b8de8a18ad1d29a42658dbab96679ed992dd513e7b0b5069741c2cc283fe9d64",
+      "valid": true
+    },
+    {
+      "path": "firm-logo.png",
+      "present": true,
+      "expectedSha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b",
+      "actualSha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b",
+      "valid": true
+    },
+    {
+      "path": "logo192.png",
+      "present": true,
+      "expectedSha256": "55ee341bab892325c41af88e5713481fd7b56b32e47b56172fd98bea34354682",
+      "actualSha256": "55ee341bab892325c41af88e5713481fd7b56b32e47b56172fd98bea34354682",
+      "valid": true
+    },
+    {
+      "path": "logo512.png",
+      "present": true,
+      "expectedSha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b",
+      "actualSha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b",
+      "valid": true
+    },
+    {
+      "path": "favicon.ico",
+      "present": true,
+      "expectedSha256": "7e35d911c2bcdd6d091cd716f51b630e17fde315196431d0964bac2969943ce4",
+      "actualSha256": "7e35d911c2bcdd6d091cd716f51b630e17fde315196431d0964bac2969943ce4",
+      "valid": true
+    },
+    {
+      "path": "favicon.png",
+      "present": true,
+      "expectedSha256": "f6d903577d671c805fc8c045ba7083cef5c5e09dea2df7e8ad11e05be10d8148",
+      "actualSha256": "f6d903577d671c805fc8c045ba7083cef5c5e09dea2df7e8ad11e05be10d8148",
+      "valid": true
+    },
+    {
+      "path": "favicon-16x16.png",
+      "present": true,
+      "expectedSha256": "123091e779f964977ca5fc879ea7d712f7834a9d95f7d79afd3058d17243d0e3",
+      "actualSha256": "123091e779f964977ca5fc879ea7d712f7834a9d95f7d79afd3058d17243d0e3",
+      "valid": true
+    },
+    {
+      "path": "favicon-32x32.png",
+      "present": true,
+      "expectedSha256": "f6d903577d671c805fc8c045ba7083cef5c5e09dea2df7e8ad11e05be10d8148",
+      "actualSha256": "f6d903577d671c805fc8c045ba7083cef5c5e09dea2df7e8ad11e05be10d8148",
+      "valid": true
+    },
+    {
+      "path": "apple-touch-icon.png",
+      "present": true,
+      "expectedSha256": "7019f391c502bd9dd0a4ea332d141b4bc078bcde3d3a5c9bc4ac010237412253",
+      "actualSha256": "7019f391c502bd9dd0a4ea332d141b4bc078bcde3d3a5c9bc4ac010237412253",
+      "valid": true
+    },
+    {
+      "path": "android-chrome-192x192.png",
+      "present": true,
+      "expectedSha256": "55ee341bab892325c41af88e5713481fd7b56b32e47b56172fd98bea34354682",
+      "actualSha256": "55ee341bab892325c41af88e5713481fd7b56b32e47b56172fd98bea34354682",
+      "valid": true
+    },
+    {
+      "path": "android-chrome-512x512.png",
+      "present": true,
+      "expectedSha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b",
+      "actualSha256": "0b62cc7fb9de8fa112e95a011428395becd37ce12d1799230dd3ee65b791c77b",
+      "valid": true
+    },
+    {
+      "path": ".well-known/assetlinks.json",
+      "present": true,
+      "expectedSha256": "08b7a288147e6077fca8d97bcef84b035772fb83882d66f737d87192bd85ff57",
+      "actualSha256": "08b7a288147e6077fca8d97bcef84b035772fb83882d66f737d87192bd85ff57",
+      "valid": true
+    },
+    {
+      "path": ".well-known/apple-app-site-association",
+      "present": true,
+      "expectedSha256": "9d978179e09d41f2bc431be34350daad931bd3857943ca54183a8b0b8c4b81c4",
+      "actualSha256": "9d978179e09d41f2bc431be34350daad931bd3857943ca54183a8b0b8c4b81c4",
+      "valid": true
+    },
+    {
+      "path": "apple-app-site-association",
+      "present": true,
+      "expectedSha256": "9d978179e09d41f2bc431be34350daad931bd3857943ca54183a8b0b8c4b81c4",
+      "actualSha256": "9d978179e09d41f2bc431be34350daad931bd3857943ca54183a8b0b8c4b81c4",
+      "valid": true
+    },
+    {
+      "path": "melamedia-mark.png",
+      "expectedAbsent": true,
+      "valid": true
+    }
+  ],
+  "copiedSourceLogos": [
+    {
+      "path": "logoLMwhite.png",
+      "exportMatchesTenant": true
+    },
+    {
+      "path": "logo.png",
+      "exportMatchesTenant": true
+    },
+    {
+      "path": "logo2.png",
+      "exportMatchesTenant": true
+    },
+    {
+      "path": "logoLM.png",
+      "exportMatchesTenant": true
+    }
+  ],
+  "ownIndexTitleMatches": true,
+  "allValid": true,
+  "scope": "Only local frozen synthetic build; no live association, tenant configuration or signing certificate changes."
+}

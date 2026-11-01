@@ -1,0 +1,63 @@
+[billing] PACKAGE_PERSIST_AFTER_CHARGE {
+  code: 'PACKAGE_PERSIST_AFTER_CHARGE',
+  platformId: 'site_app',
+  resourceId: 'pro',
+  signingId: '1500',
+  billingInterval: 'monthly',
+  message: 'disk full'
+}
+✔ savePackage does not persist package before failed upgrade charge (0.761875ms)
+✔ savePackage persists only after successful upgrade charge (0.833792ms)
+✔ savePackage throws when persist fails after successful charge (0.797417ms)
+✔ savePackage no-card upgrade opens checkout with pending package snapshot (0.367833ms)
+[takbull] Using legacy TAKBULL_API_KEY/TAKBULL_API_SECRET. Set TAKBULL_MODE plus PROD_TAKBULL_* and TEST_TAKBULL_* to avoid confusion.
+[billing] UPGRADE_PACKAGE_RECOVERED {
+  code: 'UPGRADE_PACKAGE_RECOVERED',
+  intentId: '68a451a3-0b84-47f8-9df5-14a501a12c8f',
+  orderReference: 'lw-upgrade-68a451a30b8447f89d',
+  transactionId: 'txn-1-lw-upgrade-68a451a30b8447f89d',
+  platformId: 'site_app',
+  resourceId: 'pro',
+  signingId: '1500',
+  upgradeOperationKey: 'legacy|site_app|pro|1500|monthly|200.00'
+}
+[billing] PACKAGE_PERSIST_AFTER_CHARGE {
+  code: 'PACKAGE_PERSIST_AFTER_CHARGE',
+  platformId: 'site_app',
+  resourceId: 'pro',
+  signingId: '1500',
+  billingInterval: 'monthly',
+  message: 'sync down'
+}
+[billing] UPGRADE_PACKAGE_RECOVERED {
+  code: 'UPGRADE_PACKAGE_RECOVERED',
+  intentId: '60e329eb-5fb9-4c6b-8993-5e08a6778984',
+  orderReference: 'lw-upgrade-60e329eb5fb94c6b89',
+  transactionId: 'txn-1-lw-upgrade-60e329eb5fb94c6b89',
+  platformId: 'site_app',
+  resourceId: 'pro',
+  signingId: '1500',
+  upgradeOperationKey: 'legacy|site_app|pro|1500|monthly|200.00'
+}
+✔ buildUpgradeOperationKey is stable for the same logical upgrade (0.513209ms)
+✔ saved-card upgrade charges once then retry recovers without second provider charge (6.283042ms)
+✔ failed charge allows a fresh provider charge on retry (0.759291ms)
+✔ concurrent upgrade requests produce at most one provider charge (0.518916ms)
+✔ an uncertain provider response keeps a committed reservation and blocks a second charge (0.363834ms)
+✔ a recorded provider transaction is independently verified on recovery instead of charging again (0.335625ms)
+✔ historical succeeded intent for a different package is not reused (0.237791ms)
+✔ already-applied package returns success without charging (0.128958ms)
+✔ savePackage retry after PACKAGE_PERSIST passes upgradeOperation and avoids duplicate charge stub (0.577ms)
+✔ repeated retries after paid-unapplied state still produce only one total charge (0.638375ms)
+✔ an existing pending intent without a known outcome remains reserved across retries (0.377625ms)
+✔ complimentary interval-only savePackage does not pass upgradeOperation to charge (0.11625ms)
+✔ savePackage blocks fallback checkout for an unresolved payment (0.391583ms)
+✔ savePackage does not persist an already atomic upgrade a second time (0.062458ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 193.593666

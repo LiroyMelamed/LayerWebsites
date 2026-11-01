@@ -1,0 +1,10 @@
+{
+  "atUtc": "2026-11-01T14:11:32.157982+00:00",
+  "cluster": "/tmp/layer-billing-pg.dJ0RrF/data",
+  "stop": "pg_ctl fast stop, exit0 under network/signal allowance",
+  "statusExitCode": 3,
+  "statusOutput": "pg_ctl: no server running",
+  "listenerCheckExitCode": 1,
+  "listenerOutputEmpty": true,
+  "otherClustersTouched": false
+}

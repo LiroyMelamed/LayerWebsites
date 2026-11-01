@@ -1,0 +1,457 @@
+{
+  "candidate": "2d9c7040ade76ff30aab7026a7c5ccd54d18bafa",
+  "node": "v24.14.0",
+  "dependencies": {
+    "frontend": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules",
+      "direct": [
+        {
+          "name": "@base-ui/react",
+          "locked": "1.7.0",
+          "installed": "1.7.0",
+          "matches": true
+        },
+        {
+          "name": "@fullcalendar/core",
+          "locked": "6.1.20",
+          "installed": "6.1.20",
+          "matches": true
+        },
+        {
+          "name": "@fullcalendar/daygrid",
+          "locked": "6.1.20",
+          "installed": "6.1.20",
+          "matches": true
+        },
+        {
+          "name": "@fullcalendar/interaction",
+          "locked": "6.1.20",
+          "installed": "6.1.20",
+          "matches": true
+        },
+        {
+          "name": "@fullcalendar/luxon3",
+          "locked": "6.1.20",
+          "installed": "6.1.20",
+          "matches": true
+        },
+        {
+          "name": "@fullcalendar/react",
+          "locked": "6.1.20",
+          "installed": "6.1.20",
+          "matches": true
+        },
+        {
+          "name": "@fullcalendar/timegrid",
+          "locked": "6.1.20",
+          "installed": "6.1.20",
+          "matches": true
+        },
+        {
+          "name": "@testing-library/jest-dom",
+          "locked": "5.17.0",
+          "installed": "5.17.0",
+          "matches": true
+        },
+        {
+          "name": "@testing-library/react",
+          "locked": "13.4.0",
+          "installed": "13.4.0",
+          "matches": true
+        },
+        {
+          "name": "@testing-library/user-event",
+          "locked": "13.5.0",
+          "installed": "13.5.0",
+          "matches": true
+        },
+        {
+          "name": "ajv",
+          "locked": "8.18.0",
+          "installed": "8.18.0",
+          "matches": true
+        },
+        {
+          "name": "ajv-keywords",
+          "locked": "5.1.0",
+          "installed": "5.1.0",
+          "matches": true
+        },
+        {
+          "name": "axios",
+          "locked": "1.20.0",
+          "installed": "1.20.0",
+          "matches": true
+        },
+        {
+          "name": "chart.js",
+          "locked": "4.5.1",
+          "installed": "4.5.1",
+          "matches": true
+        },
+        {
+          "name": "class-variance-authority",
+          "locked": "0.7.1",
+          "installed": "0.7.1",
+          "matches": true
+        },
+        {
+          "name": "clsx",
+          "locked": "2.1.1",
+          "installed": "2.1.1",
+          "matches": true
+        },
+        {
+          "name": "i18next",
+          "locked": "25.8.17",
+          "installed": "25.8.17",
+          "matches": true
+        },
+        {
+          "name": "lucide-react",
+          "locked": "1.31.0",
+          "installed": "1.31.0",
+          "matches": true
+        },
+        {
+          "name": "luxon",
+          "locked": "3.7.2",
+          "installed": "3.7.2",
+          "matches": true
+        },
+        {
+          "name": "pdfjs-dist",
+          "locked": "5.4.296",
+          "installed": "5.4.296",
+          "matches": true
+        },
+        {
+          "name": "react",
+          "locked": "18.3.1",
+          "installed": "18.3.1",
+          "matches": true
+        },
+        {
+          "name": "react-chartjs-2",
+          "locked": "5.3.1",
+          "installed": "5.3.1",
+          "matches": true
+        },
+        {
+          "name": "react-dom",
+          "locked": "18.3.1",
+          "installed": "18.3.1",
+          "matches": true
+        },
+        {
+          "name": "react-i18next",
+          "locked": "16.5.6",
+          "installed": "16.5.6",
+          "matches": true
+        },
+        {
+          "name": "react-pdf",
+          "locked": "10.4.1",
+          "installed": "10.4.1",
+          "matches": true
+        },
+        {
+          "name": "react-router-dom",
+          "locked": "7.18.2",
+          "installed": "7.18.2",
+          "matches": true
+        },
+        {
+          "name": "react-scripts",
+          "locked": "5.0.1",
+          "installed": "5.0.1",
+          "matches": true
+        },
+        {
+          "name": "sass",
+          "locked": "1.77.8",
+          "installed": "1.77.8",
+          "matches": true
+        },
+        {
+          "name": "tailwind-merge",
+          "locked": "3.6.0",
+          "installed": "3.6.0",
+          "matches": true
+        },
+        {
+          "name": "tw-animate-css",
+          "locked": "1.4.0",
+          "installed": "1.4.0",
+          "matches": true
+        },
+        {
+          "name": "web-vitals",
+          "locked": "2.1.4",
+          "installed": "2.1.4",
+          "matches": true
+        },
+        {
+          "name": "@craco/craco",
+          "locked": "7.1.0",
+          "installed": "7.1.0",
+          "matches": true
+        },
+        {
+          "name": "@types/react",
+          "locked": "18.3.18",
+          "installed": "18.3.18",
+          "matches": true
+        },
+        {
+          "name": "@types/react-dom",
+          "locked": "18.3.5",
+          "installed": "18.3.5",
+          "matches": true
+        },
+        {
+          "name": "autoprefixer",
+          "locked": "10.4.21",
+          "installed": "10.4.21",
+          "matches": true
+        },
+        {
+          "name": "tailwindcss",
+          "locked": "3.4.17",
+          "installed": "3.4.17",
+          "matches": true
+        },
+        {
+          "name": "typescript",
+          "locked": "5.1.6",
+          "installed": "5.1.6",
+          "matches": true
+        }
+      ],
+      "installedManifestPackageCount": 1599,
+      "installedManifestVersionDrift": [],
+      "filesSha256": {
+        "package.json": "5d355ae41df3f3df28baa094db3e337d1c1350cd013b0eba19f76322337511c2",
+        "package-lock.json": "ed0b4c398ffe0d47a2d91e735ee48bf494a0b718534293b59056f91973a6a4ac",
+        "node_modules/.package-lock.json": "00cc3b9a309e871937202330da56da5744fedbaac7773c89447c4c943a049b05"
+      }
+    },
+    "backend": {
+      "path": "/private/tmp/layer-billing-lock-deps/node_modules",
+      "direct": [
+        {
+          "name": "@aws-sdk/client-s3",
+          "locked": "3.1006.0",
+          "installed": "3.1006.0",
+          "matches": true
+        },
+        {
+          "name": "@aws-sdk/s3-request-presigner",
+          "locked": "3.1006.0",
+          "installed": "3.1006.0",
+          "matches": true
+        },
+        {
+          "name": "@cursor/sdk",
+          "locked": "1.0.32",
+          "installed": "1.0.32",
+          "matches": true
+        },
+        {
+          "name": "@hebcal/core",
+          "locked": "6.9.2",
+          "installed": "6.9.2",
+          "matches": true
+        },
+        {
+          "name": "@pdf-lib/fontkit",
+          "locked": "1.1.1",
+          "installed": "1.1.1",
+          "matches": true
+        },
+        {
+          "name": "archiver",
+          "locked": "7.0.1",
+          "installed": "7.0.1",
+          "matches": true
+        },
+        {
+          "name": "axios",
+          "locked": "1.20.0",
+          "installed": "1.20.0",
+          "matches": true
+        },
+        {
+          "name": "bcrypt",
+          "locked": "6.0.0",
+          "installed": "6.0.0",
+          "matches": true
+        },
+        {
+          "name": "bcryptjs",
+          "locked": "2.4.3",
+          "installed": "2.4.3",
+          "matches": true
+        },
+        {
+          "name": "compression",
+          "locked": "1.8.2",
+          "installed": "1.8.2",
+          "matches": true
+        },
+        {
+          "name": "cors",
+          "locked": "2.8.6",
+          "installed": "2.8.6",
+          "matches": true
+        },
+        {
+          "name": "dotenv",
+          "locked": "16.6.1",
+          "installed": "16.6.1",
+          "matches": true
+        },
+        {
+          "name": "exceljs",
+          "locked": "4.4.0",
+          "installed": "4.4.0",
+          "matches": true
+        },
+        {
+          "name": "express",
+          "locked": "4.22.2",
+          "installed": "4.22.2",
+          "matches": true
+        },
+        {
+          "name": "googleapis",
+          "locked": "173.0.0",
+          "installed": "173.0.0",
+          "matches": true
+        },
+        {
+          "name": "helmet",
+          "locked": "8.1.0",
+          "installed": "8.1.0",
+          "matches": true
+        },
+        {
+          "name": "ical-generator",
+          "locked": "11.0.0",
+          "installed": "11.0.0",
+          "matches": true
+        },
+        {
+          "name": "ioredis",
+          "locked": "5.11.1",
+          "installed": "5.11.1",
+          "matches": true
+        },
+        {
+          "name": "jsonwebtoken",
+          "locked": "9.0.3",
+          "installed": "9.0.3",
+          "matches": true
+        },
+        {
+          "name": "multer",
+          "locked": "2.4.0",
+          "installed": "2.4.0",
+          "matches": true
+        },
+        {
+          "name": "node-cron",
+          "locked": "4.2.1",
+          "installed": "4.2.1",
+          "matches": true
+        },
+        {
+          "name": "nodemailer",
+          "locked": "10.0.15",
+          "installed": "10.0.15",
+          "matches": true
+        },
+        {
+          "name": "pdf-lib",
+          "locked": "1.17.1",
+          "installed": "1.17.1",
+          "matches": true
+        },
+        {
+          "name": "pdf-parse",
+          "locked": "2.4.5",
+          "installed": "2.4.5",
+          "matches": true
+        },
+        {
+          "name": "pdfjs-dist",
+          "locked": "4.10.38",
+          "installed": "4.10.38",
+          "matches": true
+        },
+        {
+          "name": "pg",
+          "locked": "8.20.0",
+          "installed": "8.20.0",
+          "matches": true
+        },
+        {
+          "name": "puppeteer",
+          "locked": "25.8.0",
+          "installed": "25.8.0",
+          "matches": true
+        },
+        {
+          "name": "qrcode",
+          "locked": "1.5.4",
+          "installed": "1.5.4",
+          "matches": true
+        },
+        {
+          "name": "saxes",
+          "locked": "5.0.1",
+          "installed": "5.0.1",
+          "matches": true
+        },
+        {
+          "name": "sharp",
+          "locked": "0.35.4",
+          "installed": "0.35.4",
+          "matches": true
+        },
+        {
+          "name": "uuid",
+          "locked": "13.0.2",
+          "installed": "13.0.2",
+          "matches": true
+        },
+        {
+          "name": "@electric-sql/pglite",
+          "locked": "0.5.10",
+          "installed": "0.5.10",
+          "matches": true
+        },
+        {
+          "name": "adm-zip",
+          "locked": "0.6.1",
+          "installed": "0.6.1",
+          "matches": true
+        },
+        {
+          "name": "supertest",
+          "locked": "7.2.2",
+          "installed": "7.2.2",
+          "matches": true
+        }
+      ],
+      "installedManifestPackageCount": 520,
+      "installedManifestVersionDrift": [],
+      "filesSha256": {
+        "package.json": "d8dc77f992e80a5cefef6f803551cd66e1d3993dac4419763848c6f9562ea519",
+        "package-lock.json": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+        "node_modules/.package-lock.json": "6050ef6083317866bc68181efba905733c39b1de665b1564002a97d56a126f4b"
+      }
+    }
+  },
+  "testScope": "Final backend run uses exact lock-installed dependencies only. Frontend direct versions all match; full source/installed manifest hashes pinned; build dependencies unchanged."
+}

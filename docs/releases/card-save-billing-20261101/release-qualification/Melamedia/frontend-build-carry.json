@@ -1,0 +1,276 @@
+{
+  "atUtc": "2026-11-01T22:51:31.019004+00:00",
+  "tenant": "Melamedia",
+  "currentCandidate": "efe1ee371ad96bc76963ac1848076055cb83066b",
+  "nodeVersion": "v24.14.0",
+  "importScope": {
+    "parsedFrontendSourceFiles": 492,
+    "parserErrors": [],
+    "directBackendImports": [
+      {
+        "file": "frontend/src/screens/signingScreen/word/wordAuthoringSelection.test.js",
+        "line": 158,
+        "method": "require",
+        "specifier": "../../../../../backend/lib/wordTemplates",
+        "resolved": "backend/lib/wordTemplates/index.js"
+      },
+      {
+        "file": "frontend/src/screens/signingScreen/word/wordAuthoringSelection.test.js",
+        "line": 159,
+        "method": "require",
+        "specifier": "../../../../../backend/lib/wordTemplates/visual",
+        "resolved": "backend/lib/wordTemplates/visual.js"
+      },
+      {
+        "file": "frontend/src/screens/signingScreen/word/wordAuthoringSelection.test.js",
+        "line": 160,
+        "method": "require",
+        "specifier": "../../../../../backend/lib/wordTemplates/zip",
+        "resolved": "backend/lib/wordTemplates/zip.js"
+      },
+      {
+        "file": "frontend/src/screens/signingScreen/word/wordAuthoringSelection.test.js",
+        "line": 205,
+        "method": "require",
+        "specifier": "../../../../../backend/lib/wordTemplates/visual",
+        "resolved": "backend/lib/wordTemplates/visual.js"
+      }
+    ],
+    "reviewedDynamicImports": [
+      {
+        "file": "frontend/src/components/billing/SystemMessageConsent.test.js",
+        "line": 11,
+        "expression": "require('../../i18n/locales/' + mockLanguage + '.json')"
+      }
+    ],
+    "conservativeBackendHelperPaths": [
+      "backend/lib/wordTemplates/README.md",
+      "backend/lib/wordTemplates/catalog.js",
+      "backend/lib/wordTemplates/clientValues.js",
+      "backend/lib/wordTemplates/converter.js",
+      "backend/lib/wordTemplates/errors.js",
+      "backend/lib/wordTemplates/index.js",
+      "backend/lib/wordTemplates/pdfWorker.cjs",
+      "backend/lib/wordTemplates/visual.js",
+      "backend/lib/wordTemplates/zip.js",
+      "backend/utils/clientProfile.js"
+    ]
+  },
+  "receipts": [
+    {
+      "label": "frontend",
+      "receiptSha256": "966d415c4b9f9415d4bfdb15a051a6d846a37b66fab0ec35646b9a96ee4aa70a",
+      "oldSourceCandidate": "7c3131f2b87bcbf69d2e0fb2650aa6d6ab7aef51",
+      "currentCandidate": "efe1ee371ad96bc76963ac1848076055cb83066b",
+      "receiptPassed": true,
+      "receiptSourceStable": true,
+      "allTrackedFrontendAndScriptsInputCount": 879,
+      "allTrackedFrontendAndScriptsInputsEqual": true,
+      "oldInputMapSha256": "6dffdbef09d143a1b7ae6c23e9e21b78164463f78bde6a5011c60ad0b72bcd6f",
+      "currentInputMapSha256": "6dffdbef09d143a1b7ae6c23e9e21b78164463f78bde6a5011c60ad0b72bcd6f",
+      "treeObjects": {
+        "frontend": {
+          "old": "acef18c7f9bdb5f0bad90f2cdded39d6e2a2c83d",
+          "current": "acef18c7f9bdb5f0bad90f2cdded39d6e2a2c83d"
+        },
+        "scripts": {
+          "old": "0fda6984171b12b1a96297444230d64603eccc1b",
+          "current": "0fda6984171b12b1a96297444230d64603eccc1b"
+        }
+      },
+      "allTreeObjectsEqual": true,
+      "dependencyProof": {
+        "backend": {
+          "sourceLockMatches": true,
+          "installedLockMatches": true,
+          "zeroDependencyDriftAtReceipt": true
+        },
+        "frontend": {
+          "sourceLockMatches": true,
+          "installedLockMatches": true,
+          "zeroDependencyDriftAtReceipt": true
+        }
+      },
+      "conservativeImportedBackendHelpers": {
+        "backend/lib/wordTemplates/README.md": {
+          "oldSha256": "a5f66558300855bbb47deb9adf85842c19b756eecf84bf46fde313700fbb5ffb",
+          "currentSha256": "a5f66558300855bbb47deb9adf85842c19b756eecf84bf46fde313700fbb5ffb"
+        },
+        "backend/lib/wordTemplates/catalog.js": {
+          "oldSha256": "b3132bd87862efd3f13d3fc8494c959076e6053431025d9e830186a0bbd4a030",
+          "currentSha256": "b3132bd87862efd3f13d3fc8494c959076e6053431025d9e830186a0bbd4a030"
+        },
+        "backend/lib/wordTemplates/clientValues.js": {
+          "oldSha256": "61e74d00f597d9cf819a00a9ffa1f1412d2ad87871dd123fe776e0316414c290",
+          "currentSha256": "61e74d00f597d9cf819a00a9ffa1f1412d2ad87871dd123fe776e0316414c290"
+        },
+        "backend/lib/wordTemplates/converter.js": {
+          "oldSha256": "97dc314ac9278c0c431de127679165bcc20106085b3aaf84ce0ccab65addecab",
+          "currentSha256": "97dc314ac9278c0c431de127679165bcc20106085b3aaf84ce0ccab65addecab"
+        },
+        "backend/lib/wordTemplates/errors.js": {
+          "oldSha256": "bf3b2cfd18ebf398928de25b74af466669d6132ef8141c290e147dbe643b8e15",
+          "currentSha256": "bf3b2cfd18ebf398928de25b74af466669d6132ef8141c290e147dbe643b8e15"
+        },
+        "backend/lib/wordTemplates/index.js": {
+          "oldSha256": "c9a49dedf27f83d0d1c3fbb9db204f1fc83a8f773ae1f4d6bc8f4351decec2b4",
+          "currentSha256": "c9a49dedf27f83d0d1c3fbb9db204f1fc83a8f773ae1f4d6bc8f4351decec2b4"
+        },
+        "backend/lib/wordTemplates/pdfWorker.cjs": {
+          "oldSha256": "11eda06923c43f61c42e5453f0c9024be189d261a669f154e1a761a0f3da3dba",
+          "currentSha256": "11eda06923c43f61c42e5453f0c9024be189d261a669f154e1a761a0f3da3dba"
+        },
+        "backend/lib/wordTemplates/visual.js": {
+          "oldSha256": "8abce6fda3fb0eeb84aeaf2b0705b61693ec949cad3cdc39aec3705378542a1d",
+          "currentSha256": "8abce6fda3fb0eeb84aeaf2b0705b61693ec949cad3cdc39aec3705378542a1d"
+        },
+        "backend/lib/wordTemplates/zip.js": {
+          "oldSha256": "4cbc7c2d47e1a65237ed7e0090ef2f199ffee5ad7433869a74d2857a5a1d1b82",
+          "currentSha256": "4cbc7c2d47e1a65237ed7e0090ef2f199ffee5ad7433869a74d2857a5a1d1b82"
+        },
+        "backend/utils/clientProfile.js": {
+          "oldSha256": "4d299590b38634e02a1b821128934800376aed10c329030c7b574577b7bf698d",
+          "currentSha256": "4d299590b38634e02a1b821128934800376aed10c329030c7b574577b7bf698d"
+        }
+      },
+      "allImportedBackendHelpersEqual": true,
+      "packageInputs": {
+        "frontend/package.json": {
+          "oldSha256": "5d355ae41df3f3df28baa094db3e337d1c1350cd013b0eba19f76322337511c2",
+          "currentSha256": "5d355ae41df3f3df28baa094db3e337d1c1350cd013b0eba19f76322337511c2"
+        },
+        "frontend/package-lock.json": {
+          "oldSha256": "ed0b4c398ffe0d47a2d91e735ee48bf494a0b718534293b59056f91973a6a4ac",
+          "currentSha256": "ed0b4c398ffe0d47a2d91e735ee48bf494a0b718534293b59056f91973a6a4ac"
+        },
+        "backend/package.json": {
+          "oldSha256": "d8dc77f992e80a5cefef6f803551cd66e1d3993dac4419763848c6f9562ea519",
+          "currentSha256": "d8dc77f992e80a5cefef6f803551cd66e1d3993dac4419763848c6f9562ea519"
+        },
+        "backend/package-lock.json": {
+          "oldSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+          "currentSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651"
+        }
+      },
+      "allPackageInputsEqual": true,
+      "logSha256Matches": true,
+      "recompiledAtCurrentHead": false,
+      "provenance": "Existing receipt remains pinned to oldSourceCandidate; equal compiler/test inputs permit carrying its evidence, not a claim of a new compile.",
+      "valid": true
+    },
+    {
+      "label": "build",
+      "receiptSha256": "8cd2238f16d1ae177e3272eb1fef91d61bc7c6631f849703ee171e2723650851",
+      "oldSourceCandidate": "7c3131f2b87bcbf69d2e0fb2650aa6d6ab7aef51",
+      "currentCandidate": "efe1ee371ad96bc76963ac1848076055cb83066b",
+      "receiptPassed": true,
+      "receiptSourceStable": true,
+      "allTrackedFrontendAndScriptsInputCount": 879,
+      "allTrackedFrontendAndScriptsInputsEqual": true,
+      "oldInputMapSha256": "6dffdbef09d143a1b7ae6c23e9e21b78164463f78bde6a5011c60ad0b72bcd6f",
+      "currentInputMapSha256": "6dffdbef09d143a1b7ae6c23e9e21b78164463f78bde6a5011c60ad0b72bcd6f",
+      "treeObjects": {
+        "frontend": {
+          "old": "acef18c7f9bdb5f0bad90f2cdded39d6e2a2c83d",
+          "current": "acef18c7f9bdb5f0bad90f2cdded39d6e2a2c83d"
+        },
+        "scripts": {
+          "old": "0fda6984171b12b1a96297444230d64603eccc1b",
+          "current": "0fda6984171b12b1a96297444230d64603eccc1b"
+        }
+      },
+      "allTreeObjectsEqual": true,
+      "dependencyProof": {
+        "backend": {
+          "sourceLockMatches": true,
+          "installedLockMatches": true,
+          "zeroDependencyDriftAtReceipt": true
+        },
+        "frontend": {
+          "sourceLockMatches": true,
+          "installedLockMatches": true,
+          "zeroDependencyDriftAtReceipt": true
+        }
+      },
+      "conservativeImportedBackendHelpers": {
+        "backend/lib/wordTemplates/README.md": {
+          "oldSha256": "a5f66558300855bbb47deb9adf85842c19b756eecf84bf46fde313700fbb5ffb",
+          "currentSha256": "a5f66558300855bbb47deb9adf85842c19b756eecf84bf46fde313700fbb5ffb"
+        },
+        "backend/lib/wordTemplates/catalog.js": {
+          "oldSha256": "b3132bd87862efd3f13d3fc8494c959076e6053431025d9e830186a0bbd4a030",
+          "currentSha256": "b3132bd87862efd3f13d3fc8494c959076e6053431025d9e830186a0bbd4a030"
+        },
+        "backend/lib/wordTemplates/clientValues.js": {
+          "oldSha256": "61e74d00f597d9cf819a00a9ffa1f1412d2ad87871dd123fe776e0316414c290",
+          "currentSha256": "61e74d00f597d9cf819a00a9ffa1f1412d2ad87871dd123fe776e0316414c290"
+        },
+        "backend/lib/wordTemplates/converter.js": {
+          "oldSha256": "97dc314ac9278c0c431de127679165bcc20106085b3aaf84ce0ccab65addecab",
+          "currentSha256": "97dc314ac9278c0c431de127679165bcc20106085b3aaf84ce0ccab65addecab"
+        },
+        "backend/lib/wordTemplates/errors.js": {
+          "oldSha256": "bf3b2cfd18ebf398928de25b74af466669d6132ef8141c290e147dbe643b8e15",
+          "currentSha256": "bf3b2cfd18ebf398928de25b74af466669d6132ef8141c290e147dbe643b8e15"
+        },
+        "backend/lib/wordTemplates/index.js": {
+          "oldSha256": "c9a49dedf27f83d0d1c3fbb9db204f1fc83a8f773ae1f4d6bc8f4351decec2b4",
+          "currentSha256": "c9a49dedf27f83d0d1c3fbb9db204f1fc83a8f773ae1f4d6bc8f4351decec2b4"
+        },
+        "backend/lib/wordTemplates/pdfWorker.cjs": {
+          "oldSha256": "11eda06923c43f61c42e5453f0c9024be189d261a669f154e1a761a0f3da3dba",
+          "currentSha256": "11eda06923c43f61c42e5453f0c9024be189d261a669f154e1a761a0f3da3dba"
+        },
+        "backend/lib/wordTemplates/visual.js": {
+          "oldSha256": "8abce6fda3fb0eeb84aeaf2b0705b61693ec949cad3cdc39aec3705378542a1d",
+          "currentSha256": "8abce6fda3fb0eeb84aeaf2b0705b61693ec949cad3cdc39aec3705378542a1d"
+        },
+        "backend/lib/wordTemplates/zip.js": {
+          "oldSha256": "4cbc7c2d47e1a65237ed7e0090ef2f199ffee5ad7433869a74d2857a5a1d1b82",
+          "currentSha256": "4cbc7c2d47e1a65237ed7e0090ef2f199ffee5ad7433869a74d2857a5a1d1b82"
+        },
+        "backend/utils/clientProfile.js": {
+          "oldSha256": "4d299590b38634e02a1b821128934800376aed10c329030c7b574577b7bf698d",
+          "currentSha256": "4d299590b38634e02a1b821128934800376aed10c329030c7b574577b7bf698d"
+        }
+      },
+      "allImportedBackendHelpersEqual": true,
+      "packageInputs": {
+        "frontend/package.json": {
+          "oldSha256": "5d355ae41df3f3df28baa094db3e337d1c1350cd013b0eba19f76322337511c2",
+          "currentSha256": "5d355ae41df3f3df28baa094db3e337d1c1350cd013b0eba19f76322337511c2"
+        },
+        "frontend/package-lock.json": {
+          "oldSha256": "ed0b4c398ffe0d47a2d91e735ee48bf494a0b718534293b59056f91973a6a4ac",
+          "currentSha256": "ed0b4c398ffe0d47a2d91e735ee48bf494a0b718534293b59056f91973a6a4ac"
+        },
+        "backend/package.json": {
+          "oldSha256": "d8dc77f992e80a5cefef6f803551cd66e1d3993dac4419763848c6f9562ea519",
+          "currentSha256": "d8dc77f992e80a5cefef6f803551cd66e1d3993dac4419763848c6f9562ea519"
+        },
+        "backend/package-lock.json": {
+          "oldSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+          "currentSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651"
+        }
+      },
+      "allPackageInputsEqual": true,
+      "logSha256Matches": true,
+      "recompiledAtCurrentHead": false,
+      "provenance": "Existing receipt remains pinned to oldSourceCandidate; equal compiler/test inputs permit carrying its evidence, not a claim of a new compile.",
+      "frozenCompilerWrapperStillExact": true,
+      "publicEnvironment": {
+        "REACT_APP_APP_NAME": "melamedia",
+        "REACT_APP_API_BASE_URL": "http://127.0.0.1:55799/api",
+        "BUILD_PATH": "/tmp/layer-billing-release-clients-20261101/cache/Melamedia/production-build",
+        "GENERATE_SOURCEMAP": "false"
+      },
+      "artifactCount": 256,
+      "deploymentPayload": false,
+      "pdfWorkerMatchesLockedInstalledPackage": true,
+      "originalCracoMatchesSource": true,
+      "valid": true
+    }
+  ],
+  "allValid": true,
+  "scope": "Cryptographic local source/dependency/compiler-input equivalence only. No provider, customer, current production, actual payload or release acceptance."
+}

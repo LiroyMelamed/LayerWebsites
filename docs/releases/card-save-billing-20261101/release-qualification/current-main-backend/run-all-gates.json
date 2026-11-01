@@ -1,0 +1,25 @@
+{
+  "candidate": "6fab2887d056262cf52ddb773a377e5ad804f0d7",
+  "globalMutex": "/tmp/layer-billing-integration-20261101/build.lock",
+  "lockHeldBy": "outer with-build-lock.py for the entire command; no nested mutex",
+  "results": [
+    {
+      "command": [
+        "/Users/liroymelamed/.nvm/versions/node/v24.14.0/bin/node",
+        "/private/tmp/layer-billing-main-current-20261101/docs/releases/card-save-billing-20261101/release-qualification/current-main-backend/run-offline-gates.cjs"
+      ],
+      "startedAtUtc": "2026-11-01T22:42:16.203853+00:00",
+      "finishedAtUtc": "2026-11-01T22:43:05.950508+00:00",
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "python3",
+        "/private/tmp/layer-billing-main-current-20261101/docs/releases/card-save-billing-20261101/release-qualification/current-main-backend/run-real-postgres.py"
+      ],
+      "startedAtUtc": "2026-11-01T22:43:05.950566+00:00",
+      "finishedAtUtc": "2026-11-01T22:43:07.679089+00:00",
+      "exitCode": 0
+    }
+  ]
+}

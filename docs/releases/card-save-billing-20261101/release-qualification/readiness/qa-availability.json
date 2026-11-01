@@ -1,0 +1,32 @@
+{
+  "atUtc": "2026-11-01T22:23:15.550052+00:00",
+  "scope": "Existing local fixture/config/listener presence and pg_database names only; no create, restore, application/bootstrap or customer-row queries",
+  "signup": {
+    "SIGNUP_RELEASE_QA_CONFIGSet": false,
+    "knownPrivateConfigExists": false,
+    "catalogNameQueryExit": 0,
+    "catalogNameQueryStatus": "VERIFIED_EXISTING_DEFAULT_ACCESS",
+    "atUtc": "2026-11-01T22:23:40.186409+00:00",
+    "namedReleaseQaDatabasePresent": false,
+    "olderQaDatabasePresent": false,
+    "catalogOnlyReadOnlyTransaction": true
+  },
+  "profile": {
+    "CLIENT_PROFILE_TEST_SOCKETSet": false,
+    "55487": {
+      "fixedSocketPathExists": false,
+      "fixedSocketFileExists": false
+    },
+    "55488": {
+      "fixedSocketPathExists": false,
+      "fixedSocketFileExists": false
+    }
+  },
+  "listenerObservation": {
+    "exit": 1,
+    "port55440Listening": true,
+    "port55487Listening": false,
+    "port55488Listening": false
+  },
+  "earlierSandboxLocalSocketObservation": "Read-only socket connection blocked by local sandbox; same metadata query retried through normal escalation, no roles/access created."
+}

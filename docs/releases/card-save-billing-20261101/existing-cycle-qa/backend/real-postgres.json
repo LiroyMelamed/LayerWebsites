@@ -1,0 +1,42 @@
+{
+  "candidate": "c21c897b00fb3a969bd977d62615e6325879a1fc",
+  "startedAtUtc": "2026-11-01T21:49:41.372682+00:00",
+  "finishedAtUtc": "2026-11-01T21:49:46.206132+00:00",
+  "command": [
+    "/Users/liroymelamed/.nvm/versions/node/v24.14.0/bin/node",
+    "--require",
+    "/private/tmp/layer-billing-debt-20261101/docs/releases/card-save-billing-20261101/existing-cycle-qa/backend/real-postgres-network-guard.cjs",
+    "--test",
+    "--test-reporter=tap",
+    "backend/tests/cardSetupDebtCollection.test.js"
+  ],
+  "exitCode": 0,
+  "summary": {
+    "tests": 57,
+    "pass": 57,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "sourceSha256Before": {
+    "backend/lib/billing/firmBillingService.js": "5f6ecd8d26503d7a79a082809907df309da0c19b875fbb31e5f87facb2280e80",
+    "backend/tests/cardSetupDebtCollection.test.js": "d1086bc9b5e19d56ab23af2dcf71de5d61ec61a00f48cd0529c842c382888378"
+  },
+  "sourceSha256After": {
+    "backend/lib/billing/firmBillingService.js": "5f6ecd8d26503d7a79a082809907df309da0c19b875fbb31e5f87facb2280e80",
+    "backend/tests/cardSetupDebtCollection.test.js": "d1086bc9b5e19d56ab23af2dcf71de5d61ec61a00f48cd0529c842c382888378"
+  },
+  "sourceStable": true,
+  "testDiffSha256": "c4b60407d00398f9ee3df12a1cf2e1fe58b0a59ee3315c7cc09b37206d7a0347",
+  "dependencyRoot": "/tmp/layer-billing-lock-deps/node_modules",
+  "fixture": {
+    "host": "127.0.0.1",
+    "port": 55449,
+    "user": "billing_qa",
+    "database": "billing_card_setup_qa"
+  },
+  "providerCalls": "synthetic only",
+  "networkGuard": "only127.0.0.1:55449 TCP, native fetch blocked",
+  "newRuntimeFeature": "none; current monthly cycle only",
+  "logSha256": "b605a57c849a34454477a2cb7d0b8bcb31444e46cc0ca70cf9bf088e43207a38"
+}

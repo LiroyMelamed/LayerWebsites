@@ -1,0 +1,176 @@
+Browser tab: 3, Title: "Local billing browser QA", URL: "http://127.0.0.1:55701/AdminStack/PlansPricing".
+1 AXWebArea Local billing browser QA, URL: 127.0.0.1:55701/AdminStack/PlansPricing
+	2 container
+		3 container qa
+			4 text LOCAL QA — actual screens, synthetic API + iframe; no credentials or provider I/O
+			5 container
+				6 text Scenario 
+				7 pop up button (collapsed, settable) Scenario, Value: unknown, ID: scenario, Secondary Actions: Expand
+					8 menu
+						9 success
+						10 decline
+						11 (selected) unknown
+						12 no-debt
+			13 button Reset scenario, ID: reset
+			14 button PlanUsage screen, ID: plan
+			15 button PlansPricing screen, ID: pricing
+			16 button Send forged parent message, ID: spoof
+			17 container Description: Synthetic payment and access status, ID: qa-summary
+				104 text scenario=unknown | status=past_due | due=1353 | savedCard=true | paid=false | pending=true | checkouts=1 | confirmations=1 | verificationFee=1 | simulatedSubscriptionCharges=0
+			19 container Description: Synthetic API counters, ID: qa-state
+				105 text {
+ "scenario": "unknown",
+ "checkouts": 1,
+ "confirmations": 1,
+ "confirmBodies": [
+  {
+   "intentId": "synthetic-intent-1",
+   "uniqId": "synthetic-order-1"
+  }
+ ],
+ "fee": 1,
+ "subscriptionCharges": 0,
+ "savedCard": true,
+ "paid": false,
+ "pending": true,
+ "calls": [
+  {
+   "method": "GET",
+   "path": "/api/billing/system-message-consent"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/plan"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/usage"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/lock-status"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/system-message-consent"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/plan"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/lock-status"
+  },
+  {
+   "method": "POST",
+   "path": "/api/billing/package"
+  },
+  {
+   "method": "POST",
+   "path": "/api/billing/checkout/confirm"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/plan"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/lock-status"
+  },
+  {
+   "method": "GET",
+   "path": "/api/billing/lock-status"
+  }
+ ],
+ "messages": [],
+ "completed": [
+  "synthetic-intent-1"
+ ],
+ "accountStatus": "past_due",
+ "collectibleDebt": 1353
+}
+		106 container
+			107 text חבילות ותמחור כל מה שמשלמים עליו — מוסבר בצורה ברורה. תשלום שנתי חוסך 10%. מחשבון מחיר בחרו את ההרכב שמתאים למשרד וקבלו פירוט מחיר ברור. המערכת – כלול תמיד כולל ניהול תיקים, לקוחות ומסמכים. פלטפורמות
+			108 checkbox אתר, Value: 0
+				109 text אתר
+			110 checkbox אפליקציה, Value: 0
+				111 text אפליקציה
+			112 checkbox אתר + אפליקציה, Value: 1
+				113 text אתר + אפליקציה
+			114 content list
+				115 container
+					116 AXListMarker • 
+					117 text דפדפן + אפליקציה
+				118 container
+					119 AXListMarker • 
+					120 text חווית לקוח מלאה
+			121 text חבילת משאבים
+			122 checkbox בסיסי, Value: 0
+				123 text בסיסי
+			124 checkbox פרו, Value: 1
+				125 text פרו
+			126 checkbox ארגוני, Value: 0
+				127 text ארגוני
+			128 content list
+				129 container
+					130 AXListMarker • 
+					131 text עד 5 מנהלי מערכת
+				132 container
+					133 AXListMarker • 
+					134 text עד 2000 SMS בחודש
+				135 container
+					136 AXListMarker • 
+					137 text נפח אחסון: 1 GB
+			138 text חבילת חתימות
+			139 checkbox ללא חתימות, Value: 0
+				140 text ללא חתימות
+			141 checkbox 500 חתימות, Value: 1
+				142 text 500 חתימות
+			143 checkbox 1500 חתימות, Value: 0
+				144 text 1500 חתימות
+			145 checkbox 5000 חתימות, Value: 0
+				146 text 5000 חתימות
+			147 checkbox חתימות ללא הגבלה, Value: 0
+				148 text חתימות ללא הגבלה
+			149 content list
+				150 container
+					151 AXListMarker • 
+					152 text עד 500 חתימות בחודש
+				153 container
+					154 AXListMarker • 
+					155 text כולל OTP
+				156 container
+					157 AXListMarker • 
+					158 text כולל קובץ ראיות
+			159 text תשלום
+			160 checkbox חודשי, Value: 1
+				161 text חודשי
+			162 checkbox שנתי · 10% הנחה, Value: 0
+				163 text שנתי · 10% הנחה
+			164 text סה״כ לחודש סה״כ 972 ₪ או 10,498 ₪ לשנה · 10% הנחה
+			165 table פירוט מחיר
+				166 row
+					167 cell
+						168 text מערכת
+					169 cell
+						170 text 296 ₪
+				171 row
+					172 cell
+						173 text פלטפורמה: אתר + אפליקציה
+					174 cell
+						175 text 296 ₪
+				176 row
+					177 cell
+						178 text חבילת משאבים: פרו
+					179 cell
+						180 text 211 ₪
+				181 row
+					182 cell
+						183 text חבילת חתימות: 500 חתימות
+					184 cell
+						185 text 169 ₪
+			186 text תוצאת התשלום עדיין לא אושרה. יש לבדוק את מצב המנוי לפני ניסיון נוסף.
+			187 button שמירה ותשלום
+				188 text שמירה ותשלום
+		103 container Notifications

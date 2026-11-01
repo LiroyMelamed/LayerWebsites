@@ -1,0 +1,26 @@
+{
+  "capturedAtUtc": "2026-11-01T21:47:04.667464+00:00",
+  "candidateHead": "c21c897b00fb3a969bd977d62615e6325879a1fc",
+  "scope": "existing-customer one due subscription month followed by next monthly renewal; no multi-period ledger",
+  "database": "disposable PGlite real SQL with leased transaction exclusion",
+  "providerReads": "synthetic module boundaries",
+  "providerWrites": "synthetic module boundaries",
+  "actualProviderOrCustomerOperations": 0,
+  "tests": 57,
+  "passed": 57,
+  "failed": 0,
+  "skipped": 0,
+  "newChainCases": 6,
+  "sourceSha256": {
+    "backend/tests/cardSetupDebtCollection.test.js": "d1086bc9b5e19d56ab23af2dcf71de5d61ec61a00f48cd0529c842c382888378",
+    "backend/lib/billing/firmBillingService.js": "5f6ecd8d26503d7a79a082809907df309da0c19b875fbb31e5f87facb2280e80",
+    "docs/releases/card-save-billing-20261101/comprehensive-qa/offline-network-guard.cjs": "31881b6080420ca59e9b27b339525b418db5744a239bcefe6b8845a452a3d6a7"
+  },
+  "outputSha256": "2c0f4f467a805e99b09e01d4c70d0f0a395a62cbc9b899621cfe07ff63b05ebd",
+  "nodeVersion": "v24.14.0",
+  "command": "NODE_PATH=/tmp/layer-billing-lock-deps/node_modules node --require ./docs/releases/card-save-billing-20261101/comprehensive-qa/offline-network-guard.cjs --test --test-reporter=tap backend/tests/cardSetupDebtCollection.test.js",
+  "productionCodeChangedByThisSubtask": false,
+  "testFixtureChange": "Bind synthetic charged-transaction-N to actual recorded provider input N, retaining exact amount assertions",
+  "includesUncommittedTestChanges": true,
+  "candidateHeadMeaning": "Shared runtime source head; new test contents are bound by sourceSha256 and await parent commit"
+}

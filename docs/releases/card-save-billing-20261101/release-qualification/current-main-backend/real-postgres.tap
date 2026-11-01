@@ -1,0 +1,352 @@
+TAP version 13
+# Subtest: dedicated legacy card save collects the stored debt once, separately from ₪1
+ok 1 - dedicated legacy card save collects the stored debt once, separately from ₪1
+  ---
+  duration_ms: 76.541166
+  type: 'test'
+  ...
+# Subtest: scoped legacy card save collects the stored debt once, separately from ₪1
+ok 2 - scoped legacy card save collects the stored debt once, separately from ₪1
+  ---
+  duration_ms: 30.776917
+  type: 'test'
+  ...
+# Subtest: dedicated legacy existing customer pays the due month on card save and the full agreed price at next monthly renewal
+ok 3 - dedicated legacy existing customer pays the due month on card save and the full agreed price at next monthly renewal
+  ---
+  duration_ms: 39.966334
+  type: 'test'
+  ...
+# Subtest: dedicated legacy declined card-save debt grants no free month; explicit recovery is followed by a full-price next renewal
+ok 4 - dedicated legacy declined card-save debt grants no free month; explicit recovery is followed by a full-price next renewal
+  ---
+  duration_ms: 38.039166
+  type: 'test'
+  ...
+# Subtest: dedicated legacy uncertain card-save charge grants no free month; the same verified transaction settles before next full-price renewal
+ok 5 - dedicated legacy uncertain card-save charge grants no free month; the same verified transaction settles before next full-price renewal
+  ---
+  duration_ms: 34.945667
+  type: 'test'
+  ...
+# Subtest: scoped legacy existing customer pays the due month on card save and the full agreed price at next monthly renewal
+ok 6 - scoped legacy existing customer pays the due month on card save and the full agreed price at next monthly renewal
+  ---
+  duration_ms: 33.818459
+  type: 'test'
+  ...
+# Subtest: scoped legacy declined card-save debt grants no free month; explicit recovery is followed by a full-price next renewal
+ok 7 - scoped legacy declined card-save debt grants no free month; explicit recovery is followed by a full-price next renewal
+  ---
+  duration_ms: 37.142458
+  type: 'test'
+  ...
+# Subtest: scoped legacy uncertain card-save charge grants no free month; the same verified transaction settles before next full-price renewal
+ok 8 - scoped legacy uncertain card-save charge grants no free month; the same verified transaction settles before next full-price renewal
+  ---
+  duration_ms: 35.006875
+  type: 'test'
+  ...
+# Subtest: card verification leaves nonbillable subscription unchanged: {"amount":0}
+ok 9 - card verification leaves nonbillable subscription unchanged: {"amount":0}
+  ---
+  duration_ms: 18.298708
+  type: 'test'
+  ...
+# Subtest: card verification leaves nonbillable subscription unchanged: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"}
+ok 10 - card verification leaves nonbillable subscription unchanged: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"}
+  ---
+  duration_ms: 16.673541
+  type: 'test'
+  ...
+# Subtest: card verification leaves nonbillable subscription unchanged: {"status":"complimentary","complimentaryUntil":"2026-12-01T12:00:00Z"}
+ok 11 - card verification leaves nonbillable subscription unchanged: {"status":"complimentary","complimentaryUntil":"2026-12-01T12:00:00Z"}
+  ---
+  duration_ms: 18.649625
+  type: 'test'
+  ...
+# Subtest: card verification leaves nonbillable subscription unchanged: {"billingEnabled":false}
+ok 12 - card verification leaves nonbillable subscription unchanged: {"billingEnabled":false}
+  ---
+  duration_ms: 16.912792
+  type: 'test'
+  ...
+# Subtest: card verification leaves nonbillable subscription unchanged: {"autoRenew":false,"status":"active","renewsAt":"2026-10-01T12:00:00Z"}
+ok 13 - card verification leaves nonbillable subscription unchanged: {"autoRenew":false,"status":"active","renewsAt":"2026-10-01T12:00:00Z"}
+  ---
+  duration_ms: 17.40425
+  type: 'test'
+  ...
+# Subtest: one definite decline retains debt/grace and callback replay never retries that setup attempt
+ok 14 - one definite decline retains debt/grace and callback replay never retries that setup attempt
+  ---
+  duration_ms: 21.739708
+  type: 'test'
+  ...
+# Subtest: timeout charge outcome retains a reservation and prevents alternate charges or checkout
+ok 15 - timeout charge outcome retains a reservation and prevents alternate charges or checkout
+  ---
+  duration_ms: 22.547667
+  type: 'test'
+  ...
+# Subtest: ambiguous charge outcome retains a reservation and prevents alternate charges or checkout
+ok 16 - ambiguous charge outcome retains a reservation and prevents alternate charges or checkout
+  ---
+  duration_ms: 24.182
+  type: 'test'
+  ...
+# Subtest: malformed charge outcome retains a reservation and prevents alternate charges or checkout
+ok 17 - malformed charge outcome retains a reservation and prevents alternate charges or checkout
+  ---
+  duration_ms: 20.305667
+  type: 'test'
+  ...
+# Subtest: an existing unresolved payment survives setup and blocks a second collection
+ok 18 - an existing unresolved payment survives setup and blocks a second collection
+  ---
+  duration_ms: 20.53275
+  type: 'test'
+  ...
+# Subtest: concurrent setup callbacks, explicit retry and maintenance dispatch at most one subscription charge
+ok 19 - concurrent setup callbacks, explicit retry and maintenance dispatch at most one subscription charge
+  ---
+  duration_ms: 24.459125
+  type: 'test'
+  ...
+# Subtest: unverified setup or missing trusted token cannot save a callback card or collect debt
+ok 20 - unverified setup or missing trusted token cannot save a callback card or collect debt
+  ---
+  duration_ms: 25.475709
+  type: 'test'
+  ...
+# Subtest: initial signup payment provisions the signup without entering card debt collection
+ok 21 - initial signup payment provisions the signup without entering card debt collection
+  ---
+  duration_ms: 16.919875
+  type: 'test'
+  ...
+# Subtest: a setup saved before the next bill cannot authorize that later bill when its callback replays
+ok 22 - a setup saved before the next bill cannot authorize that later bill when its callback replays
+  ---
+  duration_ms: 19.064
+  type: 'test'
+  ...
+# Subtest: pre-fix succeeded setup without collection authorization cannot start a historical live bill
+ok 23 - pre-fix succeeded setup without collection authorization cannot start a historical live bill
+  ---
+  duration_ms: 15.235792
+  type: 'test'
+  ...
+# Subtest: a successful charge with unverifiable outcome remains reserved until its same transaction verifies
+ok 24 - a successful charge with unverifiable outcome remains reserved until its same transaction verifies
+  ---
+  duration_ms: 26.3415
+  type: 'test'
+  ...
+# Subtest: setup settlement rejects a stored intent from a different office before saving its card
+ok 25 - setup settlement rejects a stored intent from a different office before saving its card
+  ---
+  duration_ms: 16.34275
+  type: 'test'
+  ...
+# Subtest: a setup authorized for an unresolved old cycle cannot collect a different later cycle
+ok 26 - a setup authorized for an unresolved old cycle cannot collect a different later cycle
+  ---
+  duration_ms: 20.7055
+  type: 'test'
+  ...
+# Subtest: hosted checkout racing setup collection reserves one payment route
+ok 27 - hosted checkout racing setup collection reserves one payment route
+  ---
+  duration_ms: 19.903834
+  type: 'test'
+  ...
+# Subtest: yearly debt collection uses its stored agreed monthly amount and existing annual rule
+ok 28 - yearly debt collection uses its stored agreed monthly amount and existing annual rule
+  ---
+  duration_ms: 18.465875
+  type: 'test'
+  ...
+# Subtest: setup return reports actual payment result for an active account with due debt: timeout
+ok 29 - setup return reports actual payment result for an active account with due debt: timeout
+  ---
+  duration_ms: 21.266625
+  type: 'test'
+  ...
+# Subtest: setup return reports actual payment result for an active account with due debt: success
+ok 30 - setup return reports actual payment result for an active account with due debt: success
+  ---
+  duration_ms: 21.54625
+  type: 'test'
+  ...
+# Subtest: browser cancellation preserves an uncertain hosted reservation; later confirmed payment settles once
+ok 31 - browser cancellation preserves an uncertain hosted reservation; later confirmed payment settles once
+  ---
+  duration_ms: 19.956333
+  type: 'test'
+  ...
+# Subtest: a missing card cannot downgrade a nonbillable account: {"amount":0}
+ok 32 - a missing card cannot downgrade a nonbillable account: {"amount":0}
+  ---
+  duration_ms: 16.414583
+  type: 'test'
+  ...
+# Subtest: a missing credentials cannot downgrade a nonbillable account: {"amount":0}
+ok 33 - a missing credentials cannot downgrade a nonbillable account: {"amount":0}
+  ---
+  duration_ms: 15.473291
+  type: 'test'
+  ...
+# Subtest: a missing card cannot downgrade a nonbillable account: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"}
+ok 34 - a missing card cannot downgrade a nonbillable account: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"}
+  ---
+  duration_ms: 16.049875
+  type: 'test'
+  ...
+# Subtest: a missing credentials cannot downgrade a nonbillable account: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"}
+ok 35 - a missing credentials cannot downgrade a nonbillable account: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"}
+  ---
+  duration_ms: 15.05775
+  type: 'test'
+  ...
+# Subtest: setup blocked by an unrelated pending payment cannot retry it after its later decline
+ok 36 - setup blocked by an unrelated pending payment cannot retry it after its later decline
+  ---
+  duration_ms: 18.334791
+  type: 'test'
+  ...
+# Subtest: provider document reference persists on the successful intent and history without assuming email delivery
+ok 37 - provider document reference persists on the successful intent and history without assuming email delivery
+  ---
+  duration_ms: 18.503875
+  type: 'test'
+  ...
+# Subtest: expiry suspension after cancellation without an existing payment failure creates no debt on card save
+ok 38 - expiry suspension after cancellation without an existing payment failure creates no debt on card save
+  ---
+  duration_ms: 15.903958
+  type: 'test'
+  ...
+# Subtest: zero-price v2 agreement remains readable by plan, return and lock status snapshots
+ok 39 - zero-price v2 agreement remains readable by plan, return and lock status snapshots
+  ---
+  duration_ms: 17.517666
+  type: 'test'
+  ...
+# Subtest: due debt with missing card returns explicit failed payment instead of success-shaped snapshot
+ok 40 - due debt with missing card returns explicit failed payment instead of success-shaped snapshot
+  ---
+  duration_ms: 15.35775
+  type: 'test'
+  ...
+# Subtest: due debt with missing credentials returns explicit failed payment instead of success-shaped snapshot
+ok 41 - due debt with missing credentials returns explicit failed payment instead of success-shaped snapshot
+  ---
+  duration_ms: 15.50125
+  type: 'test'
+  ...
+# Subtest: hosted page timeout preserves a reservation and blocks alternate payment dispatch
+ok 42 - hosted page timeout preserves a reservation and blocks alternate payment dispatch
+  ---
+  duration_ms: 16.499792
+  type: 'test'
+  ...
+# Subtest: a lost hosted order reference cannot be reconciled with an unrelated approved order
+ok 43 - a lost hosted order reference cannot be reconciled with an unrelated approved order
+  ---
+  duration_ms: 16.73925
+  type: 'test'
+  ...
+# Subtest: saved-card endpoint rejects unsupported setup kind before reserving or charging
+ok 44 - saved-card endpoint rejects unsupported setup kind before reserving or charging
+  ---
+  duration_ms: 13.294834
+  type: 'test'
+  ...
+# Subtest: saved-card endpoint rejects unsupported unrecognized kind before reserving or charging
+ok 45 - saved-card endpoint rejects unsupported unrecognized kind before reserving or charging
+  ---
+  duration_ms: 15.668875
+  type: 'test'
+  ...
+# Subtest: saved-card endpoint rejects unsupported manual kind before reserving or charging
+ok 46 - saved-card endpoint rejects unsupported manual kind before reserving or charging
+  ---
+  duration_ms: 15.283083
+  type: 'test'
+  ...
+# Subtest: manual annual charge reads the current agreed price under reservation lock
+ok 47 - manual annual charge reads the current agreed price under reservation lock
+  ---
+  duration_ms: 21.705583
+  type: 'test'
+  ...
+# Subtest: a disable committed before annual reservation prevents provider dispatch
+ok 48 - a disable committed before annual reservation prevents provider dispatch
+  ---
+  duration_ms: 17.398292
+  type: 'test'
+  ...
+# Subtest: a scheduled annual cycle cannot dispatch twice after its first settlement
+ok 49 - a scheduled annual cycle cannot dispatch twice after its first settlement
+  ---
+  duration_ms: 22.610292
+  type: 'test'
+  ...
+# Subtest: a paid monthly reservation retains its frozen period if current interval changed before reconciliation
+ok 50 - a paid monthly reservation retains its frozen period if current interval changed before reconciliation
+  ---
+  duration_ms: 17.526542
+  type: 'test'
+  ...
+# Subtest: legacy interval-only edits are blocked while a payment is unresolved
+ok 51 - legacy interval-only edits are blocked while a payment is unresolved
+  ---
+  duration_ms: 15.701584
+  type: 'test'
+  ...
+# Subtest: an interval-only legacy edit preserves its agreed monthly amount instead of repricing the catalogue
+ok 52 - an interval-only legacy edit preserves its agreed monthly amount instead of repricing the catalogue
+  ---
+  duration_ms: 15.2275
+  type: 'test'
+  ...
+# Subtest: success before transaction-reference persistence failure remains pending and cannot be redispatched
+ok 53 - success before transaction-reference persistence failure remains pending and cannot be redispatched
+  ---
+  duration_ms: 16.93
+  type: 'test'
+  ...
+# Subtest: two different verified card setups race into at most one subscription payment and replays keep the current card
+ok 54 - two different verified card setups race into at most one subscription payment and replays keep the current card
+  ---
+  duration_ms: 22.826333
+  type: 'test'
+  ...
+# Subtest: an approved payment with missing provider document reference is not charged again to create a receipt
+ok 55 - an approved payment with missing provider document reference is not charged again to create a receipt
+  ---
+  duration_ms: 24.348333
+  type: 'test'
+  ...
+# Subtest: a dedicated deployment without configured billing contact never guesses an arbitrary administrator recipient
+ok 56 - a dedicated deployment without configured billing contact never guesses an arbitrary administrator recipient
+  ---
+  duration_ms: 51.585166
+  type: 'test'
+  ...
+# Subtest: settling an earlier saved-token charge cannot replace a newer verified active card
+ok 57 - settling an earlier saved-token charge cannot replace a newer verified active card
+  ---
+  duration_ms: 19.81525
+  type: 'test'
+  ...
+1..57
+# tests 57
+# suites 0
+# pass 57
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1324.973834

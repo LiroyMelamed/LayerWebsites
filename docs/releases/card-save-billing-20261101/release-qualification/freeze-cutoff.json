@@ -1,0 +1,15 @@
+{
+  "observedAtUtc": "2026-11-01 22:47:52 UTC",
+  "upstreamCutoff": {
+    "refs/heads/AshrafEssa": "3359e65cdc082dbc50c30a0e1bd7284df854cf06",
+    "refs/heads/MelamedLaw": "d6ef0c9a6aaa2f7f53b8b501575b973e0ffff092",
+    "refs/heads/Melamedia": "545779e4b99e111959f4684167dfdf46da1f3186",
+    "refs/heads/MorLevi": "586f93e5ac5148ba5ec0059cb5430ebbc4e92e6c",
+    "refs/heads/main": "074df7520497a0cd6bd95ad70353201c905f0aa6"
+  },
+  "qualifiedCommonRuntime": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "policy": "Frozen source cutoff, not a claim about later remote refs; refresh before any push/deployment. No unbounded concurrent-source chase.",
+  "originalDriftCheck": "remote-refs.json",
+  "applicationRuntimeUnchangedByFinalAuditCommits": true,
+  "noPushOrDeployment": true
+}

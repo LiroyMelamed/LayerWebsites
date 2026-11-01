@@ -1,0 +1,762 @@
+TAP version 13
+# {"event":"auth_missing_token","method":"GET","path":"/secure"}
+# Subtest: auth middleware returns consistent JSON on missing token
+ok 1 - auth middleware returns consistent JSON on missing token
+  ---
+  duration_ms: 23.268
+  type: 'test'
+  ...
+# {"event":"auth_invalid_token","method":"GET","path":"/secure"}
+# Subtest: auth middleware returns consistent JSON on invalid token
+ok 2 - auth middleware returns consistent JSON on invalid token
+  ---
+  duration_ms: 7.352291
+  type: 'test'
+  ...
+# Subtest: client profile migration and controller persist on isolated PostgreSQL
+ok 3 - client profile migration and controller persist on isolated PostgreSQL # SKIP
+  ---
+  duration_ms: 0.659958
+  type: 'test'
+  ...
+# Subtest: exact customer read rejects missing authentication before DB lookup
+ok 4 - exact customer read rejects missing authentication before DB lookup
+  ---
+  duration_ms: 13.562709
+  type: 'test'
+  ...
+# Subtest: customer identity cannot invoke the office clients-view endpoint
+ok 5 - customer identity cannot invoke the office clients-view endpoint
+  ---
+  duration_ms: 5.145667
+  type: 'test'
+  ...
+# Subtest: same-tenant authorized read returns exact profile and no-store cache policy
+ok 6 - same-tenant authorized read returns exact profile and no-store cache policy
+  ---
+  duration_ms: 4.847375
+  type: 'test'
+  ...
+# Subtest: cross-tenant target is absent even when query/body attempts a tenant override
+ok 7 - cross-tenant target is absent even when query/body attempts a tenant override
+  ---
+  duration_ms: 3.547208
+  type: 'test'
+  ...
+# Subtest: dedicated null-tenant admin cannot read a shared tenant customer
+ok 8 - dedicated null-tenant admin cannot read a shared tenant customer
+  ---
+  duration_ms: 3.581792
+  type: 'test'
+  ...
+# Subtest: role-mode staff without clients view is denied before exact-data query
+ok 9 - role-mode staff without clients view is denied before exact-data query
+  ---
+  duration_ms: 3.61525
+  type: 'test'
+  ...
+# Subtest: role-mode clients viewer can read only its tenant profile
+ok 10 - role-mode clients viewer can read only its tenant profile
+  ---
+  duration_ms: 3.464542
+  type: 'test'
+  ...
+# Subtest: exact customer read does not expose Admin target profile
+ok 11 - exact customer read does not expose Admin target profile
+  ---
+  duration_ms: 3.231583
+  type: 'test'
+  ...
+# Subtest: exact customer read does not expose Deleted target profile
+ok 12 - exact customer read does not expose Deleted target profile
+  ---
+  duration_ms: 2.986583
+  type: 'test'
+  ...
+# Subtest: invalid exact ID is rejected before target-data lookup
+ok 13 - invalid exact ID is rejected before target-data lookup
+  ---
+  duration_ms: 3.653792
+  type: 'test'
+  ...
+# Subtest: the exact profile route honors a billing rejection before any target-data lookup
+ok 14 - the exact profile route honors a billing rejection before any target-data lookup
+  ---
+  duration_ms: 2.624209
+  type: 'test'
+  ...
+# Subtest: same-tenant admin can preserve an exact legacy contact snapshot through the actual edit route
+ok 15 - same-tenant admin can preserve an exact legacy contact snapshot through the actual edit route
+  ---
+  duration_ms: 4.642958
+  type: 'test'
+  ...
+# Subtest: another tenant actor cannot borrow legacy contact values or a body tenant override to edit the target
+ok 16 - another tenant actor cannot borrow legacy contact values or a body tenant override to edit the target
+  ---
+  duration_ms: 3.415208
+  type: 'test'
+  ...
+# Subtest: a clients viewer cannot use the legacy preservation exception to acquire edit permission
+ok 17 - a clients viewer cannot use the legacy preservation exception to acquire edit permission
+  ---
+  duration_ms: 3.395917
+  type: 'test'
+  ...
+# Subtest: edit route still excludes Admin target when contacts match
+ok 18 - edit route still excludes Admin target when contacts match
+  ---
+  duration_ms: 3.010042
+  type: 'test'
+  ...
+# Subtest: edit route still excludes Deleted target when contacts match
+ok 19 - edit route still excludes Deleted target when contacts match
+  ---
+  duration_ms: 2.418584
+  type: 'test'
+  ...
+# Subtest: human identity and organization registration retain independent values and leading zeroes
+ok 20 - human identity and organization registration retain independent values and leading zeroes
+  ---
+  duration_ms: 1.38575
+  type: 'test'
+  ...
+# Subtest: legacy omission is distinct from explicit null reset; defaults do not invent nationality
+ok 21 - legacy omission is distinct from explicit null reset; defaults do not invent nationality
+  ---
+  duration_ms: 0.760292
+  type: 'test'
+  ...
+# Subtest: reject numeric ID without exposing its value
+ok 22 - reject numeric ID without exposing its value
+  ---
+  duration_ms: 0.488042
+  type: 'test'
+  ...
+# Subtest: reject oversized ID without exposing its value
+ok 23 - reject oversized ID without exposing its value
+  ---
+  duration_ms: 0.185667
+  type: 'test'
+  ...
+# Subtest: reject oversized address without exposing its value
+ok 24 - reject oversized address without exposing its value
+  ---
+  duration_ms: 0.119583
+  type: 'test'
+  ...
+# Subtest: reject array instead of object without exposing its value
+ok 25 - reject array instead of object without exposing its value
+  ---
+  duration_ms: 0.081375
+  type: 'test'
+  ...
+# Subtest: reject new version without exposing its value
+ok 26 - reject new version without exposing its value
+  ---
+  duration_ms: 0.320125
+  type: 'test'
+  ...
+# Subtest: reject unknown property without exposing its value
+ok 27 - reject unknown property without exposing its value
+  ---
+  duration_ms: 0.187459
+  type: 'test'
+  ...
+# Subtest: reject unsupported capacity without exposing its value
+ok 28 - reject unsupported capacity without exposing its value
+  ---
+  duration_ms: 0.1275
+  type: 'test'
+  ...
+# Subtest: reject line break in identity without exposing its value
+ok 29 - reject line break in identity without exposing its value
+  ---
+  duration_ms: 0.212375
+  type: 'test'
+  ...
+# Subtest: reject bidi override in identity without exposing its value
+ok 30 - reject bidi override in identity without exposing its value
+  ---
+  duration_ms: 0.099416
+  type: 'test'
+  ...
+# Subtest: reject organization name duplicate without exposing its value
+ok 31 - reject organization name duplicate without exposing its value
+  ---
+  duration_ms: 0.164334
+  type: 'test'
+  ...
+# Subtest: conflicting request spellings are rejected instead of losing data
+ok 32 - conflicting request spellings are rejected instead of losing data
+  ---
+  duration_ms: 0.185542
+  type: 'test'
+  ...
+# Subtest: create persists profile; current-self reads it while broad lists omit identity data; transport is fake
+ok 33 - create persists profile; current-self reads it while broad lists omit identity data; transport is fake
+  ---
+  duration_ms: 3.962084
+  type: 'test'
+  ...
+# Subtest: legacy create without new fields remains valid
+ok 34 - legacy create without new fields remains valid
+  ---
+  duration_ms: 1.220042
+  type: 'test'
+  ...
+# Subtest: legacy update preserves profile while explicit reset clears it
+ok 35 - legacy update preserves profile while explicit reset clears it
+  ---
+  duration_ms: 1.807291
+  type: 'test'
+  ...
+# Subtest: update stores an international passport without coercion and preserves organization separate from contact
+ok 36 - update stores an international passport without coercion and preserves organization separate from contact
+  ---
+  duration_ms: 1.103916
+  type: 'test'
+  ...
+# Subtest: unchanged legacy contacts preserve exact stored bytes and ExternalSigner role during profile edits
+ok 37 - unchanged legacy contacts preserve exact stored bytes and ExternalSigner role during profile edits
+  ---
+  duration_ms: 0.949958
+  type: 'test'
+  ...
+# Subtest: unchanged legacy contacts preserve exact stored bytes and User role during profile edits
+ok 38 - unchanged legacy contacts preserve exact stored bytes and User role during profile edits
+  ---
+  duration_ms: 1.015416
+  type: 'test'
+  ...
+# Subtest: unchanged legacy contacts preserve exact stored bytes and Lawyer role during profile edits
+ok 39 - unchanged legacy contacts preserve exact stored bytes and Lawyer role during profile edits
+  ---
+  duration_ms: 0.937166
+  type: 'test'
+  ...
+# Subtest: unchanged invalid legacy phone remains editable without granting a mobile login role
+ok 40 - unchanged invalid legacy phone remains editable without granting a mobile login role
+  ---
+  duration_ms: 0.853
+  type: 'test'
+  ...
+# Subtest: changed invalid phone 0 cannot borrow the persisted legacy exception
+ok 41 - changed invalid phone 0 cannot borrow the persisted legacy exception
+  ---
+  duration_ms: 0.901833
+  type: 'test'
+  ...
+# Subtest: changed invalid phone 12345 cannot borrow the persisted legacy exception
+ok 42 - changed invalid phone 12345 cannot borrow the persisted legacy exception
+  ---
+  duration_ms: 0.960167
+  type: 'test'
+  ...
+# Subtest: changed invalid phone unknown cannot borrow the persisted legacy exception
+ok 43 - changed invalid phone unknown cannot borrow the persisted legacy exception
+  ---
+  duration_ms: 1.497041
+  type: 'test'
+  ...
+# Subtest: changed invalid email is rejected while an unchanged invalid email can accompany a valid new phone
+ok 44 - changed invalid email is rejected while an unchanged invalid email can accompany a valid new phone
+  ---
+  duration_ms: 0.917708
+  type: 'test'
+  ...
+# Subtest: changed valid phone retains incumbent role transition and clearing it retains email-only signing
+ok 45 - changed valid phone retains incumbent role transition and clearing it retains email-only signing
+  ---
+  duration_ms: 0.907959
+  type: 'test'
+  ...
+# Subtest: changed phoneNumber keeps tenant-local duplicate rejection
+ok 46 - changed phoneNumber keeps tenant-local duplicate rejection
+  ---
+  duration_ms: 0.853833
+  type: 'test'
+  ...
+# Subtest: changed email keeps tenant-local duplicate rejection
+ok 47 - changed email keeps tenant-local duplicate rejection
+  ---
+  duration_ms: 0.666834
+  type: 'test'
+  ...
+# Subtest: a concurrent actor changing phonenumber invalidates the exact contact snapshot
+ok 48 - a concurrent actor changing phonenumber invalidates the exact contact snapshot
+  ---
+  duration_ms: 0.78125
+  type: 'test'
+  ...
+# Subtest: a concurrent actor changing email invalidates the exact contact snapshot
+ok 49 - a concurrent actor changing email invalidates the exact contact snapshot
+  ---
+  duration_ms: 0.694084
+  type: 'test'
+  ...
+# Subtest: a concurrent actor changing role invalidates the exact contact snapshot
+ok 50 - a concurrent actor changing role invalidates the exact contact snapshot
+  ---
+  duration_ms: 0.718459
+  type: 'test'
+  ...
+# Subtest: addCustomer keeps CONTACT_REQUIRED validation for new or changed contacts
+ok 51 - addCustomer keeps CONTACT_REQUIRED validation for new or changed contacts
+  ---
+  duration_ms: 0.822041
+  type: 'test'
+  ...
+# Subtest: addCustomer keeps INVALID_PHONE validation for new or changed contacts
+ok 52 - addCustomer keeps INVALID_PHONE validation for new or changed contacts
+  ---
+  duration_ms: 1.004375
+  type: 'test'
+  ...
+# Subtest: addCustomer keeps INVALID_EMAIL validation for new or changed contacts
+ok 53 - addCustomer keeps INVALID_EMAIL validation for new or changed contacts
+  ---
+  duration_ms: 1.117958
+  type: 'test'
+  ...
+# Subtest: updateCustomerById keeps CONTACT_REQUIRED validation for new or changed contacts
+ok 54 - updateCustomerById keeps CONTACT_REQUIRED validation for new or changed contacts
+  ---
+  duration_ms: 1.526166
+  type: 'test'
+  ...
+# Subtest: updateCustomerById keeps INVALID_PHONE validation for new or changed contacts
+ok 55 - updateCustomerById keeps INVALID_PHONE validation for new or changed contacts
+  ---
+  duration_ms: 0.940083
+  type: 'test'
+  ...
+# Subtest: updateCustomerById keeps INVALID_EMAIL validation for new or changed contacts
+ok 56 - updateCustomerById keeps INVALID_EMAIL validation for new or changed contacts
+  ---
+  duration_ms: 0.706708
+  type: 'test'
+  ...
+# Subtest: addCustomer rejects invalid profile before any database/transport operation
+ok 57 - addCustomer rejects invalid profile before any database/transport operation
+  ---
+  duration_ms: 0.755959
+  type: 'test'
+  ...
+# Subtest: updateCustomerById rejects invalid profile before any database/transport operation
+ok 58 - updateCustomerById rejects invalid profile before any database/transport operation
+  ---
+  duration_ms: 0.659875
+  type: 'test'
+  ...
+# Subtest: updateCurrentCustomer rejects invalid profile before any database/transport operation
+ok 59 - updateCurrentCustomer rejects invalid profile before any database/transport operation
+  ---
+  duration_ms: 0.807625
+  type: 'test'
+  ...
+# Subtest: organization profile requires the sole incumbent company-name field
+ok 60 - organization profile requires the sole incumbent company-name field
+  ---
+  duration_ms: 0.637541
+  type: 'test'
+  ...
+# Subtest: current-profile update targets authenticated identity and leaves omitted profile untouched
+ok 61 - current-profile update targets authenticated identity and leaves omitted profile untouched
+  ---
+  duration_ms: 0.7725
+  type: 'test'
+  ...
+# Subtest: current-profile update binds validated profile without writing a different user ID
+ok 62 - current-profile update binds validated profile without writing a different user ID
+  ---
+  duration_ms: 1.20325
+  type: 'test'
+  ...
+# Subtest: current customer database lookup validates context without granting an office role
+ok 63 - current customer database lookup validates context without granting an office role
+  ---
+  duration_ms: 4.277625
+  type: 'test'
+  ...
+# Subtest: legacy customer scope requires both validated identity and the server-owned legacy database boundary
+ok 64 - legacy customer scope requires both validated identity and the server-owned legacy database boundary
+  ---
+  duration_ms: 2.993542
+  type: 'test'
+  ...
+# Subtest: package discovery in validated legacy scope retains exact actor and office matching
+ok 65 - package discovery in validated legacy scope retains exact actor and office matching
+  ---
+  duration_ms: 1.432167
+  type: 'test'
+  ...
+# Subtest: a request tenant cannot replace the authenticated client tenant
+ok 66 - a request tenant cannot replace the authenticated client tenant
+  ---
+  duration_ms: 1.891875
+  type: 'test'
+  ...
+# Subtest: unknown sequential indices never produce an actionable client item
+ok 67 - unknown sequential indices never produce an actionable client item
+  ---
+  duration_ms: 0.200791
+  type: 'test'
+  ...
+# Subtest: expiry includes the exact deadline used by signing submission
+ok 68 - expiry includes the exact deadline used by signing submission
+  ---
+  duration_ms: 1.704875
+  type: 'test'
+  ...
+# Subtest: personal completion survives later global expiry, rejection or cancellation
+ok 69 - personal completion survives later global expiry, rejection or cancellation
+  ---
+  duration_ms: 0.15925
+  type: 'test'
+  ...
+# Subtest: invalid non-null expiry cannot advertise an unfinished document as ready
+ok 70 - invalid non-null expiry cannot advertise an unfinished document as ready
+  ---
+  duration_ms: 0.107208
+  type: 'test'
+  ...
+# Subtest: signing discovery and metadata failures are propagated instead of reporting an empty list
+ok 71 - signing discovery and metadata failures are propagated instead of reporting an empty list
+  ---
+  duration_ms: 0.581375
+  type: 'test'
+  ...
+# Subtest: attachment database failures return an error, never an empty success
+ok 72 - attachment database failures return an error, never an empty success
+  ---
+  duration_ms: 1.917834
+  type: 'test'
+  ...
+# Subtest: attachment handler denies unauthenticated, staff, external and wrong-tenant callers before querying
+ok 73 - attachment handler denies unauthenticated, staff, external and wrong-tenant callers before querying
+  ---
+  duration_ms: 0.8275
+  type: 'test'
+  ...
+# Subtest: customer User stays customer and does not load staff schema
+ok 74 - customer User stays customer and does not load staff schema
+  ---
+  duration_ms: 4.513292
+  type: 'test'
+  ...
+# Subtest: customer Client stays customer and does not load staff schema
+ok 75 - customer Client stays customer and does not load staff schema
+  ---
+  duration_ms: 1.025375
+  type: 'test'
+  ...
+# Subtest: customer ExternalSigner stays customer and does not load staff schema
+ok 76 - customer ExternalSigner stays customer and does not load staff schema
+  ---
+  duration_ms: 0.684292
+  type: 'test'
+  ...
+# Subtest: stale customer JWT after DB role Admin cannot bypass loader
+ok 77 - stale customer JWT after DB role Admin cannot bypass loader
+  ---
+  duration_ms: 0.924958
+  type: 'test'
+  ...
+# Subtest: stale customer JWT after DB role Lawyer cannot bypass loader
+ok 78 - stale customer JWT after DB role Lawyer cannot bypass loader
+  ---
+  duration_ms: 0.842625
+  type: 'test'
+  ...
+# Subtest: stale customer JWT after DB role Staff cannot bypass loader
+ok 79 - stale customer JWT after DB role Staff cannot bypass loader
+  ---
+  duration_ms: 1.408166
+  type: 'test'
+  ...
+# Subtest: stale customer JWT after DB role Deleted cannot bypass loader
+ok 80 - stale customer JWT after DB role Deleted cannot bypass loader
+  ---
+  duration_ms: 0.822584
+  type: 'test'
+  ...
+# Subtest: cross requested tenant customer denied; correct tenant allowed
+ok 81 - cross requested tenant customer denied; correct tenant allowed
+  ---
+  duration_ms: 1.539083
+  type: 'test'
+  ...
+# Subtest: removed customer is unauthorized
+ok 82 - removed customer is unauthorized
+  ---
+  duration_ms: 0.746042
+  type: 'test'
+  ...
+# Subtest: staff Admin retains schema fail closed
+ok 83 - staff Admin retains schema fail closed
+  ---
+  duration_ms: 0.719708
+  type: 'test'
+  ...
+# Subtest: staff Lawyer retains schema fail closed
+ok 84 - staff Lawyer retains schema fail closed
+  ---
+  duration_ms: 0.605375
+  type: 'test'
+  ...
+# Subtest: staff Staff retains schema fail closed
+ok 85 - staff Staff retains schema fail closed
+  ---
+  duration_ms: 0.505125
+  type: 'test'
+  ...
+# Subtest: actual HS256 signed public optional User remains usable
+ok 86 - actual HS256 signed public optional User remains usable
+  ---
+  duration_ms: 3.022792
+  type: 'test'
+  ...
+# Subtest: actual HS256 signed public optional Client remains usable
+ok 87 - actual HS256 signed public optional Client remains usable
+  ---
+  duration_ms: 1.56975
+  type: 'test'
+  ...
+# Subtest: actual HS256 signed public optional ExternalSigner remains usable
+ok 88 - actual HS256 signed public optional ExternalSigner remains usable
+  ---
+  duration_ms: 1.260792
+  type: 'test'
+  ...
+# Subtest: invalid optional token never supplies identity eyJhbGciOiJI
+ok 89 - invalid optional token never supplies identity eyJhbGciOiJI
+  ---
+  duration_ms: 1.605375
+  type: 'test'
+  ...
+# Subtest: invalid optional token never supplies identity eyJhbGciOiJI
+ok 90 - invalid optional token never supplies identity eyJhbGciOiJI
+  ---
+  duration_ms: 1.567208
+  type: 'test'
+  ...
+# Subtest: invalid optional token never supplies identity eyJhbGciOiJI
+ok 91 - invalid optional token never supplies identity eyJhbGciOiJI
+  ---
+  duration_ms: 1.59525
+  type: 'test'
+  ...
+# Subtest: invalid optional token never supplies identity malformed
+ok 92 - invalid optional token never supplies identity malformed
+  ---
+  duration_ms: 1.045417
+  type: 'test'
+  ...
+# Subtest: optional valid staff JWT missing schema denies before handler
+ok 93 - optional valid staff JWT missing schema denies before handler
+  ---
+  duration_ms: 1.478458
+  type: 'test'
+  ...
+# Subtest: customer enum change uses current DB role User without staff promotion
+ok 94 - customer enum change uses current DB role User without staff promotion
+  ---
+  duration_ms: 0.654875
+  type: 'test'
+  ...
+# Subtest: customer enum change uses current DB role Client without staff promotion
+ok 95 - customer enum change uses current DB role Client without staff promotion
+  ---
+  duration_ms: 1.521
+  type: 'test'
+  ...
+# Subtest: customer enum change uses current DB role ExternalSigner without staff promotion
+ok 96 - customer enum change uses current DB role ExternalSigner without staff promotion
+  ---
+  duration_ms: 0.619083
+  type: 'test'
+  ...
+# Subtest: feature OFF returns Word and stage 404 before trusted identity, policy, actor or service execution
+ok 97 - feature OFF returns Word and stage 404 before trusted identity, policy, actor or service execution
+  ---
+  duration_ms: 50.628666
+  type: 'test'
+  ...
+# Subtest: enabled Word and stage entries reject unauthenticated requests before policy and service execution
+ok 98 - enabled Word and stage entries reject unauthenticated requests before policy and service execution
+  ---
+  duration_ms: 17.357583
+  type: 'test'
+  ...
+# Subtest: incumbent signing policy rejection still fences both new feature families
+ok 99 - incumbent signing policy rejection still fences both new feature families
+  ---
+  duration_ms: 9.259833
+  type: 'test'
+  ...
+# Subtest: Word authoring requires upload permission and resolves the current trusted actor rather than body context
+ok 100 - Word authoring requires upload permission and resolves the current trusted actor rather than body context
+  ---
+  duration_ms: 8.204166
+  type: 'test'
+  ...
+# Subtest: every stage mutation requires signing upload AND case edit before resolving an actor or executing service work
+ok 101 - every stage mutation requires signing upload AND case edit before resolving an actor or executing service work
+  ---
+  duration_ms: 20.990125
+  type: 'test'
+  ...
+# Subtest: current actor tenant mismatch and unvalidated permission context deny both features despite trusted upload grants
+ok 102 - current actor tenant mismatch and unvalidated permission context deny both features despite trusted upload grants
+  ---
+  duration_ms: 9.348625
+  type: 'test'
+  ...
+# Subtest: ordinary read-only signing and stage listing retain view permission without new upload or case-edit requirements
+ok 103 - ordinary read-only signing and stage listing retain view permission without new upload or case-edit requirements
+  ---
+  duration_ms: 6.093334
+  type: 'test'
+  ...
+# Subtest: Word HTTP admission busy retains retry metadata through central errors without operational alerts
+ok 104 - Word HTTP admission busy retains retry metadata through central errors without operational alerts
+  ---
+  duration_ms: 5.339041
+  type: 'test'
+  ...
+# Subtest: Word HTTP operational failures retain the real sanitized request reporter
+ok 105 - Word HTTP operational failures retain the real sanitized request reporter
+  ---
+  duration_ms: 5.488125
+  type: 'test'
+  ...
+# Subtest: normal permission denials are forwarded without generating operational error alerts
+ok 106 - normal permission denials are forwarded without generating operational error alerts
+  ---
+  duration_ms: 3.62875
+  type: 'test'
+  ...
+# Subtest: actual app keeps linked raw-HMAC mount before the general JSON parser and retains billing consent routing
+ok 107 - actual app keeps linked raw-HMAC mount before the general JSON parser and retains billing consent routing
+  ---
+  duration_ms: 0.952417
+  type: 'test'
+  ...
+# Subtest: native document files retain full Word provenance for the Word PDF and ordinary PDFs in a mixed draft
+ok 108 - native document files retain full Word provenance for the Word PDF and ordinary PDFs in a mixed draft
+  ---
+  duration_ms: 1726.983959
+  type: 'test'
+  ...
+# Subtest: native document files reject missing, forged and mismatched stored Word provenance before reading bytes
+ok 109 - native document files reject missing, forged and mismatched stored Word provenance before reading bytes
+  ---
+  duration_ms: 1202.976375
+  type: 'test'
+  ...
+# Subtest: native Word PDF reads recheck actor, context, record access and current mapping before storage
+ok 110 - native Word PDF reads recheck actor, context, record access and current mapping before storage
+  ---
+  duration_ms: 1287.646166
+  type: 'test'
+  ...
+# Subtest: native PDF reads preserve ordinary non-Word access and reject corrupt stored PDF bytes
+ok 111 - native PDF reads preserve ordinary non-Word access and reject corrupt stored PDF bytes
+  ---
+  duration_ms: 1186.30975
+  type: 'test'
+  ...
+# Subtest: Word origin uses actual native draft/source SQL and remains author-private despite all-firm management
+ok 112 - Word origin uses actual native draft/source SQL and remains author-private despite all-firm management
+  ---
+  duration_ms: 1247.463917
+  type: 'test'
+  ...
+# Subtest: lower draft APIs reject stripped, mutated, substituted and fake Word origins before writing
+ok 113 - lower draft APIs reject stripped, mutated, substituted and fake Word origins before writing
+  ---
+  duration_ms: 1185.097708
+  type: 'test'
+  ...
+# Subtest: native reads, publication and new sends recheck persisted client, case and role access without requiring upload for reads
+ok 114 - native reads, publication and new sends recheck persisted client, case and role access without requiring upload for reads
+  ---
+  duration_ms: 1157.704959
+  type: 'test'
+  ...
+# Subtest: source mapping/version/archive drift blocks new native work and direct submissions, preserving frozen rows
+ok 115 - source mapping/version/archive drift blocks new native work and direct submissions, preserving frozen rows
+  ---
+  duration_ms: 1154.189875
+  type: 'test'
+  ...
+# Subtest: ordinary incomplete/native drafts and all-firm reads remain valid without Word tables
+ok 116 - ordinary incomplete/native drafts and all-firm reads remain valid without Word tables
+  ---
+  duration_ms: 1194.542834
+  type: 'test'
+  ...
+# Subtest: Word package associations stay pinned to the private filled preview in preview, create and direct submission paths
+ok 117 - Word package associations stay pinned to the private filled preview in preview, create and direct submission paths
+  ---
+  duration_ms: 1154.007417
+  type: 'test'
+  ...
+# Subtest: every Word route resolves signing.upload scope before service access and disables caching
+ok 118 - every Word route resolves signing.upload scope before service access and disables caching
+  ---
+  duration_ms: 4.374
+  type: 'test'
+  ...
+# Subtest: failed authorization never reaches storage or the materialization service
+ok 119 - failed authorization never reaches storage or the materialization service
+  ---
+  duration_ms: 0.77125
+  type: 'test'
+  ...
+# Subtest: the HTTP idempotency header overrides any forged body key
+ok 120 - the HTTP idempotency header overrides any forged body key
+  ---
+  duration_ms: 0.230583
+  type: 'test'
+  ...
+# Subtest: protected PDF response uses fixed safe disposition rather than customer names or public URLs
+ok 121 - protected PDF response uses fixed safe disposition rather than customer names or public URLs
+  ---
+  duration_ms: 0.318542
+  type: 'test'
+  ...
+# Subtest: converter operational failures have accurate safe HTTP status and no source/process details
+ok 122 - converter operational failures have accurate safe HTTP status and no source/process details
+  ---
+  duration_ms: 2.222667
+  type: 'test'
+  ...
+# Subtest: authoring routes keep exact private source/render/body bindings and fixed route precedence
+ok 123 - authoring routes keep exact private source/render/body bindings and fixed route precedence
+  ---
+  duration_ms: 0.980459
+  type: 'test'
+  ...
+# Subtest: native draft bridge is injectable without provider imports and header overrides a forged body key
+ok 124 - native draft bridge is injectable without provider imports and header overrides a forged body key
+  ---
+  duration_ms: 0.229
+  type: 'test'
+  ...
+# Subtest: private upload reads reject oversized, truncated or growing objects before import
+ok 125 - private upload reads reject oversized, truncated or growing objects before import
+  ---
+  duration_ms: 1.11675
+  type: 'test'
+  ...
+1..125
+# tests 125
+# suites 0
+# pass 124
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 13330.90875

@@ -1,0 +1,13 @@
+{
+  "atUtc": "2026-11-01T14:11:32.092326+00:00",
+  "command": [
+    "node",
+    "scripts/check-signing-release.cjs",
+    "HEAD"
+  ],
+  "exitCode": 0,
+  "stdout": "{\"commit\":\"176ff60a377136ce6a01b43c1defd23f2fe0674b\",\"files\":103}",
+  "stderr": "",
+  "manifestSha256": "91fd27bf1c355d35dfbd3dfa4a49af8ecd01ff00ee3fffddbf354af745d1d60e",
+  "manifestChangedByThisTask": false
+}

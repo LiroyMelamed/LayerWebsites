@@ -1,0 +1,7 @@
+src/components/billing/TakbullCheckoutDialog.js PASS
+src/screens/billingScreen/PlanUsageScreen.js PASS
+src/screens/billingScreen/PlansPricingScreen.js PASS
+src/api/billingApi.js PASS
+he locale PASS
+en locale PASS
+ar locale PASS

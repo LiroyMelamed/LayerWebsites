@@ -1,0 +1,212 @@
+{
+  "candidate": "3217781317b54b3143d8bfba29475f2ab42485bd",
+  "donor": "9dd9cb3607ee79434fcfb1aed5a40773e5713789",
+  "donorDiffBase": "9f01a42dcf85ec36a1e4a6d980c86f44e1eab5e9",
+  "sourcePaths": [
+    {
+      "path": "backend/controllers/billingController.js",
+      "donorSha256": "bf5e5f42e194c0e7efb6433bb02724f3c63d715472bf59982ec5505daa65abfe",
+      "candidateSha256": "bf5e5f42e194c0e7efb6433bb02724f3c63d715472bf59982ec5505daa65abfe",
+      "exact": true
+    },
+    {
+      "path": "backend/controllers/publicSignupController.js",
+      "donorSha256": "3d1c0bc148d6dde079e17d84fe59b9cedca06cd678de4a6776a8f531acc6363c",
+      "candidateSha256": "3d1c0bc148d6dde079e17d84fe59b9cedca06cd678de4a6776a8f531acc6363c",
+      "exact": true
+    },
+    {
+      "path": "backend/lib/billing/billingEmails.js",
+      "donorSha256": "6faee5f89cdda2ca2f1f58b644fa88a111b11f1de417b53479eccc5fc62fc95c",
+      "candidateSha256": "6faee5f89cdda2ca2f1f58b644fa88a111b11f1de417b53479eccc5fc62fc95c",
+      "exact": true
+    },
+    {
+      "path": "backend/lib/billing/billingOperations.js",
+      "donorSha256": "50932a1b1e8d9e167cd6ae377d2cea21d45344f191a24dce59aca6cb74f3d10f",
+      "candidateSha256": "50932a1b1e8d9e167cd6ae377d2cea21d45344f191a24dce59aca6cb74f3d10f",
+      "exact": true
+    },
+    {
+      "path": "backend/lib/billing/firmBillingService.js",
+      "donorSha256": "b651a79ec829b48a92536e07499def3b85b1a2b2eb051de6851a6f741bc4cda0",
+      "candidateSha256": "b651a79ec829b48a92536e07499def3b85b1a2b2eb051de6851a6f741bc4cda0",
+      "exact": true
+    },
+    {
+      "path": "backend/lib/billing/selfServiceRenewal.js",
+      "donorSha256": "a9d90f0fd6bf6e9fb97cc690e5973540e2a0836721ee13d418a51e3579c20c09",
+      "candidateSha256": "a9d90f0fd6bf6e9fb97cc690e5973540e2a0836721ee13d418a51e3579c20c09",
+      "exact": true
+    },
+    {
+      "path": "backend/lib/billing/selfServiceUpgrade.js",
+      "donorSha256": "262e5b697091eaa5d3b53c0131872a49f4b2f2742c098268e1d42aea1643640e",
+      "candidateSha256": "262e5b697091eaa5d3b53c0131872a49f4b2f2742c098268e1d42aea1643640e",
+      "exact": true
+    },
+    {
+      "path": "backend/lib/payments/takbullClient.js",
+      "donorSha256": "9cd2d96d4644071de5baad44035a925d71085bad55f18ff30cff3a3aecb6afa6",
+      "candidateSha256": "9cd2d96d4644071de5baad44035a925d71085bad55f18ff30cff3a3aecb6afa6",
+      "exact": true
+    },
+    {
+      "path": "backend/lib/payments/verifySignupPayment.js",
+      "donorSha256": "65157d1c97ac6a7f7f87fd9b5c8891df9e65c3e21d77aae71c50ecbf43e90c90",
+      "candidateSha256": "65157d1c97ac6a7f7f87fd9b5c8891df9e65c3e21d77aae71c50ecbf43e90c90",
+      "exact": true
+    },
+    {
+      "path": "backend/lib/systemMessages/index.js",
+      "donorSha256": "d5f0708d46218b8fe238b059be9d37422e84a11c2f7f471186c74d004ee4763a",
+      "candidateSha256": "d5f0708d46218b8fe238b059be9d37422e84a11c2f7f471186c74d004ee4763a",
+      "exact": true
+    },
+    {
+      "path": "backend/lib/tenant/signupService.js",
+      "donorSha256": "fc3dc82a7ab944cc08b07dcc87689624d86ddceb579c2ca779c2f7fae2652d0b",
+      "candidateSha256": "fc3dc82a7ab944cc08b07dcc87689624d86ddceb579c2ca779c2f7fae2652d0b",
+      "exact": true
+    },
+    {
+      "path": "backend/lib/tenant/signupWelcomeEmail.js",
+      "donorSha256": "f6bcb71739c76a3b9a623e6a80308092c8f08d6cec9917418d58d6cd260052d4",
+      "candidateSha256": "f6bcb71739c76a3b9a623e6a80308092c8f08d6cec9917418d58d6cd260052d4",
+      "exact": true
+    },
+    {
+      "path": "backend/routes/paymentWebhookRoutes.js",
+      "donorSha256": "a514084f75dd3254fc14cad03a32c040ecbfd7a57e2509cd157293e635fd0477",
+      "candidateSha256": "a514084f75dd3254fc14cad03a32c040ecbfd7a57e2509cd157293e635fd0477",
+      "exact": true
+    },
+    {
+      "path": "backend/tasks/billingRenewal/scheduler.js",
+      "donorSha256": "04df2a8951fc1144fda6fb5920a19f2edb0d9517aaf0e2971006c29d6474b3e1",
+      "candidateSha256": "04df2a8951fc1144fda6fb5920a19f2edb0d9517aaf0e2971006c29d6474b3e1",
+      "exact": true
+    },
+    {
+      "path": "backend/tests/billingOperationsGate.test.js",
+      "donorSha256": "8d3e2b4fe4d96b0f6ccad74a736b1d38dbe293e4ba453d2fa9d19c550d34f19c",
+      "candidateSha256": "8d3e2b4fe4d96b0f6ccad74a736b1d38dbe293e4ba453d2fa9d19c550d34f19c",
+      "exact": true
+    },
+    {
+      "path": "backend/tests/cardSetupDebtCollection.test.js",
+      "donorSha256": "d1086bc9b5e19d56ab23af2dcf71de5d61ec61a00f48cd0529c842c382888378",
+      "candidateSha256": "d1086bc9b5e19d56ab23af2dcf71de5d61ec61a00f48cd0529c842c382888378",
+      "exact": true
+    },
+    {
+      "path": "backend/tests/liveServerPreservation.test.js",
+      "donorSha256": "9be5e8da2dcc21d0c385d09e141c8e134ec6883caeff6c82a95c1a57a45b8e92",
+      "candidateSha256": "9be5e8da2dcc21d0c385d09e141c8e134ec6883caeff6c82a95c1a57a45b8e92",
+      "exact": true
+    },
+    {
+      "path": "backend/tests/savePackage.chargeOrder.test.js",
+      "donorSha256": "8111e4f4c7cdf7b17dba620b150f1ddeab110d2549034db8bbb2d853145c47b4",
+      "candidateSha256": "8111e4f4c7cdf7b17dba620b150f1ddeab110d2549034db8bbb2d853145c47b4",
+      "exact": true
+    },
+    {
+      "path": "backend/tests/savePackage.idempotency.test.js",
+      "donorSha256": "d8575a94aa487819cb0515c45bbaefcc792f7ea3ef1a7afc1439afc3b32f4ace",
+      "candidateSha256": "d8575a94aa487819cb0515c45bbaefcc792f7ea3ef1a7afc1439afc3b32f4ace",
+      "exact": true
+    },
+    {
+      "path": "backend/tests/selfServiceCardSetupCollection.test.js",
+      "donorSha256": "26ed71b456d5f1d206093f1e20a82b49320f37d7de379396c33e45c5cf499f41",
+      "candidateSha256": "26ed71b456d5f1d206093f1e20a82b49320f37d7de379396c33e45c5cf499f41",
+      "exact": true
+    },
+    {
+      "path": "backend/tests/signupAvailability.test.js",
+      "donorSha256": "3afab789005fcbdf99d499b578ef54dec893242637ceae07a84123942f388d17",
+      "candidateSha256": "3afab789005fcbdf99d499b578ef54dec893242637ceae07a84123942f388d17",
+      "exact": true
+    },
+    {
+      "path": "backend/tests/signupLifecycle.officeIsolation.integration.test.js",
+      "donorSha256": "820acc67003577b9652e6d864b47d4aabb9d5e0986c4dbee3886b759ddbca079",
+      "candidateSha256": "820acc67003577b9652e6d864b47d4aabb9d5e0986c4dbee3886b759ddbca079",
+      "exact": true
+    },
+    {
+      "path": "backend/tests/systemMessageBillingSettlement.test.js",
+      "donorSha256": "e574d96cf9b1d2d4028485fe2bf0babad17a2e9304376cdb26b73138046e8c71",
+      "candidateSha256": "e574d96cf9b1d2d4028485fe2bf0babad17a2e9304376cdb26b73138046e8c71",
+      "exact": true
+    },
+    {
+      "path": "backend/tests/systemMessageSharedSettlement.test.js",
+      "donorSha256": "959cb0c476bc6c13f67b301dfdf577ba34ad6c7d75a81779ac6eee5a6ebfb44b",
+      "candidateSha256": "959cb0c476bc6c13f67b301dfdf577ba34ad6c7d75a81779ac6eee5a6ebfb44b",
+      "exact": true
+    },
+    {
+      "path": "backend/tests/takbullDocuments.test.js",
+      "donorSha256": "0940270e94d2b9b761abb28d346a429e65de64246b669e8c8a0cb3ba479b3a08",
+      "candidateSha256": "0940270e94d2b9b761abb28d346a429e65de64246b669e8c8a0cb3ba479b3a08",
+      "exact": true
+    },
+    {
+      "path": "frontend/src/api/billingApi.confirmCheckout.test.js",
+      "donorSha256": "5821537d6e93d740d077a510b3774bf508f70fe48660f419cd59058b02b216b0",
+      "candidateSha256": "5821537d6e93d740d077a510b3774bf508f70fe48660f419cd59058b02b216b0",
+      "exact": true
+    },
+    {
+      "path": "frontend/src/api/billingApi.js",
+      "donorSha256": "22dc8579d0e6385ddf29cce631111d3cd3f9d34a94638ffbd78d1fdc7dca8b1a",
+      "candidateSha256": "22dc8579d0e6385ddf29cce631111d3cd3f9d34a94638ffbd78d1fdc7dca8b1a",
+      "exact": true
+    },
+    {
+      "path": "frontend/src/components/billing/TakbullCheckoutDialog.js",
+      "donorSha256": "5f58fb9626f9f976874d5e0167031c3f09f67cd8ea36a00c5bbdbc76c60e78cc",
+      "candidateSha256": "5f58fb9626f9f976874d5e0167031c3f09f67cd8ea36a00c5bbdbc76c60e78cc",
+      "exact": true
+    },
+    {
+      "path": "frontend/src/components/billing/TakbullCheckoutDialog.test.js",
+      "donorSha256": "80ac851e7ef0ca81976ff95d0777d54ef5776ba27fa6c2d036118546d145002e",
+      "candidateSha256": "80ac851e7ef0ca81976ff95d0777d54ef5776ba27fa6c2d036118546d145002e",
+      "exact": true
+    },
+    {
+      "path": "frontend/src/i18n/locales/ar.json",
+      "donorSha256": "50c40b83edeb4284e217b60125943e2f979174c2680f8b6ba47f8e3c3fec26b5",
+      "candidateSha256": "50c40b83edeb4284e217b60125943e2f979174c2680f8b6ba47f8e3c3fec26b5",
+      "exact": true
+    },
+    {
+      "path": "frontend/src/i18n/locales/en.json",
+      "donorSha256": "b5d84b608012fa2ba75d24410aba389f068cd265800f4c0e184f1749b2dac37c",
+      "candidateSha256": "b5d84b608012fa2ba75d24410aba389f068cd265800f4c0e184f1749b2dac37c",
+      "exact": true
+    },
+    {
+      "path": "frontend/src/i18n/locales/he.json",
+      "donorSha256": "ed6f686c52a1c96baadfe3e9f9f4317401045a34a4ba56482b0baeccee6bea68",
+      "candidateSha256": "ed6f686c52a1c96baadfe3e9f9f4317401045a34a4ba56482b0baeccee6bea68",
+      "exact": true
+    },
+    {
+      "path": "frontend/src/screens/billingScreen/PlanUsageScreen.js",
+      "donorSha256": "0d0b555e7b0887875908c4a4e57a00705124df9dfd6eee4ec9740fb77c6bfdf0",
+      "candidateSha256": "0d0b555e7b0887875908c4a4e57a00705124df9dfd6eee4ec9740fb77c6bfdf0",
+      "exact": true
+    },
+    {
+      "path": "frontend/src/screens/billingScreen/PlansPricingScreen.js",
+      "donorSha256": "2db947f4ed9f429ced095db7a3ae89aeacaaf67ae08e2e1c6f541c5b40734302",
+      "candidateSha256": "2db947f4ed9f429ced095db7a3ae89aeacaaf67ae08e2e1c6f541c5b40734302",
+      "exact": true
+    }
+  ],
+  "allMatch": true
+}

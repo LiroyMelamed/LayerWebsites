@@ -1,0 +1,75 @@
+[
+  {
+    "gate": "common",
+    "sourceCommit": "4d41c5c18eaf4dc53868d2d83f82603c63cc7d1d",
+    "node": "v24.14.0",
+    "files": [
+      "backend/tests/clientDocumentProfile.postgres.test.js",
+      "backend/tests/clientDocumentProfile.readScope.test.js",
+      "backend/tests/clientDocumentProfile.test.js",
+      "backend/tests/signingV2.wordOriginBoundary.test.js",
+      "backend/tests/signingWordRoutes.test.js",
+      "backend/tests/wordSigning.test.js",
+      "backend/tests/wordTemplateConcurrency.test.js",
+      "backend/tests/wordTemplateConversion.test.js",
+      "backend/tests/wordTemplates.actualConverter.test.js",
+      "backend/tests/wordTemplates.authoringService.test.js",
+      "backend/tests/wordTemplates.autoFillAcceptance.test.js",
+      "backend/tests/wordTemplates.multilingualConversion.test.js",
+      "backend/tests/wordTemplates.service.test.js",
+      "backend/tests/wordTemplates.test.js",
+      "backend/tests/wordTemplates.visual.test.js",
+      "backend/tests/wordTemplates.workerAdmission.test.js"
+    ],
+    "excluded": [
+      {
+        "file": "wordTemplates.http.integration.test.js",
+        "reason": "Top-level external private HTTP fixture is absent before the test can reach its opt-in skip; full attempt retained separately."
+      }
+    ],
+    "command": [
+      "/Users/liroymelamed/.nvm/versions/node/v24.14.0/bin/node",
+      "--require",
+      "/private/tmp/layer-billing-integration-20261101/MorLevi/docs/releases/card-save-billing-20261101/comprehensive-qa/offline-network-guard.cjs",
+      "--test",
+      "--test-concurrency=2",
+      "backend/tests/clientDocumentProfile.postgres.test.js",
+      "backend/tests/clientDocumentProfile.readScope.test.js",
+      "backend/tests/clientDocumentProfile.test.js",
+      "backend/tests/signingV2.wordOriginBoundary.test.js",
+      "backend/tests/signingWordRoutes.test.js",
+      "backend/tests/wordSigning.test.js",
+      "backend/tests/wordTemplateConcurrency.test.js",
+      "backend/tests/wordTemplateConversion.test.js",
+      "backend/tests/wordTemplates.actualConverter.test.js",
+      "backend/tests/wordTemplates.authoringService.test.js",
+      "backend/tests/wordTemplates.autoFillAcceptance.test.js",
+      "backend/tests/wordTemplates.multilingualConversion.test.js",
+      "backend/tests/wordTemplates.service.test.js",
+      "backend/tests/wordTemplates.test.js",
+      "backend/tests/wordTemplates.visual.test.js",
+      "backend/tests/wordTemplates.workerAdmission.test.js"
+    ],
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "exactBackendNodeModules": "/tmp/layer-billing-lock-deps/node_modules",
+    "externalNetworkGuard": true,
+    "tail": [
+      "✔ expanded catalog distinguishes manual names, stored enum codes and final signing phases (0.147542ms)",
+      "✔ expanded formatter does not fabricate default profile enums, split names or country facts (0.446083ms)",
+      "✔ one mapping worker per process rejects concurrent extraction and retains admission through cleanup (5.290834ms)",
+      "✔ worker reported error, runtime error and constructor failure each release admission after cleanup (0.423666ms)",
+      "✔ 30-second worker deadline terminates the owned worker and then releases admission (0.423708ms)",
+      "ℹ tests 142",
+      "ℹ suites 0",
+      "ℹ pass 135",
+      "ℹ fail 0",
+      "ℹ cancelled 0",
+      "ℹ skipped 7",
+      "ℹ todo 0",
+      "ℹ duration_ms 14693.933958",
+      ""
+    ]
+  }
+]

@@ -1,0 +1,444 @@
+{
+  "atUtc": "2026-11-01T22:07:09.282053+00:00",
+  "liveCapturedAtUtc": "2026-11-01T22:05:25.422959+00:00",
+  "remotePinsSuppliedByParent": {
+    "main": "9f01a42dcf85ec36a1e4a6d980c86f44e1eab5e9",
+    "AshrafEssa": "bc964428a38bfa63a62b3ef6a5782c9b2e86d28a",
+    "MelamedLaw": "5e2da32b3ebad7b77ace52d50227584a94e1e3ed",
+    "Melamedia": "615078693afd117e2d488f5c5355f1338d622ad8",
+    "MorLevi": "f5220552918507a8b34b30cb7fb0cc41f3f0710b"
+  },
+  "source": "Read-only actualSSHmetadata/publicHTTPSbytes + independently verified preservedpublicationarchives; no customer DB/provider/cron/billingAPI",
+  "rows": [
+    {
+      "tenant": "AshrafEssa",
+      "freshGitHubBranchPin": "bc964428a38bfa63a62b3ef6a5782c9b2e86d28a",
+      "backendCheckout": "ab271c535a996e5db4bcfc333c3b60dd332c3781",
+      "branchLabel": "AshrafEssa",
+      "trackedSourceClean": true,
+      "backendTreeAtCheckout": "67e0eb92c2da9dee216f02a27c4fdc04a5a15498",
+      "backendTreeAtFreshBranch": "67e0eb92c2da9dee216f02a27c4fdc04a5a15498",
+      "backendTreesIdentical": true,
+      "pm2": [
+        {
+          "name": "ashrafessa-api",
+          "status": "online",
+          "cwd": "/root/AshrafEssa/backend",
+          "script": "/root/AshrafEssa/backend/server.js",
+          "startedAtMs": 1793553799710,
+          "gitShaEnv": null
+        }
+      ],
+      "protectedSource": {
+        "manifestSha256": "4972adc1c1807ad7f35dbd7e324ed9340626b95936bb7ca6b149c4471eb77dd9",
+        "expectedEntries": 103,
+        "checkedEntries": 103,
+        "mismatches": [],
+        "requiredAncestor": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+        "requiredAncestorPresent": true,
+        "scope": "checkout source only, not loaded backend or static frontend binding"
+      },
+      "publishedFrontendSourceBoundByArchive": "bc964428a38bfa63a62b3ef6a5782c9b2e86d28a",
+      "publicAssetPaths": {
+        "main.js": "/static/js/main.b15bba80.js",
+        "main.css": "/static/css/main.42e8b4df.css"
+      },
+      "publicMatchesPreservedArchive": {
+        "manifest": true,
+        "main.js": true,
+        "main.css": true
+      },
+      "lockedStaticMatchesPublic": {
+        "manifest": true,
+        "main.js": true,
+        "main.css": true
+      },
+      "publicHealth": {
+        "httpStatus": 200,
+        "ok": true,
+        "scope": "unauthenticated /health only; no tenant headers/cookies; no DB/provider probe"
+      },
+      "publicManifestHttpStatus": 200,
+      "billingSourceComparison": {
+        "backend/controllers/billingController.js": {
+          "liveSourceSha256": "473143d1bdae02f869ce9219e29da0ea46fb6a60b7006504d8cb5755cfea6b11",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "backend/lib/billing/firmBillingService.js": {
+          "liveSourceSha256": "87940c6244f5f33debe25b2b040d1eb68c49aee023f089f07d87e8518cce9433",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "backend/lib/billing/selfServiceRenewal.js": {
+          "liveSourceSha256": "0aad4e1301f0165c8a431253350121a576340eafc9f12ff7e3c3dd724b335fc4",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "backend/lib/billing/selfServiceUpgrade.js": {
+          "liveSourceSha256": "7f0f297dec96f761537c8e0cd3e15e57958c53f7c18b1ccd6cadf33cbdee268b",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "backend/lib/payments/takbullClient.js": {
+          "liveSourceSha256": "378c668978f4cd197a5de02f30343b82b1abb76f592177abd39df7c6e5906d24",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "frontend/src/api/billingApi.js": {
+          "liveSourceSha256": "c30bdcbe9820d33a8f6b1b4a799158acbf18691c61cad8f18a17fac39e0e3c99",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "frontend/src/components/billing/TakbullCheckoutDialog.js": {
+          "liveSourceSha256": "13e2bf8489ee46dbf9b635c6f104a0553e574abd23babe5d216f8dd77593bd36",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "frontend/src/screens/billingScreen/PlanUsageScreen.js": {
+          "liveSourceSha256": "2ebcc5e7792c5eae1116c016fbe3e5cd57e648832c7f725095df85cbefd8b70f",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "frontend/src/screens/billingScreen/PlansPricingScreen.js": {
+          "liveSourceSha256": "f429fb6230fda9687a0c0f247c4445e00b2f3dcb744d9c466b93604c95d97caf",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        }
+      }
+    },
+    {
+      "tenant": "Melamedia",
+      "freshGitHubBranchPin": "615078693afd117e2d488f5c5355f1338d622ad8",
+      "backendCheckout": "ca31b04ea2957e78eb7f57edcff468baa6e6332d",
+      "branchLabel": "",
+      "trackedSourceClean": true,
+      "backendTreeAtCheckout": "daca7093631e3f2a5171a211c3dcd4e0a988c182",
+      "backendTreeAtFreshBranch": "daca7093631e3f2a5171a211c3dcd4e0a988c182",
+      "backendTreesIdentical": true,
+      "pm2": [
+        {
+          "name": "melamedia-api",
+          "status": "online",
+          "cwd": "/root/Melamedia/backend",
+          "script": "/root/Melamedia/backend/server.js",
+          "startedAtMs": 1793551474189,
+          "gitShaEnv": null
+        }
+      ],
+      "protectedSource": {
+        "manifestSha256": "6056c5c19e711a2e1810a5179806b0674d16bb953042636ecb2b4e8ef1c29c21",
+        "expectedEntries": 103,
+        "checkedEntries": 103,
+        "mismatches": [],
+        "requiredAncestor": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+        "requiredAncestorPresent": true,
+        "scope": "checkout source only, not loaded backend or static frontend binding"
+      },
+      "publishedFrontendSourceBoundByArchive": "615078693afd117e2d488f5c5355f1338d622ad8",
+      "publicAssetPaths": {
+        "main.js": "/static/js/main.ae388fc0.js",
+        "main.css": "/static/css/main.9bf17f76.css"
+      },
+      "publicMatchesPreservedArchive": {
+        "manifest": true,
+        "main.js": true,
+        "main.css": true
+      },
+      "lockedStaticMatchesPublic": {
+        "manifest": true,
+        "main.js": true,
+        "main.css": true
+      },
+      "publicHealth": {
+        "httpStatus": 200,
+        "ok": true,
+        "scope": "unauthenticated /health only; no tenant headers/cookies; no DB/provider probe"
+      },
+      "publicManifestHttpStatus": 200,
+      "billingSourceComparison": {
+        "backend/controllers/billingController.js": {
+          "liveSourceSha256": "473143d1bdae02f869ce9219e29da0ea46fb6a60b7006504d8cb5755cfea6b11",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "backend/lib/billing/firmBillingService.js": {
+          "liveSourceSha256": "87940c6244f5f33debe25b2b040d1eb68c49aee023f089f07d87e8518cce9433",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "backend/lib/billing/selfServiceRenewal.js": {
+          "liveSourceSha256": "0aad4e1301f0165c8a431253350121a576340eafc9f12ff7e3c3dd724b335fc4",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "backend/lib/billing/selfServiceUpgrade.js": {
+          "liveSourceSha256": "7f0f297dec96f761537c8e0cd3e15e57958c53f7c18b1ccd6cadf33cbdee268b",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "backend/lib/payments/takbullClient.js": {
+          "liveSourceSha256": "378c668978f4cd197a5de02f30343b82b1abb76f592177abd39df7c6e5906d24",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "frontend/src/api/billingApi.js": {
+          "liveSourceSha256": "c30bdcbe9820d33a8f6b1b4a799158acbf18691c61cad8f18a17fac39e0e3c99",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "frontend/src/components/billing/TakbullCheckoutDialog.js": {
+          "liveSourceSha256": "13e2bf8489ee46dbf9b635c6f104a0553e574abd23babe5d216f8dd77593bd36",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "frontend/src/screens/billingScreen/PlanUsageScreen.js": {
+          "liveSourceSha256": "2ebcc5e7792c5eae1116c016fbe3e5cd57e648832c7f725095df85cbefd8b70f",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "frontend/src/screens/billingScreen/PlansPricingScreen.js": {
+          "liveSourceSha256": "f429fb6230fda9687a0c0f247c4445e00b2f3dcb744d9c466b93604c95d97caf",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        }
+      }
+    },
+    {
+      "tenant": "MorLevi",
+      "freshGitHubBranchPin": "f5220552918507a8b34b30cb7fb0cc41f3f0710b",
+      "backendCheckout": "08f1a9889274b035d9bc307337563ad8c7016cb8",
+      "branchLabel": "MorLevi",
+      "trackedSourceClean": true,
+      "backendTreeAtCheckout": "8680a5d8e52efa4b3f57bf313faf51a63dc5d891",
+      "backendTreeAtFreshBranch": "8680a5d8e52efa4b3f57bf313faf51a63dc5d891",
+      "backendTreesIdentical": true,
+      "pm2": [
+        {
+          "name": "morlevy-api",
+          "status": "online",
+          "cwd": "/root/MorLevi/backend",
+          "script": "/root/MorLevi/backend/server.js",
+          "startedAtMs": 1793557359079,
+          "gitShaEnv": null
+        }
+      ],
+      "protectedSource": {
+        "manifestSha256": "4972adc1c1807ad7f35dbd7e324ed9340626b95936bb7ca6b149c4471eb77dd9",
+        "expectedEntries": 103,
+        "checkedEntries": 103,
+        "mismatches": [],
+        "requiredAncestor": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+        "requiredAncestorPresent": true,
+        "scope": "checkout source only, not loaded backend or static frontend binding"
+      },
+      "publishedFrontendSourceBoundByArchive": "f5220552918507a8b34b30cb7fb0cc41f3f0710b",
+      "publicAssetPaths": {
+        "main.js": "/static/js/main.15483ae9.js",
+        "main.css": "/static/css/main.42e8b4df.css"
+      },
+      "publicMatchesPreservedArchive": {
+        "manifest": true,
+        "main.js": true,
+        "main.css": true
+      },
+      "lockedStaticMatchesPublic": {
+        "manifest": true,
+        "main.js": true,
+        "main.css": true
+      },
+      "publicHealth": {
+        "httpStatus": 200,
+        "ok": true,
+        "scope": "unauthenticated /health only; no tenant headers/cookies; no DB/provider probe"
+      },
+      "publicManifestHttpStatus": 200,
+      "billingSourceComparison": {
+        "backend/controllers/billingController.js": {
+          "liveSourceSha256": "473143d1bdae02f869ce9219e29da0ea46fb6a60b7006504d8cb5755cfea6b11",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "backend/lib/billing/firmBillingService.js": {
+          "liveSourceSha256": "87940c6244f5f33debe25b2b040d1eb68c49aee023f089f07d87e8518cce9433",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "backend/lib/billing/selfServiceRenewal.js": {
+          "liveSourceSha256": "0aad4e1301f0165c8a431253350121a576340eafc9f12ff7e3c3dd724b335fc4",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "backend/lib/billing/selfServiceUpgrade.js": {
+          "liveSourceSha256": "7f0f297dec96f761537c8e0cd3e15e57958c53f7c18b1ccd6cadf33cbdee268b",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "backend/lib/payments/takbullClient.js": {
+          "liveSourceSha256": "378c668978f4cd197a5de02f30343b82b1abb76f592177abd39df7c6e5906d24",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "frontend/src/api/billingApi.js": {
+          "liveSourceSha256": "c30bdcbe9820d33a8f6b1b4a799158acbf18691c61cad8f18a17fac39e0e3c99",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "frontend/src/components/billing/TakbullCheckoutDialog.js": {
+          "liveSourceSha256": "13e2bf8489ee46dbf9b635c6f104a0553e574abd23babe5d216f8dd77593bd36",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "frontend/src/screens/billingScreen/PlanUsageScreen.js": {
+          "liveSourceSha256": "2ebcc5e7792c5eae1116c016fbe3e5cd57e648832c7f725095df85cbefd8b70f",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "frontend/src/screens/billingScreen/PlansPricingScreen.js": {
+          "liveSourceSha256": "f429fb6230fda9687a0c0f247c4445e00b2f3dcb744d9c466b93604c95d97caf",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        }
+      }
+    },
+    {
+      "tenant": "MelamedLaw",
+      "freshGitHubBranchPin": "5e2da32b3ebad7b77ace52d50227584a94e1e3ed",
+      "backendCheckout": "5f3a4459256c225be14386178e3cec827e3c79e2",
+      "branchLabel": "MelamedLaw",
+      "trackedSourceClean": true,
+      "backendTreeAtCheckout": "9da2c280c01e14c82ec8e79ca860e953596aefcb",
+      "backendTreeAtFreshBranch": "9da2c280c01e14c82ec8e79ca860e953596aefcb",
+      "backendTreesIdentical": true,
+      "pm2": [
+        {
+          "name": "melamed-backend",
+          "status": "online",
+          "cwd": "/root/LayerWebsites/backend",
+          "script": "/root/LayerWebsites/backend/server.js",
+          "startedAtMs": 1793558775305,
+          "gitShaEnv": null
+        }
+      ],
+      "protectedSource": {
+        "manifestSha256": "62e0e2780c6b4de631768b6c64ca09b4eea8c95c94ee3403d14a01b05f751fd4",
+        "expectedEntries": 103,
+        "checkedEntries": 103,
+        "mismatches": [],
+        "requiredAncestor": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+        "requiredAncestorPresent": true,
+        "scope": "checkout source only, not loaded backend or static frontend binding"
+      },
+      "publishedFrontendSourceBoundByArchive": "5f3a4459256c225be14386178e3cec827e3c79e2",
+      "publicAssetPaths": {
+        "main.js": "/static/js/main.93266448.js",
+        "main.css": "/static/css/main.42e8b4df.css"
+      },
+      "publicMatchesPreservedArchive": {
+        "manifest": true,
+        "main.js": true,
+        "main.css": true
+      },
+      "lockedStaticMatchesPublic": null,
+      "publicHealth": {
+        "httpStatus": 200,
+        "ok": true,
+        "scope": "unauthenticated /health only; no tenant headers/cookies; no DB/provider probe"
+      },
+      "publicManifestHttpStatus": 200,
+      "billingSourceComparison": {
+        "backend/controllers/billingController.js": {
+          "liveSourceSha256": "473143d1bdae02f869ce9219e29da0ea46fb6a60b7006504d8cb5755cfea6b11",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "backend/lib/billing/firmBillingService.js": {
+          "liveSourceSha256": "87940c6244f5f33debe25b2b040d1eb68c49aee023f089f07d87e8518cce9433",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "backend/lib/billing/selfServiceRenewal.js": {
+          "liveSourceSha256": "0aad4e1301f0165c8a431253350121a576340eafc9f12ff7e3c3dd724b335fc4",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "backend/lib/billing/selfServiceUpgrade.js": {
+          "liveSourceSha256": "7f0f297dec96f761537c8e0cd3e15e57958c53f7c18b1ccd6cadf33cbdee268b",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "backend/lib/payments/takbullClient.js": {
+          "liveSourceSha256": "378c668978f4cd197a5de02f30343b82b1abb76f592177abd39df7c6e5906d24",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "frontend/src/api/billingApi.js": {
+          "liveSourceSha256": "c30bdcbe9820d33a8f6b1b4a799158acbf18691c61cad8f18a17fac39e0e3c99",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "frontend/src/components/billing/TakbullCheckoutDialog.js": {
+          "liveSourceSha256": "13e2bf8489ee46dbf9b635c6f104a0553e574abd23babe5d216f8dd77593bd36",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "frontend/src/screens/billingScreen/PlanUsageScreen.js": {
+          "liveSourceSha256": "2ebcc5e7792c5eae1116c016fbe3e5cd57e648832c7f725095df85cbefd8b70f",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        },
+        "frontend/src/screens/billingScreen/PlansPricingScreen.js": {
+          "liveSourceSha256": "f429fb6230fda9687a0c0f247c4445e00b2f3dcb744d9c466b93604c95d97caf",
+          "matchesFreshBranch": true,
+          "matchesOldBillingBaseline0631": true,
+          "matchesLocalQualified5d": false
+        }
+      }
+    }
+  ],
+  "limits": [
+    "Loaded backend not cryptographically bound: all GIT_SHA env markers absent.",
+    "/health is liveness only, no DB/schema/permission/payment correctness.",
+    "Direct locked static read exists for three shared-server sites; Melamedpublicbytesonly.",
+    "FreshbranchSHA is not automatically its deployed frontend.",
+    "Old Mor lock/403 observation is superseded by this successful locked/publicsnapshot."
+  ],
+  "providerCalls": 0,
+  "customerDbQueries": 0,
+  "remoteMutations": 0
+}

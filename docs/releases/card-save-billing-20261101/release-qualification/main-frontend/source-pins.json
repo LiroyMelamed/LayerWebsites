@@ -1,0 +1,16 @@
+{
+  "capturedAtUtc": "2026-11-01T22:32:36.084594+00:00",
+  "candidateCommit": "9dd9cb3607ee79434fcfb1aed5a40773e5713789",
+  "branch": "codex/billing-release-qualification-20261101",
+  "tree": "e1e08ed381b8c4f1a36304024cd85aff0abd847b",
+  "frontendTree": "04066315bbbeadb53b182c394bc2cb52c1e42738",
+  "backendTree": "da8c7b52cfc710ccda9eb969bd8ea256829b645a",
+  "signingManifestSha256": "4972adc1c1807ad7f35dbd7e324ed9340626b95936bb7ca6b149c4471eb77dd9",
+  "sourceLockSha256": {
+    "frontend": "ed0b4c398ffe0d47a2d91e735ee48bf494a0b718534293b59056f91973a6a4ac",
+    "backend": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651"
+  },
+  "sourceMutationScope": "None; only the fresh main-frontend QA evidence folder is owned by this subtask.",
+  "providerWrites": 0,
+  "liveConfigurationChanges": 0
+}

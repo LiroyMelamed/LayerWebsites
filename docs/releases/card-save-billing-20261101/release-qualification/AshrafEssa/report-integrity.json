@@ -1,0 +1,390 @@
+{
+  "qualifiedSourceCandidate": "9eaebbdb6c23d56d974546e233b8905d19570ef5",
+  "atUtc": "2026-11-01T22:59:55.609170+00:00",
+  "jsonParsedCount": 49,
+  "jsonFiles": [
+    {
+      "path": "branding-build-proof.json",
+      "sha256": "8d6ee684049bb701de8d58984f535f6f924b69bf650ad2d47c6b07e565696f11"
+    },
+    {
+      "path": "dependencies.json",
+      "sha256": "5b29b5adf7a88d49aafc1b366ac73ff4f2af0cd021d8fbf1bd32e0cfd4781910"
+    },
+    {
+      "path": "donor-source-parity.json",
+      "sha256": "af1e06a9d6b47d82143fea7867ff2c0ab6ed04a7d5dfaed1c326311e1cac9435"
+    },
+    {
+      "path": "frontend-build-carry.json",
+      "sha256": "88b621542e3397b480cb688f0f67d7457a72243c7a30e22bbd8373551250195d"
+    },
+    {
+      "path": "source-guard.json",
+      "sha256": "85ef1152f1d3f74a90fae9a1814440f7fb5a66849bfb48a82ba7af19c65ffd0d"
+    },
+    {
+      "path": "frontend-result.json",
+      "sha256": "57fa7ebf1b95da83b25b2b65a02243387352c7c67693cca20fd099ab79913f02"
+    },
+    {
+      "path": "provenance.json",
+      "sha256": "22568be8604a961adac64b926ec0b02b8416307a2e8335d1b7619abf0c6d51b9"
+    },
+    {
+      "path": "frontend.json",
+      "sha256": "fb3973c88b33f4bcae8e92a8496d8b6b770e55b5088becb19ac1e5fa18f223b9"
+    },
+    {
+      "path": "qualification-summary.json",
+      "sha256": "ef454d761ce76a93781d94c7ea1771e2be9b5efad524a61ff8ad3676516573a6"
+    },
+    {
+      "path": "initial-frontend-failure-source-parity.json",
+      "sha256": "9d92c49c180e500e7a7294c9b7375e53792da079c5402afbcafd99783ef7a0aa"
+    },
+    {
+      "path": "latest-client-history-binding.json",
+      "sha256": "a54531c6b0e20437f3556ce9e64873d5ccf6ce81f7c99db2e9ee16f3f8214b62"
+    },
+    {
+      "path": "preservation.json",
+      "sha256": "c05e93ded2ee601aa6ffb44f8b9b026f1668e88bdfd82e5e73c85ec8feb42f13"
+    },
+    {
+      "path": "preservation-preimage.json",
+      "sha256": "d5bfc16cfc86427ab61b9bae2ed7e70badd7021146455e2f90b71dc530ddb8d5"
+    },
+    {
+      "path": "transport.json",
+      "sha256": "23f67cee4bc5c3aa059723233d4bb87177972641c8c5a06ccc73a02a70525da7"
+    },
+    {
+      "path": "frontend-focused-result.json",
+      "sha256": "02bb4fb14efd254607550bd9416ae27b620ecc0b4db6823e18ae1b2f23ad4b1f"
+    },
+    {
+      "path": "frontend-import-scope.json",
+      "sha256": "77c6861a9eb53da467c341b5d0587a5ff2c2c30b4787d67ee0c2245799894c17"
+    },
+    {
+      "path": "backend.json",
+      "sha256": "7897659cbc7aa947f504f3b48baea8c36ff097ea3073c27004945ee42df0d7bb"
+    },
+    {
+      "path": "frontend-focused.json",
+      "sha256": "039d159d9a83a71816fef099a4883bcb220ab532cd71041a14b5d8cd6083ba4f"
+    },
+    {
+      "path": "build.json",
+      "sha256": "860026faf589a3fcba4cfb0a3d768bf20a047f2a7e4c1b55c522bb45e2e4cb07"
+    },
+    {
+      "path": "pinned-6fab/branding-build-proof.json",
+      "sha256": "8d6ee684049bb701de8d58984f535f6f924b69bf650ad2d47c6b07e565696f11"
+    },
+    {
+      "path": "pinned-6fab/dependencies.json",
+      "sha256": "9270f227e07e8675fd1fbd9748e398157362321e83c565c83a1abc1fac8cee32"
+    },
+    {
+      "path": "pinned-6fab/donor-source-parity.json",
+      "sha256": "1cb45e5e0426f46b49d5b549d4d66ce66375e38b6404ddc21fe3f10c499bf9d3"
+    },
+    {
+      "path": "pinned-6fab/frontend-build-carry.json",
+      "sha256": "55eb1fe6e761a0604f6d70a72ddb5936e203dc94bcf8b482b75463ed33e1a6f5"
+    },
+    {
+      "path": "pinned-6fab/source-guard.json",
+      "sha256": "96e29c5abf35e15ed11740aad82e30581fce8de9d43433c4667bd1d16cd2fd80"
+    },
+    {
+      "path": "pinned-6fab/frontend-result.json",
+      "sha256": "57fa7ebf1b95da83b25b2b65a02243387352c7c67693cca20fd099ab79913f02"
+    },
+    {
+      "path": "pinned-6fab/provenance.json",
+      "sha256": "fac2fbdc841830d7f2bd508592a7a87500ec6b51e169adb0df35ba7cfb32cf77"
+    },
+    {
+      "path": "pinned-6fab/frontend.json",
+      "sha256": "fb3973c88b33f4bcae8e92a8496d8b6b770e55b5088becb19ac1e5fa18f223b9"
+    },
+    {
+      "path": "pinned-6fab/initial-frontend-failure-source-parity.json",
+      "sha256": "9d92c49c180e500e7a7294c9b7375e53792da079c5402afbcafd99783ef7a0aa"
+    },
+    {
+      "path": "pinned-6fab/preservation.json",
+      "sha256": "cd02b414487cf7d268040a72a425c6754fa68f03c5453ee2348af44060536728"
+    },
+    {
+      "path": "pinned-6fab/preservation-preimage.json",
+      "sha256": "d5bfc16cfc86427ab61b9bae2ed7e70badd7021146455e2f90b71dc530ddb8d5"
+    },
+    {
+      "path": "pinned-6fab/transport.json",
+      "sha256": "d22886814a091b7989e01a626e2de87e51629cc6d0c9f0abc401f2f7fa1ead4b"
+    },
+    {
+      "path": "pinned-6fab/frontend-focused-result.json",
+      "sha256": "02bb4fb14efd254607550bd9416ae27b620ecc0b4db6823e18ae1b2f23ad4b1f"
+    },
+    {
+      "path": "pinned-6fab/frontend-import-scope.json",
+      "sha256": "77c6861a9eb53da467c341b5d0587a5ff2c2c30b4787d67ee0c2245799894c17"
+    },
+    {
+      "path": "pinned-6fab/backend.json",
+      "sha256": "8725220903a119db5c7244bb87b00d76a8baefb0d9c60f45f60a1f78fb34962e"
+    },
+    {
+      "path": "pinned-6fab/frontend-focused.json",
+      "sha256": "039d159d9a83a71816fef099a4883bcb220ab532cd71041a14b5d8cd6083ba4f"
+    },
+    {
+      "path": "pinned-6fab/build.json",
+      "sha256": "860026faf589a3fcba4cfb0a3d768bf20a047f2a7e4c1b55c522bb45e2e4cb07"
+    },
+    {
+      "path": "pinned-9dd/dependencies.json",
+      "sha256": "3d0fc919bcf8bfb2ba21d1a63aef5bb5911f421043b8216aca7b9232bb303629"
+    },
+    {
+      "path": "pinned-9dd/donor-source-parity.json",
+      "sha256": "5b6909d5f1bfd741f02144d7d4e3fe7d5ccab70553d567652a2fd41bc55ef214"
+    },
+    {
+      "path": "pinned-9dd/source-guard.json",
+      "sha256": "5a377b053370149553e3e35e3dc2023c466ed1dbd18602d28d779063f0d2dfbe"
+    },
+    {
+      "path": "pinned-9dd/frontend-result.json",
+      "sha256": "0beeacd482873918819c24ebb308fbd55a805adfde48ce5351c616549dbc4a87"
+    },
+    {
+      "path": "pinned-9dd/provenance.json",
+      "sha256": "1e9609d5c20b57792860912683e706dd70108e0593687a0d983e5ebf45a661b9"
+    },
+    {
+      "path": "pinned-9dd/frontend.json",
+      "sha256": "4efc6c6224e2b5f56df93a34230c211ee59e892d53649cbf196b56c0546cab2c"
+    },
+    {
+      "path": "pinned-9dd/initial-frontend-failure-source-parity.json",
+      "sha256": "9d92c49c180e500e7a7294c9b7375e53792da079c5402afbcafd99783ef7a0aa"
+    },
+    {
+      "path": "pinned-9dd/preservation.json",
+      "sha256": "49ebc8f5851705ff8f45e01caf6cfcd944af602fe95985ea471c49df803238de"
+    },
+    {
+      "path": "pinned-9dd/preservation-preimage.json",
+      "sha256": "d5bfc16cfc86427ab61b9bae2ed7e70badd7021146455e2f90b71dc530ddb8d5"
+    },
+    {
+      "path": "pinned-9dd/frontend-focused-result.json",
+      "sha256": "02bb4fb14efd254607550bd9416ae27b620ecc0b4db6823e18ae1b2f23ad4b1f"
+    },
+    {
+      "path": "pinned-9dd/backend.json",
+      "sha256": "26e7216b52e2ff6d3bdf51c0d8f4cdf917bfc303eaa6e54ff41de5d4540dcf90"
+    },
+    {
+      "path": "pinned-9dd/frontend-focused.json",
+      "sha256": "039d159d9a83a71816fef099a4883bcb220ab532cd71041a14b5d8cd6083ba4f"
+    },
+    {
+      "path": "pinned-9dd/build.json",
+      "sha256": "860026faf589a3fcba4cfb0a3d768bf20a047f2a7e4c1b55c522bb45e2e4cb07"
+    }
+  ],
+  "markdownLinkCount": 36,
+  "allMarkdownLinksExist": true,
+  "markdownLinks": [
+    {
+      "from": "README.md",
+      "target": "pinned-9dd/README.md",
+      "exists": true
+    },
+    {
+      "from": "README.md",
+      "target": "pinned-6fab/README.md",
+      "exists": true
+    },
+    {
+      "from": "README.md",
+      "target": "qualification-summary.json",
+      "exists": true
+    },
+    {
+      "from": "README.md",
+      "target": "provenance.json",
+      "exists": true
+    },
+    {
+      "from": "README.md",
+      "target": "backend.json",
+      "exists": true
+    },
+    {
+      "from": "README.md",
+      "target": "transport.json",
+      "exists": true
+    },
+    {
+      "from": "README.md",
+      "target": "frontend.json",
+      "exists": true
+    },
+    {
+      "from": "README.md",
+      "target": "build.json",
+      "exists": true
+    },
+    {
+      "from": "README.md",
+      "target": "frontend-build-carry.json",
+      "exists": true
+    },
+    {
+      "from": "README.md",
+      "target": "branding-build-proof.json",
+      "exists": true
+    },
+    {
+      "from": "README.md",
+      "target": "preservation.json",
+      "exists": true
+    },
+    {
+      "from": "README.md",
+      "target": "latest-client-history-binding.json",
+      "exists": true
+    },
+    {
+      "from": "README.md",
+      "target": "donor-source-parity.json",
+      "exists": true
+    },
+    {
+      "from": "README.md",
+      "target": "source-guard.json",
+      "exists": true
+    },
+    {
+      "from": "README.md",
+      "target": "dependencies.json",
+      "exists": true
+    },
+    {
+      "from": "README.md",
+      "target": "report-integrity.json",
+      "exists": true
+    },
+    {
+      "from": "pinned-6fab/README.md",
+      "target": "../pinned-9dd/README.md",
+      "exists": true
+    },
+    {
+      "from": "pinned-6fab/README.md",
+      "target": "provenance.json",
+      "exists": true
+    },
+    {
+      "from": "pinned-6fab/README.md",
+      "target": "backend.json",
+      "exists": true
+    },
+    {
+      "from": "pinned-6fab/README.md",
+      "target": "transport.json",
+      "exists": true
+    },
+    {
+      "from": "pinned-6fab/README.md",
+      "target": "frontend.json",
+      "exists": true
+    },
+    {
+      "from": "pinned-6fab/README.md",
+      "target": "build.json",
+      "exists": true
+    },
+    {
+      "from": "pinned-6fab/README.md",
+      "target": "frontend-build-carry.json",
+      "exists": true
+    },
+    {
+      "from": "pinned-6fab/README.md",
+      "target": "branding-build-proof.json",
+      "exists": true
+    },
+    {
+      "from": "pinned-6fab/README.md",
+      "target": "preservation.json",
+      "exists": true
+    },
+    {
+      "from": "pinned-6fab/README.md",
+      "target": "donor-source-parity.json",
+      "exists": true
+    },
+    {
+      "from": "pinned-6fab/README.md",
+      "target": "source-guard.json",
+      "exists": true
+    },
+    {
+      "from": "pinned-6fab/README.md",
+      "target": "dependencies.json",
+      "exists": true
+    },
+    {
+      "from": "pinned-9dd/README.md",
+      "target": "provenance.json",
+      "exists": true
+    },
+    {
+      "from": "pinned-9dd/README.md",
+      "target": "backend.json",
+      "exists": true
+    },
+    {
+      "from": "pinned-9dd/README.md",
+      "target": "frontend.json",
+      "exists": true
+    },
+    {
+      "from": "pinned-9dd/README.md",
+      "target": "build.json",
+      "exists": true
+    },
+    {
+      "from": "pinned-9dd/README.md",
+      "target": "preservation.json",
+      "exists": true
+    },
+    {
+      "from": "pinned-9dd/README.md",
+      "target": "donor-source-parity.json",
+      "exists": true
+    },
+    {
+      "from": "pinned-9dd/README.md",
+      "target": "source-guard.json",
+      "exists": true
+    },
+    {
+      "from": "pinned-9dd/README.md",
+      "target": "dependencies.json",
+      "exists": true
+    }
+  ],
+  "individualCaseNameMatches": 0,
+  "privacyPolicy": "Owner-waived periods were preserved; customer-specific evidence stays private outside Git.",
+  "scope": "Own new report folder including archived receipts; self hash excluded."
+}

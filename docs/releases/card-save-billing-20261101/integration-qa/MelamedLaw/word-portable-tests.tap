@@ -1,0 +1,104 @@
+✔ server-verified final PDF enters an author-bound draft without inferred recipients or stale geometry (8.229708ms)
+✔ client-supplied keys or provenance cannot replace the server origin (0.914667ms)
+✔ a changed reviewed hash fails before source registration (0.59475ms)
+✔ storage readback tampering prevents the draft and artifact row (1.311958ms)
+✔ duplicate artifact with foreign provenance fails closed (0.802917ms)
+✔ malformed final PDF cannot establish native page geometry (0.136875ms)
+✔ configured one admits one job, rejects a second and releases the slot after success (565.451125ms)
+✔ unset policy preserves default two jobs with distinct profiles and rejects a third (624.817875ms)
+✔ explicit two is accepted without altering the fixed argv or child environment (780.878542ms)
+✔ every unsupported exact-string policy fails before child start and cannot leak capacity (739.010458ms)
+✔ configured one releases capacity after conversion failure without changing cleanup (848.974916ms)
+✔ configuration is explicit, bounded and sanitized; no implicit desktop discovery (9.457292ms)
+✔ invalid or externally active DOCX is rejected before executing converter (7.078583ms)
+✔ conversion snapshots input, uses isolated profile/permissions/environment and private immutable output bytes (359.746125ms)
+✔ nonzero converter exit leaks no output and cleans all private files (356.911584ms)
+✔ a signal crash is a conversion failure and cleans all private files (339.993ms)
+✔ timeout kills the owned process group including TERM-resistant descendant (2710.160125ms)
+✔ successful wrapper cannot leave a background converter descendant running (638.481208ms)
+✔ pre-aborted and running cancellation clean private state (104.495166ms)
+✔ missing or non-PDF output fails truthfully without partial artifact (1347.473625ms)
+✔ symlink output is rejected and cannot delete or read an external target (436.854917ms)
+✔ output-byte limit applies both after exit and during a long-running process (1139.35ms)
+✔ page count limit and invalid page bounds reject parsed PDFs (1375.189292ms)
+✔ concurrent jobs have separate profiles and bounded worker occupancy (1696.371666ms)
+✔ worker capacity is released after failure and explicit configured environment is accepted (709.741334ms)
+﹣ actual explicitly configured bundled converter handles one new synthetic DOCX (0.086792ms) # SKIP
+﹣ private Word service integrates actual configured conversion and protected current PDF readback (0.296917ms) # SKIP
+✔ actual authoring SQL saves server-resolved independent ranges, reuses original render and keeps it private (759.941209ms)
+ℹ Consumed migration SHA256 {"2026-10-23_01_signing_word_sources.sql":"a5a81ccd19e962a6d4c3c365f1d51066abb8624338a1311cfac3a96331a63343","2026-10-26_01_signing_word_authoring_renders.sql":"ac5402d3260e0c2f385e926ae0c2deccad8a7dc1ce9dd259a00618f32e1ac5c8"}
+✔ authoring map and PDF storage tampering are rejected against immutable hashes (486.296875ms)
+ℹ Consumed migration SHA256 {"2026-10-23_01_signing_word_sources.sql":"a5a81ccd19e962a6d4c3c365f1d51066abb8624338a1311cfac3a96331a63343","2026-10-26_01_signing_word_authoring_renders.sql":"ac5402d3260e0c2f385e926ae0c2deccad8a7dc1ce9dd259a00618f32e1ac5c8"}
+✔ mapping version changes during conversion stop before an authoring row is committed (433.113542ms)
+ℹ Consumed migration SHA256 {"2026-10-23_01_signing_word_sources.sql":"a5a81ccd19e962a6d4c3c365f1d51066abb8624338a1311cfac3a96331a63343","2026-10-26_01_signing_word_authoring_renders.sql":"ac5402d3260e0c2f385e926ae0c2deccad8a7dc1ce9dd259a00618f32e1ac5c8"}
+✔ visual caret insertion survives SQL save and mutates a fresh DOCX/PDF, legacy raw insertion is refused (453.192125ms)
+ℹ Consumed migration SHA256 {"2026-10-23_01_signing_word_sources.sql":"a5a81ccd19e962a6d4c3c365f1d51066abb8624338a1311cfac3a96331a63343","2026-10-26_01_signing_word_authoring_renders.sql":"ac5402d3260e0c2f385e926ae0c2deccad8a7dc1ce9dd259a00618f32e1ac5c8"}
+✔ new stored DOB and court number preserve calendar date and remain distinct from internal case ID (464.840333ms)
+ℹ Consumed migration SHA256 {"2026-10-23_01_signing_word_sources.sql":"a5a81ccd19e962a6d4c3c365f1d51066abb8624338a1311cfac3a96331a63343","2026-10-26_01_signing_word_authoring_renders.sql":"ac5402d3260e0c2f385e926ae0c2deccad8a7dc1ce9dd259a00618f32e1ac5c8"}
+✔ legacy seven-field values hash/idempotency survives old schema without birthdate or court table (434.107125ms)
+ℹ Consumed migration SHA256 {"2026-10-23_01_signing_word_sources.sql":"a5a81ccd19e962a6d4c3c365f1d51066abb8624338a1311cfac3a96331a63343","2026-10-26_01_signing_word_authoring_renders.sql":"ac5402d3260e0c2f385e926ae0c2deccad8a7dc1ce9dd259a00618f32e1ac5c8"}
+✔ cached authoring response refuses a concurrent metadata-version advance during private map read (428.935917ms)
+ℹ Consumed migration SHA256 {"2026-10-23_01_signing_word_sources.sql":"a5a81ccd19e962a6d4c3c365f1d51066abb8624338a1311cfac3a96331a63343","2026-10-26_01_signing_word_authoring_renders.sql":"ac5402d3260e0c2f385e926ae0c2deccad8a7dc1ce9dd259a00618f32e1ac5c8"}
+✔ selected records automatically fill client, organization, contact, role and case fields with no manual values (691.099125ms)
+✔ switching selected clients uses the new record and never leaks the previous client or organization number (495.817625ms)
+✔ missing required identity blocks before conversion while optional missing identity is cleared (451.901ms)
+✔ person and office roles never infer organization identifiers or signing authority from stored profile (454.517459ms)
+✔ idempotent reuse revalidates stored values and a new request materializes changed client data (456.846709ms)
+✔ foreign, deleted, office-primary and inaccessible client/case selections fail before conversion (455.377584ms)
+✔ record references reject numeric strings and manual numeric identity values cannot coerce leading-zero strings (438.732458ms)
+✔ separate repeated client and role bindings resolve independently in the same original document (438.569667ms)
+﹣ actual he flowing Word preserves long values, table/header/footer and fresh geometry (0.299375ms) # SKIP
+﹣ actual ar flowing Word preserves long values, table/header/footer and fresh geometry (0.046958ms) # SKIP
+﹣ actual en flowing Word preserves long values, table/header/footer and fresh geometry (0.036417ms) # SKIP
+﹣ private Word library and per-use PDF service on isolated PostgreSQL (0.255ms) # SKIP
+✔ complex nested fields protect cached results across paragraphs and stop at the final end (11.731959ms)
+✔ malformed or unclosed complex fields cannot expose editable cached results (2.176917ms)
+✔ imports text across runs, table cells, headers and footers with entity decoding (0.769083ms)
+✔ materializes split runs with first-run formatting, XML escaping, repeats and leading zeros (2.286042ms)
+✔ replaces several nonoverlapping selections in one run without offset drift (1.179292ms)
+✔ supports table, header and footer role/case/office bindings (0.950333ms)
+✔ rejects stale source bytes and independently stale selection anchors (0.8755ms)
+✔ rejects overlapping ranges, duplicate identifiers and arbitrary fields (0.530292ms)
+✔ required values block materialization; strings preserve numbers; optional blanks clear (0.926834ms)
+✔ rejects invisible control values, multiline layout changes and broken surrogate selections (1.29725ms)
+✔ tabs and breaks are visible but cannot be replaced by a cross-gap selection (0.36875ms)
+✔ clearly refuses editable selection in tracked changes (0.321334ms)
+✔ clearly refuses editable selection in content controls (0.224292ms)
+✔ clearly refuses editable selection in Word fields (0.200959ms)
+✔ clearly refuses editable selection in text boxes (0.20675ms)
+✔ rejects malformed XML, DTD, custom entities and CDATA (0.683125ms)
+✔ rejects external relationships, active embedded content and signed packages (0.689333ms)
+✔ ordinary package metadata relationships remain accepted (0.244917ms)
+✔ rejects active Word instructions even split across runs without external relationships (0.358ms)
+✔ rejects legacy relative image references that could resolve outside the package (0.618708ms)
+✔ rejects broken internal package targets and non-DOCX archives (0.291209ms)
+✔ rejects path traversal, duplicate names and forged compressed expansion (4.390333ms)
+✔ rejects CRC corruption and encrypted ZIP flags (0.137333ms)
+✔ client values keep human contact and organization identities separate across PascalCase responses (0.367291ms)
+✔ client values support lowercase DB rows and existing company aliases without identifier coercion (0.161416ms)
+✔ person records never expose organization registration as identity or company number (0.046333ms)
+✔ omitted profiles and missing legacy fields stay empty with no inferred identity or country (0.073916ms)
+✔ client profile validation is enforced and aliases follow canonical precedence (0.06075ms)
+✔ company-name bindings fill human and legal-entity names independently (0.627833ms)
+✔ general ordinary Hebrew source derives separate repeated-name anchors without prepared targets (11.075ms)
+✔ forward and backward multi-item selection resolve the same contiguous source range (1.183833ms)
+✔ table text is independently mappable, duplicate full paragraphs remain explicitly unsupported (0.876125ms)
+✔ same compact text with different source whitespace is not assigned by guessing (0.455584ms)
+✔ long flowing body text can align across repeated known header/footer stories without making them editable (0.593833ms)
+✔ fields/content controls are read-only and cross-paragraph selectors reject clearly (0.437583ms)
+✔ mapped existing-text caret inserts actual DOCX content, preserving text and run properties (1.450958ms)
+✔ true empty paragraphs/arbitrary blank locations and split surrogate insertions reject (0.425958ms)
+✔ insertions at the same point or inside a replacement are rejected rather than reordered (0.484458ms)
+✔ expanded catalog distinguishes manual names, stored enum codes and final signing phases (0.12275ms)
+✔ expanded formatter does not fabricate default profile enums, split names or country facts (0.415084ms)
+✔ one mapping worker per process rejects concurrent extraction and retains admission through cleanup (5.499292ms)
+✔ worker reported error, runtime error and constructor failure each release admission after cleanup (0.372958ms)
+✔ 30-second worker deadline terminates the owned worker and then releases admission (0.655541ms)
+ℹ tests 89
+ℹ suites 0
+ℹ pass 83
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 6
+ℹ todo 0
+ℹ duration_ms 22859.170875
