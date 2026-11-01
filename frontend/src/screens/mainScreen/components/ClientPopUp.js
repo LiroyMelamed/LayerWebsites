@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import SimpleInput from "../../../components/simpleComponents/SimpleInput";
@@ -25,21 +25,6 @@ import { parseDateInput, toNativeDateValue } from "../../../functions/date/forma
 import "./ClientPopUp.scss";
 import { AdminStackName, SigningManagerScreenName } from '../../../navigation/screenPaths';
 
-const contactSnapshot = client => {
-    const id = Number(client?.UserId || client?.userid);
-    if (!Number.isSafeInteger(id) || id <= 0) return null;
-    return { id,
-        phoneNumber: Object.hasOwn(client, 'PhoneNumber') ? client.PhoneNumber : client.phonenumber,
-        email: Object.hasOwn(client, 'Email') ? client.Email : client.email };
-};
-// National identifiers can contain letters too; keyboard hints never impose a
-// country's format or change the saved 40-character text value.
-const IDENTITY_PRESENTATION = {
-    national_id: { number: 'nationalIdNumber', country: 'nationalIdCountry', help: 'nationalIdHelp', inputMode: 'text' },
-    passport: { number: 'passportNumber', country: 'passportCountry', help: 'passportHelp', inputMode: 'text' },
-    other: { number: 'otherIdentityNumber', country: 'otherIdentityCountry', help: 'otherIdentityHelp', inputMode: 'text' },
-};
-
 export default function ClientPopup({
     clientDetails,
     initialName,
@@ -49,21 +34,17 @@ export default function ClientPopup({
     rePerformRequest,
     onFailureFunction,
     closePopUpFunction,
-    readOnly = false,
-    onSendClient,
     style: _style,
 }) {
     const { t, i18n } = useTranslation();
     const direction = i18n.dir();
     const profileText = key => t(`customers.documentProfile.${key}`);
-    const identityHelpId = useId();
     const validateName = value => invalidClientText(value) ? profileText('invalidText') : null;
     const navigate = useNavigate();
     const { canAction } = useFirmPermissions() || { canAction: () => false };
     const signingAvailable = useSigningV2Available();
     const [signingOpen, setSigningOpen] = useState(false);
     const [selectedClient, setSelectedClient] = useState(clientDetails || null);
-    const [storedContacts, setStoredContacts] = useState(() => contactSnapshot(clientDetails));
     const [name, setName, nameError] = useFieldState(
         validateName,
         clientDetails?.Name || clientDetails?.name || initialName || ""
@@ -80,33 +61,25 @@ export default function ClientPopup({
         IsraeliPhoneNumberValidation,
         clientDetails?.PhoneNumber || clientDetails?.phonenumber || initialPhone || ""
     );
-    const selectedId = Number(selectedClient?.UserId || selectedClient?.userid);
-    // This exception belongs to one loaded edit snapshot, never to new values.
-    const unchangedStoredContact = (key, value) => storedContacts?.id === selectedId
-        && typeof storedContacts[key] === 'string' && storedContacts[key] === value;
-    const effectivePhoneError = unchangedStoredContact('phoneNumber', phoneNumber) ? null : phoneNumberError;
-    const effectiveEmailError = unchangedStoredContact('email', email) ? null : emailError;
-    const [documentProfile, setDocumentProfile] = useState(() => clientDocumentProfile(readOnly ? null : clientDetails));
+    const [documentProfile, setDocumentProfile] = useState(() => clientDocumentProfile(clientDetails));
     const [profileDirty, setProfileDirty] = useState(false);
-    const [profileLoaded, setProfileLoaded] = useState(() => !readOnly && (!clientDetails || hasClientDocumentProfile(clientDetails)));
+    const [profileLoaded, setProfileLoaded] = useState(() => !clientDetails || hasClientDocumentProfile(clientDetails));
     const [profileLoadError, setProfileLoadError] = useState(false);
     const profileLoadRequest = useRef(0);
     const profileErrors = useMemo(() => clientDocumentProfileErrors(documentProfile), [documentProfile]);
     const hasProfileError = Object.keys(profileErrors).length > 0;
     const updateProfile = (section, key, value) => {
-        if (readOnly || !profileLoaded) return;
+        if (!profileLoaded) return;
         setProfileDirty(true);
         setDocumentProfile(previous => ({ ...previous, [section]: { ...previous[section], [key]: value } }));
     };
-    const [dateOfBirth, setDateOfBirth] = useState(() => !readOnly && (clientDetails?.DateOfBirth || clientDetails?.dateofbirth) ? toNativeDateValue(clientDetails.DateOfBirth || clientDetails.dateofbirth) : "");
+    const [dateOfBirth, setDateOfBirth] = useState((clientDetails?.DateOfBirth || clientDetails?.dateofbirth) ? toNativeDateValue(clientDetails.DateOfBirth || clientDetails.dateofbirth) : "");
 
     useEffect(() => {
         const request = ++profileLoadRequest.current;
         const id = selectedClient?.UserId || selectedClient?.userid;
-        setStoredContacts(contactSnapshot(selectedClient));
         setProfileDirty(false);
         setProfileLoadError(false);
-        if (readOnly) { setProfileLoaded(false); return; }
         if (!id || hasClientDocumentProfile(selectedClient)) {
             setProfileLoaded(true);
             setDocumentProfile(clientDocumentProfile(selectedClient));
@@ -120,16 +93,12 @@ export default function ClientPopup({
             if (response?.status !== 200 || Number(customer?.UserId || customer?.userid) !== Number(id)
                 || !hasClientDocumentProfile(customer)) throw new Error('Profile unavailable');
             setDocumentProfile(clientDocumentProfile(customer));
-            const fetchedContacts = contactSnapshot(customer);
-            setStoredContacts(previous => previous?.id === fetchedContacts.id ? { ...previous,
-                ...(fetchedContacts.phoneNumber !== undefined ? { phoneNumber: fetchedContacts.phoneNumber } : {}),
-                ...(fetchedContacts.email !== undefined ? { email: fetchedContacts.email } : {}) } : previous);
             setProfileLoaded(true);
         }).catch(() => {
             if (!cancelled && request === profileLoadRequest.current) setProfileLoadError(true);
         });
         return () => { cancelled = true; };
-    }, [selectedClient, readOnly]);
+    }, [selectedClient]);
 
     const { result: customersByName, isPerforming: isPerformingCustomersByName, performRequest: searchCustomersByName } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
     const { result: companiesByName, isPerforming: isPerformingCompaniesByName, performRequest: searchCompaniesByName } = useHttpRequest(customersApi.getCompaniesByName, null, () => { });
@@ -158,7 +127,6 @@ export default function ClientPopup({
 
     useEffect(() => {
         if (detectPhoneTimerRef.current) clearTimeout(detectPhoneTimerRef.current);
-        if (readOnly) return undefined;
         const phone = (phoneNumber || '').trim();
         const digits = phone.replace(/\D/g, '');
         if (digits.length >= 7) {
@@ -167,22 +135,20 @@ export default function ClientPopup({
             setExistingMatch(null);
         }
         return () => { if (detectPhoneTimerRef.current) clearTimeout(detectPhoneTimerRef.current); };
-    }, [phoneNumber, detectExisting, readOnly]);
+    }, [phoneNumber, detectExisting]);
 
     useEffect(() => {
         if (detectEmailTimerRef.current) clearTimeout(detectEmailTimerRef.current);
-        if (readOnly) return undefined;
         const emailVal = (email || '').trim();
         if (emailVal && emailVal.includes('@') && emailVal.includes('.')) {
             detectEmailTimerRef.current = setTimeout(() => detectExisting(emailVal), 500);
         }
         return () => { if (detectEmailTimerRef.current) clearTimeout(detectEmailTimerRef.current); };
-    }, [email, detectExisting, readOnly]);
+    }, [email, detectExisting]);
 
     const loadExistingClient = () => {
         if (!existingMatch) return;
         setSelectedClient(existingMatch);
-        setStoredContacts(contactSnapshot(existingMatch));
         setDocumentProfile(clientDocumentProfile(existingMatch));
         setProfileDirty(false);
         setProfileLoaded(hasClientDocumentProfile(existingMatch));
@@ -196,7 +162,6 @@ export default function ClientPopup({
 
     const handleSelectCustomer = (_text, customer) => {
         setSelectedClient(customer);
-        setStoredContacts(contactSnapshot(customer));
         setDocumentProfile(clientDocumentProfile(customer));
         setProfileDirty(false);
         setProfileLoaded(hasClientDocumentProfile(customer));
@@ -235,18 +200,18 @@ export default function ClientPopup({
         const fieldErrors = Boolean(
             nameError
             || companyNameError
-            || (hasPhone && effectivePhoneError)
-            || (hasEmail && effectiveEmailError)
+            || (hasPhone && phoneNumberError)
+            || (hasEmail && emailError)
         );
 
         if (!hasName) {
             setSaveDisabledReason(t('customers.saveBlockedMissingName', { defaultValue: 'נא למלא שם לקוח' }));
         } else if (!contactOk) {
             setSaveDisabledReason(t('customers.contactRequiredHint'));
-        } else if (hasPhone && effectivePhoneError) {
-            setSaveDisabledReason(effectivePhoneError);
-        } else if (hasEmail && effectiveEmailError) {
-            setSaveDisabledReason(effectiveEmailError);
+        } else if (hasPhone && phoneNumberError) {
+            setSaveDisabledReason(phoneNumberError);
+        } else if (hasEmail && emailError) {
+            setSaveDisabledReason(emailError);
         } else if (documentProfile.partyType === 'organization' && !(companyName || '').trim()) {
             setSaveDisabledReason(t('customers.documentProfile.requiredCompanyName'));
         } else if (hasProfileError) {
@@ -256,7 +221,7 @@ export default function ClientPopup({
         } else {
             setSaveDisabledReason('');
         }
-    }, [name, phoneNumber, email, companyName, nameError, effectivePhoneError, effectiveEmailError, companyNameError, documentProfile.partyType, hasProfileError, t]);
+    }, [name, phoneNumber, email, companyName, nameError, phoneNumberError, emailError, companyNameError, documentProfile.partyType, hasProfileError, t]);
 
     const { isPerforming, performRequest } = useHttpRequest(
         selectedClient ? customersApi.updateCustomerById : customersApi.addCustomer,
@@ -313,7 +278,6 @@ export default function ClientPopup({
     );
 
     const handleSaveClient = () => {
-        if (readOnly) return;
         const clientData = {
             name: (name || '').trim(),
             phoneNumber: (phoneNumber || '').trim(),
@@ -331,26 +295,22 @@ export default function ClientPopup({
     };
 
     const handleDeleteClient = () => {
-        if (readOnly) return;
         deleteClient(selectedClient.UserId || selectedClient.userid);
     };
 
     const handleConfirmLegalDelete = () => {
-        if (readOnly) return;
         setIsLegalDeleteConfirmOpen(false);
         deleteClient(selectedClient.UserId || selectedClient.userid, { confirmLegalDelete: true });
     };
 
-    const identityPresentation = IDENTITY_PRESENTATION[documentProfile.identity.type] || IDENTITY_PRESENTATION.other;
-    const profileInput = (section, key, label, maxLength, inputDirection = direction, extraProps = {}) => <SimpleInput
+    const profileInput = (section, key, label, maxLength, inputDirection = direction) => <SimpleInput
         className="lw-clientPopup__input" title={profileText(label)} aria-label={profileText(label)}
         containerDir={inputDirection} value={documentProfile[section][key]} maxLength={maxLength} timeToWaitInMilli={0}
-        autoComplete="off" {...extraProps} onChange={event => updateProfile(section, key, event.target.value)}
+        autoComplete="off" onChange={event => updateProfile(section, key, event.target.value)}
         error={profileErrors[`${section}.${key}`] ? profileText('invalidText') : null} />;
 
     const persistedClientId = selectedClient?.UserId || selectedClient?.userid;
     const openWordDocument = () => {
-        if (readOnly) return;
         const id = Number(persistedClientId);
         if (!Number.isSafeInteger(id) || id <= 0) return;
         // Selected identity is persisted; current unsaved profile fields are not copied.
@@ -358,19 +318,6 @@ export default function ClientPopup({
         closePopUpFunction?.();
         navigate(`${AdminStackName}${SigningManagerScreenName}?panel=templates&mode=word`, { state: { wordInitialContext: initialContext } });
     };
-    if (readOnly) return <SimpleContainer className="lw-clientPopup" dir={direction}>
-        <dl className="lw-clientPopup__readOnlyDetails">
-            {[[t('cases.customerName'), name], [t('customers.companyName'), companyName],
-                [t('common.email'), email, 'ltr'], [t('cases.phoneNumber'), phoneNumber, 'ltr']].map(([label, value, fieldDirection]) => <div key={label}>
-                <dt>{label}</dt><dd><bdi dir={fieldDirection}>{value || '-'}</bdi></dd>
-            </div>)}
-        </dl>
-        <SimpleContainer className="lw-clientPopup__actions">
-            {typeof onSendClient === 'function' && signingAvailable && canAction('clients', 'view') && canAction('signing', 'upload') && Number.isSafeInteger(Number(persistedClientId)) && Number(persistedClientId) > 0 &&
-                <SecondaryButton onPress={() => onSendClient(Number(persistedClientId))}>{t('signingV2.compose.clientContext.send')}</SecondaryButton>}
-            <SecondaryButton onPress={() => closePopUpFunction?.()}>{t('common.close')}</SecondaryButton>
-        </SimpleContainer>
-    </SimpleContainer>;
     if (signingOpen) return <ClientSigningFlow clientId={persistedClientId} onBack={() => setSigningOpen(false)} />;
 
     return (
@@ -446,7 +393,7 @@ export default function ClientPopup({
                         type="tel"
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
-                        error={effectivePhoneError}
+                        error={phoneNumberError}
                     />
                 </SimpleContainer>
 
@@ -458,7 +405,7 @@ export default function ClientPopup({
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        error={effectiveEmailError}
+                        error={emailError}
                     />
                     <SearchInput
                         className="lw-clientPopup__input"
@@ -487,8 +434,8 @@ export default function ClientPopup({
                     />
                 </SimpleContainer>
 
-                <section className="lw-clientPopup__documentProfile" aria-label={profileText('title')}>
-                    <h3>{profileText('title')}</h3>
+                <details className="lw-clientPopup__documentProfile" open={hasProfileError || undefined}>
+                    <summary>{profileText('title')}</summary>
                     <p className="lw-clientPopup__profileHelp">{profileText('help')}</p>
                     <fieldset className="lw-clientPopup__profileFields" disabled={!profileLoaded}>
                     {documentProfile.partyType === 'organization' && <fieldset className="lw-clientPopup__profileGroup">
@@ -514,12 +461,9 @@ export default function ClientPopup({
                                 {['national_id', 'passport', 'other'].map(value => <option key={value} value={value}>{profileText(value)}</option>)}
                             </SigningSelect>
                         </label>
-                        <p className="lw-clientPopup__profileHelp" id={identityHelpId}>{profileText(identityPresentation.help)}</p>
                         <SimpleContainer className="lw-clientPopup__row">
-                            {profileInput('identity', 'number', identityPresentation.number, 40, 'ltr', {
-                                inputMode: identityPresentation.inputMode, spellCheck: false, autoCorrect: 'off', autoCapitalize: 'off', 'aria-describedby': identityHelpId,
-                            })}
-                            {profileInput('identity', 'country', identityPresentation.country, 80)}
+                            {profileInput('identity', 'number', 'identityNumber', 40, 'ltr')}
+                            {profileInput('identity', 'country', 'identityCountry', 80)}
                         </SimpleContainer>
                     </fieldset>
                     <fieldset className="lw-clientPopup__profileGroup">
@@ -535,7 +479,7 @@ export default function ClientPopup({
                         </SimpleContainer>
                     </fieldset>
                     </fieldset>
-                </section>
+                </details>
                 {saveDisabledReason && <p className="lw-clientPopup__saveBlockedHint" role="status">{saveDisabledReason}</p>}
 
                 {persistedClientId && signingAvailable && canAction('signing', 'upload') && canAction('clients', 'view') && <SecondaryButton
