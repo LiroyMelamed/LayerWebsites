@@ -417,10 +417,10 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
                                         <TertiaryButton disabled={busy} onPress={cancelSelection}>{text('cancelSelection')}</TertiaryButton>
                                     </div>
                                     {(selection || activeBinding) && <div className="lw-word__replacementChoices">
-                                        {activeBinding && <div className="lw-word__currentReplacement"><p>{text('currentReplacement')}: <strong>{fieldLabel(activeBinding.field)}</strong></p>
+                                        {activeBinding && <><p>{text('currentReplacement')}: <strong>{fieldLabel(activeBinding.field)}</strong></p>
                                             <TertiaryButton disabled={mappingDisabled} onPress={() => {
                                                 edit(() => setBindings(previous => previous.filter(binding => binding.id !== activeBinding.id))); cancelSelection();
-                                            }}>{text('removeBinding')}</TertiaryButton></div>}
+                                            }}>{text('removeBinding')}</TertiaryButton></>}
                                         <WordDataFieldPanel key={activeBindingId || 'new-selection'} definitions={definitions} roles={roles} value={activeBinding?.field || field}
                                             disabled={mappingDisabled || resolvingSelection} onChange={chooseDataField} fieldLabel={fieldLabel} text={text} />
                                     </div>}

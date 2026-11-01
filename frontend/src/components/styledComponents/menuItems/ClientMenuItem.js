@@ -16,14 +16,12 @@ export default function ClientMenuItem({
     closePopUpFunction,
     rePerformRequest,
     onPress,
-    onReadOnlyPress,
     allowEdit = true,
     style: _style
 }) {
     const { openPopup } = usePopup();
 
     function clientPressHandle() {
-        if (!allowEdit) { onReadOnlyPress?.(); return; }
         if (onPress) {
             onPress()
         } else {
@@ -55,7 +53,7 @@ export default function ClientMenuItem({
             </SimpleContainer>
     );
 
-    if (!allowEdit && !onReadOnlyPress) {
+    if (!allowEdit) {
         return content;
     }
     return (
