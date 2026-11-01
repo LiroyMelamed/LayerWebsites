@@ -6,7 +6,7 @@ const vm = require('node:vm');
 const { qaOutboundNoop } = require('../lib/qaOutboundNoop');
 const previous = { ...process.env };
 function setQa() { process.env.QA_OUTBOUND_MODE='noop';process.env.DB_NAME='melamedia';process.env.PORT='3003';delete process.env.DATABASE_URL; }
-test.after(() => { for(const key of ['QA_OUTBOUND_MODE','DB_NAME','PORT','DATABASE_URL']) { if(previous[key]===undefined)delete process.env[key];else process.env[key]=previous[key]; } });
+test.after(() => { for(const key of ['QA_OUTBOUND_MODE','QA_OUTBOUND_ALLOW','DB_NAME','PORT','DATABASE_URL','IS_PRODUCTION','FORCE_SEND_SMS_ALL','FORCE_SEND_EMAIL_ALL']) { if(previous[key]===undefined)delete process.env[key];else process.env[key]=previous[key]; } });
 test('disabled mode preserves normal transports; guard rejects other tenants', () => {
  delete process.env.QA_OUTBOUND_MODE;assert.equal(qaOutboundNoop('sms'),null);
  setQa();process.env.DB_NAME='morlevy';assert.throws(()=>qaOutboundNoop('sms'),/isolated/);
@@ -42,4 +42,19 @@ test('all public SMS/email/push entry points stop before provider, DB, templates
  push(999999,'QA','QA',{}, {sendPush:true}),
  push(999999,'QA','QA',{}, {sendPush:false})
  ]);for(const result of results)assert.equal(result.mode,'qa-noop');
+});
+test('QA email opt-in requires every addressed recipient and reaches normal transport only for allowed recipients', async () => {
+ setQa();process.env.QA_OUTBOUND_ALLOW='allowed@example.invalid,second@example.invalid';
+ assert.equal(qaOutboundNoop('email','ALLOWED@example.invalid'),null);
+ assert.equal(qaOutboundNoop('email',['allowed@example.invalid','second@example.invalid']),null);
+ for(const recipients of [[],['allowed@example.invalid',undefined],['allowed@example.invalid','other@example.invalid']]) {
+  assert.equal(qaOutboundNoop('email',recipients).suppressed,true);
+ }
+ const mail=loadUtility('smooveEmailCampaignService.js');
+ const blocked=await mail.sendEmailWithAttachments({toEmail:'allowed@example.invalid',ccEmails:['other@example.invalid']});
+ assert.equal(blocked.suppressed,true);
+ await assert.rejects(mail.sendTransactionalCustomHtmlEmail({toEmail:'allowed@example.invalid',subject:'QA',htmlBody:'QA'}),/Provider or DB IO attempted/);
+ await assert.rejects(mail.sendEmailWithAttachments({toEmail:'allowed@example.invalid',ccEmails:['second@example.invalid']}),/Provider or DB IO attempted/);
+ await assert.rejects(mail.sendEmailCampaign({toEmail:'allowed@example.invalid',campaignKey:'SIGN_INVITE'}),/Provider or DB IO attempted/);
+ delete process.env.QA_OUTBOUND_ALLOW;
 });
