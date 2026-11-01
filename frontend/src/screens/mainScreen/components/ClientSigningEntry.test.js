@@ -37,12 +37,19 @@ test('entering and returning uses persisted ID, preserves unsaved client edits, 
     expect(screen.getByDisplayValue('unsaved@example.invalid')).toHaveValue('unsaved@example.invalid');
     expect(mockRequest).not.toHaveBeenCalled();
 });
-test('client viewers can send without client-edit permission through a separate accessible action', async () => {
-    await mount(<ClientsCard customerList={[client]} allowEdit={false} hideButtons />);
-    fireEvent.click(screen.getByRole('button', { name: 'Send for signature for Synthetic client' }));
+test('the client row opens its popup and signing keeps the persisted client context without an inline list action', async () => {
+    await mount(<ClientsCard customerList={[client]} hideButtons />);
+    expect(screen.queryByRole('button', { name: 'Send for signature for Synthetic client' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Synthetic client/ }));
     expect(mockOpen).toHaveBeenCalledTimes(1);
-    expect(mockOpen.mock.calls[0][0].props.clientId).toBe(71);
-    expect(mockOpen.mock.calls[0][0].props.onBack).toBe(mockClose);
+    const popup = mockOpen.mock.calls[0][0];
+    expect(popup.props.clientDetails).toEqual(client);
+    expect(popup.props.closePopUpFunction).toBe(mockClose);
+    await mount(popup);
+    expect(screen.getByRole('button', { name: en.signingWord.openFromClient })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Send for signature' }));
+    expect(screen.getByRole('region', { name: 'Flow 71' })).toBeVisible();
+    expect(mockRequest).not.toHaveBeenCalled();
 });
 test.each(['disabled', 'noUpload', 'unsaved'])('unavailable %s entry is hidden', async condition => {
     if (condition === 'disabled') mockAvailable = false;
