@@ -88,6 +88,7 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
     const appliedContext = useRef(contextSignature(initialContext));
     const nextContext = contextSignature(initialContext);
     const previewHeading = useRef(null);
+    const replacementHeading = useRef(null);
     const authoringGeneration = useRef(0);
     const selectionGeneration = useRef(0);
     const authoringRef = useRef(null); authoringRef.current = authoring;
@@ -122,7 +123,7 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
                     setAuthoring({ data, pdfFile: blob }); if (data.catalog) setCatalog(data.catalog);
                 }
             } catch (err) {
-                if (!cancelled && token === authoringGeneration.current) setAuthoringError([409, 412].includes(err?.status) ? 'conflict' : 'authoringUnavailable');
+                if (!cancelled && token === authoringGeneration.current) setAuthoringError([409, 412].includes(err?.status) ? 'conflict' : err?.status === 429 ? 'converterBusy' : 'authoringUnavailable');
             } finally { if (!cancelled && token === authoringGeneration.current) setAuthoringLoading(false); }
         })();
         return () => { cancelled = true; authoringGeneration.current += 1; selectionGeneration.current += 1; };
@@ -152,6 +153,9 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
         if (!preview) return;
         previewHeading.current?.focus(); previewHeading.current?.scrollIntoView?.({ block: 'start', behavior: 'auto' });
     }, [preview]);
+    useEffect(() => {
+        if (selection) replacementHeading.current?.focus({ preventScroll: true });
+    }, [selection]);
 
     function edit(change) { if (lock.current) return; clearPreview(); setNotice(''); setError(''); change(); setDirty(true); }
     function cancelSelection() {
@@ -185,7 +189,7 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
         if (lock.current) return;
         lock.current = true; setBusyMessage(message); setBusy(true); setError(''); setNotice('');
         try { await operation(); }
-        catch (err) { if (alive.current) { setError([409, 412].includes(err?.status) ? 'conflict' : err?.status === 503 ? 'converterUnavailable' : err?.status === 422 ? 'missingValues' : 'requestFailed'); if (err?.status === 422) setShowOverrides(true); } }
+        catch (err) { if (alive.current) { setError([409, 412].includes(err?.status) ? 'conflict' : err?.status === 429 ? 'converterBusy' : err?.status === 503 ? 'converterUnavailable' : err?.status === 422 ? 'missingValues' : 'requestFailed'); if (err?.status === 422) setShowOverrides(true); } }
         finally { lock.current = false; if (alive.current) setBusy(false); }
     }
     function openSource(id, { preserveDocumentInputs = false } = {}) {
@@ -372,7 +376,7 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
                     <PrimaryButton isPerforming={busy} aria-label={text('import')} disabled={busy || !name.trim()} onPress={importSource}>{text('import')}</PrimaryButton></>}
             </section>}
             {source && <>
-                <section className="lw-word__section lw-word__editor" aria-label={text('mapping')}>
+                <section className={`lw-word__section lw-word__editor${selection || activeBinding || resolvingSelection ? ' lw-word__editor--choosing' : ''}`} aria-label={text('mapping')}>
                     <div className="lw-word__editorHeader">
                         <div><h2><TextBold18>{text('mapping')}</TextBold18></h2><p className="lw-word__saveState" aria-live="polite">{text(dirty ? 'unsavedChanges' : 'allChangesSaved')}</p></div>
                         <div className="lw-word__editorActions">
@@ -388,22 +392,7 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
                     </StatusNotice>}
                     {!converterAvailable && <StatusNotice><p>{text('converterUnavailable')}</p></StatusNotice>}
                     {authoring && <>
-                        {(selection || activeBinding || resolvingSelection) ? <div className="lw-word__selectionBar" aria-label={text('replacementSelection')}>
-                            <div className="lw-word__selected" role="status">
-                                <strong>{text(resolvingSelection ? 'resolvingSelection' : activeBinding ? 'editingReplacement' : selection.kind === 'insert' ? 'insertionSelected' : 'textSelected')}</strong>
-                                {!resolvingSelection && <p><bdi>{activeBinding ? bindingText(activeBinding) : selection.selectedText || text('insertionSelected')}</bdi></p>}
-                            </div>
-                            <label className="lw-word__check"><input type="checkbox" checked={activeBinding ? activeBinding.required : required}
-                                disabled={mappingDisabled || resolvingSelection} onChange={event => {
-                                    const checked = event.target.checked;
-                                    if (activeBinding) edit(() => setBindings(previous => previous.map(binding => binding.id === activeBinding.id ? { ...binding, required: checked } : binding)));
-                                    else setRequired(checked);
-                                }} />{text('required')}</label>
-                            <TertiaryButton disabled={busy} onPress={cancelSelection}>{text('cancelSelection')}</TertiaryButton>
-                            {activeBinding && <TertiaryButton disabled={mappingDisabled} onPress={() => {
-                                edit(() => setBindings(previous => previous.filter(binding => binding.id !== activeBinding.id))); cancelSelection();
-                            }}>{text('removeBinding')}</TertiaryButton>}
-                        </div> : <p className="lw-word__selectionHint">{text('selectToReplace')}</p>}
+                        {!selection && !activeBinding && !resolvingSelection && <p className="lw-word__selectionHint">{text('selectToReplace')}</p>}
                         <div className="lw-signing-pdfViewerWrapper">
                             <div className="lw-signing-pdfViewerRow lw-word__visualRow">
                                 <div className="lw-signing-pdfViewerMain">
@@ -411,11 +400,29 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
                                         activeBindingId={activeBindingId} onSelectBinding={selectBinding} disabled={busy || !!authoringError} onSelect={resolveVisualSelection}
                                         onError={message => { cancelSelection(); setAuthoringError(message); }} fieldLabel={fieldLabel} text={text} />
                                 </div>
-                                {(selection || activeBinding) && <aside className="lw-word__mappingForm" aria-label={text('replacementPicker')}>
-                                    <h3>{text('whatReplacesText')}</h3>
-                                    {activeBinding && <p>{text('currentReplacement')}: <strong>{fieldLabel(activeBinding.field)}</strong></p>}
-                                    <WordDataFieldPanel key={activeBindingId || 'new-selection'} definitions={definitions} roles={roles} value={activeBinding?.field || field}
-                                        disabled={mappingDisabled || resolvingSelection} onChange={chooseDataField} fieldLabel={fieldLabel} text={text} />
+                                {(selection || activeBinding || resolvingSelection) && <aside className="lw-word__mappingForm" aria-label={text('replacementPicker')}>
+                                    <h3 ref={replacementHeading} tabIndex={-1}>{text('whatReplacesText')}</h3>
+                                    <div className="lw-word__selectionBar" aria-label={text('replacementSelection')}>
+                                        <div className="lw-word__selected" role="status">
+                                            {resolvingSelection ? <strong>{text('resolvingSelection')}</strong> :
+                                                <p><bdi>{activeBinding ? bindingText(activeBinding) : selection.selectedText || text('insertionSelected')}</bdi></p>}
+                                        </div>
+                                        <label className="lw-word__check"><input type="checkbox" checked={activeBinding ? activeBinding.required : required}
+                                            disabled={mappingDisabled || resolvingSelection} onChange={event => {
+                                                const checked = event.target.checked;
+                                                if (activeBinding) edit(() => setBindings(previous => previous.map(binding => binding.id === activeBinding.id ? { ...binding, required: checked } : binding)));
+                                                else setRequired(checked);
+                                            }} />{text('required')}</label>
+                                        <TertiaryButton disabled={busy} onPress={cancelSelection}>{text('cancelSelection')}</TertiaryButton>
+                                    </div>
+                                    {(selection || activeBinding) && <div className="lw-word__replacementChoices">
+                                        {activeBinding && <><p>{text('currentReplacement')}: <strong>{fieldLabel(activeBinding.field)}</strong></p>
+                                            <TertiaryButton disabled={mappingDisabled} onPress={() => {
+                                                edit(() => setBindings(previous => previous.filter(binding => binding.id !== activeBinding.id))); cancelSelection();
+                                            }}>{text('removeBinding')}</TertiaryButton></>}
+                                        <WordDataFieldPanel key={activeBindingId || 'new-selection'} definitions={definitions} roles={roles} value={activeBinding?.field || field}
+                                            disabled={mappingDisabled || resolvingSelection} onChange={chooseDataField} fieldLabel={fieldLabel} text={text} />
+                                    </div>}
                                 </aside>}
                             </div>
                         </div>

@@ -20,7 +20,7 @@
   .lw-simpleInput { inline-size: 100%; min-inline-size: 0; }
   .lw-signingBack { margin-block-end: v.$space-4; }
   small, &__muted, &__pickerHelp { color: var(--lw-color-primary, #2a4365); }
-  button:focus-visible, input:focus-visible, summary:focus-visible, h2:focus-visible { outline: 2px solid var(--lw-color-primary, #2a4365); outline-offset: 3px; }
+  button:focus-visible, input:focus-visible, summary:focus-visible, h2:focus-visible, h3:focus-visible { outline: 2px solid var(--lw-color-primary, #2a4365); outline-offset: 3px; }
   input { caret-color: var(--lw-color-primary, #2a4365); }
   ::selection { background: var(--lw-color-primary, #2a4365); color: var(--lw-color-white, #fff); }
 
@@ -78,10 +78,17 @@
     .lw-simpleInput { min-block-size: 2.75rem; }
     &__visualRow { flex-direction: column; }
     &__visualRow > &__mappingForm { flex: 0 0 auto; max-inline-size: none; inline-size: 100%; box-sizing: border-box; }
-    &__visualRow > &__mappingForm { order: -1; padding: v.$space-3; }
+    &__editor--choosing { padding-block-end: calc(40dvh + #{v.$space-8}); }
+    &__visualRow > &__mappingForm { position: fixed; inset-block-end: 0; inset-inline: v.$space-3; inline-size: auto; z-index: 20;
+      display: flex; flex-direction: column; gap: v.$space-2; padding: v.$space-3; max-block-size: 40dvh; overflow: hidden;
+      background: var(--lw-color-white, #fff); border: 1px solid var(--lw-color-primary, #2a4365); border-radius: .5rem .5rem 0 0;
+      box-shadow: 0 -2px 8px rgba(42, 67, 101, .12); h3 { margin: 0; flex: 0 0 auto; } }
+    &__selectionBar { flex: 0 0 auto; margin: 0; gap: v.$space-2; > .lw-word__selected { flex-basis: 100%; min-block-size: 0; padding: v.$space-2;
+        p { margin: 0; max-block-size: 2.8em; overflow: auto; } } }
+    &__replacementChoices { min-block-size: 0; overflow-y: auto; overscroll-behavior: contain; }
     &__editorHeader { align-items: start; }
     &__editorActions { inline-size: 100%; > .lw-simpleButton { flex: 1 1 auto; } }
-    &__dataPanel .lw-addFieldPanel { max-block-size: 14rem; }
+    &__dataPanel .lw-addFieldPanel { max-block-size: none; overflow: visible; }
   }
 }
 

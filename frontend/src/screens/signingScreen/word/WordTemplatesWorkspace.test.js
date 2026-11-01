@@ -555,3 +555,40 @@ test('the document area announces preparation until both the deferred authoring 
     fireEvent.click(screen.getByText('chooseBlank')); await chooseReplacement('client.fullName');
     expect(screen.getByText('save')).toBeEnabled();
 });
+
+test('the temporary picker keeps its quote, required setting and cancel together and reserves editor space only while active', async () => {
+    await open(source(), {}, true); const editor = screen.getByRole('region', { name: 'mapping' });
+    expect(editor).not.toHaveClass('lw-word__editor--choosing');
+    fireEvent.click(screen.getByText('chooseBlank')); await screen.findByLabelText('field');
+    const picker = screen.getByLabelText('replacementPicker');
+    expect(editor).toHaveClass('lw-word__editor--choosing'); expect(within(picker).getByText('______')).toBeInTheDocument();
+    expect(within(picker).getByLabelText('required')).toBeEnabled();
+    expect(screen.getByTestId('original-pdf').compareDocumentPosition(picker) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.click(within(picker).getByText('cancelSelection'));
+    expect(editor).not.toHaveClass('lw-word__editor--choosing'); expect(screen.queryByLabelText('replacementPicker')).not.toBeInTheDocument();
+    expect(api.save).not.toHaveBeenCalled();
+});
+
+test('authoring admission busy feedback preserves the source and offers an explicit retry', async () => {
+    const onDraftChange = jest.fn(); api.authoringRender.mockRejectedValueOnce({ status: 429, code: 'WORD_CONVERSION_BUSY' });
+    await open(source(), { onDraftChange }); fireEvent.click(screen.getByText('manageTemplates'));
+    await screen.findByText('converterBusy');
+    expect(screen.queryByTestId('original-pdf')).not.toBeInTheDocument(); expect(screen.queryByLabelText('field')).not.toBeInTheDocument();
+    expect(screen.getByText('save')).toBeDisabled(); expect(api.authoringPdf).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText('retryAuthoring')); await screen.findByTestId('original-pdf');
+    expect(api.authoringRender).toHaveBeenCalledTimes(2); expect(screen.queryByText('converterBusy')).not.toBeInTheDocument();
+    expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ source: source(), dirty: false, bindings: [] }));
+    expect(api.save).not.toHaveBeenCalled();
+});
+
+test('a busy preview request shows retry-later feedback without dropping chosen records or inventing a PDF', async () => {
+    const onDraftChange = jest.fn(); api.preview.mockRejectedValueOnce({ status: 429, code: 'WORD_CONVERSION_BUSY' });
+    await open(mapped(), { initialContext: context(), onDraftChange });
+    fireEvent.click(screen.getByText('preview')); await screen.findByText('converterBusy');
+    expect(screen.queryByTestId('final-pdf')).not.toBeInTheDocument(); expect(api.pdf).not.toHaveBeenCalled();
+    expect(screen.getByText('preview')).toBeEnabled();
+    expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: false, bindings: mapped().bindings,
+        inputs: expect.objectContaining({ clientId: '22', caseId: '31' }) }));
+    fireEvent.click(screen.getByText('preview')); await screen.findByTestId('final-pdf');
+    expect(api.preview).toHaveBeenCalledTimes(2); expect(screen.queryByText('converterBusy')).not.toBeInTheDocument();
+});

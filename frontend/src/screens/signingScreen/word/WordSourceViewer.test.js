@@ -169,6 +169,8 @@ test('dense saved and pending chip labels separate after resize while exact sour
 test('saved labels are accessible controls; selecting one never reuses native text selection, and list selection focuses it', async () => {
     const authoring = create(); mockContent = { items: authoring.pages[0].items.map(({ text, ...rest }) => ({ ...rest, str: text })) };
     const originalBounds = HTMLElement.prototype.getBoundingClientRect;
+    const originalScroll = HTMLElement.prototype.scrollIntoView; const originalWidth = window.innerWidth;
+    HTMLElement.prototype.scrollIntoView = jest.fn(); Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
     HTMLElement.prototype.getBoundingClientRect = function () {
         if (this.matches('[data-word-chip]')) return { left: 0, top: 0, width: 120, height: 19 };
         if (this.dataset.testid === 'source-page') return { left: 0, top: 0, width: 600, height: 800 };
@@ -188,9 +190,16 @@ test('saved labels are accessible controls; selecting one never reuses native te
         expect(onSelectBinding).toHaveBeenCalledWith('saved-name'); expect(onSelect).not.toHaveBeenCalled();
         view.rerender(<WordSourceViewer {...props} activeBindingId="saved-name" />);
         await waitFor(() => expect(chip).toHaveFocus()); expect(chip).toHaveAttribute('aria-pressed', 'true');
+        expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledWith({ block: 'center', inline: 'nearest' });
         expect(view.container.querySelector('.lw-word-source__mark')).toHaveStyle({ left: '25px', top: '50px', width: '70px', height: '12px' });
         fireEvent.mouseUp(sourceText);
         expect(onSelect).toHaveBeenCalledWith({ kind: 'range', start: { itemId: 'p1_i0', offset: 0 }, end: { itemId: 'p1_i0', offset: 8 } });
         expect(binding).toEqual(props.bindings[0]);
-    } finally { view?.unmount(); HTMLElement.prototype.getBoundingClientRect = originalBounds; }
+        HTMLElement.prototype.scrollIntoView.mockClear();
+        view.rerender(<WordSourceViewer {...props} activeBindingId={null} selection={{ kind: 'range', anchor: { ...binding, start: 0, end: 3 } }} />);
+        await waitFor(() => expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledWith({ block: 'center', inline: 'nearest' }));
+    } finally {
+        view?.unmount(); HTMLElement.prototype.getBoundingClientRect = originalBounds; HTMLElement.prototype.scrollIntoView = originalScroll;
+        Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });
+    }
 });

@@ -3624,7 +3624,8 @@
     "templateHelp": "مساعدة في استخدام القالب",
     "selectionOptions": "خيارات التحديد ولوحة المفاتيح",
     "editReplacement": "تعديل الحقل: {{field}}",
-    "fieldUpdated": "تم تحديث الحقل في المستند"
+    "fieldUpdated": "تم تحديث الحقل في المستند",
+    "converterBusy": "تحضير المستندات مشغول حاليًا. حاول مرة أخرى بعد قليل."
   },
   "stageAutomation": {
     "title": "مستندات تلقائية حسب مرحلة الملف",

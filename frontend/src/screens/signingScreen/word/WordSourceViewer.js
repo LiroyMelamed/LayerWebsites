@@ -12,6 +12,7 @@ function PageMarks({ host, page, bindings, selection, activeBindingId, onSelectB
     const [marks, setMarks] = useState([]);
     const overlay = useRef(null);
     const focusedBinding = useRef(null);
+    const focusedSelection = useRef(null);
     const [layout, setLayout] = useState({ marks: null, positions: [] });
     useEffect(() => {
         if (!host || !page || !revision) { setMarks([]); return undefined; }
@@ -78,8 +79,19 @@ function PageMarks({ host, page, bindings, selection, activeBindingId, onSelectB
         if (!activeBindingId) { focusedBinding.current = null; return; }
         if (!positions.length || focusedBinding.current === activeBindingId) return;
         const chip = Array.from(overlay.current?.querySelectorAll('[data-word-binding-id]') || []).find(node => node.dataset.wordBindingId === activeBindingId);
-        if (chip) { focusedBinding.current = activeBindingId; chip.focus({ preventScroll: true }); chip.scrollIntoView?.({ block: 'nearest', inline: 'nearest' }); }
+        const firstChip = Array.from(host.closest('.lw-word-source')?.querySelectorAll('[data-word-binding-id]') || []).find(node => node.dataset.wordBindingId === activeBindingId);
+        if (chip && chip === firstChip) { focusedBinding.current = activeBindingId; chip.focus({ preventScroll: true }); chip.scrollIntoView?.({ block: window.innerWidth <= 768 ? 'center' : 'nearest', inline: 'nearest' }); }
     }, [activeBindingId, marks, positions]);
+    useEffect(() => {
+        if (!selection) { focusedSelection.current = null; return; }
+        if (window.innerWidth > 768 || !positions.length) return;
+        const key = JSON.stringify(selection.anchor);
+        if (focusedSelection.current === key) return;
+        const highlight = overlay.current?.querySelector('.lw-word-source__mark.is-pending');
+        if (highlight && highlight === host.closest('.lw-word-source')?.querySelector('.lw-word-source__mark.is-pending')) {
+            focusedSelection.current = key; highlight.scrollIntoView?.({ block: 'center', inline: 'nearest' });
+        }
+    }, [selection, marks, positions, host]);
     return <div ref={overlay} className="lw-word-source__marks">
         <svg className="lw-word-source__leaders" aria-hidden="true">{positions.map((position, index) => position.leader &&
             <line key={marks[index].id} {...position.leader} className={marks[index].pending ? 'is-pending' : undefined} />)}</svg>
@@ -147,7 +159,7 @@ export default function WordSourceViewer({ authoring, pdfFile, bindings, selecti
 
     const readSelection = useCallback(event => {
         if (disabled || !root.current) return;
-        if (event?.target?.closest?.('button, input, textarea, select, summary') || (!event && document.activeElement?.closest?.('[data-word-binding-id]')) || document.activeElement === accessibleText.current) return;
+        if (event?.target?.closest?.('button, input, textarea, select, summary') || (!event && document.activeElement?.closest?.('[data-word-binding-id], .lw-word__mappingForm')) || document.activeElement === accessibleText.current) return;
         const selection = window.getSelection();
         if (!selection?.anchorNode || !root.current.contains(selection.anchorNode)) return;
         if (selection.isCollapsed && selectionMode === 'range') return;

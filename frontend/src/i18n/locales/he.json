@@ -4190,7 +4190,8 @@
     "templateHelp": "עזרה בשימוש בתבנית",
     "selectionOptions": "אפשרויות סימון ומקלדת",
     "editReplacement": "עריכת שדה: {{field}}",
-    "fieldUpdated": "השדה עודכן על המסמך"
+    "fieldUpdated": "השדה עודכן על המסמך",
+    "converterBusy": "הכנת המסמכים עמוסה כרגע. נסו שוב בעוד רגע."
   },
   "stageAutomation": {
     "title": "מסמכים אוטומטיים לפי שלב",

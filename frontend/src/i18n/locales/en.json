@@ -3603,7 +3603,8 @@
     "templateHelp": "Template help",
     "selectionOptions": "Selection and keyboard options",
     "editReplacement": "Edit field: {{field}}",
-    "fieldUpdated": "Field updated on the document"
+    "fieldUpdated": "Field updated on the document",
+    "converterBusy": "Document preparation is busy. Please try again shortly."
   },
   "stageAutomation": {
     "title": "Automatic documents by case stage",
