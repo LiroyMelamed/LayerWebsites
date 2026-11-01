@@ -1,4 +1,5 @@
 'use strict';
+const {billingOperationsEnabled,assertBillingOperationsEnabled,isBillingOperationsPausedError}=require('./billingOperations');
 const crypto=require('node:crypto');
 const pool=require('../../config/db');
 const {decryptSecret}=require('./secrets');
@@ -10,6 +11,7 @@ const {renewalAmount}=require('./signupQuote');
 
 function createSignupRenewal({database=pool,charge=chargeTakbullToken,verify=verifyChargedTransaction,credentials=getTakbullCredentialsFromEnv,now=()=>new Date()}={}) {
     async function markPastDue(tenantId) {
+        assertBillingOperationsEnabled();
         const failedAt=now();
         // A retry or provider uncertainty must not reset the first grace window.
         await database.query(`UPDATE firm_billing SET
@@ -20,6 +22,7 @@ function createSignupRenewal({database=pool,charge=chargeTakbullToken,verify=ver
             AND (complimentary_until IS NULL OR complimentary_until<=$2)`,[tenantId,failedAt]);
     }
     async function renew(tenantId, { retryFailed = false, cardSetupIntentId = null } = {}) {
+        if(!billingOperationsEnabled())return {handled:true,skipped:true,status:'paused',reason:'billing_operations_paused'};
         const c=await database.connect();let intent,account,card,consent;
         const canCollectCancelledDebt = row => Boolean(cardSetupIntentId && row?.last_failed_at && ['past_due','suspended'].includes(row?.status));
         try {
@@ -115,6 +118,7 @@ function createSignupRenewal({database=pool,charge=chargeTakbullToken,verify=ver
             } catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
             return {handled:true,status:'succeeded'};
         } catch(e){
+            if(isBillingOperationsPausedError(e))throw e;
             await markPastDue(tenantId);
             // The committed cycle remains reserved after a timeout or crash.
             await database.query("UPDATE firm_payment_intents SET error_message='תוצאת החיוב דורשת בירור; אין לחייב שוב',updated_at=now() WHERE id=$1 AND status='pending'",[intent.id]);
@@ -122,6 +126,7 @@ function createSignupRenewal({database=pool,charge=chargeTakbullToken,verify=ver
         }
     }
     async function due(){
+        if(!billingOperationsEnabled())return [];
         const rows=(await require('../tenant/databaseScope').withSystem(()=>database.query(`SELECT b.law_firm_tenant_id id FROM firm_billing b JOIN signup_intents s ON s.law_firm_tenant_id=b.law_firm_tenant_id
           WHERE s.status='completed' AND s.consent_version IN ('signup-1ils-3months-v1','signup-1ils-3months-v2') AND b.billing_enabled AND b.auto_renew AND b.renews_at<=$1
           AND (b.complimentary_until IS NULL OR b.complimentary_until<=$1) ORDER BY b.renews_at LIMIT 100`,[now()]))).rows;

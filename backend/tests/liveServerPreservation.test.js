@@ -9,7 +9,10 @@ function load(file, modules = {}, env = {}) {
     vm.runInNewContext(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), {
         module, exports: module.exports, process: { env }, global: {},
         console: { warn() {}, error() {}, log() {} },
-        require(name) { return modules[name] || {}; },
+        require(name) {
+            if (name === '../lib/billing/billingOperations') return load('lib/billing/billingOperations.js', {}, env);
+            return modules[name] || {};
+        },
     }, { filename: file });
     return module.exports;
 }

@@ -1,3 +1,4 @@
+const { billingOperationsEnabled, assertBillingOperationsEnabled, isBillingOperationsPausedError } = require('./billingOperations');
 const crypto = require('node:crypto');
 const pool = require('../../config/db');
 const { encryptSecret, decryptSecret } = require('./secrets');
@@ -107,6 +108,7 @@ async function getBillingRow(database = pool) {
 }
 
 async function ensureBillingRow(database = pool) {
+    assertBillingOperationsEnabled();
     const existing = await getBillingRow(database);
     if (existing) return existing;
 
@@ -165,6 +167,7 @@ async function ensureBillingRow(database = pool) {
 }
 
 async function updateBilling(fields, database = pool) {
+    assertBillingOperationsEnabled();
     const sets = [];
     const vals = [];
     let i = 1;
@@ -218,6 +221,7 @@ async function getActiveCard() {
 }
 
 async function saveCardFromToken(tokenInfo, database = pool) {
+    assertBillingOperationsEnabled();
     if (!tokenInfo?.token) return null;
     const encrypted = encryptSecret(tokenInfo.token);
     const tenantId = getCurrentTenantId();
@@ -269,6 +273,7 @@ function publicCard(card) {
 }
 
 async function expireGraceIfNeeded(row, now = new Date()) {
+    assertBillingOperationsEnabled();
     const flags = computeFlags(row, now);
     if (flags.stillComplimentary) {
         if (row.status === 'past_due' || row.status === 'suspended' || row.graceUntil) {
@@ -321,7 +326,8 @@ async function listPaymentHistory(limit = 25) {
 }
 
 async function getBillingSnapshot() {
-    let row = await ensureBillingRow();
+    const operationsEnabled = billingOperationsEnabled();
+    let row = operationsEnabled ? await ensureBillingRow() : await getBillingRow();
     if (!row) {
         return {
             available: false,
@@ -335,7 +341,7 @@ async function getBillingSnapshot() {
             upcomingPayment: null,
         };
     }
-    row = await expireGraceIfNeeded(row);
+    if (operationsEnabled) row = await expireGraceIfNeeded(row);
     const flags = computeFlags(row);
     const pkg = resolvePricingLineItems({
         platformId: row.platformId,
@@ -401,6 +407,7 @@ async function getBillingSnapshot() {
 }
 
 async function syncTenantSubscription(pkg, database = pool) {
+    assertBillingOperationsEnabled();
     const quotas = quotasForPackage(pkg);
     try {
         await database.query(
@@ -423,6 +430,7 @@ async function syncTenantSubscription(pkg, database = pool) {
 }
 
 async function recordEvent(intentId, eventType, payload, database = pool) {
+    assertBillingOperationsEnabled();
     try {
         await database.query(
             `INSERT INTO firm_payment_events (intent_id, event_type, payload) VALUES ($1, $2, $3::jsonb)`,
@@ -447,6 +455,7 @@ function cancelAddress() {
 }
 
 async function createIntent({ kind, amountIls, purpose, packageSnapshot }, dbClient) {
+    assertBillingOperationsEnabled();
     const id = crypto.randomUUID();
     const orderReference = `lw-${kind}-${id.replace(/-/g, '').slice(0, 18)}`;
     const q = dbClient?.query?.bind(dbClient) || pool.query.bind(pool);
@@ -553,6 +562,7 @@ async function findPendingUpgradeIntentForUpdate(operationKey, dbClient) {
 }
 
 async function recoverPaidUpgradeIntent(intent, logContext = {}) {
+    assertBillingOperationsEnabled();
     const target = parseIntentPackageSnapshot(intent?.package_snapshot);
     console.error('[billing] UPGRADE_PACKAGE_RECOVERED', {
         code: 'UPGRADE_PACKAGE_RECOVERED',
@@ -609,6 +619,7 @@ async function findIntentById(id) {
 }
 
 async function markPaymentFailed({ intent, errorMessage, skipEmail } = {}) {
+    assertBillingOperationsEnabled();
     const client = await pool.connect();
     const now = new Date();
     let row, graceUntil, notify = false;
@@ -676,6 +687,7 @@ function parseIntentPackageSnapshot(raw) {
 }
 
 async function applyIntentPackageSnapshot(intent, database = pool) {
+    assertBillingOperationsEnabled();
     const pending = parseIntentPackageSnapshot(intent?.package_snapshot);
     if (!pending) return false;
     const priced = resolvePricingLineItems(pending);
@@ -732,9 +744,11 @@ async function getBillingCustomer(database = pool) {
 }
 
 async function collectAfterCardSetup(intentId) {
+    assertBillingOperationsEnabled();
     try {
         return await chargeSavedCard({ kind: 'retry', cardSetupIntentId: intentId, dueOnly: true });
     } catch (error) {
+        if (isBillingOperationsPausedError(error)) throw error;
         // The card verification remains committed. A charge reservation, if one
         // exists, stays pending so callbacks/retries cannot dispatch it again.
         console.error('[billing] card debt collection requires review', { intentId, code: error?.code || 'PAYMENT_RECONCILIATION_REQUIRED' });
@@ -743,6 +757,7 @@ async function collectAfterCardSetup(intentId) {
 }
 
 async function settleSuccessfulPayment({ intent, tokenInfo, transactionId, transactionClient, document } = {}) {
+    assertBillingOperationsEnabled();
     if (intent?.signup_intent_id) {
         if (intent?.id) {
             await pool.query(
@@ -845,6 +860,7 @@ async function settleSuccessfulPayment({ intent, tokenInfo, transactionId, trans
 }
 
 async function createCheckout({ kind, customer, pendingPackage } = {}) {
+    assertBillingOperationsEnabled();
     const creds = getTakbullCredentialsFromEnv();
     if (!creds) {
         const err = new Error('סליקת Takbull לא הוגדרה');
@@ -946,6 +962,7 @@ async function createCheckout({ kind, customer, pendingPackage } = {}) {
 }
 
 async function chargeSavedCard({ kind, amountOverride, skipEmail, upgradeOperation, automatic = false, cardSetupIntentId, dueOnly = false } = {}) {
+    assertBillingOperationsEnabled();
     if ((kind != null && !['retry', 'renewal', 'annual', 'upgrade'].includes(kind))
         || (kind === 'upgrade' && !upgradeOperation?.targetPackage)) {
         throw Object.assign(new Error('סוג החיוב אינו נתמך'), { code: 'INVALID_PAYMENT_KIND' });
@@ -1123,6 +1140,7 @@ async function chargeSavedCardForPackageUpgrade({
     skipEmail,
     upgradeOperation,
 } = {}) {
+    assertBillingOperationsEnabled();
     if (await hasSelfServiceAgreement()) {
         const result = await require('./selfServiceUpgrade').chargeSelfServiceUpgrade({
             tenantId: getCurrentTenantId(), target: upgradeOperation.targetPackage,
@@ -1233,6 +1251,7 @@ async function chargeSavedCardForPackageUpgrade({
 }
 
 async function savePackage({ platformId, resourceId, signingId, billingInterval, usage, customer } = {}) {
+    assertBillingOperationsEnabled();
     const api = module.exports;
     const row = await api.ensureBillingRow();
     const current = {
@@ -1420,6 +1439,7 @@ async function savePackage({ platformId, resourceId, signingId, billingInterval,
 }
 
 async function handleTakbullNotification({ uniqId, query } = {}) {
+    assertBillingOperationsEnabled();
     const creds = getTakbullCredentialsFromEnv();
     if (!creds || !uniqId) {
         return { ok: false, reason: 'missing_creds_or_uniq' };
@@ -1488,6 +1508,7 @@ async function handleTakbullNotification({ uniqId, query } = {}) {
 }
 
 async function handleTakbullReturn({ uniqId, intentId } = {}) {
+    assertBillingOperationsEnabled();
     let result = null;
     if (uniqId) {
         result = await handleTakbullNotification({ uniqId });
@@ -1504,6 +1525,7 @@ async function handleTakbullReturn({ uniqId, intentId } = {}) {
 }
 
 async function handleTakbullCancel({ intentId } = {}) {
+    assertBillingOperationsEnabled();
     if (intentId) {
         const intent = await findIntentById(intentId);
         // A browser cancellation is not evidence that the provider did not
@@ -1514,6 +1536,7 @@ async function handleTakbullCancel({ intentId } = {}) {
 }
 
 async function runBillingMaintenance({ now = new Date() } = {}) {
+    if (!billingOperationsEnabled()) return { skipped: true, reason: 'billing_operations_paused' };
     if(getCurrentTenantId()){
         const result=await require('./selfServiceRenewal').signupRenewal.renew(getCurrentTenantId());
         if(result.handled)return result;
@@ -1569,7 +1592,7 @@ async function runBillingMaintenance({ now = new Date() } = {}) {
 }
 
 async function getDisabledOptions(usage) {
-    const row = await ensureBillingRow();
+    const row = billingOperationsEnabled() ? await ensureBillingRow() : await getBillingRow();
     return disabledOptionsForUsage({
         current: {
             platformId: row?.platformId,
@@ -1581,6 +1604,7 @@ async function getDisabledOptions(usage) {
 }
 
 async function cancelSubscription() {
+    assertBillingOperationsEnabled();
     const row = await ensureBillingRow();
     if (!row) {
         const err = new Error('לא נמצא מנוי');

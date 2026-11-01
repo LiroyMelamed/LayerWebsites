@@ -1,3 +1,4 @@
+const { assertBillingOperationsEnabled } = require('../billing/billingOperations');
 /**
  * Takbull External API client (sandbox + production share the same host).
  * Ported from Melamotion for LayerWebsites firm billing.
@@ -95,6 +96,7 @@ function requirePositiveAmount(input) {
 }
 
 async function isConfirmedFailedTransaction(input, transactionId) {
+    assertBillingOperationsEnabled();
     if (!transactionId) return false;
     try {
         const response = await fetch(`${TAKBULL_API_BASE}/api/ExtranalAPI/GetTransaction?${new URLSearchParams({ transactionInternalNumber: transactionId })}`, {
@@ -165,6 +167,7 @@ function extractTokenFromValidated(raw) {
 }
 
 async function createTakbullPaymentPage(input) {
+    assertBillingOperationsEnabled();
     requirePositiveAmount(input);
     const body = {
         order_reference: input.orderReference,
@@ -229,6 +232,7 @@ async function createTakbullPaymentPage(input) {
 }
 
 async function validateTakbullNotification(credentials, uniqId) {
+    assertBillingOperationsEnabled();
     const creds = requireCreds(credentials);
     const res = await fetch(`${TAKBULL_API_BASE}/api/ExtranalAPI/ValidateNotification`, {
         method: 'POST',
@@ -301,6 +305,7 @@ async function validateTakbullNotification(credentials, uniqId) {
 }
 
 async function chargeTakbullToken(input) {
+    assertBillingOperationsEnabled();
     requirePositiveAmount(input);
     const currency = input.currency.toUpperCase() === 'ILS' ? 'ILS' : input.currency.toUpperCase();
     const body = {

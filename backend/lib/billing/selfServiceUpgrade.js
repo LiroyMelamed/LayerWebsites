@@ -1,4 +1,5 @@
 'use strict';
+const { assertBillingOperationsEnabled, isBillingOperationsPausedError } = require('./billingOperations');
 const crypto = require('node:crypto');
 const pool = require('../../config/db');
 const { decryptSecret } = require('./secrets');
@@ -18,6 +19,7 @@ async function assertNoPendingPayment(client, tenantId) {
 // Shared self-service agreements use a durable reservation before calling the
 // provider. Legacy dedicated-account billing remains on its existing path.
 async function chargeSelfServiceUpgrade({ tenantId, target, interval, amount, charge }) {
+    assertBillingOperationsEnabled();
     const priced = resolvePricingLineItems(target);
     const expected = interval === 'yearly' ? yearlyTotalIls(priced.total) : priced.total;
     if (!Number.isFinite(amount) || amount !== expected || amount <= 0) throw Error('UPGRADE_AMOUNT_MISMATCH');
@@ -92,6 +94,7 @@ async function chargeSelfServiceUpgrade({ tenantId, target, interval, amount, ch
         finally { settle.release(); }
         return { ok: true, charged: true, appliedAtomically: true, intentId: intent.id };
     } catch (error) {
+        if (isBillingOperationsPausedError(error)) throw error;
         await pool.query("UPDATE firm_payment_intents SET error_message='תוצאת החיוב דורשת בירור; אין לחייב שוב',updated_at=now() WHERE id=$1 AND status='pending'", [intent.id]);
         throw error;
     }
