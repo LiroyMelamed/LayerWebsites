@@ -1,0 +1,49 @@
+{
+  "at": "2026-10-27T04:21:15.653Z",
+  "result": "PASS_ACTUAL_FRESH_ENTRY_AND_TWO_TAB_STALE_SOURCE_REOPEN_PRESERVES_MANUAL_INPUT",
+  "frontendSource": "47e5ff40cc9e3ee42156e8895ef54ead9c69f424",
+  "backendSource": "fb0d6c22640f8b01911a9c6491ec856c4f5ab71a",
+  "observedBundle": [
+    "https://melamedia.mela-media.co.il/static/js/main.760c7a99.js"
+  ],
+  "freshEntry": "Existingfailedfresh-tab07 reloaded760: empty saved-source selection openswithoutnullclientRecord; secondnewtabalsoopenswithoutdraft",
+  "source": "QA-NF-20261023-UI שכירות",
+  "peerUpdate": {
+    "temporaryName": "QA-NF-20261023-UI שכירות — רענון QA",
+    "status": "התבנית הפרטית נשמרה."
+  },
+  "readerOldName": "QA-NF-20261023-UI שכירות",
+  "conflictObserved": "התבנית השתנתה מאז שנפתחה. פתחו שוב את הגרסה השמורה לפני שמירה נוספת. השינויים המקומיים עדיין מוצגים.",
+  "reopen": "Actualbuttonפתיחת המקור מחדש loadsnewname; alerts[]/canvas3/status[]",
+  "manualValueRetained": "שם בדיקה לשימור רענון 2710",
+  "contextAfter": [
+    {
+      "label": "בחירת הלקוח של המסמך",
+      "value": ""
+    },
+    {
+      "label": "בחירת תיק (לבחירה)",
+      "value": ""
+    },
+    {
+      "label": "בחירת האדם בתפקיד שוכר",
+      "value": ""
+    },
+    {
+      "label": "שוכר · שם מלא",
+      "value": "שם בדיקה לשימור רענון 2710"
+    }
+  ],
+  "peerNameRestored": "QA-NF-20261023-UI שכירות",
+  "peerRestoreConfirmed": "התבנית הפרטית נשמרה.",
+  "screenshots": [
+    "word-fresh-library08.png",
+    "word-source-conflict08.png",
+    "word-source-reopened-preserved08.png"
+  ],
+  "limits": [
+    "No numericversionUUID/APIstatusobserved; actualUI sourceconflict/newnames prove concurrency path.",
+    "No freshDOCXupload/package/send/OTP/consent/provider/customer action; sourceUIonlytemporarynamechange/restored,1binding3rolesuntouched.",
+    "Nonnullclient/case preserved separately model/source and priorComposer06; actualnewemptycontext remainsblank."
+  ]
+}

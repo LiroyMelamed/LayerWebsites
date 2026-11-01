@@ -1,0 +1,17 @@
+{
+  "utc": "2026-10-28T12:14:07.822230+00:00",
+  "candidate": "87e8eaa58830ee9b42772c1619e01814143dc28e",
+  "main": "/static/js/main.e622d4e3.js",
+  "css": "/static/css/main.98088501.css",
+  "observedVia": "Authenticated Chrome reload; public DOM script/link elements",
+  "authenticatedAfterReload": true,
+  "screens": {
+    "settings": "Email template settings rendered",
+    "signing": "0 pending,0signed, new dispatch management control renders",
+    "templates": "Active/archive and Word entry render",
+    "wordCreation": "Renders correctly; no saved Word template",
+    "wordManagement": "Renders DOCX upload control and empty saved-template list"
+  },
+  "consoleErrorsOrWarningsObserved": 0,
+  "scope": "Post-deploy authenticated screen smoke and exact asset identity. No uploaded source/new client/package/signature or full workflow claim."
+}

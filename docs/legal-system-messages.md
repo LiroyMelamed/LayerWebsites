@@ -211,3 +211,14 @@ dispatch stay OFF; no keys, migrations, provider calls or Court changes are incl
 Preserve each customer's other source, branding, package locks, signing and office
 WhatsApp code. Retire these temporary copies only after remote Git preservation,
 consumer shutdown and separate preservation of private recovery data and final artifacts.
+
+
+## Common source alignment — 1 November 2026
+
+The dated QA/customer preparation notes above are historical recovery context.
+The current source candidate merges the reviewed common `main` line after Melamedia
+QA acceptance. Follow `docs/DEPLOY_TENANTS_FROM_MAIN.md` and the current exact
+release receipts for runtime state; this source note does not claim publication.
+Capture and dispatch remain default-off; no provider, environment or consent activation
+is authorized by this alignment. Preserve the protected signing ledgers and current
+tenant-specific contractor, portal, accessibility and empty-recipient behavior.

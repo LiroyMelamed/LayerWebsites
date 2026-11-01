@@ -1,0 +1,1355 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-26T14:34:54.212428+00:00",
+  "completedAt": "2026-10-26T14:35:00.690703+00:00",
+  "scope": "FINAL_FIVE_LEGAL_API_READONLY_SOURCE_CONFIG_DEPENDENCY_STABLE_HEALTH_ONLY",
+  "exitCode": 0,
+  "bindingsSha256": "2f28303c11c4b99662d103361972aa5a2af80290a357e63c085559631a08d663",
+  "scriptHashes": {
+    "final-five-inventory01.cjs": "1265361855abb6c2c52244dd3f966b24ad1e93af4b2249ad108b9ea3ec0f9f5a",
+    "final_five_bindings01.py": "ed67f59092abe9459aee9ce299cbdeaacba32c6a43ef2ebe887e5f1698134d92",
+    "run-final-five-inventory01.py": "ea2984cfa144f4529e617a3316589e5069fd1aeb6970274095396225282e5733"
+  },
+  "payloadSha256": "3c052c6f96b0262d665bf887e1d389878b2fb39ac748e35409af75ea05f5a5a1",
+  "ledgerReadHashes": {
+    "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/signing-implementation-20261007/TEST-LEDGER.md": "1d630c06911671b925ee1234ed75409e790dac965211bdfe219d04fc6f2ede10",
+    "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/office-whatsapp-20261023/TEST-LEDGER.md": "0fdab03bb62ba1c8f896595f1e86fc5c07bf8410ebe800a6267b28e81adfbd17"
+  },
+  "stdoutSha256": "6b664b2753ffffa6efe3bad9ce8d98f43310f1dcdbfc8b6045fd9c531b48c2ef",
+  "stderrBytes": 0,
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "private0600TransportLogs": true,
+  "observation": {
+    "at": "2026-10-26T14:34:56.627Z",
+    "completedAt": "2026-10-26T14:35:00.624Z",
+    "result": "PASS_FINAL_FIVE_LEGAL_API_SOURCE_CONFIG_HEALTH_INVENTORY",
+    "observations": [
+      {
+        "tenant": "ashrafessa",
+        "sourceBefore": {
+          "head": "596aa5b7eb9b40f8cd5f6927132955ff6caf2175",
+          "branch": "AshrafEssa",
+          "headMatchesExpected": true,
+          "trackedClean": true,
+          "backendFiles": 791,
+          "backendMapSha256": "0e7bf36eb4517b9c4cb1885bbba8d2145a715da777a3ee119ea8b78bd9f21724",
+          "dependencyFiles": 190,
+          "dependencyMapSha256": "eaa3336abe634327deb70d9a57c3f10bd8242613f0a79ddf1b08345acf78678e"
+        },
+        "processBefore": {
+          "id": 3,
+          "pid": 1537349,
+          "status": "online",
+          "start": 1793019968930,
+          "restarts": 107,
+          "procStart": "68940808",
+          "procEnvSha256": "1b55fa81b665eafe2df2ece1cb5cd5b7cd6345da7e21b7e4e24ffc1c42d7b482"
+        },
+        "environmentBefore": {
+          "envSha256": "8956b57218c8a0f1378707d9013164e03628724d6f17753bc9ae4bdb6003b7a7",
+          "nestedCanonicalSha256": "1b544c89e59ec0997fdc0b2b96e9f53344b5c9bdc39b6b4684b0e1cbdb7a2c68",
+          "effectiveCanonicalSha256": "3281f3dc9fa4c3b2efb1ea6ee1100568ff9ed381c149390d7538f4e4faac198c",
+          "selectedRootCanonicalSha256": "1b544c89e59ec0997fdc0b2b96e9f53344b5c9bdc39b6b4684b0e1cbdb7a2c68",
+          "controlSignatureSha256": "268a9db786cb31da8aadc7b8b0900437118a0946b3f4a0b3343f6f1eda729681",
+          "activationCanonicalBindingsMatch": true,
+          "offFixedKeys": {
+            "dotenvFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            },
+            "nestedFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            },
+            "pm2RootFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            },
+            "effectiveFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            }
+          },
+          "wordConfig": {
+            "WORD_TEMPLATE_SOFFICE_PATH": "/opt/melamedia-qa-word-converter-20261023/managed-soffice.py",
+            "WORD_TEMPLATE_MAX_CONCURRENT": "1"
+          },
+          "wordConfigEffective": true,
+          "originalMinUptimePolicy": {
+            "present": true,
+            "type": "number",
+            "value": 5000
+          }
+        },
+        "health": {
+          "startedAt": "2026-10-26T14:34:58.098Z",
+          "deadlineMs": 25000,
+          "perProbeTimeoutMs": 1000,
+          "pollMs": 250,
+          "originalMinUptimePolicy": {
+            "present": true,
+            "type": "number",
+            "value": 5000
+          },
+          "requiredStabilityAgeMs": 5000,
+          "attempts": [
+            {
+              "number": 1,
+              "startedElapsedMs": 0.1483259999999973,
+              "durationMs": 19.7996169999999,
+              "finalAfterStability": false,
+              "ready": true,
+              "classification": "READY",
+              "status": 200,
+              "bytes": 11,
+              "bodySha256": "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93"
+            },
+            {
+              "number": 2,
+              "startedElapsedMs": 469.707169,
+              "durationMs": 10.600782999999865,
+              "finalAfterStability": true,
+              "ready": true,
+              "classification": "READY",
+              "status": 200,
+              "bytes": 11,
+              "bodySha256": "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93"
+            }
+          ],
+          "ready": true,
+          "fullAsyncStartupCompletionClaimed": false,
+          "firstReadyElapsedMs": 19.99381799999992,
+          "processStability": {
+            "pid": 1537349,
+            "uptimeStartedAtMs": 1793019968930,
+            "observedAgeMs": 5329635,
+            "requiredMinUptimeMs": 5000,
+            "originalMinUptimePolicy": {
+              "present": true,
+              "type": "number",
+              "value": 5000
+            },
+            "samePidAndUptimeAcrossSnapshots": true,
+            "stableProcessWindowOnly": true
+          },
+          "elapsedMs": 480.32607600000006,
+          "terminalClassification": "READY_AFTER_STABLE_PROCESS_WINDOW"
+        },
+        "sourceAfter": {
+          "head": "596aa5b7eb9b40f8cd5f6927132955ff6caf2175",
+          "branch": "AshrafEssa",
+          "headMatchesExpected": true,
+          "trackedClean": true,
+          "backendFiles": 791,
+          "backendMapSha256": "0e7bf36eb4517b9c4cb1885bbba8d2145a715da777a3ee119ea8b78bd9f21724",
+          "dependencyFiles": 190,
+          "dependencyMapSha256": "eaa3336abe634327deb70d9a57c3f10bd8242613f0a79ddf1b08345acf78678e"
+        },
+        "processAfter": {
+          "id": 3,
+          "pid": 1537349,
+          "status": "online",
+          "start": 1793019968930,
+          "restarts": 107,
+          "procStart": "68940808",
+          "procEnvSha256": "1b55fa81b665eafe2df2ece1cb5cd5b7cd6345da7e21b7e4e24ffc1c42d7b482"
+        },
+        "environmentAfter": {
+          "envSha256": "8956b57218c8a0f1378707d9013164e03628724d6f17753bc9ae4bdb6003b7a7",
+          "nestedCanonicalSha256": "1b544c89e59ec0997fdc0b2b96e9f53344b5c9bdc39b6b4684b0e1cbdb7a2c68",
+          "effectiveCanonicalSha256": "3281f3dc9fa4c3b2efb1ea6ee1100568ff9ed381c149390d7538f4e4faac198c",
+          "selectedRootCanonicalSha256": "1b544c89e59ec0997fdc0b2b96e9f53344b5c9bdc39b6b4684b0e1cbdb7a2c68",
+          "controlSignatureSha256": "268a9db786cb31da8aadc7b8b0900437118a0946b3f4a0b3343f6f1eda729681",
+          "activationCanonicalBindingsMatch": true,
+          "offFixedKeys": {
+            "dotenvFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            },
+            "nestedFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            },
+            "pm2RootFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            },
+            "effectiveFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            }
+          },
+          "wordConfig": {
+            "WORD_TEMPLATE_SOFFICE_PATH": "/opt/melamedia-qa-word-converter-20261023/managed-soffice.py",
+            "WORD_TEMPLATE_MAX_CONCURRENT": "1"
+          },
+          "wordConfigEffective": true,
+          "originalMinUptimePolicy": {
+            "present": true,
+            "type": "number",
+            "value": 5000
+          }
+        },
+        "samePidAndStartAcrossGlobalSnapshots": true,
+        "finalHealthAfterGlobalStability": {
+          "ready": true,
+          "classification": "READY",
+          "status": 200,
+          "bytes": 11,
+          "bodySha256": "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93"
+        }
+      },
+      {
+        "tenant": "melamedlaw",
+        "sourceBefore": {
+          "head": "0631caf7b1c829673887e12c1d2e3ffc36c1715b",
+          "branch": "MelamedLaw",
+          "headMatchesExpected": true,
+          "trackedClean": true,
+          "backendFiles": 794,
+          "backendMapSha256": "5e80bc9471bcb36d802de77191030b038e8c17c812ce26670921a6078d54aa25",
+          "dependencyFiles": 190,
+          "dependencyMapSha256": "eaa3336abe634327deb70d9a57c3f10bd8242613f0a79ddf1b08345acf78678e"
+        },
+        "processBefore": {
+          "id": 1,
+          "pid": 1543429,
+          "status": "online",
+          "start": 1793022091092,
+          "restarts": 3,
+          "procStart": "69153024",
+          "procEnvSha256": "620f4d3d2b79624cee3438e8bcde9f94127461a1010de1e2cb53c0fe69d5678a"
+        },
+        "environmentBefore": {
+          "envSha256": "8c834a791a092ef22b4dd22632e14c18357df2e145d5ac9add5904d8e60ac6d6",
+          "nestedCanonicalSha256": "440bdfd3cfe0379e0d1849b605dd55ed6e7f4d14855d7c7421d6ec746efb76b8",
+          "effectiveCanonicalSha256": "5593391d67cccf2b06d3ccf593f27bb20270d163fb694a3d44b3d2a232e9a9b3",
+          "selectedRootCanonicalSha256": "18435c369219ef088dffdf2ab266a3b711eca9ceaf3076c3c31dfc61ccfcbfe2",
+          "controlSignatureSha256": "ad70a6e698ab9c895a212f6d48dac59f69c3c75e43f77643d1b266edd5aee973",
+          "activationCanonicalBindingsMatch": true,
+          "offFixedKeys": {
+            "dotenvFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            },
+            "nestedFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            },
+            "pm2RootFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            },
+            "effectiveFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            }
+          },
+          "wordConfig": {
+            "WORD_TEMPLATE_SOFFICE_PATH": "/opt/melamedia-qa-word-converter-20261023/managed-soffice.py",
+            "WORD_TEMPLATE_MAX_CONCURRENT": "1"
+          },
+          "wordConfigEffective": true,
+          "originalMinUptimePolicy": {
+            "present": false,
+            "type": "undefined",
+            "value": null
+          }
+        },
+        "health": {
+          "startedAt": "2026-10-26T14:34:58.579Z",
+          "deadlineMs": 25000,
+          "perProbeTimeoutMs": 1000,
+          "pollMs": 250,
+          "originalMinUptimePolicy": {
+            "present": false,
+            "type": "undefined",
+            "value": null
+          },
+          "requiredStabilityAgeMs": 5000,
+          "attempts": [
+            {
+              "number": 1,
+              "startedElapsedMs": 0.04204799999979514,
+              "durationMs": 2.833810000000085,
+              "finalAfterStability": false,
+              "ready": true,
+              "classification": "READY",
+              "status": 200,
+              "bytes": 11,
+              "bodySha256": "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93"
+            },
+            {
+              "number": 2,
+              "startedElapsedMs": 484.1101779999999,
+              "durationMs": 4.790667000000212,
+              "finalAfterStability": true,
+              "ready": true,
+              "classification": "READY",
+              "status": 200,
+              "bytes": 11,
+              "bodySha256": "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93"
+            }
+          ],
+          "ready": true,
+          "fullAsyncStartupCompletionClaimed": false,
+          "firstReadyElapsedMs": 2.8842839999997523,
+          "processStability": {
+            "pid": 1543429,
+            "uptimeStartedAtMs": 1793022091092,
+            "observedAgeMs": 3207971,
+            "requiredMinUptimeMs": 5000,
+            "originalMinUptimePolicy": {
+              "present": false,
+              "type": "undefined",
+              "value": null
+            },
+            "samePidAndUptimeAcrossSnapshots": true,
+            "stableProcessWindowOnly": true
+          },
+          "elapsedMs": 489.08381599999984,
+          "terminalClassification": "READY_AFTER_STABLE_PROCESS_WINDOW"
+        },
+        "sourceAfter": {
+          "head": "0631caf7b1c829673887e12c1d2e3ffc36c1715b",
+          "branch": "MelamedLaw",
+          "headMatchesExpected": true,
+          "trackedClean": true,
+          "backendFiles": 794,
+          "backendMapSha256": "5e80bc9471bcb36d802de77191030b038e8c17c812ce26670921a6078d54aa25",
+          "dependencyFiles": 190,
+          "dependencyMapSha256": "eaa3336abe634327deb70d9a57c3f10bd8242613f0a79ddf1b08345acf78678e"
+        },
+        "processAfter": {
+          "id": 1,
+          "pid": 1543429,
+          "status": "online",
+          "start": 1793022091092,
+          "restarts": 3,
+          "procStart": "69153024",
+          "procEnvSha256": "620f4d3d2b79624cee3438e8bcde9f94127461a1010de1e2cb53c0fe69d5678a"
+        },
+        "environmentAfter": {
+          "envSha256": "8c834a791a092ef22b4dd22632e14c18357df2e145d5ac9add5904d8e60ac6d6",
+          "nestedCanonicalSha256": "440bdfd3cfe0379e0d1849b605dd55ed6e7f4d14855d7c7421d6ec746efb76b8",
+          "effectiveCanonicalSha256": "5593391d67cccf2b06d3ccf593f27bb20270d163fb694a3d44b3d2a232e9a9b3",
+          "selectedRootCanonicalSha256": "18435c369219ef088dffdf2ab266a3b711eca9ceaf3076c3c31dfc61ccfcbfe2",
+          "controlSignatureSha256": "ad70a6e698ab9c895a212f6d48dac59f69c3c75e43f77643d1b266edd5aee973",
+          "activationCanonicalBindingsMatch": true,
+          "offFixedKeys": {
+            "dotenvFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            },
+            "nestedFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            },
+            "pm2RootFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            },
+            "effectiveFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            }
+          },
+          "wordConfig": {
+            "WORD_TEMPLATE_SOFFICE_PATH": "/opt/melamedia-qa-word-converter-20261023/managed-soffice.py",
+            "WORD_TEMPLATE_MAX_CONCURRENT": "1"
+          },
+          "wordConfigEffective": true,
+          "originalMinUptimePolicy": {
+            "present": false,
+            "type": "undefined",
+            "value": null
+          }
+        },
+        "samePidAndStartAcrossGlobalSnapshots": true,
+        "finalHealthAfterGlobalStability": {
+          "ready": true,
+          "classification": "READY",
+          "status": 200,
+          "bytes": 11,
+          "bodySha256": "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93"
+        }
+      },
+      {
+        "tenant": "morlevy",
+        "sourceBefore": {
+          "head": "a50afb3fccaaee17633328ef62b5695336d73090",
+          "branch": "MorLevi",
+          "headMatchesExpected": true,
+          "trackedClean": true,
+          "backendFiles": 790,
+          "backendMapSha256": "58ef076917866f95cfddc35a6160250d746067629ee0aee27125b7b8d0671910",
+          "dependencyFiles": 190,
+          "dependencyMapSha256": "eaa3336abe634327deb70d9a57c3f10bd8242613f0a79ddf1b08345acf78678e"
+        },
+        "processBefore": {
+          "id": 4,
+          "pid": 1550031,
+          "status": "online",
+          "start": 1793024484766,
+          "restarts": 101,
+          "procStart": "69392392",
+          "procEnvSha256": "f39844dca1b75d4fb10b31959c2d022cf06347adcb1a6773291417b57d28c802"
+        },
+        "environmentBefore": {
+          "envSha256": "d7a17bf3be60969921e4d568feeca3bfacba9fafcef98c12d3ddfb5d8b795f93",
+          "nestedCanonicalSha256": "6467f011ffbb9a46bc7a0833d983f4fe2b81f547b98a5251483bd99349573877",
+          "effectiveCanonicalSha256": "4a56565e2b8c80388de8823564bb578ea6de5d209bc6d64bc72b5851f4782591",
+          "selectedRootCanonicalSha256": "6467f011ffbb9a46bc7a0833d983f4fe2b81f547b98a5251483bd99349573877",
+          "controlSignatureSha256": "a706d345cf664f735f72015fc1424448e8894dfa2fcce5840a8be1af84f1b8c4",
+          "activationCanonicalBindingsMatch": true,
+          "offFixedKeys": {
+            "dotenvFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            },
+            "nestedFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            },
+            "pm2RootFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            },
+            "effectiveFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            }
+          },
+          "wordConfig": {
+            "WORD_TEMPLATE_SOFFICE_PATH": "/opt/melamedia-qa-word-converter-20261023/managed-soffice.py",
+            "WORD_TEMPLATE_MAX_CONCURRENT": "1"
+          },
+          "wordConfigEffective": true,
+          "originalMinUptimePolicy": {
+            "present": true,
+            "type": "number",
+            "value": 10000
+          }
+        },
+        "health": {
+          "startedAt": "2026-10-26T14:34:59.068Z",
+          "deadlineMs": 25000,
+          "perProbeTimeoutMs": 1000,
+          "pollMs": 250,
+          "originalMinUptimePolicy": {
+            "present": true,
+            "type": "number",
+            "value": 10000
+          },
+          "requiredStabilityAgeMs": 10000,
+          "attempts": [
+            {
+              "number": 1,
+              "startedElapsedMs": 0.038320000000112486,
+              "durationMs": 5.123597999999674,
+              "finalAfterStability": false,
+              "ready": true,
+              "classification": "READY",
+              "status": 200,
+              "bytes": 11,
+              "bodySha256": "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93"
+            },
+            {
+              "number": 2,
+              "startedElapsedMs": 455.16166299999986,
+              "durationMs": 2.7435530000002473,
+              "finalAfterStability": true,
+              "ready": true,
+              "classification": "READY",
+              "status": 200,
+              "bytes": 11,
+              "bodySha256": "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93"
+            }
+          ],
+          "ready": true,
+          "fullAsyncStartupCompletionClaimed": false,
+          "firstReadyElapsedMs": 5.175242999999682,
+          "processStability": {
+            "pid": 1550031,
+            "uptimeStartedAtMs": 1793024484766,
+            "observedAgeMs": 814757,
+            "requiredMinUptimeMs": 10000,
+            "originalMinUptimePolicy": {
+              "present": true,
+              "type": "number",
+              "value": 10000
+            },
+            "samePidAndUptimeAcrossSnapshots": true,
+            "stableProcessWindowOnly": true
+          },
+          "elapsedMs": 458.0027580000001,
+          "terminalClassification": "READY_AFTER_STABLE_PROCESS_WINDOW"
+        },
+        "sourceAfter": {
+          "head": "a50afb3fccaaee17633328ef62b5695336d73090",
+          "branch": "MorLevi",
+          "headMatchesExpected": true,
+          "trackedClean": true,
+          "backendFiles": 790,
+          "backendMapSha256": "58ef076917866f95cfddc35a6160250d746067629ee0aee27125b7b8d0671910",
+          "dependencyFiles": 190,
+          "dependencyMapSha256": "eaa3336abe634327deb70d9a57c3f10bd8242613f0a79ddf1b08345acf78678e"
+        },
+        "processAfter": {
+          "id": 4,
+          "pid": 1550031,
+          "status": "online",
+          "start": 1793024484766,
+          "restarts": 101,
+          "procStart": "69392392",
+          "procEnvSha256": "f39844dca1b75d4fb10b31959c2d022cf06347adcb1a6773291417b57d28c802"
+        },
+        "environmentAfter": {
+          "envSha256": "d7a17bf3be60969921e4d568feeca3bfacba9fafcef98c12d3ddfb5d8b795f93",
+          "nestedCanonicalSha256": "6467f011ffbb9a46bc7a0833d983f4fe2b81f547b98a5251483bd99349573877",
+          "effectiveCanonicalSha256": "4a56565e2b8c80388de8823564bb578ea6de5d209bc6d64bc72b5851f4782591",
+          "selectedRootCanonicalSha256": "6467f011ffbb9a46bc7a0833d983f4fe2b81f547b98a5251483bd99349573877",
+          "controlSignatureSha256": "a706d345cf664f735f72015fc1424448e8894dfa2fcce5840a8be1af84f1b8c4",
+          "activationCanonicalBindingsMatch": true,
+          "offFixedKeys": {
+            "dotenvFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            },
+            "nestedFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            },
+            "pm2RootFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            },
+            "effectiveFixedKeys": {
+              "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_LIVE_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_DELIVERY_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WAHA_QA_PILOT_ENABLED": {
+                "present": false,
+                "enabled": false
+              },
+              "WHATSAPP_WORKER_ENABLED": {
+                "present": false,
+                "enabled": false
+              }
+            }
+          },
+          "wordConfig": {
+            "WORD_TEMPLATE_SOFFICE_PATH": "/opt/melamedia-qa-word-converter-20261023/managed-soffice.py",
+            "WORD_TEMPLATE_MAX_CONCURRENT": "1"
+          },
+          "wordConfigEffective": true,
+          "originalMinUptimePolicy": {
+            "present": true,
+            "type": "number",
+            "value": 10000
+          }
+        },
+        "samePidAndStartAcrossGlobalSnapshots": true,
+        "finalHealthAfterGlobalStability": {
+          "ready": true,
+          "classification": "READY",
+          "status": 200,
+          "bytes": 11,
+          "bodySha256": "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93"
+        }
+      },
+      {
+        "tenant": "melamediaQA",
+        "sourceBefore": {
+          "head": "1161fd687db381833552db78a70723573792ab97",
+          "headMatchesExpected": true,
+          "minimumUptimePolicyAsserted": false
+        },
+        "processBefore": {
+          "id": 5,
+          "pid": 1370533,
+          "status": "online",
+          "start": 1792937979405,
+          "restarts": 8,
+          "procStart": "60741856",
+          "procEnvSha256": "28dce0cea9b3ccbb008361bb35d6d39303d6aba3836d0faa253a396ede0ba58b"
+        },
+        "minimumUptimePolicyAsserted": false,
+        "health": {
+          "ready": true,
+          "classification": "READY",
+          "status": 200,
+          "bytes": 11,
+          "bodySha256": "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93"
+        },
+        "sourceAfter": {
+          "head": "1161fd687db381833552db78a70723573792ab97",
+          "headMatchesExpected": true,
+          "minimumUptimePolicyAsserted": false
+        },
+        "processAfter": {
+          "id": 5,
+          "pid": 1370533,
+          "status": "online",
+          "start": 1792937979405,
+          "restarts": 8,
+          "procStart": "60741856",
+          "procEnvSha256": "28dce0cea9b3ccbb008361bb35d6d39303d6aba3836d0faa253a396ede0ba58b"
+        },
+        "samePidAndStartAcrossGlobalSnapshots": true,
+        "finalHealthAfterGlobalStability": {
+          "ready": true,
+          "classification": "READY",
+          "status": 200,
+          "bytes": 11,
+          "bodySha256": "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93"
+        }
+      },
+      {
+        "tenant": "lawyerShared",
+        "sourceBefore": {
+          "head": "ce3cb6a9058a2a3ec2dc1495796079cde90f6f51",
+          "headMatchesExpected": true,
+          "minimumUptimePolicyAsserted": false
+        },
+        "processBefore": {
+          "id": 7,
+          "pid": 1145299,
+          "status": "online",
+          "start": 1792906938277,
+          "restarts": 1,
+          "procStart": "57637743",
+          "procEnvSha256": "202dbbccbc63a0515894ec4e4a1e54b262450ea972e927025c42d9fdea1d5940"
+        },
+        "minimumUptimePolicyAsserted": false,
+        "health": {
+          "ready": true,
+          "classification": "READY",
+          "status": 200,
+          "bytes": 11,
+          "bodySha256": "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93"
+        },
+        "sourceAfter": {
+          "head": "ce3cb6a9058a2a3ec2dc1495796079cde90f6f51",
+          "headMatchesExpected": true,
+          "minimumUptimePolicyAsserted": false
+        },
+        "processAfter": {
+          "id": 7,
+          "pid": 1145299,
+          "status": "online",
+          "start": 1792906938277,
+          "restarts": 1,
+          "procStart": "57637743",
+          "procEnvSha256": "202dbbccbc63a0515894ec4e4a1e54b262450ea972e927025c42d9fdea1d5940"
+        },
+        "samePidAndStartAcrossGlobalSnapshots": true,
+        "finalHealthAfterGlobalStability": {
+          "ready": true,
+          "classification": "READY",
+          "status": 200,
+          "bytes": 11,
+          "bodySha256": "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93"
+        }
+      }
+    ],
+    "allProcessesBefore": [
+      {
+        "id": 0,
+        "pid": 948119,
+        "status": "online",
+        "start": 1792816990347,
+        "restarts": 0,
+        "procStart": "48642951",
+        "procEnvSha256": "f85f654bc3a5af6826bf777d1082328f461233f98d671ae3b94faa6ede596f31"
+      },
+      {
+        "id": 1,
+        "pid": 1543429,
+        "status": "online",
+        "start": 1793022091092,
+        "restarts": 3,
+        "procStart": "69153024",
+        "procEnvSha256": "620f4d3d2b79624cee3438e8bcde9f94127461a1010de1e2cb53c0fe69d5678a"
+      },
+      {
+        "id": 2,
+        "pid": 948131,
+        "status": "online",
+        "start": 1792816990405,
+        "restarts": 0,
+        "procStart": "48642956",
+        "procEnvSha256": "ccc8da5bd7a6589fa0894b4074e604dd45932f265b8cae908681a6b11af49e26"
+      },
+      {
+        "id": 3,
+        "pid": 1537349,
+        "status": "online",
+        "start": 1793019968930,
+        "restarts": 107,
+        "procStart": "68940808",
+        "procEnvSha256": "1b55fa81b665eafe2df2ece1cb5cd5b7cd6345da7e21b7e4e24ffc1c42d7b482"
+      },
+      {
+        "id": 4,
+        "pid": 1550031,
+        "status": "online",
+        "start": 1793024484766,
+        "restarts": 101,
+        "procStart": "69392392",
+        "procEnvSha256": "f39844dca1b75d4fb10b31959c2d022cf06347adcb1a6773291417b57d28c802"
+      },
+      {
+        "id": 5,
+        "pid": 1370533,
+        "status": "online",
+        "start": 1792937979405,
+        "restarts": 8,
+        "procStart": "60741856",
+        "procEnvSha256": "28dce0cea9b3ccbb008361bb35d6d39303d6aba3836d0faa253a396ede0ba58b"
+      },
+      {
+        "id": 7,
+        "pid": 1145299,
+        "status": "online",
+        "start": 1792906938277,
+        "restarts": 1,
+        "procStart": "57637743",
+        "procEnvSha256": "202dbbccbc63a0515894ec4e4a1e54b262450ea972e927025c42d9fdea1d5940"
+      },
+      {
+        "id": 8,
+        "pid": 1386163,
+        "status": "online",
+        "start": 1792941982623,
+        "restarts": 0,
+        "procStart": "61142178",
+        "procEnvSha256": "751a8ead740a4512a5e7f037b8fc8497a5d4f3cb9854b069c34bcad87a4ec5de"
+      },
+      {
+        "id": 9,
+        "pid": 1038544,
+        "status": "online",
+        "start": 1792852850614,
+        "restarts": 0,
+        "procStart": "52228977",
+        "procEnvSha256": "6176e9260e7705791ed8ce0712e12b9a1b4253e9734cc5405f80f3a9bbc9bf57"
+      }
+    ],
+    "allProcessesAfter": [
+      {
+        "id": 0,
+        "pid": 948119,
+        "status": "online",
+        "start": 1792816990347,
+        "restarts": 0,
+        "procStart": "48642951",
+        "procEnvSha256": "f85f654bc3a5af6826bf777d1082328f461233f98d671ae3b94faa6ede596f31"
+      },
+      {
+        "id": 1,
+        "pid": 1543429,
+        "status": "online",
+        "start": 1793022091092,
+        "restarts": 3,
+        "procStart": "69153024",
+        "procEnvSha256": "620f4d3d2b79624cee3438e8bcde9f94127461a1010de1e2cb53c0fe69d5678a"
+      },
+      {
+        "id": 2,
+        "pid": 948131,
+        "status": "online",
+        "start": 1792816990405,
+        "restarts": 0,
+        "procStart": "48642956",
+        "procEnvSha256": "ccc8da5bd7a6589fa0894b4074e604dd45932f265b8cae908681a6b11af49e26"
+      },
+      {
+        "id": 3,
+        "pid": 1537349,
+        "status": "online",
+        "start": 1793019968930,
+        "restarts": 107,
+        "procStart": "68940808",
+        "procEnvSha256": "1b55fa81b665eafe2df2ece1cb5cd5b7cd6345da7e21b7e4e24ffc1c42d7b482"
+      },
+      {
+        "id": 4,
+        "pid": 1550031,
+        "status": "online",
+        "start": 1793024484766,
+        "restarts": 101,
+        "procStart": "69392392",
+        "procEnvSha256": "f39844dca1b75d4fb10b31959c2d022cf06347adcb1a6773291417b57d28c802"
+      },
+      {
+        "id": 5,
+        "pid": 1370533,
+        "status": "online",
+        "start": 1792937979405,
+        "restarts": 8,
+        "procStart": "60741856",
+        "procEnvSha256": "28dce0cea9b3ccbb008361bb35d6d39303d6aba3836d0faa253a396ede0ba58b"
+      },
+      {
+        "id": 7,
+        "pid": 1145299,
+        "status": "online",
+        "start": 1792906938277,
+        "restarts": 1,
+        "procStart": "57637743",
+        "procEnvSha256": "202dbbccbc63a0515894ec4e4a1e54b262450ea972e927025c42d9fdea1d5940"
+      },
+      {
+        "id": 8,
+        "pid": 1386163,
+        "status": "online",
+        "start": 1792941982623,
+        "restarts": 0,
+        "procStart": "61142178",
+        "procEnvSha256": "751a8ead740a4512a5e7f037b8fc8497a5d4f3cb9854b069c34bcad87a4ec5de"
+      },
+      {
+        "id": 9,
+        "pid": 1038544,
+        "status": "online",
+        "start": 1792852850614,
+        "restarts": 0,
+        "procStart": "52228977",
+        "procEnvSha256": "6176e9260e7705791ed8ce0712e12b9a1b4253e9734cc5405f80f3a9bbc9bf57"
+      }
+    ],
+    "allNineProcessesStableDuringInventory": true,
+    "globalProcessSnapshots": 3,
+    "nonCustomerProcessesMatchKnownLinuxBaseline": true,
+    "onlyThreeAuthorizedCustomerProcessTransitionsExcludedFromOldBaseline": true,
+    "oldPerClientOtherPidBaselineReplayed": false,
+    "qaAndSharedMinimumUptimePolicyAsserted": false,
+    "noSqlCustomerRowsLogsApplicationBootProvidersOrRuntimeMutation": true,
+    "noRemoteWritesCachesOrCleanup": true,
+    "scopeDoesNotProveAuthenticatedFeatureCorrectnessFrontendOrNativeVersions": true
+  },
+  "noOldPerClientOtherPidReplay": true,
+  "noSqlCustomerRowsLogsProviderAppBootSourceEnvPm2OrRemoteCacheWrites": true,
+  "noFullProductFrontendNativeOrProviderApprovalClaim": true,
+  "noBlindRetry": true
+}

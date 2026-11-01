@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "kind": "BYTE_EXACT_FRONTEND_CONTINUITY_TOOLING_ARCHIVE_NOT_PRODUCT_RELEASE",
+  "archivedAtUtc": "2026-10-27T04:15:17.821348+00:00",
+  "activePreparedDirectory": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026",
+  "files": {
+    "qa-backend-observe03.py": "6856888d7820f2f2026f51833dc5021379db63932ff53af8f9fc4b47d965f491",
+    "qa_backend_observe03_test.py": "f66deb9d9b35d862f54c5d5f032ffba31e9e48f77dd16c62fd125511a94fbc49",
+    "run-qa-static06.py": "32e640d1b2d1c73d7e1b5cdbfaef0a63dc7f4ac768ff2371daac8a0331c86a53",
+    "qa_static06_test.py": "34c365bd8a2ec72429581ed937e89657d6deae74c0ae995db77212df853fb492"
+  },
+  "sourceDistinction": {
+    "productMainCommit": "c684b862e9fbbfbea4e1af593ede44d280b31a0c",
+    "frontendQaCandidate": "47e5ff40cc9e3ee42156e8895ef54ead9c69f424",
+    "verifiedBackendCommit": "fb0d6c22640f8b01911a9c6491ec856c4f5ab71a",
+    "meaning": "New frontend candidate descends from fb0 and preserves its full807 backend map. This tooling archive changes no product source; it does not advance backend Git HEAD or restart the API."
+  },
+  "qualifications": {
+    "observer03": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/observer03-local-fixtures-20261027T040947325554Z.json",
+      "sha256": "a06d9b5326ad35fde40119ce480dbd42d1c4dc57064bb7f3a409befaee054d19",
+      "result": "PASS_LOCAL_SYNTHETIC_OBSERVER03_FIXTURES",
+      "methods": 7,
+      "scope": "Mocked SSH/Node/DB and augmented metadata validation; no actual observation."
+    },
+    "combinedOperators": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/ops06-local-qualification-20261027T041038713920Z.json",
+      "sha256": "c381c3452f3a0e3b6361da82ff9616740e7359b4c694e0f9dc12bfdce42540ba",
+      "result": "PASS_LOCAL_FIXTURES",
+      "methods": 21,
+      "counts": {
+        "qa-backend-code-fix05.local.test.py": 8,
+        "qa_static05_test.py": 7,
+        "qa_static06_test.py": 6
+      },
+      "scope": "Local operator fixtures only; observer03 source bound as dependency. No runtime/browser result."
+    }
+  },
+  "dependencies": {
+    "observer02": {
+      "path": "ops/word-visual-qa-20261026/qa-backend-observe02.py",
+      "sha256": "adced0030fbfc646182d3d44db25b2195f215b3f6c19b11aef3707420e96f2b7"
+    },
+    "release02ReadOnlyHelpers": {
+      "path": "ops/word-visual-qa-20261026/qa-backend-release02.py",
+      "sha256": "bf4369a26ec6284419bbc848ed4d3b9fb37a200e28d2638256322657e2f93dc3"
+    },
+    "codeFix05": {
+      "path": "ops/word-visual-qa-20261026/code-fix05/qa-backend-code-fix05.py",
+      "sha256": "4b13519dde9fe2c675224f0c0083b1399b2357b14e4d795ef9a375da6dbcfabc"
+    },
+    "static05": {
+      "path": "ops/word-visual-qa-20261026/code-fix05/run-qa-static05.py",
+      "sha256": "b96c5531b990d29d2e2f273604f0de7872c9a238c935d3ddaddc2ae2d6137a13"
+    },
+    "static05FixtureHelpers": {
+      "path": "ops/word-visual-qa-20261026/code-fix05/qa_static05_test.py",
+      "sha256": "b168c7bbdb8bf0056c862b770b875d2070a5c35357c3912ff113aa0041938b4c"
+    },
+    "static04FixtureHelpers": {
+      "path": "ops/word-visual-qa-20261026/source-advance04/qa_static04_test.py",
+      "sha256": "203ffb7fcb8183807fa4150393de2bf1e2e0e246e99b802a1ab6c3fc77f41d4e"
+    },
+    "staticHelper2a0": {
+      "path": "ops/word-ux-qa-20261026/qa-static01.py",
+      "sha256": "2a0d147f10579bdb755f81a989414609ead7332444ebd8e30bb9840f714523d8"
+    },
+    "originalStaticFixtureHelpers": {
+      "path": "ops/word-ux-qa-20261026/qa_static01_test.py",
+      "sha256": "5d61bfaeedb7ad65b212025c8849697089a3d48addcfd47c8448fe990ae3cbd3"
+    }
+  },
+  "historicalBackendVerification": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-code-fix-verify-20261027T032524569993Z-617af7cc.json",
+    "sha256": "9f9bc215f56f0e573cecea9352bb43991d30c31e1527c97bab245790ce86a0fa",
+    "included": false,
+    "purpose": "Observer03 pins this exact safe metadata receipt; static06 preserves historical codeFix05 provenance. Receipt/current observations and private server checkpoints remain outside Git."
+  },
+  "restoreNotes": [
+    "Historical byte-exact sources, not portable replay commands. Preserve hashes; do not patch paths or pins to make archive copies execute.",
+    "Restore the pinned observer02 and release02 from the earlier archive into the separately reviewed active prepared directory expected by observer03; it selects only snapshot/effective_env_hash/peer/history read-only helpers.",
+    "Static06 uses the existing qa-static01.py helper at its fixed Q worktree path. Recover that exact2a0 helper from ops/word-ux-qa-20261026 and validate its absolute target before any future invocation.",
+    "Static06 fixture helpers resolve sibling static05/static04 fixture files and the original qa_static01_test.py path. Earlier code-fix05/source-advance04 archives supply their exact bytes; restore the intended layout in a separate reviewed scratch directory before requalification.",
+    "The earlier recovery03/source-advance04/code-fix05 archives preserve the backend proof lineage. Revalidate every bound historical receipt, fresh complete augmented observation, exact frontend build/main-first QA refs, current preimage, reviews and newly sealed contract. Never replay completed contracts or infer fresh approval from this archive.",
+    "Observer03 is read-only but any future --observe still requires current authorization/coordination and records both protected ledgers. Static06 publication is a separate root-controlled action; this archival operation ran neither."
+  ],
+  "archiveOperation": {
+    "testsRun": false,
+    "remoteActions": false,
+    "gitCommitOrPush": false,
+    "productFilesChanged": false
+  },
+  "excluded": [
+    "Raw environment values/credentials/keys",
+    "Customer/application records",
+    "Raw transport logs or process environments",
+    "Database dumps or private server checkpoints",
+    "Compiled frontend artifacts/caches",
+    "Current-state observation contents"
+  ],
+  "pending": "Final source review approved withno changes. Actualread-onlyobserver03 and frontendstatic11completed; see docs/releases/2026-10-26-word-visual-qa/WORD-VISUAL-QA-CLOSEOUT01.json. No replay authority; rootfinalsourcepreservationcommitonly."
+}

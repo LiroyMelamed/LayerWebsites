@@ -1,0 +1,19 @@
+{
+  "at": "2026-10-26T13:22:34.213964+00:00",
+  "status": "ASHRAF_BACKEND_VERIFIED_STATIC_ASSETS_UPLOADED_OLD_INDEX_NOT_YET_PUBLISHED_AT_THIS_SNAPSHOT",
+  "applicationIntegration": "5b1b6859ebcee0ccb5c94c7f357088902292c6f5",
+  "ashrafBackend": "596aa5b7eb9b40f8cd5f6927132955ff6caf2175",
+  "activeOperator01Sha256": "2f15b003b68db41aa6ce972c15a797c5d6a6624275bc8af07e97174bda747957",
+  "futureMelamedMorOperator02Sha256": "da52e5f73e0eada39808f31891a83648e45d524f683a3424b0192c989c32888c",
+  "staticPublisher03Sha256": "45ef254fcc730b4fdc3fe039806b6d0345711faac26a9115ae4b44085ff236bf",
+  "sourceReceiptsRoot": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026",
+  "copiedSourceHashes": {
+    "backend-release02.cjs": "da52e5f73e0eada39808f31891a83648e45d524f683a3424b0192c989c32888c",
+    "run-backend-release02.py": "6f4f64e00dac7816f52a4fa6b247bca6fcd7ae97cec5e17c8a054b6f769f4070",
+    "run-readonly-inputs-root03.py": "9faeb12f481cfa4f503a325c6167d311fc5e6e0bc4a6a54c82cf0969fee25a22",
+    "run-readonly-inputs-root04.py": "83c742035bd86ef9f3d3de713edc8a850e8791556b4ba6cbc2827da36431e276",
+    "assemble-sealed-contract-root02.py": "de00b32739fd0446efee3445e0383728e417dafd211683d39bbbb438d8ac5f0e",
+    "publish-word-stage03.py": "45ef254fcc730b4fdc3fe039806b6d0345711faac26a9115ae4b44085ff236bf"
+  },
+  "noProductionTagYet": true
+}

@@ -116,6 +116,9 @@ async function runProcess(config, directory, outputPath) {
             try { killOwnedGroup(child, 'SIGKILL'); } catch (caught) { reason = caught; }
             if (reason) reject(reason);
             else if (failedToStart) reject(error('WORD_CONVERSION_START_FAILED'));
+            // EX_TEMPFAIL is the managed host-wide admission gate's explicit
+            // retry signal. Keep all other wrapper failures as failures.
+            else if (code === 75) reject(error('WORD_CONVERSION_BUSY'));
             else if (code !== 0) reject(error('WORD_CONVERSION_FAILED'));
             else resolve();
         };

@@ -13,14 +13,20 @@ import StatusNotice from '../../../components/ui/StatusNotice';
 import WordTemplatesWorkspace from '../word/WordTemplatesWorkspace';
 import './templates.scss';
 
-export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSendTemplate, onWordContinue, nativeAvailable = false, view = 'templates' }) {
+export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSendTemplate, onWordContinue, nativeAvailable = false, view = 'templates',
+    initialWordMode = false, initialContext, resumeDraft, onDraftChange, onWordBack }) {
     const legacyRunsOnly = view === 'legacy-runs';
     const showBatches = legacyRunsOnly || !nativeAvailable;
     const { t, direction, number, date, errorMessage } = useSigningLocale();
     const text = (key, values) => t(`signingV2.workspace.${key}`, values);
     const status = value => text(`status.${value}`, { defaultValue: text('unknownStatus') });
     const count = (key, value) => text(key, { count: Number(value), formattedCount: number(value) });
-    const [mode, setMode] = useState('list');
+    const [requestedMode, setMode] = useState(initialWordMode && nativeAvailable && canUpload ? 'word' : 'list');
+    const mode = requestedMode === 'word' && (!nativeAvailable || !canUpload) ? 'list' : requestedMode;
+    useEffect(() => {
+        if (initialWordMode && nativeAvailable && canUpload) setMode('word');
+        else if (!nativeAvailable || !canUpload) setMode(current => current === 'word' ? 'list' : current);
+    }, [initialWordMode, nativeAvailable, canUpload]);
     const [templates, setTemplates] = useState([]);
     const [nativeTemplates, setNativeTemplates] = useState([]);
     const [importedOrigins, setImportedOrigins] = useState([]);
@@ -126,7 +132,9 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSe
     const visibleLegacyTemplates = showArchived ? [] : templates.filter(template => !nativeAvailable || !migrated.some(origin =>
         origin.templateId === template.id && origin.version === template.version));
     const back = () => { setMode('list'); setError(null); refresh(); };
-    if (mode === 'word' && nativeAvailable && canUpload) return <WordTemplatesWorkspace onBack={back} onContinue={onWordContinue} />;
+    if (mode === 'word' && nativeAvailable && canUpload) return <WordTemplatesWorkspace
+        initialContext={initialContext} resumeDraft={resumeDraft} onDraftChange={onDraftChange}
+        onBack={() => { back(); onWordBack?.(); }} onContinue={onWordContinue} />;
     if (mode === 'nativeBuilder') return <NativeTemplateBuilder version={current} onBack={back} onSaved={back} />;
     if (mode === 'builder') return <TemplateBuilder template={current} onBack={back} onSaved={back} />;
     if (mode === 'compose') return <BatchComposer template={current} onBack={back} onCreated={openBatch} />;

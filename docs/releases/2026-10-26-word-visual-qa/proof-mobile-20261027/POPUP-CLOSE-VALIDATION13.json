@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-27T05:36:40.536653+00:00",
+  "result": "PASS_ACTUAL_320_COLLAPSED_AND_EXPANDED_X_ESCAPE_FOOTER_CLOSE",
+  "frontendQaCommit": "0990866b749e44f3f64f6a8bbe85fbe006747e67",
+  "bundle": "main.e03a8128.js",
+  "css": "main.a439581c.css",
+  "backendRuntimeCommit": "fb0d6c22640f8b01911a9c6491ec856c4f5ab71a",
+  "scope": "Existing private synthetic R3 template, actual pointer and keyboard on Chrome viewport320x844. No physical touch claim.",
+  "browserEvidence": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-mobile-polish-20261027/POPUP-CLOSE13-BROWSER.json",
+    "sha256": "cc07427f98c01952c9a291440f7b12e0112bcf2c67141a9b09f64af9df42b260"
+  },
+  "finalDomEvidence": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-mobile-polish-20261027/POPUP-CLOSE13-FINAL-DOM.txt",
+    "sha256": "1fb4d2435d1e84b938b055346e5d27e69dea6dd175b42ee3ce6a6a7292c9d69d"
+  },
+  "screenshot": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-mobile-polish-20261027/popup-close320-expanded13.png",
+    "sha256": "165415133be6e26c638350df69db27769207a7d3b4a7bfa87b6b049f72c75e84"
+  },
+  "collapsedBounds": {
+    "closeButtons": [
+      {
+        "ariaLabel": "סגור",
+        "fullyInsideViewport": true,
+        "height": 32,
+        "text": "",
+        "width": 32,
+        "x": 13,
+        "y": 167.515625
+      },
+      {
+        "ariaLabel": null,
+        "fullyInsideViewport": true,
+        "height": 44,
+        "text": "סגור",
+        "width": 60.59375,
+        "x": 222.40625,
+        "y": 592.484375
+      }
+    ],
+    "dialog": {
+      "clientWidth": 270,
+      "height": 486.96875,
+      "scrollWidth": 282,
+      "width": 272,
+      "x": 24,
+      "y": 178.515625
+    },
+    "viewport": {
+      "height": 844,
+      "scrollWidth": 320,
+      "width": 320
+    }
+  },
+  "expandedBounds": {
+    "buttons": [
+      {
+        "fullyInsideViewport": true,
+        "height": 32,
+        "label": "סגור",
+        "width": 32,
+        "x": 13,
+        "y": 72.71875
+      },
+      {
+        "fullyInsideViewport": true,
+        "height": 44,
+        "label": "סגור",
+        "width": 60.59375,
+        "x": 222.40625,
+        "y": 687.2734375
+      }
+    ],
+    "dialog": {
+      "clientWidth": 270,
+      "height": 676.5546875,
+      "scrollWidth": 282,
+      "width": 272,
+      "x": 24,
+      "y": 83.71875
+    },
+    "viewport": {
+      "height": 844,
+      "scrollWidth": 320,
+      "width": 320
+    }
+  },
+  "actions": {
+    "collapsed": [
+      "top-X pointer click → hidden",
+      "label textbox Escape → hidden",
+      "footer Close pointer click → hidden"
+    ],
+    "expanded": [
+      "top-X pointer click → hidden",
+      "label textbox Escape → hidden",
+      "footer Close pointer click → hidden"
+    ]
+  },
+  "finalVisibleDialogs": 0,
+  "labelRetained": "שם שוכר QA — נייד",
+  "fieldCountRetained": 4,
+  "geometryAfterCollapsedAndExpandedIdentical": true,
+  "interpretation": "The corner X extends11px beyond the dialog border by incumbent design but stays fully inside the viewport. Dialog content-box scrollWidth282 versus clientWidth270 includes that control; page scrollWidth equals320. Footer Close is44px high. No material clipping or page overflow.",
+  "resolution": "Validated existing behavior; no product change necessary.",
+  "viewportOverrideReset": true,
+  "resetViewport": {
+    "width": 901,
+    "height": 869,
+    "scrollWidth": 901
+  },
+  "noServerOrLibraryAction": true
+}

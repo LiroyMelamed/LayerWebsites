@@ -1,0 +1,117 @@
+{
+  "createdAt": "2026-10-28T12:12:24.953515+00:00",
+  "ledgersRead": {
+    "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/signing-implementation-20261007/TEST-LEDGER.md": "f263f42cf337d02aa549f67bcc1d82c23efe87488c1a0d34ee3dc4af385477b2",
+    "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/office-whatsapp-20261023/TEST-LEDGER.md": "988b2d5fea2993703946e9b48022a53826deecd0e64a8e336c2ae783147453a1"
+  },
+  "sourceContext": "main4a827586 / QA0990866b / Ashraf87e8eaa5",
+  "servers": {
+    "37.60.230.148": {
+      "exit": 0,
+      "data": {
+        "utc": "2026-10-28T12:12:27.321460+00:00",
+        "noRuntimeChanges": true,
+        "disk": {
+          "total": 76887154688,
+          "used": 37486153728,
+          "free": 39384223744
+        },
+        "memory": {
+          "MemTotal": 8327299072,
+          "MemAvailable": 5743837184,
+          "SwapFree": 1842081792
+        },
+        "services": {
+          "nginx": "active",
+          "postgresql": "active"
+        },
+        "processes": [
+          {
+            "name": "ashrafessa-api",
+            "pid": 1896404,
+            "status": "online",
+            "restarts": 108,
+            "uptime": 1793188266146,
+            "memory": 235380736
+          },
+          {
+            "name": "melamedia-api",
+            "pid": 1642213,
+            "status": "online",
+            "restarts": 10,
+            "uptime": 1793071576284,
+            "memory": 239915008
+          }
+        ],
+        "sources": {
+          "ashrafessa": {
+            "head": "87e8eaa58830ee9b42772c1619e01814143dc28e",
+            "branch": "AshrafEssa",
+            "trackedChanges": 0
+          },
+          "melamedia": {
+            "head": "fb0d6c22640f8b01911a9c6491ec856c4f5ab71a",
+            "branch": "",
+            "trackedChanges": 0
+          }
+        },
+        "backups": {
+          "ashrafessa": [],
+          "melamedia": []
+        }
+      },
+      "error": null
+    },
+    "84.46.253.85": {
+      "exit": 0,
+      "data": {
+        "utc": "2026-10-28T12:12:29.430906+00:00",
+        "noRuntimeChanges": true,
+        "disk": {
+          "total": 206900281344,
+          "used": 98109702144,
+          "free": 108773801984
+        },
+        "memory": {
+          "MemTotal": 12541480960,
+          "MemAvailable": 8048594944,
+          "SwapFree": 854818816
+        },
+        "services": {
+          "nginx": "active",
+          "postgresql": "active"
+        },
+        "static": {
+          "ashrafessa": {
+            "indexSha256": "f86b0e58c0d274e2482c303a31b6e7c45c28d35a5f82c49b2019352a760bbc9d",
+            "scripts": [
+              "/static/js/vendor-pdf.f63c2819.js",
+              "/static/js/vendor-i18n.40936357.js",
+              "/static/js/vendor-react.094da8d9.js",
+              "/static/js/vendor.2a0dc768.js",
+              "/static/js/main.e622d4e3.js",
+              "/mela-accessibility-534abbadadf2.js"
+            ],
+            "styles": [
+              "/static/css/main.98088501.css"
+            ]
+          },
+          "melamedia": {
+            "indexSha256": "90299ee53a19ab377504bb7018a695b0da92ed695cf84109f7c0e60c67978454",
+            "scripts": [
+              "/static/js/vendor-pdf.f63c2819.js",
+              "/static/js/vendor-i18n.40936357.js",
+              "/static/js/vendor-react.094da8d9.js",
+              "/static/js/vendor.2a0dc768.js",
+              "/static/js/main.e03a8128.js"
+            ],
+            "styles": [
+              "/static/css/main.a439581c.css"
+            ]
+          }
+        }
+      },
+      "error": null
+    }
+  }
+}

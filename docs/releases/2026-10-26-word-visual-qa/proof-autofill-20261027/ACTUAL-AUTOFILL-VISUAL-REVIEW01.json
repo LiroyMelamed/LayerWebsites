@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-27T08:29:51.082650+00:00",
+  "kind": "INDEPENDENT_READ_ONLY_ACTUAL_AUTOFILL_PIXEL_AND_SETUP_REVIEW",
+  "result": "APPROVE_BOUNDED_A_B_AUTOFILL_OVERRIDE_RESTORE_AND_NATIVE_CONTENT_VISUAL_SCOPE",
+  "declaredQaSource": "0990866b749e44f3f64f6a8bbe85fbe006747e67",
+  "declaredBackendRuntime": "fb0d6c22640f8b01911a9c6491ec856c4f5ab71a",
+  "declaredBundle": "main.e03a8128.js",
+  "sourceBindingLimit": "Source/runtime/bundle are root browser-receipt metadata. No independent live runtime, network or Git inspection by this reviewer.",
+  "inputs": {
+    "auto-A-pdf-complete15.jpg": {
+      "path": "/Users/liroymelamed/.cache/melamedia-builds/LayerWebsites/word-autofill-qa-20261027/auto-A-pdf-complete15.jpg",
+      "sha256": "c817e77b7675a25b89d23a9527f28b2ff767a793f3ba4a922db0bfed71298890"
+    },
+    "auto-A-explicit-id-override16.jpg": {
+      "path": "/Users/liroymelamed/.cache/melamedia-builds/LayerWebsites/word-autofill-qa-20261027/auto-A-explicit-id-override16.jpg",
+      "sha256": "7a355f8b6223d947963b19d1f642db1f0f57bc82375a9ed5f68f40c6c426bdb6"
+    },
+    "auto-A-restored16.jpg": {
+      "path": "/Users/liroymelamed/.cache/melamedia-builds/LayerWebsites/word-autofill-qa-20261027/auto-A-restored16.jpg",
+      "sha256": "1d2c1c737fa1cbad7fe6de21524405e0f75db20c3c9ba3058408f3d9da710786"
+    },
+    "auto-missing-profile16.jpg": {
+      "path": "/Users/liroymelamed/.cache/melamedia-builds/LayerWebsites/word-autofill-qa-20261027/auto-missing-profile16.jpg",
+      "sha256": "a854f57a54eb01632f0e99eba19a6516945cc03c36c7c413c9d03ea54e10369e"
+    },
+    "auto-B-pdf-complete17.jpg": {
+      "path": "/Users/liroymelamed/.cache/melamedia-builds/LayerWebsites/word-autofill-qa-20261027/auto-B-pdf-complete17.jpg",
+      "sha256": "0c7f88cf7f1bcc27792b286c652b3a4a3e5c624b2f725894ac88887bec10a7a7"
+    },
+    "auto-B-native-complete18.jpg": {
+      "path": "/Users/liroymelamed/.cache/melamedia-builds/LayerWebsites/word-autofill-qa-20261027/auto-B-native-complete18.jpg",
+      "sha256": "1d20927a2b67db125c1b019fc23bc618f6dbef30779b912ff80d314b0a1a3f3a"
+    },
+    "AUTO-A-CARD-EXPECTED15.json": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/AUTO-A-CARD-EXPECTED15.json",
+      "sha256": "c894bc9c33b4db1c9f684a1a53195446f68bd4c9e8bf6bea17490690744e846a"
+    },
+    "AUTO-A-PREVIEW-INPUT15.txt": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/AUTO-A-PREVIEW-INPUT15.txt",
+      "sha256": "e0c8576ce3bf9e4398b6db3ba2646f1260e94c9305cb1bb90ad67107e4b76e14"
+    },
+    "AUTO-B-CARD-EXPECTED17.json": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/AUTO-B-CARD-EXPECTED17.json",
+      "sha256": "9da4db4438a9e5ea161372e6f276f59c6d6295a7644e97ffdf9c13231b69637c"
+    },
+    "AUTO-B-PREVIEW-INPUT17.txt": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/AUTO-B-PREVIEW-INPUT17.txt",
+      "sha256": "68fe0004d8367231e0e9b65b24289b4d584eae4bf63c8e3221d729797fa3d1ca"
+    },
+    "ACTUAL-AUTO-NEGATIVE16.json": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/ACTUAL-AUTO-NEGATIVE16.json",
+      "sha256": "3bfba62c8ef120f31670528f12060c86493d9f4f3ca048207ea14f38bc70fba5"
+    },
+    "ACTUAL-AUTO-B17.json": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/ACTUAL-AUTO-B17.json",
+      "sha256": "e63649d27a1489ca713356daff5646d3b0d977699b5662cfd356e2fc24d89888"
+    },
+    "AUTO-NATIVE-STATE18.json": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/AUTO-NATIVE-STATE18.json",
+      "sha256": "0c57c8a14cb75eb4e0a98b3b92eb4a4fb73b36c4e5d08235f6eac6abb6998d9d"
+    }
+  },
+  "method": "Directly inspected six raw actual screenshots at original resolution and compared their visible values to supplied expected-card JSON plus preinput snapshots. Read root negative/B/native state receipts. No browser/server action, app test, source/ref edit or old evidence/ledger edit performed.",
+  "autofillSetupBoundary": {
+    "A": "Supplied preinput explicitly selects cardA and the three role records. Eight manual-override checkboxes are unchecked; firstName QA-AUTO-2710 is the only intentional manual document field.",
+    "B": "Supplied preinput explicitly selects cardB and the same three role records. Eight overrides are unchecked; firstName QA-AUTO-2710-B is the only intentional manual document field.",
+    "originLimit": "These UI snapshots plus the expected-card files support comparison against selected records; this reviewer did not directly read database records. Older manually populated PDF proofs were not reused as autofill evidence."
+  },
+  "AVisibleMatches": {
+    "image": "auto-A-pdf-complete15.jpg",
+    "automaticValueCount": 8,
+    "clientFullName": "QA-NF-20261023-R2 tenant Updated",
+    "identityNumber": "000000009",
+    "companyName": "QA-NF-20261023-R2 Company 0",
+    "companyNumber": "005123450",
+    "address": "1 QA Street — UI, Unit 2, QA City, 00100, IL",
+    "threeExplicitRoleValues": {
+      "Tenant": "QA-NF-20261023-R2 tenant Updated",
+      "Landlord": "QA-NF-20261023-R2 landlord",
+      "Lawyer": "QA-NF-20261023-R2 lawyer"
+    },
+    "onlyManualInsertion": "QA-AUTO-2710",
+    "allEightVisibleValuesMatchProvidedExpectedSetup": true,
+    "leadingZeroAccuracy": "Identity000000009, company005123450 and postcode00100 are visibly preserved as text."
+  },
+  "overrideAndRestoreVisible": {
+    "overrideImage": "auto-A-explicit-id-override16.jpg",
+    "overrideIdentityVisible": "001234567",
+    "restoredImage": "auto-A-restored16.jpg",
+    "restoredIdentityVisible": "000000009",
+    "otherSevenAutomaticValues": "A full name, company name/number, address and all three selected-role values remain visibly unchanged.",
+    "manualInsertion": "QA-AUTO-2710 remains the intentional manual insertion.",
+    "transitionLimit": "Actual override toggling, preview invalidation, unchecking and regeneration are recorded in root negative16 receipt; a pair of stills alone does not independently prove those interactions or absence of profile writes."
+  },
+  "missingProfileVisible": {
+    "image": "auto-missing-profile16.jpg",
+    "selectedPrimaryRecordVisible": "QA-NF-20261024-USER03",
+    "genericAlert": "חסרים נתונים או שיש ערך שאינו מתאים. בדקו את הנתונים הנדרשים ואת הקישורים לפני יצירה נוספת.",
+    "roleSelections": "TenantA, LandlordB and Lawyer remain visibly independently selected; those retained role values are not evidence of an old primary-client fallback.",
+    "specificMissingFieldInferred": false,
+    "httpStatusOrBackendCauseInferred": false,
+    "rootReceiptOnly": "Receipt16 reports zero PDF canvases/review regions after the failed generation. The screenshot itself covers the alert and form, not all possible offscreen page content."
+  },
+  "BVisibleMatches": {
+    "image": "auto-B-pdf-complete17.jpg",
+    "automaticValueCount": 8,
+    "clientFullName": "QA-NF-20261023-R2 landlord",
+    "identityNumber": "001234561",
+    "companyName": "QA-NF-20261023-R2 Company 1",
+    "companyNumber": "005123451",
+    "address": "1 QA Street, Unit 2, QA City, 00100, IL",
+    "addressDifferenceFromA": "B correctly has1 QA Street without the A-specific — UI suffix.",
+    "threeExplicitRoleValues": {
+      "Tenant": "QA-NF-20261023-R2 tenant Updated",
+      "Landlord": "QA-NF-20261023-R2 landlord",
+      "Lawyer": "QA-NF-20261023-R2 lawyer"
+    },
+    "onlyManualInsertion": "QA-AUTO-2710-B",
+    "allEightVisibleValuesMatchProvidedExpectedSetup": true,
+    "leadingZeroAccuracy": "Identity001234561, company005123451 and postcode00100 remain visibly intact.",
+    "roleIndependenceScope": "Changing the selected primary card to B in this separate entry does not replace the explicit TenantA/LandlordB/Lawyer text with one primary name. Tenant and Landlord equal a primary name only where deliberately selected.",
+    "entryLimit": "Root receipt17 explicitly scopes B as a separate second-card entry/session. This review does not claim successful A→B primary switching within the same form."
+  },
+  "nativeBVisibleTransfer": {
+    "image": "auto-B-native-complete18.jpg",
+    "observed": "Native editor visibly renders the same B populated content: all eight automatic values, the manual QA-AUTO-2710-B insertion and the three printed signature lines.",
+    "matchesBPreview": true,
+    "populatedContentClippingOrOverlapObserved": false,
+    "visibleRoleToolbar": "חותם ראשון",
+    "rootDomState": {
+      "canvasCount": 1,
+      "fieldCount": 0,
+      "viewport": {
+        "height": 869,
+        "scrollWidth": 901,
+        "width": 901
+      }
+    },
+    "scope": "Loaded populated content is visible and unclipped. Lower blank page area extends beyond the viewport and is not independently inspected. Default placeholder role/zero fields do not establish placement, save, publication or package creation."
+  },
+  "materialVisibleFindings": [],
+  "rootReceiptOnlyOperationalFacts": {
+    "negativeRunResult": "PASS_ACTUAL_OVERRIDE_RESTORE_CLIENT_CHANGE_INVALIDATION_AND_MISSING_PROFILE_REJECTION",
+    "profileWritesReported": 0,
+    "packagesOrSendsReported": 0,
+    "BRunResult": "PASS_ACTUAL_SECOND_SAVED_PROFILE_EIGHT_AUTOMATIC_VALUES",
+    "BCheckedManualOverridesReported": 0,
+    "limit": "No independent database-write or dispatch audit is performed by screenshot review."
+  },
+  "acceptanceLimits": [
+    "Provided synthetic selected-record setup and visible rendered values only; no direct database/hiddenID payload qualification.",
+    "Missing-profile alert is generic. No specific missing identity field, backend error code or HTTP status inferred.",
+    "No current native field-placement/save/publish/Composer workflow repeat from B transfer18.",
+    "No fresh DOCX upload, real provider, signing package/send, OTP, signature or consent qualification.",
+    "No physical mobile/touch, performance, customer deployment or full-app acceptance."
+  ],
+  "boundedAutofillVisualScopeApproved": true,
+  "fullApplicationApproved": false,
+  "oldEvidenceOrSourceEdited": false
+}

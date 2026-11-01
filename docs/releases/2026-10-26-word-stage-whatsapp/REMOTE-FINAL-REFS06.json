@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-26T14:48:33.286092+00:00",
+  "result": "ALL_THREE_REMOTE_CUSTOMER_REFS_AND_ANNOTATED_TAGS_VERIFIED",
+  "actual": {
+    "refs/heads/AshrafEssa": "596aa5b7eb9b40f8cd5f6927132955ff6caf2175",
+    "refs/heads/MelamedLaw": "0631caf7b1c829673887e12c1d2e3ffc36c1715b",
+    "refs/heads/MorLevi": "a50afb3fccaaee17633328ef62b5695336d73090",
+    "refs/heads/main": "5b1b6859ebcee0ccb5c94c7f357088902292c6f5",
+    "refs/tags/PROD_26_10_2026_LIROY_WORD_STAGE_WHATSAPP_OFF_AshrafEssa": "d50f3d8edfaf4008b8eacd0c16caaa26ac244632",
+    "refs/tags/PROD_26_10_2026_LIROY_WORD_STAGE_WHATSAPP_OFF_AshrafEssa^{}": "596aa5b7eb9b40f8cd5f6927132955ff6caf2175",
+    "refs/tags/PROD_26_10_2026_LIROY_WORD_STAGE_WHATSAPP_OFF_MelamedLaw": "5412855df7d60734769372602868a96b0fb65da3",
+    "refs/tags/PROD_26_10_2026_LIROY_WORD_STAGE_WHATSAPP_OFF_MelamedLaw^{}": "0631caf7b1c829673887e12c1d2e3ffc36c1715b",
+    "refs/tags/PROD_26_10_2026_LIROY_WORD_STAGE_WHATSAPP_OFF_MorLevi": "58e396f468c288840a0d440a25db68655d4efce9",
+    "refs/tags/PROD_26_10_2026_LIROY_WORD_STAGE_WHATSAPP_OFF_MorLevi^{}": "a50afb3fccaaee17633328ef62b5695336d73090"
+  },
+  "noForceOrMutation": true
+}
