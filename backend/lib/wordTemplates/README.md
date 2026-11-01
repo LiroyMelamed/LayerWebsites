@@ -29,7 +29,7 @@ const result = materializeDocx(originalBuffer, {
 
 `importDocx` exposes paragraphs from the main document, including tables, and
 numbered headers/footers. Paragraph IDs are stable only for the exact source
-hash. The UI must select nonempty UTF-16 `[start,end)` text ranges within one
+hash. Range bindings select nonempty UTF-16 `[start,end)` text ranges within one
 paragraph. Ordinary text split across several Word runs is one selectable
 string. Underscore blanks are suggested in `blanks`; the user still explicitly
 chooses a field binding. Tabs, line breaks, surrogate-pair splits, stale sources,
@@ -87,15 +87,17 @@ read-only. Conversion services must still use an isolated, network-disabled,
 time/memory-limited converter; document parsing does not make a desktop office
 application a trusted processing sandbox.
 
-## Integration remains separate
+## Private service integration
 
-No authoring route, private source storage, client/case resolver, publication
-revision, PDF conversion or stage automation is implemented here. The next
-service must save the original hash and validated bindings, fill a new DOCX,
-convert that exact filled document to PDF, then establish or explicitly verify
-signature fields against its resulting pages. Pagination may change with data.
-Existing frozen signing packages must remain immutable. The result explicitly
-sets `requiresPdfConversion` and `requiresFreshSigningGeometry` to true.
+`services/signingV2/wordTemplates.js` retains the immutable original and versioned
+bindings, resolves currently permitted client/case references, fills a new DOCX,
+and converts that exact filled document to a private PDF. A Word data role does
+not grant signing authority. The native draft bridge receives the final verified
+PDF plus source/version/bindings/values/filled-DOCX/PDF hashes; final signing
+fields start empty and require placement against that resulting PDF. Pagination
+may change with data. Existing frozen signing packages remain immutable. Core
+materialization sets `requiresPdfConversion` and `requiresFreshSigningGeometry`
+to true; it does not create a signing submission or send anything.
 
 Run only this module's focused tests with `node --test
 backend/tests/wordTemplates.test.js` from the repository root. Read and append
@@ -116,3 +118,77 @@ all API instances, including QA, when reserving converter memory. The reviewed
 three-customer setting is one per customer process with QA retaining two, for
 five possible jobs at the existing per-job memory cap. Recheck current host
 headroom before activation and retain all outbound/provider flags.
+
+## Source-PDF visual authoring, schema 2
+
+The upload-permission-protected `/signing-v2/word` router exposes:
+
+- `GET /catalog` and catalog metadata on source list/load responses. Catalog
+  entries distinguish record resolvers from manual document values. First/last
+  names are explicitly manual; the resolver never splits a stored full name.
+  Office values remain manual. Missing raw identity/organization enums stay
+  missing rather than becoming profile-normalizer defaults. Stored enum codes
+  are labeled as codes with an explicit document override. SQL birth dates keep
+  their literal calendar date. `case.reference` is the internal case identifier;
+  `case.courtNumber` requires a uniquely primary, permitted court link.
+- `POST /:sourceId/authoring-renders` with `expectedVersion` and `sourceHash`.
+  The original DOCX, rather than a previously filled preview, is converted. A
+  bounded PDF.js worker computes the authoritative source text/layout map.
+  Render metadata, PDF bytes and mapping JSON are immutable private objects,
+  bound by hashes and the author/context. A later binding-only version can reuse
+  the same original render while retaining its original `renderSourceVersion`.
+- `GET /authoring-renders/:renderId` and `/pdf` return the current envelope and
+  authenticated, hash-verified PDF. No public URL is generated; all responses use
+  `private, no-store` and a fixed safe PDF filename.
+- `POST /:sourceId/authoring-renders/:renderId/selections` with current version,
+  source/map hashes and `{kind:'range',start:{itemId,offset},end:{itemId,offset}}`
+  resolves the requested PDF text selection to one source paragraph. A mapped
+  existing-text caret uses `{kind:'insert',start:{itemId,offset},affinity}`,
+  where `affinity` is `before` or `after`. Empty paragraphs and arbitrary blank
+  PDF locations are unsupported. Offsets are UTF-16, never estimated PDF pixels.
+- Existing source `PUT` accepts `bindingSchemaVersion:2`, `authoringRenderId`,
+  `authoringMapHash` and bindings containing these selectors. The service resolves
+  every selector again and persists canonical source/paragraph/selection hashes.
+  Legacy text-range save remains supported; raw legacy insertion is refused.
+
+The source-PDF envelope declares PDF.js scale-1 top-left viewport geometry,
+rotation, view box, user unit, per-item transform/size and text hash. PDF.js text
+options are exactly `{disableNormalization:false,includeMarkedContent:false}`,
+matching the existing React-PDF text API. The item hash is SHA256 over UTF-8
+`JSON.stringify(items.map(i => [i.text,i.dir,i.transform,i.width,i.height,i.hasEOL]))`.
+The viewer must verify PDF bytes and exact item text/order/direction/EOL before
+selection; finite geometry differences alone have a declared tolerance of 0.01
+PDF points. The UI never guesses source offsets from a visually similar string.
+
+Mapping is a supported subset. A whole source paragraph must have one unambiguous
+compact-text match, with every selected non-whitespace character attributable to
+that paragraph. Identical names within a uniquely matched paragraph remain
+independent ranges. Identical full paragraphs, compact-text whitespace ambiguity,
+unsupported Word constructs, unmapped/normalized clusters and cross-paragraph
+selections fail closed. Known repeated header/footer text may be transparent to
+body flow without becoming an editable anchor. Table paragraphs use the same
+proof requirement. Diagnostics expose unavailable paragraphs; rendering a page
+does not mean every word is editable.
+
+PDF extraction and mapping share a worker with a 30-second termination deadline
+and 256-MiB old-generation memory bound. Input limits are 20-MiB PDF, 200 pages,
+500,000 UTF-16 characters, 50,000 text items, 10,000 source paragraphs and 8-MiB
+mapping JSON. These bounds do not replace the managed converter's confinement.
+Exactly one such worker can be admitted per API process; a concurrent request
+fails immediately with `WORD_AUTHORING_BUSY` (HTTP 503), without queuing. The
+permit remains held through worker termination and is released after success,
+reported error or timeout cleanup. This admission is separate from LibreOffice:
+budget one mapping worker plus the configured converter jobs for every API
+process. Multiple processes have independent caps; this is not a host-wide limit.
+The additive `signing_word_authoring_renders` table is append-only and private
+to the existing owner context/author; no customer/provider permission is added.
+
+Focused tests are `wordTemplates.visual.test.js`,
+`wordTemplates.authoringService.test.js` and `signingWordRoutes.test.js` alongside
+the existing core/native privacy tests. The local real-converter proof uses a
+synthetic already-filled Hebrew document, production bounded mapping, independent
+repeated-name bindings and an existing-text caret. It mapped 33 of 62 paragraphs;
+the other paragraphs retain explicit unsupported diagnostics. It verifies actual
+new DOCX bytes, unaffected OOXML parts/run/paragraph properties and actual filled
+PDF text. Shorter values or inserted text can wrap and move later content; neither
+this proof nor OOXML preservation guarantees pixel/layout identity or WYSIWYG.

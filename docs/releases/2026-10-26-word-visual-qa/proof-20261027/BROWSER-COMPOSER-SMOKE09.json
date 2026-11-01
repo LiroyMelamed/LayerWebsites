@@ -1,0 +1,24 @@
+{
+  "at": "2026-10-27T04:21:51.357Z",
+  "result": "PASS_CURRENT_760_COMPOSER_SAVED_DRAFT_RELOAD",
+  "frontendSource": "47e5ff40cc9e3ee42156e8895ef54ead9c69f424",
+  "backendSource": "fb0d6c22640f8b01911a9c6491ec856c4f5ab71a",
+  "bundle": [
+    "https://melamedia.mela-media.co.il/static/js/main.760c7a99.js"
+  ],
+  "draftName": "QA-WORD-COMPOSE-20261027-R3",
+  "caseText": "משויך לתיק: בדיקת הסכם שכירות — הדגמה",
+  "names": [
+    "",
+    ""
+  ],
+  "emails": [
+    "",
+    ""
+  ],
+  "phones": [
+    "",
+    ""
+  ],
+  "limits": "Existingnative06publishedtemplate/draftreloadedcurrentbundleonly; no repeatclaimofallnative06actions,newversionUUID,packagecreation/send/OTP/provider."
+}

@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-27T03:57:41.885630+00:00",
+  "kind": "INDEPENDENT_READ_ONLY_PUBLICATION_AND_COMPOSER_SCREENSHOT_REVIEW",
+  "result": "APPROVE_VISIBLE_LIBRARY_VERSION_AND_COMPOSER_CONTEXT_WITH_RECEIPT_LIMITS",
+  "declaredCandidate": "fb0d6c22640f8b01911a9c6491ec856c4f5ab71a",
+  "declaredBundle": "main.81f89751.js",
+  "inputs": {
+    "native-published-library06.png": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/native-published-library06.png",
+      "sha256": "7706f6d9f42340ed2bb8e23033bfd3f83572b447a8a02fc7a208a176ed8d64b5"
+    },
+    "composer-context-recovered06.png": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/composer-context-recovered06.png",
+      "sha256": "72fd52d96a7ead241d1376476454a2ab98a8d1c76e4e2ea310056d6e5a9bb814"
+    },
+    "BROWSER-NATIVE-RETEST06.json": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/BROWSER-NATIVE-RETEST06.json",
+      "sha256": "3314e98a425d27c7f0c37feb9257d2e5a615065326881d44a3ce13baf9f1ee09"
+    },
+    "ACTUAL-NATIVE-VISUAL-REVIEW02.json": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/ACTUAL-NATIVE-VISUAL-REVIEW02.json",
+      "sha256": "7c5a2074c2e0d4453e0a9d28fbd70a0950f2070b7ae71533ea87a7dfea3010a9"
+    }
+  },
+  "method": "Direct inspection of both PNGs and read-only review of root browser receipt. No live browser or server operation, new application test, source/ref change or ledger edit performed.",
+  "directScreenshotObservations": {
+    "library": {
+      "image": "native-published-library06.png",
+      "templateName": "QA-WORD-VISUAL-20261027-R3",
+      "visibleVersion": 1,
+      "visibleDocumentCount": 1,
+      "visibleDescription": "גרסה 1 · מסמך אחד",
+      "activeLibraryTabVisible": true,
+      "sendFromTemplateButtonVisible": true,
+      "approval": "The named synthetic template is visibly present as version1 with one document in the active template library.",
+      "limits": "A still does not independently establish the publication transition, access/privacy boundaries, field persistence or absence of a package send."
+    },
+    "composer": {
+      "image": "composer-context-recovered06.png",
+      "templateNameVisible": "QA-WORD-VISUAL-20261027-R3",
+      "draftNameVisible": "QA-WORD-COMPOSE-20261027-R3",
+      "savedDraftStatusVisible": "הטיוטה שמורה",
+      "originalSyntheticCaseVisible": "בדיקת הסכם שכירות — הדגמה",
+      "caseCardFullyVisible": true,
+      "caseSearchOrRemovalVisibleInCard": false,
+      "twoRoleSummaryVisible": [
+        "שוכר בדיקה QA",
+        "משכיר בדיקה QA"
+      ],
+      "selectedSigningOrderVisible": "Parallel",
+      "approval": "Composer visibly uses the matching named template and the original synthetic case in a static case card, with the custom draft name and saved status.",
+      "recipientInputVisibilityLimit": "Individual recipient name/email/phone inputs lie below this screenshot crop or behind the sticky footer; their blank values cannot be independently verified from these pixels.",
+      "versionVisibilityLimit": "Composer shows the template name, not its numeric version or versionUUID. The library version1 image is distinct evidence.",
+      "recoveryVisibilityLimit": "A single screenshot does not itself prove a full-page reload or two-tab recovery transition."
+    }
+  },
+  "rootReceiptSupportedButNotIndependentPixelProof": {
+    "nativeSaveAndReopen": "Receipt states private draft save confirmation and normal library Edit retained2roles/4fields and correct field label/role.",
+    "nativePublication": "Receipt records internal QA template publish action and visible library version1.",
+    "composerBlankRecipients": {
+      "names": [
+        "",
+        ""
+      ],
+      "emails": [
+        "",
+        ""
+      ],
+      "phones": [
+        "",
+        ""
+      ],
+      "allReportedBlank": true,
+      "basis": "Root actual DOM observations recorded in BROWSER-NATIVE-RETEST06.json; not visible as complete inputs in the supplied PNG."
+    },
+    "caseLockDomCounts": {
+      "casePickerCount": 0,
+      "removeCaseButtonCount": 0,
+      "basis": "Root DOM count evidence is consistent with the static case card shown in the screenshot."
+    },
+    "fullPageReload": "Customdraftname/templateName/lockedoriginalcase/unassignednamesretained",
+    "exactVersionAndNullClient": "Exact version selection remains separately tested source/API behavior. Original Word client unselected; this review does not claim hidden clientID payload inspection."
+  },
+  "retainedPriorMobileLimit": {
+    "review": "ACTUAL-NATIVE-VISUAL-REVIEW02.json",
+    "status": "UNCHANGED_NOT_RETESTED_BY_THESE_SCREENSHOTS",
+    "description": "Fitted mobile field overlays have crowded badges/handles; full role/custom-label reading requires the inspector. No comfortable all-handle or physical-touch approval."
+  },
+  "materialVisibleFindings": [],
+  "notApproved": [
+    "Word stale-source two-tab concurrency recovery still being tested separately",
+    "Composer versionUUID visibility or hidden client payload",
+    "Independent verification of blank recipient inputs from these PNGs",
+    "All mobile field-control usability",
+    "Signing package creation, send, OTP, signature, consent or real provider",
+    "Customer deployment or full-application acceptance"
+  ],
+  "boundedVisiblePublicationAndContextScopeApproved": true,
+  "fullWorkflowIndependentlyApproved": false,
+  "oldEvidenceAndLedgersEdited": false
+}

@@ -13,6 +13,7 @@ import SecondaryButton from '../../components/styledComponents/buttons/Secondary
 import { Text14, TextBold14, TextBold24 } from '../../components/specializedComponents/text/AllTextKindFile';
 import MelaMediaLogo from '../../components/branding/MelaMediaLogo';
 import { isSignupEmbedded, navigateAfterSignup } from '../../lib/signupEmbed';
+import { bindSignupAttribution } from '../../lib/signupAttribution';
 import { SystemMessageConsentChoice, SYSTEM_MESSAGE_CONSENT_VERSION } from '../../components/billing/SystemMessageConsent';
 
 import LoginSimpleScreen from '../loginScreen/components/LoginSimpleScreen';
@@ -141,6 +142,7 @@ export default function SignupScreen() {
                 return;
             }
             sessionStorage.setItem('legal-signup-intent', intentId);
+            await bindSignupAttribution(intentId);
             const checkout = await ApiUtils.post(`/public/signup/${intentId}/checkout`);
             if(checkout.data?.status==='completed'){sessionStorage.removeItem('legal-signup-key');sessionStorage.removeItem('legal-signup-intent');navigateAfterSignup(checkout.data.slug,navigate);return;}
             const target = checkout.data?.redirectUrl;
@@ -316,6 +318,7 @@ export function SignupCompleteScreen() {
             try {
                 const res = await ApiUtils.get(`/public/signup/${intentId}/status`);
                 if (res.data?.status === 'completed' && res.data?.slug) {
+                    await bindSignupAttribution(intentId);
                     ['legal-signup-intent','legal-signup-key','legal-signup-form'].forEach(k=>sessionStorage.removeItem(k));
                     navigateAfterSignup(res.data.slug, navigate);return;
                 }

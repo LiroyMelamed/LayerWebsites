@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-27T08:15:16.390028+00:00",
+  "result": "PASS_LOCAL_AUTOMATIC_RECORD_FILL_160_TESTS_NO_SKIPS",
+  "kind": "LOCAL_SYNTHETIC_UNIT_AND_IN_MEMORY_SQL_REGRESSIONS",
+  "actualQaSourceCommit": "0990866b749e44f3f64f6a8bbe85fbe006747e67",
+  "mainHeadBeforeTest": "7bc016e19dbc117b988c367333f9a72868c386ef",
+  "backend": {
+    "receipt": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/backend-units-20261027T081254477236Z.json",
+      "sha256": "efc5d4212f81b135b473f41eeaabbb616de27bdbe54c39d973f71e9eaf5e326a"
+    },
+    "passed": 71,
+    "failed": 0,
+    "skipped": 0,
+    "testFiles": 6,
+    "newAutomaticAcceptanceMethods": 8,
+    "existingMethods": 63,
+    "sourceStable": true,
+    "dependenciesStable": true,
+    "externalNewTest": {
+      "path": "/Users/liroymelamed/Projects/LayerWebsites/.worktrees/word-ux-qa-20261026/backend/tests/wordTemplates.autoFillAcceptance.test.js",
+      "sha256": "34b54d82e5cdfa1119341f182fa7bcdc1e13b3906da094a3be1450a5b091b6ff"
+    },
+    "externalTestImportsBackend": "/Users/liroymelamed/Projects/LayerWebsites/.worktrees/word-ux-melamedia-qa-20261026/backend"
+  },
+  "frontend": {
+    "receipt": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/frontend-regression-20261027T081254Z.json",
+      "sha256": "8d26c00718095f1ad6f5404f159527ad438ea1426c86ada3bfaa6cf790c6d4ca"
+    },
+    "passed": 89,
+    "failed": 0,
+    "skipped": 0,
+    "testSuites": 9,
+    "sourceStable": true,
+    "jestSummary": {
+      "numPassedTests": 89,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "numPassedTestSuites": 9,
+      "numFailedTestSuites": 0
+    },
+    "dependencyQualification": "Existing installed manifest,package,lock and Node version bound. No install performed."
+  },
+  "commandsNetworkDenied": true,
+  "relevantWordQaSourceHashesAlsoEqualToMain": {
+    "backend/lib/signingV2/canonical.js": "35a3122f3b82aeff80a5b8c44865e2eb4081225ba4e9c33680d850baa3624ccf",
+    "backend/lib/signingV2/errors.js": "d875a5b3b091663ba6085056cda65fb0a43b77c169a31f92099b411a64edc8f3",
+    "backend/lib/wordTemplates/README.md": "a5f66558300855bbb47deb9adf85842c19b756eecf84bf46fde313700fbb5ffb",
+    "backend/lib/wordTemplates/catalog.js": "b3132bd87862efd3f13d3fc8494c959076e6053431025d9e830186a0bbd4a030",
+    "backend/lib/wordTemplates/clientValues.js": "61e74d00f597d9cf819a00a9ffa1f1412d2ad87871dd123fe776e0316414c290",
+    "backend/lib/wordTemplates/converter.js": "fd3f00af862c61ca2b8332730e68afaf8d96b3f41ce0cc7b8d918a5b921fd245",
+    "backend/lib/wordTemplates/errors.js": "bf3b2cfd18ebf398928de25b74af466669d6132ef8141c290e147dbe643b8e15",
+    "backend/lib/wordTemplates/index.js": "c9a49dedf27f83d0d1c3fbb9db204f1fc83a8f773ae1f4d6bc8f4351decec2b4",
+    "backend/lib/wordTemplates/pdfWorker.cjs": "11eda06923c43f61c42e5453f0c9024be189d261a669f154e1a761a0f3da3dba",
+    "backend/lib/wordTemplates/visual.js": "8abce6fda3fb0eeb84aeaf2b0705b61693ec949cad3cdc39aec3705378542a1d",
+    "backend/lib/wordTemplates/zip.js": "4cbc7c2d47e1a65237ed7e0090ef2f199ffee5ad7433869a74d2857a5a1d1b82",
+    "backend/migrations/2026-10-23_01_signing_word_sources.sql": "a5a81ccd19e962a6d4c3c365f1d51066abb8624338a1311cfac3a96331a63343",
+    "backend/migrations/2026-10-26_01_signing_word_authoring_renders.sql": "ac5402d3260e0c2f385e926ae0c2deccad8a7dc1ce9dd259a00618f32e1ac5c8",
+    "backend/services/signingV2/access.js": "13758f723be712ba583fd7bb2031fd66e60a89784bb49d42b7ee3be39f41f6e8",
+    "backend/services/signingV2/transaction.js": "18f71048ad875bdc29cf90db3ba1a5d0d583ab44e31fe90ad0426cf058936824",
+    "backend/services/signingV2/wordOrigin.js": "3a478e2d9d48cfdb7319627ff27ad33ea6566b9a54a7f87864b8224f199036d5",
+    "backend/services/signingV2/wordSigning.js": "b0b894d9dbdc259c215786a7102c310aca616f89772718969ed441a1c57b2192",
+    "backend/services/signingV2/wordTemplates.js": "066c12dcefd5d0f347e94510335818352c94a00caa9e196a6bba9d3fd6e262d9",
+    "backend/utils/clientProfile.js": "4d299590b38634e02a1b821128934800376aed10c329030c7b574577b7bf698d"
+  },
+  "wholeMainQaBackendEqualityNotClaimed": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/MAIN-QA-COMPARISON-ATTEMPT01.json",
+    "sha256": "815ed01dd049c0be6c0f1da8c7c99b1f6c579046caafcefba06b2df62bbc2526"
+  },
+  "newAcceptanceCoverage": [
+    "Actual Q SQL service receives selected client/case/role IDs and manualValues:{}; real materialized DOCX converter input checked for full name,001234567 ID,005123456 organization number,independent company name,address/contact,DOB,postal zeroes,case title/internal9/court00042-10-2026,distinct role identities.",
+    "Changing selected A to B replaces data and does not leak prior identity/company values; optional person company number clears.",
+    "Missing stored required identity blocks before conversion; optional identity clears; no profile data invented.",
+    "Office role never auto-fills identity/company identifiers/capacity/authority; firstName remains manual-only,never inferred from fullName.",
+    "Idempotent reuse rechecks values; changed record rejects WORD_INPUTS_CHANGED without reconversion; fresh request materializes changed values.",
+    "Foreign/deleted/unknown/office-primary/inaccessible client/case references reject before conversion.",
+    "Reference/manual value types remain strict; ID strings never numerically coerced.",
+    "Independent repeated client/role ranges remain separate; original storedDOCX and allclient records unchanged by fill."
+  ],
+  "frontendCoverage": [
+    "Picker client/case/role references and labels",
+    "Selecting saved records sends IDs with empty manualValues for automatic filling",
+    "Changing or clearing selections invalidates PDF and revokes objectURL",
+    "Stale searches/reopen/context changes cannot reuse old preview",
+    "Word entry/native/Composer context handoff",
+    "Only explicit manual override fields use manualValues"
+  ],
+  "syntheticExpectedSample": {
+    "clientAName": "לקוח א — נתוני בדיקה",
+    "clientAIdentity": "001234567",
+    "clientACompany": "חברת דמה א",
+    "clientACompanyNumber": "005123456",
+    "clientBName": "לקוח ב — נתוני בדיקה",
+    "clientBIdentity": "000000082",
+    "caseCourtNumber": "00042-10-2026"
+  },
+  "sourceChangesByWorker": [
+    "/Users/liroymelamed/Projects/LayerWebsites/.worktrees/word-ux-qa-20261026/backend/tests/wordTemplates.autoFillAcceptance.test.js"
+  ],
+  "productSourceChanges": [],
+  "runnerFiles": [
+    {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/run-backend-autofill01.py",
+      "sha256": "17a1951a948cf218eb01a9ce2caecdbe64eda1b213c8065c500ed40665b01e71"
+    },
+    {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/run-frontend-autofill01.py",
+      "sha256": "e80a5c9515313f21ead111bd54486e0b5ca6b1c331a386ec068304c4f4c772bc"
+    }
+  ],
+  "limits": [
+    "PDF converter is a stand-in producing valid blank PDF; assertions inspect genuine materialized DOCX bytes before conversion,not PDF typography.",
+    "Frontend tests mock HTTP/PDF canvas; actual saved QA records/browser acceptance belongs to root.",
+    "No live PostgreSQL,remote server,credentials,provider,customer data,send,OTP,consent,schema,dependency or deployed code changes.",
+    "Isolated-socket service suite not run and not claimed passing.",
+    "Corresponding source/shared import/test/runtime/dependency drift invalidates scope."
+  ]
+}

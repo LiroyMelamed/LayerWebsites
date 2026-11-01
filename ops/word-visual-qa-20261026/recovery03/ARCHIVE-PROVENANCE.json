@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "kind": "IMMUTABLE_QA_RECOVERY_TOOLING_ARCHIVE_NOT_PRODUCT_RELEASE",
+  "at": "2026-10-26T23:41:12.287225+00:00",
+  "compiledProductCandidate": "9afc07adde83eae7ead026315dc9291851892cdf",
+  "productMainAncestor": "565239cc871d23eda465efe1507ddfd77098f2e7",
+  "files": {
+    "qa-backend-recovery03.py": "f794387a462ab0ec573624d57f05130413ff92af288914a96fab256e50b4364d",
+    "qa-backend-recovery03.local.test.py": "2acb5f9aab0f198164af41be5209cf8f8e27c242567b6a9d22700c60fd7c21f3",
+    "run-qa-static03.py": "202ac8420b87d7d8c67c3d10989aeda5bba39c39362c0f6b129da2c60a4f0842",
+    "qa_static03_test.py": "39c40262c6f39f28395cb73badc402bb746c640f8217738a1543cf55feaf30f5"
+  },
+  "activePreparedDirectory": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026",
+  "qualification": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/recovery-static-local-qualification-20261026T233353396969Z.json",
+    "sha256": "a2b9f17fd0ba0e208558a1977140808517a402ba01e06c8818a9a7f6b7023ab9",
+    "scope": "6 recovery03 plus6 static03 local metadata/AST/negative fixtures; no global app tests"
+  },
+  "runtimeRecoveryReceipt": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/qa-backend-recovery-verify-20261026T233524194148Z-315b400b.json",
+    "sha256": "c199ef400bc50a9fe0f35d9da616d2bff2a2477a568775a28c16f55177f29046"
+  },
+  "dependencies": {
+    "originalOperator": "ops/word-visual-qa-20261026/qa-backend-release02.py",
+    "originalOperatorSha256": "bf4369a26ec6284419bbc848ed4d3b9fb37a200e28d2638256322657e2f93dc3",
+    "observer": "ops/word-visual-qa-20261026/qa-backend-observe02.py",
+    "observerSha256": "adced0030fbfc646182d3d44db25b2195f215b3f6c19b11aef3707420e96f2b7",
+    "staticHelper": "ops/word-ux-qa-20261026/qa-static01.py",
+    "staticHelperSha256": "2a0d147f10579bdb755f81a989414609ead7332444ebd8e30bb9840f714523d8"
+  },
+  "executionNotes": [
+    "Historical exact artifact archive. Active source bytes/evidence at the prepared directory were reviewed and used; archive placement is not a portable replay command.",
+    "Recovery03 verifies existing interrupted apply and writes only new recovery journals; original failed apply stays preserved. It never reapplies migration/source or restarts.",
+    "Static03 is QA-only and consumes the exact distinct recovery proof, build/source/main-first/locks/CAS/fresh static preimage. Old02 backend proofs are rollback-only.",
+    "Root must restore original bound file locations and independently review current state before any future execution. Do not weaken pins to replay against another state."
+  ],
+  "publicationPolicy": "Back up tooling on a separate Git branch during frontend maintenance hold. Keep remote main/Melamedia product refs at tested5652/9af until QA publication completes; main-first tooling archive merge follows closeout.",
+  "secretsOrCustomerDataIncluded": false
+}

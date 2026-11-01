@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-27T04:23:58.259223+00:00",
+  "kind": "INDEPENDENT_READ_ONLY_FINAL_BROWSER_VISIBLE_PROOF_REVIEW",
+  "result": "APPROVE_BOUNDED_VISIBLE_FRESH_ENTRY_REOPEN_OUTCOME_AND_CURRENT_COMPOSER_SMOKE",
+  "declaredFrontendSource": "47e5ff40cc9e3ee42156e8895ef54ead9c69f424",
+  "declaredBackendSource": "fb0d6c22640f8b01911a9c6491ec856c4f5ab71a",
+  "declaredBundle": [
+    "https://melamedia.mela-media.co.il/static/js/main.760c7a99.js"
+  ],
+  "sourceBindingLimit": "Source and bundle are recorded by root browser receipts08/09; this reviewer did not independently read live runtime, Git refs or network activity.",
+  "inputs": {
+    "word-fresh-library08.png": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/word-fresh-library08.png",
+      "sha256": "9df6afbb8dc647d04b50074434cdb21c28a93d362b1c084b3b10663bba3238ae"
+    },
+    "word-source-conflict08.png": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/word-source-conflict08.png",
+      "sha256": "145fb8160e88d52db776762236fcd34d9d3d17693fa42c55993df91b13407f63"
+    },
+    "word-source-reopened-preserved08.png": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/word-source-reopened-preserved08.png",
+      "sha256": "1d19b5df1b739e752ba2f42cec7cc8927377adb293fb0bd9e1edbe8270b290da"
+    },
+    "composer-final760-09.png": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/composer-final760-09.png",
+      "sha256": "99baaec2d673787455caecfe16ed7cfcc63dfec2b77f9698143d77666d91aab8"
+    },
+    "BROWSER-FRESH-REOPEN08.json": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/BROWSER-FRESH-REOPEN08.json",
+      "sha256": "21adc02187b24e6c01cd6601a2c6fa97ec3255a4273cd7c39df6bcbb68748dfe"
+    },
+    "BROWSER-COMPOSER-SMOKE09.json": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/BROWSER-COMPOSER-SMOKE09.json",
+      "sha256": "4b39e4f7e21ee009e87039d5af0ccf11342b6801618f73d3ce8e0d18961fda92"
+    },
+    "ACTUAL-NATIVE-VISUAL-REVIEW02.json": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/ACTUAL-NATIVE-VISUAL-REVIEW02.json",
+      "sha256": "7c5a2074c2e0d4453e0a9d28fbd70a0950f2070b7ae71533ea87a7dfea3010a9"
+    },
+    "ACTUAL-PUBLICATION-CONTEXT-VISUAL-REVIEW03.json": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/ACTUAL-PUBLICATION-CONTEXT-VISUAL-REVIEW03.json",
+      "sha256": "e3ae7413532911240181a2c40759da49efa650bb2a3343e740c428701ccd3ad9"
+    }
+  },
+  "method": "Direct inspection of the four actual local PNGs and read-only review of receipts08/09, bound to the exact root-supplied hashes. No browser/server operation, app test, source/ref edit or old evidence/ledger change performed.",
+  "visibleFreshEntry": {
+    "image": "word-fresh-library08.png",
+    "observed": "Word library screen renders its heading, management button, empty saved-template selection and selection instructions. No error is visible in the captured screen.",
+    "selectedSource": "None visibly selected",
+    "limit": "The screenshot establishes a normal empty-source screen, not independently the clean-tab/storage conditions or prior failed-tab history."
+  },
+  "visibleStaleSourceAndReopenOutcome": {
+    "source": "QA-NF-20261023-UI שכירות",
+    "conflictImage": "word-source-conflict08.png",
+    "conflictImageObserved": "Upper Manage UI shows the original source name without the temporary peer-update suffix.",
+    "conflictAlertVisibility": "The exact version-conflict alert is outside this screenshot crop. It is recorded as an actual DOM observation in receipt08, not independently visible in the supplied conflict PNG.",
+    "reopenedImage": "word-source-reopened-preserved08.png",
+    "reopenedImageObserved": {
+      "newSourceNameSuffix": "רענון QA",
+      "manualValueVisible": "שם בדיקה לשימור רענון 2710",
+      "visibleRecordSelectorsUnselected": [
+        "בחירת הלקוח של המסמך",
+        "בחירת תיק (לבחירה)",
+        "בחירת האדם בתפקיד שוכר"
+      ],
+      "formAvailable": true,
+      "errorVisibleInCapturedRegion": false
+    },
+    "approval": "The final still visibly contains the newly named source and the retained manual value, while the displayed client/case/person record selectors remain blank.",
+    "receiptOnlyBehavior": {
+      "twoTabPeerUpdateAndSave": {
+        "temporaryName": "QA-NF-20261023-UI שכירות — רענון QA",
+        "status": "התבנית הפרטית נשמרה."
+      },
+      "oldReaderConflict": "התבנית השתנתה מאז שנפתחה. פתחו שוב את הגרסה השמורה לפני שמירה נוספת. השינויים המקומיים עדיין מוצגים.",
+      "actualReopenActionAndThreeCanvases": "Actualbuttonפתיחת המקור מחדש loadsnewname; alerts[]/canvas3/status[]",
+      "peerNameRestored": "QA-NF-20261023-UI שכירות",
+      "peerRestoreConfirmed": "התבנית הפרטית נשמרה."
+    },
+    "limits": [
+      "Still images do not independently prove the two-tab chronology, actual reopen-button action, three rendered source canvases or peer restoration. Those are root-observed facts recorded in receipt08.",
+      "Only displayed record selectors are visibly blank; no hidden clientID/caseID payload inference.",
+      "Actual browser08 empty-context preservation does not re-run non-null client/case preservation or dirty-edit cancellation coverage."
+    ]
+  },
+  "visibleCurrentComposer": {
+    "image": "composer-final760-09.png",
+    "draftName": "QA-WORD-COMPOSE-20261027-R3",
+    "templateName": "QA-WORD-VISUAL-20261027-R3",
+    "originalSyntheticCase": "בדיקת הסכם שכירות — הדגמה",
+    "savedStatus": "הטיוטה שמורה",
+    "caseCard": "Static original-case association card is visible, with no case search/removal controls in that card.",
+    "twoRoleSummaryVisible": [
+      "שוכר בדיקה QA",
+      "משכיר בדיקה QA"
+    ],
+    "approval": "The current screenshot visibly retains the expected custom draft/template names, saved status and original synthetic case card.",
+    "recipientPixelLimit": "Individual recipient name/email/phone inputs remain below this screenshot crop or behind its footer; their blank values are not independently visible from the PNG.",
+    "rootDomReceiptBlankRecipients": {
+      "names": [
+        "",
+        ""
+      ],
+      "emails": [
+        "",
+        ""
+      ],
+      "phones": [
+        "",
+        ""
+      ]
+    },
+    "allRootReportedRecipientValuesBlank": true,
+    "exactVersionLimit": "Composer shows the template name, not versionUUID. Library version1 was separately visible in prior review03; this current Composer smoke is not a repeated publication or version inspection.",
+    "reloadLimit": "Receipt09 records current760 saved-draft reload; that transition is not inferred from a single still."
+  },
+  "priorEvidenceReuseBoundary": {
+    "native06": "Prior load, placement, save/reopen, publish and geometry evidence remains separately scoped. Current receipts08/09 do not re-run the full native06 workflow.",
+    "geometryReview": "ACTUAL-NATIVE-VISUAL-REVIEW02.json",
+    "publicationContextReview": "ACTUAL-PUBLICATION-CONTEXT-VISUAL-REVIEW03.json",
+    "mobileLimitRetained": "Fitted mobile field badges and handles crowd the overlays. Complete role/custom-label reading uses the inspector; comfortable all-handle/physical-touch behavior remains unapproved."
+  },
+  "materialVisibleFindings": [],
+  "evidencePresentationLimits": [
+    "The actual conflict/reopened filenames have the word- prefix as recorded in receipt08.",
+    "Do not present word-source-conflict08.png alone as visible proof of the offscreen conflict alert.",
+    "Blank recipient values, canvas count, button actions and reload chronology are root receipt/DOM evidence, not independently established by these pixels."
+  ],
+  "notApproved": [
+    "Fresh DOCX upload still blocked by extension permission",
+    "All native06 actions repeated on current frontend",
+    "VersionUUID or hidden client/case payload inspection",
+    "Real package creation, sends, OTP, consent, signature or provider behavior",
+    "Customer deployment or full application acceptance"
+  ],
+  "boundedVisibleProofApproved": true,
+  "fullApplicationApproved": false,
+  "oldEvidenceOrLedgersEdited": false
+}

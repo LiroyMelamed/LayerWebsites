@@ -1,0 +1,11 @@
+{
+  "utc": "2026-10-28T12:07:01.025728+00:00",
+  "candidate": "87e8eaa58830ee9b42772c1619e01814143dc28e",
+  "base": "596aa5b7eb9b40f8cd5f6927132955ff6caf2175",
+  "rollbackCommit": "624f95936e03835219db0fabc901c35213970c5d",
+  "remoteBranch": "codex/ashraf-update-rollback-20261028",
+  "treeEqualsBase": true,
+  "parentEqualsCandidate": true,
+  "deployed": false,
+  "notes": "Conditional forward-only code recovery. Frontend index and manifest backups exist only after successful frontend publication. Never restore whole database automatically."
+}

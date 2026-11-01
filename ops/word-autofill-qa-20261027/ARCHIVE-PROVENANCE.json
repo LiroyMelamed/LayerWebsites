@@ -1,0 +1,27 @@
+{
+  "at": "2026-10-27T08:33:28.144667+00:00",
+  "kind": "BYTE_EXACT_LOCAL_SYNTHETIC_TEST_RUNNER_ARCHIVE_NO_SERVER_ACTIONS",
+  "files": {
+    "run-backend-autofill01.py": "17a1951a948cf218eb01a9ce2caecdbe64eda1b213c8065c500ed40665b01e71",
+    "run-frontend-autofill01.py": "e80a5c9515313f21ead111bd54486e0b5ca6b1c331a386ec068304c4f4c772bc"
+  },
+  "sourceDirectory": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027",
+  "testQualification": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/AUTO-FILL-LOCAL-REGRESSIONS01.json",
+    "sha256": "7d72c9424a09041f20da479f349dcf2dcc5c6f9e8cb644226ba8495401b03f37"
+  },
+  "newTest": {
+    "versionedPath": "backend/tests/wordTemplates.autoFillAcceptance.test.js",
+    "sha256": "34b54d82e5cdfa1119341f182fa7bcdc1e13b3906da094a3be1450a5b091b6ff"
+  },
+  "actualQaSource": "0990866b749e44f3f64f6a8bbe85fbe006747e67",
+  "mainBeforeTests": "7bc016e19dbc117b988c367333f9a72868c386ef",
+  "constraints": [
+    "ReadbothprotectedTEST-LEDGERsbeforetest;appendexactresult/evidenceaftereveryrun.",
+    "ExistingfrozenNode/dependenciesandoutsidecloudcachepathsrequired. No install,network,sockets,credentials,livedatabase,serverorbrowserinvocation.",
+    "BackendrunnerhardcodesQandbindsexternalWacceptancetestviaWORD_AUTOFILL_QA_BACKEND. FrontendrunnerdefaultsW; recordedrunexplicitlyusedWORD_UX_TEST_WORKTREE=Q, commandboundinreceipt.",
+    "Do not claim currentmodule/dependency/runtime/QAstate fromhistoricalreceipt; comparefreshhashesbeforefuturetest.",
+    "Do not replay deploymentoperators; thisarchivecontainslocaltestsonly."
+  ],
+  "dependencyPolicy": "Usecurrentinstalledmanifest/lock/runtimepinsfromboundreceipts; missingcacheisablocker, no automaticinstallation."
+}

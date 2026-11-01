@@ -1,0 +1,49 @@
+{
+  "at": "2026-10-27T08:23:46.121038+00:00",
+  "result": "PASS_ACTUAL_OVERRIDE_RESTORE_CLIENT_CHANGE_INVALIDATION_AND_MISSING_PROFILE_REJECTION",
+  "qaSource": "0990866b749e44f3f64f6a8bbe85fbe006747e67",
+  "bundle": "main.e03a8128.js",
+  "backendRuntime": "fb0d6c22640f8b01911a9c6491ec856c4f5ab71a",
+  "checks": {
+    "explicitIdentityOverride": "Only client.identityNumber override enabled; actual PDF001234567, other7automatic values retained.",
+    "revert": "Unchecking override removed manualID textbox, invalidatedPDF, regeneration restored saved000000009.",
+    "clientChange": "Typing new client cleared selectedoldreference and immediately removed PDF+review; explicit primary picker selection selectedQA-NF-20261024-USER03.",
+    "missingRequiredProfile": "Generation returned visible missing/invalid-data alert, zeroPDFcanvases/reviewregions, no oldclient data reused. Specific missing fields not inferred solely from genericerror."
+  },
+  "evidence": {
+    "OVERRIDE-INVALIDATION16.json": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/OVERRIDE-INVALIDATION16.json",
+      "sha256": "ac1ad13c77947a8a52d4b0bca5a183b1513ace03f6ace6f959b8a5b71892900e"
+    },
+    "OVERRIDE-RESTORE-INVALIDATION16.json": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/OVERRIDE-RESTORE-INVALIDATION16.json",
+      "sha256": "e996571f9b02135d66b6a59e293846aa43b42594d6e51e6b0dfb5b41409b71b7"
+    },
+    "CLIENT-CHANGE-INVALIDATION16.json": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/CLIENT-CHANGE-INVALIDATION16.json",
+      "sha256": "4ed3891254779a9c3a30d9fa9f39a33b69b2741cd5fe455f2c9ee34adaeb3f86"
+    },
+    "MISSING-PROFILE-PREVIEW-INPUT16.txt": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/MISSING-PROFILE-PREVIEW-INPUT16.txt",
+      "sha256": "ae728639260543a399f98b424e7c75db3031b798e2ff946d58476e4038f97eb8"
+    },
+    "MISSING-PROFILE-RESULT16.json": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/MISSING-PROFILE-RESULT16.json",
+      "sha256": "7c8430b5fafaea22e8d67aab8e35be45c4f021c21719f6fe7596cf22ed8c9bc4"
+    },
+    "auto-A-explicit-id-override16.png": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/auto-A-explicit-id-override16.png",
+      "sha256": "399f59c1d0f6ca51efc0bd0215c715f2d9bf5516fd0ec311bf281f1b17d94d78"
+    },
+    "auto-A-restored16.png": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/auto-A-restored16.png",
+      "sha256": "489e01883959b95a45219e225c55fc6aa1895211d9c05e44ae0539df9b1ea295"
+    },
+    "auto-missing-profile16.png": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/auto-missing-profile16.png",
+      "sha256": "1aadea2ba8399954622c54bee2f0a3fbc4b43f23ffe56233a937273d1cdc73d8"
+    }
+  },
+  "profileWrites": 0,
+  "packagesOrSends": 0
+}

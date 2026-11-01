@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "scope": "WORD_UX_QA_FRONTEND_ONLY",
+  "sealedByRoot": false,
+  "tenant": "melamedia",
+  "host": "root@84.46.253.85",
+  "publicRoot": "/var/www/melamedia",
+  "qaBackendExpectedCommit": "1161fd687db381833552db78a70723573792ab97",
+  "operatorSha256": "2a0d147f10579bdb755f81a989414609ead7332444ebd8e30bb9840f714523d8",
+  "runnerSha256": "65ae43a29d35258f96402255b3446f3eaec0b8a1ae9a04b156e82fbfd2dab57e",
+  "backendChanges": false,
+  "customerPublication": false,
+  "oldChunksDeleted": 0,
+  "rootPublicUploads": 0,
+  "providerCalls": false,
+  "repository": "/Users/liroymelamed/Projects/LayerWebsites",
+  "observationNonce": null,
+  "mainCommit": null,
+  "qaCommit": null,
+  "mainThenQaPublication": null,
+  "buildReceipt": null,
+  "baselineObservation": null,
+  "archive": null,
+  "artifactFiles": null,
+  "entrypointMap": {},
+  "reviews": {
+    "root": null,
+    "independent": null
+  },
+  "bindingFormat": {
+    "file": {
+      "path": "ABSOLUTE_REVIEWED_FILE",
+      "sha256": "EXACT_SHA256"
+    },
+    "mainThenQaPublication": {
+      "result": "PUSHED_MAIN_THEN_QA",
+      "mainCommit": "EXACT40",
+      "qaCommit": "EXACT40",
+      "qaBranch": "Melamedia",
+      "mainPushedAt": "ISO8601",
+      "qaPushedAt": "ISO8601"
+    },
+    "review": {
+      "decision": "APPROVE",
+      "scope": "WORD_UX_QA_FRONTEND_ONLY",
+      "operatorSha256": "CURRENT_OPERATOR_SHA",
+      "runnerSha256": "CURRENT_RUNNER_SHA"
+    }
+  }
+}

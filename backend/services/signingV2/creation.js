@@ -17,6 +17,7 @@ const { normalizeSigningOrder } = require('../../lib/signingV2/signingOrder');
 
 const LEGACY_FIELD_TYPES = { signature: 'signature', initials: 'initials', text: 'text', date: 'date', checkbox: 'checkbox', number: 'text', email: 'email', phone: 'phone', idnumber: 'idnumber', lawyerStamp: 'lawyerStamp' };
 const { availableOriginSql, importedOrigins } = require('./templateAvailability');
+const { assertWordDefinition, assertWordPackageContext, wordTemplateScopeSql, filterAvailableWordVersions } = require('./wordOrigin');
 const CHANNELS = { email: ['email'], sms: ['sms'], both: ['email', 'sms'] };
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -38,7 +39,8 @@ async function loadVersion(db, scope, versionId) {
     expect(UUID.test(versionId), 'INVALID_TEMPLATE');
     const result = await db.query(`SELECT v.*,t.name AS template_name FROM signing_template_versions v
         JOIN signing_templates t ON t.owner_context_id=v.owner_context_id AND t.id=v.template_id
-        WHERE v.owner_context_id=$1 AND v.id=$2 AND v.state='published' AND NOT t.archived AND ($3::boolean OR t.owner_userid=$4) AND ${availableOriginSql}`,
+        WHERE v.owner_context_id=$1 AND v.id=$2 AND v.state='published' AND NOT t.archived AND ($3::boolean OR t.owner_userid=$4) AND ${availableOriginSql}
+        AND ${wordTemplateScopeSql('$4')}`,
     [scope.contextId, versionId, scope.all, scope.userId]);
     if (!result.rowCount) fail('NOT_FOUND', 404);
     const template = result.rows[0];
@@ -46,6 +48,7 @@ async function loadVersion(db, scope, versionId) {
     expect(digest(definition) === template.definition_hash, 'TEMPLATE_CHANGED');
     const sourceIds = [...new Set(definition.documents.map(document => document.sourceArtifactId))];
     const sources = (await db.query(`SELECT * FROM signing_artifacts WHERE owner_context_id=$1 AND id=ANY($2::uuid[])`, [scope.contextId, sourceIds])).rows;
+    await assertWordDefinition(db, scope, definition, { sources: new Map(sources.map(source => [source.id, source])) });
     return { template, definition, sources: new Map(sources.map(source => [source.id, source])) };
 }
 
@@ -55,11 +58,13 @@ function roleSummary(definition) {
 }
 
 async function listTemplates(db, scope) {
-    const current = (await db.query(`SELECT t.id AS template_id,t.name,v.id AS version_id,v.version,v.definition,v.published_at
+    const candidates = (await db.query(`SELECT t.id AS template_id,t.name,v.id AS version_id,v.version,v.definition,v.published_at
         FROM signing_templates t JOIN LATERAL (SELECT * FROM signing_template_versions v WHERE v.owner_context_id=t.owner_context_id
             AND v.template_id=t.id AND v.state='published' ORDER BY v.version DESC LIMIT 1) v ON TRUE
-        WHERE t.owner_context_id=$1 AND NOT t.archived AND ($2::boolean OR t.owner_userid=$3) AND ${availableOriginSql} ORDER BY t.name,t.id`,
+        WHERE t.owner_context_id=$1 AND NOT t.archived AND ($2::boolean OR t.owner_userid=$3) AND ${availableOriginSql}
+        AND ${wordTemplateScopeSql('$3')} ORDER BY t.name,t.id`,
     [scope.contextId, scope.all, scope.userId])).rows;
+    const current = await filterAvailableWordVersions(db, scope, candidates);
     const imported = new Set((await importedOrigins(db, scope)).map(origin => `${origin.templateId}:${origin.version}`));
     const legacy = (await db.query(`SELECT id,name,version,definition FROM signing_templates t WHERE t.owner_context_id IS NULL
         AND COALESCE(t.definition->>'schemaVersion','1')='1' AND NOT t.archived
@@ -345,6 +350,7 @@ async function referencedDirectory(db,scope,definition,plan) {
 async function previewCreation(pool, scope, input) {
     const { template, definition, sources } = await loadVersion(pool, scope, input.templateVersionId);
     const plan = normalize(definition, input);
+    await assertWordPackageContext(pool, scope, definition, plan.rows);
     await assertCases(pool, scope, [...new Set(plan.rows.map(row => row.caseId).filter(Boolean))]);
     await assertClients(pool, scope, [...new Set(plan.rows.map(row => row.clientId).filter(Boolean))]);
     const references = await referencedDirectory(pool, scope, definition, plan);
@@ -418,6 +424,7 @@ async function createFromRowsInTransaction(db, scope, input, { reserveCapacity, 
     expect(UUID.test(input.idempotencyKey), 'INVALID_SUBMISSION');
     const { template, definition } = await loadVersion(db, scope, input.templateVersionId);
     const plan = normalize(definition, input);
+    await assertWordPackageContext(db, scope, definition, plan.rows);
     // Check before creating directory entries; createSubmission checks again in its transaction.
     await assertCases(db, scope, [...new Set(plan.rows.map(row => row.caseId).filter(Boolean))]);
     await assertClients(db, scope, [...new Set(plan.rows.map(row => row.clientId).filter(Boolean))], true);

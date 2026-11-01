@@ -1,0 +1,139 @@
+{
+  "at": "2026-10-27T08:33:28.144667+00:00",
+  "status": "AUTOMATIC_FILL_VERIFIED_WITH_OPEN_CLIENT_SEARCH_UX_FINDING",
+  "report": {
+    "schemaVersion": 1,
+    "at": "2026-10-27T08:31:46.697353+00:00",
+    "status": "AUTOMATIC_PROFILE_FILL_VERIFIED_WITH_OPEN_CLIENT_SEARCH_UX_FINDING",
+    "scope": "User-requested automatic client name/identity and related profile/role fill. SyntheticMelamediaQA only. No welcome/customer writes/signature sends/providers/production deployments.",
+    "localQualification": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/AUTO-FILL-LOCAL-REGRESSIONS01.json",
+      "sha256": "7d72c9424a09041f20da479f349dcf2dcc5c6f9e8cb644226ba8495401b03f37"
+    },
+    "localCounts": {
+      "backend": 71,
+      "frontend": 89,
+      "total": 160,
+      "skipped": 0,
+      "newAutomaticSqlCases": 8
+    },
+    "actualUiQualification": {
+      "firstSavedClientEightAutomaticValues": {
+        "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/ACTUAL-AUTO-A15.json",
+        "sha256": "d1dcc1ec93e73188103d3c2ef4da3abc2611f715bb57f61b79c107be0230649d"
+      },
+      "explicitOverrideRestoreAndMissingProfile": {
+        "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/ACTUAL-AUTO-NEGATIVE16.json",
+        "sha256": "3bfba62c8ef120f31670528f12060c86493d9f4f3ca048207ea14f38bc70fba5"
+      },
+      "secondSavedClientEightAutomaticValues": {
+        "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/ACTUAL-AUTO-B17.json",
+        "sha256": "e63649d27a1489ca713356daff5646d3b0d977699b5662cfd356e2fc24d89888"
+      },
+      "nativeHandoffAndUnchangedCard": {
+        "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/ACTUAL-AUTO-NATIVE18.json",
+        "sha256": "60c5baff1e9cc26968a4e58fd97bb0cdffa0d3d6c0718f09492031fcb277fc1b"
+      },
+      "independentVisualReview": {
+        "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/ACTUAL-AUTOFILL-VISUAL-REVIEW01.json",
+        "sha256": "f4da91e398b6f656bf5b573fc4d6da2a343ec15eebf15f279bbc3b32cd4cc3ad"
+      }
+    },
+    "valuesActuallySeen": {
+      "A": {
+        "fullName": "QA-NF-20261023-R2 tenant Updated",
+        "identityNumber": "000000009",
+        "companyName": "QA-NF-20261023-R2 Company 0",
+        "companyNumber": "005123450",
+        "address": "1 QA Street — UI, Unit 2, QA City, 00100, IL"
+      },
+      "B": {
+        "fullName": "QA-NF-20261023-R2 landlord",
+        "identityNumber": "001234561",
+        "companyName": "QA-NF-20261023-R2 Company 1",
+        "companyNumber": "005123451",
+        "address": "1 QA Street, Unit 2, QA City, 00100, IL"
+      },
+      "roles": "IndependentTenantA/LandlordB/Lawyer record values visiblypreserved in both PDFs and Bnative."
+    },
+    "automaticVsManual": "All8mappedclient/role overridesoff in initialA/B. OnlyindependentcustomfirstNameinlinefieldQA-AUTO-2710[-B] intentionallymanual. Fullname never split. ExplicitIDoverride testedseparately, thenoffrestoredcardvalue.",
+    "negativeChecks": "Client/search/inputchanges remove oldPDF+review; missingprofileUser03 rejects withgenericerror and no olddata. No inference of specificmissingfield fromgenericerror. LocalactualQSQL tests separately prove missingID/permissions/type/idempotency cases.",
+    "openFinding": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/CONTACT-SEARCH-CONSISTENCY18.json",
+      "sha256": "0dc0a3d2a1fb0439043cf8f1c74a919c1b85e6f990297f5c2909c4d5f52541c4"
+    },
+    "notClaimed": [
+      "No globalfull-app/signingprovider/send/OTP/signature/customer production acceptance.",
+      "No new physicaltouch/mobile qualification in this run. Prior mobile11 remains separatelybound.",
+      "ExactlivegeneratedDOCX remains unavailable through current supportedexport; actualrenderedPDFs qualified, local160 inspectgenuineDOCXconverterinput separately.",
+      "No freshbackendSSHhash/runtimeobservation. BackendlastknownFB05:04, actualQ099modulehashes testedlocally; currentloadedFEbundleE03observed.",
+      "Secondsuccessfulclient usedseparatecardentry; sameformswitchto missingprofiletestedlive, successfulA→BswitchtestedlocalSQL."
+    ],
+    "sourceState": {
+      "mainBeforeTests": "7bc016e19dbc117b988c367333f9a72868c386ef",
+      "qaLocalSource": "0990866b749e44f3f64f6a8bbe85fbe006747e67",
+      "actualBrowserBundle": "main.e03a8128.js",
+      "productChanges": [],
+      "newTestOnly": "backend/tests/wordTemplates.autoFillAcceptance.test.js"
+    },
+    "operations": {
+      "newClients": 0,
+      "clientProfileWrites": 0,
+      "sourceMappingWrites": 0,
+      "templateExplicitSavesOrPublishes": 0,
+      "signaturePackageCreatesOrSends": 0,
+      "serverDeploymentsOrSSH": 0,
+      "libraryUploads": 0,
+      "ownServerLeases": 0,
+      "viewportReset": true,
+      "deliverableTab": "894427437; nativePDFB"
+    },
+    "continuation": "CONTACT-SEARCH-CONSISTENCY18.json remainsopen; preserveevidence/currentQA, no unreviewedfilter/accesschange. No furtherautomatedproductchange inferred from testrequest."
+  },
+  "independentReviews": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-autofill-qa-20261027/SOURCE-AND-INDEPENDENT-REVIEW20.json",
+    "sha256": "d0aaf43b6461cff65da417e12858fcc9e475589fbdeae984f0be1f2219ffb912"
+  },
+  "portableProofFiles": {
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/ACTUAL-AUTO-A15.json": "d1dcc1ec93e73188103d3c2ef4da3abc2611f715bb57f61b79c107be0230649d",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/ACTUAL-AUTO-B17.json": "e63649d27a1489ca713356daff5646d3b0d977699b5662cfd356e2fc24d89888",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/ACTUAL-AUTO-NATIVE18.json": "60c5baff1e9cc26968a4e58fd97bb0cdffa0d3d6c0718f09492031fcb277fc1b",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/ACTUAL-AUTO-NEGATIVE16.json": "3bfba62c8ef120f31670528f12060c86493d9f4f3ca048207ea14f38bc70fba5",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/ACTUAL-AUTOFILL-VISUAL-REVIEW01.json": "f4da91e398b6f656bf5b573fc4d6da2a343ec15eebf15f279bbc3b32cd4cc3ad",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/AUTO-A-CARD-EXPECTED15.json": "c894bc9c33b4db1c9f684a1a53195446f68bd4c9e8bf6bea17490690744e846a",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/AUTO-A-PREVIEW-INPUT15.txt": "e0c8576ce3bf9e4398b6db3ba2646f1260e94c9305cb1bb90ad67107e4b76e14",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/AUTO-B-CARD-EXPECTED17.json": "9da4db4438a9e5ea161372e6f276f59c6d6295a7644e97ffdf9c13231b69637c",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/AUTO-B-PREVIEW-INPUT17.txt": "68fe0004d8367231e0e9b65b24289b4d584eae4bf63c8e3221d729797fa3d1ca",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/AUTO-B-RESULT-DOM17.txt": "4d88ca190b6c2128bce0c10e05ff47f5af00f229236b8b0684b7c5b86ae8c2c1",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/AUTO-FILL-LOCAL-REGRESSIONS01.json": "7d72c9424a09041f20da479f349dcf2dcc5c6f9e8cb644226ba8495401b03f37",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/AUTO-FILL-QA-REPORT19.json": "3ef40c7a459a133bf63f15370ae2a0ed8980d3cee7a7cefdaceea0b88232b384",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/AUTO-NATIVE-STATE18.json": "0c57c8a14cb75eb4e0a98b3b92eb4a4fb73b36c4e5d08235f6eac6abb6998d9d",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/CARD-A-UNCHANGED-READBACK18.json": "66c20cae99eb2c1cf786e9a00c462e749864b17476072e7074741dfe46555ae5",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/CLIENT-CHANGE-INVALIDATION16.json": "4ed3891254779a9c3a30d9fa9f39a33b69b2741cd5fe455f2c9ee34adaeb3f86",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/CONTACT-SEARCH-CONSISTENCY18.json": "0dc0a3d2a1fb0439043cf8f1c74a919c1b85e6f990297f5c2909c4d5f52541c4",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/MAIN-QA-COMPARISON-ATTEMPT01.json": "815ed01dd049c0be6c0f1da8c7c99b1f6c579046caafcefba06b2df62bbc2526",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/MISSING-PROFILE-PREVIEW-INPUT16.txt": "ae728639260543a399f98b424e7c75db3031b798e2ff946d58476e4038f97eb8",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/MISSING-PROFILE-RESULT16.json": "7c8430b5fafaea22e8d67aab8e35be45c4f021c21719f6fe7596cf22ed8c9bc4",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/OVERRIDE-INVALIDATION16.json": "ac1ad13c77947a8a52d4b0bca5a183b1513ace03f6ace6f959b8a5b71892900e",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/OVERRIDE-RESTORE-INVALIDATION16.json": "e996571f9b02135d66b6a59e293846aa43b42594d6e51e6b0dfb5b41409b71b7",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/PRIMARY-CLIENT-SEARCH18.txt": "6cd46fbdfc6357d9bbb1bc7254d6d8347e0cbcba2ba72c811372db675243d511",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/ROLE-PERSON-SEARCH18.txt": "fa6d3673816e1c7890919c143501995000d65a1ee03b80fa860e0f5fea08be38",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/SOURCE-AND-INDEPENDENT-REVIEW20.json": "d0aaf43b6461cff65da417e12858fcc9e475589fbdeae984f0be1f2219ffb912",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/auto-A-explicit-id-override16.png": "399f59c1d0f6ca51efc0bd0215c715f2d9bf5516fd0ec311bf281f1b17d94d78",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/auto-A-pdf-complete15.png": "1d99369bb3342c1305345900b48b2f2f87d45c8f4d0d3570c62e75f2298fd0f1",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/auto-A-restored16.png": "489e01883959b95a45219e225c55fc6aa1895211d9c05e44ae0539df9b1ea295",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/auto-B-native-complete18.png": "874a0b4e4c933accf2e64c5405454ebf98d050fa30f39e658e5af41cb49e1597",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/auto-B-pdf-complete17.png": "316210aa9bc3779fcaa4658378302e7a76e3562dc19568d195808bb154513cba",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/auto-missing-profile16.png": "1aadea2ba8399954622c54bee2f0a3fbc4b43f23ffe56233a937273d1cdc73d8",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/backend-units-20261027T081254477236Z.json": "efc5d4212f81b135b473f41eeaabbb616de27bdbe54c39d973f71e9eaf5e326a",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/backend-units-20261027T081254477236Z.log": "463e777c0670fe7b5da17a1b2a34a0429f66a7b9f5e1fa48c0a512cbff7e15d8",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/frontend-regression-20261027T081254Z.json": "8d26c00718095f1ad6f5404f159527ad438ea1426c86ada3bfaa6cf790c6d4ca",
+    "docs/releases/2026-10-26-word-visual-qa/proof-autofill-20261027/frontend-regression-20261027T081254Z.log": "bdc0da0070a3b3b249464843d643edfb6dbaac7d528bc01fa7a0887b7d9cf5db"
+  },
+  "testRunnerArchive": {
+    "path": "ops/word-autofill-qa-20261027",
+    "sha256": "c8ce1652a490e0aa50930f2f96cf190177f41273e942a7aff0f2d41ee5ddc557"
+  },
+  "sourceChange": "One new backendacceptancetestfile only. No application/runtime/environment/dependency/filter/accesschange.",
+  "qaDeploymentUnchanged": "Frontend099/main.e03a8128.js. BackendlastindependentlyobservedFB05:04UTC; no newSSHstateobservation or backenddeployment."
+}

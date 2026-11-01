@@ -1,0 +1,28 @@
+{
+  "at": "2026-10-27T04:57:27.365915+00:00",
+  "scope": "Melamedia QA native signing-field mobile usability only",
+  "sourceReview": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-mobile-polish-20261027/MOBILE-APP-INDEPENDENT-REVIEW01.json",
+    "sha256": "a0e3c00b0811bbc430bda8bd2afa0f28da893375c47cfff01f9b337708660b42"
+  },
+  "workerFreeze": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-mobile-polish-20261027/MOBILE-UI-WORKER-FREEZE01.json",
+    "sha256": "24fe68ceee4198f7d5f6822d914d0086cb7309528e570a28d4c23ffb3f196a60"
+  },
+  "scopedProtectedRefresh": {
+    "frontend/src/screens/signingScreen/templates/TemplateBuilder.js": {
+      "before": "fe4cf3c7acd16478ee4521f21583248ea78bd7e18d42632cb7207d789e695e8d",
+      "after": "2e7c339518cdf012ab1d2f8d7daf088ae8ceef0cd865d6b358e6332fbd8a33ab"
+    },
+    "frontend/src/screens/signingScreen/templates/templates.scss": {
+      "before": "71a43d2b8e6fb15cd0fae3bd74c2e67898b03ec2eb26183aa59f483eee357b99",
+      "after": "7961e93ea83224d0675969de87459358f20d5347f23b942c2c27742585fbdf22"
+    }
+  },
+  "manifestBeforeSha256": "4dfcebcbcef59b3254c799aa106784d5ca6dd1ad42efac05dcd553ccd131a4fe",
+  "manifestAfterSha256": "91fd27bf1c355d35dfbd3dfa4a49af8ecd01ff00ee3fffddbf354af745d1d60e",
+  "allOther101ProtectedValuesRetained": true,
+  "requiredAncestorRetained": "eb94f66e6f1f86e66eeb80112696df7662bcc279",
+  "behavior": "Native-only full field chooser/Edit/physical nudge controls; narrow chrome leaves canonical rectangles, inspector retains resizing. No geometry, adapter, runtime Spot/PdfViewer/legacy signFiles changes.",
+  "validation": "56 focused tests/5 suites on frozen working bytes, detector once with no findings, source review approved. ActualQ103/source/test/build/runtime/browser evidence separate; no physicaltouch/provider/customer acceptance."
+}

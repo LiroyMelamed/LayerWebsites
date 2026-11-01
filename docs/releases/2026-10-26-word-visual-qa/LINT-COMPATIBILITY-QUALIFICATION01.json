@@ -1,0 +1,23 @@
+{
+  "status": "PASS_TARGETED_TESTS_HEADER_ONLY_ESLINT_COMPATIBILITY",
+  "changes": {
+    "frontend/src/screens/signingScreen/word/WordSigningWorkflow.js": {
+      "old": "7a0ebc5a8b3d21d26ffb41a6ae9185d121f8b0c7d8d2c0ee1986ef2fb6c7bc59",
+      "new": "84d648e9372ada124900cd724b8472dbff5493a85e4bff54be9bf0992a64cd3d"
+    },
+    "frontend/src/screens/signingScreen/word/wordAuthoringSelection.js": {
+      "old": "e221bd01a336145077a1eea7a3c69d5d778f903401b94f45467bc9b80295a8e1",
+      "new": "b3cc7dca75c2dc7c6dce4d132b617ebcfe99b501aa825c165f8fe9420ae92704"
+    }
+  },
+  "runtimeTokensUnchanged": true,
+  "tests": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-ux-fix-20261026/frontend-regression-20261026T230804Z.json",
+    "sha256": "a531a50cd2837cd2385decda7b1082d83eb2dcfd0c1d2e00b8f355c3f0ef1316"
+  },
+  "priorBuildFailure": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/build/melamedia-word-visual-qa01/build.json",
+    "sha256": "20f1f58853646b883faf52889d0e2040ecc2c17ecf2a9c0f1553527330a708f4"
+  },
+  "limits": "Prior compile failed lint/no-undef only; fresh build required. No backend/source behavior or protected103 hash changes."
+}

@@ -1,0 +1,34 @@
+{
+  "status": "PASS_SCOPED_CARET_BOUNDARY_SOURCE_QUALIFICATION_BROWSER_RETEST_PENDING",
+  "sourceBase": "fb7fabab3e86551eb86b3ec704044607116ba2d8",
+  "qualifiedWorkingSource": {
+    "frontend/src/screens/signingScreen/word/wordAuthoringSelection.js": "93a9cb2484f60cbe5ccb3212f960350f17687bba7b8879580dc6b92df5f0bf29",
+    "frontend/src/screens/signingScreen/word/wordAuthoringSelection.test.js": "536f208ba02b6236c8bffcf6ceb6864b563d9933046d793199fc310999a9fe61",
+    "frontend/src/screens/signingScreen/word/WordTemplatesWorkspace.test.js": "c5c7ada567b35bc742db02cdb17fcbf1520603d01e2d2006c6ba691bae0dcb39"
+  },
+  "scenarios": 40,
+  "suites": 3,
+  "receipt": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-ux-fix-20261026/frontend-regression-20261027T002944Z.json",
+    "sha256": "39e6e20fbbdfd1e2c1e889c62c63b82caab644ccce90694abfe433727e91096a"
+  },
+  "initialBrowserFailure": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/BROWSER-SOURCE-RUN01.json",
+    "sha256": "386fd78caa221798035a166580025a618ca1993f771ec016e276fcbe35c572d3"
+  },
+  "failureDiagnosis": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/BROWSER-INSERTION-DIAGNOSIS01.json",
+    "sha256": "954e93902eb44b55173e847f7e028ac13c0a9e186f8351cef5e1c4f45ce4874b"
+  },
+  "priorPartialSourceReview": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/WORD-SELECTION-BOUNDARY-INDEPENDENT-REVIEW01.json",
+    "sha256": "d3a672a5b73b6ea25d8323045ee9d838bfd86ead1f778ec11bdb74b4997180e2"
+  },
+  "finalSourceReview": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/word-visual-implementation-20261026/WORD-SELECTION-BOUNDARY-INDEPENDENT-REVIEW02.json",
+    "sha256": "f1972b3614c2fce57881161aeb55fb24bf39fd3a58449019968f469a15ada543"
+  },
+  "backendProductBytesChanged": false,
+  "protected103HashesChanged": false,
+  "limits": "No fresh-upload/finalbrowser/native/responsive/provider/customer pass claim. Failed browser and intermediate33-case noncollapsed-only evidence preserved; final source tests do not replace browser retest."
+}

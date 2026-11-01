@@ -4,7 +4,7 @@ import StatusNotice from '../../../components/ui/StatusNotice';
 import TertiaryButton from '../../../components/styledComponents/buttons/TertiaryButton';
 import useSigningLocale from './useSigningLocale';
 
-export default function CaseContextPicker({ api, initialCaseId, value, onChange, onPending }) {
+export default function CaseContextPicker({ api, initialCaseId, value, onChange, onPending, locked = false }) {
     const { t, direction, errorMessage } = useSigningLocale();
     const [query, setQuery] = useState('');
     const [results, setResults] = useState([]);
@@ -53,7 +53,7 @@ export default function CaseContextPicker({ api, initialCaseId, value, onChange,
     };
     return <div className="lw-signingCompose__case">
         {value ? <><p><strong>{t('signingV2.compose.context.selected')}</strong> <bdi>{value.name}</bdi></p>
-            <TertiaryButton onPress={clear}>{t('signingV2.compose.context.remove')}</TertiaryButton></> : <SearchInput
+            {!locked && <TertiaryButton onPress={clear}>{t('signingV2.compose.context.remove')}</TertiaryButton>}</> : !locked && <SearchInput
             title={t('signingV2.compose.context.label')} aria-label={t('signingV2.compose.context.label')}
             value={query} onSearch={search} timeToWaitInMilli={0} maxLength={160} dir={direction} containerDir={direction}
             isPerforming={busy} queryResult={results} acceptExternalValueWhileFocused
@@ -61,6 +61,7 @@ export default function CaseContextPicker({ api, initialCaseId, value, onChange,
             getSelectValueFunction={item => item.name} buttonPressFunction={(text, item) => { selectionEcho.current = text; load(item.id); }} />}
         <p className="lw-signingCompose__hintLine">{t('signingV2.compose.context.help')}</p>
         {error && <StatusNotice embedded><p>{errorMessage(error)}</p>
-            <TertiaryButton onPress={clear}>{t('signingV2.compose.context.without')}</TertiaryButton></StatusNotice>}
+            {locked ? <TertiaryButton onPress={() => load(initialCaseId)}>{t('common.retry')}</TertiaryButton>
+                : <TertiaryButton onPress={clear}>{t('signingV2.compose.context.without')}</TertiaryButton>}</StatusNotice>}
     </div>;
 }

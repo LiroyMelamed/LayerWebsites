@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-26T14:39:17.889600+00:00",
+  "status": "DRAFT_ONLY_NOT_SENT",
+  "audience": [
+    "AshrafEssa",
+    "MelamedLaw",
+    "MorLevi"
+  ],
+  "textFile": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/CUSTOMER-UPDATE-HE.txt",
+  "textSha256": "a6a6c193eb07b3cece819bfbf263795ca77fc6329ffcf8591e491cded752e7ce",
+  "text": "שלום,\nעלתה גרסה חדשה למערכת המשרד:\n• יצירת מסמכים מתבניות Word עם פרטי הלקוח והתיק, תצוגה מקדימה והכנה לחתימה.\n• הגדרת מסמכים וחבילות חתימה לפי השלב בתיק.\n• שיפורים בהרשאות וביציבות תהליכי המסמכים.\nמומלץ לרענן את הדפדפן לטעינת העדכון.\n",
+  "actualDeploymentBasis": [
+    "ashrafessa-PRODUCTION-REF-TAG01.json",
+    "melamedlaw-PRODUCTION-REF-TAG01.json",
+    "morlevy-PRODUCTION-REF-TAG01.json"
+  ],
+  "providerNoteForOwner": "WhatsApp code shipped behind OFF controls; draft makes no live WhatsApp activation claim. No message was sent."
+}

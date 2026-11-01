@@ -1,0 +1,122 @@
+{
+  "at": "2026-10-26T13:31:34.249642+00:00",
+  "result": "PASS_ASHRAF_REVIEWED_STATIC_PUBLICATION_AND_SCOPED_ANONYMOUS_PUBLIC_SMOKE",
+  "tenant": "ashrafessa",
+  "sourceCommit": "596aa5b7eb9b40f8cd5f6927132955ff6caf2175",
+  "builtSourceCommit": "dc2bc6cf863b8817ad1797c69f20d9c33870c44a",
+  "releaseBindingSha256": "443cd8dbeddc110fb8ff15be6785910fbd5ce1ea8ec564b037cf7e496c136f9c",
+  "publisher": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/frontend/publish-word-stage03.py",
+    "sha256": "45ef254fcc730b4fdc3fe039806b6d0345711faac26a9115ae4b44085ff236bf"
+  },
+  "contract": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/frontend/publisher-ashrafessa-bound-e188261fd438-contract05.json",
+    "sha256": "2759d1d9e8a8ac1716db2f4fdeb10a790669d34fc4e3654fa4d1b04580128c98"
+  },
+  "backendVerify": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/ops/ashrafessa-verify-20261026T132634359451Z.json",
+    "sha256": "e188261fd4383f9d68cf27f3d79cd8142501bc9306561ae813d0f63f1ce20390"
+  },
+  "phaseReceipts": {
+    "checkpoint": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/frontend/ashrafessa-publisher-checkpoint-20261026T131556583617Z.json",
+      "sha256": "ae348ab851ad23f18a937f21a966b8b304638155dcca5d8f88050f8a0cb02d2e"
+    },
+    "upload": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/frontend/ashrafessa-publisher-upload-20261026T131946360462Z.json",
+      "sha256": "d5f89242a0c0952e32b4a6af0d8531bc064f9577aeeef3ea699d585b0764cd77"
+    },
+    "publish": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/frontend/ashrafessa-publisher-publish-20261026T132859991336Z.json",
+      "sha256": "c41988904eea7546dde436c079dd9fad4b03b61bac69929e7eea91a0a8a8c866"
+    },
+    "verify": {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/frontend/ashrafessa-publisher-verify-20261026T132914185317Z.json",
+      "sha256": "2d31438e88cdefc97cc7bb4ae59dc3fd2ef80518e51b678abb2d719c56e7ca1e"
+    }
+  },
+  "privateRecoveryStage": "/root/legal-word-stage-frontend-ashrafessa-20261026",
+  "privateRecoveryRetained": true,
+  "retentionReviewDate": "2026-11-02",
+  "oldChunksDeleted": 0,
+  "otherProtectedPublicFilesUnchanged": true,
+  "assetsFirstIndexLast": true,
+  "uploadedNewImmutableFiles": 20,
+  "reusedImmutableFiles": 187,
+  "actualMixedOldFrontendNewBackendProof": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/browser/ashrafessa-public/MIXED-STATE-COMPATIBILITY04.json",
+    "sha256": "cb8a276ddc262311ed694f536b244a037067c484751b50e903affa38f1cf104a"
+  },
+  "knownHistoricalCdNResponseAdditionClassification": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/browser/ashrafessa-public/mixed-old-https-html-classification03.json",
+    "sha256": "fe4793fad81c8e638b1bd2cc0eecd96e33050b9a91b16bafa94838589bb72bbb"
+  },
+  "newPublicHttpsReadback": {
+    "path": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/browser/ashrafessa-public/public-readback-published-new02.json",
+    "sha256": "83e2252cac8f743b17d0957a103f2f42be7651a0e981d266368c6381c3953591"
+  },
+  "newOriginIndexSha256": "fdc2b248851e640e7b8895129e957cdcd989d172813fc62329ad0553fc2112e9",
+  "newRawHttpsIndexSha256": "2cfb62be1ebc6ca23daef04a6b5322193cba9e61d363b26364987ab7ba388ca6",
+  "htmlQualification": "HTTPS response is exact new bound origin HTML plus only the SAME approved 367-byte whole historical Cloudflare script. Remove only those exact bytes and every origin byte matches. Raw/origin hashes remain separate; origin CAS guard unchanged.",
+  "newMainPath": "static/js/main.0fd18d40.js",
+  "newMainSha256": "7033a48f9c6f230ffd064fa20c7200058397acf1ed7276ec8ab011553981d680",
+  "desktop": {
+    "width": 1280,
+    "height": 720,
+    "scrollWidth": 1280,
+    "branding": "AshrafEssa logo/title",
+    "anonymousLoginOnly": true,
+    "consoleErrorsOrWarnings": []
+  },
+  "mobile": {
+    "width": 390,
+    "height": 844,
+    "scrollWidth": 390,
+    "branding": "AshrafEssa logo/title",
+    "anonymousLoginOnly": true,
+    "consoleErrorsOrWarnings": []
+  },
+  "httpsApiHealth": {
+    "url": "https://api-ashrafessa.mela-media.co.il/health",
+    "status": 200,
+    "json": {
+      "ok": true
+    },
+    "identityFromBoundBackendVerifyNotHealthBody": true
+  },
+  "browserFiles": {
+    "published-new-raw-https-index02.html": "2cfb62be1ebc6ca23daef04a6b5322193cba9e61d363b26364987ab7ba388ca6",
+    "published-new-desktop02.json": "db3c7fee975dae51e1dbb274a37f36c6378565089a404cd3ec22b77bfcae97c6",
+    "browser-cleanup02.json": "e1113c637ac64aa0255d7795783a2af67f6ff345ba3c3d0067bffafd4cc8b1ce",
+    "published-new-mobile02.png": "7c7f02fef806a2e94850c549a20aeab8766f527284fb3191a30f552ba9bc3a1c",
+    "published-new-mobile02.json": "bc75c01be5adb96c2e22822859cdcb731b4eefc40d1fb9c145ba2a9f5f4b34cc",
+    "published-new-desktop02.png": "9ccd1861d1696ed98d950c1dade2401e9f1f0aaf08368b28be4fcfd166900712",
+    "public-readback-published-new02.json": "83e2252cac8f743b17d0957a103f2f42be7651a0e981d266368c6381c3953591"
+  },
+  "initialFailuresRetained": [
+    {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/frontend/ashrafessa-publisher-checkpoint-20261026T130629600217Z.json",
+      "sha256": "293e974848ba82157e718c50136c698d02b74274a739a45b59bd22e9d05fe97f"
+    },
+    {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/browser/ashrafessa-public/public-readback-mixed-old01.json",
+      "sha256": "fa2b172c0ed4ad6e872ed8ccc7fcb517e1475c5c362c7e57b82e2ccfc6e3fda7"
+    },
+    {
+      "path": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/browser/ashrafessa-public/mixed-old-https-html-diagnostic02.json",
+      "sha256": "39453f92e95a2a9e8050e25cfcf8f271a9786e3b700b41b8c8f4ac6e9632c4bf"
+    }
+  ],
+  "cleanup": {
+    "at": "2026-10-26T13:30:40.436Z",
+    "ownedTabClosed": true,
+    "viewportReset": true,
+    "noInputEnteredOrSubmitted": true
+  },
+  "limits": [
+    "Public bootstrap/readiness only; no authenticated customer/Word/stage operation tested on production.",
+    "No OTP/login/messages/payment/signature/customer action, no provider or security/CDN setting change.",
+    "No Git client branch/tag operation by this worker; root owns those.",
+    "No other customer public phase executed."
+  ]
+}
