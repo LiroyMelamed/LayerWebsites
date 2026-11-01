@@ -1,4 +1,5 @@
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import PlatformSettingsScreen from './PlatformSettingsScreen';
 import platformSettingsApi from '../../api/platformSettingsApi';
@@ -38,7 +39,7 @@ beforeEach(() => {
     platformSettingsApi.updateSettings.mockResolvedValue({ status: 200, data: { count: 4 } });
 });
 async function openContractorTab() {
-    render(<PlatformSettingsScreen />);
+    render(<MemoryRouter><PlatformSettingsScreen /></MemoryRouter>);
     await waitFor(() => expect(platformSettingsApi.getAll).toHaveBeenCalled());
     fireEvent.click(screen.getByRole('button', { name: /מעקב קבלנים/ }));
     return screen.findByRole('checkbox', { name: 'אתרי בנייה פעילים מעקב פעיל' });
@@ -56,7 +57,7 @@ test('four real active-sites controls have visible-label names and recipient/sum
 
 test('contractor mobile button retains its category name when the visual text is hidden', async () => {
     useScreenSize.mockReturnValue({ isSmallScreen: true });
-    render(<PlatformSettingsScreen />);
+    render(<MemoryRouter><PlatformSettingsScreen /></MemoryRouter>);
     await waitFor(() => expect(platformSettingsApi.getAll).toHaveBeenCalled());
     const tab = screen.getByRole('button', { name: /מעקב קבלנים/ });
     fireEvent.click(tab);
