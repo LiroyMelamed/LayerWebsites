@@ -1,7 +1,7 @@
 {
-  "atUtc": "2026-11-01T22:45:35.621412+00:00",
+  "atUtc": "2026-11-01T22:50:46.397770+00:00",
   "tenant": "MorLevi",
-  "currentCandidate": "af9e8c50e5a5714f6ba4e04d83a71580ee676583",
+  "currentCandidate": "b05d66f9f7873753e520c554f4b2c1c540e6682b",
   "nodeVersion": "v24.14.0",
   "importScope": {
     "parsedFrontendSourceFiles": 485,
@@ -61,7 +61,7 @@
       "label": "frontend",
       "receiptSha256": "8dfb5cb805a8bbde7e3ffa2967a012e9daaab92466635e8fbb8ae17455fea44b",
       "oldSourceCandidate": "3217781317b54b3143d8bfba29475f2ab42485bd",
-      "currentCandidate": "af9e8c50e5a5714f6ba4e04d83a71580ee676583",
+      "currentCandidate": "b05d66f9f7873753e520c554f4b2c1c540e6682b",
       "receiptPassed": true,
       "receiptSourceStable": true,
       "allTrackedFrontendAndScriptsInputCount": 865,
@@ -162,7 +162,7 @@
       "label": "build",
       "receiptSha256": "981a87172b447ae2ed50e86eb9e1e66c2c9e316c656351920b88d3f4bda444b5",
       "oldSourceCandidate": "3217781317b54b3143d8bfba29475f2ab42485bd",
-      "currentCandidate": "af9e8c50e5a5714f6ba4e04d83a71580ee676583",
+      "currentCandidate": "b05d66f9f7873753e520c554f4b2c1c540e6682b",
       "receiptPassed": true,
       "receiptSourceStable": true,
       "allTrackedFrontendAndScriptsInputCount": 865,

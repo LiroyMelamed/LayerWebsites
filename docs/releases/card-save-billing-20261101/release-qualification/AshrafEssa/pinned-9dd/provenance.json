@@ -1,0 +1,24 @@
+{
+  "tenant": "AshrafEssa",
+  "recordedAtUtc": "2026-11-01T22:31:58.072499+00:00",
+  "branch": "codex/billing-final-ashraf-20261101",
+  "base": "bc964428a38bfa63a62b3ef6a5782c9b2e86d28a",
+  "donor": "9dd9cb3607ee79434fcfb1aed5a40773e5713789",
+  "mergeCandidate": "7309eb636748a8081bbe159053bfba710ffd9bc0",
+  "mergeParents": [
+    "bc964428a38bfa63a62b3ef6a5782c9b2e86d28a",
+    "9dd9cb3607ee79434fcfb1aed5a40773e5713789"
+  ],
+  "sharedMain": "9f01a42dcf85ec36a1e4a6d980c86f44e1eab5e9",
+  "qualificationRunnerSha256": "b4e1e3bea91a47c78359bc9d0a8d891ab9b5d65726e0f03fb10f35054fceea1e",
+  "conflicts": [],
+  "runtimeEditsAfterMerge": false,
+  "network": "native offline backend guard; OS deny-network frontend/build",
+  "customerDatabaseAccess": false,
+  "actualPostgresFixture": false,
+  "providerCalls": "synthetic only",
+  "customerStateMutations": false,
+  "liveConfigurationChanges": false,
+  "pushOrDeployment": false,
+  "waivedPeriodPolicy": "Owner-waived periods were preserved; customer-specific evidence stays private outside Git."
+}

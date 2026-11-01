@@ -1,0 +1,53 @@
+{
+  "parsedFrontendSourceFiles": 488,
+  "parserErrors": [],
+  "directBackendImports": [
+    {
+      "file": "frontend/src/screens/signingScreen/word/wordAuthoringSelection.test.js",
+      "line": 158,
+      "method": "require",
+      "specifier": "../../../../../backend/lib/wordTemplates",
+      "resolved": "backend/lib/wordTemplates/index.js"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/word/wordAuthoringSelection.test.js",
+      "line": 159,
+      "method": "require",
+      "specifier": "../../../../../backend/lib/wordTemplates/visual",
+      "resolved": "backend/lib/wordTemplates/visual.js"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/word/wordAuthoringSelection.test.js",
+      "line": 160,
+      "method": "require",
+      "specifier": "../../../../../backend/lib/wordTemplates/zip",
+      "resolved": "backend/lib/wordTemplates/zip.js"
+    },
+    {
+      "file": "frontend/src/screens/signingScreen/word/wordAuthoringSelection.test.js",
+      "line": 205,
+      "method": "require",
+      "specifier": "../../../../../backend/lib/wordTemplates/visual",
+      "resolved": "backend/lib/wordTemplates/visual.js"
+    }
+  ],
+  "reviewedDynamicImports": [
+    {
+      "file": "frontend/src/components/billing/SystemMessageConsent.test.js",
+      "line": 11,
+      "expression": "require('../../i18n/locales/' + mockLanguage + '.json')"
+    }
+  ],
+  "conservativeBackendHelperPaths": [
+    "backend/lib/wordTemplates/README.md",
+    "backend/lib/wordTemplates/catalog.js",
+    "backend/lib/wordTemplates/clientValues.js",
+    "backend/lib/wordTemplates/converter.js",
+    "backend/lib/wordTemplates/errors.js",
+    "backend/lib/wordTemplates/index.js",
+    "backend/lib/wordTemplates/pdfWorker.cjs",
+    "backend/lib/wordTemplates/visual.js",
+    "backend/lib/wordTemplates/zip.js",
+    "backend/utils/clientProfile.js"
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "base": "bc964428a38bfa63a62b3ef6a5782c9b2e86d28a",
+  "candidate": "7309eb636748a8081bbe159053bfba710ffd9bc0",
+  "paths": [
+    {
+      "path": "frontend/src/components/specializedComponents/signFiles/SignatureCanvas.js",
+      "sha256": "a24c23bd80d6d00b3f470c3cb6d74f00b9f34a8d3173f5b1bc2732603f48f2c2",
+      "equalClientBase": true,
+      "equalDonor": true
+    },
+    {
+      "path": "frontend/src/screens/mainScreen/components/ClientPopUp.documentProfile.test.js",
+      "sha256": "e5305d4aa77d31dbc571a9e76b31a8ee523d8a2fde2e3555fa4a2f12f823e123",
+      "equalClientBase": true,
+      "equalDonor": true
+    },
+    {
+      "path": "frontend/src/screens/mainScreen/components/ClientPopUp.js",
+      "sha256": "3a90f31b2c0d7da4771d6e8d437b9042c7e64047387379257db8de67395d0150",
+      "equalClientBase": true,
+      "equalDonor": true
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/publicV2/SignatureCanvas.packages.test.js",
+      "sha256": "36847dc1deb344ea6f0246e82bf19353a8f1655dcfaaddd92bcb66f77b1af104",
+      "equalClientBase": true,
+      "equalDonor": true
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/templates/CaseStageAutomationPanel.js",
+      "sha256": "4ff62eb1b2de651bdc59408d8b500e5551052d7de20b63ce9cce002ace7081ef",
+      "equalClientBase": true,
+      "equalDonor": true
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/templates/CaseStageAutomationPanel.test.js",
+      "sha256": "cb1cc70e277c708b47551e084c1aca55b9910c0f7d69d358490332db130d4a91",
+      "equalClientBase": true,
+      "equalDonor": true
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js",
+      "sha256": "c88848992d94649c879f525b9f5ad5db395f432b20805e5ca7bfefcb119b0e85",
+      "equalClientBase": true,
+      "equalDonor": true
+    },
+    {
+      "path": "frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.test.js",
+      "sha256": "851009c1302ab7c24ec47ca1d78a666f5cfc4f357a30208afa374361cd2acfdb",
+      "equalClientBase": true,
+      "equalDonor": true
+    }
+  ],
+  "allEightTestAndComponentFilesUnchanged": true,
+  "diagnosis": "Source identity only; this does not establish root cause, baseline failure or passing acceptance."
+}

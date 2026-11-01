@@ -1,0 +1,67 @@
+{
+  "candidate": "b05d66f9f7873753e520c554f4b2c1c540e6682b",
+  "originalClientBase": "f5220552918507a8b34b30cb7fb0cc41f3f0710b",
+  "latestClientCutoff": "586f93e5ac5148ba5ec0059cb5430ebbc4e92e6c",
+  "mainCutoff": "074df7520497a0cd6bd95ad70353201c905f0aa6",
+  "latestClientIsAncestor": true,
+  "changedApplicationPaths": [
+    {
+      "path": "backend/lib/qaOutboundNoop.js",
+      "latestClientSha256": "b9fbbd8d2ea1a676e381a3d549f916d29fb36e4dbb414c9e78b0f50ff7e89a40",
+      "candidateSha256": "b9fbbd8d2ea1a676e381a3d549f916d29fb36e4dbb414c9e78b0f50ff7e89a40",
+      "mainCutoffSha256": "b9fbbd8d2ea1a676e381a3d549f916d29fb36e4dbb414c9e78b0f50ff7e89a40",
+      "exactLatestClient": true,
+      "latestClientMatchesMain": true
+    },
+    {
+      "path": "backend/services/notifications/notificationOrchestrator.js",
+      "latestClientSha256": "6ff44e7c951907c273e7df4a981297880df6180cf799f8e1951cd9008ba8efcf",
+      "candidateSha256": "6ff44e7c951907c273e7df4a981297880df6180cf799f8e1951cd9008ba8efcf",
+      "mainCutoffSha256": "6ff44e7c951907c273e7df4a981297880df6180cf799f8e1951cd9008ba8efcf",
+      "exactLatestClient": true,
+      "latestClientMatchesMain": true
+    },
+    {
+      "path": "backend/services/signingV2/runtime.js",
+      "latestClientSha256": "7ae7721347313e46a7036c5bbfe098b516bebd862ba89913e50821f12e5a3d70",
+      "candidateSha256": "7ae7721347313e46a7036c5bbfe098b516bebd862ba89913e50821f12e5a3d70",
+      "mainCutoffSha256": "7ae7721347313e46a7036c5bbfe098b516bebd862ba89913e50821f12e5a3d70",
+      "exactLatestClient": true,
+      "latestClientMatchesMain": true
+    },
+    {
+      "path": "backend/tests/qaOutboundNoop.recovery.test.js",
+      "latestClientSha256": "19130f115f8ba9aedbe38188aea1b0056e9da5f661d1b9bca06cc22bb6bed0a5",
+      "candidateSha256": "19130f115f8ba9aedbe38188aea1b0056e9da5f661d1b9bca06cc22bb6bed0a5",
+      "mainCutoffSha256": "19130f115f8ba9aedbe38188aea1b0056e9da5f661d1b9bca06cc22bb6bed0a5",
+      "exactLatestClient": true,
+      "latestClientMatchesMain": true
+    },
+    {
+      "path": "backend/tests/signingV2.completedCopyNotification.test.js",
+      "latestClientSha256": "acdbb06ecbcacfa2dc816e0bee7013a43954cc41ca6a77fb0edd25753a8f0160",
+      "candidateSha256": "acdbb06ecbcacfa2dc816e0bee7013a43954cc41ca6a77fb0edd25753a8f0160",
+      "mainCutoffSha256": "acdbb06ecbcacfa2dc816e0bee7013a43954cc41ca6a77fb0edd25753a8f0160",
+      "exactLatestClient": true,
+      "latestClientMatchesMain": true
+    },
+    {
+      "path": "backend/tests/signingV2.transportOutcomes.test.js",
+      "latestClientSha256": "cba592d33f04a94c345bb6ab6a56ad1060f7e4bfdd59ad878ce4b5e4166fc874",
+      "candidateSha256": "cba592d33f04a94c345bb6ab6a56ad1060f7e4bfdd59ad878ce4b5e4166fc874",
+      "mainCutoffSha256": "cba592d33f04a94c345bb6ab6a56ad1060f7e4bfdd59ad878ce4b5e4166fc874",
+      "exactLatestClient": true,
+      "latestClientMatchesMain": true
+    },
+    {
+      "path": "backend/utils/smooveEmailCampaignService.js",
+      "latestClientSha256": "914d7cc12e2ff11e7c433fd8911377ed059801679eacdece59f099ccab3101e2",
+      "candidateSha256": "914d7cc12e2ff11e7c433fd8911377ed059801679eacdece59f099ccab3101e2",
+      "mainCutoffSha256": "914d7cc12e2ff11e7c433fd8911377ed059801679eacdece59f099ccab3101e2",
+      "exactLatestClient": true,
+      "latestClientMatchesMain": true
+    }
+  ],
+  "allMatch": true,
+  "policy": "Fixed authorized cutoff only; subsequent upstream drift is HOLD, not an instruction to chase."
+}

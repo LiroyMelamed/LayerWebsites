@@ -1,7 +1,8 @@
 {
-  "candidate": "af9e8c50e5a5714f6ba4e04d83a71580ee676583",
-  "donor": "6fab2887d056262cf52ddb773a377e5ad804f0d7",
+  "candidate": "b05d66f9f7873753e520c554f4b2c1c540e6682b",
+  "donor": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
   "donorDiffBase": "9f01a42dcf85ec36a1e4a6d980c86f44e1eab5e9",
+  "cutoffMain": "074df7520497a0cd6bd95ad70353201c905f0aa6",
   "sourcePaths": [
     {
       "path": "backend/controllers/billingController.js",
@@ -59,8 +60,8 @@
     },
     {
       "path": "backend/lib/qaOutboundNoop.js",
-      "donorSha256": "e0f503dd43784fa85ea9379d3d9630c64872a668dc2461a613ce5b8dbd0efd00",
-      "candidateSha256": "e0f503dd43784fa85ea9379d3d9630c64872a668dc2461a613ce5b8dbd0efd00",
+      "donorSha256": "b9fbbd8d2ea1a676e381a3d549f916d29fb36e4dbb414c9e78b0f50ff7e89a40",
+      "candidateSha256": "b9fbbd8d2ea1a676e381a3d549f916d29fb36e4dbb414c9e78b0f50ff7e89a40",
       "exact": true
     },
     {
@@ -125,8 +126,8 @@
     },
     {
       "path": "backend/tests/qaOutboundNoop.recovery.test.js",
-      "donorSha256": "e11423a39b07038515285ca86d334191390ccdd923cecc83c385b23d3e17da18",
-      "candidateSha256": "e11423a39b07038515285ca86d334191390ccdd923cecc83c385b23d3e17da18",
+      "donorSha256": "19130f115f8ba9aedbe38188aea1b0056e9da5f661d1b9bca06cc22bb6bed0a5",
+      "candidateSha256": "19130f115f8ba9aedbe38188aea1b0056e9da5f661d1b9bca06cc22bb6bed0a5",
       "exact": true
     },
     {

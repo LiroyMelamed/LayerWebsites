@@ -1,0 +1,12 @@
+{
+  "atUtc": "2026-11-01T22:52:48.084092+00:00",
+  "cluster": "/tmp/layer-billing-pg.dJ0RrF/data",
+  "startExitCode": 0,
+  "stopExitCode": 0,
+  "statusExitCode": 3,
+  "statusOutput": "pg_ctl: no server running",
+  "listenerCheckExitCode": 1,
+  "listenerOutputEmpty": true,
+  "newClusterDatabaseRoleOrAccessCreated": false,
+  "otherClustersTouched": false
+}

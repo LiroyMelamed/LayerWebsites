@@ -1,10 +1,10 @@
 {
-  "atUtc": "2026-11-01T22:46:57.369134+00:00",
+  "atUtc": "2026-11-01T22:55:40.214920+00:00",
   "tenant": "Melamedia",
-  "qualifiedRuntimeCommit": "19b283433cf8774e2bdd697568e8065a2bcaa1ba",
-  "currentSharedMain": "4917ca1a3d25e4224bd64fa8c05048285c0741dd",
-  "currentClientBaseline": "1d61825c2fac7503f5cf7f25ff3543cde471914d",
-  "finalDonor": "6fab2887d056262cf52ddb773a377e5ad804f0d7",
+  "qualifiedRuntimeCommit": "efe1ee371ad96bc76963ac1848076055cb83066b",
+  "currentSharedMain": "074df7520497a0cd6bd95ad70353201c905f0aa6",
+  "currentClientBaseline": "545779e4b99e111959f4684167dfdf46da1f3186",
+  "finalDonor": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
   "backend": {
     "billing-and-gate": {
       "tests": 218,
@@ -63,6 +63,8 @@
     "with-build-lock.py": "02187bcd053957d63c496d2ce4201071897a000fa3797c5fa2fb256502ac55da",
     "prove-frontend-carry.py": "2e7d24e5c33afae524adb156a00bb7e328b3003e27fcc7a2d77edfac1467267b",
     "qualify-final-client.py": "ac81af37700db43dd10511eff9723b4aa9c941b262ed2d6beca973a979589a99",
+    "verify-final-preservation.py": "918b1e8def7af5b9824da04884750fbeeb77e4941be96b7ba000f076906952a0",
     "inspect-frontend-imports.cjs": "a5b5406411230dee6601c6fa85e236183747c496e516bd14a1a72a910a617bd4"
-  }
+  },
+  "cutoffPolicy": "Snapshot074 at2026-11-01T22:47:52Z. Later remote movement is a release hold and is not qualified; do not chase it."
 }

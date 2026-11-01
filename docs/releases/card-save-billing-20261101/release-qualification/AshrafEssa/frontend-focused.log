@@ -1,0 +1,1029 @@
+LOCAL_BUILD_LOCK_WAIT 2026-11-01T22:36:57.859203+00:00
+LOCAL_BUILD_LOCK_ACQUIRED 2026-11-01T22:42:01.952056+00:00
+PASS src/screens/signingScreen/templates/CaseStageAutomationPanel.test.js (5.74 s)
+  ● Console
+
+    console.info
+      🌐 i18next is made possible by our own product, Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+
+      at I18n.init (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/i18next/dist/cjs/i18next.js:1781:90)
+
+    console.error
+      Warning: `ReactDOMTestUtils.act` is deprecated in favor of `React.act`. Import `act` from `react` instead of `react-dom/test-utils`. See https://react.dev/warnings/react-dom-test-utils for more info.
+
+    [0m [90m 53 |[39m     [36mconst[39m api [33m=[39m { list[33m:[39m jest[33m.[39mfn()[33m.[39mmockResolvedValue(data)[33m,[39m preview[33m:[39m jest[33m.[39mfn()[33m.[39mmockResolvedValue(valid())[33m,[39m save[33m:[39m jest[33m.[39mfn()[33m.[39mmockResolvedValue({})[33m,[39m retry[33m:[39m jest[33m.[39mfn()[33m.[39mmockResolvedValue({})[33m,[39m [33m...[39moverrides }[33m;[39m
+     [90m 54 |[39m     [36mconst[39m packagesApi [33m=[39m { templates[33m:[39m jest[33m.[39mfn()[33m.[39mmockResolvedValue({ templates[33m:[39m [template] })[33m,[39m caseContext[33m:[39m jest[33m.[39mfn()[33m.[39mmockResolvedValue({ people[33m:[39m contacts })[33m,[39m create[33m:[39m jest[33m.[39mfn() }[33m;[39m
+    [31m[1m>[22m[39m[90m 55 |[39m     [36mconst[39m view [33m=[39m render([33m<[39m[33mI18nextProvider[39m i18n[33m=[39m{i18n}[33m>[39m
+     [90m    |[39m                        [31m[1m^[22m[39m
+     [90m 56 |[39m         [33m<[39m[33mCaseStageAutomationPanel[39m key[33m=[39m[32m"case-41"[39m caseId[33m=[39m{[35m41[39m} canEdit[33m=[39m{canEdit} initiallyOpen api[33m=[39m{api} packagesApi[33m=[39m{packagesApi} [33m/[39m[33m>[39m
+     [90m 57 |[39m     [33m<[39m[33m/[39m[33mI18nextProvider[39m[33m>[39m)[33m;[39m
+     [90m 58 |[39m     [36mawait[39m screen[33m.[39mfindByRole([32m'heading'[39m[33m,[39m { name[33m:[39m [35m/Saved court filing/[39m })[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:71:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:45:7)
+      at actWithWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:1736:7)
+      at ../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@testing-library/react/dist/act-compat.js:63:25
+      at renderRoot (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@testing-library/react/dist/pure.js:159:26)
+      at render (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@testing-library/react/dist/pure.js:246:10)
+      at setup (src/screens/signingScreen/templates/CaseStageAutomationPanel.test.js:55:24)
+      at src/screens/signingScreen/templates/CaseStageAutomationPanel.test.js:84:40
+
+PASS src/screens/signingScreen/templates/SigningPackagesWorkspace.test.js (6.385 s)
+  ● Console
+
+    console.info
+      🌐 i18next is made possible by our own product, Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+
+      at I18n.init (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/i18next/dist/cjs/i18next.js:1781:90)
+
+    console.error
+      Warning: `ReactDOMTestUtils.act` is deprecated in favor of `React.act`. Import `act` from `react` instead of `react-dom/test-utils`. See https://react.dev/warnings/react-dom-test-utils for more info.
+
+    [0m [90m 45 |[39m     [36mconst[39m i18n [33m=[39m [36mawait[39m translations([32m'en'[39m)[33m,[39m { api } [33m=[39m fixture()[33m;[39m
+     [90m 46 |[39m     [36mconst[39m onClearFocus [33m=[39m jest[33m.[39mfn()[33m;[39m
+    [31m[1m>[22m[39m[90m 47 |[39m     render([33m<[39m[33mI18nextProvider[39m i18n[33m=[39m{i18n}[33m>[39m[33m<[39m[33mSigningPackagesWorkspace[39m api[33m=[39m{api} initialSubmissionId[33m=[39m[32m"send-1"[39m onClearFocus[33m=[39m{onClearFocus} [33m/[39m[33m>[39m[33m<[39m[33m/[39m[33mI18nextProvider[39m[33m>[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 48 |[39m     [36mawait[39m screen[33m.[39mfindByText([32m'Employee 001'[39m)[33m;[39m
+     [90m 49 |[39m     expect(api[33m.[39mlist)[33m.[39mtoHaveBeenCalledWith(expect[33m.[39mobjectContaining({ state[33m:[39m [32m'all'[39m[33m,[39m submissionId[33m:[39m [32m'send-1'[39m })[33m,[39m expect[33m.[39many([33mObject[39m))[33m;[39m
+     [90m 50 |[39m     expect(screen[33m.[39mgetByRole([32m'button'[39m[33m,[39m { name[33m:[39m [35m/October employees/[39m }))[33m.[39mtoHaveAttribute([32m'aria-expanded'[39m[33m,[39m [32m'true'[39m)[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:71:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:45:7)
+      at actWithWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:1736:7)
+      at ../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@testing-library/react/dist/act-compat.js:63:25
+      at renderRoot (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@testing-library/react/dist/pure.js:159:26)
+      at render (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@testing-library/react/dist/pure.js:246:10)
+      at Object.<anonymous> (src/screens/signingScreen/templates/SigningPackagesWorkspace.test.js:47:11)
+
+    console.error
+      Warning: An update to SigningPackagesWorkspace inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 56 |[39m             [36mtry[39m {
+     [90m 57 |[39m                 [36mconst[39m next [33m=[39m [36mawait[39m loadRef[33m.[39mcurrent({ signal[33m:[39m controller[33m.[39msignal })[33m;[39m
+    [31m[1m>[22m[39m[90m 58 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence) { setData(next)[33m;[39m setError([36mnull[39m)[33m;[39m }
+     [90m    |[39m                                                          [31m[1m^[22m[39m
+     [90m 59 |[39m             } [36mcatch[39m (failure) {
+     [90m 60 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence [33m&&[39m [33m![39mcontroller[33m.[39msignal[33m.[39maborted) {
+     [90m 61 |[39m                     [36mif[39m (privateAccessError(failure)) setData(emptyResource())[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setData (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at refresh (src/screens/signingScreen/templates/SigningPackagesWorkspace.js:58:58)
+
+    console.error
+      Warning: An update to SigningPackagesWorkspace inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 56 |[39m             [36mtry[39m {
+     [90m 57 |[39m                 [36mconst[39m next [33m=[39m [36mawait[39m loadRef[33m.[39mcurrent({ signal[33m:[39m controller[33m.[39msignal })[33m;[39m
+    [31m[1m>[22m[39m[90m 58 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence) { setData(next)[33m;[39m setError([36mnull[39m)[33m;[39m }
+     [90m    |[39m                                                                         [31m[1m^[22m[39m
+     [90m 59 |[39m             } [36mcatch[39m (failure) {
+     [90m 60 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence [33m&&[39m [33m![39mcontroller[33m.[39msignal[33m.[39maborted) {
+     [90m 61 |[39m                     [36mif[39m (privateAccessError(failure)) setData(emptyResource())[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setError (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at refresh (src/screens/signingScreen/templates/SigningPackagesWorkspace.js:58:73)
+
+    console.error
+      Warning: An update to SigningPackagesWorkspace inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 64 |[39m             } [36mfinally[39m {
+     [90m 65 |[39m                 controllers[33m.[39m[36mdelete[39m(controller)[33m;[39m
+    [31m[1m>[22m[39m[90m 66 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence) setBusy([36mfalse[39m)[33m;[39m
+     [90m    |[39m                                                        [31m[1m^[22m[39m
+     [90m 67 |[39m             }
+     [90m 68 |[39m         }[33m;[39m
+     [90m 69 |[39m         refresh([36mtrue[39m)[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setBusy (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at refresh (src/screens/signingScreen/templates/SigningPackagesWorkspace.js:66:56)
+
+    console.error
+      Warning: An update to PackagePanel inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at PackagePanel (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:197:25)
+          at section
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 56 |[39m             [36mtry[39m {
+     [90m 57 |[39m                 [36mconst[39m next [33m=[39m [36mawait[39m loadRef[33m.[39mcurrent({ signal[33m:[39m controller[33m.[39msignal })[33m;[39m
+    [31m[1m>[22m[39m[90m 58 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence) { setData(next)[33m;[39m setError([36mnull[39m)[33m;[39m }
+     [90m    |[39m                                                          [31m[1m^[22m[39m
+     [90m 59 |[39m             } [36mcatch[39m (failure) {
+     [90m 60 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence [33m&&[39m [33m![39mcontroller[33m.[39msignal[33m.[39maborted) {
+     [90m 61 |[39m                     [36mif[39m (privateAccessError(failure)) setData(emptyResource())[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setData (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at refresh (src/screens/signingScreen/templates/SigningPackagesWorkspace.js:58:58)
+
+    console.error
+      Warning: An update to PackagePanel inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at PackagePanel (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:197:25)
+          at section
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 56 |[39m             [36mtry[39m {
+     [90m 57 |[39m                 [36mconst[39m next [33m=[39m [36mawait[39m loadRef[33m.[39mcurrent({ signal[33m:[39m controller[33m.[39msignal })[33m;[39m
+    [31m[1m>[22m[39m[90m 58 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence) { setData(next)[33m;[39m setError([36mnull[39m)[33m;[39m }
+     [90m    |[39m                                                                         [31m[1m^[22m[39m
+     [90m 59 |[39m             } [36mcatch[39m (failure) {
+     [90m 60 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence [33m&&[39m [33m![39mcontroller[33m.[39msignal[33m.[39maborted) {
+     [90m 61 |[39m                     [36mif[39m (privateAccessError(failure)) setData(emptyResource())[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setError (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at refresh (src/screens/signingScreen/templates/SigningPackagesWorkspace.js:58:73)
+
+    console.error
+      Warning: An update to PackagePanel inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at PackagePanel (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:197:25)
+          at section
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 64 |[39m             } [36mfinally[39m {
+     [90m 65 |[39m                 controllers[33m.[39m[36mdelete[39m(controller)[33m;[39m
+    [31m[1m>[22m[39m[90m 66 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence) setBusy([36mfalse[39m)[33m;[39m
+     [90m    |[39m                                                        [31m[1m^[22m[39m
+     [90m 67 |[39m             }
+     [90m 68 |[39m         }[33m;[39m
+     [90m 69 |[39m         refresh([36mtrue[39m)[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setBusy (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at refresh (src/screens/signingScreen/templates/SigningPackagesWorkspace.js:66:56)
+
+    console.error
+      Warning: An update to PackagePanel inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at PackagePanel (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:197:25)
+          at section
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 56 |[39m             [36mtry[39m {
+     [90m 57 |[39m                 [36mconst[39m next [33m=[39m [36mawait[39m loadRef[33m.[39mcurrent({ signal[33m:[39m controller[33m.[39msignal })[33m;[39m
+    [31m[1m>[22m[39m[90m 58 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence) { setData(next)[33m;[39m setError([36mnull[39m)[33m;[39m }
+     [90m    |[39m                                                          [31m[1m^[22m[39m
+     [90m 59 |[39m             } [36mcatch[39m (failure) {
+     [90m 60 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence [33m&&[39m [33m![39mcontroller[33m.[39msignal[33m.[39maborted) {
+     [90m 61 |[39m                     [36mif[39m (privateAccessError(failure)) setData(emptyResource())[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setData (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at refresh (src/screens/signingScreen/templates/SigningPackagesWorkspace.js:58:58)
+
+    console.error
+      Warning: An update to PackagePanel inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at PackagePanel (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:197:25)
+          at section
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 56 |[39m             [36mtry[39m {
+     [90m 57 |[39m                 [36mconst[39m next [33m=[39m [36mawait[39m loadRef[33m.[39mcurrent({ signal[33m:[39m controller[33m.[39msignal })[33m;[39m
+    [31m[1m>[22m[39m[90m 58 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence) { setData(next)[33m;[39m setError([36mnull[39m)[33m;[39m }
+     [90m    |[39m                                                                         [31m[1m^[22m[39m
+     [90m 59 |[39m             } [36mcatch[39m (failure) {
+     [90m 60 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence [33m&&[39m [33m![39mcontroller[33m.[39msignal[33m.[39maborted) {
+     [90m 61 |[39m                     [36mif[39m (privateAccessError(failure)) setData(emptyResource())[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setError (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at refresh (src/screens/signingScreen/templates/SigningPackagesWorkspace.js:58:73)
+
+    console.error
+      Warning: An update to PackagePanel inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at PackagePanel (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:197:25)
+          at section
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 64 |[39m             } [36mfinally[39m {
+     [90m 65 |[39m                 controllers[33m.[39m[36mdelete[39m(controller)[33m;[39m
+    [31m[1m>[22m[39m[90m 66 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence) setBusy([36mfalse[39m)[33m;[39m
+     [90m    |[39m                                                        [31m[1m^[22m[39m
+     [90m 67 |[39m             }
+     [90m 68 |[39m         }[33m;[39m
+     [90m 69 |[39m         refresh([36mtrue[39m)[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setBusy (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at refresh (src/screens/signingScreen/templates/SigningPackagesWorkspace.js:66:56)
+
+    console.error
+      Warning: An update to PackagePanel inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at PackagePanel (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:197:25)
+          at section
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 56 |[39m             [36mtry[39m {
+     [90m 57 |[39m                 [36mconst[39m next [33m=[39m [36mawait[39m loadRef[33m.[39mcurrent({ signal[33m:[39m controller[33m.[39msignal })[33m;[39m
+    [31m[1m>[22m[39m[90m 58 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence) { setData(next)[33m;[39m setError([36mnull[39m)[33m;[39m }
+     [90m    |[39m                                                          [31m[1m^[22m[39m
+     [90m 59 |[39m             } [36mcatch[39m (failure) {
+     [90m 60 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence [33m&&[39m [33m![39mcontroller[33m.[39msignal[33m.[39maborted) {
+     [90m 61 |[39m                     [36mif[39m (privateAccessError(failure)) setData(emptyResource())[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setData (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at refresh (src/screens/signingScreen/templates/SigningPackagesWorkspace.js:58:58)
+
+    console.error
+      Warning: An update to PackagePanel inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at PackagePanel (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:197:25)
+          at section
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 56 |[39m             [36mtry[39m {
+     [90m 57 |[39m                 [36mconst[39m next [33m=[39m [36mawait[39m loadRef[33m.[39mcurrent({ signal[33m:[39m controller[33m.[39msignal })[33m;[39m
+    [31m[1m>[22m[39m[90m 58 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence) { setData(next)[33m;[39m setError([36mnull[39m)[33m;[39m }
+     [90m    |[39m                                                                         [31m[1m^[22m[39m
+     [90m 59 |[39m             } [36mcatch[39m (failure) {
+     [90m 60 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence [33m&&[39m [33m![39mcontroller[33m.[39msignal[33m.[39maborted) {
+     [90m 61 |[39m                     [36mif[39m (privateAccessError(failure)) setData(emptyResource())[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setError (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at refresh (src/screens/signingScreen/templates/SigningPackagesWorkspace.js:58:73)
+
+    console.error
+      Warning: An update to PackagePanel inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at PackagePanel (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:197:25)
+          at section
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 64 |[39m             } [36mfinally[39m {
+     [90m 65 |[39m                 controllers[33m.[39m[36mdelete[39m(controller)[33m;[39m
+    [31m[1m>[22m[39m[90m 66 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence) setBusy([36mfalse[39m)[33m;[39m
+     [90m    |[39m                                                        [31m[1m^[22m[39m
+     [90m 67 |[39m             }
+     [90m 68 |[39m         }[33m;[39m
+     [90m 69 |[39m         refresh([36mtrue[39m)[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setBusy (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at refresh (src/screens/signingScreen/templates/SigningPackagesWorkspace.js:66:56)
+
+    console.error
+      Warning: An update to ParticipantActionDialog inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at ParticipantActionDialog (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/ParticipantActionDialog.js:26:51)
+          at dialog
+          at PackagePanel (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:197:25)
+          at section
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 75 |[39m         [36mtry[39m {
+     [90m 76 |[39m             [36mconst[39m result [33m=[39m [36mawait[39m api[33m.[39mexecuteAction(packageId[33m,[39m personId[33m,[39m { [33m...[39mactionInput()[33m,[39m previewHash[33m:[39m preview[33m.[39mpreviewHash }[33m,[39m key[33m.[39mcurrent)[33m;[39m
+    [31m[1m>[22m[39m[90m 77 |[39m             setOperation(result)[33m;[39m setPhase([32m'sent'[39m)[33m;[39m
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 78 |[39m         } [36mcatch[39m (failure) {
+     [90m 79 |[39m             setError(failure)[33m;[39m
+     [90m 80 |[39m             [90m// A changed state is shown fresh instead of retrying a decision made on stale data.[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setOperation (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at confirm (src/screens/signingScreen/templates/ParticipantActionDialog.js:77:13)
+
+    console.error
+      Warning: An update to ParticipantActionDialog inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at ParticipantActionDialog (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/ParticipantActionDialog.js:26:51)
+          at dialog
+          at PackagePanel (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:197:25)
+          at section
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 75 |[39m         [36mtry[39m {
+     [90m 76 |[39m             [36mconst[39m result [33m=[39m [36mawait[39m api[33m.[39mexecuteAction(packageId[33m,[39m personId[33m,[39m { [33m...[39mactionInput()[33m,[39m previewHash[33m:[39m preview[33m.[39mpreviewHash }[33m,[39m key[33m.[39mcurrent)[33m;[39m
+    [31m[1m>[22m[39m[90m 77 |[39m             setOperation(result)[33m;[39m setPhase([32m'sent'[39m)[33m;[39m
+     [90m    |[39m                                   [31m[1m^[22m[39m
+     [90m 78 |[39m         } [36mcatch[39m (failure) {
+     [90m 79 |[39m             setError(failure)[33m;[39m
+     [90m 80 |[39m             [90m// A changed state is shown fresh instead of retrying a decision made on stale data.[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setPhase (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at confirm (src/screens/signingScreen/templates/ParticipantActionDialog.js:77:35)
+
+    console.error
+      Warning: An update to PackagePanel inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at PackagePanel (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:197:25)
+          at section
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 56 |[39m             [36mtry[39m {
+     [90m 57 |[39m                 [36mconst[39m next [33m=[39m [36mawait[39m loadRef[33m.[39mcurrent({ signal[33m:[39m controller[33m.[39msignal })[33m;[39m
+    [31m[1m>[22m[39m[90m 58 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence) { setData(next)[33m;[39m setError([36mnull[39m)[33m;[39m }
+     [90m    |[39m                                                          [31m[1m^[22m[39m
+     [90m 59 |[39m             } [36mcatch[39m (failure) {
+     [90m 60 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence [33m&&[39m [33m![39mcontroller[33m.[39msignal[33m.[39maborted) {
+     [90m 61 |[39m                     [36mif[39m (privateAccessError(failure)) setData(emptyResource())[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setData (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at refresh (src/screens/signingScreen/templates/SigningPackagesWorkspace.js:58:58)
+
+    console.error
+      Warning: An update to PackagePanel inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at PackagePanel (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:197:25)
+          at section
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 56 |[39m             [36mtry[39m {
+     [90m 57 |[39m                 [36mconst[39m next [33m=[39m [36mawait[39m loadRef[33m.[39mcurrent({ signal[33m:[39m controller[33m.[39msignal })[33m;[39m
+    [31m[1m>[22m[39m[90m 58 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence) { setData(next)[33m;[39m setError([36mnull[39m)[33m;[39m }
+     [90m    |[39m                                                                         [31m[1m^[22m[39m
+     [90m 59 |[39m             } [36mcatch[39m (failure) {
+     [90m 60 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence [33m&&[39m [33m![39mcontroller[33m.[39msignal[33m.[39maborted) {
+     [90m 61 |[39m                     [36mif[39m (privateAccessError(failure)) setData(emptyResource())[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setError (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at refresh (src/screens/signingScreen/templates/SigningPackagesWorkspace.js:58:73)
+
+    console.error
+      Warning: An update to PackagePanel inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at PackagePanel (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:197:25)
+          at section
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 64 |[39m             } [36mfinally[39m {
+     [90m 65 |[39m                 controllers[33m.[39m[36mdelete[39m(controller)[33m;[39m
+    [31m[1m>[22m[39m[90m 66 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence) setBusy([36mfalse[39m)[33m;[39m
+     [90m    |[39m                                                        [31m[1m^[22m[39m
+     [90m 67 |[39m             }
+     [90m 68 |[39m         }[33m;[39m
+     [90m 69 |[39m         refresh([36mtrue[39m)[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setBusy (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at refresh (src/screens/signingScreen/templates/SigningPackagesWorkspace.js:66:56)
+
+    console.error
+      Warning: An update to PackagePanel inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at PackagePanel (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:197:25)
+          at section
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 56 |[39m             [36mtry[39m {
+     [90m 57 |[39m                 [36mconst[39m next [33m=[39m [36mawait[39m loadRef[33m.[39mcurrent({ signal[33m:[39m controller[33m.[39msignal })[33m;[39m
+    [31m[1m>[22m[39m[90m 58 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence) { setData(next)[33m;[39m setError([36mnull[39m)[33m;[39m }
+     [90m    |[39m                                                          [31m[1m^[22m[39m
+     [90m 59 |[39m             } [36mcatch[39m (failure) {
+     [90m 60 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence [33m&&[39m [33m![39mcontroller[33m.[39msignal[33m.[39maborted) {
+     [90m 61 |[39m                     [36mif[39m (privateAccessError(failure)) setData(emptyResource())[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setData (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at refresh (src/screens/signingScreen/templates/SigningPackagesWorkspace.js:58:58)
+
+    console.error
+      Warning: An update to PackagePanel inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at PackagePanel (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:197:25)
+          at section
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 56 |[39m             [36mtry[39m {
+     [90m 57 |[39m                 [36mconst[39m next [33m=[39m [36mawait[39m loadRef[33m.[39mcurrent({ signal[33m:[39m controller[33m.[39msignal })[33m;[39m
+    [31m[1m>[22m[39m[90m 58 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence) { setData(next)[33m;[39m setError([36mnull[39m)[33m;[39m }
+     [90m    |[39m                                                                         [31m[1m^[22m[39m
+     [90m 59 |[39m             } [36mcatch[39m (failure) {
+     [90m 60 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence [33m&&[39m [33m![39mcontroller[33m.[39msignal[33m.[39maborted) {
+     [90m 61 |[39m                     [36mif[39m (privateAccessError(failure)) setData(emptyResource())[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setError (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at refresh (src/screens/signingScreen/templates/SigningPackagesWorkspace.js:58:73)
+
+    console.error
+      Warning: An update to PackagePanel inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at PackagePanel (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:197:25)
+          at section
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 64 |[39m             } [36mfinally[39m {
+     [90m 65 |[39m                 controllers[33m.[39m[36mdelete[39m(controller)[33m;[39m
+    [31m[1m>[22m[39m[90m 66 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence) setBusy([36mfalse[39m)[33m;[39m
+     [90m    |[39m                                                        [31m[1m^[22m[39m
+     [90m 67 |[39m             }
+     [90m 68 |[39m         }[33m;[39m
+     [90m 69 |[39m         refresh([36mtrue[39m)[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setBusy (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at refresh (src/screens/signingScreen/templates/SigningPackagesWorkspace.js:66:56)
+
+    console.error
+      Warning: An update to PackagePanel inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at PackagePanel (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:197:25)
+          at section
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 56 |[39m             [36mtry[39m {
+     [90m 57 |[39m                 [36mconst[39m next [33m=[39m [36mawait[39m loadRef[33m.[39mcurrent({ signal[33m:[39m controller[33m.[39msignal })[33m;[39m
+    [31m[1m>[22m[39m[90m 58 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence) { setData(next)[33m;[39m setError([36mnull[39m)[33m;[39m }
+     [90m    |[39m                                                          [31m[1m^[22m[39m
+     [90m 59 |[39m             } [36mcatch[39m (failure) {
+     [90m 60 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence [33m&&[39m [33m![39mcontroller[33m.[39msignal[33m.[39maborted) {
+     [90m 61 |[39m                     [36mif[39m (privateAccessError(failure)) setData(emptyResource())[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setData (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at refresh (src/screens/signingScreen/templates/SigningPackagesWorkspace.js:58:58)
+
+    console.error
+      Warning: An update to PackagePanel inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at PackagePanel (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:197:25)
+          at section
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 56 |[39m             [36mtry[39m {
+     [90m 57 |[39m                 [36mconst[39m next [33m=[39m [36mawait[39m loadRef[33m.[39mcurrent({ signal[33m:[39m controller[33m.[39msignal })[33m;[39m
+    [31m[1m>[22m[39m[90m 58 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence) { setData(next)[33m;[39m setError([36mnull[39m)[33m;[39m }
+     [90m    |[39m                                                                         [31m[1m^[22m[39m
+     [90m 59 |[39m             } [36mcatch[39m (failure) {
+     [90m 60 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence [33m&&[39m [33m![39mcontroller[33m.[39msignal[33m.[39maborted) {
+     [90m 61 |[39m                     [36mif[39m (privateAccessError(failure)) setData(emptyResource())[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setError (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at refresh (src/screens/signingScreen/templates/SigningPackagesWorkspace.js:58:73)
+
+    console.error
+      Warning: An update to PackagePanel inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at PackagePanel (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:197:25)
+          at section
+          at SigningPackagesWorkspace (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js:368:52)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+
+    [0m [90m 64 |[39m             } [36mfinally[39m {
+     [90m 65 |[39m                 controllers[33m.[39m[36mdelete[39m(controller)[33m;[39m
+    [31m[1m>[22m[39m[90m 66 |[39m                 [36mif[39m ([33m![39mdisposed [33m&&[39m request [33m===[39m sequence) setBusy([36mfalse[39m)[33m;[39m
+     [90m    |[39m                                                        [31m[1m^[22m[39m
+     [90m 67 |[39m             }
+     [90m 68 |[39m         }[33m;[39m
+     [90m 69 |[39m         refresh([36mtrue[39m)[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setBusy (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at refresh (src/screens/signingScreen/templates/SigningPackagesWorkspace.js:66:56)
+
+PASS src/screens/mainScreen/components/ClientPopUp.documentProfile.test.js
+  ● Console
+
+    console.info
+      🌐 i18next is made possible by our own product, Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+
+      at I18n.init (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/i18next/dist/cjs/i18next.js:1781:90)
+
+    console.error
+      Warning: `ReactDOMTestUtils.act` is deprecated in favor of `React.act`. Import `act` from `react` instead of `react-dom/test-utils`. See https://react.dev/warnings/react-dom-test-utils for more info.
+
+    [0m [90m 39 |[39m     i18n [33m=[39m createInstance()[33m;[39m
+     [90m 40 |[39m     [36mawait[39m i18n[33m.[39muse(initReactI18next)[33m.[39minit({ resources[33m,[39m lng[33m:[39m language[33m,[39m fallbackLng[33m:[39m [36mfalse[39m[33m,[39m interpolation[33m:[39m { escapeValue[33m:[39m [36mfalse[39m } })[33m;[39m
+    [31m[1m>[22m[39m[90m 41 |[39m     [36mreturn[39m render([33m<[39m[33mMemoryRouter[39m[33m>[39m[33m<[39m[33mI18nextProvider[39m i18n[33m=[39m{i18n}[33m>[39m[33m<[39m[33mClientPopup[39m {[33m...[39mprops} [33m/[39m[33m>[39m[33m<[39m[33m/[39m[33mI18nextProvider[39m[33m>[39m[33m<[39m[33m/[39m[33mMemoryRouter[39m[33m>[39m)[33m;[39m
+     [90m    |[39m                  [31m[1m^[22m[39m
+     [90m 42 |[39m }
+     [90m 43 |[39m [36mconst[39m text [33m=[39m key [33m=>[39m i18n[33m.[39mt([32m`customers.documentProfile.${key}`[39m)[33m;[39m
+     [90m 44 |[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:71:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:45:7)
+      at actWithWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:1736:7)
+      at ../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@testing-library/react/dist/act-compat.js:63:25
+      at renderRoot (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@testing-library/react/dist/pure.js:159:26)
+      at render (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@testing-library/react/dist/pure.js:246:10)
+      at mount (src/screens/mainScreen/components/ClientPopUp.documentProfile.test.js:41:18)
+      at Object.<anonymous> (src/screens/mainScreen/components/ClientPopUp.documentProfile.test.js:60:9)
+
+    console.error
+      Warning: An update to ClientPopup inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at ClientPopup (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/mainScreen/components/ClientPopUp.js:44:5)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+          at Router (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-router/dist/development/chunk-HHGH3NKS.js:9895:13)
+          at MemoryRouter (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-router/dist/development/chunk-HHGH3NKS.js:9811:3)
+
+    [0m [90m 56 |[39m
+     [90m 57 |[39m       } [36melse[39m {
+    [31m[1m>[22m[39m[90m 58 |[39m         setResult(data[33m.[39mdata [33m||[39m [])[33m;[39m
+     [90m    |[39m         [31m[1m^[22m[39m
+     [90m 59 |[39m         onSuccessRef[33m.[39mcurrent[33m?[39m[33m.[39m(data[33m.[39mdata)[33m;[39m
+     [90m 60 |[39m       }
+     [90m 61 |[39m     } [36mcatch[39m (err) {[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setResult (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at src/hooks/useHttpRequest.js:58:9
+
+    console.error
+      Warning: An update to ClientPopup inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at ClientPopup (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/mainScreen/components/ClientPopUp.js:44:5)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+          at Router (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-router/dist/development/chunk-HHGH3NKS.js:9895:13)
+          at MemoryRouter (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-router/dist/development/chunk-HHGH3NKS.js:9811:3)
+
+    [0m [90m 71 |[39m     } [36mfinally[39m {
+     [90m 72 |[39m       [36mif[39m (seq [33m===[39m requestSeqRef[33m.[39mcurrent [33m&&[39m isMountedRef[33m.[39mcurrent) {
+    [31m[1m>[22m[39m[90m 73 |[39m         setIsPerforming([36mfalse[39m)[33m;[39m
+     [90m    |[39m         [31m[1m^[22m[39m
+     [90m 74 |[39m       }
+     [90m 75 |[39m     }
+     [90m 76 |[39m   }[33m,[39m [defaultOnFailure])[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setIsPerforming (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at src/hooks/useHttpRequest.js:73:9
+
+    console.error
+      Warning: An update to ClientPopup inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at ClientPopup (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/mainScreen/components/ClientPopUp.js:44:5)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+          at Router (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-router/dist/development/chunk-HHGH3NKS.js:9895:13)
+          at MemoryRouter (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-router/dist/development/chunk-HHGH3NKS.js:9811:3)
+
+    [0m [90m 56 |[39m
+     [90m 57 |[39m       } [36melse[39m {
+    [31m[1m>[22m[39m[90m 58 |[39m         setResult(data[33m.[39mdata [33m||[39m [])[33m;[39m
+     [90m    |[39m         [31m[1m^[22m[39m
+     [90m 59 |[39m         onSuccessRef[33m.[39mcurrent[33m?[39m[33m.[39m(data[33m.[39mdata)[33m;[39m
+     [90m 60 |[39m       }
+     [90m 61 |[39m     } [36mcatch[39m (err) {[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setResult (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at src/hooks/useHttpRequest.js:58:9
+
+    console.error
+      Warning: An update to ClientPopup inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at ClientPopup (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/mainScreen/components/ClientPopUp.js:44:5)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+          at Router (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-router/dist/development/chunk-HHGH3NKS.js:9895:13)
+          at MemoryRouter (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-router/dist/development/chunk-HHGH3NKS.js:9811:3)
+
+    [0m [90m 71 |[39m     } [36mfinally[39m {
+     [90m 72 |[39m       [36mif[39m (seq [33m===[39m requestSeqRef[33m.[39mcurrent [33m&&[39m isMountedRef[33m.[39mcurrent) {
+    [31m[1m>[22m[39m[90m 73 |[39m         setIsPerforming([36mfalse[39m)[33m;[39m
+     [90m    |[39m         [31m[1m^[22m[39m
+     [90m 74 |[39m       }
+     [90m 75 |[39m     }
+     [90m 76 |[39m   }[33m,[39m [defaultOnFailure])[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setIsPerforming (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at src/hooks/useHttpRequest.js:73:9
+
+    console.error
+      Warning: An update to ClientPopup inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at ClientPopup (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/mainScreen/components/ClientPopUp.js:44:5)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+          at Router (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-router/dist/development/chunk-HHGH3NKS.js:9895:13)
+          at MemoryRouter (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-router/dist/development/chunk-HHGH3NKS.js:9811:3)
+
+    [0m [90m 56 |[39m
+     [90m 57 |[39m       } [36melse[39m {
+    [31m[1m>[22m[39m[90m 58 |[39m         setResult(data[33m.[39mdata [33m||[39m [])[33m;[39m
+     [90m    |[39m         [31m[1m^[22m[39m
+     [90m 59 |[39m         onSuccessRef[33m.[39mcurrent[33m?[39m[33m.[39m(data[33m.[39mdata)[33m;[39m
+     [90m 60 |[39m       }
+     [90m 61 |[39m     } [36mcatch[39m (err) {[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setResult (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at src/hooks/useHttpRequest.js:58:9
+
+    console.error
+      Warning: An update to ClientPopup inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+          at ClientPopup (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/mainScreen/components/ClientPopUp.js:44:5)
+          at I18nextProvider (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-i18next/dist/commonjs/I18nextProvider.js:10:3)
+          at Router (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-router/dist/development/chunk-HHGH3NKS.js:9895:13)
+          at MemoryRouter (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-router/dist/development/chunk-HHGH3NKS.js:9811:3)
+
+    [0m [90m 71 |[39m     } [36mfinally[39m {
+     [90m 72 |[39m       [36mif[39m (seq [33m===[39m requestSeqRef[33m.[39mcurrent [33m&&[39m isMountedRef[33m.[39mcurrent) {
+    [31m[1m>[22m[39m[90m 73 |[39m         setIsPerforming([36mfalse[39m)[33m;[39m
+     [90m    |[39m         [31m[1m^[22m[39m
+     [90m 74 |[39m       }
+     [90m 75 |[39m     }
+     [90m 76 |[39m   }[33m,[39m [defaultOnFailure])[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:86:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:60:7)
+      at warnIfUpdatesNotWrappedWithActDEV (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:27628:9)
+      at scheduleUpdateOnFiber (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:25547:5)
+      at setIsPerforming (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom.development.js:16708:7)
+      at src/hooks/useHttpRequest.js:73:9
+
+PASS src/screens/signingScreen/publicV2/SignatureCanvas.packages.test.js
+  ● Console
+
+    console.error
+      Warning: `ReactDOMTestUtils.act` is deprecated in favor of `React.act`. Import `act` from `react` instead of `react-dom/test-utils`. See https://react.dev/warnings/react-dom-test-utils for more info.
+
+    [0m [90m 40 |[39m     [36mconst[39m api [33m=[39m createV2DocumentAdapter({ token[33m:[39m [32m'synthetic'[39m[33m,[39m entries[33m,[39m consentVersion[33m:[39m [32m'v'[39m[33m,[39m locale[33m:[39m [32m'ar'[39m })[33m;[39m
+     [90m 41 |[39m     [36mconst[39m loadPdf [33m=[39m jest[33m.[39mfn([36masync[39m id [33m=>[39m [36mnew[39m [33mBlob[39m([[32m`PDF ${id}`[39m]))[33m;[39m
+    [31m[1m>[22m[39m[90m 42 |[39m     render([33m<[39m[33mSignatureCanvas[39m variant[33m=[39m[32m"screen"[39m publicToken[33m=[39m[32m"synthetic"[39m filesApi[33m=[39m{api} onClose[33m=[39m{() [33m=>[39m {}} deferOtpUntilConsent
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 43 |[39m         documentGroup[33m=[39m{{ documents[33m:[39m entries[33m.[39mmap(item [33m=>[39m ({ id[33m:[39m item[33m.[39mdocument[33m.[39mdocumentId[33m,[39m name[33m:[39m item[33m.[39mdocument[33m.[39mname }))[33m,[39m loadPdf[33m,[39m
+     [90m 44 |[39m             consentText[33m:[39m [32m'Consent to both PDFs'[39m[33m,[39m signAllLabel[33m:[39m [32m'Sign all documents'[39m[33m,[39m completionText[33m:[39m [32m'2 documents signed; 1 remains.'[39m }} [33m/[39m[33m>[39m)[33m;[39m
+     [90m 45 |[39m     fireEvent[33m.[39mclick([36mawait[39m screen[33m.[39mfindByRole([32m'button'[39m[33m,[39m { name[33m:[39m [32m'Name a'[39m }))[33m;[39m[0m
+
+      at printWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:71:30)
+      at error (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:45:7)
+      at actWithWarning (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:1736:7)
+      at ../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@testing-library/react/dist/act-compat.js:63:25
+      at renderRoot (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@testing-library/react/dist/pure.js:159:26)
+      at render (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@testing-library/react/dist/pure.js:246:10)
+      at Object.<anonymous> (src/screens/signingScreen/publicV2/SignatureCanvas.packages.test.js:42:11)
+      at TestScheduler.scheduleTests (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@jest/core/build/runJest.js:404:19)
+      at _run10000 (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@jest/core/build/cli/index.js:320:7)
+      at runCLI (../../../../../Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/qa-new-features-melamedia-20261023/frontend/node_modules/@jest/core/build/cli/index.js:173:3)
+
+    console.error
+      OTP verify failed Error: Incorrect code
+          at Object.<anonymous> (/private/tmp/layer-billing-release-clients-20261101/AshrafEssa/frontend/src/screens/signingScreen/publicV2/SignatureCanvas.packages.test.js:49:51)
+
+    [0m [90m 1967 |[39m             
+     [90m 1968 |[39m         } [36mcatch[39m (err) {
+    [31m[1m>[22m[39m[90m 1969 |[39m             console[33m.[39merror([32m"OTP verify failed"[39m[33m,[39m err)[33m;[39m
+     [90m      |[39m                     [31m[1m^[22m[39m
+     [90m 1970 |[39m             otpLastFailedRef[33m.[39mcurrent [33m=[39m [33mString[39m(otpCode [33m||[39m [32m""[39m)[33m.[39mreplace([35m/\D/g[39m[33m,[39m [32m""[39m)[33m.[39mslice([35m0[39m[33m,[39m [35m6[39m)[33m;[39m
+     [90m 1971 |[39m             otpAutoVerifyRef[33m.[39mcurrent [33m=[39m [36mfalse[39m[33m;[39m
+     [90m 1972 |[39m             setOtpVerified([36mfalse[39m)[33m;[39m[0m
+
+      at verifyOtp (src/components/specializedComponents/signFiles/SignatureCanvas.js:1969:21)
+
+
+Test Suites: 4 passed, 4 total
+Tests:       75 passed, 75 total
+Snapshots:   0 total
+Time:        13.588 s, estimated 80 s
+Ran all test suites within paths "src/screens/mainScreen/components/ClientPopUp.documentProfile.test.js", "src/screens/signingScreen/publicV2/SignatureCanvas.packages.test.js", "src/screens/signingScreen/templates/CaseStageAutomationPanel.test.js", "src/screens/signingScreen/templates/SigningPackagesWorkspace.test.js".
+Test results written to: ../../../../../tmp/layer-billing-release-clients-20261101/AshrafEssa/docs/releases/card-save-billing-20261101/release-qualification/AshrafEssa/frontend-focused-result.json

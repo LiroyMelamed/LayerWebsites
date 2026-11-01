@@ -1,63 +1,167 @@
 {
-  "status": "LOCAL_FINAL_QUALIFICATION_IN_PROGRESS_DEPLOYMENT_HOLD",
-  "candidateDonor": "6fab2887d056262cf52ddb773a377e5ad804f0d7",
-  "observedMain": "4917ca1a3d25e4224bd64fa8c05048285c0741dd",
+  "status": "LOCAL_COMMON_AND_FOUR_CLIENTS_QUALIFIED_DEPLOYMENT_HOLD",
+  "candidateDonor": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "observedMain": "074df7520497a0cd6bd95ad70353201c905f0aa6",
   "targets": [
     {
       "target": "Melamedia",
-      "observedGitTip": "1d61825c2fac7503f5cf7f25ff3543cde471914d",
-      "observedBackendCheckout": "ca31b04e",
-      "observedFrontendSource": "61507869",
-      "backendTreeMatchesGitTip": true,
+      "observedGitTip": "545779e4b99e111959f4684167dfdf46da1f3186",
       "proposalMethod": "historical simulation superseded by isolated real merges; see qualification index",
-      "releaseCommit": null,
-      "finalQualifiedArtifact": null,
+      "releaseCommit": "efe1ee371ad96bc76963ac1848076055cb83066b",
+      "finalQualifiedArtifact": {
+        "actualCompileSource": "7c3131f2b87bcbf69d2e0fb2650aa6d6ab7aef51",
+        "artifactCount": 256,
+        "ownTenantLogoMatches": true,
+        "syntheticApi": true,
+        "deploymentPayload": false,
+        "inputEquivalenceToFinalRuntime": true
+      },
       "approvedSql": [],
       "approval": null,
-      "qualification": "FINAL_RECEIPTS_PENDING_INDEX",
-      "historicalPlanningOnlyTree": "f1a563cbe8dd1e03837334c95f472fbf7c8618e9"
+      "qualification": "LOCAL_PASS_WITH_TWO_EXPLICIT_UNAVAILABLE_ENVIRONMENT_SKIPS",
+      "historicalPlanningOnlyTree": "f1a563cbe8dd1e03837334c95f472fbf7c8618e9",
+      "historicalLiveGitTipAt2205": "615078693afd117e2d488f5c5355f1338d622ad8",
+      "historicalBackendCheckoutAt2205": "ca31b04e",
+      "historicalFrontendSourceAt2205": "61507869",
+      "historicalBackendTreeMatchesGitTipAt2205": true,
+      "remoteRefCutoffObservedAtUtc": "2026-11-01 22:47:52 UTC",
+      "qualificationEvidence": "../release-qualification/Melamedia/README.md",
+      "backend": {
+        "billingPass": 217,
+        "commonPass": 124,
+        "transportPass": 40,
+        "fail": 0,
+        "fixtureSkips": 2,
+        "actualPostgres": false
+      },
+      "frontend": {
+        "actualExecutionSource": "7c3131f2b87bcbf69d2e0fb2650aa6d6ab7aef51",
+        "passed": 960,
+        "suitePass": 112,
+        "inputEquivalenceToFinalRuntime": true,
+        "freshAtFinalHead": false
+      },
+      "cleanDeliveryRef": "codex/billing-delivery-melamedia-20261101"
     },
     {
       "target": "AshrafEssa",
-      "observedGitTip": "bc964428a38bfa63a62b3ef6a5782c9b2e86d28a",
-      "observedBackendCheckout": "ab271c53",
-      "observedFrontendSource": "bc964428",
-      "backendTreeMatchesGitTip": true,
+      "observedGitTip": "3359e65cdc082dbc50c30a0e1bd7284df854cf06",
       "proposalMethod": "historical simulation superseded by isolated real merges; see qualification index",
-      "releaseCommit": null,
-      "finalQualifiedArtifact": null,
+      "releaseCommit": "9eaebbdb6c23d56d974546e233b8905d19570ef5",
+      "finalQualifiedArtifact": {
+        "actualCompileSource": "7309eb636748a8081bbe159053bfba710ffd9bc0",
+        "artifactCount": 255,
+        "ownTenantLogoMatches": true,
+        "syntheticApi": true,
+        "deploymentPayload": false,
+        "inputEquivalenceToFinalRuntime": true
+      },
       "approvedSql": [],
       "approval": null,
-      "qualification": "FINAL_RECEIPTS_PENDING_INDEX",
-      "historicalPlanningOnlyTree": "cfec2b0273f28a60f2974742853ce18244abe2f9"
+      "qualification": "LOCAL_PASS_WITH_TWO_EXPLICIT_UNAVAILABLE_ENVIRONMENT_SKIPS",
+      "historicalPlanningOnlyTree": "cfec2b0273f28a60f2974742853ce18244abe2f9",
+      "historicalLiveGitTipAt2205": "bc964428a38bfa63a62b3ef6a5782c9b2e86d28a",
+      "historicalBackendCheckoutAt2205": "ab271c53",
+      "historicalFrontendSourceAt2205": "bc964428",
+      "historicalBackendTreeMatchesGitTipAt2205": true,
+      "remoteRefCutoffObservedAtUtc": "2026-11-01 22:47:52 UTC",
+      "qualificationEvidence": "../release-qualification/AshrafEssa/README.md",
+      "backend": {
+        "billingPass": 217,
+        "commonPass": 124,
+        "transportPass": 40,
+        "fail": 0,
+        "fixtureSkips": 2,
+        "actualPostgres": false
+      },
+      "frontend": {
+        "actualExecutionSource": "fc6f3b46378daa05b87f06ddfe6b2f58b97c6ab8",
+        "passed": 923,
+        "suitePass": 108,
+        "inputEquivalenceToFinalRuntime": true,
+        "freshAtFinalHead": false
+      },
+      "cleanDeliveryRef": "codex/billing-delivery-ashraf-20261101"
     },
     {
       "target": "MelamedLaw",
-      "observedGitTip": "5e2da32b3ebad7b77ace52d50227584a94e1e3ed",
-      "observedBackendCheckout": "5f3a4459",
-      "observedFrontendSource": "5f3a4459",
-      "backendTreeMatchesGitTip": true,
+      "observedGitTip": "d6ef0c9a6aaa2f7f53b8b501575b973e0ffff092",
       "proposalMethod": "historical simulation superseded by isolated real merges; see qualification index",
-      "releaseCommit": null,
-      "finalQualifiedArtifact": null,
+      "releaseCommit": "21d51f5766e5df0b0ac497fce4cc9d16bdd8bbf5",
+      "finalQualifiedArtifact": {
+        "actualCompileSource": "cc3d2fecc6f02230f88485c55d38295d5aff1e75",
+        "artifactCount": 253,
+        "ownTenantLogoMatches": true,
+        "syntheticApi": true,
+        "deploymentPayload": false,
+        "inputEquivalenceToFinalRuntime": true
+      },
       "approvedSql": [],
       "approval": null,
-      "qualification": "FINAL_RECEIPTS_PENDING_INDEX",
-      "historicalPlanningOnlyTree": "5764d2f0b98dfed77e951ffa9b08261d2f01f8c9"
+      "qualification": "LOCAL_PASS_WITH_TWO_EXPLICIT_UNAVAILABLE_ENVIRONMENT_SKIPS",
+      "historicalPlanningOnlyTree": "5764d2f0b98dfed77e951ffa9b08261d2f01f8c9",
+      "historicalLiveGitTipAt2205": "5e2da32b3ebad7b77ace52d50227584a94e1e3ed",
+      "historicalBackendCheckoutAt2205": "5f3a4459",
+      "historicalFrontendSourceAt2205": "5f3a4459",
+      "historicalBackendTreeMatchesGitTipAt2205": true,
+      "remoteRefCutoffObservedAtUtc": "2026-11-01 22:47:52 UTC",
+      "qualificationEvidence": "../release-qualification/MelamedLaw/README.md",
+      "backend": {
+        "billingPass": 217,
+        "commonPass": 124,
+        "transportPass": 40,
+        "fail": 0,
+        "fixtureSkips": 2,
+        "actualPostgres": false
+      },
+      "frontend": {
+        "actualExecutionSource": "cc3d2fecc6f02230f88485c55d38295d5aff1e75",
+        "passed": 938,
+        "suitePass": 110,
+        "inputEquivalenceToFinalRuntime": true,
+        "freshAtFinalHead": false
+      },
+      "cleanDeliveryRef": "codex/billing-delivery-melamed-20261101"
     },
     {
       "target": "MorLevi",
-      "observedGitTip": "f5220552918507a8b34b30cb7fb0cc41f3f0710b",
-      "observedBackendCheckout": "08f1a988",
-      "observedFrontendSource": "f5220552",
-      "backendTreeMatchesGitTip": true,
+      "observedGitTip": "586f93e5ac5148ba5ec0059cb5430ebbc4e92e6c",
       "proposalMethod": "historical simulation superseded by isolated real merges; see qualification index",
-      "releaseCommit": null,
-      "finalQualifiedArtifact": null,
+      "releaseCommit": "b05d66f9f7873753e520c554f4b2c1c540e6682b",
+      "finalQualifiedArtifact": {
+        "actualCompileSource": "3217781317b54b3143d8bfba29475f2ab42485bd",
+        "artifactCount": 253,
+        "ownTenantLogoMatches": true,
+        "syntheticApi": true,
+        "deploymentPayload": false,
+        "inputEquivalenceToFinalRuntime": true
+      },
       "approvedSql": [],
       "approval": null,
-      "qualification": "FINAL_RECEIPTS_PENDING_INDEX",
-      "historicalPlanningOnlyTree": "8bcd70617de1b305f2d79ed2546ff61b847ddce2"
+      "qualification": "LOCAL_PASS_WITH_TWO_EXPLICIT_UNAVAILABLE_ENVIRONMENT_SKIPS",
+      "historicalPlanningOnlyTree": "8bcd70617de1b305f2d79ed2546ff61b847ddce2",
+      "historicalLiveGitTipAt2205": "f5220552918507a8b34b30cb7fb0cc41f3f0710b",
+      "historicalBackendCheckoutAt2205": "08f1a988",
+      "historicalFrontendSourceAt2205": "f5220552",
+      "historicalBackendTreeMatchesGitTipAt2205": true,
+      "remoteRefCutoffObservedAtUtc": "2026-11-01 22:47:52 UTC",
+      "qualificationEvidence": "../release-qualification/MorLevi/README.md",
+      "backend": {
+        "billingPass": 217,
+        "commonPass": 124,
+        "transportPass": 40,
+        "fail": 0,
+        "fixtureSkips": 2,
+        "actualPostgres": false
+      },
+      "frontend": {
+        "actualExecutionSource": "3217781317b54b3143d8bfba29475f2ab42485bd",
+        "passed": 923,
+        "suitePass": 108,
+        "inputEquivalenceToFinalRuntime": true,
+        "freshAtFinalHead": false
+      },
+      "cleanDeliveryRef": "codex/billing-delivery-mor-20261101"
     }
   ],
   "financialMode": "NO_PROVIDER_OPERATION_AUTHORIZED",
@@ -91,7 +195,7 @@
   ],
   "forbidden": [
     "push",
-    "deployment",
+    "deployment while release gates are open",
     "process/config changes",
     "customer billing writes",
     "provider calls",
@@ -116,7 +220,6 @@
     "readinessObservedAtUtc": "2026-11-01T22:21Z/2026-11-01T22:26Z"
   },
   "releaseHolds": [
-    "final client receipts and unchanged-full Ashraf frontend acceptance",
     "full signup QA fixture/config absent",
     "owned profile PostgreSQL fixture absent",
     "independent current non-settling sandbox identity",
@@ -148,5 +251,28 @@
     "Idm"
   ],
   "historicalPlanningSnapshotAtUtc": "2026-11-01T22:15:19.904510+00:00",
-  "supersedingEvidence": "../release-qualification/README.md"
+  "supersedingEvidence": "../release-qualification/README.md",
+  "sourceCutoffObservedAtUtc": "2026-11-01 22:47:52 UTC",
+  "closedLocalGates": {
+    "commonRuntime": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+    "billing": 217,
+    "common": 124,
+    "pause": 14,
+    "outboxSdk": 33,
+    "incomingTransport": 40,
+    "realPostgres": 57,
+    "protectedSource": 103,
+    "clientTargets": 4,
+    "allFinalClientGroupsPassed": true,
+    "frontendAndCompilers": "actual earlier receipts carried by exact input equality; Ashraf genuine full rerun passed",
+    "noLiveFinancialGateActivated": true
+  },
+  "scopeNotes": [
+    "Selected schema catalogs/grants passed on four targets; not full startup/isolation acceptance",
+    "Healthy existing backup reports referred to approximately19.69-hour generations; no independent archive/restore proof",
+    "Directory counts do not establish three complete inactive rollbacks",
+    "Clean delivery refs will be new branches with exact qualified product inputs; original local QA branches remain intact",
+    "No retrospective recovery or data correction for an owner-waived period"
+  ],
+  "deploymentIntent": "Owner requests staged deployment to all active clients after safety/QA/backup/restore/financial-quiescence gates close. No deployment while HOLD; infrastructure/financial config/access changes require separate reviewed approval."
 }

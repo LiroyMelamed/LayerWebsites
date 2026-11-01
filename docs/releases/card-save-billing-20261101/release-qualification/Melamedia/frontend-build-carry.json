@@ -1,7 +1,7 @@
 {
-  "atUtc": "2026-11-01T22:44:54.423731+00:00",
+  "atUtc": "2026-11-01T22:51:31.019004+00:00",
   "tenant": "Melamedia",
-  "currentCandidate": "19b283433cf8774e2bdd697568e8065a2bcaa1ba",
+  "currentCandidate": "efe1ee371ad96bc76963ac1848076055cb83066b",
   "nodeVersion": "v24.14.0",
   "importScope": {
     "parsedFrontendSourceFiles": 492,
@@ -61,7 +61,7 @@
       "label": "frontend",
       "receiptSha256": "966d415c4b9f9415d4bfdb15a051a6d846a37b66fab0ec35646b9a96ee4aa70a",
       "oldSourceCandidate": "7c3131f2b87bcbf69d2e0fb2650aa6d6ab7aef51",
-      "currentCandidate": "19b283433cf8774e2bdd697568e8065a2bcaa1ba",
+      "currentCandidate": "efe1ee371ad96bc76963ac1848076055cb83066b",
       "receiptPassed": true,
       "receiptSourceStable": true,
       "allTrackedFrontendAndScriptsInputCount": 879,
@@ -162,7 +162,7 @@
       "label": "build",
       "receiptSha256": "8cd2238f16d1ae177e3272eb1fef91d61bc7c6631f849703ee171e2723650851",
       "oldSourceCandidate": "7c3131f2b87bcbf69d2e0fb2650aa6d6ab7aef51",
-      "currentCandidate": "19b283433cf8774e2bdd697568e8065a2bcaa1ba",
+      "currentCandidate": "efe1ee371ad96bc76963ac1848076055cb83066b",
       "receiptPassed": true,
       "receiptSourceStable": true,
       "allTrackedFrontendAndScriptsInputCount": 879,
