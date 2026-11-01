@@ -116,12 +116,11 @@
     padding-block: v.$space-3;
     min-inline-size: 0;
 
-    > summary {
+    > h3 {
         color: #2a4365;
-        cursor: pointer;
+        font-size: 1rem;
         font-weight: 600;
-        min-block-size: 2.75rem;
-        padding-block: 0.625rem;
+        margin-block: 0 v.$space-3;
         overflow-wrap: anywhere;
     }
 }
@@ -184,6 +183,13 @@
     @include m.row(v.$space-2, wrap, center, center);
     justify-content: center;
     margin-block: v.$space-4;
+}
+
+.lw-clientPopup__readOnlyDetails {
+    margin: 0;
+    > div { margin-block-end: v.$space-3; }
+    dt { font-weight: 600; color: var(--lw-color-primary, #2a4365); }
+    dd { margin-inline-start: 0; overflow-wrap: anywhere; }
 }
 
 .lw-clientPopup__actions .lw-textButtonWithTwoOptionalIcons {

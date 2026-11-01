@@ -4,7 +4,7 @@ import SearchInput from '../../../components/specializedComponents/containers/Se
 import SigningSelect from '../templates/SigningSelect';
 
 export default function WordDataFieldPanel({ definitions, roles, value, onChange, disabled, fieldLabel, text }) {
-    const [group, setGroup] = useState('client'); const [query, setQuery] = useState('');
+    const [group, setGroup] = useState(() => value.startsWith('role.') ? value.split('.').slice(0, 2).join('.') : value.split('.')[0]); const [query, setQuery] = useState('');
     const groups = ['client', 'case', 'office', ...roles.map(role => `role.${role.key}`)];
     const activeGroup = groups.includes(group) ? group : 'client';
     const matches = definitions.filter(item => item.available !== false && item.phase === 'storedData' &&
@@ -17,7 +17,6 @@ export default function WordDataFieldPanel({ definitions, roles, value, onChange
         {disabled ? <p>{text('working')}</p> : <AddFieldPanel fieldTypeOptions={matches.map(item => ({ id: item.key, label: fieldLabel(item.key, true) }))}
             onSelectField={onChange} isInline />}
         {matches.length === 0 && <p>{text('noMatchingFields')}</p>}
-        <p className="lw-word__selectedField">{text('selectedDataField')}: <strong>{fieldLabel(value)}</strong></p>
         {definitions.find(item => item.key === value)?.resolver === 'manual' && <p>{text('manualDataFieldHelp')}</p>}
     </div>;
 }

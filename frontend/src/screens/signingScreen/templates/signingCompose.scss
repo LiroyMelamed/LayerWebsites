@@ -212,3 +212,58 @@
 .lw-signingCompose__directoryBody > details { min-inline-size: 0; }
 .lw-signingCompose__directoryBody input, .lw-signingCompose__directoryBody select { inline-size: 100%; max-inline-size: 100%; min-inline-size: 0; min-block-size: 44px; box-sizing: border-box; }
 .lw-signingCompose__directoryBody button { max-inline-size: 100%; white-space: normal; }
+
+// A role starts with one person choice; search text never becomes recipient data.
+.lw-signingCompose__personLookup { display: grid; gap: .625rem; min-inline-size: 0; }
+.lw-signingCompose__personSummary {
+  display: flex; align-items: center; justify-content: space-between; gap: .5rem 1rem; flex-wrap: wrap;
+  > div:first-child { display: grid; gap: .25rem; min-inline-size: 0; }
+  strong, span { overflow-wrap: anywhere; }
+  span { font-size: .8125rem; color: #4a5568; }
+}
+.lw-signingCompose__personActions, .lw-signingCompose__deliverySummary {
+  display: flex; align-items: center; flex-wrap: wrap; gap: .25rem .875rem;
+  button { min-block-size: 2.75rem; }
+}
+.lw-signingCompose__deliverySummary { font-size: .8125rem; color: #4a5568; }
+.lw-signingCompose__contextPeople {
+  display: flex; flex-wrap: wrap; gap: .5rem;
+  > button {
+    display: grid; gap: .125rem; min-block-size: 2.75rem; max-inline-size: 100%; padding: .5rem .75rem;
+    text-align: start; border: 1px solid #cbd5e0; border-radius: .375rem; background: #f7fafc; color: var(--signing-ink, #2c4363); cursor: pointer;
+    strong, span { overflow-wrap: anywhere; }
+    span { font-size: .75rem; font-weight: 400; color: #4a5568; }
+    &:hover { border-color: var(--signing-ink, #2c4363); }
+    &:focus-visible { outline: 2px solid var(--signing-ink, #2c4363); outline-offset: 2px; }
+  }
+}
+.lw-signingCompose__recipientAdvanced {
+  min-inline-size: 0; font-size: .8125rem;
+  > summary { display: list-item; min-block-size: 2.75rem; align-content: center; cursor: pointer; color: var(--signing-ink, #2c4363); }
+  > .lw-signingCompose__field { margin-block: .5rem; }
+}
+// Linked client and case are one context row, retaining their own unlink actions.
+.lw-signingCompose__contextStrip {
+  display: flex; flex-wrap: wrap; gap: .375rem 1.25rem; align-items: flex-start; margin-block-end: .75rem;
+  &[hidden], &:empty { display: none; }
+  > .lw-signingCompose__context.lw-simpleCard {
+    flex: 1 1 15rem; min-inline-size: 0; padding: 0; margin: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none;
+    &:hover { box-shadow: none; }
+  }
+  .lw-signingCompose__case { display: flex; align-items: center; flex-wrap: wrap; gap: .125rem .75rem; }
+  .lw-signingCompose__case > p { margin: 0; font-size: .8125rem; }
+  .lw-signingCompose__case > .lw-searchInput { flex: 1 1 15rem; }
+  .lw-signingCompose__case > .lw-signingCompose__hintLine { display: none; }
+}
+.lw-signingCompose__contextHelp { flex-basis: 100%; margin: 0; font-size: .8125rem; line-height: 1.5; color: #4a5568; }
+// The popup already supplies the container and scrolling surface.
+.lw-simplePopUp__content .lw-signingCompose {
+  padding: .5rem 0 1rem; overflow: visible; max-block-size: none;
+  > .lw-signingCompose__card.lw-simpleCard {
+    padding: 1rem 0; margin: 0; border: 0; border-block-start: 1px solid #e2e8f0; border-radius: 0; box-shadow: none;
+    &:hover { box-shadow: none; }
+  }
+  .lw-signingCompose__shared { margin-block-start: .5rem; padding: .5rem 0 .75rem; border: 0; border-block-start: 1px solid #e2e8f0; border-radius: 0; }
+  .lw-signingCompose__row > fieldset { padding: .5rem 0 .75rem; border-inline: 0; border-radius: 0; }
+  .lw-signingCompose__footer.is-sticky { margin-inline: 0; padding-inline: 0; border-radius: 0; }
+}

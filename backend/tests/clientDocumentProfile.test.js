@@ -48,24 +48,28 @@ test('conflicting request spellings are rejected instead of losing data', () => 
     assert.throws(() => clientProfilePatch({ clientProfile: null, ClientProfile: profile() }), { code: 'INVALID_CLIENT_PROFILE' });
 });
 
-function harness(initial = {}) {
+function harness(initial = {}, options = {}) {
     let stored = { userid: 42, name: 'Test contact', email: 'contact@example.invalid', phonenumber: null,
         companyname: 'Test Ltd', role: 'ExternalSigner', ...initial };
     const calls = [], notifications = [];
     const pool = { async query(sql, params = []) {
         calls.push({ sql, params });
-        if (/SELECT.*FROM users\s+WHERE LOWER\(email\)/s.test(sql) || sql.includes('regexp_replace(phonenumber')) return { rows: [] };
+        if (/SELECT.*FROM users\s+WHERE LOWER\(email\)/s.test(sql)) return { rows: options.duplicateEmail ? [{ userid: 99 }] : [] };
+        if (sql.includes('regexp_replace(phonenumber')) return { rows: options.duplicatePhone ? [{ userid: 99 }] : [] };
         if (sql.includes('INSERT INTO users')) {
             stored = { ...stored, name: params[0], email: params[1], phonenumber: params[2], role: params[4],
                 companyname: params[5], dateofbirth: params[6], client_profile: JSON.parse(params[8]) };
             return { rows: [stored], rowCount: 1 };
         }
         if (sql.includes('UPDATE users') && sql.includes('client_profile = CASE')) {
+            if (options.beforeUpdate) stored = { ...stored, ...options.beforeUpdate };
+            if (params[10] !== stored.phonenumber || params[11] !== stored.email || params[12] !== stored.role) return { rows: [], rowCount: 0 };
             stored = { ...stored, name: params[0], email: params[1], phonenumber: params[2], companyname: params[3] };
+            if (['User', 'ExternalSigner'].includes(stored.role)) stored.role = params[6];
             if (params[7]) stored.client_profile = JSON.parse(params[8]);
             return { rows: [stored], rowCount: 1 };
         }
-        return { rows: [stored], rowCount: 1 };
+        return { rows: [{ ...stored }], rowCount: 1 };
     } };
     const filename = path.resolve(__dirname, '../controllers/customerController.js');
     const module = { exports: {} };
@@ -73,7 +77,7 @@ function harness(initial = {}) {
         require(id) {
             if (id === '../config/db') return pool;
             if (id === '../utils/clientProfile') return require(id);
-            if (id === '../utils/phoneUtils') return { formatPhoneNumber: value => value || null };
+            if (id === '../utils/phoneUtils') return require(id);
             if (id === '../utils/paramValidation') return { requireInt: req => Number(req.params.customerId) };
             if (id === '../utils/pagination') return { getPagination: () => ({ enabled: false }) };
             if (id === '../utils/sendMessage') return { getWebsiteDomain: async () => 'example.invalid' };
@@ -134,6 +138,90 @@ test('update stores an international passport without coercion and preserves org
     assert.equal(h.calls.some(call => call.sql.includes('000123-A')), false);
     assert.equal(h.notifications.length, 0);
 });
+
+for (const role of ['ExternalSigner', 'User', 'Lawyer']) test(`unchanged legacy contacts preserve exact stored bytes and ${role} role during profile edits`, async () => {
+    const h = harness({ phonenumber: ' 0000001102 ', email: ' OLD INVALID EMAIL ', role }, { duplicatePhone: true, duplicateEmail: true });
+    const result = await invoke(h.controller, 'updateCustomerById', { name: 'Updated', phoneNumber: '000-000-1102', email: 'old invalid email',
+        companyName: 'Company', clientProfile: profile() });
+    assert.equal(result.statusCode, 200);
+    assert.equal(h.stored().phonenumber, ' 0000001102 ');
+    assert.equal(h.stored().email, ' OLD INVALID EMAIL ');
+    assert.equal(h.stored().role, role);
+    assert.equal(h.stored().client_profile.identity.number, '000123-A');
+    assert.equal(h.calls.some(call => call.sql.includes('regexp_replace') || call.sql.includes('LOWER(email)')), false);
+    assert.equal(h.notifications.length, 0);
+});
+
+test('unchanged invalid legacy phone remains editable without granting a mobile login role', async () => {
+    const h = harness({ phonenumber: '0', email: null });
+    const result = await invoke(h.controller, 'updateCustomerById', { name: 'Updated', phoneNumber: '0', email: '' });
+    assert.equal(result.statusCode, 200);
+    assert.equal(h.stored().phonenumber, '0');
+    assert.equal(h.stored().email, null);
+    assert.equal(h.stored().role, 'ExternalSigner');
+});
+
+for (const phoneNumber of ['0', '12345', 'unknown']) test(`changed invalid phone ${phoneNumber} cannot borrow the persisted legacy exception`, async () => {
+    const h = harness({ phonenumber: '0000001102' });
+    const result = await invoke(h.controller, 'updateCustomerById', { name: 'Updated', phoneNumber, email: 'contact@example.invalid',
+        existingPhoneNumber: phoneNumber, role: 'ExternalSigner' });
+    assert.equal(result.statusCode, 400); assert.equal(result.body.code, 'INVALID_PHONE');
+    assert.equal(h.calls.some(call => call.sql.includes('UPDATE users')), false);
+    assert.equal(h.stored().phonenumber, '0000001102');
+});
+
+test('changed invalid email is rejected while an unchanged invalid email can accompany a valid new phone', async () => {
+    const h = harness({ email: 'OLD INVALID EMAIL' });
+    const invalid = await invoke(h.controller, 'updateCustomerById', { name: 'Updated', email: 'another invalid email' });
+    assert.equal(invalid.statusCode, 400); assert.equal(invalid.body.code, 'INVALID_EMAIL');
+    assert.equal(h.calls.some(call => call.sql.includes('UPDATE users')), false);
+    const valid = await invoke(h.controller, 'updateCustomerById', { name: 'Updated', email: 'old invalid email', phoneNumber: '03-5551234' });
+    assert.equal(valid.statusCode, 200);
+    assert.equal(h.stored().email, 'OLD INVALID EMAIL');
+    assert.equal(h.stored().phonenumber, '03-5551234');
+    assert.equal(h.stored().role, 'User');
+});
+
+test('changed valid phone retains incumbent role transition and clearing it retains email-only signing', async () => {
+    const h = harness();
+    const mobile = await invoke(h.controller, 'updateCustomerById', { name: 'Updated', phoneNumber: '050-1234567', email: 'contact@example.invalid' });
+    assert.equal(mobile.statusCode, 200); assert.equal(h.stored().role, 'User');
+    const emailOnly = await invoke(h.controller, 'updateCustomerById', { name: 'Updated', phoneNumber: '', email: 'contact@example.invalid' });
+    assert.equal(emailOnly.statusCode, 200); assert.equal(h.stored().role, 'ExternalSigner');
+    assert.equal(h.stored().phonenumber, null); assert.equal(h.notifications.length, 0);
+});
+
+for (const [key, value, code] of [['phoneNumber', '0501234567', 'PHONE_ALREADY_EXISTS'], ['email', 'new@example.invalid', 'EMAIL_ALREADY_EXISTS']]) {
+    test(`changed ${key} keeps tenant-local duplicate rejection`, async () => {
+        const h = harness({}, { duplicatePhone: true, duplicateEmail: true });
+        const result = await invoke(h.controller, 'updateCustomerById', { name: 'Updated', email: 'contact@example.invalid', [key]: value });
+        assert.equal(result.statusCode, 409); assert.equal(result.body.code, code);
+        assert.equal(h.calls.some(call => call.sql.includes('UPDATE users')), false);
+    });
+}
+
+for (const change of [{ phonenumber: '0507654321' }, { email: 'actor-two@example.invalid' }, { role: 'User' }]) {
+    test(`a concurrent actor changing ${Object.keys(change)[0]} invalidates the exact contact snapshot`, async () => {
+        const h = harness({ phonenumber: '0' }, { beforeUpdate: change });
+        const result = await invoke(h.controller, 'updateCustomerById', { name: 'Stale edit', phoneNumber: '0', email: 'contact@example.invalid' });
+        assert.equal(result.statusCode, 409); assert.equal(result.body.code, 'CUSTOMER_CONTACT_CHANGED');
+        assert.equal(h.stored().name, 'Test contact');
+        assert.equal(h.stored()[Object.keys(change)[0]], Object.values(change)[0]);
+        assert.equal(h.notifications.length, 0);
+    });
+}
+
+for (const method of ['addCustomer', 'updateCustomerById']) {
+    for (const [body, code] of [[{}, 'CONTACT_REQUIRED'], [{ phoneNumber: '0' }, 'INVALID_PHONE'], [{ email: 'not an email' }, 'INVALID_EMAIL']]) {
+        test(`${method} keeps ${code} validation for new or changed contacts`, async () => {
+            const h = harness();
+            const result = await invoke(h.controller, method, { name: 'Contact', ...body });
+            assert.equal(result.statusCode, 400); assert.equal(result.body.code, code);
+            assert.equal(h.calls.some(call => /INSERT INTO users|UPDATE users/.test(call.sql)), false);
+            assert.equal(h.notifications.length, 0);
+        });
+    }
+}
 
 for (const method of ['addCustomer', 'updateCustomerById', 'updateCurrentCustomer']) test(`${method} rejects invalid profile before any database/transport operation`, async () => {
     const h = harness();

@@ -58,6 +58,7 @@ test('different actual text items stay untagged and visibly block authoring inst
 test('the keyboard fallback selects exact UTF16 offsets of an already verified item without editing the document', async () => {
     const authoring = create(); mockContent = { items: authoring.pages[0].items.map(({ text, ...rest }) => ({ ...rest, str: text })) };
     const onSelect = jest.fn(); render(<WordSourceViewer authoring={authoring} pdfFile={new Blob(['%PDF'])} bindings={[]} onSelect={onSelect} fieldLabel={value => value} text={value => value} />);
+    fireEvent.click(screen.getByText('selectionOptions')); fireEvent.click(screen.getByText('keyboardSelection'));
     await waitFor(() => expect(screen.getByLabelText('selectExcerptText')).toBeEnabled());
     const input = screen.getByLabelText('selectExcerptText'); input.focus(); input.setSelectionRange(3, 8);
     fireEvent.keyUp(input, { key: 'ArrowRight', shiftKey: true }); fireEvent.click(screen.getByText('confirmTextSelection'));
@@ -162,5 +163,101 @@ test('dense saved and pending chip labels separate after resize while exact sour
         view?.unmount();
         global.ResizeObserver = originalObserver;
         HTMLElement.prototype.getBoundingClientRect = originalBounds;
+    }
+});
+
+test('saved labels are accessible controls; selecting one never reuses native text selection, and list selection focuses it', async () => {
+    const authoring = create(); mockContent = { items: authoring.pages[0].items.map(({ text, ...rest }) => ({ ...rest, str: text })) };
+    const originalBounds = HTMLElement.prototype.getBoundingClientRect;
+    const originalScroll = HTMLElement.prototype.scrollIntoView; const originalWidth = window.innerWidth;
+    HTMLElement.prototype.scrollIntoView = jest.fn(); Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
+    HTMLElement.prototype.getBoundingClientRect = function () {
+        if (this.matches('[data-word-chip]')) return { left: 0, top: 0, width: 120, height: 19 };
+        if (this.dataset.testid === 'source-page') return { left: 0, top: 0, width: 600, height: 800 };
+        return originalBounds.call(this);
+    };
+    const onSelect = jest.fn(); const onSelectBinding = jest.fn();
+    const binding = { id: 'saved-name', kind: 'range', field: 'client.fullName', part: 'word/document.xml', paragraphId: 'p0', start: 3, end: 8 };
+    const props = { authoring, pdfFile: new Blob(['%PDF']), bindings: [binding], onSelect, onSelectBinding, fieldLabel: value => value, text: (key, values) => values?.field ? `${key} ${values.field}` : key };
+    let view;
+    try {
+        view = render(<WordSourceViewer {...props} />);
+        const chip = await screen.findByRole('button', { name: 'editReplacement client.fullName' });
+        expect(chip.closest('[aria-hidden="true"]')).toBeNull();
+        const sourceText = screen.getByTestId('source-page').querySelector('[data-word-item]');
+        const range = document.createRange(); range.selectNodeContents(sourceText); window.getSelection().removeAllRanges(); window.getSelection().addRange(range);
+        fireEvent.mouseUp(chip); fireEvent.click(chip);
+        expect(onSelectBinding).toHaveBeenCalledWith('saved-name'); expect(onSelect).not.toHaveBeenCalled();
+        view.rerender(<WordSourceViewer {...props} activeBindingId="saved-name" />);
+        await waitFor(() => expect(chip).toHaveFocus()); expect(chip).toHaveAttribute('aria-pressed', 'true');
+        expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledWith({ block: 'center', inline: 'nearest' });
+        expect(view.container.querySelector('.lw-word-source__mark')).toHaveStyle({ left: '25px', top: '50px', width: '70px', height: '12px' });
+        fireEvent.mouseUp(sourceText);
+        expect(onSelect).toHaveBeenCalledWith({ kind: 'range', start: { itemId: 'p1_i0', offset: 0 }, end: { itemId: 'p1_i0', offset: 8 } });
+        expect(binding).toEqual(props.bindings[0]);
+        HTMLElement.prototype.scrollIntoView.mockClear();
+        view.rerender(<WordSourceViewer {...props} activeBindingId={null} selection={{ kind: 'range', anchor: { ...binding, start: 0, end: 3 } }} />);
+        await waitFor(() => expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledWith({ block: 'center', inline: 'nearest' }));
+    } finally {
+        view?.unmount(); HTMLElement.prototype.getBoundingClientRect = originalBounds; HTMLElement.prototype.scrollIntoView = originalScroll;
+        Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });
+    }
+});
+
+test('only an actually verified RTL neutral layer receives caret presentation and a later mismatch removes it', async () => {
+    const authoring = create(); const paragraph = { part: 'word/document.xml', id: 'p0', text: '\u05e9\u05dd ____', editable: true, textHash: hash('\u05e9\u05dd ____') };
+    authoring.pages[0].items.forEach((item, index) => {
+        item.text = '__'; item.dir = 'ltr'; item.segments = [{ itemStart: 0, itemEnd: 2, sourceStart: 3 + index * 2,
+            sourceEnd: 5 + index * 2, part: paragraph.part, paragraphId: paragraph.id, paragraphHash: paragraph.textHash }];
+    });
+    authoring.pages[0].textContentHash = hash(JSON.stringify(authoring.pages[0].items.map(item => [item.text, item.dir, item.transform, item.width, item.height, item.hasEOL])));
+    const before = JSON.parse(JSON.stringify(authoring)); const onError = jest.fn();
+    mockContent = { items: authoring.pages[0].items.map(({ text, ...rest }) => ({ ...rest, str: text })) };
+    render(<WordSourceViewer authoring={authoring} paragraphs={[paragraph]} pdfFile={new Blob(['%PDF'])} bindings={[]}
+        onSelect={jest.fn()} onError={onError} fieldLabel={value => value} text={value => value} />);
+    await waitFor(() => expect(screen.getByTestId('source-page').querySelectorAll('[data-word-neutral-rtl="true"]')).toHaveLength(2));
+    expect(authoring).toEqual(before); expect(onError).not.toHaveBeenCalled();
+    mockContent.items[1].str = 'Different'; await act(async () => mockVerifyPage());
+    expect(onError).toHaveBeenCalledWith('authoringMismatch');
+    expect(screen.getByTestId('source-page').querySelector('[data-word-neutral-rtl]')).toBeNull();
+    expect(screen.getByTestId('source-page').querySelector('[data-word-verified]')).toBeNull();
+});
+
+test('an active saved label recenters once after desktop-to-mobile resize without stealing input focus or changing its anchor', async () => {
+    const authoring = create(); mockContent = { items: authoring.pages[0].items.map(({ text, ...rest }) => ({ ...rest, str: text })) };
+    const originalBounds = HTMLElement.prototype.getBoundingClientRect; const originalScroll = HTMLElement.prototype.scrollIntoView;
+    const originalWidth = window.innerWidth; const originalObserver = global.ResizeObserver;
+    let pageWidth = 600; const callbacks = new Set();
+    global.ResizeObserver = class { constructor(callback) { this.callback = callback; callbacks.add(callback); } observe() {} disconnect() { callbacks.delete(this.callback); } };
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1200 });
+    HTMLElement.prototype.scrollIntoView = jest.fn();
+    HTMLElement.prototype.getBoundingClientRect = function () {
+        if (this.matches('[data-word-chip]')) return { left: 0, top: 0, width: 120, height: 19 };
+        if (this.dataset.testid === 'source-page') return { left: 0, top: 0, width: pageWidth, height: pageWidth * 4 / 3 };
+        return originalBounds.call(this);
+    };
+    const binding = { id: 'resize-name', kind: 'range', field: 'client.fullName', part: 'word/document.xml', paragraphId: 'p0', start: 3, end: 8 };
+    const before = JSON.parse(JSON.stringify(binding)); const onSelect = jest.fn(); let view; let input;
+    try {
+        view = render(<WordSourceViewer authoring={authoring} pdfFile={new Blob(['%PDF'])} bindings={[binding]} activeBindingId={binding.id}
+            onSelect={onSelect} fieldLabel={value => value} text={(key, values) => values?.field ? `${key} ${values.field}` : key} />);
+        const chip = await screen.findByRole('button', { name: 'editReplacement client.fullName' });
+        await waitFor(() => expect(chip).toHaveFocus());
+        expect(HTMLElement.prototype.scrollIntoView).toHaveBeenLastCalledWith({ block: 'nearest', inline: 'nearest' });
+        const focus = jest.spyOn(chip, 'focus'); HTMLElement.prototype.scrollIntoView.mockClear();
+        input = document.createElement('input'); document.body.append(input); input.focus();
+        pageWidth = 278; Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
+        fireEvent(window, new Event('resize'));
+        await waitFor(() => expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(1));
+        expect(HTMLElement.prototype.scrollIntoView).toHaveBeenLastCalledWith({ block: 'center', inline: 'nearest' });
+        expect(input).toHaveFocus(); expect(focus).not.toHaveBeenCalled();
+        await act(async () => { [...callbacks].forEach(callback => callback()); });
+        fireEvent(window, new Event('resize'));
+        expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(1);
+        expect(binding).toEqual(before); expect(onSelect).not.toHaveBeenCalled(); focus.mockRestore();
+    } finally {
+        view?.unmount(); input?.remove(); global.ResizeObserver = originalObserver;
+        HTMLElement.prototype.getBoundingClientRect = originalBounds; HTMLElement.prototype.scrollIntoView = originalScroll;
+        Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });
     }
 });

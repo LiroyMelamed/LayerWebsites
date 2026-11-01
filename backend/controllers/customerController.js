@@ -251,29 +251,36 @@ const updateCustomerById = async (req, res) => {
     try {
         const profile = clientProfilePatch(req.body);
         if (organizationNameRequired(res, profile, companyName)) return;
-        const target = await pool.query(`SELECT userid FROM users WHERE userid=$1
+        const target = await pool.query(`SELECT userid, phonenumber, email, role FROM users WHERE userid=$1
             AND law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid AND role NOT IN ('Admin','Deleted')`,
         [customerId, req.firmTenantId || null]);
         if (!target.rows.length) return res.status(404).json({ message: 'לקוח לא נמצא' });
+        const existingCustomer = target.rows[0];
         const phoneDigits = normalizePhoneDigits(phoneNumber);
         const emailNorm = String(email || "").trim().toLowerCase();
+        const phoneInput = String(phoneNumber ?? '').trim();
+        const existingPhone = String(existingCustomer.phonenumber ?? '').trim();
+        // The exception belongs to this authorized persisted record only. A
+        // profile edit must not rewrite a legacy contact or promote its role.
+        const phoneUnchanged = phoneInput === existingPhone || (phoneDigits !== null
+            && phoneDigits === normalizePhoneDigits(existingPhone));
+        const emailUnchanged = emailNorm === String(existingCustomer.email ?? '').trim().toLowerCase();
+        const phoneToStore = phoneUnchanged ? existingCustomer.phonenumber : (phoneInput || null);
+        const emailToStore = emailUnchanged ? existingCustomer.email : (emailNorm || null);
 
-        if (!phoneDigits && !emailNorm) {
+        if (!phoneInput && !emailNorm) {
             return res.status(400).json({
                 message: "נא להזין מספר טלפון או דוא״ל",
                 code: 'CONTACT_REQUIRED',
             });
         }
 
-        if (emailNorm && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
+        if (!emailUnchanged && emailNorm && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
             return res.status(400).json({ message: "נא להזין כתובת דוא״ל תקינה", code: 'INVALID_EMAIL' });
         }
 
-        if (phoneDigits) {
-            const invalidPhone = phoneNumber && String(phoneNumber).trim() === "0";
-            if (invalidPhone || (phoneNumber && !formatPhoneNumber(phoneNumber))) {
-                return res.status(400).json({ message: "נא להזין מספר פלאפון תקין", code: 'INVALID_PHONE' });
-            }
+        if (!phoneUnchanged && phoneInput && !formatPhoneNumber(phoneNumber)) {
+            return res.status(400).json({ message: "נא להזין מספר פלאפון תקין", code: 'INVALID_PHONE' });
         }
 
         let parsedDob = null;
@@ -285,7 +292,7 @@ const updateCustomerById = async (req, res) => {
             parsedDob = d;
         }
 
-        if (phoneDigits) {
+        if (!phoneUnchanged && phoneDigits) {
             const existing = await pool.query(
                 `SELECT userid FROM users WHERE regexp_replace(phonenumber, '\\D', '', 'g') = $1 AND userid <> $2 AND law_firm_tenant_id IS NOT DISTINCT FROM $3::uuid LIMIT 1`,
                 [phoneDigits, customerId, req.firmTenantId || null]
@@ -295,7 +302,7 @@ const updateCustomerById = async (req, res) => {
             }
         }
 
-        if (emailNorm) {
+        if (!emailUnchanged && emailNorm) {
             const existingEmail = await pool.query(
                 `SELECT userid FROM users WHERE LOWER(email) = $1 AND userid <> $2 AND law_firm_tenant_id IS NOT DISTINCT FROM $3::uuid LIMIT 1`,
                 [emailNorm, customerId, req.firmTenantId || null]
@@ -305,8 +312,7 @@ const updateCustomerById = async (req, res) => {
             }
         }
 
-        const phoneToStore = phoneNumber ? String(phoneNumber).trim() : null;
-        const roleToSet = phoneDigits ? "User" : "ExternalSigner";
+        const roleToSet = phoneUnchanged ? existingCustomer.role : (phoneDigits ? "User" : "ExternalSigner");
 
         const result = await pool.query(
             `
@@ -323,13 +329,16 @@ const updateCustomerById = async (req, res) => {
                     ELSE role
                 END
             WHERE userid = $6 AND law_firm_tenant_id IS NOT DISTINCT FROM $10::uuid AND role NOT IN ('Admin','Deleted')
+                AND phonenumber IS NOT DISTINCT FROM $11 AND email IS NOT DISTINCT FROM $12
+                AND role IS NOT DISTINCT FROM $13
             RETURNING userid, name, email, phonenumber, companyname, dateofbirth, client_profile
             `,
-            [name, emailNorm || null, phoneToStore, companyName, parsedDob, customerId, roleToSet, profile.present, profile.present ? JSON.stringify(profile.value) : null, req.firmTenantId || null]
+            [name, emailToStore, phoneToStore, companyName, parsedDob, customerId, roleToSet, profile.present, profile.present ? JSON.stringify(profile.value) : null, req.firmTenantId || null,
+                existingCustomer.phonenumber, existingCustomer.email, existingCustomer.role]
         );
 
         if (result.rowCount === 0) {
-            return res.status(404).json({ message: "לקוח לא נמצא" });
+            return res.status(409).json({ message: "פרטי הקשר של הלקוח השתנו. נא לטעון את הפרטים מחדש ולנסות שוב", code: 'CUSTOMER_CONTACT_CHANGED' });
         }
 
         res.status(200).json({ message: "לקוח עודכן בהצלחה", ...clientProfileResponse(result.rows?.[0]) });
