@@ -49,6 +49,8 @@ export default function ClientPopup({
     rePerformRequest,
     onFailureFunction,
     closePopUpFunction,
+    readOnly = false,
+    onSendClient,
     style: _style,
 }) {
     const { t, i18n } = useTranslation();
@@ -84,19 +86,19 @@ export default function ClientPopup({
         && typeof storedContacts[key] === 'string' && storedContacts[key] === value;
     const effectivePhoneError = unchangedStoredContact('phoneNumber', phoneNumber) ? null : phoneNumberError;
     const effectiveEmailError = unchangedStoredContact('email', email) ? null : emailError;
-    const [documentProfile, setDocumentProfile] = useState(() => clientDocumentProfile(clientDetails));
+    const [documentProfile, setDocumentProfile] = useState(() => clientDocumentProfile(readOnly ? null : clientDetails));
     const [profileDirty, setProfileDirty] = useState(false);
-    const [profileLoaded, setProfileLoaded] = useState(() => !clientDetails || hasClientDocumentProfile(clientDetails));
+    const [profileLoaded, setProfileLoaded] = useState(() => !readOnly && (!clientDetails || hasClientDocumentProfile(clientDetails)));
     const [profileLoadError, setProfileLoadError] = useState(false);
     const profileLoadRequest = useRef(0);
     const profileErrors = useMemo(() => clientDocumentProfileErrors(documentProfile), [documentProfile]);
     const hasProfileError = Object.keys(profileErrors).length > 0;
     const updateProfile = (section, key, value) => {
-        if (!profileLoaded) return;
+        if (readOnly || !profileLoaded) return;
         setProfileDirty(true);
         setDocumentProfile(previous => ({ ...previous, [section]: { ...previous[section], [key]: value } }));
     };
-    const [dateOfBirth, setDateOfBirth] = useState((clientDetails?.DateOfBirth || clientDetails?.dateofbirth) ? toNativeDateValue(clientDetails.DateOfBirth || clientDetails.dateofbirth) : "");
+    const [dateOfBirth, setDateOfBirth] = useState(() => !readOnly && (clientDetails?.DateOfBirth || clientDetails?.dateofbirth) ? toNativeDateValue(clientDetails.DateOfBirth || clientDetails.dateofbirth) : "");
 
     useEffect(() => {
         const request = ++profileLoadRequest.current;
@@ -104,6 +106,7 @@ export default function ClientPopup({
         setStoredContacts(contactSnapshot(selectedClient));
         setProfileDirty(false);
         setProfileLoadError(false);
+        if (readOnly) { setProfileLoaded(false); return; }
         if (!id || hasClientDocumentProfile(selectedClient)) {
             setProfileLoaded(true);
             setDocumentProfile(clientDocumentProfile(selectedClient));
@@ -126,7 +129,7 @@ export default function ClientPopup({
             if (!cancelled && request === profileLoadRequest.current) setProfileLoadError(true);
         });
         return () => { cancelled = true; };
-    }, [selectedClient]);
+    }, [selectedClient, readOnly]);
 
     const { result: customersByName, isPerforming: isPerformingCustomersByName, performRequest: searchCustomersByName } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
     const { result: companiesByName, isPerforming: isPerformingCompaniesByName, performRequest: searchCompaniesByName } = useHttpRequest(customersApi.getCompaniesByName, null, () => { });
@@ -155,6 +158,7 @@ export default function ClientPopup({
 
     useEffect(() => {
         if (detectPhoneTimerRef.current) clearTimeout(detectPhoneTimerRef.current);
+        if (readOnly) return undefined;
         const phone = (phoneNumber || '').trim();
         const digits = phone.replace(/\D/g, '');
         if (digits.length >= 7) {
@@ -163,16 +167,17 @@ export default function ClientPopup({
             setExistingMatch(null);
         }
         return () => { if (detectPhoneTimerRef.current) clearTimeout(detectPhoneTimerRef.current); };
-    }, [phoneNumber, detectExisting]);
+    }, [phoneNumber, detectExisting, readOnly]);
 
     useEffect(() => {
         if (detectEmailTimerRef.current) clearTimeout(detectEmailTimerRef.current);
+        if (readOnly) return undefined;
         const emailVal = (email || '').trim();
         if (emailVal && emailVal.includes('@') && emailVal.includes('.')) {
             detectEmailTimerRef.current = setTimeout(() => detectExisting(emailVal), 500);
         }
         return () => { if (detectEmailTimerRef.current) clearTimeout(detectEmailTimerRef.current); };
-    }, [email, detectExisting]);
+    }, [email, detectExisting, readOnly]);
 
     const loadExistingClient = () => {
         if (!existingMatch) return;
@@ -308,6 +313,7 @@ export default function ClientPopup({
     );
 
     const handleSaveClient = () => {
+        if (readOnly) return;
         const clientData = {
             name: (name || '').trim(),
             phoneNumber: (phoneNumber || '').trim(),
@@ -325,10 +331,12 @@ export default function ClientPopup({
     };
 
     const handleDeleteClient = () => {
+        if (readOnly) return;
         deleteClient(selectedClient.UserId || selectedClient.userid);
     };
 
     const handleConfirmLegalDelete = () => {
+        if (readOnly) return;
         setIsLegalDeleteConfirmOpen(false);
         deleteClient(selectedClient.UserId || selectedClient.userid, { confirmLegalDelete: true });
     };
@@ -342,6 +350,7 @@ export default function ClientPopup({
 
     const persistedClientId = selectedClient?.UserId || selectedClient?.userid;
     const openWordDocument = () => {
+        if (readOnly) return;
         const id = Number(persistedClientId);
         if (!Number.isSafeInteger(id) || id <= 0) return;
         // Selected identity is persisted; current unsaved profile fields are not copied.
@@ -349,6 +358,19 @@ export default function ClientPopup({
         closePopUpFunction?.();
         navigate(`${AdminStackName}${SigningManagerScreenName}?panel=templates&mode=word`, { state: { wordInitialContext: initialContext } });
     };
+    if (readOnly) return <SimpleContainer className="lw-clientPopup" dir={direction}>
+        <dl className="lw-clientPopup__readOnlyDetails">
+            {[[t('cases.customerName'), name], [t('customers.companyName'), companyName],
+                [t('common.email'), email, 'ltr'], [t('cases.phoneNumber'), phoneNumber, 'ltr']].map(([label, value, fieldDirection]) => <div key={label}>
+                <dt>{label}</dt><dd><bdi dir={fieldDirection}>{value || '-'}</bdi></dd>
+            </div>)}
+        </dl>
+        <SimpleContainer className="lw-clientPopup__actions">
+            {typeof onSendClient === 'function' && signingAvailable && canAction('clients', 'view') && canAction('signing', 'upload') && Number.isSafeInteger(Number(persistedClientId)) && Number(persistedClientId) > 0 &&
+                <SecondaryButton onPress={() => onSendClient(Number(persistedClientId))}>{t('signingV2.compose.clientContext.send')}</SecondaryButton>}
+            <SecondaryButton onPress={() => closePopUpFunction?.()}>{t('common.close')}</SecondaryButton>
+        </SimpleContainer>
+    </SimpleContainer>;
     if (signingOpen) return <ClientSigningFlow clientId={persistedClientId} onBack={() => setSigningOpen(false)} />;
 
     return (

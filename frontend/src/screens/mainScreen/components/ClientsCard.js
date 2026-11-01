@@ -1,4 +1,7 @@
 import { forwardRef } from "react";
+import ClientSigningFlow from '../../signingScreen/templates/ClientSigningFlow';
+import { useSigningV2Available } from '../../signingScreen/templates/SigningPackagesHub';
+import { useFirmPermissions } from '../../../providers/FirmPermissionsProvider';
 import { images } from "../../../assets/images/images";
 import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
@@ -21,6 +24,9 @@ import SecondaryButton from "../../../components/styledComponents/buttons/Second
 const ClientsCard = forwardRef(({ rePerformRequest, customerList, style: _style, isPerforming, hideButtons, allowEdit = true, allowDelete: _allowDelete = true }, ref) => {
     const { openPopup, closePopup } = usePopup();
     const { t } = useTranslation();
+    const { canAction } = useFirmPermissions() || { canAction: () => false };
+    const signingAvailable = useSigningV2Available();
+    const canSend = signingAvailable && canAction('clients', 'view') && canAction('signing', 'upload');
 
     if (isPerforming) {
         return (
@@ -98,6 +104,9 @@ const ClientsCard = forwardRef(({ rePerformRequest, customerList, style: _style,
                             closePopUpFunction={closePopup}
                             rePerformRequest={rePerformRequest}
                             allowEdit={allowEdit}
+                            onReadOnlyPress={!allowEdit && canSend && (customer.UserId || customer.userid) ? () => openPopup(<ClientPopup
+                                readOnly clientDetails={customer} closePopUpFunction={closePopup}
+                                onSendClient={clientId => openPopup(<ClientSigningFlow clientId={clientId} onBack={closePopup} />)} />) : undefined}
                         />
                     </SimpleContainer>
 

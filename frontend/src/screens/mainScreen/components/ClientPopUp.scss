@@ -185,6 +185,13 @@
     margin-block: v.$space-4;
 }
 
+.lw-clientPopup__readOnlyDetails {
+    margin: 0;
+    > div { margin-block-end: v.$space-3; }
+    dt { font-weight: 600; color: var(--lw-color-primary, #2a4365); }
+    dd { margin-inline-start: 0; overflow-wrap: anywhere; }
+}
+
 .lw-clientPopup__actions .lw-textButtonWithTwoOptionalIcons {
     min-block-size: 2.75rem;
     flex: 1 1 12rem;
