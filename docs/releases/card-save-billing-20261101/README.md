@@ -62,8 +62,11 @@ Frontend Jest: **13/13** passed with mocked confirmation responses, spoofed
 messages and duplicate callbacks; see [`frontend-tests.log`](frontend-tests.log).
 The four changed frontend JavaScript files compile through the existing Babel
 configuration, and the Hebrew/English/Arabic locale JSON parses; see
-[`frontend-compile.log`](frontend-compile.log). A full production build and a
-browser/provider sandbox flow were not run.
+[`frontend-compile.log`](frontend-compile.log). A later follow-up completed six
+actual browser flows against synthetic loopback API/iframe services and reran
+the UI tests after an agreed-price display correction; see
+[`qa-followup/REPORT.md`](qa-followup/REPORT.md). A full production build and a
+real-provider browser/payment/receipt flow were not run.
 
 All provider writes, provider reads, email and signup provisioning in the focused
 billing fixtures are synthetic. No real payment, document, email, cron, production
@@ -92,7 +95,8 @@ and initial-signup boundaries are covered by the portable mocked-provider tests.
 No branch was merged, no tenant deployed, and no live accounting correction was
 made. Land reviewed code on `main`, then follow the existing Melamedia QA gate
 before any customer branch or deployment. Confirm the full signup/office-policy
-suite, frontend flow, provider sandbox receipt and email settings during QA.
+suite and the real-provider sandbox receipt/email flow during QA. The exact
+missing environment and provider settings holds are recorded in the follow-up.
 
 Existing customer records previously advanced by the setup bug are deliberately
 not rewritten or billed by an old setup callback. Their actual payment history,

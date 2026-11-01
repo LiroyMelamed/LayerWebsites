@@ -102,7 +102,7 @@ export default function PlanUsageScreen() {
 
         const planName = pkg.displayName || plan?.name || plan?.planName || pkg.resource?.label || "-";
         const planKey = plan?.planKey || pkg.resource?.planKey || "-";
-        const priceIls = pkg.total ?? billing.priceMonthlyIls ?? null;
+        const priceIls = billing.priceMonthlyIls ?? pkg.total ?? null;
         const priceCents = plan?.priceMonthlyCents ?? plan?.pricing?.priceMonthlyCents ?? null;
         const priceCurrency = plan?.priceCurrency ?? pkg.currency ?? plan?.pricing?.currency ?? "ILS";
 

@@ -1,0 +1,35 @@
+{
+  "checkedAt": "2026-11-01T13:09:05.989Z",
+  "scope": "existing historical synthetic legal sandbox order; read-only",
+  "localMode": "test",
+  "namedTestPairComplete": true,
+  "productionPairPresent": false,
+  "documentTypeOverrideConfigured": false,
+  "providerWrites": 0,
+  "documentSettingsRead": false,
+  "documentSettingsReadHold": "Official documentation says first GetDocumentSettings can initialize missing language defaults.",
+  "getOrder": {
+    "httpStatus": 200,
+    "returnedObject": true,
+    "matchesHistoricalOrder": true,
+    "currency": "ILS",
+    "amountIls": 1,
+    "orderStatus": 3,
+    "transactionCount": 1,
+    "explicitSandboxFlag": null
+  },
+  "getTransaction": {
+    "httpStatus": 200,
+    "matchesHistoricalTransaction": true,
+    "amountIls": 1,
+    "currency": "ILS",
+    "status": 1,
+    "statusCode": 0,
+    "transactionType": 10,
+    "paymentMethod": 3,
+    "documentCreated": false,
+    "documentReferencePresent": false,
+    "cardTokenPresent": true,
+    "explicitSandboxFlag": null
+  }
+}

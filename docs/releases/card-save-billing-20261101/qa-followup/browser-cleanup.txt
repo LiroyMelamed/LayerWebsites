@@ -1,0 +1,6 @@
+Local synthetic browser fixture cleanup
+2026-11-01T13:24:02.301Z
+Stopped only owned process session85160 using SIGINT (exit0).
+PASS: 127.0.0.1:55701 has no TCP listener (lsof status1, empty output).
+PASS: 127.0.0.1:55702 has no TCP listener (lsof status1, empty output).
+No provider, production, credential or customer resource was changed.
