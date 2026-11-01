@@ -58,6 +58,7 @@ test('different actual text items stay untagged and visibly block authoring inst
 test('the keyboard fallback selects exact UTF16 offsets of an already verified item without editing the document', async () => {
     const authoring = create(); mockContent = { items: authoring.pages[0].items.map(({ text, ...rest }) => ({ ...rest, str: text })) };
     const onSelect = jest.fn(); render(<WordSourceViewer authoring={authoring} pdfFile={new Blob(['%PDF'])} bindings={[]} onSelect={onSelect} fieldLabel={value => value} text={value => value} />);
+    fireEvent.click(screen.getByText('selectionOptions')); fireEvent.click(screen.getByText('keyboardSelection'));
     await waitFor(() => expect(screen.getByLabelText('selectExcerptText')).toBeEnabled());
     const input = screen.getByLabelText('selectExcerptText'); input.focus(); input.setSelectionRange(3, 8);
     fireEvent.keyUp(input, { key: 'ArrowRight', shiftKey: true }); fireEvent.click(screen.getByText('confirmTextSelection'));
@@ -162,5 +163,43 @@ test('dense saved and pending chip labels separate after resize while exact sour
         view?.unmount();
         global.ResizeObserver = originalObserver;
         HTMLElement.prototype.getBoundingClientRect = originalBounds;
+    }
+});
+
+test('saved labels are accessible controls; selecting one never reuses native text selection, and list selection focuses it', async () => {
+    const authoring = create(); mockContent = { items: authoring.pages[0].items.map(({ text, ...rest }) => ({ ...rest, str: text })) };
+    const originalBounds = HTMLElement.prototype.getBoundingClientRect;
+    const originalScroll = HTMLElement.prototype.scrollIntoView; const originalWidth = window.innerWidth;
+    HTMLElement.prototype.scrollIntoView = jest.fn(); Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
+    HTMLElement.prototype.getBoundingClientRect = function () {
+        if (this.matches('[data-word-chip]')) return { left: 0, top: 0, width: 120, height: 19 };
+        if (this.dataset.testid === 'source-page') return { left: 0, top: 0, width: 600, height: 800 };
+        return originalBounds.call(this);
+    };
+    const onSelect = jest.fn(); const onSelectBinding = jest.fn();
+    const binding = { id: 'saved-name', kind: 'range', field: 'client.fullName', part: 'word/document.xml', paragraphId: 'p0', start: 3, end: 8 };
+    const props = { authoring, pdfFile: new Blob(['%PDF']), bindings: [binding], onSelect, onSelectBinding, fieldLabel: value => value, text: (key, values) => values?.field ? `${key} ${values.field}` : key };
+    let view;
+    try {
+        view = render(<WordSourceViewer {...props} />);
+        const chip = await screen.findByRole('button', { name: 'editReplacement client.fullName' });
+        expect(chip.closest('[aria-hidden="true"]')).toBeNull();
+        const sourceText = screen.getByTestId('source-page').querySelector('[data-word-item]');
+        const range = document.createRange(); range.selectNodeContents(sourceText); window.getSelection().removeAllRanges(); window.getSelection().addRange(range);
+        fireEvent.mouseUp(chip); fireEvent.click(chip);
+        expect(onSelectBinding).toHaveBeenCalledWith('saved-name'); expect(onSelect).not.toHaveBeenCalled();
+        view.rerender(<WordSourceViewer {...props} activeBindingId="saved-name" />);
+        await waitFor(() => expect(chip).toHaveFocus()); expect(chip).toHaveAttribute('aria-pressed', 'true');
+        expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledWith({ block: 'center', inline: 'nearest' });
+        expect(view.container.querySelector('.lw-word-source__mark')).toHaveStyle({ left: '25px', top: '50px', width: '70px', height: '12px' });
+        fireEvent.mouseUp(sourceText);
+        expect(onSelect).toHaveBeenCalledWith({ kind: 'range', start: { itemId: 'p1_i0', offset: 0 }, end: { itemId: 'p1_i0', offset: 8 } });
+        expect(binding).toEqual(props.bindings[0]);
+        HTMLElement.prototype.scrollIntoView.mockClear();
+        view.rerender(<WordSourceViewer {...props} activeBindingId={null} selection={{ kind: 'range', anchor: { ...binding, start: 0, end: 3 } }} />);
+        await waitFor(() => expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledWith({ block: 'center', inline: 'nearest' }));
+    } finally {
+        view?.unmount(); HTMLElement.prototype.getBoundingClientRect = originalBounds; HTMLElement.prototype.scrollIntoView = originalScroll;
+        Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });
     }
 });

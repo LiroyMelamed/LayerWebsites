@@ -20,7 +20,7 @@
   .lw-simpleInput { inline-size: 100%; min-inline-size: 0; }
   .lw-signingBack { margin-block-end: v.$space-4; }
   small, &__muted, &__pickerHelp { color: var(--lw-color-primary, #2a4365); }
-  button:focus-visible, input:focus-visible, summary:focus-visible, h2:focus-visible { outline: 2px solid var(--lw-color-primary, #2a4365); outline-offset: 3px; }
+  button:focus-visible, input:focus-visible, summary:focus-visible, h2:focus-visible, h3:focus-visible { outline: 2px solid var(--lw-color-primary, #2a4365); outline-offset: 3px; }
   input { caret-color: var(--lw-color-primary, #2a4365); }
   ::selection { background: var(--lw-color-primary, #2a4365); color: var(--lw-color-white, #fff); }
 
@@ -40,6 +40,7 @@
   &__advanced > .lw-simpleTextArea { inline-size: 100%; margin-block: v.$space-3; }
   &__loading { position: sticky; inset-block-start: v.$space-3; z-index: 5; display: flex; align-items: center; gap: v.$space-3; padding: v.$space-4; margin-block: v.$space-3; background: var(--lw-color-secondary-highlighted, #edf2f7); border-radius: v.$space-2; }
   &__loading > .lw-simpleLoader { flex: 0 0 auto; inline-size: auto; block-size: auto; z-index: auto; }
+  &__documentLoading { position: static; min-block-size: 8rem; justify-content: center; }
   &__range, &__references, &__valueGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: v.$space-5 v.$space-6; margin-block: v.$space-4; align-items: start; }
   &__check { display: flex; align-items: center; gap: v.$space-3; min-block-size: 2.75rem; line-height: 1.5; margin-block: v.$space-3; input { inline-size: 1.125rem; block-size: 1.125rem; flex-shrink: 0; accent-color: var(--lw-color-primary, #2a4365); } }
   &__bindings { margin: v.$space-4 0; padding: 0; list-style: none; li { display: flex; gap: v.$space-4; justify-content: space-between; align-items: center; padding-block: v.$space-4; border-block-end: 1px solid var(--lw-color-secondary-highlighted, #edf2f7); > div { min-inline-size: 0; overflow-wrap: anywhere; } } }
@@ -49,6 +50,18 @@
   &__pickerSelection { overflow-wrap: anywhere; }
   &__notice { color: var(--lw-color-primary, #2a4365); padding-block: v.$space-3; }
   &__visualRow { align-items: start; }
+  &__editor { margin-block-start: v.$space-4; padding-block-start: v.$space-4; }
+  &__editorHeader { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: v.$space-3; margin-block-end: v.$space-3;
+    h2, p { margin: 0; } }
+  &__editorActions { display: flex; flex-wrap: wrap; gap: v.$space-3; }
+  &__saveState { color: var(--lw-color-primary, #2a4365); font-size: .8125rem; }
+  &__selectionBar { display: flex; align-items: center; flex-wrap: wrap; gap: v.$space-3; margin-block: v.$space-3;
+    > .lw-word__selected { flex: 1 1 16rem; min-inline-size: 0; } .lw-word__check { margin: 0; } }
+  &__selectionHint { margin-block-end: v.$space-3; }
+  &__settings, &__bindingDetails, &__selectionOptions { border-block-start: 1px solid var(--lw-color-secondary-highlighted, #edf2f7); margin-block-start: v.$space-3; }
+  &__settings > section { max-inline-size: 42rem; display: grid; gap: v.$space-4; padding-block: v.$space-3; }
+  &__bindings li.is-active { background: var(--lw-color-secondary-highlighted, #edf2f7); }
+  &__editor .lw-signing-pdfViewerMain { min-inline-size: 0; }
   &__visualRow > &__mappingForm { flex: 0 0 18rem; max-inline-size: 22rem; padding: v.$space-4; }
   &__dataPanel { display: grid; gap: v.$space-3; > label { display: grid; gap: v.$space-2; } .lw-addFieldPanel { inline-size: 100%; max-block-size: 25rem; overflow-y: auto; } }
   &__selectedField { overflow-wrap: anywhere; }
@@ -65,7 +78,17 @@
     .lw-simpleInput { min-block-size: 2.75rem; }
     &__visualRow { flex-direction: column; }
     &__visualRow > &__mappingForm { flex: 0 0 auto; max-inline-size: none; inline-size: 100%; box-sizing: border-box; }
-    &__dataPanel .lw-addFieldPanel { max-block-size: 14rem; }
+    &__editor--choosing { padding-block-end: calc(40dvh + #{v.$space-8}); }
+    &__visualRow > &__mappingForm { position: fixed; inset-block-end: 0; inset-inline: v.$space-3; inline-size: auto; z-index: 20;
+      display: flex; flex-direction: column; gap: v.$space-2; padding: v.$space-3; max-block-size: 40dvh; overflow: hidden;
+      background: var(--lw-color-white, #fff); border: 1px solid var(--lw-color-primary, #2a4365); border-radius: .5rem .5rem 0 0;
+      box-shadow: 0 -2px 8px rgba(42, 67, 101, .12); h3 { margin: 0; flex: 0 0 auto; } }
+    &__selectionBar { flex: 0 0 auto; margin: 0; gap: v.$space-2; > .lw-word__selected { flex-basis: 100%; min-block-size: 0; padding: v.$space-2;
+        p { margin: 0; max-block-size: 2.8em; overflow: auto; } } }
+    &__replacementChoices { min-block-size: 0; overflow-y: auto; overscroll-behavior: contain; }
+    &__editorHeader { align-items: start; }
+    &__editorActions { inline-size: 100%; > .lw-simpleButton { flex: 1 1 auto; } }
+    &__dataPanel .lw-addFieldPanel { max-block-size: none; overflow: visible; }
   }
 }
 
@@ -94,4 +117,9 @@
   &__mark { position: absolute; border: 1px solid var(--lw-color-primary, #2a4365); box-sizing: border-box; background: color-mix(in srgb, var(--lw-color-primary, #2a4365) 18%, transparent); min-inline-size: 3px; &.is-pending { border-style: dashed; background: color-mix(in srgb, var(--lw-color-primary, #2a4365) 28%, transparent); } }
   &__chip { position: absolute; box-sizing: border-box; white-space: nowrap; max-inline-size: min(16rem, 100%); overflow: hidden; text-overflow: ellipsis; font-size: .75rem; line-height: 1.4;
     padding-inline: v.$space-2; border: 1px solid var(--lw-color-primary, #2a4365); border-radius: .25rem; background: var(--lw-color-primary, #2a4365); color: var(--lw-color-white, #fff); }
+  &__mark.is-active { background: color-mix(in srgb, var(--lw-color-primary, #2a4365) 32%, transparent); }
+  button.lw-word-source__chip { appearance: none; font-family: inherit; font-size: .75rem; font-weight: inherit; line-height: 1.4; padding-block: 0; margin: 0; cursor: pointer; pointer-events: auto; text-align: start;
+    &:hover, &.is-active { background: var(--lw-color-white, #fff); color: var(--lw-color-primary, #2a4365); }
+    &.is-active { outline: 2px solid var(--lw-color-primary, #2a4365); outline-offset: 1px; }
+    &:disabled { cursor: default; pointer-events: none; opacity: .65; } }
 }
