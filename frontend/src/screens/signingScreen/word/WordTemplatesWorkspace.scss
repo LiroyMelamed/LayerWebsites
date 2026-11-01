@@ -20,7 +20,11 @@
   .lw-simpleInput { inline-size: 100%; min-inline-size: 0; }
   .lw-signingBack { margin-block-end: v.$space-4; }
   small, &__muted, &__pickerHelp { color: var(--lw-color-primary, #2a4365); }
-  button:focus-visible, input:focus-visible, summary:focus-visible, h2:focus-visible, h3:focus-visible { outline: 2px solid var(--lw-color-primary, #2a4365); outline-offset: 3px; }
+  button:focus-visible, input:not(.lw-simpleInput__field):focus-visible, summary:focus-visible, h2:focus-visible, h3:focus-visible { outline: 2px solid var(--lw-color-primary, #2a4365); outline-offset: 3px; }
+  .lw-simpleInput:has(> .lw-simpleInput__field:focus-visible) {
+    box-shadow: 0 0 0 1px var(--lw-color-primary-highlighted, #1a365d);
+    &.has-error { box-shadow: 0 0 0 1px var(--lw-color-error, #e53e3e); }
+  }
   input { caret-color: var(--lw-color-primary, #2a4365); }
   ::selection { background: var(--lw-color-primary, #2a4365); color: var(--lw-color-white, #fff); }
 
