@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { notificationProvider } = require('../services/signingV2/runtime');
+const { notificationProvider, notificationOtpTransport } = require('../services/signingV2/runtime');
 
 test('completed copies use the incumbent signed-document campaign and scoped links with no admin CC', async () => {
     const sent = [];
@@ -21,4 +21,19 @@ test('completed copies use the incumbent signed-document campaign and scoped lin
     assert.match(sent[2].sms.messageBody, /لا حاجة للتوقيع مجددًا/);
     assert.match(sent[3].sms.messageBody, /No further signature is needed/);
     assert.ok(sent.slice(1).every(item => item.email === null && item.sms.messageBody.endsWith(url)));
+});
+test('suppressed QA invitations never acknowledge a real provider send', async () => {
+ const provider=notificationProvider({
+  pool:{query:async()=>({rows:[{person_name:'QA',submission_name:'QA',owner_name:'QA'}]})},
+  notifyRecipient:async()=>({outcomes:{email:{ok:true,simulated:true},sms:{ok:true,simulated:true}}}),
+ });
+ for(const channel of ['email','sms']) await assert.rejects(provider.send({deliveryId:'synthetic',purpose:'invitation',channel,endpoint:'synthetic',url:'https://example.invalid'}),error=>error.definitive===true&&error.code==='QA_OUTBOUND_SUPPRESSED');
+});
+test('OTP delivery requires a real transport result', async () => {
+ for(const result of [{ok:true,simulated:true},{ok:true,suppressed:true}]) {
+  const transport=notificationOtpTransport({sendMessage:async()=>result,sendEmailCampaign:async()=>result});
+  for(const channel of ['email','sms']) await assert.rejects(transport.send({channel,endpoint:'synthetic',code:'123456',locale:'he',ttlMinutes:5}),error=>error.definitive===true&&error.code==='OTP_DELIVERY_FAILED');
+ }
+ const transport=notificationOtpTransport({sendMessage:async()=>({ok:true,messageId:'sms-id'}),sendEmailCampaign:async()=>({ok:true,messageId:'mail-id'})});
+ assert.equal((await transport.send({channel:'email',endpoint:'synthetic',code:'123456',locale:'he',ttlMinutes:5})).providerId,'mail-id');
 });

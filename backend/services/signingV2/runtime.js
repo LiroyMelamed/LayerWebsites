@@ -113,6 +113,7 @@ function notificationProvider({ pool, notifyRecipient }) {
                 ...(completedCopy ? { signed_document_url: message.url, evidence_certificate_url: message.url } : {}) } } : null,
             sms: email ? null : { messageBody: (copy[message.locale] || copy.he)(found.person_name, found.owner_name, message.url) } });
         const outcome = result?.outcomes?.[email ? 'email' : 'sms'];
+        if (outcome?.simulated) throw Object.assign(new Error('QA transport suppressed'), { definitive: true, code: 'QA_OUTBOUND_SUPPRESSED' });
         if (outcome?.ok === true) return { providerId: outcome.messageId || null };
         if (outcome && outcome.attempted === false) throw Object.assign(new Error('not attempted'), { definitive: true, code: 'PROVIDER_REJECTED' });
         // Anything else may already have reached the provider; the delivery service records it as uncertain.
@@ -133,7 +134,7 @@ function notificationOtpTransport({ sendMessage, sendEmailCampaign }) {
             ? await sendMessage((OTP_SMS[locale] || OTP_SMS.he)(code, ttlMinutes), endpoint, { fast: true })
             : await sendEmailCampaign({ toEmail: endpoint, campaignKey: 'SIGNING_OTP', contactFields: {
                 recipient_name: name || '', document_name: '', otp_code: code, otp_ttl_minutes: String(ttlMinutes) } });
-        if (result && result.ok !== false) return { providerId: result.messageId || null };
+        if (result && result.ok !== false && !result.simulated && !result.suppressed) return { providerId: result.messageId || null };
         throw Object.assign(new Error('otp not sent'), { definitive: true, code: 'OTP_DELIVERY_FAILED' });
     } };
 }

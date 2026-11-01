@@ -20,7 +20,10 @@ function qaOutboundNoop(channel, endpoint) {
         throw new Error('QA outbound mode requires the isolated Melamedia QA database and port');
     }
     if (!['sms', 'email', 'push'].includes(channel)) throw new Error('Unknown outbound channel');
-    if (endpointAllowed(endpoint)) return null;
+    // A transport can address more than one recipient (for example email CC).
+    // Every recipient must be explicitly allowed before any provider IO.
+    const endpoints = Array.isArray(endpoint) ? endpoint : [endpoint];
+    if (endpoints.length && endpoints.every(endpointAllowed)) return null;
     console.info(JSON.stringify({ event: 'qa_outbound_suppressed', channel }));
     return { ok: true, simulated: true, suppressed: true, mode: 'qa-noop' };
 }

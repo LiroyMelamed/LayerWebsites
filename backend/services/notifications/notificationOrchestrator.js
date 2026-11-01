@@ -229,6 +229,8 @@ async function notifyRecipient({
                         replyTo: email.replyTo || undefined,
                     });
                     outcomes.email.ok = Boolean(r?.ok);
+                    outcomes.email.simulated = Boolean(r?.simulated || r?.suppressed);
+                    outcomes.email.messageId = r?.messageId || null;
                     if (!r?.ok) {
                         errors.push({ channel: 'email', errorCode: r?.errorCode || 'EMAIL_FAILED' });
                     }
@@ -257,6 +259,8 @@ async function notifyRecipient({
                         return;
                     }
                     outcomes.sms.ok = true;
+                    outcomes.sms.simulated = Boolean(smsResult.simulated || smsResult.suppressed);
+                    outcomes.sms.messageId = smsResult.messageId || null;
                 } catch (e) {
                     outcomes.sms.ok = false;
                     errors.push({ channel: 'sms', error: e?.message || 'sms_failed' });
