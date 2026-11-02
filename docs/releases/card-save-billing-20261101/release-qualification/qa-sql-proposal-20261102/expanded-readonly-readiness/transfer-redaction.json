@@ -1,0 +1,7 @@
+{
+  "scope": "transfer copy narrative only; original read-only receipt retained outside Git",
+  "change": "excluded-customer proper name replaced by generic exclusion wording",
+  "originalReadmeSha256": "1205c353e856278fce4e5fa0cdcf233708c3a366b757226c00e5afe377e33e97",
+  "transferredReadmeSha256": "b78219389ca671c09bfc491ea936c8c164ddc776de74568d52d178b95f256881",
+  "sourceOrOperationalFactsChanged": false
+}

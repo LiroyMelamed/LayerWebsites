@@ -1,0 +1,2025 @@
+{
+  "startedAtUtc": "2026-11-02T07:32:28.520313+00:00",
+  "remoteMutations": 0,
+  "databaseConnections": 0,
+  "providerCalls": 0,
+  "storageCalls": 0,
+  "environmentValuesRead": false,
+  "namespaceOrGuardExecuted": false,
+  "archiveFilesExtractedToDisk": 0,
+  "archives": [
+    {
+      "target": "Melamedia",
+      "path": "/root/codex-recovery-melamedia-20261005/backend.tgz",
+      "metadataBefore": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 105847,
+        "mtimeNs": 1791187069793542695,
+        "uid": 0,
+        "mode": "0o644"
+      },
+      "archiveSha256": "0d323a781f85be8412cb8bc3012d7add14be6540f52d608f070dec7014b00360",
+      "memberCount": 26,
+      "unsafeHeaderCount": 0,
+      "serverPaths": [
+        "backend/server.js"
+      ],
+      "requiredCodeHeaders": {
+        "server.js": true,
+        "app.js": false,
+        "package.json": false,
+        "package-lock.json": false
+      },
+      "nodeModulesMemberCount": 0,
+      "environmentFileHeaderPresent": false,
+      "configHeaders": {
+        "ecosystem.config.js": false,
+        "config/db.js": false,
+        "config/dbTargetPolicy.js": false
+      },
+      "canonicalRuntimeCode": {
+        "fileCount": 25,
+        "selectedPathsAndContentDigest": "ae8ea52c2456fe6a2a75b05d82679b7c13731138d2de9691ec303e7c5084f83e",
+        "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+      },
+      "directSiblingMetadata": [
+        {
+          "name": "office-role-after.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 1925,
+          "mtimeNs": 1791187116911872310,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "rollback-file-manifest.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 4018,
+          "mtimeNs": 1791187114772902614,
+          "uid": 0,
+          "mode": "0o644"
+        },
+        {
+          "name": "manifest.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 8972,
+          "mtimeNs": 1791187678271204433,
+          "uid": 0,
+          "mode": "0o644"
+        },
+        {
+          "name": "qa-tenant-followup.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 449,
+          "mtimeNs": 1791187637318750100,
+          "uid": 0,
+          "mode": "0o644"
+        },
+        {
+          "name": "APPLIED.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 4341,
+          "mtimeNs": 1791187116911872310,
+          "uid": 0,
+          "mode": "0o644"
+        },
+        {
+          "name": "office-role-before.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 12053,
+          "mtimeNs": 1791187114764902728,
+          "uid": 0,
+          "mode": "0o600"
+        }
+      ],
+      "metadataAfter": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 105847,
+        "mtimeNs": 1791187069793542695,
+        "uid": 0,
+        "mode": "0o644"
+      },
+      "stableDuringRead": true
+    },
+    {
+      "target": "Melamedia",
+      "path": "/root/qa-court-owner-import-20261025/checkpoint/source-before.tar",
+      "metadataBefore": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 7731200,
+        "mtimeNs": 1792931674584943910,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "archiveSha256": "256971e6ab823d593abd7d82be547f40eb7abf582e35744f423e6cb8d5d2d77e",
+      "memberCount": 817,
+      "unsafeHeaderCount": 0,
+      "serverPaths": [
+        "backend/server.js"
+      ],
+      "requiredCodeHeaders": {
+        "server.js": true,
+        "app.js": true,
+        "package.json": true,
+        "package-lock.json": true
+      },
+      "nodeModulesMemberCount": 0,
+      "environmentFileHeaderPresent": false,
+      "configHeaders": {
+        "ecosystem.config.js": true,
+        "config/db.js": true,
+        "config/dbTargetPolicy.js": true
+      },
+      "canonicalRuntimeCode": {
+        "fileCount": 353,
+        "selectedPathsAndContentDigest": "e6b4def8ac1e6bdeb3b7e71958e4b1f60100a48b2f3f594f2814b58e1f2afdae",
+        "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+      },
+      "package.jsonSha256": "d8dc77f992e80a5cefef6f803551cd66e1d3993dac4419763848c6f9562ea519",
+      "packageEngines": null,
+      "packageHasStartScript": true,
+      "package-lock.jsonSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+      "lockPackageCount": 556,
+      "installedPackageCount": 507,
+      "matchesCurrentInstalledDependencyGraph": false,
+      "dependencyGraphDifferenceCount": 49,
+      "directSiblingMetadata": [
+        {
+          "name": "source-hashes.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 93705,
+          "mtimeNs": 1792931674349945890,
+          "uid": 0,
+          "mode": "0o600"
+        }
+      ],
+      "metadataAfter": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 7731200,
+        "mtimeNs": 1792931674584943910,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "stableDuringRead": true
+    },
+    {
+      "target": "Melamedia",
+      "path": "/root/qa-legal-system-messages-off-20261025/checkpoint/source-before.tar",
+      "metadataBefore": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 49889280,
+        "mtimeNs": 1792937906290009130,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "archiveSha256": "d595bbaa7e26468ff2e09bc941c8301d27a5504375c6495831baec977a6050e0",
+      "memberCount": 2153,
+      "unsafeHeaderCount": 0,
+      "serverPaths": [
+        "backend/server.js"
+      ],
+      "requiredCodeHeaders": {
+        "server.js": true,
+        "app.js": true,
+        "package.json": true,
+        "package-lock.json": true
+      },
+      "nodeModulesMemberCount": 0,
+      "environmentFileHeaderPresent": false,
+      "configHeaders": {
+        "ecosystem.config.js": true,
+        "config/db.js": true,
+        "config/dbTargetPolicy.js": true
+      },
+      "canonicalRuntimeCode": {
+        "fileCount": 353,
+        "selectedPathsAndContentDigest": "e6b4def8ac1e6bdeb3b7e71958e4b1f60100a48b2f3f594f2814b58e1f2afdae",
+        "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+      },
+      "package.jsonSha256": "d8dc77f992e80a5cefef6f803551cd66e1d3993dac4419763848c6f9562ea519",
+      "packageEngines": null,
+      "packageHasStartScript": true,
+      "package-lock.jsonSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+      "lockPackageCount": 556,
+      "installedPackageCount": 507,
+      "matchesCurrentInstalledDependencyGraph": false,
+      "dependencyGraphDifferenceCount": 49,
+      "directSiblingMetadata": [
+        {
+          "name": "qa-launch-and-pairing-before.private.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 39952,
+          "mtimeNs": 1792937905552017702,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "source-hashes.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 93705,
+          "mtimeNs": 1792937905554017679,
+          "uid": 0,
+          "mode": "0o600"
+        }
+      ],
+      "metadataAfter": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 49889280,
+        "mtimeNs": 1792937906290009130,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "stableDuringRead": true
+    },
+    {
+      "target": "Melamedia",
+      "path": "/root/qa-new-features-20261023-09eca0a6/checkpoints/source-baseline.tar.gz",
+      "metadataBefore": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 27234379,
+        "mtimeNs": 1792763017371724575,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "archiveSha256": "1271363f8d060dd23669a896c4e56483dc8e954b2008e284b86c1ac93435ccd1",
+      "memberCount": 2075,
+      "unsafeHeaderCount": 0,
+      "serverPaths": [
+        "backend/server.js"
+      ],
+      "requiredCodeHeaders": {
+        "server.js": true,
+        "app.js": true,
+        "package.json": true,
+        "package-lock.json": true
+      },
+      "nodeModulesMemberCount": 0,
+      "environmentFileHeaderPresent": false,
+      "configHeaders": {
+        "ecosystem.config.js": true,
+        "config/db.js": true,
+        "config/dbTargetPolicy.js": true
+      },
+      "canonicalRuntimeCode": {
+        "fileCount": 336,
+        "selectedPathsAndContentDigest": "27e276be7b612594f02f5b7d3420da43330aecaeca09ee290de024817bab5ce3",
+        "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+      },
+      "package.jsonSha256": "1959aaef2af71dbefc6416fce76478683a1280af6eb0e0b78bd38493096aad28",
+      "packageEngines": null,
+      "packageHasStartScript": true,
+      "package-lock.jsonSha256": "41018540392ba457a782ba86cfc6a038f3ab0ab8df9b201fdebafeed269497ee",
+      "lockPackageCount": 556,
+      "installedPackageCount": 507,
+      "matchesCurrentInstalledDependencyGraph": false,
+      "dependencyGraphDifferenceCount": 49,
+      "directSiblingMetadata": [
+        {
+          "name": "backend-tracked-hashes.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 87692,
+          "mtimeNs": 1792763017666721128,
+          "uid": 0,
+          "mode": "0o600"
+        }
+      ],
+      "metadataAfter": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 27234379,
+        "mtimeNs": 1792763017371724575,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "stableDuringRead": true
+    },
+    {
+      "target": "Melamedia",
+      "path": "/root/qa-new-features-20261023-5ce621ee/checkpoints/source-baseline.tar.gz",
+      "metadataBefore": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 27234379,
+        "mtimeNs": 1792763115831574276,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "archiveSha256": "1271363f8d060dd23669a896c4e56483dc8e954b2008e284b86c1ac93435ccd1",
+      "memberCount": 2075,
+      "unsafeHeaderCount": 0,
+      "serverPaths": [
+        "backend/server.js"
+      ],
+      "requiredCodeHeaders": {
+        "server.js": true,
+        "app.js": true,
+        "package.json": true,
+        "package-lock.json": true
+      },
+      "nodeModulesMemberCount": 0,
+      "environmentFileHeaderPresent": false,
+      "configHeaders": {
+        "ecosystem.config.js": true,
+        "config/db.js": true,
+        "config/dbTargetPolicy.js": true
+      },
+      "canonicalRuntimeCode": {
+        "fileCount": 336,
+        "selectedPathsAndContentDigest": "27e276be7b612594f02f5b7d3420da43330aecaeca09ee290de024817bab5ce3",
+        "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+      },
+      "package.jsonSha256": "1959aaef2af71dbefc6416fce76478683a1280af6eb0e0b78bd38493096aad28",
+      "packageEngines": null,
+      "packageHasStartScript": true,
+      "package-lock.jsonSha256": "41018540392ba457a782ba86cfc6a038f3ab0ab8df9b201fdebafeed269497ee",
+      "lockPackageCount": 556,
+      "installedPackageCount": 507,
+      "matchesCurrentInstalledDependencyGraph": false,
+      "dependencyGraphDifferenceCount": 49,
+      "directSiblingMetadata": [
+        {
+          "name": "backend-tracked-hashes.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 87692,
+          "mtimeNs": 1792763115916573283,
+          "uid": 0,
+          "mode": "0o600"
+        }
+      ],
+      "metadataAfter": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 27234379,
+        "mtimeNs": 1792763115831574276,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "stableDuringRead": true
+    },
+    {
+      "target": "Melamedia",
+      "path": "/root/qa-new-features-20261023-5ce621ee/checkpoints/final08/source-before.tar",
+      "metadataBefore": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 49346560,
+        "mtimeNs": 1792797801941559752,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "archiveSha256": "c53e7ef0a69ed0509ce08d1e99511327cd58444409af1017ea98b8a3f8b0aa88",
+      "memberCount": 2124,
+      "unsafeHeaderCount": 0,
+      "serverPaths": [
+        "backend/server.js"
+      ],
+      "requiredCodeHeaders": {
+        "server.js": true,
+        "app.js": true,
+        "package.json": true,
+        "package-lock.json": true
+      },
+      "nodeModulesMemberCount": 0,
+      "environmentFileHeaderPresent": false,
+      "configHeaders": {
+        "ecosystem.config.js": true,
+        "config/db.js": true,
+        "config/dbTargetPolicy.js": true
+      },
+      "canonicalRuntimeCode": {
+        "fileCount": 345,
+        "selectedPathsAndContentDigest": "46b3cfd9418f4208dbfc1233565181ff837d834a9687642ca39743f4fb306291",
+        "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+      },
+      "package.jsonSha256": "d8dc77f992e80a5cefef6f803551cd66e1d3993dac4419763848c6f9562ea519",
+      "packageEngines": null,
+      "packageHasStartScript": true,
+      "package-lock.jsonSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+      "lockPackageCount": 556,
+      "installedPackageCount": 507,
+      "matchesCurrentInstalledDependencyGraph": false,
+      "dependencyGraphDifferenceCount": 49,
+      "directSiblingMetadata": [],
+      "metadataAfter": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 49346560,
+        "mtimeNs": 1792797801941559752,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "stableDuringRead": true
+    },
+    {
+      "target": "Melamedia",
+      "path": "/root/qa-release-backups/melamedia-readiness-20261006-v4/backend-before.tar.gz",
+      "metadataBefore": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 1565001,
+        "mtimeNs": 1791235005936436861,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "archiveSha256": "f440a03cb6b79ccd5b2114b83e2894cbbea4a2db92b1420ead70ae0f7d34db71",
+      "memberCount": 485,
+      "unsafeHeaderCount": 0,
+      "serverPaths": [
+        "backend/server.js"
+      ],
+      "requiredCodeHeaders": {
+        "server.js": true,
+        "app.js": true,
+        "package.json": true,
+        "package-lock.json": true
+      },
+      "nodeModulesMemberCount": 0,
+      "environmentFileHeaderPresent": true,
+      "configHeaders": {
+        "ecosystem.config.js": true,
+        "config/db.js": true,
+        "config/dbTargetPolicy.js": true
+      },
+      "canonicalRuntimeCode": {
+        "fileCount": 225,
+        "selectedPathsAndContentDigest": "fa92249f674574b69ab3b59eafa39dc610e25eef762aabc05370d8076e976b0c",
+        "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+      },
+      "package.jsonSha256": "4065a920d3f90f7679e5c48341be2ba03963958d22c54da53dd628dbb8617636",
+      "packageEngines": null,
+      "packageHasStartScript": true,
+      "package-lock.jsonSha256": "515c9a9afcf00901d9c7f84f16a7ccd9117de9f72609670040b35b31aea67025",
+      "lockPackageCount": 525,
+      "installedPackageCount": 507,
+      "matchesCurrentInstalledDependencyGraph": false,
+      "dependencyGraphDifferenceCount": 42,
+      "directSiblingMetadata": [
+        {
+          "name": "processes-before.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 560,
+          "mtimeNs": 1791235028608113015,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "source-before.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 5168,
+          "mtimeNs": 1791235106469001044,
+          "uid": 0,
+          "mode": "0o644"
+        }
+      ],
+      "metadataAfter": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 1565001,
+        "mtimeNs": 1791235005936436861,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "stableDuringRead": true
+    },
+    {
+      "target": "Melamedia",
+      "path": "/root/qa-release-backups/melamedia-preservation-20261006-v11b/backend-before.tar.gz",
+      "metadataBefore": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 1572446,
+        "mtimeNs": 1791246636031288698,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "archiveSha256": "ec4b8008d2fef2cf89f88b44b44a4d2b5f128dc56e5e369974e50beb068ce55f",
+      "memberCount": 511,
+      "unsafeHeaderCount": 0,
+      "serverPaths": [
+        "backend/server.js"
+      ],
+      "requiredCodeHeaders": {
+        "server.js": true,
+        "app.js": true,
+        "package.json": true,
+        "package-lock.json": true
+      },
+      "nodeModulesMemberCount": 0,
+      "environmentFileHeaderPresent": false,
+      "configHeaders": {
+        "ecosystem.config.js": true,
+        "config/db.js": true,
+        "config/dbTargetPolicy.js": true
+      },
+      "canonicalRuntimeCode": {
+        "fileCount": 226,
+        "selectedPathsAndContentDigest": "a776db297b91cbf63563ec4b9292577a99d60bffe2392c26941d5e8538f86c1b",
+        "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+      },
+      "package.jsonSha256": "e44b2a4b28cc2e989b2f7e3054c77a77abfe4e01a5ae68123cf2b93f61afb9c5",
+      "packageEngines": null,
+      "packageHasStartScript": true,
+      "package-lock.jsonSha256": "0aa4361ade9a3b4ca3573e9a1fad99f63cc9e16e0239a5fc881c534c449e4c2b",
+      "lockPackageCount": 525,
+      "installedPackageCount": 507,
+      "matchesCurrentInstalledDependencyGraph": false,
+      "dependencyGraphDifferenceCount": 39,
+      "directSiblingMetadata": [
+        {
+          "name": "processes-before.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 560,
+          "mtimeNs": 1791246636442282837,
+          "uid": 0,
+          "mode": "0o600"
+        }
+      ],
+      "metadataAfter": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 1572446,
+        "mtimeNs": 1791246636031288698,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "stableDuringRead": true
+    },
+    {
+      "target": "Melamedia",
+      "path": "/root/qa-release-backups/melamedia-preservation-20261006-v11/backend-before.tar.gz",
+      "metadataBefore": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 1572446,
+        "mtimeNs": 1791246607596694322,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "archiveSha256": "ec4b8008d2fef2cf89f88b44b44a4d2b5f128dc56e5e369974e50beb068ce55f",
+      "memberCount": 511,
+      "unsafeHeaderCount": 0,
+      "serverPaths": [
+        "backend/server.js"
+      ],
+      "requiredCodeHeaders": {
+        "server.js": true,
+        "app.js": true,
+        "package.json": true,
+        "package-lock.json": true
+      },
+      "nodeModulesMemberCount": 0,
+      "environmentFileHeaderPresent": false,
+      "configHeaders": {
+        "ecosystem.config.js": true,
+        "config/db.js": true,
+        "config/dbTargetPolicy.js": true
+      },
+      "canonicalRuntimeCode": {
+        "fileCount": 226,
+        "selectedPathsAndContentDigest": "a776db297b91cbf63563ec4b9292577a99d60bffe2392c26941d5e8538f86c1b",
+        "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+      },
+      "package.jsonSha256": "e44b2a4b28cc2e989b2f7e3054c77a77abfe4e01a5ae68123cf2b93f61afb9c5",
+      "packageEngines": null,
+      "packageHasStartScript": true,
+      "package-lock.jsonSha256": "0aa4361ade9a3b4ca3573e9a1fad99f63cc9e16e0239a5fc881c534c449e4c2b",
+      "lockPackageCount": 525,
+      "installedPackageCount": 507,
+      "matchesCurrentInstalledDependencyGraph": false,
+      "dependencyGraphDifferenceCount": 39,
+      "directSiblingMetadata": [
+        {
+          "name": "processes-before.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 0,
+          "mtimeNs": 1791246607598694294,
+          "uid": 0,
+          "mode": "0o600"
+        }
+      ],
+      "metadataAfter": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 1572446,
+        "mtimeNs": 1791246607596694322,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "stableDuringRead": true
+    },
+    {
+      "target": "Melamedia",
+      "path": "/root/qa-release-backups/melamedia-http-deps-20261006-v12/backend-before.tar.gz",
+      "metadataBefore": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 1584839,
+        "mtimeNs": 1791267264581678859,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "archiveSha256": "1fc048b430fefdc67f480fa95adaa75d8bd70143c27139ff2653dcf3ab101dc2",
+      "memberCount": 519,
+      "unsafeHeaderCount": 0,
+      "serverPaths": [
+        "backend/server.js"
+      ],
+      "requiredCodeHeaders": {
+        "server.js": true,
+        "app.js": true,
+        "package.json": true,
+        "package-lock.json": true
+      },
+      "nodeModulesMemberCount": 0,
+      "environmentFileHeaderPresent": false,
+      "configHeaders": {
+        "ecosystem.config.js": true,
+        "config/db.js": true,
+        "config/dbTargetPolicy.js": true
+      },
+      "canonicalRuntimeCode": {
+        "fileCount": 227,
+        "selectedPathsAndContentDigest": "12d8ad61a81778e25c2c49b5516cacb4cb2a5f5c302b8eabda0b0b28bf855bd2",
+        "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+      },
+      "package.jsonSha256": "e44b2a4b28cc2e989b2f7e3054c77a77abfe4e01a5ae68123cf2b93f61afb9c5",
+      "packageEngines": null,
+      "packageHasStartScript": true,
+      "package-lock.jsonSha256": "0aa4361ade9a3b4ca3573e9a1fad99f63cc9e16e0239a5fc881c534c449e4c2b",
+      "lockPackageCount": 525,
+      "installedPackageCount": 507,
+      "matchesCurrentInstalledDependencyGraph": false,
+      "dependencyGraphDifferenceCount": 39,
+      "directSiblingMetadata": [
+        {
+          "name": "processes-before.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 560,
+          "mtimeNs": 1791267265110671445,
+          "uid": 0,
+          "mode": "0o600"
+        }
+      ],
+      "metadataAfter": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 1584839,
+        "mtimeNs": 1791267264581678859,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "stableDuringRead": true
+    },
+    {
+      "target": "Melamedia",
+      "path": "/root/qa-release-backups/melamedia-document-details-20261006-v13/backend-before.tar.gz",
+      "metadataBefore": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 1586551,
+        "mtimeNs": 1791268630842365428,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "archiveSha256": "55f251f71b745b3344e9a74aa0f6da1e79eccd7a4377ea7ce8cc14c36480f5c4",
+      "memberCount": 521,
+      "unsafeHeaderCount": 0,
+      "serverPaths": [
+        "backend/server.js"
+      ],
+      "requiredCodeHeaders": {
+        "server.js": true,
+        "app.js": true,
+        "package.json": true,
+        "package-lock.json": true
+      },
+      "nodeModulesMemberCount": 0,
+      "environmentFileHeaderPresent": false,
+      "configHeaders": {
+        "ecosystem.config.js": true,
+        "config/db.js": true,
+        "config/dbTargetPolicy.js": true
+      },
+      "canonicalRuntimeCode": {
+        "fileCount": 227,
+        "selectedPathsAndContentDigest": "7795cfe0c009c9549dfb123e8eb7f7bda5bd1d62affe415529295bf267763d1b",
+        "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+      },
+      "package.jsonSha256": "34bb336da141de7c7b66b2d3e5affe17ea1469aee80814830aa2cb98d5d8a4d0",
+      "packageEngines": null,
+      "packageHasStartScript": true,
+      "package-lock.jsonSha256": "505821a287fb56eabd1206581b3c1e4f9950c9007d53e98605109b16d87c752d",
+      "lockPackageCount": 525,
+      "installedPackageCount": 507,
+      "matchesCurrentInstalledDependencyGraph": false,
+      "dependencyGraphDifferenceCount": 37,
+      "directSiblingMetadata": [
+        {
+          "name": "processes-before.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 560,
+          "mtimeNs": 1791268631334358449,
+          "uid": 0,
+          "mode": "0o600"
+        }
+      ],
+      "metadataAfter": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 1586551,
+        "mtimeNs": 1791268630842365428,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "stableDuringRead": true
+    },
+    {
+      "target": "Melamedia",
+      "path": "/root/qa-signing-dd3c1dc-20261008/backend-before.tar",
+      "metadataBefore": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 5672960,
+        "mtimeNs": 1791481927888175676,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "archiveSha256": "51d1306d2bc3f8e2cd96fd275bc369fda42eb8631124ed1ce2788aa55571702d",
+      "memberCount": 596,
+      "unsafeHeaderCount": 0,
+      "serverPaths": [
+        "backend/server.js"
+      ],
+      "requiredCodeHeaders": {
+        "server.js": true,
+        "app.js": true,
+        "package.json": true,
+        "package-lock.json": true
+      },
+      "nodeModulesMemberCount": 0,
+      "environmentFileHeaderPresent": false,
+      "configHeaders": {
+        "ecosystem.config.js": true,
+        "config/db.js": true,
+        "config/dbTargetPolicy.js": true
+      },
+      "canonicalRuntimeCode": {
+        "fileCount": 269,
+        "selectedPathsAndContentDigest": "ee9327d8529fd6e93b8d92af6e0734a3fa6b8e12eb234edd8f04e2ce8f025ad4",
+        "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+      },
+      "package.jsonSha256": "34bb336da141de7c7b66b2d3e5affe17ea1469aee80814830aa2cb98d5d8a4d0",
+      "packageEngines": null,
+      "packageHasStartScript": true,
+      "package-lock.jsonSha256": "505821a287fb56eabd1206581b3c1e4f9950c9007d53e98605109b16d87c752d",
+      "lockPackageCount": 525,
+      "installedPackageCount": 507,
+      "matchesCurrentInstalledDependencyGraph": false,
+      "dependencyGraphDifferenceCount": 37,
+      "directSiblingMetadata": [
+        {
+          "name": "migrations-after.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 4980,
+          "mtimeNs": 1791483284454720246,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "candidate-source-after.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 202059,
+          "mtimeNs": 1791483283050739316,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "database-before02.dump.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 345,
+          "mtimeNs": 1791482817061310531,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "health-after-update02.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 11,
+          "mtimeNs": 1791484720069674663,
+          "uid": 0,
+          "mode": "0o644"
+        },
+        {
+          "name": "candidate-source-after-update02.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 203006,
+          "mtimeNs": 1791484709870818663,
+          "uid": 0,
+          "mode": "0o644"
+        },
+        {
+          "name": "health-after.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 11,
+          "mtimeNs": 1791483290129643146,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "backend-backup-receipt.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 1311,
+          "mtimeNs": 1791481928552165905,
+          "uid": 0,
+          "mode": "0o600"
+        }
+      ],
+      "metadataAfter": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 5672960,
+        "mtimeNs": 1791481927888175676,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "stableDuringRead": true
+    },
+    {
+      "target": "Melamedia",
+      "path": "/root/qa-signing-fixes-20261009-cdb6c5db/backend-before.tar.gz",
+      "metadataBefore": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 1977538,
+        "mtimeNs": 1791568443253170533,
+        "uid": 0,
+        "mode": "0o644"
+      },
+      "archiveSha256": "48edaf7f5947873eabfe7035c45706ce12ee9f7bb9d9e8d202858bfd8605dfa4",
+      "memberCount": 672,
+      "unsafeHeaderCount": 0,
+      "serverPaths": [
+        "backend/server.js"
+      ],
+      "requiredCodeHeaders": {
+        "server.js": true,
+        "app.js": true,
+        "package.json": true,
+        "package-lock.json": true
+      },
+      "nodeModulesMemberCount": 0,
+      "environmentFileHeaderPresent": false,
+      "configHeaders": {
+        "ecosystem.config.js": true,
+        "config/db.js": true,
+        "config/dbTargetPolicy.js": true
+      },
+      "canonicalRuntimeCode": {
+        "fileCount": 293,
+        "selectedPathsAndContentDigest": "e2fe04cb9d853300f78babce57d561d921062c3f6c4506890c89b3142a2cebfe",
+        "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+      },
+      "package.jsonSha256": "34bb336da141de7c7b66b2d3e5affe17ea1469aee80814830aa2cb98d5d8a4d0",
+      "packageEngines": null,
+      "packageHasStartScript": true,
+      "package-lock.jsonSha256": "505821a287fb56eabd1206581b3c1e4f9950c9007d53e98605109b16d87c752d",
+      "lockPackageCount": 525,
+      "installedPackageCount": 507,
+      "matchesCurrentInstalledDependencyGraph": false,
+      "dependencyGraphDifferenceCount": 37,
+      "directSiblingMetadata": [
+        {
+          "name": "manifest.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 285127,
+          "mtimeNs": 1791568424256433659,
+          "uid": 0,
+          "mode": "0o644"
+        },
+        {
+          "name": "backend-live.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 345,
+          "mtimeNs": 1791568556900595409,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "backend-backup.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 444,
+          "mtimeNs": 1791568445367141248,
+          "uid": 0,
+          "mode": "0o600"
+        }
+      ],
+      "metadataAfter": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 1977538,
+        "mtimeNs": 1791568443253170533,
+        "uid": 0,
+        "mode": "0o644"
+      },
+      "stableDuringRead": true
+    },
+    {
+      "target": "Melamedia",
+      "path": "/root/qa-signing-preview-20261008/backend-live-before.tar.gz",
+      "metadataBefore": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 1878626,
+        "mtimeNs": 1791412862886770424,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "archiveSha256": "e471f315d12c1cbd17ba0d6061f86b71a97f2ad0f56720bebe84407c4dd85ea7",
+      "memberCount": 606,
+      "unsafeHeaderCount": 0,
+      "serverPaths": [
+        "backend/server.js"
+      ],
+      "requiredCodeHeaders": {
+        "server.js": true,
+        "app.js": true,
+        "package.json": true,
+        "package-lock.json": true
+      },
+      "nodeModulesMemberCount": 0,
+      "environmentFileHeaderPresent": true,
+      "configHeaders": {
+        "ecosystem.config.js": true,
+        "config/db.js": true,
+        "config/dbTargetPolicy.js": true
+      },
+      "canonicalRuntimeCode": {
+        "fileCount": 269,
+        "selectedPathsAndContentDigest": "d4e8e34df19df0a78efdd45c251c7da7d116b4f6f9b90caf8b08594c97ce2c73",
+        "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+      },
+      "package.jsonSha256": "34bb336da141de7c7b66b2d3e5affe17ea1469aee80814830aa2cb98d5d8a4d0",
+      "packageEngines": null,
+      "packageHasStartScript": true,
+      "package-lock.jsonSha256": "505821a287fb56eabd1206581b3c1e4f9950c9007d53e98605109b16d87c752d",
+      "lockPackageCount": 525,
+      "installedPackageCount": 507,
+      "matchesCurrentInstalledDependencyGraph": false,
+      "dependencyGraphDifferenceCount": 37,
+      "directSiblingMetadata": [],
+      "metadataAfter": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 1878626,
+        "mtimeNs": 1791412862886770424,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "stableDuringRead": true
+    },
+    {
+      "target": "Melamedia",
+      "path": "/root/qa-stage-automation-20261024/checkpoints/stage02/source-before.tar",
+      "metadataBefore": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 49367040,
+        "mtimeNs": 1792800181674945665,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "archiveSha256": "eda0b325ea84f9b7a9c430d127329108d88c5ead6c6bf9ce8773b84f5be5e1a8",
+      "memberCount": 2125,
+      "unsafeHeaderCount": 0,
+      "serverPaths": [
+        "backend/server.js"
+      ],
+      "requiredCodeHeaders": {
+        "server.js": true,
+        "app.js": true,
+        "package.json": true,
+        "package-lock.json": true
+      },
+      "nodeModulesMemberCount": 0,
+      "environmentFileHeaderPresent": false,
+      "configHeaders": {
+        "ecosystem.config.js": true,
+        "config/db.js": true,
+        "config/dbTargetPolicy.js": true
+      },
+      "canonicalRuntimeCode": {
+        "fileCount": 345,
+        "selectedPathsAndContentDigest": "594f8cb56911bdb708545d093580a4b0e01fa29ae2d1ed34093d9e29caf5d74a",
+        "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+      },
+      "package.jsonSha256": "d8dc77f992e80a5cefef6f803551cd66e1d3993dac4419763848c6f9562ea519",
+      "packageEngines": null,
+      "packageHasStartScript": true,
+      "package-lock.jsonSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+      "lockPackageCount": 556,
+      "installedPackageCount": 507,
+      "matchesCurrentInstalledDependencyGraph": false,
+      "dependencyGraphDifferenceCount": 49,
+      "directSiblingMetadata": [
+        {
+          "name": "backend-source-hashes.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 91165,
+          "mtimeNs": 1792800181237950639,
+          "uid": 0,
+          "mode": "0o600"
+        }
+      ],
+      "metadataAfter": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 49367040,
+        "mtimeNs": 1792800181674945665,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "stableDuringRead": true
+    },
+    {
+      "target": "Melamedia",
+      "path": "/root/qa-whatsapp-linked-20261024/checkpoints/delta04/source-before.tar",
+      "metadataBefore": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 49889280,
+        "mtimeNs": 1792853966338469241,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "archiveSha256": "2b36248b05ce410e569e8aed697ccd5094d3c39ee421f9c4f62c7c420d09e392",
+      "memberCount": 2153,
+      "unsafeHeaderCount": 0,
+      "serverPaths": [
+        "backend/server.js"
+      ],
+      "requiredCodeHeaders": {
+        "server.js": true,
+        "app.js": true,
+        "package.json": true,
+        "package-lock.json": true
+      },
+      "nodeModulesMemberCount": 0,
+      "environmentFileHeaderPresent": false,
+      "configHeaders": {
+        "ecosystem.config.js": true,
+        "config/db.js": true,
+        "config/dbTargetPolicy.js": true
+      },
+      "canonicalRuntimeCode": {
+        "fileCount": 353,
+        "selectedPathsAndContentDigest": "cc2a40ed338e283a4b2fca3279ba59a6bcb9d68b90a1970bc395fa7f0cffeb3b",
+        "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+      },
+      "package.jsonSha256": "d8dc77f992e80a5cefef6f803551cd66e1d3993dac4419763848c6f9562ea519",
+      "packageEngines": null,
+      "packageHasStartScript": true,
+      "package-lock.jsonSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+      "lockPackageCount": 556,
+      "installedPackageCount": 507,
+      "matchesCurrentInstalledDependencyGraph": false,
+      "dependencyGraphDifferenceCount": 49,
+      "directSiblingMetadata": [
+        {
+          "name": "paired-baseline.private.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 2776,
+          "mtimeNs": 1792853965858474913,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "backend-source-hashes.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 93704,
+          "mtimeNs": 1792853965932474039,
+          "uid": 0,
+          "mode": "0o600"
+        }
+      ],
+      "metadataAfter": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 49889280,
+        "mtimeNs": 1792853966338469241,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "stableDuringRead": true
+    },
+    {
+      "target": "Melamedia",
+      "path": "/root/qa-whatsapp-linked-20261024/checkpoints/delta03/source-before.tar",
+      "metadataBefore": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 49889280,
+        "mtimeNs": 1792853398769206148,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "archiveSha256": "0f2c37ab5cac2a4a07144fee9e2ec776ef67e131af85e80a3bb9700f6e59e455",
+      "memberCount": 2153,
+      "unsafeHeaderCount": 0,
+      "serverPaths": [
+        "backend/server.js"
+      ],
+      "requiredCodeHeaders": {
+        "server.js": true,
+        "app.js": true,
+        "package.json": true,
+        "package-lock.json": true
+      },
+      "nodeModulesMemberCount": 0,
+      "environmentFileHeaderPresent": false,
+      "configHeaders": {
+        "ecosystem.config.js": true,
+        "config/db.js": true,
+        "config/dbTargetPolicy.js": true
+      },
+      "canonicalRuntimeCode": {
+        "fileCount": 353,
+        "selectedPathsAndContentDigest": "165540baa134f6fc74abaca97d21fcc85adbbdb618a3754b591e4e3de737c555",
+        "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+      },
+      "package.jsonSha256": "d8dc77f992e80a5cefef6f803551cd66e1d3993dac4419763848c6f9562ea519",
+      "packageEngines": null,
+      "packageHasStartScript": true,
+      "package-lock.jsonSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+      "lockPackageCount": 556,
+      "installedPackageCount": 507,
+      "matchesCurrentInstalledDependencyGraph": false,
+      "dependencyGraphDifferenceCount": 49,
+      "directSiblingMetadata": [
+        {
+          "name": "paired-baseline.private.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 2558,
+          "mtimeNs": 1792853398345211000,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "backend-source-hashes.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 93704,
+          "mtimeNs": 1792853398420210142,
+          "uid": 0,
+          "mode": "0o600"
+        }
+      ],
+      "metadataAfter": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 49889280,
+        "mtimeNs": 1792853398769206148,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "stableDuringRead": true
+    },
+    {
+      "target": "Melamedia",
+      "path": "/root/qa-whatsapp-linked-20261024/checkpoints/delta02/source-before.tar",
+      "metadataBefore": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 49879040,
+        "mtimeNs": 1792852359140164782,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "archiveSha256": "197a550afb8dac267b8cab717287eef19d9f2f945022229f0976456b2c36a45d",
+      "memberCount": 2153,
+      "unsafeHeaderCount": 0,
+      "serverPaths": [
+        "backend/server.js"
+      ],
+      "requiredCodeHeaders": {
+        "server.js": true,
+        "app.js": true,
+        "package.json": true,
+        "package-lock.json": true
+      },
+      "nodeModulesMemberCount": 0,
+      "environmentFileHeaderPresent": false,
+      "configHeaders": {
+        "ecosystem.config.js": true,
+        "config/db.js": true,
+        "config/dbTargetPolicy.js": true
+      },
+      "canonicalRuntimeCode": {
+        "fileCount": 353,
+        "selectedPathsAndContentDigest": "8af033795ed5050c48821ef0f836c442ea328a6582bab3692fca455dc5e10dd0",
+        "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+      },
+      "package.jsonSha256": "d8dc77f992e80a5cefef6f803551cd66e1d3993dac4419763848c6f9562ea519",
+      "packageEngines": null,
+      "packageHasStartScript": true,
+      "package-lock.jsonSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+      "lockPackageCount": 556,
+      "installedPackageCount": 507,
+      "matchesCurrentInstalledDependencyGraph": false,
+      "dependencyGraphDifferenceCount": 49,
+      "directSiblingMetadata": [
+        {
+          "name": "paired-baseline.private.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 1335,
+          "mtimeNs": 1792852358442172891,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "backend-source-hashes.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 93704,
+          "mtimeNs": 1792852358503172182,
+          "uid": 0,
+          "mode": "0o600"
+        }
+      ],
+      "metadataAfter": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 49879040,
+        "mtimeNs": 1792852359140164782,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "stableDuringRead": true
+    },
+    {
+      "target": "Melamedia",
+      "path": "/root/qa-whatsapp-linked-20261024/checkpoints/backend02/source-before.tar",
+      "metadataBefore": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 49510400,
+        "mtimeNs": 1792850893204254026,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "archiveSha256": "a39661f307bd800082509014048f30026ff57c24c3607cf4c9b65566a6194594",
+      "memberCount": 2133,
+      "unsafeHeaderCount": 0,
+      "serverPaths": [
+        "backend/server.js"
+      ],
+      "requiredCodeHeaders": {
+        "server.js": true,
+        "app.js": true,
+        "package.json": true,
+        "package-lock.json": true
+      },
+      "nodeModulesMemberCount": 0,
+      "environmentFileHeaderPresent": false,
+      "configHeaders": {
+        "ecosystem.config.js": true,
+        "config/db.js": true,
+        "config/dbTargetPolicy.js": true
+      },
+      "canonicalRuntimeCode": {
+        "fileCount": 346,
+        "selectedPathsAndContentDigest": "e94e05824dc7bc68ff5fefbaf8f6dc34ec09b793693b9cc26e90aa4e89bba553",
+        "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+      },
+      "package.jsonSha256": "d8dc77f992e80a5cefef6f803551cd66e1d3993dac4419763848c6f9562ea519",
+      "packageEngines": null,
+      "packageHasStartScript": true,
+      "package-lock.jsonSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+      "lockPackageCount": 556,
+      "installedPackageCount": 507,
+      "matchesCurrentInstalledDependencyGraph": false,
+      "dependencyGraphDifferenceCount": 49,
+      "directSiblingMetadata": [
+        {
+          "name": "backend-source-hashes.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 91678,
+          "mtimeNs": 1792850892536261491,
+          "uid": 0,
+          "mode": "0o600"
+        }
+      ],
+      "metadataAfter": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 49510400,
+        "mtimeNs": 1792850893204254026,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "stableDuringRead": true
+    },
+    {
+      "target": "Melamedia",
+      "path": "/root/word-code-fix-qa-20261027-434636ca6c7b7556705e/backend-source.tar",
+      "metadataBefore": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 8089600,
+        "mtimeNs": 1793071540285625968,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "archiveSha256": "23f9c6163d604e6c8bd2f717bd79a5b182fc8bd355246ae1fb682aacd8c6cd87",
+      "memberCount": 855,
+      "unsafeHeaderCount": 0,
+      "serverPaths": [
+        "backend/server.js"
+      ],
+      "requiredCodeHeaders": {
+        "server.js": true,
+        "app.js": true,
+        "package.json": true,
+        "package-lock.json": true
+      },
+      "nodeModulesMemberCount": 0,
+      "environmentFileHeaderPresent": false,
+      "configHeaders": {
+        "ecosystem.config.js": true,
+        "config/db.js": true,
+        "config/dbTargetPolicy.js": true
+      },
+      "canonicalRuntimeCode": {
+        "fileCount": 364,
+        "selectedPathsAndContentDigest": "33fa57d4c8b530f398ec0a0f459960ecb402968e3e1ed851b353fbf34d75ebe1",
+        "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+      },
+      "package.jsonSha256": "d8dc77f992e80a5cefef6f803551cd66e1d3993dac4419763848c6f9562ea519",
+      "packageEngines": null,
+      "packageHasStartScript": true,
+      "package-lock.jsonSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+      "lockPackageCount": 556,
+      "installedPackageCount": 507,
+      "matchesCurrentInstalledDependencyGraph": false,
+      "dependencyGraphDifferenceCount": 49,
+      "directSiblingMetadata": [
+        {
+          "name": "contract.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 106349,
+          "mtimeNs": 1793071539911630399,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "code-baseline.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 211828,
+          "mtimeNs": 1793071539916630339,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "restart.intent.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 1658,
+          "mtimeNs": 1793071567531303438,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "verify.result.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 121672,
+          "mtimeNs": 1793071613747757342,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "candidate-baseline.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 21922,
+          "mtimeNs": 1793071545812560504,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "operation.intent.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 1604,
+          "mtimeNs": 1793071539909630422,
+          "uid": 0,
+          "mode": "0o600"
+        }
+      ],
+      "metadataAfter": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 8089600,
+        "mtimeNs": 1793071540285625968,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "stableDuringRead": true
+    },
+    {
+      "target": "Melamedia",
+      "path": "/root/word-visual-qa-20261026-1f3a95fdf920b45eadc4/source.tar",
+      "metadataBefore": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 50104320,
+        "mtimeNs": 1793056577605852796,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "archiveSha256": "8ddda30c259480167cbd05265a86a8a24665abc38d7fedc0f6c21165bd590288",
+      "memberCount": 2178,
+      "unsafeHeaderCount": 0,
+      "serverPaths": [
+        "backend/server.js"
+      ],
+      "requiredCodeHeaders": {
+        "server.js": true,
+        "app.js": true,
+        "package.json": true,
+        "package-lock.json": true
+      },
+      "nodeModulesMemberCount": 0,
+      "environmentFileHeaderPresent": false,
+      "configHeaders": {
+        "ecosystem.config.js": true,
+        "config/db.js": true,
+        "config/dbTargetPolicy.js": true
+      },
+      "canonicalRuntimeCode": {
+        "fileCount": 359,
+        "selectedPathsAndContentDigest": "61cb25c7850fe1aa8cee946c03794d281afb90590241c8b499162edbdf37df5c",
+        "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+      },
+      "package.jsonSha256": "d8dc77f992e80a5cefef6f803551cd66e1d3993dac4419763848c6f9562ea519",
+      "packageEngines": null,
+      "packageHasStartScript": true,
+      "package-lock.jsonSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+      "lockPackageCount": 556,
+      "installedPackageCount": 507,
+      "matchesCurrentInstalledDependencyGraph": false,
+      "dependencyGraphDifferenceCount": 49,
+      "directSiblingMetadata": [
+        {
+          "name": "source-advance04-a28934e28db1b9519072bd9a.intent.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 1084,
+          "mtimeNs": 1793062486854764047,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "checkpoint.result.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 113244,
+          "mtimeNs": 1793056586965735483,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "recovery03-dff8add50a979e1e-315b400bcc8b4b58a77a651a0848f9aa.result.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 119626,
+          "mtimeNs": 1793057756509826694,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "apply.intent.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 118,
+          "mtimeNs": 1793056643703028065,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "contract.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 232732,
+          "mtimeNs": 1793056576726863823,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "source-advance04-a28934e28db1b9519072bd9a.result.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 120183,
+          "mtimeNs": 1793062525769306302,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "candidate-release-baseline.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 21922,
+          "mtimeNs": 1793056650875939062,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "checkpoint.intent.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 163,
+          "mtimeNs": 1793056576724863848,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "launch.safe-preimage.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 885,
+          "mtimeNs": 1793056577615852671,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "recovery03-4b4bb8e20a0f6dfc-5b9bf43dd7034070a92f752fab390aa9.intent.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 288,
+          "mtimeNs": 1793059046428194306,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "source-advance04-a28934e28db1b9519072bd9a.candidate-baseline.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 21922,
+          "mtimeNs": 1793062491758706351,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "recovery03-dff8add50a979e1e-315b400bcc8b4b58a77a651a0848f9aa.intent.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 288,
+          "mtimeNs": 1793057736113063126,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "apply.failure-ec49672db1f3.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 436,
+          "mtimeNs": 1793056697708360166,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "name": "recovery03-4b4bb8e20a0f6dfc-5b9bf43dd7034070a92f752fab390aa9.result.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 119626,
+          "mtimeNs": 1793059066716989288,
+          "uid": 0,
+          "mode": "0o600"
+        }
+      ],
+      "metadataAfter": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 50104320,
+        "mtimeNs": 1793056577605852796,
+        "uid": 0,
+        "mode": "0o600"
+      },
+      "stableDuringRead": true
+    }
+  ],
+  "libseccomp": {
+    "ldconfigExit": 0,
+    "entries": [
+      {
+        "declaredPath": "/lib/x86_64-linux-gnu/libseccomp.so.2",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libseccomp.so.2.5.5",
+        "metadata": {
+          "exists": true,
+          "symlink": false,
+          "bytes": 125360,
+          "mtimeNs": 1723170801000000000,
+          "uid": 0,
+          "mode": "0o644"
+        },
+        "sha256": "b4d9140a7797ccf3ac14f5d9d579b64f157111662940cb8330c632b11a8cea8e"
+      }
+    ],
+    "packageVersion": {
+      "exit": 0,
+      "version": "2.5.5-1ubuntu3.1"
+    }
+  },
+  "runtimeVersions": {
+    "node": {
+      "path": "/usr/bin/node",
+      "exit": 0,
+      "version": "v22.23.2"
+    },
+    "python3": {
+      "path": "/usr/bin/python3",
+      "exit": 0,
+      "version": "Python 3.12.3"
+    },
+    "unshare": {
+      "path": "/usr/bin/unshare",
+      "exit": 0,
+      "version": "unshare from util-linux 2.39.3"
+    }
+  },
+  "additionalCustomerCheckpointMetadata": [
+    {
+      "path": "/root/ashrafessa-home-release-backup-2026-10-15T18-57-40-334Z",
+      "metadata": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 4096,
+        "mtimeNs": 1792090733886015799,
+        "uid": 0,
+        "mode": "0o700"
+      },
+      "entries": [
+        {
+          "path": "ashrafessa.dump",
+          "exists": true,
+          "symlink": false,
+          "bytes": 485105,
+          "mtimeNs": 1792090661231118879,
+          "uid": 109,
+          "mode": "0o600"
+        },
+        {
+          "path": "before.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 2634,
+          "mtimeNs": 1792090660341132430,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "path": "deployment.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 1102,
+          "mtimeNs": 1792090733886015799,
+          "uid": 0,
+          "mode": "0o600"
+        }
+      ],
+      "limitedToDepth": 2
+    },
+    {
+      "path": "/root/ashrafessa-home-release-backup-2026-10-16T08-25-49-368Z",
+      "metadata": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 4096,
+        "mtimeNs": 1792139163559826813,
+        "uid": 0,
+        "mode": "0o700"
+      },
+      "entries": [
+        {
+          "path": "ashrafessa.dump",
+          "exists": true,
+          "symlink": false,
+          "bytes": 510130,
+          "mtimeNs": 1792139149857024169,
+          "uid": 109,
+          "mode": "0o600"
+        },
+        {
+          "path": "before.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 2223,
+          "mtimeNs": 1792139149378031068,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "path": "deployment.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 583,
+          "mtimeNs": 1792139163559826813,
+          "uid": 0,
+          "mode": "0o600"
+        }
+      ],
+      "limitedToDepth": 2
+    },
+    {
+      "path": "/root/melamedia-home-release-backup-2026-10-15T18-48-04-795Z",
+      "metadata": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 4096,
+        "mtimeNs": 1792090102399930861,
+        "uid": 0,
+        "mode": "0o700"
+      },
+      "entries": [
+        {
+          "path": "commit.txt",
+          "exists": true,
+          "symlink": false,
+          "bytes": 41,
+          "mtimeNs": 1792090084827222205,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "path": "deployment.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 226,
+          "mtimeNs": 1792090102399930861,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "path": "melamedia.dump",
+          "exists": true,
+          "symlink": false,
+          "bytes": 1397442,
+          "mtimeNs": 1792090086291197886,
+          "uid": 109,
+          "mode": "0o600"
+        }
+      ],
+      "limitedToDepth": 2
+    },
+    {
+      "path": "/root/melamedia-home-release-backup-2026-10-16T08-17-34-622Z",
+      "metadata": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 4096,
+        "mtimeNs": 1792138668609963159,
+        "uid": 0,
+        "mode": "0o700"
+      },
+      "entries": [
+        {
+          "path": "before.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 2222,
+          "mtimeNs": 1792138654650161792,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "path": "deployment.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 587,
+          "mtimeNs": 1792138668609963159,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "path": "melamedia.dump",
+          "exists": true,
+          "symlink": false,
+          "bytes": 1397647,
+          "mtimeNs": 1792138655259153127,
+          "uid": 109,
+          "mode": "0o600"
+        }
+      ],
+      "limitedToDepth": 2
+    },
+    {
+      "path": "/root/melamedlaw-home-release-backup-2026-10-15T19-02-27-151Z",
+      "metadata": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 4096,
+        "mtimeNs": 1792091022789681236,
+        "uid": 0,
+        "mode": "0o700"
+      },
+      "entries": [
+        {
+          "path": "before.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 2648,
+          "mtimeNs": 1792090947158809362,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "path": "deployment.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 1114,
+          "mtimeNs": 1792091022789681236,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "path": "melamedlaw.dump",
+          "exists": true,
+          "symlink": false,
+          "bytes": 2050101,
+          "mtimeNs": 1792090948596787875,
+          "uid": 109,
+          "mode": "0o600"
+        }
+      ],
+      "limitedToDepth": 2
+    },
+    {
+      "path": "/root/melamedlaw-home-release-backup-2026-10-16T08-22-44-257Z",
+      "metadata": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 4096,
+        "mtimeNs": 1792138977398512497,
+        "uid": 0,
+        "mode": "0o700"
+      },
+      "entries": [
+        {
+          "path": "before.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 2233,
+          "mtimeNs": 1792138964277702187,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "path": "deployment.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 595,
+          "mtimeNs": 1792138977398512497,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "path": "melamedlaw.dump",
+          "exists": true,
+          "symlink": false,
+          "bytes": 2076485,
+          "mtimeNs": 1792138964947692499,
+          "uid": 109,
+          "mode": "0o600"
+        }
+      ],
+      "limitedToDepth": 2
+    },
+    {
+      "path": "/root/morlevy-home-release-backup-2026-10-15T18-55-53-297Z",
+      "metadata": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 4096,
+        "mtimeNs": 1792090632813552138,
+        "uid": 0,
+        "mode": "0o700"
+      },
+      "entries": [
+        {
+          "path": "before.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 2621,
+          "mtimeNs": 1792090553304770460,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "path": "deployment.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 1098,
+          "mtimeNs": 1792090632814552123,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "path": "morlevy.dump",
+          "exists": true,
+          "symlink": false,
+          "bytes": 514268,
+          "mtimeNs": 1792090554262755724,
+          "uid": 109,
+          "mode": "0o600"
+        }
+      ],
+      "limitedToDepth": 2
+    },
+    {
+      "path": "/root/morlevy-home-release-backup-2026-10-16T08-25-12-128Z",
+      "metadata": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 4096,
+        "mtimeNs": 1792139126237364479,
+        "uid": 0,
+        "mode": "0o700"
+      },
+      "entries": [
+        {
+          "path": "before.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 2212,
+          "mtimeNs": 1792139112139567668,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "path": "deployment.json",
+          "exists": true,
+          "symlink": false,
+          "bytes": 579,
+          "mtimeNs": 1792139126237364479,
+          "uid": 0,
+          "mode": "0o600"
+        },
+        {
+          "path": "morlevy.dump",
+          "exists": true,
+          "symlink": false,
+          "bytes": 539159,
+          "mtimeNs": 1792139112610560879,
+          "uid": 109,
+          "mode": "0o600"
+        }
+      ],
+      "limitedToDepth": 2
+    }
+  ],
+  "result": "READONLY_TARGETED_ARCHIVE_AND_LIBSECCOMP_METADATA_COMPLETE",
+  "finishedAtUtc": "2026-11-02T07:32:31.513633+00:00",
+  "locksReleasedAtRemoteExit": true,
+  "sshExit": 0
+}

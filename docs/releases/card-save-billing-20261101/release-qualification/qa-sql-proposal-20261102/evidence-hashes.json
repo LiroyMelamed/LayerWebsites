@@ -1,0 +1,94 @@
+{
+  "APPROVAL-PACKET.md": {
+    "bytes": 6221,
+    "sha256": "06adf62dab034277b95c1c1680d935f0bc0210e450f9a366da5559809c0abab6"
+  },
+  "FILE-MANIFEST.json": {
+    "bytes": 64063,
+    "sha256": "a9465814bcbf84438ccf85c4cfa5c49f805a0b6008d280b9be447b5f6537d9f1"
+  },
+  "expanded-readonly-readiness/README.md": {
+    "bytes": 3866,
+    "sha256": "b78219389ca671c09bfc491ea936c8c164ddc776de74568d52d178b95f256881"
+  },
+  "expanded-readonly-readiness/artifact-hashes.json": {
+    "bytes": 1018,
+    "sha256": "1b90484fbd4e48fac10256ce563fb0ab2ef4645fa08bb490cf31df19dfa91c65"
+  },
+  "expanded-readonly-readiness/backend-expanded-inventory.json": {
+    "bytes": 38699,
+    "sha256": "292006fc1ecfc19d4562d7aded067b8b9d72a41341b52d1420c6e9629c2a2241"
+  },
+  "expanded-readonly-readiness/backend-targeted-archive-evidence.json": {
+    "bytes": 63980,
+    "sha256": "f54bc1a2b0013c75d856e86a94ff7db54a95cf5326552dcadca11acd495fc07e"
+  },
+  "expanded-readonly-readiness/current-qa-preflight.json": {
+    "bytes": 6436,
+    "sha256": "576c51d0ce50139709655f42b1758069d484880e7a3a344cada36c8add23ab3c"
+  },
+  "expanded-readonly-readiness/expanded-readiness-summary.json": {
+    "bytes": 22711,
+    "sha256": "f239eb7103c6e56b45fb7c3acc77e384c4f858c2ad11466522f395330fcef8ae"
+  },
+  "expanded-readonly-readiness/frontend-expanded-inventory.json": {
+    "bytes": 29199,
+    "sha256": "640c8ad1a36c3edfbfb939bd5f9c0179b607c50f4cdb3801c467685260a984d2"
+  },
+  "expanded-readonly-readiness/local-rollback/README.md": {
+    "bytes": 4381,
+    "sha256": "771ea8857d58418df76b1bdca10fa3fa68efd96e9bc06527ff28f4590067d0d5"
+  },
+  "expanded-readonly-readiness/local-rollback/archive-evidence.json": {
+    "bytes": 93402,
+    "sha256": "ee7fcd9aba01a1addbbb32f8c75d2cebdf097753fd4118136b5bf57ea29ef30b"
+  },
+  "expanded-readonly-readiness/local-rollback/artifact-hashes.json": {
+    "bytes": 267,
+    "sha256": "4695702a0e251db6c8e5dd312040938e45e9c1bd060f5e58161708259af802c2"
+  },
+  "expanded-readonly-readiness/local-rollback/summary.json": {
+    "bytes": 8524,
+    "sha256": "a38eaa52b2487c67e9416c5208e0d49ff0989a865a6089ccd07228df014a17b5"
+  },
+  "expanded-readonly-readiness/preflight-collector.py": {
+    "bytes": 12266,
+    "sha256": "64ea66420548773401174df35e8a6e1bd985781784856bbe70dd5fbf2d9b9693"
+  },
+  "expanded-readonly-readiness/transfer-redaction.json": {
+    "bytes": 413,
+    "sha256": "b7b96546bee5ae472897a0a56d6ef81547bc26fed1f4c705b37b72d2fc7d9344"
+  },
+  "final-package.json": {
+    "bytes": 1572,
+    "sha256": "ef0ba2ccaf07c4bd15c1381bcb9da9fd59a1bdddef56c6616be2b8d70a7f8390"
+  },
+  "linux_sql_sandbox.py": {
+    "bytes": 13103,
+    "sha256": "08707f14aa237ccd2e84235c7f921306078b0859452dde2bfcfed9ff3061dcae"
+  },
+  "passive-resource-collector.py": {
+    "bytes": 1913,
+    "sha256": "d5b40ad9e6f0d6dd0c7168bec402d718ea8487cf1a5586f3ef1190b02a19216a"
+  },
+  "passive-resource-prerequisites.json": {
+    "bytes": 1267,
+    "sha256": "2617bff85e732e778f626f965390f7632f61fd7e0554e10422f5d5a0db1943c1"
+  },
+  "proposal-status.json": {
+    "bytes": 959,
+    "sha256": "224304dfbe2361e670803324e88dd94967f034967a557e5bd02d02e82a6bff7c"
+  },
+  "qa_sql_controller.py": {
+    "bytes": 19613,
+    "sha256": "e38ee2ce8a9206df5f1e3093402e1fec8685d23dd4788b1f7187745e0dd6a92c"
+  },
+  "run-sql-sequences.cjs": {
+    "bytes": 2055,
+    "sha256": "cca29f7f4675fecb0d9c5522c2d893b51732724b79a9dadc12474105f07bfcc5"
+  },
+  "strict-test-guard.cjs": {
+    "bytes": 7069,
+    "sha256": "c2761949ed58117fcda243c4b93ab0cf767e588578ab5135043fc917911c977b"
+  }
+}
