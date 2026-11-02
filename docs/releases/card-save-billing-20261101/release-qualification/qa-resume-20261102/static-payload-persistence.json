@@ -1,0 +1,71 @@
+{
+  "workspaceRelativeDirectory": "billing-deploy-static-074df752-20261102",
+  "atUtc": "2026-11-02T06:39:27.628238+00:00",
+  "frozenMain": "074df7520497a0cd6bd95ad70353201c905f0aa6",
+  "qualifiedProduct": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "activationReady": false,
+  "deployed": false,
+  "files": {
+    "melamedia/melamedia-static-only.tar.gz": {
+      "bytes": 5286231,
+      "sha256": "5ecead7c1478f081e23965f2438db77081bc1d9de569b8518dca6d694867db3d",
+      "kind": "static-only-tar"
+    },
+    "melamedia/index.proposed.html": {
+      "bytes": 7060,
+      "sha256": "4f14b45971bad41bea0d1542e98e985db332361e1a7be3d96e311e37138a7d0e",
+      "kind": "local-cas-proposal-not-for-unconditional-activation"
+    },
+    "melamedia/asset-manifest.proposed.json": {
+      "bytes": 9140,
+      "sha256": "6f6ab4abe76a06ba41b8bb2011d9c220bd31995bc9baeae88f5f1b2576f4d789",
+      "kind": "local-cas-proposal-not-for-unconditional-activation"
+    },
+    "ashrafessa/ashrafessa-static-only.tar.gz": {
+      "bytes": 5364732,
+      "sha256": "58e2950480fb0a37a9e048f54c084e671ce38c72141dedfc347035f82a824f01",
+      "kind": "static-only-tar"
+    },
+    "ashrafessa/index.proposed.html": {
+      "bytes": 8062,
+      "sha256": "ecd3a647875b726145fc96dc8be7490037c2a37fca82fdea8a9c13d28d906161",
+      "kind": "local-cas-proposal-not-for-unconditional-activation"
+    },
+    "ashrafessa/asset-manifest.proposed.json": {
+      "bytes": 9140,
+      "sha256": "11c71d828966d9edb79dbb5b3d663bca229cc353bc56f13b64744090954e103b",
+      "kind": "local-cas-proposal-not-for-unconditional-activation"
+    },
+    "morlevy/morlevy-static-only.tar.gz": {
+      "bytes": 5018972,
+      "sha256": "81399459985b1ec1863d77a565f20ac10e10855a0c7e4dda50099e2d6247a507",
+      "kind": "static-only-tar"
+    },
+    "morlevy/index.proposed.html": {
+      "bytes": 7912,
+      "sha256": "5535f7bd0b19569539606195f47c51c240542ee996546fce58af30cf9fa098f1",
+      "kind": "local-cas-proposal-not-for-unconditional-activation"
+    },
+    "morlevy/asset-manifest.proposed.json": {
+      "bytes": 8970,
+      "sha256": "e37ec7ed29bb1ea0b8868b750b7e3b993bc5c08893bedbd9f84d7726e1df3aba",
+      "kind": "local-cas-proposal-not-for-unconditional-activation"
+    },
+    "melamedlaw/melamedlaw-static-only.tar.gz": {
+      "bytes": 5173978,
+      "sha256": "acc1ddbca7a2a52e69041ec3f8282103d38d870ad72c866060a1f0c59535ac3b",
+      "kind": "static-only-tar"
+    },
+    "melamedlaw/index.proposed.html": {
+      "bytes": 8987,
+      "sha256": "dd22569aab1c2b5496e571dd8f31b110562c31ad6ab97c6db333b556cfb61969",
+      "kind": "local-cas-proposal-not-for-unconditional-activation"
+    },
+    "melamedlaw/asset-manifest.proposed.json": {
+      "bytes": 8970,
+      "sha256": "1b3fe3e59fcb125c990b9c7a46c44694e8cece9da5db4d31775af915c4b57045",
+      "kind": "local-cas-proposal-not-for-unconditional-activation"
+    }
+  },
+  "limits": "No root HTML/manifest/branding in static archives. Proposed HTML/manifest require renewed remote lock-held CAS and all release gates. No credentials, application data, source dotenv or DB dump copied."
+}

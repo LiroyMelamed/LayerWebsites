@@ -1,8 +1,8 @@
 {
   "files": {
     "README.md": {
-      "bytes": 8147,
-      "sha256": "4f28a02d16f49d338fc63abe410bbf2d6881c2510f25998edb7b63428415ccdf"
+      "bytes": 8518,
+      "sha256": "b2fbc79624ea844472350f42b0552daf3dfe22c10a593e299a684abf1b340613"
     },
     "candidate-guard-host-probe.json": {
       "bytes": 1533,
@@ -100,9 +100,13 @@
       "bytes": 1504,
       "sha256": "5065ffe85f330ce7567963080d9ce3d2b827df4381e6f4ad51e294ead7e2e6cd"
     },
+    "static-payload-persistence.json": {
+      "bytes": 3101,
+      "sha256": "306f22b08a90ca2269cba4fc10b1fcefcd764d51b46f716f6e741721ce4413c6"
+    },
     "status.json": {
-      "bytes": 5549,
-      "sha256": "12bf477e54586f62a9546f6c2b523bc480677041cf51ef5a347d62b9aaf9e473"
+      "bytes": 5676,
+      "sha256": "13bbc4cbf73cd8f076e6ddafc075e2f8aa78262811560c730ac4373bad61501b"
     }
   },
   "privatePreimageOrCredentialsCopied": false

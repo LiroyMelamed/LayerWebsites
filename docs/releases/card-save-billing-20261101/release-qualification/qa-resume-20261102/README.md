@@ -12,6 +12,8 @@ This report supersedes earlier deployment-status rows that still list the local 
 
 - [Existing routine backup review](routine-backup-review/README.md): all four ordinary encrypted DB-only generations from **02:30:40–02:30:44 UTC** report `local_complete` and `verified_readback`; cipher files exist. At06:33 the unchanged installed producer/config and existing locks/timers were checked. Receipts are within the existing30-hour routine freshness threshold. This closes availability metadata only: no independent storage read, authenticated decryption or restore was performed. A fresh cutover seal remains pending until there is an actual qualified cutover. No redundant backup was triggered.
 
+- All four static-only archives and the eight local CAS proposal files were copied out of temporary storage to task-workspace directory `billing-deploy-static-074df752-20261102` (20,843,913 archive bytes). Each original archive SHA256 still matches its qualified build receipt. [Persistence manifest](static-payload-persistence.json). Nothing was uploaded or activated.
+
 ## Pause decision and actual live state
 
 The approved temporary pause remains authorized. No STOP, restart, PM2/configuration write, code deployment, push, DB mutation or supplier transaction has been attempted. No operation has an unresolved live outcome.
