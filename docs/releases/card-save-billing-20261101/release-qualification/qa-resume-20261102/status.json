@@ -1,5 +1,5 @@
 {
-  "recordedAtUtc": "2026-11-02T06:34:17.796789+00:00",
+  "recordedAtUtc": "2026-11-02T06:38:05.583538+00:00",
   "frozenMain": "074df7520497a0cd6bd95ad70353201c905f0aa6",
   "qualifiedProduct": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
   "coreAudit": "41ab84c003a27ced9f2a4a2fdd74bc05ad999ab4",
@@ -25,7 +25,8 @@
     "two uncertain public-CAS local file writes inspected and resolved without replay of an unknown operation",
     "fresh QA adjacent read-only source/process/dependency/financial-work inventory",
     "34 unchanged positive protocol/pricing tests passed on actual QA Node22 via strict no-I/O stdin VM",
-    "private credentials and exact flag preimage excluded from Git"
+    "private credentials and exact flag preimage excluded from Git",
+    "existing four encrypted 02:30 routine backup receipts and installed producer/config/lock identities revalidated metadata-only at06:33"
   ],
   "qaNativeTests": {
     "providerGateCases": 9,
@@ -96,5 +97,15 @@
     "AshrafEssa": "bb43a7efa687403576b53c3c331b37e7c673f52f",
     "MorLevi": "4626da74b64ad4189f8a71515c1bc04ba45378cd",
     "MelamedLaw": "054de1ce94f9937e4694e11ac864690c32c6789b"
+  },
+  "backupGates": {
+    "routineAvailabilityAndExistingReadbackReceipts": "PASS_METADATA_ONLY",
+    "freshCutoverSnapshotSeal": "PENDING_NO_CUTOVER_PLANNED_NO_REDUNDANT_RUN",
+    "authenticatedRestore": "HOLD_NOT_PROVED",
+    "observedAtUtc": "2026-11-02T06:33:29Z",
+    "normalFreshnessHours": 30,
+    "retentionHours": 72,
+    "storageCallsByReview": 0,
+    "newBackupRuns": 0
   }
 }

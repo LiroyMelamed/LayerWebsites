@@ -1,8 +1,8 @@
 {
   "files": {
     "README.md": {
-      "bytes": 7534,
-      "sha256": "53781e25dd580eb0e1ede49b220e03c4b6b62d9f51baf66fe36d1b835b5ca029"
+      "bytes": 8147,
+      "sha256": "4f28a02d16f49d338fc63abe410bbf2d6881c2510f25998edb7b63428415ccdf"
     },
     "candidate-guard-host-probe.json": {
       "bytes": 1533,
@@ -63,6 +63,46 @@
     "pre-action-20261102T061805Z/source-equivalence.json": {
       "bytes": 2258,
       "sha256": "9b78663778d51be81c69089d0edb28c2233c4af0a7369971bff29b5d4aed03e3"
+    },
+    "routine-backup-review/README.md": {
+      "bytes": 4552,
+      "sha256": "e771e9a21c2d6188dd915fb2c295a189878719e955ab4c017dcace36feef280d"
+    },
+    "routine-backup-review/artifact-hashes.json": {
+      "bytes": 795,
+      "sha256": "ef221c867e79b202843490384ec5c630305afca240ac165b3c92b8f8c859db9f"
+    },
+    "routine-backup-review/lock-timer-metadata.json": {
+      "bytes": 7308,
+      "sha256": "98204407bec205601bec36c6414129df2c6000e96209228ed3e106e8244dd619"
+    },
+    "routine-backup-review/melamedia-backup-retention.py": {
+      "bytes": 9138,
+      "sha256": "f2dc2352c70a831935546fe9fb4f007182b03f560a8e0541f2e81f342939027c"
+    },
+    "routine-backup-review/melamedia-server-backup.py": {
+      "bytes": 12909,
+      "sha256": "085b3d946f475d1ad8ebd78f60aed389d6fea661963e34389b8991d339b2d160"
+    },
+    "routine-backup-review/reviewed-command-template.sh.txt": {
+      "bytes": 1412,
+      "sha256": "e01626cd575ee637513065f0ba0065c3ba63e2bd43af7b413592fd60270d42a5"
+    },
+    "routine-backup-review/routine-backup-review.json": {
+      "bytes": 16993,
+      "sha256": "95d375feab51dfe1dd2a51e85b44c4f38ad17c413670d8378a5f07e5865efc77"
+    },
+    "routine-backup-review/source-metadata.json": {
+      "bytes": 4553,
+      "sha256": "52e5dc01791a7d1d5bfdcde7d9b543788e9f87466940aea63eca280a6d091f38"
+    },
+    "routine-backup-review/watch-freshness-source-excerpt.txt": {
+      "bytes": 1504,
+      "sha256": "5065ffe85f330ce7567963080d9ce3d2b827df4381e6f4ad51e294ead7e2e6cd"
+    },
+    "status.json": {
+      "bytes": 5549,
+      "sha256": "12bf477e54586f62a9546f6c2b523bc480677041cf51ef5a347d62b9aaf9e473"
     }
   },
   "privatePreimageOrCredentialsCopied": false
