@@ -1,0 +1,12 @@
+{
+  "scope": "LOCAL REVIEW ONLY guard compatibility alternative; no SQL or remote execution",
+  "originalGuardSha256": "c2761949ed58117fcda243c4b93ab0cf767e588578ab5135043fc917911c977b",
+  "compatGuardSha256": "1f4bed65955d4588ad51bdbbb94c6783123d5a8ae072c235f9bdb29bb87d7bf7",
+  "publicNumericEnums": 10,
+  "nativeBindingDelegations": 0,
+  "permissionFlagsChanged": false,
+  "kernelOrResourceControlsChanged": false,
+  "originalSourceOrTestsOrPgliteChanged": false,
+  "newCanaries": 2,
+  "originalNetworkCanaries": 4
+}

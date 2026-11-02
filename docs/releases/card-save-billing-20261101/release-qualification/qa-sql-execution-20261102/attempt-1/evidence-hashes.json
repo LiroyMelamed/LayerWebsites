@@ -1,0 +1,86 @@
+{
+  "approved-preaction.json": {
+    "bytes": 1094,
+    "sha256": "3f3dc7b0429493d95886d67fac78ffcfccafe51723378e28495ed5d14fc382c3"
+  },
+  "approved-scope-result.json": {
+    "bytes": 4759,
+    "sha256": "63c52f703905f59cb9332f66c7113ff8319b64c33549aa3b897e79fa9016f8a8"
+  },
+  "approved-staging-result.json": {
+    "bytes": 3259,
+    "sha256": "298e94d2d2b41bb8d8ec52fc5b06d23aa1ae0e89889a8855c7b03d5d5fa16d90"
+  },
+  "attempt1-cleanup-result.json": {
+    "bytes": 1249,
+    "sha256": "ffb14772f0204c954714f9c5c27bb5023ec12f795ed05d8c547b51b0de755280"
+  },
+  "executed-attempt1-cleanup-source.py": {
+    "bytes": 5038,
+    "sha256": "73f7295d2d388fd5d319fb0d9a864e7241a101acf1db04eaeda664fae1237dca"
+  },
+  "executed-scope-source.py": {
+    "bytes": 5661,
+    "sha256": "981143ea3715ad5fd25b466106ad1cc639f14d1c04fe38661791ea5ceaf72f66"
+  },
+  "executed-staging-source.py": {
+    "bytes": 14436,
+    "sha256": "4d7e8112bb866d81b00f449c713488799b3e51d0f92f640e63390a05c824de2c"
+  },
+  "final-package.json": {
+    "bytes": 1572,
+    "sha256": "ef0ba2ccaf07c4bd15c1381bcb9da9fd59a1bdddef56c6616be2b8d70a7f8390"
+  },
+  "remote-evidence/STAGED-PIN.json": {
+    "bytes": 281,
+    "sha256": "292202963b30181bc779b59ddc45e3b02e3e8018966c8a943c4974df0fa59bfd"
+  },
+  "remote-evidence/runs/cardSetupDebtCollection.test/launcher.log": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "remote-evidence/runs/cardSetupDebtCollection.test/receipt.json": {
+    "bytes": 1110,
+    "sha256": "72154e423dc8a66690bdb6a9ad48d1df21c5807b00d21445d05fcb5ba4c1470d"
+  },
+  "remote-evidence/runs/cardSetupDebtCollection.test/stderr.log": {
+    "bytes": 661,
+    "sha256": "6a0ab2c6a499c5e398a8392c34c9f554658521f6ec650d910919c7f67ded09f2"
+  },
+  "remote-evidence/runs/cardSetupDebtCollection.test/stdout.tap": {
+    "bytes": 94780,
+    "sha256": "b8c3cfa8a41dad9d92cb429f4e35336341c956d1f898eb6accd8b546002bb9e1"
+  },
+  "remote-evidence/runs/progress.json": {
+    "bytes": 1906,
+    "sha256": "9c67f9e01e405b17d6ea3612f6efe678edf21f5fc7d1e96ccd378f60a1bb66f9"
+  },
+  "remote-evidence/runs/receipt.json": {
+    "bytes": 2829,
+    "sha256": "50cc987af274c13c80bc2b5d7b0eec1de1537ec3d2ce9c9580a118ea5b9fb60e"
+  },
+  "remote-evidence/scope-command.stderr": {
+    "bytes": 111,
+    "sha256": "12a1cec182f2820bc0d6dbc68c1a195657769481274c09227eb7bd359834278d"
+  },
+  "remote-evidence/scope-command.stdout": {
+    "bytes": 102,
+    "sha256": "abb6a8ed5263030201ad353c77aa26c58983b81a392cccc255a1ffeadf02e384"
+  },
+  "remote-evidence/scope-execution-request.json": {
+    "bytes": 226,
+    "sha256": "e49f019bd402e995b3e23034f10618d0b09f4873ec894fbf655236080a909bb0"
+  },
+  "remote-evidence/scope-progress.json": {
+    "bytes": 1081,
+    "sha256": "af4317ce4758b2435d94c356ee18c9c72f429560fd4427aa3fade4c3ab82c8e5"
+  },
+  "remote-evidence/scope-result.json": {
+    "bytes": 4187,
+    "sha256": "ccdf5a6728316363501a601f08f1d9fb07ee35a465435a3b024af544cb4783b0"
+  },
+  "remote-evidence/stage-receipt.json": {
+    "bytes": 2768,
+    "sha256": "916943909e0c1e9b7a74261366d36e21ccaf80b691454182d2e22842b289d688"
+  }
+}
