@@ -1,0 +1,40 @@
+{
+  "canonicalAllowlistSha256": "a291ed29cdcd85bb809471ffbf48e70890b3206037be9096a2b40bf6d84c8667",
+  "values": {
+    "melamedia": {
+      "REACT_APP_API_BASE_URL": "https://api-melamedia.mela-media.co.il/api",
+      "REACT_APP_APP_NAME": "Melamedia",
+      "REACT_APP_CENTRAL_API_URL": "https://central-api.mela-media.co.il",
+      "REACT_APP_DEFAULT_LANG": "he",
+      "REACT_APP_NOREPLY_EMAIL": "noreply-melamedia@mela-media.co.il"
+    },
+    "melamedlaw": {
+      "REACT_APP_API_BASE_URL": "https://api.calls.melamedlaw.co.il/api",
+      "REACT_APP_APP_NAME": "MelamedLaw",
+      "REACT_APP_CENTRAL_API_URL": "https://central-api.mela-media.co.il",
+      "REACT_APP_NOREPLY_EMAIL": "noreply@melamedlaw.co.il"
+    },
+    "morlevy": {
+      "REACT_APP_API_BASE_URL": "https://api-morlevy.mela-media.co.il/api",
+      "REACT_APP_APP_NAME": "MorLevi",
+      "REACT_APP_CENTRAL_API_URL": "https://central-api.mela-media.co.il",
+      "REACT_APP_DEFAULT_LANG": "he",
+      "REACT_APP_NOREPLY_EMAIL": "noreply-morlevy@mela-media.co.il"
+    },
+    "ashrafessa": {
+      "REACT_APP_API_BASE_URL": "https://api-ashrafessa.mela-media.co.il/api",
+      "REACT_APP_APP_NAME": "AshrafEssa",
+      "REACT_APP_CENTRAL_API_URL": "https://central-api.mela-media.co.il",
+      "REACT_APP_DEFAULT_LANG": "he",
+      "REACT_APP_NOREPLY_EMAIL": "noreply-ashrafessa@mela-media.co.il"
+    }
+  },
+  "publicSource": "SHA-bound contracts and publicly verified compiled archives; no private dotenv read",
+  "preservedOmissions": [
+    "REACT_APP_MULTI_TENANT",
+    "REACT_APP_FIRM_NAME",
+    "REACT_APP_VERSION"
+  ],
+  "melamedlawAdditionalOmission": "REACT_APP_DEFAULT_LANG",
+  "historicalUnusedNativeSchemeVariablesOmitted": true
+}

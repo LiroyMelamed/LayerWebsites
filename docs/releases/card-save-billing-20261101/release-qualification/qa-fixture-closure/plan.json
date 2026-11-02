@@ -1,0 +1,242 @@
+{
+  "recordedAtUtc": "2026-11-01T23:21:51.909168+00:00",
+  "frozenProductSource": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "upstreamCutoff": "074df7520497a0cd6bd95ad70353201c905f0aa6",
+  "sourceHashes": {
+    "backend/tests/signupLifecycle.officeIsolation.integration.test.js": "820acc67003577b9652e6d864b47d4aabb9d5e0986c4dbee3886b759ddbca079",
+    "backend/tests/clientDocumentProfile.postgres.test.js": "ef05123534839d437516ca7deb48167a796920bce1a2cc6920c47d50fbbcac26",
+    "backend/lib/tenant/isolationSchema.js": "0e130d5256501dafc94b8cb093d251ebb670af813a34a61e9b394b656fe16527",
+    "backend/scripts/install-office-isolation.js": "b3bc07fc6db3caffa8ec4f4caabbbbf1cf2b23a56be840d479add7f3ed145883",
+    "backend/lib/tenant/scopedPool.js": "af32b014f3e7da2a36005b2d5a25fef83ab0824a1f11100200d4afee3b983f9f",
+    "backend/config/db.js": "20e712f89bf1cbf315ef6786112113f6f88ec180e4341a0d824587f3e0603890",
+    "backend/migrations/2026-10-23_00_client_document_profile.sql": "4d3c968963cb73a33ab598f37f90a4d8f747b1594a89bbdef5ea3a416c9f5b8d"
+  },
+  "status": "CANCELLED_BY_OWNER_NEW_MAC_ENVIRONMENT_FORBIDDEN_NOT_PENDING_APPROVAL",
+  "readOnlyCatalogObservation": {
+    "target": "127.0.0.1:55440/postgres",
+    "existingAdminRoleCapabilities": {
+      "superuser": true,
+      "createdb": true,
+      "createrole": true,
+      "bypassrls": true
+    },
+    "expectedDatabasesPresent": [],
+    "existingSignupReleaseOfficeNamedRoles": [],
+    "availableExtensions": [
+      "pgcrypto",
+      "pg_stat_statements"
+    ],
+    "vectorAvailable": false,
+    "customerQueries": 0,
+    "mutations": 0,
+    "transaction": "BEGIN READ ONLY/ROLLBACK; default_transaction_read_only=on",
+    "approvalResult": "read-only local catalog inspection approved; no action denied"
+  },
+  "profile": {
+    "state": "CANCELLED_BY_OWNER_NOT_PENDING_APPROVAL",
+    "selfContainedFromFrozenSource": true,
+    "expectedParentTests": 1,
+    "expectedSubtests": 13,
+    "actualExecuted": false,
+    "root": "/tmp/layer-billing-qa-fixtures-20261101",
+    "pgdata": "/tmp/layer-billing-qa-fixtures-20261101/profile-55487",
+    "socket": "/tmp/codex-client-profile-55487",
+    "fallbackSocket": "/tmp/codex-client-profile-55488",
+    "port": 55487,
+    "listenAddresses": "",
+    "database": "postgres",
+    "initdbUser": "client_profile_test_owner",
+    "setupRoleIsClusterSuperuser": true,
+    "setupSuperuserRationale": "existing test creates a role and adjusts rows after FORCE RLS before SET ROLE; never use production/global app role",
+    "scopedRoleCreatedByExistingTest": "client_profile_scoped",
+    "scopedRoleFlags": [
+      "NOLOGIN",
+      "NOSUPERUSER",
+      "NOBYPASSRLS"
+    ],
+    "guard": "profile-network-guard.cjs",
+    "guardSha256": "306dbd4357dfa8675a7e7352495a2b9646928094e18563a3154a59f830a1ffbd",
+    "cleanup": "finally stop only the owned profile PGDATA; verify socket absent; preserve data/logs; no shared cluster shutdown"
+  },
+  "signup": {
+    "state": "CANCELLED_LOCAL_SETUP_NOT_PENDING_APPROVAL",
+    "selfContainedFromRepositoryAlone": false,
+    "actualExecuted": false,
+    "expectedParentTests": 1,
+    "expectedSubtests": 14,
+    "host": "127.0.0.1",
+    "port": 55440,
+    "database": "legal_signup_release_20261013_qa",
+    "createOnlyIfAbsent": true,
+    "sharedExistingClusterMustRemainRunning": true,
+    "ownerRole": {
+      "name": "legal_signup_release_owner_20261101",
+      "flags": [
+        "NOLOGIN",
+        "NOSUPERUSER",
+        "NOBYPASSRLS",
+        "NOCREATEDB",
+        "NOCREATEROLE"
+      ]
+    },
+    "appRole": {
+      "name": "legal_signup_release_app_20261101",
+      "flags": [
+        "LOGIN",
+        "NOSUPERUSER",
+        "NOBYPASSRLS",
+        "NOCREATEDB",
+        "NOCREATEROLE",
+        "NOINHERIT"
+      ],
+      "ownsTables": false,
+      "ownerRoleMembership": false,
+      "grantScope": "new named database only; no grants on other databases"
+    },
+    "configPath": "/tmp/layer-billing-qa-fixtures-20261101/signup-release-qa-private.json",
+    "configMode": "0600",
+    "configShape": {
+      "host": "127.0.0.1",
+      "port": 55440,
+      "database": "legal_signup_release_20261013_qa",
+      "user": "legal_signup_release_app_20261101",
+      "password": "GENERATE_PRIVATE_SYNTHETIC_ONLY_DO_NOT_PRINT"
+    },
+    "fixtureInputCandidates": [
+      {
+        "path": "/Users/liroymelamed/.codex/signup-implementation-20261011/legal-schema.sql",
+        "sha256": "cd14f71f6dcad53c0fa80ca165b5778ef05d500c98e61ba50bc8e8663a9d174a",
+        "bytes": 112317,
+        "createTableCount": 52,
+        "copyDataStatements": 0,
+        "insertStatements": 0,
+        "rawSqlExported": false,
+        "status": "historical schema-only candidate, not current full-schema approval"
+      },
+      {
+        "path": "/Users/liroymelamed/.codex/signup-implementation-20261011/legal-billing-qa-schema.sql",
+        "sha256": "9871141a503971586a61d31423736c149b8cef29b6fff1a0363892fd061f26f8",
+        "bytes": 112016,
+        "createTableCount": 52,
+        "copyDataStatements": 0,
+        "insertStatements": 0,
+        "rawSqlExported": false,
+        "status": "historical schema-only candidate, not current full-schema approval"
+      }
+    ],
+    "schemaDecision": "approved current schema-only fixture/vector-capable runtime OR explicitly limited billing-only embedding adaptation; no silent weakening",
+    "candidateMinimumDeltaManifest": {
+      "status": "UNREVIEWED_UNEXECUTED_NOT_APPROVED_BOOTSTRAP",
+      "notFullMigrationWrapper": true,
+      "files": [
+        {
+          "path": "backend/migrations/2026-10-11_00_signup_consent.sql",
+          "sha256": "efa0be021cae6cd56e68de7fa4bd0ba09027bd197aacc3315b5cd8823f52d3d8"
+        },
+        {
+          "path": "backend/migrations/2026-10-12_90_signup_logo.sql",
+          "sha256": "0e44d2eece46a59ea8f9e185ebe8e3f0e6bcc452604251c6a515ae94d74b8fc3"
+        },
+        {
+          "path": "backend/migrations/2026-10-12_firm_auto_renew.sql",
+          "sha256": "4638a573e8f33e21a877062e0178cacce9e19cc9c3a9ec80f7b07e2cfa97cb35"
+        },
+        {
+          "path": "backend/migrations/2026-10-12_signup_recurring_quote.sql",
+          "sha256": "cbc3c85eceb34bffc86b59985658faa0af48fb91b95935deb3f9d4b3bb7aa04f"
+        },
+        {
+          "path": "backend/migrations/2026-10-12_signup_renewal_cycle.sql",
+          "sha256": "e954c5760ac9074041512fd1dc2f329c6ba80ace6dd3477d05cf827a14eae6f8"
+        },
+        {
+          "path": "backend/migrations/2026-10-13_signup_retry_cycle.sql",
+          "sha256": "2e3a25bf5e3098c82ab6ddac183f446e009a6c3ea4854fbb23257aaa3e58739a"
+        },
+        {
+          "path": "backend/migrations/2026-10-13_signup_welcome_email.sql",
+          "sha256": "269fcea69d5d67ce77d7366e8bbb6ee576b04beb8342aab189f4773fbb2b1fa6"
+        },
+        {
+          "path": "backend/migrations/2026-10-23_00_client_document_profile.sql",
+          "sha256": "4d3c968963cb73a33ab598f37f90a4d8f747b1594a89bbdef5ea3a416c9f5b8d"
+        },
+        {
+          "path": "backend/migrations/2026-10-25_system_messages.sql",
+          "sha256": "4649f1d51656121e4bc8d48b36404ef9fb56be2d79303b4f02a4442c9de92825"
+        },
+        {
+          "path": "backend/migrations/2026-10-25_signup_system_message_consent.sql",
+          "sha256": "12c4f72de7ecf9d25ccc0e47bd4227cf546f185c7c25daade68a5693288e89a5"
+        }
+      ]
+    },
+    "isolationInstaller": "backend/scripts/install-office-isolation.js (explicit install(client), not automatic app bootstrap)",
+    "requiredReadiness": [
+      "app role not superuser/bypassrls/table owner",
+      "every public table classified",
+      "every public table RLS enabled and forced",
+      "restrictive office_boundary policies on every table",
+      "schema/data only synthetic, no customer clone"
+    ],
+    "requiredPreflight": [
+      "no backend/.env",
+      "clear inherited credentials",
+      "exact source/lockfiles",
+      "native guard only fixed DB plus own ephemeral HTTP",
+      "mock provider/storage/mail functions remain unchanged"
+    ],
+    "forbidden": [
+      "use existing admin as app test connection",
+      "stop/reconfigure shared55440 cluster",
+      "change pg_hba or existing roles",
+      "global extension install without approval",
+      "production migration/backfill wrapper",
+      "real provider/sandbox transaction",
+      "restore customer rows"
+    ],
+    "cleanup": "close test clients only; preserve named fixture for review; no stopping shared cluster; no drops without checking this run created the objects and no other consumers",
+    "preferredFullSchemaRoute": {
+      "schemaInput": "current verified schema-only QA/backup artifact, private outside Git, no customer rows; reject private defaults/functions in public reports",
+      "extension": "real pgvector type; no text replacement",
+      "installedPostgres": "17.11",
+      "pgConfig": "/opt/homebrew/opt/postgresql@17/bin/pg_config",
+      "extensionLibraryDirectory": "/opt/homebrew/lib/postgresql@17",
+      "extensionSqlDirectory": "/opt/homebrew/share/postgresql@17/extension",
+      "sourceVersion": "pin compatible official version after existing QA extversion metadata review",
+      "officialReference": "https://github.com/pgvector/pgvector#installation-notes---linux-and-mac",
+      "approvalNeeded": [
+        "PG17 extension files outside writable workspace",
+        "new named local database/owner/app roles and private config"
+      ],
+      "forbidden": [
+        "unapproved Homebrew/Postgres upgrade",
+        "restart shared55440",
+        "change pg_hba",
+        "enable extension in existing database",
+        "fake vector/text substitution"
+      ],
+      "executed": false,
+      "proposalState": "CANCELLED_LOCAL_INSTALLATION_BY_OWNER"
+    }
+  },
+  "productionMutations": 0,
+  "providerCalls": 0,
+  "testRuns": 0,
+  "noCustomerSpecificDataCopied": true,
+  "documentValidation": {
+    "jsonParses": true,
+    "profileGuardSyntaxCheck": "PASS standalone node --check; no application or fixture started",
+    "integrationRuns": 0,
+    "relativeMarkdownLinks": [
+      "plan.json"
+    ],
+    "productDiffFromFrozenSourceEmpty": true
+  },
+  "ownerDecision": {
+    "state": "DENIED_BY_OWNER_NO_ACTION_EXECUTED",
+    "scope": "No new PostgreSQL cluster, database or local test identities/extensions on the Mac; use existing QA only after isolation/synthetic/no-real-settlement safety is established",
+    "noActionExecuted": true
+  },
+  "activeAssessment": "existing-qa-assessment.json"
+}
