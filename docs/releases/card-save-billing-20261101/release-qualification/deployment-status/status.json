@@ -33,5 +33,6 @@
   "performedLiveChanges": 0,
   "newMacDatabasesOrRoles": 0,
   "providerRequests": 0,
-  "deploymentPerformed": false
+  "deploymentPerformed": false,
+  "sharedSignupObservedScope": "All four dedicated deployments have SELF_SERVICE_SIGNUP_ENABLED effectively false; disabled-path coverage gap, not PASS or activation permission"
 }

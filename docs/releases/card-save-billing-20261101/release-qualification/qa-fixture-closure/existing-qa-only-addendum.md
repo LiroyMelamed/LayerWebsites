@@ -169,3 +169,7 @@ absent; no daemon/image/container was queried or started. A different-port local
 server would fail the unchanged55440 contract; replacing that occupied service
 or creating a new Mac/container DB would violate the owner decision. All local
 installation proposals remain cancelled regardless of these research findings.
+
+## Follow-up disabled-path scope
+
+A bounded nonsecret flag read also confirmed self-service signup is absent/effectively false on AshrafEssa, MorLevi and MelamedLaw; QA was already false. The observed four dedicated deployments therefore keep shared signup disabled. This is a disabled-path coverage gap, not a passing integration test or authorization to enable signup. [Scope evidence](../deployment-live-preflight/eligibility-scope-addendum.json).
