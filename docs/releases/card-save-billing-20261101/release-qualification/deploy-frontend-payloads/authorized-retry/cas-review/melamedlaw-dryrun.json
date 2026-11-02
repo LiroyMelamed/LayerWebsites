@@ -1,0 +1,113 @@
+{
+  "tenant": "melamedlaw",
+  "scope": "pure local CAS plan on current public HTTPS snapshot, no publication",
+  "actualCompileSource": "21d51f5766e5df0b0ac497fce4cc9d16bdd8bbf5",
+  "freshPublicSnapshotSha256": "b729b9a9eb395eb863759d4278786164a8809c64066fe0847ccd9818b8cf8258",
+  "oldIndexSha256": "422bb853e6101ee7827ea7e86e930041b62de064080d481d1cd1ea5dfec78e20",
+  "oldManifestSha256": "8c62dc797b80ea980c018f565fe350dc243fefe397378b51cfce518b83e1b2e6",
+  "proposedIndexSha256": "dd22569aab1c2b5496e571dd8f31b110562c31ad6ab97c6db333b556cfb61969",
+  "proposedManifestSha256": "1b3fe3e59fcb125c990b9c7a46c44694e8cece9da5db4d31775af915c4b57045",
+  "mergeProof": {
+    "oldIndexSha256": "422bb853e6101ee7827ea7e86e930041b62de064080d481d1cd1ea5dfec78e20",
+    "newIndexSha256": "dd22569aab1c2b5496e571dd8f31b110562c31ad6ab97c6db333b556cfb61969",
+    "entrypointMap": {
+      "static/js/vendor-pdf.f63c2819.js": "static/js/vendor-pdf.9b7d4296.js",
+      "static/js/vendor-i18n.40936357.js": "static/js/vendor-i18n.074fe7e8.js",
+      "static/js/vendor-react.094da8d9.js": "static/js/vendor-react.bc82a7fe.js",
+      "static/js/vendor.2a0dc768.js": "static/js/vendor.7b6aff43.js",
+      "static/css/main.42e8b4df.css": "static/css/main.4d9ec64c.css",
+      "static/js/main.3b3274f2.js": "static/js/main.811b5597.js"
+    },
+    "referenceCounts": {
+      "static/js/vendor-pdf.f63c2819.js": 1,
+      "static/js/vendor-i18n.40936357.js": 1,
+      "static/js/vendor-react.094da8d9.js": 1,
+      "static/js/vendor.2a0dc768.js": 1,
+      "static/css/main.42e8b4df.css": 1,
+      "static/js/main.3b3274f2.js": 1
+    },
+    "inverseRestoresEveryOriginalByte": true,
+    "otherInlineBootstrapMetaSeoNativeHtmlBytesUnchanged": true,
+    "publicAssetsToReplace": [
+      "index.html",
+      "asset-manifest.json"
+    ],
+    "newStaticChunksAddedWithoutDeletingOldChunks": true
+  },
+  "sameNonEntryRootReferences": true,
+  "rootReferenceCount": 9,
+  "sameInlineScriptsAndStyles": true,
+  "inlineBlockHashes": [
+    {
+      "tag": "script",
+      "sha256": "2619e69cec45286ff4b6d4e87eedcf6a6b96aa40dbd2e11e91f87fda7f7dc490"
+    },
+    {
+      "tag": "script",
+      "sha256": "479d0158acab176af08d1b1f3dd1db41065548b89610076d2e4e2e412745dd53"
+    },
+    {
+      "tag": "script",
+      "sha256": "88c675c85496b14a9aba586dce8482384ed45e2cb828afe118ce8afce1ca600b"
+    }
+  ],
+  "sriNonemptyAttributeCount": 0,
+  "cspObservation": {
+    "enforcedHeaderCount": 0,
+    "reportOnlyHeaderCount": 0,
+    "metaPolicyCount": 0,
+    "classification": "CSP_ABSENT_ON_CAPTURED_PUBLIC_RESPONSES; preserve absence, not a CSP enforcement/security acceptance claim",
+    "httpHeaderConfigurationChanged": false
+  },
+  "entrypointsAllIncludedInVerifiedStaticArchive": true,
+  "newManifestNonStaticRefs": {
+    "index.html": "/index.html"
+  },
+  "privateProposedIndexPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-dryrun/melamedlaw/index.proposed.html",
+  "privateProposedManifestPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-dryrun/melamedlaw/asset-manifest.proposed.json",
+  "publicSnapshotGateClosed": true,
+  "bytePreservingMergeGateClosed": true,
+  "fullLockedRootOrPublicationGateClosed": false,
+  "remainingActivationGates": [
+    "fresh canonical root/index/manifest/protected-file/old-chunk inventory under existing locks",
+    "current raw root bytes must bind captured public bytes; no unreviewed dynamic HTML transform",
+    "current root/server CSP/branding/handoff preserved; no wholesale compiled-root copy",
+    "exact frozen backend readiness/QA/backup/restore/drain approval conditions",
+    "reviewed new publisher contract; historical constants/QA acceptance/expiry cannot be reused blindly",
+    "static first, fullhash collision checks, old chunks retained, last-moment CAS of mutable files",
+    "post-publication exact public hash/header verification; partial outcomes inspected before any retry"
+  ],
+  "currentNonStaticManifestMappings": {
+    "index.html": "/index.html"
+  },
+  "newNonStaticManifestMappings": {
+    "index.html": "/index.html"
+  },
+  "manifestNonStaticMappingsExactlyUnchanged": true,
+  "staticCollisionPreflight": {
+    "intersectingCurrentManifestPaths": 19,
+    "freshPublicEntrypointHashMatches": [],
+    "otherPathsRequiringLockedCanonicalFilesystemHashChecks": [
+      "static/media/AllManagers.7126a03d7c27213de2ad.png",
+      "static/media/AppBackground.620be0dabb2027013c3f.jpg",
+      "static/media/ISO-27701-logo.01351318947ec05ce0f5.png",
+      "static/media/ISO-logo.7ef757781907c8eef229.png",
+      "static/media/Iso22301-logo.14c4de0849abf697840c.png",
+      "static/media/MagnifyingGlass.d466bf7953662b736fc7.png",
+      "static/media/Weight.ee6259e93735981156d0.png",
+      "static/media/X.28e784309fe66fcff48d.png",
+      "static/media/analytics.bf28dfb8ee06dc5f0eba.png",
+      "static/media/apple-calendar.c79c232980dc078c4ba7.png",
+      "static/media/cases.bafbde8cf2510c7929f7.png",
+      "static/media/casesType.d6cef8ef5aef864321f3.png",
+      "static/media/dataFlowing.9f81647815d15e83ce62.png",
+      "static/media/google-maps.f8ffe032804f4d25073f.png",
+      "static/media/logo.fad522f82b15eafd995a.png",
+      "static/media/logo2.eed83dbcf3c1049b1980.png",
+      "static/media/managers.fadbb2bc0cda1f1394dc.png",
+      "static/media/searchingClient.f27d1f338e64df970a12.png",
+      "static/media/taggedCase.dea931141e9585cbfd33.png"
+    ],
+    "overwritePermittedOnSamePathDifferentBytes": false
+  }
+}

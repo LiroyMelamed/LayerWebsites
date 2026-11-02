@@ -1,0 +1,63 @@
+{
+  "atUtc": "2026-11-02T04:37:57.625787+00:00",
+  "rows": [
+    {
+      "tenant": "melamedia",
+      "baseUrl": "https://melamedia.mela-media.co.il/",
+      "snapshotResult": "PASS_STATIC_SNAPSHOT",
+      "indexSha256": "647fa89d259aa983335012867ea80c221585eef93a94cc25b47fc401e3aca5b7",
+      "manifestSha256": "caf65131a5c99f25a624954fb1a7a7252972f23a729644e3a930c29904acaed7",
+      "indexMatchesHistoricalPublished": true,
+      "manifestMatchesHistoricalPublished": true,
+      "entrypointsMatchHistorical": true,
+      "allFetchedEntrypointsBound": true,
+      "holds": []
+    },
+    {
+      "tenant": "melamedlaw",
+      "baseUrl": "https://client.melamedlaw.co.il/",
+      "snapshotResult": "PASS_STATIC_SNAPSHOT",
+      "indexSha256": "422bb853e6101ee7827ea7e86e930041b62de064080d481d1cd1ea5dfec78e20",
+      "manifestSha256": "8c62dc797b80ea980c018f565fe350dc243fefe397378b51cfce518b83e1b2e6",
+      "indexMatchesHistoricalPublished": true,
+      "manifestMatchesHistoricalPublished": true,
+      "entrypointsMatchHistorical": true,
+      "allFetchedEntrypointsBound": true,
+      "holds": []
+    },
+    {
+      "tenant": "morlevy",
+      "baseUrl": "https://morlevy.mela-media.co.il/",
+      "snapshotResult": "PASS_STATIC_SNAPSHOT",
+      "indexSha256": "624a600c5287e83d89a73f3a45965bf51cdc9aba82a48fbcac60cad7506a9899",
+      "manifestSha256": "701c12dea0b77a2823415d6a36de9bb0d29f55a10ae37327632e37db147da9aa",
+      "indexMatchesHistoricalPublished": true,
+      "manifestMatchesHistoricalPublished": true,
+      "entrypointsMatchHistorical": true,
+      "allFetchedEntrypointsBound": true,
+      "holds": []
+    },
+    {
+      "tenant": "ashrafessa",
+      "baseUrl": "https://ashrafessa.mela-media.co.il/",
+      "snapshotResult": "PASS_STATIC_SNAPSHOT",
+      "indexSha256": "74119c645e44b9e646b02e056e9ba3100db78cc252c48eecb932b660b013acb6",
+      "manifestSha256": "4cbb0e7150688d038a174fe922b4bae50316a437a16bcc893edfcd8815993529",
+      "indexMatchesHistoricalPublished": true,
+      "manifestMatchesHistoricalPublished": true,
+      "entrypointsMatchHistorical": true,
+      "allFetchedEntrypointsBound": true,
+      "holds": []
+    }
+  ],
+  "allFourStaticSnapshotsPass": true,
+  "totalHttpsRequests": 32,
+  "apiRequests": 0,
+  "providerRequests": 0,
+  "javascriptExecutions": 0,
+  "credentialsOrCookiesSent": false,
+  "setCookieRetained": false,
+  "privateCache": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight",
+  "activationReady": false,
+  "noPublicationOrRemoteChanges": true
+}
