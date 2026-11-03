@@ -3265,6 +3265,8 @@
     "reminder1d": "قبل يوم",
     "reminder2d": "قبل يومين",
     "reminder1w": "قبل أسبوع",
+    "reminder2w": "قبل أسبوعين",
+    "reminder30d": "قبل شهر (30 يومًا)",
     "activeFilters": "التصفية المفعّلة",
     "lawyersLegend": "دليل المحامين",
     "noLawyers": "لا يوجد محامون لعرضهم",
