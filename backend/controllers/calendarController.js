@@ -54,6 +54,7 @@ const { resolveShortLink } = require('../lib/publicShortLinks');
 const { lawyerMatchSql, personalCalendarSql } = require('../lib/calendarVisibility');
 const { isEventCancelled, normalizeEventStatus } = require('../lib/calendarEventStatus');
 const { signOAuthState, verifyOAuthState } = require('../lib/calendarOAuthState');
+const { googleCalendarEventTimes } = require('../lib/googleCalendarEventTimes');
 const { sendMessage } = require('../utils/sendMessage');
 const { sendTransactionalCustomHtmlEmail } = require('../utils/smooveEmailCampaignService');
 const { composeCalendarEmail } = require('../lib/calendarEmail');
@@ -2334,11 +2335,9 @@ const syncGoogleEvents = async (req, res) => {
             if (gev.status === 'cancelled') continue;
             if (!gev.id) continue;
 
-            const startTime = gev.start?.dateTime || (gev.start?.date ? `${gev.start.date}T00:00:00Z` : null);
-            const endTime = gev.end?.dateTime || (gev.end?.date ? `${gev.end.date}T23:59:59Z` : null);
-            if (!startTime || !endTime) continue;
-
-            const allDay = !gev.start?.dateTime;
+            const times = googleCalendarEventTimes(gev);
+            if (!times) continue;
+            const { startTime, endTime, allDay } = times;
 
             try {
                 await pool.query(
