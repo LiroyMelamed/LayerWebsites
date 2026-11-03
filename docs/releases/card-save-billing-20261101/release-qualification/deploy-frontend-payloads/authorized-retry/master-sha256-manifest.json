@@ -1,0 +1,155 @@
+{
+  "atUtc": "2026-11-02T06:17:57.798366+00:00",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 18,
+      "sha256": "0ded296e877d1b2a383ec19feee9b1536073a064a02e90a23f4a62d84bdef214"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3311,
+      "sha256": "c29ebbc9c4b6c38aee4094a9a46e22a2b94d4032017f479bd0c688b4982262dd"
+    },
+    {
+      "path": "artifact-verification.json",
+      "bytes": 2102,
+      "sha256": "309dce0be2d1d77fe863440343623ef365e97c8c1543eccaf66c71e0af2c8bfe"
+    },
+    {
+      "path": "ashrafessa.json",
+      "bytes": 37073,
+      "sha256": "318135d5b87fa7f68cab6a75ae1dd7ee8af1227bdc7730081d8600f7a0349fd8"
+    },
+    {
+      "path": "ashrafessa.log",
+      "bytes": 26007,
+      "sha256": "b4de6363e42dc5dabac85c9105a9143dbfe06aa2e517f6b28ec008c52682ba23"
+    },
+    {
+      "path": "cas-review/README.md",
+      "bytes": 6102,
+      "sha256": "55af3911ce3ab8e93dc0c80df6c768bec1a380a0a40e5fb0c342b233bbe49a3d"
+    },
+    {
+      "path": "cas-review/ashrafessa-dryrun.json",
+      "bytes": 5587,
+      "sha256": "0b5934fb1eeb95636e58edb53a1c4eaec54ec04b29d0546b3d2c87fc516984a9"
+    },
+    {
+      "path": "cas-review/dryrun-summary.json",
+      "bytes": 5056,
+      "sha256": "56140013cdb673777b0801c6b875939f9ad913df7b4e43d5bd526286b86e985b"
+    },
+    {
+      "path": "cas-review/melamedia-dryrun.json",
+      "bytes": 5464,
+      "sha256": "d225484c084d01db5a18fb2e45574feaad85ff102794a58be107cc88770f4a7a"
+    },
+    {
+      "path": "cas-review/melamedlaw-dryrun.json",
+      "bytes": 5473,
+      "sha256": "88e81b12db0d702188c656bf0fa0a485b6d47889041c4d0173128f9f3f2027d3"
+    },
+    {
+      "path": "cas-review/morlevy-dryrun.json",
+      "bytes": 5465,
+      "sha256": "d19ed0afd0c6da598e4046634a066aa5a6a1e06b5e1c09b6847bc8477d625338"
+    },
+    {
+      "path": "cas-review/publisher-source-review.json",
+      "bytes": 23322,
+      "sha256": "59078c531b6f8fd169ffa3836fe43492be7a05a4452851d98b6e3c06fbe5537a"
+    },
+    {
+      "path": "cas-review/reproduce-public-dryrun.py",
+      "bytes": 1714,
+      "sha256": "34b2a0816d66afb28a1f88e5ecd83ec9e93cb364623074bd3af8f92516303dd5"
+    },
+    {
+      "path": "melamedia.json",
+      "bytes": 37154,
+      "sha256": "2d3c75f37061e8163b9a7d39550f24ddd83126a52afe96ea1fa34746766d5e35"
+    },
+    {
+      "path": "melamedia.log",
+      "bytes": 30190,
+      "sha256": "a0e1a36252d2d27db85784a026131af46fbc8022e82febfdf987eb0d5f8f4e8f"
+    },
+    {
+      "path": "melamedlaw.json",
+      "bytes": 36667,
+      "sha256": "f56f5d8b2cdb0679c8e8687dbd06c9033887928853486833022e69dea822fdab"
+    },
+    {
+      "path": "melamedlaw.log",
+      "bytes": 26007,
+      "sha256": "b831992f6a55aaa09df063a7d45e8ee50176a23283a5e004114bc3d9e67800a9"
+    },
+    {
+      "path": "morlevy.json",
+      "bytes": 36686,
+      "sha256": "30774dab09c686ecde65acc553ffaa79d35e1c4197defc146d9ef3076d43d2ea"
+    },
+    {
+      "path": "morlevy.log",
+      "bytes": 25998,
+      "sha256": "e92e1c64f16d304459801eb39bab4430aafc21a60d852d8f6e4ba5d9d700670e"
+    },
+    {
+      "path": "public-cas/README.md",
+      "bytes": 2674,
+      "sha256": "f2ff407dfa432be6be4d7624d5ce0bd99f5a9a9a8d0e16aeb8bbbf9a8b6066a2"
+    },
+    {
+      "path": "public-cas/ashrafessa.json",
+      "bytes": 21684,
+      "sha256": "3dc1e732dfb8147b6634e4e09cacd8e16f07412dfb4c9ba3e6c83784e3ffa894"
+    },
+    {
+      "path": "public-cas/expected-static-collision-hashes.json",
+      "bytes": 31743,
+      "sha256": "8f71bd2376e8faf823836e1abf5fee88286ae64438ecdf76cf9d69740295c134"
+    },
+    {
+      "path": "public-cas/melamedia.json",
+      "bytes": 20547,
+      "sha256": "0baa941c6354ac8e6495a90a96910051be62b13ab9c296f9c3fcc5447ff38408"
+    },
+    {
+      "path": "public-cas/melamedlaw.json",
+      "bytes": 19886,
+      "sha256": "b729b9a9eb395eb863759d4278786164a8809c64066fe0847ccd9818b8cf8258"
+    },
+    {
+      "path": "public-cas/morlevy.json",
+      "bytes": 21600,
+      "sha256": "3b904dcde76505c4030a55fabd676dbf9bbc2cd6f6da7c12ae9dc66d8c5ec0d9"
+    },
+    {
+      "path": "public-cas/summary.json",
+      "bytes": 2527,
+      "sha256": "6e8886eed2c955e233c9be0850655afe238966acbffca0e63e4ba09d35555487"
+    },
+    {
+      "path": "reconnection-finalization.json",
+      "bytes": 2739,
+      "sha256": "2cc46ffcc3e19d17a4bb70d5f087f0882bda6d43b5ab545bdc2fefa493e14029"
+    },
+    {
+      "path": "reproduce-prepare-payloads.py",
+      "bytes": 9941,
+      "sha256": "1a60b53b9180921f891d9ad5e1e231f795592fd01a39db70ff60372801a665ca"
+    },
+    {
+      "path": "summary.json",
+      "bytes": 216477,
+      "sha256": "74d88b03b429bda48f2675c204e6771e9bb777215b64443c47a68dacfdd6c9d6"
+    }
+  ],
+  "fileCount": 29,
+  "canonicalEntryListSha256": "8b99850f1c04b79161abf7c6d12d3102142923b43d6746a64f79501836ae6367",
+  "scope": "compiled receipts/logs plus retained public/CAS proofs and local reconnection completion; excludes this manifest and sidecar",
+  "activationReady": false,
+  "noNewBuildNetworkOrRemoteOperation": true
+}

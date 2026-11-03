@@ -1,0 +1,114 @@
+{
+  "phase": "Read-only completed; actions below not executed",
+  "actions": [
+    {
+      "id": "seal-existing-backup-run",
+      "status": "PENDING_COORDINATOR_EXECUTION_AUTHORIZATION",
+      "target": "Existing backend DB-only producer and the four configured legal recovery selectors",
+      "action": "Review/bind exact installed producer085b3d94 and configa9368f14, current lock/resource/storage identity, then run the existing per-project producer under shared maintenance+tenant locks and its existing backup lock. Reuse normal encryption/upload/readback; do not alter scope/retention/config/roles.",
+      "commandTemplate": "python3 -I /usr/local/sbin/melamedia-server-backup.py --config /etc/melamedia-backup.d/config.json --project <existing-reviewed-legal-recovery-selector>",
+      "newInfrastructureOrAccessNeededIfExistingMappingUnchanged": false,
+      "effects": [
+        "DB snapshot read/locks",
+        "private temporary dump and encrypted backup/manifests",
+        "existing R2 PUT/GET/readback and normal backup status effects"
+      ],
+      "financialProviderOrAppRecordSideEffectsIntended": false,
+      "notExecutedReason": "Current delegated phase explicitly permits read-only inspection only; backup/vendor writes were not authorized in this phase."
+    },
+    {
+      "id": "local-only-authenticated-restore",
+      "status": "CANCELLED_BY_OWNER_NOT_PENDING",
+      "target": "Cancelled Mac fixture/restore plan; existing QA only under proven isolation/synthetic/no-charge conditions",
+      "action": "Do not create a Mac database/cluster/role/fixture or install extensions. Earlier local customer-backup restore proposals are withdrawn. Existing QA is the only permitted test environment, after its isolation, synthetic records and no-charge capability are established. Do not restore customer data into QA under this testing request.",
+      "newInfrastructureOrAccessNeeded": "No new environment anywhere is proposed or pending. Documented existing historical targets were inspected without starting or creating anything; no reusable quarantine was identified in that scope.",
+      "effects": [],
+      "doNotUse": [
+        "Historical verify-completed-backups.py: installs remote helpers and can create remote OS account/PG cluster",
+        "Synthetic-only billing fixture without a separate private-data scope",
+        "Live database or existing database overwrite"
+      ],
+      "notExecutedReason": "Owner explicitly denied new Mac test databases and requires existing QA. None were performed."
+    },
+    {
+      "id": "certify-eight-rollback-components",
+      "status": "HOLD_THREE_COMPLETE_INACTIVE_VERSIONS_NOT_CERTIFIED",
+      "target": "Backend and frontend separately for four legal clients",
+      "action": "Identify three distinct existing known-good inactive identities for each component; certify full source/static graph, lock/dependency/runtime recoverability, matching private startup/configuration preimages and inactivity. Deduplicate equal code archives. If missing, prepare reviewed local release artifacts from verified historical sources using existing routines; creating three copies of one active snapshot does not satisfy the rule.",
+      "newInfrastructureOrAccessNeeded": "No new live access inherently required for existing artifacts; any new stage/config/access work remains outside this read-only audit.",
+      "constraints": [
+        "Preserve all QA pins and historical archives",
+        "Do not invoke cleaner/apply/restore/deploy as inspection",
+        "Do not restore an old DB to undo code; preserve payment/idempotency/outbox state",
+        "Do not assume the new pause flag controls older code/processes/hosted checkout pages",
+        "Use current scoped credentials; archived .env is not a current-access certificate"
+      ]
+    },
+    {
+      "id": "melamed-frontend-rollback",
+      "status": "HOLD_EXTERNAL_FTP_AND_THIRD_VERSION_UNPROVEN",
+      "target": "Separate MelamedLaw frontend hosting and documented local full-build archives",
+      "action": "Use existing private FTP deployment mapping only after its scope is authorized. Bind inactive published versions and at least three complete recoverable static payloads; only two local archives were found, and publication/inactivity is not certified. Frontend VPS checkpoint counts cannot cover this host.",
+      "newInfrastructureOrAccessNeededIfExistingFtpMappingUsable": false,
+      "notExecutedReason": "No vendor/FTP calls authorized in current phase."
+    },
+    {
+      "id": "current-qa-schema-dump",
+      "status": "BLOCKED_EXISTING_DATABASE_ROLE_PERMISSION",
+      "target": "Existing QA melamedia database using mapped role melamedia_app",
+      "action": "Current read-only extension/catalog query passed; schema-only pg_dump failed permission and produced zero DDL. Coordinator must decide an already-authorized schema-only retrieval identity/scope or separately approve any role/access change. No privilege grant or fallback was attempted.",
+      "observedVersions": {
+        "postgresql": "16.15",
+        "vector": "0.6.0",
+        "pgcrypto": "1.3"
+      },
+      "currentPublicTables": 116,
+      "requiresNewApprovalForAnyGrantRoleExtensionOrInfrastructureChange": true,
+      "ownerConstraint": {
+        "recordedAtUtc": "2026-11-01T23:46:35.271921+00:00",
+        "authority": "Trusted owner instruction relayed by parent",
+        "existingQaOnly": true,
+        "newMacPostgresDatabasesClustersRolesFixturesExtensions": "CANCELLED_BY_OWNER_NOT_PENDING",
+        "newMacChangesPerformed": false,
+        "existingQaUseRequires": [
+          "Proven isolation",
+          "Synthetic-only test records",
+          "No ability to charge or invoke provider/mail/document operations"
+        ],
+        "appRoleSchemaDumpPermissionBoundaryBypassed": false,
+        "schemaExportRetryPerformed": false,
+        "additionalActiveSchemaOrProviderAccessPerformed": false
+      },
+      "existingIdentitySourceEvidence": "backup-dump-identity.json",
+      "separateApprovalProposal": "Approve metadata-only schema export via the existing backup OS identity postgres, explicitly binding the existing DB identity and local Unix socket/5432 + QA melamedia. No new role/grant/Mac DB; no automatic retry. Source command has no explicit DB-U, so effective DB identity still requires approval/binding.",
+      "appRolePermissionBoundaryBypassed": false,
+      "activeSchemaExportRetryPerformed": false
+    },
+    {
+      "id": "existing-documented-restore-quarantine",
+      "status": "HOLD_UNAVAILABLE_IN_CHECKED_DOCUMENTED_LOCATIONS",
+      "target": "Documented historical verifier roots on backend/frontend hosts, port55489",
+      "action": "No further creation/start/restore action proposed. Existing accounts/helpers alone are not an environment. A separately identified already-existing approved QA quarantine would still require isolation/synthetic/no-charge proof.",
+      "evidence": "existing-restore-targets.json",
+      "authenticatedRestoreGateClosed": false,
+      "newEnvironmentCreation": "CANCELLED_BY_OWNER_NOT_PENDING"
+    }
+  ],
+  "ownerConstraint": {
+    "recordedAtUtc": "2026-11-01T23:46:35.271921+00:00",
+    "authority": "Trusted owner instruction relayed by parent",
+    "existingQaOnly": true,
+    "newMacPostgresDatabasesClustersRolesFixturesExtensions": "CANCELLED_BY_OWNER_NOT_PENDING",
+    "newMacChangesPerformed": false,
+    "existingQaUseRequires": [
+      "Proven isolation",
+      "Synthetic-only test records",
+      "No ability to charge or invoke provider/mail/document operations"
+    ],
+    "appRoleSchemaDumpPermissionBoundaryBypassed": false,
+    "schemaExportRetryPerformed": false,
+    "additionalActiveSchemaOrProviderAccessPerformed": false,
+    "newEnvironmentAnywhere": "CANCELLED_BY_OWNER_NOT_PENDING",
+    "newEnvironmentCreationPerformed": false
+  }
+}

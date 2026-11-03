@@ -1,0 +1,19 @@
+# Expanded read-only readiness evidence — 2026-11-02
+
+**New evidence is complete. Authenticated restore and three complete rollback versions remain HOLD.** This task ran no SQL test or live change.
+
+Fresh QA preflight at 07:22:21–22 UTC succeeded: clean source 545779e4, 103 protected files unchanged, PID 2729957/start 124260326, daemon 948103, same boot/config/dependency identity. One QA-owned loopback PostgreSQL socket and no known backup/restore/helper operation was observed. This is time-bound metadata, not an atomic financial drain.
+
+Three exact frontend-host backups in /root/reminder-layout-backups-20261006 were newly verified: melamedia.tar.gz, morlevy.tar.gz and ashrafessa.tar.gz. Each matches its committed historical archive SHA and index-before SHA. Public index/asset-manifest local-reference closure passes, with logo/favicon headers, no unsafe member or link, and stable bytes. Member counts are 320, 578 and 580. Only public index/manifest contents were streamed; no files were extracted. This proves one additional self-contained historical frontend tree for those three targets.
+
+Local review found 32 distinct full frontend builds: QA 20, Ashraf 6, MorLevi 3 and Melamed 3. All HTML/manifest reference closures pass. One Oct26 publication-review tuple each for Ashraf/MorLevi/Melamed matches historical verification. Most other build receipts identify unpublished candidates; the publisher merged preserved root HTML/assets. These counts therefore do not certify three complete inactive historical deployments.
+
+The new backend review inspected 21 QA archives. Twenty contain the required server/app/package/lock headers: 18 distinct archive hashes and 17 distinct selected runtime-code content digests. Ten files/nine runtime versions share the exact current package-lock SHA. Court-import and legal-system-message-off archives have different tar hashes but identical selected runtime content, so count once. Three distinct same-lock source examples and all exact paths/hashes are in expanded-readiness-summary.json. No archive includes node_modules. Full tracked-source/assets and runtime/configuration recoverability remain unproved. Additional customer home-release folders have dumps and deployment receipts rather than full code/runtime packages.
+
+Only registered PG16/main port 5432 was identified; it is the shared application cluster. No approved separate restore target was certified. The 53 additional candidate-directory metadata entries and bounded archive searches do not prove that no unregistered target exists elsewhere. No cluster, database, schema, role or environment was created or started.
+
+Passive prerequisites: Ubuntu 24.04.4/kernel 6.8.0-147; Node 22.23.2; Python 3.12.3; unshare/setpriv/prlimit 2.39.3; timeout 9.4; nobody 65534:65534/nonlogin. bwrap is absent. Existing libseccomp 2.5.5-1ubuntu3.1 resolves to /usr/lib/x86_64-linux-gnu/libseccomp.so.2.5.5, root 0644, SHA b4d9140a7797ccf3ac14f5d9d579b64f157111662940cb8330c632b11a8cea8e. Selected capabilities/sysctls, namespace links, Node help and memory counters are recorded. No namespace, seccomp filter, guard or test process was executed. Cgroup/systemd hard-resource prerequisites were not captured because no further SSH remained planned.
+
+The JSON has a separate backend/frontend rollback matrix for all four targets. Every three-complete-inactive-version row remains unproved. Source/static integrity is kept separate from historical publication identity and runtime/configuration recovery.
+
+All six read-only SSH captures exited 0 and released locks. No credential/full-environment values, customer rows, excluded-customer data, database/provider/storage connection, live write, backup, restore, cleanup or extraction to disk occurred. No denied, pending or uncertain action remains. Refresh evidence at the coordinator's actual action boundary.

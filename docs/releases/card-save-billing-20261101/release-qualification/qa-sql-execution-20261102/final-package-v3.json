@@ -1,0 +1,51 @@
+{
+  "createdAtUtc": "2026-11-02T08:26:11.609653+00:00",
+  "status": "AUTO_REVIEW_DENIED_BEFORE_STAGING_PENDING_NEW_EXPLICIT_APPROVAL",
+  "archive": "layer-billing-sql-sequences-6a3bd299-hardened-v3.tar.gz",
+  "archiveBytes": 9906893,
+  "archiveSha256": "cb2f03ea1a0e6141960d017897f11d0de868a3932d84e1d58ae74b4d5c70c08c",
+  "manifestSha256": "d24165b8df2a825d715d1e38690d16f08c626484c7268cccaaf9bd3bc08c5399",
+  "regularFiles": 324,
+  "originalUnchangedGitFiles": [
+    "backend/lib/billing/billingOperations.js",
+    "backend/lib/billing/calendarMonths.js",
+    "backend/lib/billing/firmBillingService.js",
+    "backend/lib/billing/pricingPackage.js",
+    "backend/lib/billing/selfServiceRenewal.js",
+    "backend/lib/billing/signupQuote.js",
+    "backend/lib/billing/tenantBillingDefaults.js",
+    "backend/tests/cardSetupDebtCollection.test.js",
+    "backend/tests/selfServiceCardSetupCollection.test.js"
+  ],
+  "productCommit": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "pgliteVersion": "0.5.10",
+  "temporaryTarget": "/tmp/layer-billing-sql-sequences-20261102-6a3bd299",
+  "scope": {
+    "unit": "layer-billing-sql-qa-20261102-6a3bd299.scope",
+    "MemoryMax": 2147483648,
+    "MemorySwapMax": 0,
+    "TasksMax": 32,
+    "CPUQuota": "50%",
+    "RuntimeMaxSec": 600,
+    "OOMPolicy": "kill"
+  },
+  "newDatabaseInstancesCreated": 0,
+  "remoteWrites": 0,
+  "sqlExecuted": false,
+  "staticChecks": [
+    "Python AST only",
+    "Node --check only",
+    "all9originalGitblobs identical",
+    "allarchivepaths/types/bytes match manifest"
+  ],
+  "testRuntimeCompatibilityProven": false,
+  "compatibilityRevision": 3,
+  "originalProductTestsAndPgliteUnchanged": true,
+  "permissionOrKernelOrResourceControlsChanged": false,
+  "expectedCases": 79,
+  "initializationAdapter": "pristine immutable snapshot; new MEMFS/memory/PG perfixture; two isolation canaries",
+  "thirdAttemptExecuted": false,
+  "automaticReviewReason": "third execution attempt exceeds retained authorization for original run plus one retry",
+  "liveSideEffectsFromRejectedAction": 0,
+  "requiresNewExplicitThirdAttemptApproval": true
+}

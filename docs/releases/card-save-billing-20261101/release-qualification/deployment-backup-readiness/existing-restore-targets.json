@@ -1,0 +1,217 @@
+{
+  "result": "HOLD_NO_REUSABLE_QUARANTINE_IDENTIFIED_IN_DOCUMENTED_LOCATIONS",
+  "startedAtUtc": "2026-11-02T00:02:25.242023+00:00",
+  "completedAtUtc": "2026-11-02T00:02:27.867620+00:00",
+  "sshCallsPerHost": 1,
+  "rows": [
+    {
+      "host": "backend",
+      "capturedAtUtc": "2026-11-02T00:02:27.785119+00:00",
+      "existingAccount": {
+        "exists": true,
+        "name": "melabackupcheck",
+        "uid": 999,
+        "gid": 988,
+        "shell": "/usr/sbin/nologin",
+        "nonLogin": true
+      },
+      "documentedRestorePrefix": "/var/lib/melamedia-isolated-restore-",
+      "matchingDirectEntries": 0,
+      "tcp55489": {
+        "collectorExit": 0,
+        "matchingLines": 0,
+        "lineSha256": []
+      },
+      "unix55489": {
+        "collectorExit": 0,
+        "matchingLines": 0,
+        "lineSha256": []
+      },
+      "verifierOwnedProcesses": {
+        "collectorExit": 0,
+        "processes": []
+      },
+      "matchingDocumentedServiceNames": [],
+      "documentedHelperRoot": {
+        "path": "/root/audit-remediation-20261008/backup-coverage",
+        "metadata": {
+          "exists": true,
+          "symlink": false,
+          "directory": true,
+          "regularFile": false,
+          "uid": 0,
+          "gid": 0,
+          "mode": "0o700",
+          "bytes": 4096
+        },
+        "helpers": {
+          "receive-recovery-check.py": {
+            "exists": true,
+            "symlink": false,
+            "directory": false,
+            "regularFile": true,
+            "uid": 0,
+            "gid": 0,
+            "mode": "0o700",
+            "bytes": 5624,
+            "sha256": "c8ab7c30b5e68c5d7ebd90a5aa3d392e03e963633666b3943f6ddb328b4c4b03"
+          },
+          "restore-in-isolation.py": {
+            "exists": true,
+            "symlink": false,
+            "directory": false,
+            "regularFile": true,
+            "uid": 0,
+            "gid": 0,
+            "mode": "0o700",
+            "bytes": 7325,
+            "sha256": "d2601581d623ce9ebfb1854c82a41b7cb43b830e33c146d1110bd855126a6b10"
+          }
+        }
+      },
+      "documentedReceiverRoot": {
+        "path": "/root/audit-remediation-20261008/backup-coverage/recovery-check",
+        "metadata": {
+          "exists": true,
+          "symlink": false,
+          "directory": true,
+          "regularFile": false,
+          "uid": 0,
+          "gid": 0,
+          "mode": "0o700",
+          "bytes": 4096
+        },
+        "directEntryCount": 0,
+        "sessionDirectoryCount": 0
+      },
+      "pg16ToolsPresent": {
+        "pg_ctl": true,
+        "pg_restore": true,
+        "initdb": true
+      },
+      "existingIsolatedQuarantineCertified": false
+    },
+    {
+      "host": "frontend",
+      "capturedAtUtc": "2026-11-02T00:02:27.781685+00:00",
+      "existingAccount": {
+        "exists": true,
+        "name": "melabackupcheck",
+        "uid": 997,
+        "gid": 987,
+        "shell": "/usr/sbin/nologin",
+        "nonLogin": true
+      },
+      "documentedRestorePrefix": "/var/lib/melamedia-isolated-restore-",
+      "matchingDirectEntries": 0,
+      "tcp55489": {
+        "collectorExit": 0,
+        "matchingLines": 0,
+        "lineSha256": []
+      },
+      "unix55489": {
+        "collectorExit": 0,
+        "matchingLines": 0,
+        "lineSha256": []
+      },
+      "verifierOwnedProcesses": {
+        "collectorExit": 0,
+        "processes": []
+      },
+      "matchingDocumentedServiceNames": [],
+      "documentedHelperRoot": {
+        "path": "/root/audit-remediation-20261008/backup-coverage",
+        "metadata": {
+          "exists": true,
+          "symlink": false,
+          "directory": true,
+          "regularFile": false,
+          "uid": 0,
+          "gid": 0,
+          "mode": "0o700",
+          "bytes": 4096
+        },
+        "helpers": {
+          "receive-recovery-check.py": {
+            "exists": true,
+            "symlink": false,
+            "directory": false,
+            "regularFile": true,
+            "uid": 0,
+            "gid": 0,
+            "mode": "0o700",
+            "bytes": 5624,
+            "sha256": "c8ab7c30b5e68c5d7ebd90a5aa3d392e03e963633666b3943f6ddb328b4c4b03"
+          },
+          "restore-in-isolation.py": {
+            "exists": true,
+            "symlink": false,
+            "directory": false,
+            "regularFile": true,
+            "uid": 0,
+            "gid": 0,
+            "mode": "0o700",
+            "bytes": 7325,
+            "sha256": "d2601581d623ce9ebfb1854c82a41b7cb43b830e33c146d1110bd855126a6b10"
+          }
+        }
+      },
+      "documentedReceiverRoot": {
+        "path": "/root/audit-remediation-20261008/backup-coverage/recovery-check",
+        "metadata": {
+          "exists": true,
+          "symlink": false,
+          "directory": true,
+          "regularFile": false,
+          "uid": 0,
+          "gid": 0,
+          "mode": "0o700",
+          "bytes": 4096
+        },
+        "directEntryCount": 0,
+        "sessionDirectoryCount": 0
+      },
+      "pg16ToolsPresent": {
+        "pg_ctl": true,
+        "pg_restore": true,
+        "initdb": true
+      },
+      "existingIsolatedQuarantineCertified": false
+    }
+  ],
+  "historicalSourceProvenance": {
+    "restore-in-isolation.py": {
+      "localSourceSha256": "d2601581d623ce9ebfb1854c82a41b7cb43b830e33c146d1110bd855126a6b10",
+      "localSourceBytes": 7325
+    },
+    "verify-completed-backups.py": {
+      "localSourceSha256": "986e456ca475d275634196bb08b035ed8d187c99405d118df2cce3d3074754f4",
+      "localSourceBytes": 8698
+    },
+    "receive-recovery-check.py": {
+      "localSourceSha256": "c8ab7c30b5e68c5d7ebd90a5aa3d392e03e963633666b3943f6ddb328b4c4b03",
+      "localSourceBytes": 5624
+    }
+  },
+  "checkedScope": [
+    "Existing melabackupcheck account metadata",
+    "Direct /var/lib entries beginning melamedia-isolated-restore- only; no recursive or broad filesystem scan",
+    "Documented backup-coverage helper files and recovery-check root metadata only",
+    "Port55489 TCP and .s.PGSQL.55489 Unix listener metadata",
+    "Verifier-UID process names/PIDs only",
+    "Direct /etc/systemd/system names matching historical verifier/restore/55489 tokens only; selected service properties only",
+    "Existence of documented PG16 tool paths; tools not invoked"
+  ],
+  "interpretation": "Existing non-login accounts and historical helper files are present, but no documented cluster root/socket/listener/process/standalone service was identified. Helpers create and destroy per-run clusters; an account/tool directory alone is not an existing restore environment. This bounded discovery does not prove no other environment exists elsewhere.",
+  "ownerConstraint": "No new environment anywhere. Existing QA only after proven isolation, synthetic data and inability to charge. No environment creation/start is proposed or pending.",
+  "authenticatedRestoreGateClosed": false,
+  "operations": {
+    "newEnvironments": 0,
+    "databaseConnections": 0,
+    "scriptsOrPgCtlInvoked": 0,
+    "decryption": 0,
+    "restores": 0,
+    "installsOrRoleChanges": 0,
+    "remoteWrites": 0
+  }
+}

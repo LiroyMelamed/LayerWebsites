@@ -1,0 +1,44 @@
+{
+  "atUtc": "2026-11-02T08:21:26.660659+00:00",
+  "cleanupPerformed": true,
+  "serviceChanges": 0,
+  "dbConnections": 0,
+  "providerCalls": 0,
+  "before": {
+    "qa": {
+      "pid": 2729957,
+      "startTicks": 124260326
+    },
+    "daemon": {
+      "pid": 948103,
+      "startTicks": 48642921
+    },
+    "head": "545779e4b99e111959f4684167dfdf46da1f3186",
+    "envSha256": "9fc4bc04f6faa9e88347d3f94aa926750f616a54d2c9754fd86bc1bf94945281",
+    "boot": "79d5ef26-007c-4ee2-bfba-15db6bd5b1aa"
+  },
+  "scope": {
+    "ControlGroup": "",
+    "LoadState": "not-found",
+    "ActiveState": "inactive"
+  },
+  "preservedEvidenceFilesVerified": 13,
+  "after": {
+    "qa": {
+      "pid": 2729957,
+      "startTicks": 124260326
+    },
+    "daemon": {
+      "pid": 948103,
+      "startTicks": 48642921
+    },
+    "head": "545779e4b99e111959f4684167dfdf46da1f3186",
+    "envSha256": "9fc4bc04f6faa9e88347d3f94aa926750f616a54d2c9754fd86bc1bf94945281",
+    "boot": "79d5ef26-007c-4ee2-bfba-15db6bd5b1aa"
+  },
+  "serviceIdentityStable": true,
+  "status": "CLEANED_APPROVED_COMPLETED_TEST_TREE_ONLY",
+  "finishedAtUtc": "2026-11-02T08:21:26.847453+00:00",
+  "sshExit": 0,
+  "remoteSourceSha256": "ffb547f1b6ec5b22280d168f770018b4860130512ec79e142c35ca0e072336f0"
+}

@@ -1,5 +1,7 @@
 # Read-only release readiness — 1 November 2026
 
+> Later correction: the second read-only audit found the earlier Melamed frontend count of9 overlapped Melamedia because of substring matching. It is not evidence of9 Melamed rollback versions. The bounded actual inventory and archive/component checks are in [the follow-up](../deployment-backup-readiness/README.md); the three-complete-inactive-version gate remains HOLD. The original observation/JSON is retained as historical evidence.
+
 **Overall: HOLD.** The required live catalog primitives are present on all four
 targets. Existing backup-health reports are fresh and healthy. Full signup and
 profile QA fixtures, certified rollback reserves, archive/restore verification,

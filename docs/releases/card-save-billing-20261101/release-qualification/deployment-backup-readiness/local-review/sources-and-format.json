@@ -1,0 +1,300 @@
+{
+  "atUtc": "2026-11-01T23:17:40.990521+00:00",
+  "scope": "Read-only local rules/script review plus explicitly authorized known-public-build archive stat/opaque hash/header inspection; no network, credentials, environment values, customer/member payload, extraction, restore or product action",
+  "sourceFiles": [
+    {
+      "path": "/Users/liroymelamed/Projects/WORKSPACE.md",
+      "sha256": "ef077ef3a6a302fbeebee4eba90da19f9a9465433bf4f070e740a86a669c98a3",
+      "bytes": 10676
+    },
+    {
+      "path": "/Users/liroymelamed/Projects/AGENTS.md",
+      "sha256": "c2a81a1f2d165e3c50ed4c68c10bfee0b1a8316f286bf746ed34a280773eb19a",
+      "bytes": 7018
+    },
+    {
+      "path": "/Users/liroymelamed/Projects/LayerWebsites/AGENTS.md",
+      "sha256": "bab18d898b00597c08b15069ffab300915ca77db0da27c0c129b9da9b351d6bc",
+      "bytes": 7692
+    },
+    {
+      "path": "/Users/liroymelamed/Projects/ops/server-backup/server_backup.py",
+      "sha256": "331ff393559c183cccc608a5552f57940fd13b043aad3184fe535687d6a5fcdf",
+      "bytes": 18430
+    },
+    {
+      "path": "/Users/liroymelamed/Projects/ops/server-backup/README.md",
+      "sha256": "fc14391bf9d55558914a8e33d9ccbd3f148d07d79b3e46b5448c3467694a16e8",
+      "bytes": 6148
+    },
+    {
+      "path": "/Users/liroymelamed/Projects/ops/server-backup/example-config.json",
+      "sha256": "3f977db271f728eec71e493e40134966f61f1bf2e20a78e98a71bcc5f3aa976d",
+      "bytes": 1500
+    },
+    {
+      "path": "/Users/liroymelamed/Projects/ops/server-cleanup/README.md",
+      "sha256": "f2e14fbb81299fc3de55c00d34bc61ccd60fdfe8cc853aea42fd4c5ee95d55f2",
+      "bytes": 8870
+    },
+    {
+      "path": "/Users/liroymelamed/Projects/ops/server-cleanup/release_cleaner.py",
+      "sha256": "82f21b866cf1413ec8aa6ba7bb5acc2b563c6a9e92479d84dc12fba993690838",
+      "bytes": 27896
+    },
+    {
+      "path": "/Users/liroymelamed/Projects/ops/server-cleanup/backend.json",
+      "sha256": "694d0f26d69745ea087ed973259513746f3295915a673ed19229d2c2b54c0b38",
+      "bytes": 4170
+    },
+    {
+      "path": "/Users/liroymelamed/Projects/ops/server-cleanup/frontend.json",
+      "sha256": "7caf1428463a4b73cf13b61f3291592076aa250643ac00a4f6865ede434bfb3d",
+      "bytes": 2887
+    },
+    {
+      "path": "/Users/liroymelamed/Projects/ops/server-cleanup/manual-review/verify_pack.py",
+      "sha256": "fae792d6501809b4352a43c59b040aeebe6bd1d9560380199411c0dca2b0e695",
+      "bytes": 4419
+    },
+    {
+      "path": "/Users/liroymelamed/Projects/ops/server-cleanup/manual-review/README.md",
+      "sha256": "838ea6dd197464eeed0a20d2b4b20b81eabf39c31979a8a99c7519d36273a137",
+      "bytes": 5421
+    },
+    {
+      "path": "/Users/liroymelamed/Projects/LayerWebsites/scripts/deploy-tenant-backend.sh",
+      "sha256": "620a3579ff1e3fa4190587e5667ea6886f04c0f45a62607b1659cbf8820b807d",
+      "bytes": 2531
+    },
+    {
+      "path": "/Users/liroymelamed/Projects/LayerWebsites/scripts/deploy-tenant-frontend.sh",
+      "sha256": "ea83b07eb5a86cd431a76bd5dc438c3decbadd4cd4c65342d14a0687678a917d",
+      "bytes": 2288
+    },
+    {
+      "path": "/Users/liroymelamed/Projects/LayerWebsites/scripts/rollback-melamedlaw.sh",
+      "sha256": "cea55bfee16d0d647f49123b8b1c05a95e92b639460ea4d99db62d842c5bd39d",
+      "bytes": 1358
+    },
+    {
+      "path": "/Users/liroymelamed/Projects/social-publish/engine/knowledge/audits/2026-10-11-r2-storage/recovery-tools/verify-completed-backups.py",
+      "sha256": "986e456ca475d275634196bb08b035ed8d187c99405d118df2cce3d3074754f4",
+      "bytes": 8698
+    },
+    {
+      "path": "/Users/liroymelamed/Projects/social-publish/engine/knowledge/audits/2026-10-11-r2-storage/recovery-tools/receive-recovery-check.py",
+      "sha256": "c8ab7c30b5e68c5d7ebd90a5aa3d392e03e963633666b3943f6ddb328b4c4b03",
+      "bytes": 5624
+    },
+    {
+      "path": "/Users/liroymelamed/Projects/social-publish/engine/knowledge/audits/2026-10-11-r2-storage/recovery-tools/restore-in-isolation.py",
+      "sha256": "d2601581d623ce9ebfb1854c82a41b7cb43b830e33c146d1110bd855126a6b10",
+      "bytes": 7325
+    },
+    {
+      "path": "/tmp/layer-billing-main-current-20261101/docs/releases/card-save-billing-20261101/release-qualification/readiness/README.md",
+      "sha256": "8058e54f68940c4f0b351af727afbb97de924b03168cedf454929ea634871e66",
+      "bytes": 7342
+    },
+    {
+      "path": "/tmp/layer-billing-main-current-20261101/docs/releases/card-save-billing-20261101/release-qualification/readiness/collect-readiness.py",
+      "sha256": "41a08b9758a41cc96795f3ac934e35be22b6b1abc24c633e882cced4d9c55915",
+      "bytes": 12437
+    },
+    {
+      "path": "/tmp/layer-billing-main-current-20261101/docs/releases/card-save-billing-20261101/release-qualification/readiness/collect-retention.py",
+      "sha256": "eee2c2fb7168d029a8e2d5c1f2ec29c6b05e04f1b7af3530ce91598cbe2a474c",
+      "bytes": 4464
+    },
+    {
+      "path": "/Users/liroymelamed/Projects/social-publish/engine/knowledge/audits/2026-10-18-server-weekly-review/remediation/melamedia-server-backup.py",
+      "sha256": "e8e21e09b6ca159302ccdcffe250eb5882f7ef3057b4e1d5115d717b230fdfe9",
+      "bytes": 12395
+    },
+    {
+      "path": "/Users/liroymelamed/Projects/social-publish/engine/knowledge/audits/2026-10-08-servers/remediation/backup-coverage/server-backup.py",
+      "sha256": "66922fc570a2567172b8d550a7041b2b1b275ccdec4f13cb496086fdc0ba41f9",
+      "bytes": 11133
+    },
+    {
+      "path": "/Users/liroymelamed/Projects/social-publish/engine/knowledge/audits/2026-10-08-servers/remediation/backup-coverage/publish-frontend-backups.py",
+      "sha256": "ba773f6749b9025079dd8ef95e978b02196f270cb55d6808dcacc86ba0d24db6",
+      "bytes": 6639
+    },
+    {
+      "path": "/Users/liroymelamed/Projects/LayerWebsites/scripts/deploy-tenant-frontend-melamedlaw.sh",
+      "sha256": "6adc6c0c2139c111f3905c4b68903c571e97da76f049292a205f402047c78d96",
+      "bytes": 3541
+    },
+    {
+      "path": "/tmp/layer-billing-main-current-20261101/docs/releases/card-save-billing-20261101/rollout-plan/live-baselines/local-health-receipt-review.md",
+      "sha256": "f8229e7f889b7be1ab55f88e7a042b0337ed9ded11cca0799e45c3ef4027696f",
+      "bytes": 13191
+    }
+  ],
+  "configSchemaOnly": {
+    "topLevelKeys": [
+      "host",
+      "local_generation_only",
+      "organization_backup_bucket",
+      "projects",
+      "recipient",
+      "retention_days",
+      "root"
+    ],
+    "projectKeysObservedInSyntheticExample": [
+      [
+        "name",
+        "recovery_paths",
+        "retention_days",
+        "source_status",
+        "sqlite_database"
+      ]
+    ],
+    "producerProjectKeys": [
+      "name",
+      "database",
+      "sqlite_database",
+      "recovery_paths",
+      "recovery_excludes",
+      "object_snapshot",
+      "storage",
+      "shared_recovery_project",
+      "source_status"
+    ],
+    "credentialVariableNames": [
+      "S3_ENDPOINT",
+      "S3_BUCKET",
+      "S3_KEY",
+      "S3_SECRET"
+    ],
+    "liveConfigRead": false
+  },
+  "format": {
+    "outerGenerationFiles": [
+      "bundle.cms",
+      "manifest.json"
+    ],
+    "outerManifestFields": [
+      "project",
+      "host",
+      "created_at",
+      "local_complete",
+      "encrypted",
+      "sha256",
+      "bytes",
+      "offsite",
+      "remote_key",
+      "organization_offsite"
+    ],
+    "cipher": "CMS DER AES-256-GCM",
+    "encryptedInnerArchive": "uncompressed tar",
+    "innerRequiredFields": [
+      "project",
+      "host",
+      "created_at",
+      "database",
+      "recovery_paths",
+      "files",
+      "shared_recovery_project",
+      "source_status"
+    ],
+    "fileEntryFields": [
+      "name",
+      "sha256",
+      "bytes"
+    ],
+    "postgresPayload": [
+      "manifest.json",
+      "database.dump",
+      "recovery-files.tar.gz"
+    ],
+    "dbOnlyConditions": [
+      "database present and correct target",
+      "recovery_paths empty",
+      "object_snapshot absent or false",
+      "recovery-files.tar.gz contains no entries",
+      "no other payload members"
+    ],
+    "sqliteExtraFields": [
+      "database_kind",
+      "sqlite_database",
+      "sqlite_source"
+    ],
+    "appliesToReviewedLocalProducerSha256": "331ff393559c183cccc608a5552f57940fd13b043aad3184fe535687d6a5fcdf",
+    "currentInstalledRevisionCompatibility": "NOT_PROVEN_BY_THIS_LOCAL_REVIEW"
+  },
+  "observedOperations": {
+    "network": 0,
+    "remoteCalls": 0,
+    "providerCalls": 0,
+    "liveWrites": 0,
+    "customerPayloadReads": 0,
+    "environmentValueReads": 0,
+    "backupsOrRestores": 0,
+    "testsRun": 0,
+    "existingSourceEdits": 0,
+    "publicBuildArchivesHeaderInspected": 2,
+    "publicBuildArchivesOpaqueHashed": 2
+  },
+  "clientQualificationBranch": {
+    "path": "/tmp/layer-billing-release-clients-20261101/MorLevi",
+    "head": "9b42eff71f8ba358a38825cc196423179bb73bee",
+    "status": "",
+    "headAtFinish": "9b42eff71f8ba358a38825cc196423179bb73bee",
+    "statusAtFinish": ""
+  },
+  "coordinatorSuppliedRemoteMetadata": {
+    "independentlyObservedHere": false,
+    "backendInstalledProducerSha256Prefix": "085b3d946f",
+    "frontendInstalledProducerSha256Prefix": "bb00",
+    "backendBackupScope": "database-only",
+    "legalProjectCount": 4,
+    "allRecoveryPathsEmpty": true,
+    "allObjectSnapshotsFalse": true,
+    "storageExisting": true,
+    "frontendKnownCheckpointCounts": {
+      "Melamedia": 9,
+      "AshrafEssa": 5,
+      "MorLevi": 2,
+      "MelamedLaw": 0
+    },
+    "historicalAliasCaveat": "Old substring matching confused Melamedia with MelamedLaw. Do not carry the old false MelamedLaw count."
+  },
+  "scopedLocalDbOnlySourceSearch": {
+    "roots": [
+      "/Users/liroymelamed/Projects/ops",
+      "/Users/liroymelamed/Projects/social-publish/engine/knowledge"
+    ],
+    "extensions": [
+      ".py",
+      ".sh",
+      ".md"
+    ],
+    "terms": [
+      "backup_scope",
+      "database-only",
+      "database_only"
+    ],
+    "matches": [],
+    "limit": "Not a whole-machine or all-Git-history search; installed source still needs exact revision review."
+  },
+  "sourceFilesStableThroughReview": true,
+  "ownerQaOnlyConstraint": {
+    "recordedAtUtc": "2026-11-01T23:46:35.271921+00:00",
+    "authority": "Trusted owner instruction relayed by parent",
+    "existingQaOnly": true,
+    "newMacPostgresDatabasesClustersRolesFixturesExtensions": "CANCELLED_BY_OWNER_NOT_PENDING",
+    "newMacChangesPerformed": false,
+    "existingQaUseRequires": [
+      "Proven isolation",
+      "Synthetic-only test records",
+      "No ability to charge or invoke provider/mail/document operations"
+    ],
+    "appRoleSchemaDumpPermissionBoundaryBypassed": false,
+    "schemaExportRetryPerformed": false,
+    "additionalActiveSchemaOrProviderAccessPerformed": false,
+    "newEnvironmentAnywhere": "CANCELLED_BY_OWNER_NOT_PENDING"
+  }
+}

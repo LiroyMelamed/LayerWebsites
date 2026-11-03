@@ -1,3 +1,5 @@
+> **Current status — 3 November 2026:** QA and all three active customers are deployed. See the [completion report](completion-20261103/README.md) for exact versions, preserved data, verification and remaining limits. The planning/HOLD statements and test counts below are historical snapshots, not the current deployment status.
+
 # Card saving and due subscription collection
 
 Current operations: [safe staged rollout plan](rollout-plan/README.md).

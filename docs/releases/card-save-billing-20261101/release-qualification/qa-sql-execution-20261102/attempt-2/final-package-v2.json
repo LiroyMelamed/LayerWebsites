@@ -1,0 +1,46 @@
+{
+  "createdAtUtc": "2026-11-02T08:10:20.826513+00:00",
+  "status": "AUTHORIZED_COMPATIBILITY_ADAPTER_READY_NOT_EXECUTED",
+  "archive": "layer-billing-sql-sequences-6a3bd299-hardened-v2.tar.gz",
+  "archiveBytes": 9904568,
+  "archiveSha256": "f86b6954bd2b4a1ced0a1b378ee7f4607add90ccc6e2c1e96df3a16514e9ca72",
+  "manifestSha256": "d9b8affb6db19d51539dd96b7e63598dd70725ac8185b4248287e3efe2128d55",
+  "regularFiles": 324,
+  "originalUnchangedGitFiles": [
+    "backend/lib/billing/billingOperations.js",
+    "backend/lib/billing/calendarMonths.js",
+    "backend/lib/billing/firmBillingService.js",
+    "backend/lib/billing/pricingPackage.js",
+    "backend/lib/billing/selfServiceRenewal.js",
+    "backend/lib/billing/signupQuote.js",
+    "backend/lib/billing/tenantBillingDefaults.js",
+    "backend/tests/cardSetupDebtCollection.test.js",
+    "backend/tests/selfServiceCardSetupCollection.test.js"
+  ],
+  "productCommit": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "pgliteVersion": "0.5.10",
+  "temporaryTarget": "/tmp/layer-billing-sql-sequences-20261102-6a3bd299",
+  "scope": {
+    "unit": "layer-billing-sql-qa-20261102-6a3bd299.scope",
+    "MemoryMax": 2147483648,
+    "MemorySwapMax": 0,
+    "TasksMax": 32,
+    "CPUQuota": "50%",
+    "RuntimeMaxSec": 600,
+    "OOMPolicy": "kill"
+  },
+  "newDatabaseInstancesCreated": 0,
+  "remoteWrites": 0,
+  "sqlExecuted": false,
+  "staticChecks": [
+    "Python AST only",
+    "Node --check only",
+    "all9originalGitblobs identical",
+    "allarchivepaths/types/bytes match manifest"
+  ],
+  "testRuntimeCompatibilityProven": false,
+  "compatibilityRevision": 2,
+  "originalProductTestsAndPgliteUnchanged": true,
+  "permissionOrKernelOrResourceControlsChanged": false,
+  "expectedCases": 79
+}

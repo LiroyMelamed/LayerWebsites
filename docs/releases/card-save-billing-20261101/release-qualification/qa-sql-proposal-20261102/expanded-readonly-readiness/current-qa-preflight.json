@@ -1,0 +1,209 @@
+{
+  "startedAtUtc": "2026-11-02T07:22:21.214329+00:00",
+  "scope": "ExistingQA source/process/config/OS metadata only; no database/provider/storage connection",
+  "mutations": 0,
+  "databaseConnections": 0,
+  "providerCalls": 0,
+  "storageCalls": 0,
+  "namespaceCommandsExecuted": false,
+  "processBefore": {
+    "pid": 2729957,
+    "procCwd": "/root/Melamedia/backend",
+    "procExe": "/usr/bin/node",
+    "startTicks": 124260326,
+    "cmdlineContainsExpectedServerPath": true
+  },
+  "daemonBefore": {
+    "pid": 948103,
+    "procCwd": "/",
+    "procExe": "/usr/bin/node",
+    "startTicks": 48642921
+  },
+  "effectiveProjection": {
+    "BILLING_OPERATIONS_ENABLED": null,
+    "BACKGROUND_JOBS_ENABLED": "false",
+    "BILLING_RENEWAL_SCHEDULER_ENABLED": null,
+    "SIGNING_V2_WORKER_ENABLED": "true",
+    "WHATSAPP_WORKER_ENABLED": "false",
+    "WHATSAPP_DEMO_WORKER_ENABLED": "true",
+    "COURT_DEMO_SYNC_WORKER_ENABLED": "true",
+    "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": null,
+    "GIT_SHA": null,
+    "MULTI_TENANT_MODE": null,
+    "TENANT_DB_ISOLATION_ENABLED": null,
+    "SELF_SERVICE_SIGNUP_ENABLED": null,
+    "TAKBULL_MODE": "prod",
+    "QA_OUTBOUND_MODE": "noop",
+    "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": null,
+    "WHATSAPP_DEMO_ONLY": "false",
+    "WHATSAPP_CONNECT_ONLY": "true"
+  },
+  "initialProcessMetadata": {
+    "kill_timeout": null,
+    "autorestart": "true",
+    "exec_mode": "fork_mode",
+    "instances": null,
+    "pm_id": 5,
+    "pm_uptime": 1793573164106,
+    "status": "launching",
+    "PM2_KILL_TIMEOUT": null
+  },
+  "daemonPM2_KILL_TIMEOUT": null,
+  "hostBootIdBefore": "79d5ef26-007c-4ee2-bfba-15db6bd5b1aa",
+  "environmentFileSha256Before": "9fc4bc04f6faa9e88347d3f94aa926750f616a54d2c9754fd86bc1bf94945281",
+  "sourceBefore": {
+    "head": {
+      "exit": 0,
+      "stdout": "545779e4b99e111959f4684167dfdf46da1f3186",
+      "stderrBytes": 0
+    },
+    "trackedStatus": {
+      "exit": 0,
+      "stdout": "",
+      "stderrBytes": 0
+    },
+    "backendTree": {
+      "exit": 0,
+      "stdout": "4ffd075308c7054a9f46ddac59f74accee4c6a4b",
+      "stderrBytes": 0
+    }
+  },
+  "protected": {
+    "entries": 103,
+    "mismatches": []
+  },
+  "dependenciesBefore": {
+    "symlink": true,
+    "linkTarget": "/root/qa-new-features-20261023-5ce621ee/staging/source02/backend/node_modules",
+    "resolvedTarget": "/root/qa-new-features-20261023-5ce621ee/staging/source02/backend/node_modules",
+    "targetExists": true,
+    "sourceLockSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+    "installedLockSha256": "bf476467ea9c57c366d6a610852233c85505ae450a25b95919165c44bf7b249f"
+  },
+  "sockets": {
+    "ssExit": 0,
+    "connections": [
+      {
+        "state": "ESTAB",
+        "direction": "outbound_or_other",
+        "localPort": 21156,
+        "peerPort": 5432,
+        "peerCategory": "loopback_db",
+        "peerIsLoopbackAfterNormalization": true,
+        "peerUsesIpv4Mapping": false,
+        "inode": "13079297",
+        "qaFdNumbers": [
+          24
+        ],
+        "inodeBelongsToQaFd": true,
+        "tcpInfo": {
+          "bytes_sent": 609603,
+          "bytes_acked": 609604,
+          "bytes_received": 163596,
+          "lastsnd": 431,
+          "lastrcv": 429,
+          "lastack": 429,
+          "segs_out": 583,
+          "segs_in": 490
+        }
+      }
+    ],
+    "rawAddressOrPacketOutput": false
+  },
+  "os": {
+    "kernel": "6.8.0-147-generic",
+    "machine": "x86_64",
+    "PRETTY_NAME": "Ubuntu 24.04.4 LTS",
+    "VERSION_ID": "24.04",
+    "ID": "ubuntu"
+  },
+  "namespacePrerequisites": {
+    "selectedStatus": {
+      "CapEff": "000001ffffffffff",
+      "NoNewPrivs": "0"
+    },
+    "existingNamespaceLinks": {
+      "net": "net:[4026531840]",
+      "uts": "uts:[4026531838]",
+      "ipc": "ipc:[4026531839]",
+      "pid": "pid:[4026531836]",
+      "pid_for_children": "pid:[4026531836]",
+      "user": "user:[4026531837]",
+      "mnt": "mnt:[4026531841]",
+      "cgroup": "cgroup:[4026531835]",
+      "time": "time:[4026531834]",
+      "time_for_children": "time:[4026531834]"
+    },
+    "sysctls": {
+      "/proc/sys/user/max_user_namespaces": "31612",
+      "/proc/sys/kernel/unprivileged_userns_clone": "1"
+    },
+    "tools": {
+      "unshare": {
+        "path": "/usr/bin/unshare",
+        "exists": true,
+        "versionExit": 0,
+        "version": "unshare from util-linux 2.39.3"
+      },
+      "bwrap": {
+        "path": null,
+        "exists": false
+      },
+      "timeout": {
+        "path": "/usr/bin/timeout",
+        "exists": true,
+        "versionExit": 0,
+        "version": "timeout (GNU coreutils) 9.4"
+      },
+      "setpriv": {
+        "path": "/usr/bin/setpriv",
+        "exists": true,
+        "versionExit": 0,
+        "version": "setpriv from util-linux 2.39.3"
+      },
+      "prlimit": {
+        "path": "/usr/bin/prlimit",
+        "exists": true,
+        "versionExit": 0,
+        "version": "prlimit from util-linux 2.39.3"
+      }
+    }
+  },
+  "knownOperationalProcesses": [],
+  "helperProcessCounts": {},
+  "uncertainOperationLimit": "No matching operational processes observed does not prove absence of an unrelated or orphan command. No mutation was submitted by this collector.",
+  "processAfter": {
+    "pid": 2729957,
+    "procCwd": "/root/Melamedia/backend",
+    "procExe": "/usr/bin/node",
+    "startTicks": 124260326,
+    "cmdlineContainsExpectedServerPath": true
+  },
+  "sourceAfter": {
+    "head": {
+      "exit": 0,
+      "stdout": "545779e4b99e111959f4684167dfdf46da1f3186",
+      "stderrBytes": 0
+    },
+    "trackedStatus": {
+      "exit": 0,
+      "stdout": "",
+      "stderrBytes": 0
+    }
+  },
+  "hostBootIdAfter": "79d5ef26-007c-4ee2-bfba-15db6bd5b1aa",
+  "environmentFileSha256After": "9fc4bc04f6faa9e88347d3f94aa926750f616a54d2c9754fd86bc1bf94945281",
+  "dependenciesAfter": {
+    "symlink": true,
+    "linkTarget": "/root/qa-new-features-20261023-5ce621ee/staging/source02/backend/node_modules",
+    "resolvedTarget": "/root/qa-new-features-20261023-5ce621ee/staging/source02/backend/node_modules",
+    "targetExists": true,
+    "sourceLockSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+    "installedLockSha256": "bf476467ea9c57c366d6a610852233c85505ae450a25b95919165c44bf7b249f"
+  },
+  "stable": true,
+  "status": "READONLY_QA_PREFLIGHT_COMPLETED",
+  "locksReleasedAtRemoteExit": true,
+  "finishedAtUtc": "2026-11-02T07:22:22.216068+00:00",
+  "sshExit": 0
+}

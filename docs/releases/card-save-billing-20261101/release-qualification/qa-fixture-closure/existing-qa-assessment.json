@@ -1,0 +1,223 @@
+{
+  "recordedAtUtc": "2026-11-01T23:41:15.545005+00:00",
+  "frozenMain": "074df7520497a0cd6bd95ad70353201c905f0aa6",
+  "financialCandidate": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "policy": "EXISTING_QA_ONLY_NO_NEW_MAC_DB_CLUSTER_ROLES_EXTENSION",
+  "localSetupStatus": "CANCELLED_BY_OWNER_NOT_PENDING_APPROVAL",
+  "existingQaFacts": {
+    "provenance": [
+      "parent read-only current QA schema probe",
+      "/tmp/layer-billing-deploy-preflight-20261101/remote-preflight.json",
+      "/tmp/layer-billing-deploy-preflight-20261101/qa-eligibility.json"
+    ],
+    "database": "melamedia",
+    "dbHost": "existing backend loopback5432",
+    "postgresVersion": "16.15",
+    "vectorVersion": "0.6.0",
+    "pgcryptoVersion": "1.3",
+    "publicTables": 116,
+    "deploymentMode": "DEDICATED",
+    "rlsTables": 0,
+    "forceRlsTables": 0,
+    "appOwnedTables": 0,
+    "appRole": "melamedia_app",
+    "appSuperuser": false,
+    "appBypassRls": false,
+    "newFixtureDbNamesPresent": false,
+    "qaTestNamespacesPresent": false,
+    "selfServiceSignupEnabled": false,
+    "otherThreeClientsSelfServiceFlag": "NOT_CAPTURED",
+    "syntheticOnlyPopulation": "NOT_PROVEN_NO_APP_ROWS_QUERIED",
+    "takbullMode": "PROD",
+    "candidateFinancialGateFlag": "UNSET_DEFAULT_ENABLED_IF_CANDIDATE_INSTALLED",
+    "qaOutboundNoop": "valid SMS/email/push noop; zero recipient exceptions; does not cover Takbull",
+    "providerNonSettlement": "NOT_VERIFIED",
+    "nativeFinancialTestsSafe": false
+  },
+  "exactProfileTest": {
+    "state": "UNSAFE_UNAVAILABLE_TO_RETARGET_UNCHANGED",
+    "fixedSocketAllowlist": [
+      "/tmp/codex-client-profile-55487",
+      "/tmp/codex-client-profile-55488"
+    ],
+    "fixedDatabase": "postgres",
+    "fixedUser": "client_profile_test_owner",
+    "destructiveOrGlobalSetup": [
+      "CREATE TABLE users in public/default search path",
+      "real migration ALTER TABLE public.users",
+      "CREATE ROLE client_profile_scoped",
+      "enable/force RLS and replace tenant policy on users"
+    ],
+    "retargetingOrWeakeningGuardAllowed": false,
+    "runAttempted": false
+  },
+  "exactSignupTest": {
+    "state": "CURRENT_EXISTING_QA_DOES_NOT_MATCH_CONTRACT",
+    "fixedConnection": "127.0.0.1:55440/legal_signup_release_20261013_qa",
+    "forcesSharedMode": true,
+    "requiresNonownerNonbypassRoleAndForcedRls": true,
+    "existingQaMismatch": [
+      "different database/port",
+      "dedicated with0RLS/FORCE",
+      "three extra currently unclassified public table names",
+      "synthetic-only fixtures not proven"
+    ],
+    "broadSetupMutation": "disables auto_renew on all previous qa-release-%/Synthetic release office rows before the new fixture",
+    "retargetingOrWeakeningGuardAllowed": false,
+    "runAttempted": false
+  },
+  "gateCalibration": {
+    "profile": {
+      "classification": "INHERITED_UNEXECUTED_COVERAGE_GAP_NOT_NEW_PROFILE_CHANGE",
+      "sourceEqualityProof": [
+        {
+          "path": "backend/controllers/customerController.js",
+          "unchangedFromFrozenMain": true,
+          "sha256": "a5b7ff109cdd6789237bfacbc2c31be3487aed7f3fd76fa7760919762dcbefcb"
+        },
+        {
+          "path": "backend/utils/clientProfile.js",
+          "unchangedFromFrozenMain": true,
+          "sha256": "4d299590b38634e02a1b821128934800376aed10c329030c7b574577b7bf698d"
+        },
+        {
+          "path": "backend/migrations/2026-10-23_00_client_document_profile.sql",
+          "unchangedFromFrozenMain": true,
+          "sha256": "4d3c968963cb73a33ab598f37f90a4d8f747b1594a89bbdef5ea3a416c9f5b8d"
+        },
+        {
+          "path": "backend/tests/clientDocumentProfile.postgres.test.js",
+          "unchangedFromFrozenMain": true,
+          "sha256": "ef05123534839d437516ca7deb48167a796920bce1a2cc6920c47d50fbbcac26"
+        },
+        {
+          "path": "backend/tests/clientDocumentProfile.test.js",
+          "unchangedFromFrozenMain": true,
+          "sha256": "d7f16b2db30ae8bb1f05dd9f98e80fa21a622327b3d934f862fb735afdecf753"
+        },
+        {
+          "path": "backend/tests/clientDocumentProfile.readScope.test.js",
+          "unchangedFromFrozenMain": true,
+          "sha256": "2ea254a6e551d3119baf5e6cce7c8d669308d9d24b2e6ac194052f0f8b4a4de9"
+        }
+      ],
+      "changedFinancialImportsProfileControllerOrHelper": false,
+      "separateEvidence": "common124 test group and four-target selected profile catalog checks; not actual profile SQL fixture PASS",
+      "releaseDecision": "parent/owner must explicitly decide whether carry/defer inherited gap is acceptable for scoped dedicated billing release; do not mark skipped test PASS",
+      "indirectBillingAccessDependency": {
+        "exists": true,
+        "path": [
+          "backend/middlewares/authMiddleware.js",
+          "backend/middlewares/requireBillingAccess.js",
+          "backend/lib/billing/firmBillingService.js:getBillingSnapshot"
+        ],
+        "coverage": "billing-access boundary tests plus paused snapshot/lock cases, not complete profile-route SQL integration",
+        "classificationAppliesTo": "unchanged profile persistence/migration fixture, not all access behavior"
+      }
+    },
+    "sharedSignup": {
+      "classification": "AFFECTED_CHANGED_FINANCIAL_PATH_WITH_UNPROVEN_FULL_SHARED_RLS_INTEGRATION",
+      "changedFiles": [
+        "backend/lib/tenant/signupService.js",
+        "backend/lib/billing/selfServiceRenewal.js",
+        "backend/lib/billing/selfServiceUpgrade.js",
+        "backend/lib/payments/verifySignupPayment.js",
+        "backend/lib/payments/takbullClient.js"
+      ],
+      "realPg57Limit": "minimal synthetic billing schema with VM injected pool, tenantContext, signup provisioning, selfServiceRenewal and provider/mail boundaries; no actual office RLS/provisioning proof",
+      "scopeDecision": "QA shared signup is currently closed. Verify remaining three self-service flags and keep all shared/new-signup activation closed if consciously deferring this gap for dedicated-only release; no automatic waiver."
+    }
+  },
+  "optionalProfileSmoke": {
+    "state": "NOT_READY_NO_EXECUTION",
+    "possibleScope": "actual unchanged customer controller with VM-injected DB transaction and all transports mocked; only newly owned synthetic record IDs, rollback/no existing-record writes",
+    "remainingProof": [
+      "existing users defaults and noninternal trigger/function side effects",
+      "owned synthetic namespace/record identification and app-role DML boundaries",
+      "native HTTP/TCP/fetch no-egress test boundary",
+      "no bootstrap/app server/worker/provider invocation"
+    ],
+    "doesNotReplace": [
+      "additive migration application twice",
+      "new role creation and isolated synthetic FORCE RLS policy test"
+    ]
+  },
+  "schemaOnlyExport": {
+    "priorAction": "mapped app-role pg_dump schema-only",
+    "target": "existing QA melamedia DB only",
+    "priorResult": "FAILED_DATABASE_PERMISSION_EXIT1_ZERO_DDL_BYTES_KNOWN_OUTCOME",
+    "retryAllowedAutomatically": false,
+    "potentialNextAction": "explicitly authorize one schema-only export using the already-existing verified backup identity; do not grant/alter roles or use an arbitrary fallback",
+    "identityStatus": "OS_IDENTITY_VERIFIED_FROM_PRODUCER_DB_ROLE_AND_SOCKET_NOT_INDEPENDENTLY_OBSERVED",
+    "producerPath": "/usr/local/sbin/melamedia-server-backup.py",
+    "knownBackendProducerSha256": "085b3d946f475d1ad8ebd78f60aed389d6fea661963e34389b8991d339b2d160",
+    "output": "private schema SQL/hash only, not database recreation; no customer rows or environment values",
+    "status": "SEPARATE_REVIEW_REQUIRED_NOT_EXECUTED",
+    "priorExportCompleted": false,
+    "schemaOnlyExportAloneDoesNotAuthorizeFixtureOrRestore": true,
+    "verifiedOsIdentity": "postgres",
+    "verifiedProducerLine": 185,
+    "verifiedCommandPrefix": [
+      "runuser",
+      "-u",
+      "postgres",
+      "--",
+      "pg_dump"
+    ],
+    "sourceObservedAtUtc": "2026-11-01T23:44:35Z",
+    "sourceOnlyIdentityProbeDbConnections": 0,
+    "proposedApprovedTarget": {
+      "osUser": "postgres",
+      "databaseRole": "postgres",
+      "host": "verified existing local PostgreSQL Unix-socket directory, not guessed",
+      "port": 5432,
+      "database": "melamedia",
+      "roleIsProposedNotObserved": true,
+      "identityPreflightBeforeDump": true,
+      "transactionReadOnly": true
+    },
+    "prohibitedAfterPreflightFailure": [
+      "next identity fallback",
+      "GRANT/role/password change",
+      "pg_hba change",
+      "TCP redirection",
+      "database creation"
+    ],
+    "publicSourceIdentityReceipt": "/tmp/layer-billing-deployment-backup-readiness-20261101/public/backup-dump-identity.json"
+  },
+  "extensionResearchOnly": {
+    "officialSources": {
+      "pgvector060Commit": "281d4fcf60e2f037fa09d62be2543bb4d7511f2b",
+      "pgvector060Ci": "https://github.com/pgvector/pgvector/blob/281d4fcf60e2f037fa09d62be2543bb4d7511f2b/.github/workflows/build.yml",
+      "pgvector060Control": "https://github.com/pgvector/pgvector/blob/281d4fcf60e2f037fa09d62be2543bb4d7511f2b/vector.control",
+      "pgvector087Commit": "f37c13f68b57d2c3472b2214fbcff699d6d34876",
+      "pgvector087Ci": "https://github.com/pgvector/pgvector/blob/f37c13f68b57d2c3472b2214fbcff699d6d34876/.github/workflows/build.yml"
+    },
+    "matchingVersionCandidate": "0.6.0 at immutable281d4fcf60e2f037fa09d62be2543bb4d7511f2b",
+    "supportEvidence": "its official CI definition includes PostgreSQL17 Ubuntu make/installcheck; its control file declares0.6.0",
+    "localMac17CompileResult": "NOT_COMPILED_OR_INSTALLED; CI declaration is not proof of this native build",
+    "newerVersionMandatory": false,
+    "optionalNewerCandidate": "0.8.7 at f37c13f68b57d2c3472b2214fbcff699d6d34876, only a new decision after a recorded incompatibility, with explicit version-scope difference",
+    "newMacInstallationProposal": "CANCELLED_BY_OWNER",
+    "localPg16VectorFoundInBoundedPaths": false,
+    "dockerCliPresent": true,
+    "currentDockerContext": "colima",
+    "currentDockerUnixSocketPresent": false,
+    "existingPg16AvoidanceConclusion": "No existing usable matching local runtime verified; a different-port local server would fail the unchanged test guard, and replacing the occupied55440 service or creating a new runtime is forbidden."
+  },
+  "mutations": {
+    "productSource": 0,
+    "database": 0,
+    "roles": 0,
+    "schema": 0,
+    "configuration": 0,
+    "provider": 0,
+    "customerRows": 0,
+    "integrationTests": 0
+  },
+  "documentValidation": {
+    "relativeMarkdownLinksPass": true,
+    "jsonParses": true,
+    "noApplicationOrIntegrationRun": true
+  }
+}

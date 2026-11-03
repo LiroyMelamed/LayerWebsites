@@ -1,0 +1,203 @@
+{
+  "status": "HOLD_THREE_COMPLETE_INACTIVE_VERSIONS_NOT_CERTIFIED",
+  "observedAtUtc": "2026-11-02T07:23:58.487345+00:00",
+  "finishedAtUtc": "2026-11-02T07:26:38.699377+00:00",
+  "scope": "Bounded local declared cache/build/receipt locations. Full archives opaque SHA/header inspection; ONLY public index.html and asset-manifest.json streamed in memory for local-reference closure. No extraction or private payloads.",
+  "cacheRoot": "/Users/liroymelamed/.cache/melamedia-builds/LayerWebsites/legal-release-20261026/frontend-builds",
+  "receiptRoot": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026",
+  "summary": {
+    "Melamedia": {
+      "fullArchiveFiles": 20,
+      "distinctFullArchiveHashes": 20,
+      "archivesWithLocalReferenceClosure": 20,
+      "archivesWithHistoricalPublicationIndexBinding": 0,
+      "distinctHistoricallyPublishedArchiveHashes": 0,
+      "historicalPublishedArchivePaths": [],
+      "completeInactiveVersionsCertified": 0,
+      "backendRecoverableVersionsNewlyCertified": 0,
+      "historicallyBoundPublicationReviewTuples": 0
+    },
+    "AshrafEssa": {
+      "fullArchiveFiles": 6,
+      "distinctFullArchiveHashes": 6,
+      "archivesWithLocalReferenceClosure": 6,
+      "archivesWithHistoricalPublicationIndexBinding": 0,
+      "distinctHistoricallyPublishedArchiveHashes": 0,
+      "historicalPublishedArchivePaths": [],
+      "completeInactiveVersionsCertified": 0,
+      "backendRecoverableVersionsNewlyCertified": 0,
+      "historicallyBoundPublicationReviewTuples": 1
+    },
+    "MorLevi": {
+      "fullArchiveFiles": 3,
+      "distinctFullArchiveHashes": 3,
+      "archivesWithLocalReferenceClosure": 3,
+      "archivesWithHistoricalPublicationIndexBinding": 0,
+      "distinctHistoricallyPublishedArchiveHashes": 0,
+      "historicalPublishedArchivePaths": [],
+      "completeInactiveVersionsCertified": 0,
+      "backendRecoverableVersionsNewlyCertified": 0,
+      "historicallyBoundPublicationReviewTuples": 1
+    },
+    "MelamedLaw": {
+      "fullArchiveFiles": 3,
+      "distinctFullArchiveHashes": 3,
+      "archivesWithLocalReferenceClosure": 3,
+      "archivesWithHistoricalPublicationIndexBinding": 0,
+      "distinctHistoricallyPublishedArchiveHashes": 0,
+      "historicalPublishedArchivePaths": [],
+      "completeInactiveVersionsCertified": 0,
+      "backendRecoverableVersionsNewlyCertified": 0,
+      "historicallyBoundPublicationReviewTuples": 1
+    }
+  },
+  "newDeclaredRemoteRollbackPaths": [
+    {
+      "tenant": "melamedia",
+      "declaredRemoteHostRole": "frontend VPS",
+      "receiptPath": "/Users/liroymelamed/Projects/LayerWebsites/docs/releases/2026-10-06-reminder-layout/melamedia-deploy.json",
+      "receiptSha256": "260c5ceb27f67c04063fda4d99d8adb3216d1c767b8dea7d89ea55d6d0ed93c8",
+      "status": "DEPLOYED_VERIFIED",
+      "sourceCommit": "f1b072dfb31f93c0fe70395cb714d6b017830250",
+      "backupPath": "/root/reminder-layout-backups-20261006/melamedia.tar.gz",
+      "recordedBackupSha256": "bbd4a1999aa02b23379c58e39d4da0d0ffe6876509f1d7e828133ae06908fc5d",
+      "recordedPublishedArchiveSha256": "dfff92415216b9859c1b76d83cb21f9623914c90ee53aaa5bd1cc4fe4ad11ea8",
+      "completedUnix": 1791290456.580891,
+      "notCheckedRemotelyByThisSubtask": true
+    },
+    {
+      "tenant": "morlevy",
+      "declaredRemoteHostRole": "frontend VPS",
+      "receiptPath": "/Users/liroymelamed/Projects/LayerWebsites/docs/releases/2026-10-06-reminder-layout/morlevy-deploy.json",
+      "receiptSha256": "e50e04a0c9273625d172d85b475b64897bb9fae3d9632ae15c9b486bf4fad2c5",
+      "status": "DEPLOYED_VERIFIED",
+      "sourceCommit": "074ce3f3c4df75035cb51add35f98b5aeca6cde4",
+      "backupPath": "/root/reminder-layout-backups-20261006/morlevy.tar.gz",
+      "recordedBackupSha256": "059fc7d51c04e5466f042ca60735aa59d1ef9e5eb69f3fde13ee5ea1e462f761",
+      "recordedPublishedArchiveSha256": "b6ebc0ac1a56e18e67cb2fc057f7b89f2caf0d1924604f25d4bda78c1696e611",
+      "completedUnix": 1791290855.2881947,
+      "notCheckedRemotelyByThisSubtask": true
+    },
+    {
+      "tenant": "ashrafessa",
+      "declaredRemoteHostRole": "frontend VPS",
+      "receiptPath": "/Users/liroymelamed/Projects/LayerWebsites/docs/releases/2026-10-06-reminder-layout/ashrafessa-deploy.json",
+      "receiptSha256": "a03f8eb9ba590fda8beb6b0b33426773757fc90211a86b2c7435da265b71be59",
+      "status": "DEPLOYED_VERIFIED",
+      "sourceCommit": "d7e008c78dc9bafbb76c1504a5443bdde88a9471",
+      "backupPath": "/root/reminder-layout-backups-20261006/ashrafessa.tar.gz",
+      "recordedBackupSha256": "f8a8f2080578aacd70c142d5a871d18fff8c5a9749c006bb043ef1825d19e532",
+      "recordedPublishedArchiveSha256": "7532b52837b42ad3b3fa6096ae35d0eb033eb9dfa4f2418b8fe5960e21034db2",
+      "completedUnix": 1791290998.050054,
+      "notCheckedRemotelyByThisSubtask": true
+    }
+  ],
+  "boundedOtherRoots": [
+    {
+      "root": "/Users/liroymelamed/Projects/ops",
+      "directoriesVisited": 7,
+      "archivePaths": [],
+      "excludedDirectoryNames": [
+        "node_modules",
+        ".git",
+        "Pods",
+        ".gradle",
+        ".cxx",
+        "ModuleCache.noindex",
+        "build",
+        "dist",
+        "DerivedData"
+      ],
+      "payloadsRead": 0
+    },
+    {
+      "root": "/Users/liroymelamed/Projects/LayerWebsites",
+      "directoriesVisited": 3937,
+      "archivePaths": [],
+      "excludedDirectoryNames": [
+        "node_modules",
+        ".git",
+        "Pods",
+        ".gradle",
+        ".cxx",
+        "ModuleCache.noindex",
+        "build",
+        "dist",
+        "DerivedData"
+      ],
+      "payloadsRead": 0
+    },
+    {
+      "root": "/Users/liroymelamed/Projects/melamedlaw-frontend-build",
+      "directoriesVisited": 18,
+      "archivePaths": [],
+      "excludedDirectoryNames": [
+        "node_modules",
+        ".git",
+        "Pods",
+        ".gradle",
+        ".cxx",
+        "ModuleCache.noindex",
+        "build",
+        "dist",
+        "DerivedData"
+      ],
+      "payloadsRead": 0
+    },
+    {
+      "root": "/Users/liroymelamed/Projects/LawyerApp",
+      "directoriesVisited": 121,
+      "archivePaths": [],
+      "excludedDirectoryNames": [
+        "node_modules",
+        ".git",
+        "Pods",
+        ".gradle",
+        ".cxx",
+        "ModuleCache.noindex",
+        "build",
+        "dist",
+        "DerivedData"
+      ],
+      "payloadsRead": 0
+    },
+    {
+      "root": "/Users/liroymelamed/Projects/LawyerApp-Melamedia",
+      "directoriesVisited": 80,
+      "archivePaths": [],
+      "excludedDirectoryNames": [
+        "node_modules",
+        ".git",
+        "Pods",
+        ".gradle",
+        ".cxx",
+        "ModuleCache.noindex",
+        "build",
+        "dist",
+        "DerivedData"
+      ],
+      "payloadsRead": 0
+    }
+  ],
+  "operations": {
+    "networkCalls": 0,
+    "databaseCalls": 0,
+    "providerCalls": 0,
+    "credentialReads": 0,
+    "archiveFilesExtracted": 0,
+    "productChanges": 0,
+    "newEnvironmentOrSchemaOrRole": 0
+  },
+  "limits": [
+    "Public index binding establishes historical published bytes for the index, not a current full remote asset readback or inactivity.",
+    "All builds without a matching independent publication receipt remain candidate evidence and do not count as historical rollback versions.",
+    "Frontend closure checks index local references and asset-manifest file names against archive headers; no arbitrary JS/CSS payloads or dependency chain execution/read occurred.",
+    "Backend code archives alone would need runtime/dependency/configuration/inactivity recovery evidence; no new complete backend version was established.",
+    "Qualified publication-review archive/index bindings are reported separately from full-build index hashes; protected/incumbent root assets were retained by publisher, so archive-only historical full-version equivalence is not inferred."
+  ],
+  "newFinding": "32 distinct complete local public frontend build archives, all index/asset-manifest header references closed. Three Oct26 publication-review tuples independently bind successful public verify receipts. Neither candidate count nor the historical tuple alone certifies three complete inactive backend/frontend rollback versions.",
+  "executionIssue": {
+    "kind": "local exec transport disconnected before process creation",
+    "resolution": "Minimal pwd recovery probe succeeded, then a single retry of the three known-not-created unchanged readonly inventory commands succeeded. No uncertain action or auto-review denial."
+  }
+}

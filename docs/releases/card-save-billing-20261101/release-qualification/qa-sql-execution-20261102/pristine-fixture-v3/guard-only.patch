@@ -1,0 +1,164 @@
+--- strict-test-guard-v2.cjs
++++ strict-test-guard-v3.cjs
+@@ -4,6 +4,7 @@
+ const path = require('node:path');
+ const Module = require('node:module');
+ const assert = require('node:assert/strict');
++const crypto = require('node:crypto');
+ const net = require('node:net');
+ const tls = require('node:tls');
+ const dns = require('node:dns');
+@@ -107,6 +108,12 @@
+ const dependency = path.join(root, 'node_modules/@electric-sql/pglite') + path.sep;
+ const allowedBuiltins = new Set(['test', 'assert', 'assert/strict', 'fs', 'fs/promises', 'path', 'vm', 'crypto', 'module', 'url', 'stream', 'stream/promises', 'util', 'zlib', 'buffer', 'events', 'async_hooks', 'os', 'perf_hooks', 'string_decoder']);
+ const originalLoad = Module._load;
++let fixtureModuleExports = null;
++const templateState = {
++    status: 'unprepared', seedDatabases: 0, seedClosed: false,
++    pristinePublicTables: null, canaryDatabases: 0, closedCanaryDatabases: 0,
++    independenceCanaries: 0, fixtureDatabases: 0,
++};
+ Module._load = function (specifier, parent, isMain) {
+     const name = specifier.replace(/^node:/, '');
+     if (Module.isBuiltin(specifier)) {
+@@ -118,8 +125,118 @@
+     const resolved = Module._resolveFilename(specifier, parent, isMain);
+     if (!files.has(resolved) && !resolved.startsWith(dependency)) fail('forbiddenImport');
+     if (resolved.endsWith('.node')) fail('forbiddenImport');
++    if (specifier === '@electric-sql/pglite') {
++        assert.equal(resolved, path.join(dependency, 'dist/index.cjs'), 'Unexpected PGlite entry');
++        if (fixtureModuleExports) return fixtureModuleExports;
++        assert.equal(templateState.status, 'preparing', 'Prepare the isolated SQL fixture template before importing the original tests');
++    }
+     return originalLoad.apply(this, arguments);
+ };
++
++function fixtureTemplateCompatibility() {
++    return {
++        method: 'pristine-memory-snapshot',
++        seedDatabases: templateState.seedDatabases,
++        pristinePublicTables: templateState.pristinePublicTables,
++        independenceCanaries: templateState.independenceCanaries,
++        fixtureDatabases: templateState.fixtureDatabases,
++        sharedMutableDatabaseState: false,
++    };
++}
++
++// Test-only performance compatibility: original test bodies remain unchanged.
++// PGlite.clone() uses this same public dumpDataDir/loadDataDir mechanism. Each
++// fixture receives a fresh memory filesystem, WASM memory and PostgreSQL
++// instance. Only immutable Blob contents and the package's existing compiled
++// WASM cache are reused; this does not qualify repeated default initdb itself.
++async function prepareSqlFixtureTemplate() {
++    assert.equal(templateState.status, 'unprepared', 'SQL fixture template preparation must run exactly once');
++    assert.equal(completedBindingCanaries, 2, 'Run all existing guard canaries before SQL preparation');
++    assert.deepEqual(counts, { network: 0, forbiddenImport: 0, forbiddenFs: 0 });
++    assert.equal(rejectedBindingCalls, 0);
++    templateState.status = 'preparing';
++    try {
++        const packageRoot = path.join(root, 'node_modules/@electric-sql/pglite');
++        const packageInfo = JSON.parse(fs.readFileSync(path.join(packageRoot, 'package.json'), 'utf8'));
++        assert.equal(packageInfo.name, '@electric-sql/pglite');
++        assert.equal(packageInfo.version, '0.5.10');
++        const rawModule = require('@electric-sql/pglite');
++        const RawPGlite = rawModule.PGlite;
++        const bundleBytes = fs.readFileSync(path.join(packageRoot, 'dist/pglite.data'));
++        assert.equal(bundleBytes.byteLength, 6248214);
++        assert.equal(crypto.createHash('sha256').update(bundleBytes).digest('hex'),
++            '12384e109f1cea6edb978550d0445f8958ad4089cbbe3222d657f56e2e817d4b', 'Pinned PGlite filesystem bundle changed');
++        // Blob owns immutable bytes; do not freeze its JS shell, because Node
++        // may use private instance cache properties during arrayBuffer().
++        const fsBundle = new Blob([bundleBytes]);
++        let snapshot;
++        const seed = new RawPGlite({ fsBundle });
++        templateState.seedDatabases++;
++        try {
++            await seed.waitReady;
++            const publicTables = await seed.query("SELECT count(*)::integer AS count FROM pg_catalog.pg_tables WHERE schemaname='public'");
++            assert.equal(publicTables.rows.length, 1);
++            assert.equal(publicTables.rows[0].count, 0, 'Seed must contain no public user tables');
++            templateState.pristinePublicTables = 0;
++            const dump = await seed.dumpDataDir('none');
++            assert.ok(dump instanceof Blob && dump.size > 0);
++            snapshot = new Blob([dump], { type: 'application/x-tar' });
++        } finally {
++            await seed.close();
++            assert.equal(seed.closed, true);
++            templateState.seedClosed = true;
++        }
++
++        let canaryA, canaryB;
++        try {
++            canaryA = new RawPGlite({ loadDataDir: snapshot, fsBundle });
++            templateState.canaryDatabases++;
++            await canaryA.waitReady;
++            await canaryA.exec('CREATE TABLE public.billing_sql_template_canary_a (marker integer PRIMARY KEY)');
++            canaryB = new RawPGlite({ loadDataDir: snapshot, fsBundle });
++            templateState.canaryDatabases++;
++            await canaryB.waitReady;
++            await canaryB.exec('CREATE TABLE public.billing_sql_template_canary_b (marker integer PRIMARY KEY)');
++            const visible = async db => (await db.query("SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname='public' ORDER BY tablename")).rows.map(row => row.tablename);
++            assert.deepEqual(await visible(canaryA), ['billing_sql_template_canary_a'], 'Canary A must not see canary B');
++            templateState.independenceCanaries++;
++            assert.deepEqual(await visible(canaryB), ['billing_sql_template_canary_b'], 'Canary B must not see canary A');
++            templateState.independenceCanaries++;
++        } finally {
++            // Finish both closes even if one fails; preparation must not release
++            // the original test files while a seed/canary database is live.
++            const closed = await Promise.allSettled([canaryA, canaryB].filter(Boolean).map(async db => {
++                await db.close();
++                assert.equal(db.closed, true);
++                templateState.closedCanaryDatabases++;
++            }));
++            for (const result of closed) if (result.status === 'rejected') throw result.reason;
++        }
++        assert.equal(templateState.canaryDatabases, 2);
++        assert.equal(templateState.closedCanaryDatabases, 2);
++        assert.equal(templateState.independenceCanaries, 2);
++        assert.equal(templateState.seedClosed, true);
++        assert.deepEqual(counts, { network: 0, forbiddenImport: 0, forbiddenFs: 0 });
++        assert.equal(rejectedBindingCalls, 0);
++
++        class FixturePGlite extends RawPGlite {
++            constructor(...args) {
++                assert.equal(templateState.status, 'ready', 'SQL fixture template is not ready');
++                assert.equal(args.length, 0, 'Only the original no-argument memory fixtures are supported');
++                // Fresh options, filesystem, memory, PG instance and transaction
++                // state every time. Blob.arrayBuffer() supplies private bytes.
++                super({ loadDataDir: snapshot, fsBundle });
++                templateState.fixtureDatabases++;
++            }
++        }
++        fixtureModuleExports = Object.freeze({ ...rawModule, PGlite: FixturePGlite });
++        templateState.status = 'ready';
++        return fixtureTemplateCompatibility();
++    } catch (error) {
++        templateState.status = 'failed';
++        throw error;
++    }
++}
+ module.exports = {
+     async canaries() {
+         assert.throws(() => net.connect({ host: '127.0.0.1', port: 5432 }), /SQL_QA_NETWORK_BLOCKED/);
+@@ -149,10 +266,20 @@
+         assert.equal(process.binding, inertBinding);
+         assert.equal(rejectedBindingCalls, 0);
+         assert.equal(completedBindingCanaries, 2);
++        assert.equal(templateState.status, 'ready');
++        assert.equal(templateState.seedDatabases, 1);
++        assert.equal(templateState.seedClosed, true);
++        assert.equal(templateState.pristinePublicTables, 0);
++        assert.equal(templateState.canaryDatabases, 2);
++        assert.equal(templateState.closedCanaryDatabases, 2);
++        assert.equal(templateState.independenceCanaries, 2);
++        assert.ok(Object.isFrozen(fixtureModuleExports));
+         return { ...counts };
+     },
+     bindingCompatibility() {
+         return { inertConstants: true, allowedBindingCalls, rejectedBindingCalls, nativeBindingDelegations: 0 };
+     },
+     bindingCanaryCount() { return completedBindingCanaries; },
+-};
++    prepareSqlFixtureTemplate,
++    fixtureTemplateCompatibility,
++};
