@@ -1,0 +1,115 @@
+{
+  "tenant": "ashrafessa",
+  "scope": "pure local CAS plan on current public HTTPS snapshot, no publication",
+  "actualCompileSource": "9eaebbdb6c23d56d974546e233b8905d19570ef5",
+  "freshPublicSnapshotSha256": "3dc1e732dfb8147b6634e4e09cacd8e16f07412dfb4c9ba3e6c83784e3ffa894",
+  "oldIndexSha256": "74119c645e44b9e646b02e056e9ba3100db78cc252c48eecb932b660b013acb6",
+  "oldManifestSha256": "4cbb0e7150688d038a174fe922b4bae50316a437a16bcc893edfcd8815993529",
+  "proposedIndexSha256": "ecd3a647875b726145fc96dc8be7490037c2a37fca82fdea8a9c13d28d906161",
+  "proposedManifestSha256": "11c71d828966d9edb79dbb5b3d663bca229cc353bc56f13b64744090954e103b",
+  "mergeProof": {
+    "oldIndexSha256": "74119c645e44b9e646b02e056e9ba3100db78cc252c48eecb932b660b013acb6",
+    "newIndexSha256": "ecd3a647875b726145fc96dc8be7490037c2a37fca82fdea8a9c13d28d906161",
+    "entrypointMap": {
+      "static/js/vendor-pdf.f63c2819.js": "static/js/vendor-pdf.9b7d4296.js",
+      "static/js/vendor-i18n.40936357.js": "static/js/vendor-i18n.074fe7e8.js",
+      "static/js/vendor-react.094da8d9.js": "static/js/vendor-react.bc82a7fe.js",
+      "static/js/vendor.2a0dc768.js": "static/js/vendor.7b6aff43.js",
+      "static/css/main.42e8b4df.css": "static/css/main.4d9ec64c.css",
+      "static/js/main.b15bba80.js": "static/js/main.70cbd7b3.js"
+    },
+    "referenceCounts": {
+      "static/js/vendor-pdf.f63c2819.js": 1,
+      "static/js/vendor-i18n.40936357.js": 1,
+      "static/js/vendor-react.094da8d9.js": 1,
+      "static/js/vendor.2a0dc768.js": 1,
+      "static/css/main.42e8b4df.css": 1,
+      "static/js/main.b15bba80.js": 1
+    },
+    "inverseRestoresEveryOriginalByte": true,
+    "otherInlineBootstrapMetaSeoNativeHtmlBytesUnchanged": true,
+    "publicAssetsToReplace": [
+      "index.html",
+      "asset-manifest.json"
+    ],
+    "newStaticChunksAddedWithoutDeletingOldChunks": true
+  },
+  "sameNonEntryRootReferences": true,
+  "rootReferenceCount": 10,
+  "sameInlineScriptsAndStyles": true,
+  "inlineBlockHashes": [
+    {
+      "tag": "script",
+      "sha256": "10651b13ce77e7177193902d69860cb3c4602ece01da95bcace625783283d15e"
+    },
+    {
+      "tag": "script",
+      "sha256": "e2514252417c896f58f3710ebe92508a274a230f9e738539c3688eeb3a2cb7a5"
+    },
+    {
+      "tag": "script",
+      "sha256": "46d1961d8b3b5b228c523049e383c6a2dbdc7a9cc429beb438d5816c84043b8c"
+    }
+  ],
+  "sriNonemptyAttributeCount": 0,
+  "cspObservation": {
+    "enforcedHeaderCount": 0,
+    "reportOnlyHeaderCount": 0,
+    "metaPolicyCount": 0,
+    "classification": "CSP_ABSENT_ON_CAPTURED_PUBLIC_RESPONSES; preserve absence, not a CSP enforcement/security acceptance claim",
+    "httpHeaderConfigurationChanged": false
+  },
+  "entrypointsAllIncludedInVerifiedStaticArchive": true,
+  "newManifestNonStaticRefs": {
+    "index.html": "/index.html"
+  },
+  "privateProposedIndexPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-dryrun/ashrafessa/index.proposed.html",
+  "privateProposedManifestPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-dryrun/ashrafessa/asset-manifest.proposed.json",
+  "publicSnapshotGateClosed": true,
+  "bytePreservingMergeGateClosed": true,
+  "fullLockedRootOrPublicationGateClosed": false,
+  "remainingActivationGates": [
+    "fresh canonical root/index/manifest/protected-file/old-chunk inventory under existing locks",
+    "current raw root bytes must bind captured public bytes; no unreviewed dynamic HTML transform",
+    "current root/server CSP/branding/handoff preserved; no wholesale compiled-root copy",
+    "exact frozen backend readiness/QA/backup/restore/drain approval conditions",
+    "reviewed new publisher contract; historical constants/QA acceptance/expiry cannot be reused blindly",
+    "static first, fullhash collision checks, old chunks retained, last-moment CAS of mutable files",
+    "post-publication exact public hash/header verification; partial outcomes inspected before any retry"
+  ],
+  "currentNonStaticManifestMappings": {
+    "index.html": "/index.html"
+  },
+  "newNonStaticManifestMappings": {
+    "index.html": "/index.html"
+  },
+  "manifestNonStaticMappingsExactlyUnchanged": true,
+  "staticCollisionPreflight": {
+    "intersectingCurrentManifestPaths": 21,
+    "freshPublicEntrypointHashMatches": [],
+    "otherPathsRequiringLockedCanonicalFilesystemHashChecks": [
+      "static/media/AllManagers.7126a03d7c27213de2ad.png",
+      "static/media/AppBackground.620be0dabb2027013c3f.jpg",
+      "static/media/ISO-27701-logo.01351318947ec05ce0f5.png",
+      "static/media/ISO-logo.7ef757781907c8eef229.png",
+      "static/media/Iso22301-logo.14c4de0849abf697840c.png",
+      "static/media/MagnifyingGlass.d466bf7953662b736fc7.png",
+      "static/media/Weight.ee6259e93735981156d0.png",
+      "static/media/X.28e784309fe66fcff48d.png",
+      "static/media/analytics.bf28dfb8ee06dc5f0eba.png",
+      "static/media/apple-calendar.c79c232980dc078c4ba7.png",
+      "static/media/cases.bafbde8cf2510c7929f7.png",
+      "static/media/casesType.d6cef8ef5aef864321f3.png",
+      "static/media/dataFlowing.9f81647815d15e83ce62.png",
+      "static/media/google-maps.f8ffe032804f4d25073f.png",
+      "static/media/logo.62f43b54af15eb4a9672.png",
+      "static/media/logo2.1714aa4a001d2c2f06b3.png",
+      "static/media/logoLM.f95b0ac7aa54df312c19.png",
+      "static/media/logoLMwhite.219b59ee79d3dec46c61.png",
+      "static/media/managers.fadbb2bc0cda1f1394dc.png",
+      "static/media/searchingClient.f27d1f338e64df970a12.png",
+      "static/media/taggedCase.dea931141e9585cbfd33.png"
+    ],
+    "overwritePermittedOnSamePathDifferentBytes": false
+  }
+}

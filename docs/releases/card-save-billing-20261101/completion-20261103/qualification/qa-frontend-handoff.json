@@ -1,0 +1,26 @@
+{
+  "status": "PASS_NEW_NORMAL_BACKEND_FRONTEND_HANDOFF",
+  "checks": 15,
+  "tests": [
+    "actual completed normal return and original receipt chain",
+    "reject sourceCommit",
+    "reject healthStatus",
+    "reject currentProcess.pid",
+    "reject currentFlags.BILLING_OPERATIONS_ENABLED",
+    "reject providerCalls",
+    "reject evidence.normal.normalBehaviorRestored",
+    "reject evidence.normal.actualBeforeAfterFinancialRowsUnchanged",
+    "reject evidence.forward.httpSmokeProbes",
+    "reject evidence.outer.status",
+    "reject evidence.normal.frontendStillPending",
+    "reject atUtc",
+    "reject bindings.origin.sha256",
+    "reject bindings.forward.sha256",
+    "reject bindings.normal.sha256"
+  ],
+  "runnerSha256": "cac20a85226334f8a606ec550ad59e3a4de99f637f7e52f7b94618e4bbc195dc",
+  "observationSha256": "0acd1f02acb66725bdb23d4bbceffdac8d2bf69d6c50d7be2a44b4db76459809",
+  "unchangedPublicationChecksReused": 98,
+  "noBackendWindowExtended": true,
+  "receiptOnlyDelta": "Final result reflects the already verified successful normal backend return"
+}

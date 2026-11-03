@@ -1,0 +1,26 @@
+{
+  "atUtc": "2026-11-02T07:51:53.216923+00:00",
+  "action": "stage and run hardened synthetic SQL test artifact on existing QA host",
+  "authorization": "PENDING_EXACT_TEST_ACTION",
+  "questionPresented": true,
+  "questionAnswerReceived": false,
+  "remoteWrites": 0,
+  "scopesOrNamespacesCreated": 0,
+  "sqlExecutions": 0,
+  "newMacDatabases": 0,
+  "realProviderOrDocumentOrMail": 0,
+  "packageWorkspaceRelativePath": "billing-sql-qa-approval-074df752-20261102/layer-billing-sql-sequences-6a3bd299-hardened.tar.gz",
+  "stagingTarget": "/tmp/layer-billing-sql-sequences-20261102-6a3bd299",
+  "scope": {
+    "unit": "layer-billing-sql-qa-20261102-6a3bd299.scope",
+    "MemoryMax": 2147483648,
+    "MemorySwapMax": 0,
+    "TasksMax": 32,
+    "CPUQuota": "50%",
+    "RuntimeMaxSec": 600,
+    "OOMPolicy": "kill"
+  },
+  "requiresSeparateRestoreApproval": true,
+  "liveDeploymentPerformed": false,
+  "noAutomaticApprovalDenialOrUncertainActionInThisPhase": true
+}

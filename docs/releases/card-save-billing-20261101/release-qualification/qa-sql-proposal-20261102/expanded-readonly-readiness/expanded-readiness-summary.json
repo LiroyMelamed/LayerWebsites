@@ -1,0 +1,485 @@
+{
+  "status": "NEW_READONLY_EVIDENCE_COMPLETE__RESTORE_AND_FULL_ROLLBACK_GATES_HOLD",
+  "createdAtUtc": "2026-11-02T07:36:30.510442+00:00",
+  "scope": "Existing host/process/source/config fingerprints, declared deployment/archive metadata and public code/static archive verification only",
+  "currentQa": {
+    "observationUtc": [
+      "2026-11-02T07:22:21.214329+00:00",
+      "2026-11-02T07:22:22.216068+00:00"
+    ],
+    "sshExit": 0,
+    "stable": true,
+    "process": {
+      "pid": 2729957,
+      "procCwd": "/root/Melamedia/backend",
+      "procExe": "/usr/bin/node",
+      "startTicks": 124260326,
+      "cmdlineContainsExpectedServerPath": true
+    },
+    "daemon": {
+      "pid": 948103,
+      "procCwd": "/",
+      "procExe": "/usr/bin/node",
+      "startTicks": 48642921
+    },
+    "sourceHead": "545779e4b99e111959f4684167dfdf46da1f3186",
+    "backendTree": "4ffd075308c7054a9f46ddac59f74accee4c6a4b",
+    "trackedClean": true,
+    "protected": {
+      "entries": 103,
+      "mismatches": []
+    },
+    "hostBootId": "79d5ef26-007c-4ee2-bfba-15db6bd5b1aa",
+    "environmentFileSha256": "9fc4bc04f6faa9e88347d3f94aa926750f616a54d2c9754fd86bc1bf94945281",
+    "dependencies": {
+      "symlink": true,
+      "linkTarget": "/root/qa-new-features-20261023-5ce621ee/staging/source02/backend/node_modules",
+      "resolvedTarget": "/root/qa-new-features-20261023-5ce621ee/staging/source02/backend/node_modules",
+      "targetExists": true,
+      "sourceLockSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+      "installedLockSha256": "bf476467ea9c57c366d6a610852233c85505ae450a25b95919165c44bf7b249f"
+    },
+    "effectiveNonsecretProjection": {
+      "BILLING_OPERATIONS_ENABLED": null,
+      "BACKGROUND_JOBS_ENABLED": "false",
+      "BILLING_RENEWAL_SCHEDULER_ENABLED": null,
+      "SIGNING_V2_WORKER_ENABLED": "true",
+      "WHATSAPP_WORKER_ENABLED": "false",
+      "WHATSAPP_DEMO_WORKER_ENABLED": "true",
+      "COURT_DEMO_SYNC_WORKER_ENABLED": "true",
+      "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": null,
+      "GIT_SHA": null,
+      "MULTI_TENANT_MODE": null,
+      "TENANT_DB_ISOLATION_ENABLED": null,
+      "SELF_SERVICE_SIGNUP_ENABLED": null,
+      "TAKBULL_MODE": "prod",
+      "QA_OUTBOUND_MODE": "noop",
+      "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": null,
+      "WHATSAPP_DEMO_ONLY": "false",
+      "WHATSAPP_CONNECT_ONLY": "true"
+    },
+    "knownOperationalProcesses": [],
+    "helperProcessCounts": {},
+    "limit": "No matching known backup/restore/helper operation observed; not an atomic financial drain or proof about all unrelated processes"
+  },
+  "restoreTargetDiscovery": {
+    "existingRegisteredClusters": {
+      "exit": 0,
+      "clusters": [
+        {
+          "version": "16",
+          "cluster": "main",
+          "port": "5432",
+          "status": "online",
+          "owner": "postgres",
+          "dataDirectory": "/var/lib/postgresql/16/main",
+          "logFile": "/var/log/postgresql/postgresql-16-main.log"
+        }
+      ]
+    },
+    "additionalRootCandidateCount": 53,
+    "directoriesExamined": 1539,
+    "boundedSearchLimits": {
+      "maxDepth": 4,
+      "maxDirectories": 3500,
+      "maxArchives": 150,
+      "excludedNames": [
+        "node_modules",
+        ".git",
+        "uploads",
+        "logs",
+        "knowledge",
+        "assets",
+        "static",
+        "media"
+      ],
+      "oldRootsNotRecrawled": [
+        "/root/audit-remediation-20261008/backup-coverage",
+        "/root/customer-release-backups",
+        "/root/legal-word-stage-release-20261026",
+        "/var/backups/melamedia-recovery",
+        "/var/lib/melamedia-releases"
+      ]
+    },
+    "approvedRestoreTargetCertified": false,
+    "reason": "Only registered PG16/main port5432 online identified; existing shared application cluster. Additional source/test/deployment directories are not an approved restore environment. No target authenticated or started.",
+    "limit": "Bounded discovery does not prove no unregistered cluster/other location exists. Prior helper/account directories are not a reusable running restore target."
+  },
+  "newFrontendHistoricalArchiveEvidence": "frontend-expanded-inventory.json",
+  "newFrontendHistoricalArchives": [
+    {
+      "target": "melamedia",
+      "path": "/root/reminder-layout-backups-20261006/melamedia.tar.gz",
+      "sha256": "bbd4a1999aa02b23379c58e39d4da0d0ffe6876509f1d7e828133ae06908fc5d",
+      "matchesHistoricalReceiptSha256": true,
+      "indexSha256": "71c686e888fe81329e2e8c06eb6a20c5e6ac0e3bf8893f17d3128141bc3f8331",
+      "indexMatchesHistoricalReceipt": true,
+      "memberCount": 320,
+      "manifestPresent": true,
+      "localStaticClosure": true,
+      "unsafeMemberNames": 0,
+      "symlinkOrHardlinkCount": 0,
+      "stableDuringRead": true
+    },
+    {
+      "target": "morlevy",
+      "path": "/root/reminder-layout-backups-20261006/morlevy.tar.gz",
+      "sha256": "059fc7d51c04e5466f042ca60735aa59d1ef9e5eb69f3fde13ee5ea1e462f761",
+      "matchesHistoricalReceiptSha256": true,
+      "indexSha256": "e4c33c17b7600946d96cd1390392090c0c5548500169f76852447abfd0ebc127",
+      "indexMatchesHistoricalReceipt": true,
+      "memberCount": 578,
+      "manifestPresent": true,
+      "localStaticClosure": true,
+      "unsafeMemberNames": 0,
+      "symlinkOrHardlinkCount": 0,
+      "stableDuringRead": true
+    },
+    {
+      "target": "ashrafessa",
+      "path": "/root/reminder-layout-backups-20261006/ashrafessa.tar.gz",
+      "sha256": "f8a8f2080578aacd70c142d5a871d18fff8c5a9749c006bb043ef1825d19e532",
+      "matchesHistoricalReceiptSha256": true,
+      "indexSha256": "2fbb24c99fa6972978eb8e434c6c52be11ecf6531d9322659043c9651d1a040c",
+      "indexMatchesHistoricalReceipt": true,
+      "memberCount": 580,
+      "manifestPresent": true,
+      "localStaticClosure": true,
+      "unsafeMemberNames": 0,
+      "symlinkOrHardlinkCount": 0,
+      "stableDuringRead": true
+    }
+  ],
+  "newQaBackendArchiveFacts": {
+    "archiveFilesInspected": 21,
+    "distinctArchiveHashes": 19,
+    "sameCurrentPackageLockArchiveFiles": 10,
+    "sameCurrentPackageLockRuntimeContentDigests": 9,
+    "threeDistinctSameLockSourceExamples": [
+      {
+        "path": "/root/qa-court-owner-import-20261025/checkpoint/source-before.tar",
+        "archiveSha256": "256971e6ab823d593abd7d82be547f40eb7abf582e35744f423e6cb8d5d2d77e",
+        "package-lock.jsonSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+        "canonicalRuntimeCode": {
+          "fileCount": 353,
+          "selectedPathsAndContentDigest": "e6b4def8ac1e6bdeb3b7e71958e4b1f60100a48b2f3f594f2814b58e1f2afdae",
+          "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+        }
+      },
+      {
+        "path": "/root/qa-new-features-20261023-5ce621ee/checkpoints/final08/source-before.tar",
+        "archiveSha256": "c53e7ef0a69ed0509ce08d1e99511327cd58444409af1017ea98b8a3f8b0aa88",
+        "package-lock.jsonSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+        "canonicalRuntimeCode": {
+          "fileCount": 345,
+          "selectedPathsAndContentDigest": "46b3cfd9418f4208dbfc1233565181ff837d834a9687642ca39743f4fb306291",
+          "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+        }
+      },
+      {
+        "path": "/root/qa-stage-automation-20261024/checkpoints/stage02/source-before.tar",
+        "archiveSha256": "eda0b325ea84f9b7a9c430d127329108d88c5ead6c6bf9ce8773b84f5be5e1a8",
+        "package-lock.jsonSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+        "canonicalRuntimeCode": {
+          "fileCount": 345,
+          "selectedPathsAndContentDigest": "594f8cb56911bdb708545d093580a4b0e01fa29ae2d1ed34093d9e29caf5d74a",
+          "selection": "root app/server/ecosystem/package+lock and runtime JS/CJS/MJS under named config/controllers/lib/middleware/models/routes/scripts/tasks/utils/services/workers; no env/tests/data/docs/assets"
+        }
+      }
+    ],
+    "canonicalRuntimeGroups": {
+      "e6b4def8ac1e6bdeb3b7e71958e4b1f60100a48b2f3f594f2814b58e1f2afdae": [
+        "/root/qa-court-owner-import-20261025/checkpoint/source-before.tar",
+        "/root/qa-legal-system-messages-off-20261025/checkpoint/source-before.tar"
+      ],
+      "27e276be7b612594f02f5b7d3420da43330aecaeca09ee290de024817bab5ce3": [
+        "/root/qa-new-features-20261023-09eca0a6/checkpoints/source-baseline.tar.gz",
+        "/root/qa-new-features-20261023-5ce621ee/checkpoints/source-baseline.tar.gz"
+      ],
+      "46b3cfd9418f4208dbfc1233565181ff837d834a9687642ca39743f4fb306291": [
+        "/root/qa-new-features-20261023-5ce621ee/checkpoints/final08/source-before.tar"
+      ],
+      "fa92249f674574b69ab3b59eafa39dc610e25eef762aabc05370d8076e976b0c": [
+        "/root/qa-release-backups/melamedia-readiness-20261006-v4/backend-before.tar.gz"
+      ],
+      "a776db297b91cbf63563ec4b9292577a99d60bffe2392c26941d5e8538f86c1b": [
+        "/root/qa-release-backups/melamedia-preservation-20261006-v11b/backend-before.tar.gz",
+        "/root/qa-release-backups/melamedia-preservation-20261006-v11/backend-before.tar.gz"
+      ],
+      "12d8ad61a81778e25c2c49b5516cacb4cb2a5f5c302b8eabda0b0b28bf855bd2": [
+        "/root/qa-release-backups/melamedia-http-deps-20261006-v12/backend-before.tar.gz"
+      ],
+      "7795cfe0c009c9549dfb123e8eb7f7bda5bd1d62affe415529295bf267763d1b": [
+        "/root/qa-release-backups/melamedia-document-details-20261006-v13/backend-before.tar.gz"
+      ],
+      "ee9327d8529fd6e93b8d92af6e0734a3fa6b8e12eb234edd8f04e2ce8f025ad4": [
+        "/root/qa-signing-dd3c1dc-20261008/backend-before.tar"
+      ],
+      "e2fe04cb9d853300f78babce57d561d921062c3f6c4506890c89b3142a2cebfe": [
+        "/root/qa-signing-fixes-20261009-cdb6c5db/backend-before.tar.gz"
+      ],
+      "d4e8e34df19df0a78efdd45c251c7da7d116b4f6f9b90caf8b08594c97ce2c73": [
+        "/root/qa-signing-preview-20261008/backend-live-before.tar.gz"
+      ],
+      "594f8cb56911bdb708545d093580a4b0e01fa29ae2d1ed34093d9e29caf5d74a": [
+        "/root/qa-stage-automation-20261024/checkpoints/stage02/source-before.tar"
+      ],
+      "cc2a40ed338e283a4b2fca3279ba59a6bcb9d68b90a1970bc395fa7f0cffeb3b": [
+        "/root/qa-whatsapp-linked-20261024/checkpoints/delta04/source-before.tar"
+      ],
+      "165540baa134f6fc74abaca97d21fcc85adbbdb618a3754b591e4e3de737c555": [
+        "/root/qa-whatsapp-linked-20261024/checkpoints/delta03/source-before.tar"
+      ],
+      "8af033795ed5050c48821ef0f836c442ea328a6582bab3692fca455dc5e10dd0": [
+        "/root/qa-whatsapp-linked-20261024/checkpoints/delta02/source-before.tar"
+      ],
+      "e94e05824dc7bc68ff5fefbaf8f6dc34ec09b793693b9cc26e90aa4e89bba553": [
+        "/root/qa-whatsapp-linked-20261024/checkpoints/backend02/source-before.tar"
+      ],
+      "33fa57d4c8b530f398ec0a0f459960ecb402968e3e1ed851b353fbf34d75ebe1": [
+        "/root/word-code-fix-qa-20261027-434636ca6c7b7556705e/backend-source.tar"
+      ],
+      "61cb25c7850fe1aa8cee946c03794d281afb90590241c8b499162edbdf37df5c": [
+        "/root/word-visual-qa-20261026-1f3a95fdf920b45eadc4/source.tar"
+      ]
+    },
+    "nodeModulesIncludedInAnyArchive": false,
+    "environmentValueReads": false,
+    "dependencyComparisonLimit": "Full archived lock graph556 versus507 installed production entries has49 differences, potentially development dependencies. This is not a normalized production dependency verdict. Ten lock files exactly byte-match current source lock; immutable runtime recovery remains separate.",
+    "archivesWithRequiredSourceHeaders": 20,
+    "distinctArchivesWithRequiredSourceHeaders": 18,
+    "distinctSelectedRuntimeContentDigests": 17,
+    "sourceCompletenessLimit": "Required server/app/package/lock headers and selected runtime fingerprints establish structural source candidates, not full tracked-file, asset or recoverable runtime certification."
+  },
+  "localFrontendEvidence": {
+    "summaryPath": "local-rollback/summary.json",
+    "archiveDetailsPath": "local-rollback/archive-evidence.json",
+    "distinctFullArchiveCounts": {
+      "Melamedia": 20,
+      "AshrafEssa": 6,
+      "MorLevi": 3,
+      "MelamedLaw": 3
+    },
+    "all32HtmlManifestClosurePassed": true
+  },
+  "rollbacks": [
+    {
+      "target": "Melamedia",
+      "component": "backend",
+      "newEvidence": "20 archive files with required source headers,18 archive hashes,17 runtime content versions;10 files/9 runtime versions share current package-lock",
+      "threeCompleteInactiveVersionsCertified": false,
+      "remaining": "Immutable dependency/runtime/configuration recovery, historical health/inactivity and exact source-version binding remain unproved"
+    },
+    {
+      "target": "Melamedia",
+      "component": "frontend",
+      "newEvidence": "20 distinct local full builds pass HTML/manifest closure; exact Oct6 historical deployed-before full archive+index SHA and local static closure verified",
+      "threeCompleteInactiveVersionsCertified": false,
+      "remaining": "Most builds are unpublished candidates; Oct26 publisher retained protected root files and merged HTML;3 complete published/inactive historical trees are not certified"
+    },
+    {
+      "target": "AshrafEssa",
+      "component": "backend",
+      "newEvidence": "Two additional home-release folders contain database dumps+deployment metadata, no full code/runtime package; prior3 source archive files had only2 distinct hashes",
+      "threeCompleteInactiveVersionsCertified": false,
+      "remaining": "Immutable dependency/runtime/configuration recovery, historical health/inactivity and exact source-version binding remain unproved"
+    },
+    {
+      "target": "AshrafEssa",
+      "component": "frontend",
+      "newEvidence": "6 distinct local full builds pass HTML/manifest closure; exact Oct6 historical deployed-before full archive+index SHA and local static closure verified; one Oct26 publication-review tuple matches successful historical verify",
+      "threeCompleteInactiveVersionsCertified": false,
+      "remaining": "Most builds are unpublished candidates; Oct26 publisher retained protected root files and merged HTML;3 complete published/inactive historical trees are not certified"
+    },
+    {
+      "target": "MorLevi",
+      "component": "backend",
+      "newEvidence": "Two additional home-release folders contain database dumps+deployment metadata, no full code/runtime package; prior3 source archive files had only2 distinct hashes",
+      "threeCompleteInactiveVersionsCertified": false,
+      "remaining": "Immutable dependency/runtime/configuration recovery, historical health/inactivity and exact source-version binding remain unproved"
+    },
+    {
+      "target": "MorLevi",
+      "component": "frontend",
+      "newEvidence": "3 distinct local full builds pass HTML/manifest closure; exact Oct6 historical deployed-before full archive+index SHA and local static closure verified; one Oct26 publication-review tuple matches successful historical verify",
+      "threeCompleteInactiveVersionsCertified": false,
+      "remaining": "Most builds are unpublished candidates; Oct26 publisher retained protected root files and merged HTML;3 complete published/inactive historical trees are not certified"
+    },
+    {
+      "target": "MelamedLaw",
+      "component": "backend",
+      "newEvidence": "Two additional home-release folders contain database dumps+deployment metadata, no full code/runtime package; prior3 source archive files had only2 distinct hashes",
+      "threeCompleteInactiveVersionsCertified": false,
+      "remaining": "Immutable dependency/runtime/configuration recovery, historical health/inactivity and exact source-version binding remain unproved"
+    },
+    {
+      "target": "MelamedLaw",
+      "component": "frontend",
+      "newEvidence": "3 distinct local full builds pass HTML/manifest closure; one Oct26 publication-review tuple matches successful historical verify",
+      "threeCompleteInactiveVersionsCertified": false,
+      "remaining": "Most builds are unpublished candidates; Oct26 publisher retained protected root files and merged HTML;3 complete published/inactive historical trees are not certified"
+    }
+  ],
+  "passiveIsolationPrerequisites": {
+    "os": {
+      "kernel": "6.8.0-147-generic",
+      "machine": "x86_64",
+      "PRETTY_NAME": "Ubuntu 24.04.4 LTS",
+      "VERSION_ID": "24.04",
+      "ID": "ubuntu"
+    },
+    "namespaceMetadata": {
+      "selectedStatus": {
+        "CapEff": "000001ffffffffff",
+        "NoNewPrivs": "0"
+      },
+      "existingNamespaceLinks": {
+        "net": "net:[4026531840]",
+        "uts": "uts:[4026531838]",
+        "ipc": "ipc:[4026531839]",
+        "pid": "pid:[4026531836]",
+        "pid_for_children": "pid:[4026531836]",
+        "user": "user:[4026531837]",
+        "mnt": "mnt:[4026531841]",
+        "cgroup": "cgroup:[4026531835]",
+        "time": "time:[4026531834]",
+        "time_for_children": "time:[4026531834]"
+      },
+      "sysctls": {
+        "/proc/sys/user/max_user_namespaces": "31612",
+        "/proc/sys/kernel/unprivileged_userns_clone": "1"
+      },
+      "tools": {
+        "unshare": {
+          "path": "/usr/bin/unshare",
+          "exists": true,
+          "versionExit": 0,
+          "version": "unshare from util-linux 2.39.3"
+        },
+        "bwrap": {
+          "path": null,
+          "exists": false
+        },
+        "timeout": {
+          "path": "/usr/bin/timeout",
+          "exists": true,
+          "versionExit": 0,
+          "version": "timeout (GNU coreutils) 9.4"
+        },
+        "setpriv": {
+          "path": "/usr/bin/setpriv",
+          "exists": true,
+          "versionExit": 0,
+          "version": "setpriv from util-linux 2.39.3"
+        },
+        "prlimit": {
+          "path": "/usr/bin/prlimit",
+          "exists": true,
+          "versionExit": 0,
+          "version": "prlimit from util-linux 2.39.3"
+        }
+      }
+    },
+    "nodeHelp": {
+      "exit": 0,
+      "selectedLines": [
+        "  --allow-addons              allow use of addons when any",
+        "                              permissions are set",
+        "  --allow-child-process       allow use of child process when any",
+        "  --allow-fs-read=...         allow permissions to read the",
+        "                              filesystem",
+        "  --allow-fs-write=...        allow permissions to write in the",
+        "  --allow-wasi                allow wasi when any permissions are set",
+        "  --allow-worker              allow worker threads when any",
+        "  --build-snapshot            Generate a snapshot blob when the",
+        "                              experimental import support for addons",
+        "  --experimental-async-context-frame",
+        "  --experimental-test-isolation=...",
+        "                              configures the type of test isolation",
+        "                              addons",
+        "  --force-fips                force FIPS crypto (cannot be disabled)",
+        "  --no-addons                 disable loading native addons",
+        "  --no-deprecation            silence deprecation warnings",
+        "  --experimental-permission, --permission",
+        "                              enable the permission system",
+        "  --preserve-symlinks         preserve symbolic links when resolving"
+      ]
+    },
+    "memory": {
+      "MemAvailable": "5555800 kB",
+      "SwapFree": "1803516 kB"
+    },
+    "existingNobodyAccount": {
+      "exit": 0,
+      "exists": true,
+      "uid": 65534,
+      "gid": 65534,
+      "nonLogin": true
+    },
+    "libseccomp": {
+      "ldconfigExit": 0,
+      "entries": [
+        {
+          "declaredPath": "/lib/x86_64-linux-gnu/libseccomp.so.2",
+          "resolvedPath": "/usr/lib/x86_64-linux-gnu/libseccomp.so.2.5.5",
+          "metadata": {
+            "exists": true,
+            "symlink": false,
+            "bytes": 125360,
+            "mtimeNs": 1723170801000000000,
+            "uid": 0,
+            "mode": "0o644"
+          },
+          "sha256": "b4d9140a7797ccf3ac14f5d9d579b64f157111662940cb8330c632b11a8cea8e"
+        }
+      ],
+      "packageVersion": {
+        "exit": 0,
+        "version": "2.5.5-1ubuntu3.1"
+      }
+    },
+    "runtimeVersions": {
+      "node": {
+        "path": "/usr/bin/node",
+        "exit": 0,
+        "version": "v22.23.2"
+      },
+      "python3": {
+        "path": "/usr/bin/python3",
+        "exit": 0,
+        "version": "Python 3.12.3"
+      },
+      "unshare": {
+        "path": "/usr/bin/unshare",
+        "exit": 0,
+        "version": "unshare from util-linux 2.39.3"
+      }
+    },
+    "guardExecuted": false,
+    "namespaceCreated": false,
+    "cgroupSystemdResourcePrerequisites": "Not captured: parent limited addition to a next already-planned SSH; no next SSH remained after fingerprint capture",
+    "limit": "Availability/help/sysctls do not prove working sandbox/seccomp/socket denial/SQL isolation"
+  },
+  "operations": {
+    "successfulReadOnlySshCaptures": 6,
+    "databaseConnections": 0,
+    "providerCalls": 0,
+    "storageCalls": 0,
+    "guardOrNamespaceExecution": 0,
+    "liveWrites": 0,
+    "newEnvironmentSchemaRoleDatabase": 0,
+    "credentialOrFullEnvironmentValueReads": 0,
+    "archiveFilesExtractedToDisk": 0,
+    "inspectionLocksReleased": true,
+    "pendingOrUncertainLiveActions": false,
+    "approvalDenials": 0,
+    "classificationCorrection": "First archive pass did not recognize root backend/server.js; preserved privately and corrected before conclusions. Runtime content fingerprints remove tar-only duplicate counting. Local orchestration syntax errors occurred before execution and ran no action.",
+    "localTransportInterruption": "Child had pre-create exec transport failures, followed by one unchanged retry after successful recovery; no uncertain operation remains"
+  },
+  "remaining": [
+    "Separately review and prove test-process isolation before actual positive SQL tests; passive tool prerequisites are insufficient.",
+    "Authenticated restore needs approved existing target and separately authorized restore/data scope; this read-only task authorizes no new environment or shared QA/production overwrite.",
+    "Close each3-version rollback row with exact historical source/publication bytes, assets, configuration, dependencies/runtime and inactive-version identity.",
+    "No production rollout gate was certified closed by this inventory."
+  ]
+}

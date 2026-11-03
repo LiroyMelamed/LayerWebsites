@@ -1,0 +1,27 @@
+{
+  "result": "PASS_SOURCE_ONLY_IDENTITY_INSPECTION",
+  "capturedAtUtc": "2026-11-01T23:44:35.269954+00:00",
+  "sourcePath": "/usr/local/sbin/melamedia-server-backup.py",
+  "sourceSha256": "085b3d946f475d1ad8ebd78f60aed389d6fea661963e34389b8991d339b2d160",
+  "pgDumpCommandStructures": [
+    {
+      "line": 185,
+      "commandStructure": [
+        "runuser",
+        "-u",
+        "postgres",
+        "--",
+        "pg_dump",
+        "-Fc",
+        "--dbname",
+        "<configured project database>"
+      ]
+    }
+  ],
+  "dbConnections": 0,
+  "exports": 0,
+  "envValuesRead": false,
+  "roleOrGrantChanges": 0,
+  "sourceOnlyNotExportAuthorization": true,
+  "sshExit": 0
+}

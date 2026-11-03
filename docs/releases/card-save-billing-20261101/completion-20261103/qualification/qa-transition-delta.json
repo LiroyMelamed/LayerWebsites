@@ -1,0 +1,31 @@
+{
+  "status": "PASS_CYCLE5_NEW_OPERATOR_DELTA",
+  "checks": 22,
+  "tests": [
+    "producer exports actual observed PID and start ticks",
+    "actual producer receipt accepted by actual normal-return validator",
+    "reject missing qaSocketsPid",
+    "reject missing qaSocketsStartTicks",
+    "unchanged strict socket rejection httpPortConnections",
+    "unchanged strict socket rejection nonloopbackConnections",
+    "unchanged strict socket rejection otherLoopbackConnections",
+    "unchanged strict socket rejection loopbackDbConnections",
+    "active query still rejected",
+    "qa_forward_controller_journal_v4.py waits for real quiet observation",
+    "qa_forward_controller_journal_v4.py finite timeout",
+    "qa_forward_controller_journal_v4.py identity failure never retried",
+    "qa_normal_return_supervisor_journal_v4.py waits for real quiet observation",
+    "qa_normal_return_supervisor_journal_v4.py finite timeout",
+    "qa_normal_return_supervisor_journal_v4.py identity failure never retried",
+    "forward dispatch binds correct producer arguments and validates returned identity",
+    "normal return verifies producer identity and leaves frontend pending",
+    "38-file closure and unchanged historical evidence",
+    "qa_forward_controller_journal_v4.py dependency SHA pins",
+    "qa_normal_return_supervisor_journal_v4.py dependency SHA pins",
+    "qa_recovery_adapter_v3.py dependency SHA pins",
+    "recovery predecessor manifest closure matches rebound package"
+  ],
+  "applicationTestsRerun": 0,
+  "manifestSha256": "0e7e6715b22c56c5cb27294205042fcaddc24459cc2f028c0f139bba0979376f",
+  "fixturesSynthetic": true
+}

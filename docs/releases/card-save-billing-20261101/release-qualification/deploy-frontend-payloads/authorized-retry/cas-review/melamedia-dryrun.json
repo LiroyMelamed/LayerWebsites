@@ -1,0 +1,111 @@
+{
+  "tenant": "melamedia",
+  "scope": "pure local CAS plan on current public HTTPS snapshot, no publication",
+  "actualCompileSource": "efe1ee371ad96bc76963ac1848076055cb83066b",
+  "freshPublicSnapshotSha256": "0baa941c6354ac8e6495a90a96910051be62b13ab9c296f9c3fcc5447ff38408",
+  "oldIndexSha256": "647fa89d259aa983335012867ea80c221585eef93a94cc25b47fc401e3aca5b7",
+  "oldManifestSha256": "caf65131a5c99f25a624954fb1a7a7252972f23a729644e3a930c29904acaed7",
+  "proposedIndexSha256": "4f14b45971bad41bea0d1542e98e985db332361e1a7be3d96e311e37138a7d0e",
+  "proposedManifestSha256": "6f6ab4abe76a06ba41b8bb2011d9c220bd31995bc9baeae88f5f1b2576f4d789",
+  "mergeProof": {
+    "oldIndexSha256": "647fa89d259aa983335012867ea80c221585eef93a94cc25b47fc401e3aca5b7",
+    "newIndexSha256": "4f14b45971bad41bea0d1542e98e985db332361e1a7be3d96e311e37138a7d0e",
+    "entrypointMap": {
+      "static/js/vendor-pdf.f63c2819.js": "static/js/vendor-pdf.9b7d4296.js",
+      "static/js/vendor-i18n.40936357.js": "static/js/vendor-i18n.074fe7e8.js",
+      "static/js/vendor-react.094da8d9.js": "static/js/vendor-react.bc82a7fe.js",
+      "static/js/vendor.2a0dc768.js": "static/js/vendor.7b6aff43.js",
+      "static/css/main.9bf17f76.css": "static/css/main.81512789.css",
+      "static/js/main.ae388fc0.js": "static/js/main.4fac0bab.js"
+    },
+    "referenceCounts": {
+      "static/js/vendor-pdf.f63c2819.js": 1,
+      "static/js/vendor-i18n.40936357.js": 1,
+      "static/js/vendor-react.094da8d9.js": 1,
+      "static/js/vendor.2a0dc768.js": 1,
+      "static/css/main.9bf17f76.css": 1,
+      "static/js/main.ae388fc0.js": 1
+    },
+    "inverseRestoresEveryOriginalByte": true,
+    "otherInlineBootstrapMetaSeoNativeHtmlBytesUnchanged": true,
+    "publicAssetsToReplace": [
+      "index.html",
+      "asset-manifest.json"
+    ],
+    "newStaticChunksAddedWithoutDeletingOldChunks": true
+  },
+  "sameNonEntryRootReferences": true,
+  "rootReferenceCount": 9,
+  "sameInlineScriptsAndStyles": true,
+  "inlineBlockHashes": [
+    {
+      "tag": "script",
+      "sha256": "405ed5f710fdb7db5409d81ed73479e35660eb5b9d60ea374a7a689a7e8ee1ba"
+    },
+    {
+      "tag": "script",
+      "sha256": "88c675c85496b14a9aba586dce8482384ed45e2cb828afe118ce8afce1ca600b"
+    }
+  ],
+  "sriNonemptyAttributeCount": 0,
+  "cspObservation": {
+    "enforcedHeaderCount": 0,
+    "reportOnlyHeaderCount": 0,
+    "metaPolicyCount": 0,
+    "classification": "CSP_ABSENT_ON_CAPTURED_PUBLIC_RESPONSES; preserve absence, not a CSP enforcement/security acceptance claim",
+    "httpHeaderConfigurationChanged": false
+  },
+  "entrypointsAllIncludedInVerifiedStaticArchive": true,
+  "newManifestNonStaticRefs": {
+    "index.html": "/index.html"
+  },
+  "privateProposedIndexPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-dryrun/melamedia/index.proposed.html",
+  "privateProposedManifestPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-dryrun/melamedia/asset-manifest.proposed.json",
+  "publicSnapshotGateClosed": true,
+  "bytePreservingMergeGateClosed": true,
+  "fullLockedRootOrPublicationGateClosed": false,
+  "remainingActivationGates": [
+    "fresh canonical root/index/manifest/protected-file/old-chunk inventory under existing locks",
+    "current raw root bytes must bind captured public bytes; no unreviewed dynamic HTML transform",
+    "current root/server CSP/branding/handoff preserved; no wholesale compiled-root copy",
+    "exact frozen backend readiness/QA/backup/restore/drain approval conditions",
+    "reviewed new publisher contract; historical constants/QA acceptance/expiry cannot be reused blindly",
+    "static first, fullhash collision checks, old chunks retained, last-moment CAS of mutable files",
+    "post-publication exact public hash/header verification; partial outcomes inspected before any retry"
+  ],
+  "currentNonStaticManifestMappings": {
+    "index.html": "/index.html"
+  },
+  "newNonStaticManifestMappings": {
+    "index.html": "/index.html"
+  },
+  "manifestNonStaticMappingsExactlyUnchanged": true,
+  "staticCollisionPreflight": {
+    "intersectingCurrentManifestPaths": 21,
+    "freshPublicEntrypointHashMatches": [],
+    "otherPathsRequiringLockedCanonicalFilesystemHashChecks": [
+      "static/media/AllManagers.7126a03d7c27213de2ad.png",
+      "static/media/AppBackground.620be0dabb2027013c3f.jpg",
+      "static/media/ISO-27701-logo.01351318947ec05ce0f5.png",
+      "static/media/ISO-logo.7ef757781907c8eef229.png",
+      "static/media/Iso22301-logo.14c4de0849abf697840c.png",
+      "static/media/MagnifyingGlass.d466bf7953662b736fc7.png",
+      "static/media/Weight.ee6259e93735981156d0.png",
+      "static/media/X.28e784309fe66fcff48d.png",
+      "static/media/analytics.bf28dfb8ee06dc5f0eba.png",
+      "static/media/apple-calendar.c79c232980dc078c4ba7.png",
+      "static/media/cases.bafbde8cf2510c7929f7.png",
+      "static/media/casesType.d6cef8ef5aef864321f3.png",
+      "static/media/dataFlowing.9f81647815d15e83ce62.png",
+      "static/media/google-maps.f8ffe032804f4d25073f.png",
+      "static/media/logo.e4d6de620b089c946974.png",
+      "static/media/logo2.e4d6de620b089c946974.png",
+      "static/media/logoLM.e4d6de620b089c946974.png",
+      "static/media/logoLMwhite.e4d6de620b089c946974.png",
+      "static/media/managers.fadbb2bc0cda1f1394dc.png",
+      "static/media/searchingClient.f27d1f338e64df970a12.png",
+      "static/media/taggedCase.dea931141e9585cbfd33.png"
+    ],
+    "overwritePermittedOnSamePathDifferentBytes": false
+  }
+}

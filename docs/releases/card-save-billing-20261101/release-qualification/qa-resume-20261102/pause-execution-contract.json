@@ -1,0 +1,179 @@
+{
+  "schema": 1,
+  "assessedAtUtc": "2026-11-02T04:36:54.336949+00:00",
+  "target": "existing Melamedia QA / melamedia-api only",
+  "incumbentSource": "545779e4b99e111959f4684167dfdf46da1f3186",
+  "incumbentBackendTree": "4ffd075308c7054a9f46ddac59f74accee4c6a4b",
+  "candidateSourceNotInstalled": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "decision": {
+    "smallestPath": "MANUAL_STOP_WHOLE_EXISTING_NAMED_QA_PROCESS_THEN_RESUME_SAME_ENTRY",
+    "status": "CONDITIONAL_ONLY_PREACTION_IDLE_DRAIN_WINDOW_AND_TEST_BOUNDARY_NOT_CERTIFIED",
+    "candidateInstallationRequiredForTemporaryProcessDownIsolation": false,
+    "nineFlagsOnOldCodeMakeFinancialHttpSafe": false,
+    "wholeStoppedProcessBlocksItsLocalHttpAndTimers": true,
+    "stopDurableAcrossResurrect": false,
+    "fullReleaseGatesClosed": false,
+    "noLiveMutationByThisSubtask": true
+  },
+  "authorization": "Owner approved temporary QA pause/workers/restart after verifying no ongoing work and safe return. No DB/restore/newenv/MacPG/Liav/provider/charge action. No code install/HEAD move by this review. Do not ask blanket pause approval again once its exact conditions are met; new guards/configscope outside approval require review.",
+  "currentFacts": {
+    "pid": 2729957,
+    "pm2Id": 5,
+    "cwd": "/root/Melamedia/backend",
+    "script": "/root/Melamedia/backend/server.js",
+    "pm2Version": "6.0.8",
+    "sourceRuntimeClean": true,
+    "helperAbsentOnIncumbent": true,
+    "pm2ManualStop": "Installed ActionMethods284-314 marksSTOPPING thenSTOPPED; God.js419-424 suppressesautorestart in those states even whenautorestarttrue.",
+    "pm2SavedState": "Both dump.pm2 andbackup contain QAstatusonline/autorestarttrue; enabledpm2-root startup unit ExecStart=resurrect.",
+    "stopTimeout": "Installed Methods158 chooses currentperappkill_timeout elsecst.KILL_TIMEOUT; constants105 defaults1600ms. Initialperapp+daemonkeysunset; actualcurrentdaemoninternalperappsetting notextracted. Never assume appdefault10s gracewill beallowed.",
+    "appShutdown": "Incumbent server.js default10s forcedexit; joinsigningstopafterHTTPclose, butnotalltimer/flushwork joined.",
+    "envRestore": "Installed ActionMethods405 merges env onrestart. Omitting/unsetting a newlyintroduced shellkey is not proof thatPM2storedkey wasdeleted. MinimalSTOP avoids allninefieldwrites.",
+    "dependencySymlink": {
+      "exists": true,
+      "isSymlink": true,
+      "realPath": "/root/qa-new-features-20261023-5ce621ee/staging/source02/backend/node_modules"
+    },
+    "testDependencies": {
+      "@electric-sql/pglite": false,
+      "supertest": false,
+      "pg": true,
+      "express": true
+    },
+    "networkGuardLimit": "Existing offlineguard allows loopback ports otherthan5432/55440/55449 and ignoresUnixsocketpaths. Onthissharedhost otherclient APIs remain reachable; not adequate globaltest-networkisolation.",
+    "loadedRuntimeBindingLimit": "GIT_SHAunset. Sourcecommit545779e4 at2026-11-01T22:42:04Z predatesprocessPM2uptime22:46:04Z; disk/source/PIDstable supportsincumbentreturn, notcryptographicloadedcodebinding."
+  },
+  "inventoryEvidence": {
+    "file": "inventory.json",
+    "window": "2026-11-02T04:26:06Z/04:26:15Z",
+    "databaseReadsByThisSubtask": 0,
+    "summary": "3samples: noQAHTTPconnections; pendingpayments0, enabledbilling0, autorenew0, due0, activecards0, signup/welcome0, running/leased/due jobs0; twohistorical successfulhostedintents. OneownPGsessionidle/noactiveTX. Pendingdeliveries38 andneedsattentionjobs3 arepreserved, notcleared.",
+    "remainingUnknown": "Historical04:26 nonloopbackunknown is not retrospectivelyclassifiable. NEW04:35:29/31/33 socketmetadata shows onlyone matchedloopbackPG5432 socket,0QAHTTP/0nonloopback, stablePID/source/env. PGbytecounters increase between samples, so process/DBidleness is not proved; freshbusinesswork-vs-empty-poll classification andclean stopreceipt remain required.",
+    "workerClassification": "final-worker-classification.json at04:30:43 resolves6previouslyredactedWArowsas simulated and2invitations_sent,0active_or_awaiting/recipient_sending. Thisisclosed, notapendingblock.",
+    "externalOrderLimit": "No pureproviderstatus or pageexpiry readperformed. StoppingQAdoesnot revokehistoricalhostedpages orrecall upstreamacceptedmessages/documents; no globalexternalfinancialquiescence claim.",
+    "latestSocketEvidence": "socket-metadata.json",
+    "latestSocketWindow": "2026-11-02T04:35:29Z/04:35:33Z",
+    "currentUnknownExternalSocket": false,
+    "databaseSocketTrafficContinues": true
+  },
+  "privatePreimage": {
+    "path": "../private/nine-field-pause-preimage.json",
+    "mode": "0600; parentdirectory0700",
+    "exactFields": [
+      "BILLING_OPERATIONS_ENABLED",
+      "BACKGROUND_JOBS_ENABLED",
+      "BILLING_RENEWAL_SCHEDULER_ENABLED",
+      "SIGNING_V2_WORKER_ENABLED",
+      "WHATSAPP_WORKER_ENABLED",
+      "WHATSAPP_DEMO_WORKER_ENABLED",
+      "COURT_DEMO_SYNC_WORKER_ENABLED",
+      "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED",
+      "GIT_SHA"
+    ],
+    "unrelatedCredentialsExported": false,
+    "fullPm2OrEnvBackupCreated": false,
+    "limit": "Initialproc +currentfile bootprojection, not aruntimeintrospection ofarbitraryinprocessmutations; do not use stale procstatuslaunching ascurrentPM2status.",
+    "backoutStrength": "Source/locks/symlink/config fingerprints and nochanges allow restartofsameexistingentry. These are not full dependencybyte/restoration proofs or threecompleteinactivebackups.",
+    "transferPolicy": "Localprivateonly; excludedfrompublic/Gitcopy; no credential/completePM2backupcreated."
+  },
+  "executionContract": [
+    {
+      "step": 1,
+      "action": "Before action refresh only the authorized no-PII QA observations and compare source545779e4, PID identity, exact namedPM2entry, code/dependency symlink and private nine-field preimage. Hold existing shared maintenance and exclusive QA target release lock for the complete action/window/return; no lock creation.",
+      "gate": "Historicalunknown externalconnection superseded by latestsocketobservations. Refreshpre-action businesswork/claim/transaction classification: PGtraffic continues andsampledzeros are notatomicdrain. No unrelatedtargetselected."
+    },
+    {
+      "step": 2,
+      "action": "Choose whole existing-process manualSTOP, not nine-flag restart on old code and not candidate deployment. No --update-env, no .env/ecosystem edits, no delete/recreate, no globalrestart/save/resurrect, no npm/migrations/DB/bootstrap/restore.",
+      "gate": "Reviewed exact named/id action targets only melamedia-api/id5 and knowncurrentPID; already approved temporary pause conditions all satisfied."
+    },
+    {
+      "step": 3,
+      "action": "Obtain clean shutdown receipt, confirm old PID/children gone, expectedQA listener absent and same PM2 entry retained stopped, not just HTTP502. Stop/timeout/forcedkill ambiguity means hold/reconcile, not clean success.",
+      "gate": "Current effective stop budget known or verified clean exit before fallback; no forcedkill as substitute for drain."
+    },
+    {
+      "step": 4,
+      "action": "Keep the same daemon/host stable and exclude any alternate launcher during a short controlled window. Observe QA stays stopped. Saved dumps bothonline can resurrect it afterdaemon/hostrestart; monitoring is not a durable barrier.",
+      "gate": "Bounded process-down isolation accepted as such. If restart-durable prevention is required, existing savedstatefails; obtain separatelyreviewed exact QA-only persistent startup control before action, never globalpm2save as shortcut."
+    },
+    {
+      "step": 5,
+      "action": "Run only separatelyqualified no-IO offline code tests, from a frozen scratch export with no backend.env or productioncredentials and without writing existing source/dependency trees. Stop QA alone does not make generic testcode offline. Correctlyisolatedno-IOVMtests can proceedindependentlywithoutstoppingexistingQA; servicepause isnotanetworksandbox andisnotinherentlyrequiredforthoseexports.",
+      "gate": "Exact test/dependency and process-network boundary approved. Existing PGlite/Supertest absent; existingloopback-permissive guard is insufficient on sharedproductionhost for broadgroups. No new testenv/PG/dependencies/preload/firewall installed under this analysis."
+    },
+    {
+      "step": 6,
+      "action": "Before return terminate all owned synthetic testprocesses/listeners and compare source/dependency/.env/ecosystem fingerprints and nine exact presence/value states. Resume the same existing PM2 entry with no environment/config merge or reloadofecosystem.",
+      "gate": "Unchanged code545779e4 and dependency symlink/locks/config available; exactexistingentry retained; no sourceorconfig drift. Do not restorea stale globaldump or interpretreturnas deploymentof6a3."
+    },
+    {
+      "step": 7,
+      "action": "Verify new PID on unchanged source/cwd/script, intendedincumbent flagprojection, post-start guard completion plus health and no new errors/queues. End pause window; runtimefinancialblocking ends when old process resumes.",
+      "gate": "Return only after approved safe-return checks. No promise resumedoldcode honorsBILLING_OPERATIONS_ENABLED or automaticallyacquires new billingfix."
+    }
+  ],
+  "blockers": [
+    {
+      "action": "Perform approved namedQA STOP/restart",
+      "target": "melamedia-api/id5, existingnodePID2729957 at observation",
+      "status": "NOT_ATTEMPTED_CONDITIONAL_HOLD",
+      "reason": "No liveSTOP attempted: latestexternal-socketgapclosed at04:35, butcurrentPGpolltraffic andfreshbusinesswork/drain/timeout/return-window acceptance stillneedpre-actioncertification. No forcekill/unknownreceipt accepted."
+    },
+    {
+      "action": "Claim persistentfinancialblock whileQA stopped",
+      "target": "QAstartup/resurrect path",
+      "status": "NOT_PROVEN",
+      "reason": "Existing mainandbackupPM2savedstatesonline plusenabledresurrect. ManualSTOP isnotrestartdurable; thisreview didnotmodifydump/service/firewall orinstallguard."
+    },
+    {
+      "action": "Run broad40/217hostmockgroups unchanged",
+      "target": "existingQAproductiondependency installation/sharedhostnetwork",
+      "status": "NOT_ATTEMPTED_BLOCKED",
+      "reason": "PGlite+Supertestabsent; prodnode_modules linksprotectedQAinstallation. Existing networkguardpermitsotherclient loopbackAPIs/Unixsockets. No authorizednewdeps/env/networkguard installed."
+    },
+    {
+      "action": "Install candidatecode to make nine flags effective",
+      "target": "QAactivecode",
+      "status": "NOT_AUTHORIZED_BY_TEMPORARY_PAUSE",
+      "reason": "Actualcode deployment remains subject to separate QA/backup/restore/three-rollback/startup gates; current545 has otherchanges andmustnotbeoverwrittenasapause technique."
+    }
+  ],
+  "performed": {
+    "metadataOnlySshReads": true,
+    "streamedPm2SavedMetadataOnly": true,
+    "rawEnvMapExtraction": false,
+    "appOrTestRuns": 0,
+    "dbReadsByThisSubtask": 0,
+    "providerCalls": 0,
+    "stopsRestarts": 0,
+    "envOrConfigWrites": 0,
+    "codeOrHeadMoves": 0,
+    "newGuardsOrEnvironmentOrPg": 0
+  },
+  "sourceEvidence": {
+    "incumbentServer": "git545779e4:backend/server.js",
+    "gateAbsence": "git545779e4 lacksbackend/lib/billing/billingOperations.js",
+    "pm2SourceHashes": {
+      "lib/God/ActionMethods.js": "fac3eb453287059b94461cff459209c2d0a7c10bcb94ebf0f86aad8d087f82f8",
+      "lib/God.js": "a43594c030138c6db8d308ee1647903a72a49fc3ae781e600cc56338aa85ba90",
+      "lib/API/Startup.js": "446cc1982c77b62e72451283ca7cfb0531c4dc4311dfe2eee65c440d85b39542",
+      "constants.js": "ab50b83365fb4e3d95cd110be1ee7c7ad4e148abd385a16319e06f0adb9ccbbe",
+      "lib/God/Methods.js": "d063342503f501ee267eaca19c732d29bc640bf3188f08674b2cdddb9beeeb11"
+    },
+    "privateRecords": [
+      "../private/pause-metadata.json",
+      "../private/pm2-source-review.json",
+      "../private/pm2-stop-backout-source.json"
+    ],
+    "metadataCollector": "../private/capture-pause-metadata.py"
+  },
+  "outcomes": "No live mutation attempted. Narrowmetadata/source auditscompleted; no newoperationdenied oruncertain. Priorbroadcredentialextraction denial reportedbyinventoryagent wasnotretried. Thisreportdoesnotclose backup/restore/three-inactive gates.",
+  "hostTestScope": {
+    "servicePauseIntrinsicallyRequiredForNoIoVmTests": false,
+    "nodeRuntimeVersionNotCapturedHere": true,
+    "fullGroupsWithCurrentDependenciesQualified": false,
+    "strictNewHostNetworkGuardInstalled": false,
+    "independentAllowedWork": "Review and run only an alreadyproven no-IObuiltin/VMselection underexact availabletoolchain/deps fromsafe code-onlyscratch, afteritsboundaryisreviewed; no production.env or liveapp/DB/provider loading."
+  }
+}

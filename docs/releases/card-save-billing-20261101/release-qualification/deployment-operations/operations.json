@@ -1,0 +1,281 @@
+{
+  "schema": 1,
+  "assessedAtUtc": "2026-11-01T23:21:47.444295+00:00",
+  "runtimeSource": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "upstreamCutoff": "074df7520497a0cd6bd95ad70353201c905f0aa6",
+  "scope": "Local source and retained audit records only; documentation output; no product/test/live/provider execution",
+  "authorization": "Conditional deployment to QA and three clients is acknowledged. No deployment with unclosed QA/backup/restore/drain/financial holds; financial configuration/infrastructure/access changes need explicit approval. No intentional payment/provider transaction and no excluded waived-customer data action.",
+  "decision": {
+    "currentStatus": "HOLD_NOT_PROVEN_FINANCIALLY_QUIESCENT",
+    "restrictedCodeOnlyDeploymentTechnicallyPossible": true,
+    "newBillingRuntimeRequiredForRestrictedDeploy": false,
+    "genericBootstrapSqlRequiredByGate": false,
+    "approvedSql": [],
+    "strictNoSupplierCallsAndNoNewDataWritesProvenNow": false,
+    "reason": "Retained records do not inventory outstanding issued vendor pages/unknown operations or drain old loaded processes, vendor page expiry/terminal non-payability is not established, and callback/worker/boot/deploy contract remains unexecuted. No local/mock zero can establish those live facts.",
+    "finiteClosure": "Freeze issuance; drain/stop all old producers; inventory exact allowed scope; demonstrate authoritative terminal/nonpayable orders and no unknown acceptances; prove callback safety; boot qualified immutable release with effective gate and independent workers off. If all terminal, only status reads are needed, with no new transaction or customer mutation."
+  },
+  "sourceFacts": [
+    {
+      "id": "APP_GATE",
+      "source": "backend/lib/billing/billingOperations.js:7",
+      "fact": "Unset enables; explicit false pauses only processes executing this implementation. No live gate configuration was applied by this analysis."
+    },
+    {
+      "id": "HOSTED_REFERENCE_GAP",
+      "source": "backend/lib/billing/firmBillingService.js:929-951; backend/lib/tenant/signupService.js:174-185",
+      "fact": "The durable intent precedes hosted-page creation, but returned provider uniq is persisted afterwards. A request/response crash can leave a pending intent without its known provider reference. Such a row is ambiguous, not evidence that no order exists."
+    },
+    {
+      "id": "NO_PAGE_TTL",
+      "source": "backend/lib/payments/takbullClient.js:169-208",
+      "fact": "The create-page request sets no explicit expiry. Reviewed client code exposes no cancellation/expiry API or merchant-wide complete order inventory. Source does not prove maximum page lifetime or terminal non-payability."
+    },
+    {
+      "id": "CALLBACK_RETENTION",
+      "source": "backend/routes/paymentWebhookRoutes.js:15-25",
+      "fact": "Paused callbacks return503 before financial processing; no durable incoming callback record is written. Ordinary non-pause errors still use incumbent200 behavior. No provider retry retention is certified."
+    },
+    {
+      "id": "DRAIN_BOUND",
+      "source": "backend/server.js:87-115; backend/lib/payments/takbullClient.js:234-241",
+      "fact": "Candidate shutdown forces exit after10seconds by default. It stops Central timer without awaiting flush and has no billing/welcome timer stop/join handle. ValidateNotification fetch has no explicit AbortSignal;20-second timers on other calls cannot establish a universal safe drain bound."
+    },
+    {
+      "id": "STARTUP_EARLY_HEALTH",
+      "source": "backend/server.js:37-59; backend/app.js:212-215",
+      "fact": "HTTP binds before asynchronous startup checks; literal health200 is not ready-state proof. Startup always calls external ipify before background gate. No payment-supplier call is required by the inspected explicit startup path, but whole import-graph zero-IO is not certified."
+    },
+    {
+      "id": "INDEPENDENT_WORKERS",
+      "source": "backend/server.js:45-56; backend/services/signingV2/runtime.js:269-279; backend/services/integrations/runtime.js:43-57",
+      "fact": "Signing uses its own worker flag before background gate. Integration demo and court-demo workers can run independently of backgroundfalse and can write data or dispatch notifications."
+    },
+    {
+      "id": "ENV_PRECEDENCE",
+      "source": "backend/app.js:7-8; backend/config/db.js:5-6; scripts/lib/pm2-rolling-restart.sh:35-37",
+      "fact": "dotenv does not override process env. Plain named pm2 restart is not evidence that the effective child env was refreshed or that gatefalse won over stored env."
+    },
+    {
+      "id": "LEGACY_WRAPPER_SQL",
+      "source": "scripts/deploy-tenant-backend.sh:39-68",
+      "fact": "The wrapper fetches/mutates live checkout, unconditionally runs migration backfill and generic migration runner, then restarts and saves PM2. It has no financial drain/ingress/flag contract and no required maintenance/tenant flock. Do not execute it for this release."
+    },
+    {
+      "id": "QA_WRAPPER_ARGUMENT",
+      "source": "scripts/deploy-melamedia-qa.sh:65-74",
+      "fact": "QA wrapper omits mandatory reviewed SHA on backend invocation and prints an obsolete Idm instruction. With current backend wrapper it fails before deployment; do not work around by dropping source guard."
+    },
+    {
+      "id": "ALL_WRAPPER_ORDER",
+      "source": "scripts/deploy-all-tenants-prod.sh:64-74",
+      "fact": "All-target wrapper starts MelamedLaw production before QA and does not implement the required QA acceptance gate."
+    },
+    {
+      "id": "STATIC_TRANSPORT",
+      "source": "scripts/deploy-tenant-frontend.sh:31-53; scripts/deploy-tenant-frontend-melamedlaw.sh:33-66",
+      "fact": "Wrappers rebuild from mutable worktree and mirror with deletion, without immutable source/artifact plan or atomic assets-beforeHTML contract; Melamed FTP wrapper disables certificate verification. Both invoke external deployment notifier. Not qualified for this restricted release."
+    },
+    {
+      "id": "NO_BOOTSTRAP_SQL_INHERENT",
+      "source": "backend/lib/tenant/scopedPool.js:9-18; backend/lib/tenant/isolationSchema.js:34-45; backend/utils/startupSchemaCheck.js:16-31",
+      "fact": "Reviewed explicit startup checks inspect catalogs/roles/settings; they do not run DDL or repair schema. Gate implementation adds no migration. Existing readiness metadata does not certify all startup conditions or authorize broad SQL/GRANTs. Shared mode requires full forced restrictive RLS; prior selected tables reported RLSfalse."
+    }
+  ],
+  "proposedProcedure": [
+    {
+      "id": "PREFLIGHT",
+      "action": "Freeze exact main/client SHAs, artifacts, private target/config preimages, backups/restore/three complete inactive rollbacks and existing QA acceptance. Inspect CI/push hooks before publishing source. No financial activation is implied.",
+      "closure": "All required receipts are current and target-specific; no synthetic-API artifact is deployed.",
+      "approval": "Conditional deployment already exists, but unmet prerequisites still block execution."
+    },
+    {
+      "id": "FENCE",
+      "action": "Use approved per-target ingress maintenance boundary to stop new financial/user business work, while defining callback recovery separately. Acquire existing shared maintenance lock and exclusive target release mutex throughout. Do not create/bypass missing locks.",
+      "closure": "All target entry points/instances are enumerated and fenced; no new hosted order can be issued locally after recorded cut time.",
+      "approval": "Explicit infrastructure/financial-configuration approval for ingress/flag/egress changes is still needed; none performed here."
+    },
+    {
+      "id": "DRAIN",
+      "action": "Map every old named PM2 PID/instance, scheduler and external launcher; stop new work and verify request/job drain before replacing source. Use metadata, outstanding operation counts and target sessions without query/body logs. A forced exit, missing instrumentation or uncertain dispatched operation opens reconciliation instead of a new retry.",
+      "closure": "Old PIDs/children and target listeners gone; no old dispatch can start, and every already-dispatched financial operation has authoritative terminal evidence. A fixed10/20/30-second wait is not sufficient.",
+      "approval": "Named process outage/cutover belongs to conditional deployment only once drain contract/prerequisites are accepted. New firewall/proxy controls need separate infra approval."
+    },
+    {
+      "id": "ORDER_AUDIT",
+      "action": "After issuance freeze/drain, obtain approved per-office read-only aggregate inventory and finite private reference cursor, including old local failed/cancelled/succeeded hosted references and ambiguous missing-reference rows. Corroborate exact known orders/transactions via separately authorized proven-pure reads.",
+      "closure": "Complete bounded scope, no payable external orders, no orphan/unknown dispatch or unaccounted provider acceptance, supported by authoritative non-payability/expiry semantics. Empty local/mock data is insufficient.",
+      "approval": "Only proposed here; explicit narrowed live audit/provider-read scope required before execution. Excluded waived-customer scope must not be queried."
+    },
+    {
+      "id": "CALLBACKS",
+      "action": "Prove existing retry/retention or an independently complete terminal/no-unreconciled-event condition; use an already-authorized durable retention path only if it exists. No503-as-ACK, raw request capture, new inbox or replay by this task.",
+      "closure": "No financial event can be silently lost during pause; duplicate completed callbacks are distinguished from genuinely unprocessed payments. Same-payload synthetic replay is not persistence.",
+      "approval": "New callback proxy/inbox/retention is an infrastructure+data-write change. Replaying application callback handlers or settling data needs separate financial-write approval."
+    },
+    {
+      "id": "STAGE",
+      "action": "Build an immutable per-client release with exact locked dependencies and verified branding/API/CSP. Use restricted deployment tooling with zero SQL by default, no generic migrations/backfill, no all-client batch, no notifier, no certificate-disable workaround. Preserve old source/artifacts/config independently.",
+      "closure": "Reviewed manifest and transport hashes match; source guard passes unchanged; current mode/schema/app-role compatible.",
+      "approval": "Local restricted script preparation is possible without runtime changes; live invocation remains conditional on all gates and approved financial/infra controls."
+    },
+    {
+      "id": "BOOT_PAUSED",
+      "action": "Start only the identified new target process with explicit effective pause/worker overrides before imports, ingress still restricted to pure health/static. Do not rely on dotenvedits/plainrestart. Wait for post-guard startup completion as well as process identity and source binding.",
+      "closure": "Frozen-source startup QA passes; effective flags and newPID/source verified; no billing/welcome/signing/integration/court/financial Central consumers start; no ordinary write route is exposed during zero-write smoke.",
+      "approval": "Explicit per-process financial/worker configuration contract required. No access/role/mode weakening to make startup pass."
+    },
+    {
+      "id": "QA_THEN_CLIENTS",
+      "action": "QA first, then individually AshrafEssa, MorLevi and MelamedLaw only after each target-specific gate; retired Idm excluded. Reopen normal application traffic only under the reviewed contract while financial pause remains in force.",
+      "closure": "Source/process/health/startup marker/static hashes and scoped allowed smoke receipts pass per target; stop on drift.",
+      "approval": "Conditional deployment does not activate billing, supplier actions, documents or messages."
+    },
+    {
+      "id": "RESUME_OR_ROLLBACK",
+      "action": "Keep financial pause until separate activation permission and all ambiguous results resolved. Roll back code/artifact/config only, never restore old billing DB or erase reservations/waivers. A pre-gate rollback ignores new gatefalse, so preserve independent fences/worker controls or keep it stopped.",
+      "closure": "Preserved live payment/period history and upstream acceptance; no duplicate charge or waived-period recovery.",
+      "approval": "Financial activation, provider disposition/replay/settlement are separate; individual waiver recovery is cancelled, not pending approval."
+    }
+  ],
+  "proposedReadOnlyInventory": {
+    "executed": false,
+    "scopeBeforeConnection": "Allowlisted target + existing app role + explicit office/dedicated scope only. Skip excluded waived-customer dedicated target entirely; shared scopes must be explicitly allowlisted excluding that account. Do not include customer/contact/token/eventpayload tables or blanket system scope.",
+    "transaction": "BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY; SET LOCAL statement_timeout=5000; SET LOCAL lock_timeout=1000; ... ROLLBACK;",
+    "queries": {
+      "aggregateIntents": "SELECT kind,status,count(*)::integer AS intents,\n count(*) FILTER (WHERE NULLIF(takbull_uniq_id,'') IS NOT NULL)::integer AS hosted_refs,\n count(*) FILTER (WHERE NULLIF(takbull_transaction_id,'') IS NOT NULL)::integer AS transaction_refs,\n count(*) FILTER (WHERE status='pending' AND NULLIF(takbull_uniq_id,'') IS NULL AND NULLIF(takbull_transaction_id,'') IS NULL)::integer AS ambiguous_no_provider_ref,\n max(created_at) AS creation_high_water,max(updated_at) AS update_high_water\nFROM public.firm_payment_intents\nWHERE law_firm_tenant_id IS NOT DISTINCT FROM $1::uuid\nGROUP BY kind,status ORDER BY kind,status;",
+      "boundedPrivateReferenceCursor": "SELECT id,kind,status,order_reference,takbull_uniq_id,takbull_transaction_id,amount_ils,currency,created_at\nFROM public.firm_payment_intents\nWHERE law_firm_tenant_id IS NOT DISTINCT FROM $1::uuid\n AND ($2::timestamptz IS NULL OR (created_at,id)>($2::timestamptz,$3::uuid))\nORDER BY created_at,id LIMIT 100;",
+      "financialOutboxCounts": "SELECT event_family,status,count(*)::integer AS rows,\n count(*) FILTER (WHERE lease_until>now())::integer AS live_leases,\n count(*) FILTER (WHERE status='sending' AND lease_until<=now())::integer AS expired_sending_leases\nFROM public.central_system_message_outbox\nWHERE deployment_id=$1 AND office_key=$2\n AND event_family IN ('payment_received','subscription_update')\nGROUP BY event_family,status ORDER BY event_family,status;",
+      "supplementaryOwnRoleSessionCounts": "SELECT state,count(*)::integer AS sessions\nFROM pg_catalog.pg_stat_activity\nWHERE datname=current_database() AND usename=current_user AND pid<>pg_backend_pid()\nGROUP BY state ORDER BY state;"
+    },
+    "privateCursorHandling": "Private100row page cursor only to perform exact read probes, no Git/stdout/raw all-account dump. Export counts/booleans/HMAC-safe correlation only. Exhaust approved finite scope with reviewed cap; unknown or excluded scope remainsUNKNOWN, notzero.",
+    "limitations": [
+      "Run both before cutover for planning and after freeze/drain for closure; prefreeze zero races.",
+      "All local statuses must be considered for hosted references unless provider semantics establish terminal nonpayability. No arbitrary last30days cutoff without proven maximum page lifetime.",
+      "Pending without provider ref can be unsent token reservation or lost-response page; classifyUNKNOWN, not no-order.",
+      "Read-only session counts do not prove absence of HTTP/provider requests, and existing role may not see other processes. No new statistics grants.",
+      "Welcome-queue counts require existing permitted explicit scope; absence of signup grants is not an invitation to grant access."
+    ]
+  },
+  "proposedProviderReads": {
+    "executed": false,
+    "existingSourceEndpoints": [
+      {
+        "method": "GET",
+        "path": "/api/ExtranalAPI/GetOrder",
+        "queryKeys": [
+          "orderUniqId"
+        ],
+        "source": "backend/lib/payments/verifySignupPayment.js:18"
+      },
+      {
+        "method": "GET",
+        "path": "/api/ExtranalAPI/GetTransaction",
+        "queryKeys": [
+          "transactionInternalNumber"
+        ],
+        "source": "backend/lib/payments/verifySignupPayment.js:23,37"
+      }
+    ],
+    "host": "https://api.takbull.co.il",
+    "prerequisites": [
+      "Explicit exact merchant/target/ref read scope using existing credentials only; no excluded customer scope.",
+      "Pin a provider contract establishing nonmutating semantics; source GET usage and retained successful synthetic reads support an avenue but HTTP method alone is not proof.",
+      "Use standalone read-only allowlist client; do not call application return/notification/sync/charge helpers or temporarilyenable the live financial flag.",
+      "Keep keys/request URLs/refs/raw responses/tokens/card/contact fields in memory, never logs orGit. Export only identity/amount/currency match booleans, statuses and complete-scope counts.",
+      "Use bounded timeout and redirect:error; no browser PaymentGateway load."
+    ],
+    "notAllowed": [
+      "ChargeToken",
+      "GetTakbullPaymentPageRedirectUrl",
+      "ValidateNotification POST",
+      "DocumentApi/Create",
+      "GetDocumentSettings",
+      "cancel/expire/revoke order",
+      "application callback replay",
+      "new test transaction"
+    ],
+    "statusLimits": [
+      "App verifier recognizes completedorder3 and exact approved cardtransaction1/statusCode0/type10/method3; this alone does not document page reuse/expiry semantics.",
+      "Declined transaction2/6 with nonzero statusCode does not prove its hosted page cannot accept another attempt.",
+      "A reference lost before persistence needs proven pure order-reference lookup/merchant issuance inventory or authoritative expiry evidence; those contracts are absent from reviewed source.",
+      "Never infer sandbox/nonsettlement from TEST credential names, localmode or shared host."
+    ]
+  },
+  "workerPauseContract": {
+    "financial": "BILLING_OPERATIONS_ENABLED=false",
+    "general": "BACKGROUND_JOBS_ENABLED=false",
+    "explicitRenewalDefense": "BILLING_RENEWAL_SCHEDULER_ENABLED=false",
+    "independent": [
+      "SIGNING_V2_WORKER_ENABLED=false",
+      "WHATSAPP_WORKER_ENABLED=false",
+      "WHATSAPP_DEMO_WORKER_ENABLED=false",
+      "COURT_DEMO_SYNC_WORKER_ENABLED=false"
+    ],
+    "centralDispatchDefense": "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED=false",
+    "changeStatus": "PROPOSED_NOT_APPLIED; effective per-process contract requires approval and no secret changes",
+    "notes": [
+      "Do not switch tenant/isolation mode, grant privileges, delete credentials, set productionpriceszero or turnoffdocuments as a bypass.",
+      "Financial pause alone intentionally leaves unrelated consent/event dispatch eligible if separately enabled; general/central pause is needed for zero-message maintenance.",
+      "No local flag recalls Central messages alreadyaccepted or vendor documents/emails alreadyinflight."
+    ]
+  },
+  "existingObservations": {
+    "liveProcessAndSourceMetadata": "../../rollout-plan/live-baselines/live-baselines.json at2026-11-01T22:05:25Z; no GIT_SHA in observed namedPM2processes; not refreshed here",
+    "schemaAndBackup": "../readiness/README.md records22:21-22:26UTC catalog-only checks and19.69h reportedbackupgeneration; no restore/threecompleteinactiveproof",
+    "providerReadPrecedent": "../../qa-followup/sandbox-readiness.md records priorpureGetOrder/GetTransaction onownedhistoricalsyntheticorder, notnewtransaction or merchant-wideinventory"
+  },
+  "approvalBoundaries": {
+    "alreadyAuthorizedConditionally": "Ordinary exact-source deployment to approved QA+threeclienttargets only afterholdsclose; do not request blanket redeploymentpermission again.",
+    "needsExplicitBeforeExecution": [
+      "Financial flag/worker/environment changes affecting live operation",
+      "Ingress/egress/proxy/retention infrastructure changes and any new access",
+      "Exact live financial inventory/provider-status read scope is proposedonly in this delegation, not executed",
+      "Any providerorder cancellation/expiry/revocation, callbackreplay or settlement/customerdata repair",
+      "Financial activation, realcharge, document ormessage"
+    ],
+    "permanentlyExcluded": "Owner-waived period recovery/customercorrection stayscancelled; no assumption that deployment authorizes it."
+  },
+  "sourceHashes": {
+    "backend/lib/billing/billingOperations.js": "50932a1b1e8d9e167cd6ae377d2cea21d45344f191a24dce59aca6cb74f3d10f",
+    "backend/lib/billing/firmBillingService.js": "b651a79ec829b48a92536e07499def3b85b1a2b2eb051de6851a6f741bc4cda0",
+    "backend/lib/payments/takbullClient.js": "9cd2d96d4644071de5baad44035a925d71085bad55f18ff30cff3a3aecb6afa6",
+    "backend/lib/payments/verifySignupPayment.js": "65157d1c97ac6a7f7f87fd9b5c8891df9e65c3e21d77aae71c50ecbf43e90c90",
+    "backend/routes/paymentWebhookRoutes.js": "a514084f75dd3254fc14cad03a32c040ecbfd7a57e2509cd157293e635fd0477",
+    "backend/server.js": "d218094676f43004841ead11d27299a8b2219d7542fd93e8df419388f3f1bc4e",
+    "backend/app.js": "77055e7b564b7bc69d3245d9428c944c57e207cbebffb75fad518b494e21a6aa",
+    "backend/config/db.js": "20e712f89bf1cbf315ef6786112113f6f88ec180e4341a0d824587f3e0603890",
+    "backend/ecosystem.config.js": "3cdceca8f0e699d46de69f6990ebd1723c413b3cc4852ca51a16b21f8de29c5f",
+    "backend/tasks/billingRenewal/scheduler.js": "04df2a8951fc1144fda6fb5920a19f2edb0d9517aaf0e2971006c29d6474b3e1",
+    "backend/lib/tenant/signupWelcomeEmail.js": "f6bcb71739c76a3b9a623e6a80308092c8f08d6cec9917418d58d6cd260052d4",
+    "backend/lib/systemMessages/index.js": "d5f0708d46218b8fe238b059be9d37422e84a11c2f7f471186c74d004ee4763a",
+    "backend/lib/tenant/signupService.js": "fc3dc82a7ab944cc08b07dcc87689624d86ddceb579c2ca779c2f7fae2652d0b",
+    "backend/lib/tenant/scopedPool.js": "af32b014f3e7da2a36005b2d5a25fef83ab0824a1f11100200d4afee3b983f9f",
+    "backend/lib/tenant/isolationSchema.js": "0e130d5256501dafc94b8cb093d251ebb670af813a34a61e9b394b656fe16527",
+    "backend/lib/tenant/databaseScope.js": "d52da30120356be7526d9257edc237ed36c877a00dacfeabfac93eece0e1eaab",
+    "backend/utils/startupSchemaCheck.js": "46da904262bf2a72ce3eaa8b6d9ea78d3891320648f816d79021f017a45ce076",
+    "backend/services/signingV2/runtime.js": "7ae7721347313e46a7036c5bbfe098b516bebd862ba89913e50821f12e5a3d70",
+    "backend/services/integrations/runtime.js": "0a26b55a9335fa7ab05bf1dd6851283b0558fcfe09a7ce0832255e950d896414",
+    "scripts/deploy-tenant-backend.sh": "0f3fbeba3ea7102ef9939aa6608122300f0d1716dbda2352822313373a3f7310",
+    "scripts/deploy-all-tenants-prod.sh": "581d0f59c3d4ca773b200a2ee5730ccfecd3431a3526b4348d89a0062d7a05aa",
+    "scripts/deploy-melamedia-qa.sh": "97efe72b53eea5d3673d3c0ba627c6060e78c460e3372373410f37fac473e31a",
+    "scripts/deploy-tenant-frontend.sh": "7a580cb6357ceae8c29573405a76204ca2b41564ba1efb8181dd5f002047c376",
+    "scripts/deploy-tenant-frontend-melamedlaw.sh": "8afaf3cd81aa89b3f9a21002598a0af3da9d443354df12e3905869cc3f47b911",
+    "scripts/lib/pm2-rolling-restart.sh": "2aceca7984473bf7a721fe55c19a691603c4c867736b6f6092cf1840710fc57c",
+    "backend/migrations/migration-run.sh": "b963f6c16cb726d0e2f99362c254bc1a5d6130826368ade535e5a9db1c9411cf",
+    "backend/migrations/migration-backfill-applied.sh": "7b260b827f2046b909e01263c684ec83391cc35408cd6dccdf50a3ffeb80cad5"
+  },
+  "performed": {
+    "localSourceReads": true,
+    "retainedRecordReads": true,
+    "newDocsOnly": true,
+    "liveReads": 0,
+    "providerCalls": 0,
+    "productOrTestRuns": 0,
+    "runtimeEdits": 0,
+    "liveMutations": 0,
+    "newAccess": 0,
+    "chargesDocumentsMessages": 0
+  },
+  "blockOutcome": "No attempted live operation was denied/pending/uncertain. Live operationalproof is unexecuted, not a failed or uncertain payment."
+}

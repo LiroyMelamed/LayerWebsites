@@ -1,0 +1,79 @@
+{
+  "status": "PASS_NEW_FTPS_OPERATOR_TESTS",
+  "operatorSha256": "2202f63bcc94e4d787983a263220d5c3d2058de12d6cfcf8cebc499dfcef2762",
+  "cases": [
+    {
+      "case": "success",
+      "status": "PASS",
+      "realNetworkCalls": 0
+    },
+    {
+      "case": "stale-index",
+      "status": "PASS",
+      "realNetworkCalls": 0
+    },
+    {
+      "case": "collision",
+      "status": "PASS",
+      "realNetworkCalls": 0
+    },
+    {
+      "case": "upload-fails",
+      "status": "PASS",
+      "realNetworkCalls": 0
+    },
+    {
+      "case": "concurrent-config",
+      "status": "PASS",
+      "realNetworkCalls": 0
+    },
+    {
+      "case": "concurrent-root",
+      "status": "PASS",
+      "realNetworkCalls": 0
+    },
+    {
+      "case": "second-rename-fails",
+      "status": "PASS",
+      "realNetworkCalls": 0
+    },
+    {
+      "case": "https-mismatch",
+      "status": "PASS",
+      "realNetworkCalls": 0
+    },
+    {
+      "case": "reject-path-8",
+      "status": "PASS",
+      "realNetworkCalls": 0
+    },
+    {
+      "case": "reject-path-9",
+      "status": "PASS",
+      "realNetworkCalls": 0
+    },
+    {
+      "case": "reject-path-10",
+      "status": "PASS",
+      "realNetworkCalls": 0
+    },
+    {
+      "case": "reject-path-11",
+      "status": "PASS",
+      "realNetworkCalls": 0
+    },
+    {
+      "case": "reject-path-12",
+      "status": "PASS",
+      "realNetworkCalls": 0
+    },
+    {
+      "case": "reject-path-13",
+      "status": "PASS",
+      "realNetworkCalls": 0
+    }
+  ],
+  "total": 14,
+  "realNetworkCalls": 0,
+  "applicationTestsRerun": 0
+}

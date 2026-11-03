@@ -1,0 +1,601 @@
+{
+  "atUtc": "2026-11-02T06:17:57.794261+00:00",
+  "scope": "One bounded local completion after absent output files were inspected; no build or HTTPS rerun",
+  "networkOperations": 0,
+  "rows": [
+    {
+      "tenant": "melamedia",
+      "sourceBoundPublishedArchiveSha256": "de93b045c89b9406ca49b18d7a2c4dbc090b47393c9b7133226bab5c6fce909e",
+      "staticPathIntersectionCount": 21,
+      "allExpectedArchivedCollisionsSameContent": true,
+      "paths": [
+        {
+          "path": "static/media/AllManagers.7126a03d7c27213de2ad.png",
+          "expectedSha256": "ae04bb95437a4aedfe27a877dfe95961d65d29a2511aff19d369fde44e006742",
+          "candidateSha256": "ae04bb95437a4aedfe27a877dfe95961d65d29a2511aff19d369fde44e006742",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/AppBackground.620be0dabb2027013c3f.jpg",
+          "expectedSha256": "4de367198ef35b3a1855605bc892c137e95ef6e2fb18960659ce0c8651a51817",
+          "candidateSha256": "4de367198ef35b3a1855605bc892c137e95ef6e2fb18960659ce0c8651a51817",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/ISO-27701-logo.01351318947ec05ce0f5.png",
+          "expectedSha256": "e3b558590436b4fbb58793129f59aaedfb37c085c7e4ebad2b7e7a906adf70c7",
+          "candidateSha256": "e3b558590436b4fbb58793129f59aaedfb37c085c7e4ebad2b7e7a906adf70c7",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/ISO-logo.7ef757781907c8eef229.png",
+          "expectedSha256": "77781356f741e025b382f5dac0444a5ad131fe5cc73b23938d6ab67c2ab12754",
+          "candidateSha256": "77781356f741e025b382f5dac0444a5ad131fe5cc73b23938d6ab67c2ab12754",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/Iso22301-logo.14c4de0849abf697840c.png",
+          "expectedSha256": "e93cf6af2d26d245f38e3388b94ae5f2e48624a28524a646419ee5dc818dd3c8",
+          "candidateSha256": "e93cf6af2d26d245f38e3388b94ae5f2e48624a28524a646419ee5dc818dd3c8",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/MagnifyingGlass.d466bf7953662b736fc7.png",
+          "expectedSha256": "4a08cd91f45232d5e25a421a76f93275aaf1c3073a93f428e9f013a57b1a7e18",
+          "candidateSha256": "4a08cd91f45232d5e25a421a76f93275aaf1c3073a93f428e9f013a57b1a7e18",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/Weight.ee6259e93735981156d0.png",
+          "expectedSha256": "d36570267480237fe827776323587c8b239e0a79938c9a7e3a5c9eda837851b6",
+          "candidateSha256": "d36570267480237fe827776323587c8b239e0a79938c9a7e3a5c9eda837851b6",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/X.28e784309fe66fcff48d.png",
+          "expectedSha256": "3c6b21410949be41624a0230097a6b0135441f39489aef1f5a5001b7ffdc16e2",
+          "candidateSha256": "3c6b21410949be41624a0230097a6b0135441f39489aef1f5a5001b7ffdc16e2",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/analytics.bf28dfb8ee06dc5f0eba.png",
+          "expectedSha256": "2fd9dad2424c47d8c908c183427d446d944dfdd5d8c3da7330d7856a57f39a2b",
+          "candidateSha256": "2fd9dad2424c47d8c908c183427d446d944dfdd5d8c3da7330d7856a57f39a2b",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/apple-calendar.c79c232980dc078c4ba7.png",
+          "expectedSha256": "ef788105d9095a052ae3eb841e7b638c179226da227ea7eeecdad53ccf2e6380",
+          "candidateSha256": "ef788105d9095a052ae3eb841e7b638c179226da227ea7eeecdad53ccf2e6380",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/cases.bafbde8cf2510c7929f7.png",
+          "expectedSha256": "b055e06346430275a3cb81e5b2026644ca0416d441589c60c9d5ed832fa89dc3",
+          "candidateSha256": "b055e06346430275a3cb81e5b2026644ca0416d441589c60c9d5ed832fa89dc3",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/casesType.d6cef8ef5aef864321f3.png",
+          "expectedSha256": "1924619f26a827d207f358d9d579c4254923a5af78af480275cd9b3657828381",
+          "candidateSha256": "1924619f26a827d207f358d9d579c4254923a5af78af480275cd9b3657828381",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/dataFlowing.9f81647815d15e83ce62.png",
+          "expectedSha256": "93b8309fa24a0369fd5ddffdd3465d65c338e85bba1a9f15a4e2fdd65111454d",
+          "candidateSha256": "93b8309fa24a0369fd5ddffdd3465d65c338e85bba1a9f15a4e2fdd65111454d",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/google-maps.f8ffe032804f4d25073f.png",
+          "expectedSha256": "43b8629b52f47ec21c73d2b99ab0105e6182fa162162ec2bca341c1782d44f35",
+          "candidateSha256": "43b8629b52f47ec21c73d2b99ab0105e6182fa162162ec2bca341c1782d44f35",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/logo.e4d6de620b089c946974.png",
+          "expectedSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+          "candidateSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/logo2.e4d6de620b089c946974.png",
+          "expectedSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+          "candidateSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/logoLM.e4d6de620b089c946974.png",
+          "expectedSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+          "candidateSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/logoLMwhite.e4d6de620b089c946974.png",
+          "expectedSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+          "candidateSha256": "5b38f69ed6720456f6a4366aa604bcdd3f4f7b4747ee6897ad4ceb9e1f2ea264",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/managers.fadbb2bc0cda1f1394dc.png",
+          "expectedSha256": "e64b64324b1891b4c6359ba56033c9ad13fdb946c10f32bb4b726b237093084a",
+          "candidateSha256": "e64b64324b1891b4c6359ba56033c9ad13fdb946c10f32bb4b726b237093084a",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/searchingClient.f27d1f338e64df970a12.png",
+          "expectedSha256": "fe47745915fadea0636f7900b4a182d74c424b2492d873a9ffd6368ab3c5f42c",
+          "candidateSha256": "fe47745915fadea0636f7900b4a182d74c424b2492d873a9ffd6368ab3c5f42c",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/taggedCase.dea931141e9585cbfd33.png",
+          "expectedSha256": "5ef806b21a31be9880091a5a5c9b24e03bc73b383c94ebf7af0eeb9fe34353f0",
+          "candidateSha256": "5ef806b21a31be9880091a5a5c9b24e03bc73b383c94ebf7af0eeb9fe34353f0",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        }
+      ]
+    },
+    {
+      "tenant": "ashrafessa",
+      "sourceBoundPublishedArchiveSha256": "c8b68e6467b45f47b6d1cfae05735d6a1345ba7dc250c0d5005ab67a540feca8",
+      "staticPathIntersectionCount": 21,
+      "allExpectedArchivedCollisionsSameContent": true,
+      "paths": [
+        {
+          "path": "static/media/AllManagers.7126a03d7c27213de2ad.png",
+          "expectedSha256": "ae04bb95437a4aedfe27a877dfe95961d65d29a2511aff19d369fde44e006742",
+          "candidateSha256": "ae04bb95437a4aedfe27a877dfe95961d65d29a2511aff19d369fde44e006742",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/AppBackground.620be0dabb2027013c3f.jpg",
+          "expectedSha256": "4de367198ef35b3a1855605bc892c137e95ef6e2fb18960659ce0c8651a51817",
+          "candidateSha256": "4de367198ef35b3a1855605bc892c137e95ef6e2fb18960659ce0c8651a51817",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/ISO-27701-logo.01351318947ec05ce0f5.png",
+          "expectedSha256": "e3b558590436b4fbb58793129f59aaedfb37c085c7e4ebad2b7e7a906adf70c7",
+          "candidateSha256": "e3b558590436b4fbb58793129f59aaedfb37c085c7e4ebad2b7e7a906adf70c7",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/ISO-logo.7ef757781907c8eef229.png",
+          "expectedSha256": "77781356f741e025b382f5dac0444a5ad131fe5cc73b23938d6ab67c2ab12754",
+          "candidateSha256": "77781356f741e025b382f5dac0444a5ad131fe5cc73b23938d6ab67c2ab12754",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/Iso22301-logo.14c4de0849abf697840c.png",
+          "expectedSha256": "e93cf6af2d26d245f38e3388b94ae5f2e48624a28524a646419ee5dc818dd3c8",
+          "candidateSha256": "e93cf6af2d26d245f38e3388b94ae5f2e48624a28524a646419ee5dc818dd3c8",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/MagnifyingGlass.d466bf7953662b736fc7.png",
+          "expectedSha256": "4a08cd91f45232d5e25a421a76f93275aaf1c3073a93f428e9f013a57b1a7e18",
+          "candidateSha256": "4a08cd91f45232d5e25a421a76f93275aaf1c3073a93f428e9f013a57b1a7e18",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/Weight.ee6259e93735981156d0.png",
+          "expectedSha256": "d36570267480237fe827776323587c8b239e0a79938c9a7e3a5c9eda837851b6",
+          "candidateSha256": "d36570267480237fe827776323587c8b239e0a79938c9a7e3a5c9eda837851b6",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/X.28e784309fe66fcff48d.png",
+          "expectedSha256": "3c6b21410949be41624a0230097a6b0135441f39489aef1f5a5001b7ffdc16e2",
+          "candidateSha256": "3c6b21410949be41624a0230097a6b0135441f39489aef1f5a5001b7ffdc16e2",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/analytics.bf28dfb8ee06dc5f0eba.png",
+          "expectedSha256": "2fd9dad2424c47d8c908c183427d446d944dfdd5d8c3da7330d7856a57f39a2b",
+          "candidateSha256": "2fd9dad2424c47d8c908c183427d446d944dfdd5d8c3da7330d7856a57f39a2b",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/apple-calendar.c79c232980dc078c4ba7.png",
+          "expectedSha256": "ef788105d9095a052ae3eb841e7b638c179226da227ea7eeecdad53ccf2e6380",
+          "candidateSha256": "ef788105d9095a052ae3eb841e7b638c179226da227ea7eeecdad53ccf2e6380",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/cases.bafbde8cf2510c7929f7.png",
+          "expectedSha256": "b055e06346430275a3cb81e5b2026644ca0416d441589c60c9d5ed832fa89dc3",
+          "candidateSha256": "b055e06346430275a3cb81e5b2026644ca0416d441589c60c9d5ed832fa89dc3",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/casesType.d6cef8ef5aef864321f3.png",
+          "expectedSha256": "1924619f26a827d207f358d9d579c4254923a5af78af480275cd9b3657828381",
+          "candidateSha256": "1924619f26a827d207f358d9d579c4254923a5af78af480275cd9b3657828381",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/dataFlowing.9f81647815d15e83ce62.png",
+          "expectedSha256": "93b8309fa24a0369fd5ddffdd3465d65c338e85bba1a9f15a4e2fdd65111454d",
+          "candidateSha256": "93b8309fa24a0369fd5ddffdd3465d65c338e85bba1a9f15a4e2fdd65111454d",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/google-maps.f8ffe032804f4d25073f.png",
+          "expectedSha256": "43b8629b52f47ec21c73d2b99ab0105e6182fa162162ec2bca341c1782d44f35",
+          "candidateSha256": "43b8629b52f47ec21c73d2b99ab0105e6182fa162162ec2bca341c1782d44f35",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/logo.62f43b54af15eb4a9672.png",
+          "expectedSha256": "0c25449fe261ed58a0e8edf5427b1f7dfa2b140e25469532648136369a318d20",
+          "candidateSha256": "0c25449fe261ed58a0e8edf5427b1f7dfa2b140e25469532648136369a318d20",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/logo2.1714aa4a001d2c2f06b3.png",
+          "expectedSha256": "27a4633e7842f106f37f3e0b0cfffb7a80593dd01fcea4bb9c3f9d5269548b2e",
+          "candidateSha256": "27a4633e7842f106f37f3e0b0cfffb7a80593dd01fcea4bb9c3f9d5269548b2e",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/logoLM.f95b0ac7aa54df312c19.png",
+          "expectedSha256": "069ea24b4d3a201a161cdf882e128d369f276c710687a08abc561af07bf8dec7",
+          "candidateSha256": "069ea24b4d3a201a161cdf882e128d369f276c710687a08abc561af07bf8dec7",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/logoLMwhite.219b59ee79d3dec46c61.png",
+          "expectedSha256": "8483bf94ec0c21d53409b7c9960e5269abdb079e330ec5c259fbef5cc73c7900",
+          "candidateSha256": "8483bf94ec0c21d53409b7c9960e5269abdb079e330ec5c259fbef5cc73c7900",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/managers.fadbb2bc0cda1f1394dc.png",
+          "expectedSha256": "e64b64324b1891b4c6359ba56033c9ad13fdb946c10f32bb4b726b237093084a",
+          "candidateSha256": "e64b64324b1891b4c6359ba56033c9ad13fdb946c10f32bb4b726b237093084a",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/searchingClient.f27d1f338e64df970a12.png",
+          "expectedSha256": "fe47745915fadea0636f7900b4a182d74c424b2492d873a9ffd6368ab3c5f42c",
+          "candidateSha256": "fe47745915fadea0636f7900b4a182d74c424b2492d873a9ffd6368ab3c5f42c",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/taggedCase.dea931141e9585cbfd33.png",
+          "expectedSha256": "5ef806b21a31be9880091a5a5c9b24e03bc73b383c94ebf7af0eeb9fe34353f0",
+          "candidateSha256": "5ef806b21a31be9880091a5a5c9b24e03bc73b383c94ebf7af0eeb9fe34353f0",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        }
+      ]
+    },
+    {
+      "tenant": "morlevy",
+      "sourceBoundPublishedArchiveSha256": "87d5782148f1c61224e8d7bf5d17de5d65c0b1ef3c5d13bebff94e7e3baf89a6",
+      "staticPathIntersectionCount": 19,
+      "allExpectedArchivedCollisionsSameContent": true,
+      "paths": [
+        {
+          "path": "static/media/AllManagers.7126a03d7c27213de2ad.png",
+          "expectedSha256": "ae04bb95437a4aedfe27a877dfe95961d65d29a2511aff19d369fde44e006742",
+          "candidateSha256": "ae04bb95437a4aedfe27a877dfe95961d65d29a2511aff19d369fde44e006742",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/AppBackground.620be0dabb2027013c3f.jpg",
+          "expectedSha256": "4de367198ef35b3a1855605bc892c137e95ef6e2fb18960659ce0c8651a51817",
+          "candidateSha256": "4de367198ef35b3a1855605bc892c137e95ef6e2fb18960659ce0c8651a51817",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/ISO-27701-logo.01351318947ec05ce0f5.png",
+          "expectedSha256": "e3b558590436b4fbb58793129f59aaedfb37c085c7e4ebad2b7e7a906adf70c7",
+          "candidateSha256": "e3b558590436b4fbb58793129f59aaedfb37c085c7e4ebad2b7e7a906adf70c7",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/ISO-logo.7ef757781907c8eef229.png",
+          "expectedSha256": "77781356f741e025b382f5dac0444a5ad131fe5cc73b23938d6ab67c2ab12754",
+          "candidateSha256": "77781356f741e025b382f5dac0444a5ad131fe5cc73b23938d6ab67c2ab12754",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/Iso22301-logo.14c4de0849abf697840c.png",
+          "expectedSha256": "e93cf6af2d26d245f38e3388b94ae5f2e48624a28524a646419ee5dc818dd3c8",
+          "candidateSha256": "e93cf6af2d26d245f38e3388b94ae5f2e48624a28524a646419ee5dc818dd3c8",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/MagnifyingGlass.d466bf7953662b736fc7.png",
+          "expectedSha256": "4a08cd91f45232d5e25a421a76f93275aaf1c3073a93f428e9f013a57b1a7e18",
+          "candidateSha256": "4a08cd91f45232d5e25a421a76f93275aaf1c3073a93f428e9f013a57b1a7e18",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/Weight.ee6259e93735981156d0.png",
+          "expectedSha256": "d36570267480237fe827776323587c8b239e0a79938c9a7e3a5c9eda837851b6",
+          "candidateSha256": "d36570267480237fe827776323587c8b239e0a79938c9a7e3a5c9eda837851b6",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/X.28e784309fe66fcff48d.png",
+          "expectedSha256": "3c6b21410949be41624a0230097a6b0135441f39489aef1f5a5001b7ffdc16e2",
+          "candidateSha256": "3c6b21410949be41624a0230097a6b0135441f39489aef1f5a5001b7ffdc16e2",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/analytics.bf28dfb8ee06dc5f0eba.png",
+          "expectedSha256": "2fd9dad2424c47d8c908c183427d446d944dfdd5d8c3da7330d7856a57f39a2b",
+          "candidateSha256": "2fd9dad2424c47d8c908c183427d446d944dfdd5d8c3da7330d7856a57f39a2b",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/apple-calendar.c79c232980dc078c4ba7.png",
+          "expectedSha256": "ef788105d9095a052ae3eb841e7b638c179226da227ea7eeecdad53ccf2e6380",
+          "candidateSha256": "ef788105d9095a052ae3eb841e7b638c179226da227ea7eeecdad53ccf2e6380",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/cases.bafbde8cf2510c7929f7.png",
+          "expectedSha256": "b055e06346430275a3cb81e5b2026644ca0416d441589c60c9d5ed832fa89dc3",
+          "candidateSha256": "b055e06346430275a3cb81e5b2026644ca0416d441589c60c9d5ed832fa89dc3",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/casesType.d6cef8ef5aef864321f3.png",
+          "expectedSha256": "1924619f26a827d207f358d9d579c4254923a5af78af480275cd9b3657828381",
+          "candidateSha256": "1924619f26a827d207f358d9d579c4254923a5af78af480275cd9b3657828381",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/dataFlowing.9f81647815d15e83ce62.png",
+          "expectedSha256": "93b8309fa24a0369fd5ddffdd3465d65c338e85bba1a9f15a4e2fdd65111454d",
+          "candidateSha256": "93b8309fa24a0369fd5ddffdd3465d65c338e85bba1a9f15a4e2fdd65111454d",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/google-maps.f8ffe032804f4d25073f.png",
+          "expectedSha256": "43b8629b52f47ec21c73d2b99ab0105e6182fa162162ec2bca341c1782d44f35",
+          "candidateSha256": "43b8629b52f47ec21c73d2b99ab0105e6182fa162162ec2bca341c1782d44f35",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/logo.2c5d6b013a8ac4d265ae.png",
+          "expectedSha256": "3a7213f1d68d266a7026f904e8635804972023162a3566a9cae06da870debb94",
+          "candidateSha256": "3a7213f1d68d266a7026f904e8635804972023162a3566a9cae06da870debb94",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/logo2.50b70182ecf501da0321.png",
+          "expectedSha256": "df1a1a097e081dcae854f1d9798985f31b0a94375c3b6dfa41aa9c172b6d3888",
+          "candidateSha256": "df1a1a097e081dcae854f1d9798985f31b0a94375c3b6dfa41aa9c172b6d3888",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/managers.fadbb2bc0cda1f1394dc.png",
+          "expectedSha256": "e64b64324b1891b4c6359ba56033c9ad13fdb946c10f32bb4b726b237093084a",
+          "candidateSha256": "e64b64324b1891b4c6359ba56033c9ad13fdb946c10f32bb4b726b237093084a",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/searchingClient.f27d1f338e64df970a12.png",
+          "expectedSha256": "fe47745915fadea0636f7900b4a182d74c424b2492d873a9ffd6368ab3c5f42c",
+          "candidateSha256": "fe47745915fadea0636f7900b4a182d74c424b2492d873a9ffd6368ab3c5f42c",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/taggedCase.dea931141e9585cbfd33.png",
+          "expectedSha256": "5ef806b21a31be9880091a5a5c9b24e03bc73b383c94ebf7af0eeb9fe34353f0",
+          "candidateSha256": "5ef806b21a31be9880091a5a5c9b24e03bc73b383c94ebf7af0eeb9fe34353f0",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        }
+      ]
+    },
+    {
+      "tenant": "melamedlaw",
+      "sourceBoundPublishedArchiveSha256": "7e4c6435dad3524eac7d5f84d1cd6766197b1f63e99a16090bbea986d68bd70c",
+      "staticPathIntersectionCount": 19,
+      "allExpectedArchivedCollisionsSameContent": true,
+      "paths": [
+        {
+          "path": "static/media/AllManagers.7126a03d7c27213de2ad.png",
+          "expectedSha256": "ae04bb95437a4aedfe27a877dfe95961d65d29a2511aff19d369fde44e006742",
+          "candidateSha256": "ae04bb95437a4aedfe27a877dfe95961d65d29a2511aff19d369fde44e006742",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/AppBackground.620be0dabb2027013c3f.jpg",
+          "expectedSha256": "4de367198ef35b3a1855605bc892c137e95ef6e2fb18960659ce0c8651a51817",
+          "candidateSha256": "4de367198ef35b3a1855605bc892c137e95ef6e2fb18960659ce0c8651a51817",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/ISO-27701-logo.01351318947ec05ce0f5.png",
+          "expectedSha256": "e3b558590436b4fbb58793129f59aaedfb37c085c7e4ebad2b7e7a906adf70c7",
+          "candidateSha256": "e3b558590436b4fbb58793129f59aaedfb37c085c7e4ebad2b7e7a906adf70c7",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/ISO-logo.7ef757781907c8eef229.png",
+          "expectedSha256": "77781356f741e025b382f5dac0444a5ad131fe5cc73b23938d6ab67c2ab12754",
+          "candidateSha256": "77781356f741e025b382f5dac0444a5ad131fe5cc73b23938d6ab67c2ab12754",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/Iso22301-logo.14c4de0849abf697840c.png",
+          "expectedSha256": "e93cf6af2d26d245f38e3388b94ae5f2e48624a28524a646419ee5dc818dd3c8",
+          "candidateSha256": "e93cf6af2d26d245f38e3388b94ae5f2e48624a28524a646419ee5dc818dd3c8",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/MagnifyingGlass.d466bf7953662b736fc7.png",
+          "expectedSha256": "4a08cd91f45232d5e25a421a76f93275aaf1c3073a93f428e9f013a57b1a7e18",
+          "candidateSha256": "4a08cd91f45232d5e25a421a76f93275aaf1c3073a93f428e9f013a57b1a7e18",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/Weight.ee6259e93735981156d0.png",
+          "expectedSha256": "d36570267480237fe827776323587c8b239e0a79938c9a7e3a5c9eda837851b6",
+          "candidateSha256": "d36570267480237fe827776323587c8b239e0a79938c9a7e3a5c9eda837851b6",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/X.28e784309fe66fcff48d.png",
+          "expectedSha256": "3c6b21410949be41624a0230097a6b0135441f39489aef1f5a5001b7ffdc16e2",
+          "candidateSha256": "3c6b21410949be41624a0230097a6b0135441f39489aef1f5a5001b7ffdc16e2",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/analytics.bf28dfb8ee06dc5f0eba.png",
+          "expectedSha256": "2fd9dad2424c47d8c908c183427d446d944dfdd5d8c3da7330d7856a57f39a2b",
+          "candidateSha256": "2fd9dad2424c47d8c908c183427d446d944dfdd5d8c3da7330d7856a57f39a2b",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/apple-calendar.c79c232980dc078c4ba7.png",
+          "expectedSha256": "ef788105d9095a052ae3eb841e7b638c179226da227ea7eeecdad53ccf2e6380",
+          "candidateSha256": "ef788105d9095a052ae3eb841e7b638c179226da227ea7eeecdad53ccf2e6380",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/cases.bafbde8cf2510c7929f7.png",
+          "expectedSha256": "b055e06346430275a3cb81e5b2026644ca0416d441589c60c9d5ed832fa89dc3",
+          "candidateSha256": "b055e06346430275a3cb81e5b2026644ca0416d441589c60c9d5ed832fa89dc3",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/casesType.d6cef8ef5aef864321f3.png",
+          "expectedSha256": "1924619f26a827d207f358d9d579c4254923a5af78af480275cd9b3657828381",
+          "candidateSha256": "1924619f26a827d207f358d9d579c4254923a5af78af480275cd9b3657828381",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/dataFlowing.9f81647815d15e83ce62.png",
+          "expectedSha256": "93b8309fa24a0369fd5ddffdd3465d65c338e85bba1a9f15a4e2fdd65111454d",
+          "candidateSha256": "93b8309fa24a0369fd5ddffdd3465d65c338e85bba1a9f15a4e2fdd65111454d",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/google-maps.f8ffe032804f4d25073f.png",
+          "expectedSha256": "43b8629b52f47ec21c73d2b99ab0105e6182fa162162ec2bca341c1782d44f35",
+          "candidateSha256": "43b8629b52f47ec21c73d2b99ab0105e6182fa162162ec2bca341c1782d44f35",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/logo.fad522f82b15eafd995a.png",
+          "expectedSha256": "8899e54b782e4a68e718c40fd9ae1bf0865adc0bf76fb8e570acf12b2719074c",
+          "candidateSha256": "8899e54b782e4a68e718c40fd9ae1bf0865adc0bf76fb8e570acf12b2719074c",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/logo2.eed83dbcf3c1049b1980.png",
+          "expectedSha256": "fca6833f1e5ebc26883ca69fe4168e6180e5c7198b80e4fabe1c66926387a705",
+          "candidateSha256": "fca6833f1e5ebc26883ca69fe4168e6180e5c7198b80e4fabe1c66926387a705",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/managers.fadbb2bc0cda1f1394dc.png",
+          "expectedSha256": "e64b64324b1891b4c6359ba56033c9ad13fdb946c10f32bb4b726b237093084a",
+          "candidateSha256": "e64b64324b1891b4c6359ba56033c9ad13fdb946c10f32bb4b726b237093084a",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/searchingClient.f27d1f338e64df970a12.png",
+          "expectedSha256": "fe47745915fadea0636f7900b4a182d74c424b2492d873a9ffd6368ab3c5f42c",
+          "candidateSha256": "fe47745915fadea0636f7900b4a182d74c424b2492d873a9ffd6368ab3c5f42c",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        },
+        {
+          "path": "static/media/taggedCase.dea931141e9585cbfd33.png",
+          "expectedSha256": "5ef806b21a31be9880091a5a5c9b24e03bc73b383c94ebf7af0eeb9fe34353f0",
+          "candidateSha256": "5ef806b21a31be9880091a5a5c9b24e03bc73b383c94ebf7af0eeb9fe34353f0",
+          "archivedPublishedBytesEqual": true,
+          "requiresActualTargetHashCheck": true
+        }
+      ]
+    }
+  ],
+  "actualRemoteFileHashesNotInferred": true,
+  "remainingGate": "check exact current canonical filesystem paths/content under publication locks before any upload"
+}

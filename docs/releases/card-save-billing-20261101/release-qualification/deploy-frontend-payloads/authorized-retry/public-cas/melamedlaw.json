@@ -1,0 +1,599 @@
+{
+  "tenant": "melamedlaw",
+  "baseUrl": "https://client.melamedlaw.co.il/",
+  "historicalPublicReceiptSha256": "d8d3ab0efb71f406316e0b020dead5cea244aab1512daf4f5b5e358e60cda31c",
+  "historicalCandidate": "5e2da32b3ebad7b77ace52d50227584a94e1e3ed",
+  "requests": [
+    {
+      "url": "https://client.melamedlaw.co.il/",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:48.494896+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:49.042035+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://client.melamedlaw.co.il/",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "text/html"
+        ],
+        "last-modified": [
+          "Sun, 01 Nov 2026 22:12:42 GMT"
+        ],
+        "cache-control": [
+          "no-cache, no-store, must-revalidate"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 8987,
+      "bodySha256": "422bb853e6101ee7827ea7e86e930041b62de064080d481d1cd1ea5dfec78e20",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/melamedlaw/index.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://client.melamedlaw.co.il/asset-manifest.json",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:49.042240+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:49.120372+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://client.melamedlaw.co.il/asset-manifest.json",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "application/json"
+        ],
+        "last-modified": [
+          "Sun, 01 Nov 2026 22:12:40 GMT"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 15913,
+      "bodySha256": "8c62dc797b80ea980c018f565fe350dc243fefe397378b51cfce518b83e1b2e6",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/melamedlaw/manifest.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://client.melamedlaw.co.il/static/js/vendor-pdf.f63c2819.js",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:49.121385+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:49.265474+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://client.melamedlaw.co.il/static/js/vendor-pdf.f63c2819.js",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "cache-control": [
+          "public, max-age=604800, immutable"
+        ],
+        "content-type": [
+          "application/javascript"
+        ],
+        "last-modified": [
+          "Sun, 25 Oct 2026 18:27:25 GMT"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 431775,
+      "bodySha256": "0848428eb81a4c5936b219d82f3e476bcea679ef940cc6cd184a91ef14055607",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/melamedlaw/entry-0.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://client.melamedlaw.co.il/static/js/vendor-i18n.40936357.js",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:49.266053+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:49.387663+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://client.melamedlaw.co.il/static/js/vendor-i18n.40936357.js",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "cache-control": [
+          "public, max-age=604800, immutable"
+        ],
+        "content-type": [
+          "application/javascript"
+        ],
+        "last-modified": [
+          "Sun, 25 Oct 2026 18:27:23 GMT"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 58666,
+      "bodySha256": "db33fc70cd1ea43bcaed46ca02cb186cdd8480a3580b8f17af4eade2a341100c",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/melamedlaw/entry-1.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://client.melamedlaw.co.il/static/js/vendor-react.094da8d9.js",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:49.388092+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:49.625808+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://client.melamedlaw.co.il/static/js/vendor-react.094da8d9.js",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "cache-control": [
+          "public, max-age=604800, immutable"
+        ],
+        "content-type": [
+          "application/javascript"
+        ],
+        "last-modified": [
+          "Sun, 25 Oct 2026 18:27:32 GMT"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 185944,
+      "bodySha256": "d7a816163d60b5282f0f8a1de60af3ac73d46ec4413680af99e540d0e0d8bfc5",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/melamedlaw/entry-2.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://client.melamedlaw.co.il/static/js/vendor.2a0dc768.js",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:49.626239+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:49.759834+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://client.melamedlaw.co.il/static/js/vendor.2a0dc768.js",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "cache-control": [
+          "public, max-age=604800, immutable"
+        ],
+        "content-type": [
+          "application/javascript"
+        ],
+        "last-modified": [
+          "Sun, 01 Nov 2026 18:49:04 GMT"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 236759,
+      "bodySha256": "25569d049b110b7f71fa75ef8bc1319953db4bf4bd680c6c5fadec3f33916386",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/melamedlaw/entry-3.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://client.melamedlaw.co.il/static/css/main.42e8b4df.css",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:49.760279+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:49.937478+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://client.melamedlaw.co.il/static/css/main.42e8b4df.css",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "cache-control": [
+          "public, max-age=604800, immutable"
+        ],
+        "content-type": [
+          "text/css"
+        ],
+        "last-modified": [
+          "Sun, 01 Nov 2026 18:48:35 GMT"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 243695,
+      "bodySha256": "1f46257b0dc85897caf35388b1d6898e330e126aa4c9fec75f3df0486f0afcd2",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/melamedlaw/entry-4.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://client.melamedlaw.co.il/static/js/main.3b3274f2.js",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:49.937946+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:50.286131+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://client.melamedlaw.co.il/static/js/main.3b3274f2.js",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "cache-control": [
+          "public, max-age=604800, immutable"
+        ],
+        "content-type": [
+          "application/javascript"
+        ],
+        "last-modified": [
+          "Sun, 01 Nov 2026 22:07:16 GMT"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 1921633,
+      "bodySha256": "9756ed5f60153537d61e60db9bb4d59230a187e59cdf2751532bb84396d6482e",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/melamedlaw/entry-5.body",
+      "httpErrorCodeOnly": null
+    }
+  ],
+  "holds": [],
+  "scope": "Public static bytes only; no JavaScript execution/API/provider/customer data",
+  "htmlReferences": [
+    {
+      "tag": "link",
+      "reference": "https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap",
+      "attributes": {
+        "href": "https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap",
+        "rel": "stylesheet"
+      }
+    },
+    {
+      "tag": "script",
+      "reference": "/static/js/vendor-pdf.f63c2819.js",
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-pdf.f63c2819.js"
+      }
+    },
+    {
+      "tag": "script",
+      "reference": "/static/js/vendor-i18n.40936357.js",
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-i18n.40936357.js"
+      }
+    },
+    {
+      "tag": "script",
+      "reference": "/static/js/vendor-react.094da8d9.js",
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-react.094da8d9.js"
+      }
+    },
+    {
+      "tag": "script",
+      "reference": "/static/js/vendor.2a0dc768.js",
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor.2a0dc768.js"
+      }
+    },
+    {
+      "tag": "script",
+      "reference": "/static/js/main.3b3274f2.js",
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/main.3b3274f2.js"
+      }
+    },
+    {
+      "tag": "link",
+      "reference": "/static/css/main.42e8b4df.css",
+      "attributes": {
+        "href": "/static/css/main.42e8b4df.css",
+        "rel": "stylesheet"
+      }
+    }
+  ],
+  "metaCsp": [],
+  "headerCsp": [],
+  "headerCspReportOnly": [],
+  "currentEntrypoints": [
+    "static/js/vendor-pdf.f63c2819.js",
+    "static/js/vendor-i18n.40936357.js",
+    "static/js/vendor-react.094da8d9.js",
+    "static/js/vendor.2a0dc768.js",
+    "static/css/main.42e8b4df.css",
+    "static/js/main.3b3274f2.js"
+  ],
+  "historicalEntrypoints": [
+    "static/js/vendor-pdf.f63c2819.js",
+    "static/js/vendor-i18n.40936357.js",
+    "static/js/vendor-react.094da8d9.js",
+    "static/js/vendor.2a0dc768.js",
+    "static/css/main.42e8b4df.css",
+    "static/js/main.3b3274f2.js"
+  ],
+  "indexMatchesHistoricalPublished": true,
+  "manifestMatchesHistoricalPublished": true,
+  "assets": [
+    {
+      "path": "static/js/vendor-pdf.f63c2819.js",
+      "httpBodySha256": "0848428eb81a4c5936b219d82f3e476bcea679ef940cc6cd184a91ef14055607",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    },
+    {
+      "path": "static/js/vendor-i18n.40936357.js",
+      "httpBodySha256": "db33fc70cd1ea43bcaed46ca02cb186cdd8480a3580b8f17af4eade2a341100c",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    },
+    {
+      "path": "static/js/vendor-react.094da8d9.js",
+      "httpBodySha256": "d7a816163d60b5282f0f8a1de60af3ac73d46ec4413680af99e540d0e0d8bfc5",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    },
+    {
+      "path": "static/js/vendor.2a0dc768.js",
+      "httpBodySha256": "25569d049b110b7f71fa75ef8bc1319953db4bf4bd680c6c5fadec3f33916386",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    },
+    {
+      "path": "static/css/main.42e8b4df.css",
+      "httpBodySha256": "1f46257b0dc85897caf35388b1d6898e330e126aa4c9fec75f3df0486f0afcd2",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    },
+    {
+      "path": "static/js/main.3b3274f2.js",
+      "httpBodySha256": "9756ed5f60153537d61e60db9bb4d59230a187e59cdf2751532bb84396d6482e",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    }
+  ],
+  "entrypointsMatchHistorical": true,
+  "allFetchedEntrypointsBound": true,
+  "indexSha256": "422bb853e6101ee7827ea7e86e930041b62de064080d481d1cd1ea5dfec78e20",
+  "manifestSha256": "8c62dc797b80ea980c018f565fe350dc243fefe397378b51cfce518b83e1b2e6",
+  "privateIndexPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/melamedlaw/index.body",
+  "privateManifestPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/melamedlaw/manifest.body",
+  "snapshotResult": "PASS_STATIC_SNAPSHOT",
+  "allScriptAndLinkIntegrityAttributes": [],
+  "scriptBodies": [
+    {
+      "bodySha256": "2619e69cec45286ff4b6d4e87eedcf6a6b96aa40dbd2e11e91f87fda7f7dc490",
+      "bodyBytes": 1112,
+      "attributes": {
+        "type": "application/ld+json"
+      }
+    },
+    {
+      "bodySha256": "479d0158acab176af08d1b1f3dd1db41065548b89610076d2e4e2e412745dd53",
+      "bodyBytes": 256,
+      "attributes": {
+        "type": "application/ld+json"
+      }
+    },
+    {
+      "bodySha256": "88c675c85496b14a9aba586dce8482384ed45e2cb828afe118ce8afce1ca600b",
+      "bodyBytes": 3587,
+      "attributes": {}
+    },
+    {
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyBytes": 0,
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-pdf.f63c2819.js"
+      }
+    },
+    {
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyBytes": 0,
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-i18n.40936357.js"
+      }
+    },
+    {
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyBytes": 0,
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-react.094da8d9.js"
+      }
+    },
+    {
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyBytes": 0,
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor.2a0dc768.js"
+      }
+    },
+    {
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyBytes": 0,
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/main.3b3274f2.js"
+      }
+    }
+  ],
+  "styleBodies": [],
+  "structureScope": "All actual script/link tags checked, including non-entrypoint and inline tags; no JavaScript executed."
+}

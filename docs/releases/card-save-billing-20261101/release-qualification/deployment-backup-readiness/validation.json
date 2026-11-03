@@ -1,0 +1,7 @@
+{
+  "jsonParsed": 8,
+  "relativeMarkdownLinksValid": 23,
+  "latestConstraint": "NO_NEW_ENVIRONMENT_ANYWHERE_EXISTING_QA_ONLY",
+  "boundedRestoreDiscoverySshCallsPerHost": 1,
+  "newEnvironmentOrDatabaseConnectionOrRestoreOperations": 0
+}

@@ -1,0 +1,86 @@
+{
+  "deployment.json": {
+    "bytes": 7619,
+    "sha256": "bc5a00ed6906c53ac418e1869e598b10213d758d35048c06f1af9391a0651b65"
+  },
+  "operators/frontend-publication.py": {
+    "bytes": 12369,
+    "sha256": "325fd67dcdee15c2760e121a6ae8328308dc88c6b3b50d08c7f48cbcbe588dd4"
+  },
+  "operators/melamed-baseline-recovery.py": {
+    "bytes": 2900,
+    "sha256": "2a87bad34b11862016f33ebaa1c1e0c1efee84da7629e999f81d8498fcb52e59"
+  },
+  "operators/melamed-ftps-publication.py": {
+    "bytes": 13090,
+    "sha256": "db45040967c07241d45607e17883ec3c14a294a0a8aaccd33cd0a2deae4a70fb"
+  },
+  "operators/melamed-ftps-tests.py": {
+    "bytes": 5095,
+    "sha256": "b7ab1507cb06fa714caf021e77af672b4345e4da0945f94312bc3d463fd09397"
+  },
+  "operators/prepare-melamed-v3-and-drain-tests.py": {
+    "bytes": 3965,
+    "sha256": "28ba461f9684bbcfabc4cf1965b4ac98eeb53d312007e2554654e8defd960679"
+  },
+  "operators/production-backend-v2.py": {
+    "bytes": 12756,
+    "sha256": "2850a70e14b43bf5febf6ca681e38b322063b599027d014db127fde6874c711f"
+  },
+  "operators/production-backend-v3.py": {
+    "bytes": 13114,
+    "sha256": "d09394cd260c6d08c94beebb3d875938b4609d8193e203b738023b3848a493e1"
+  },
+  "operators/production-guard-tests.py": {
+    "bytes": 5889,
+    "sha256": "0f9934fb9fbb53f1af9aee757b037a315e950cc871d8b741d8cbc91196ac3391"
+  },
+  "operators/production-rpc-tests.cjs": {
+    "bytes": 2771,
+    "sha256": "fb0b52718e00b1f87c3d46643c2270652bac32338040e56d38982b1c4f250bad"
+  },
+  "operators/production-run.py": {
+    "bytes": 3970,
+    "sha256": "b5e595cdc255a8d1fa09d1a44b6832886b4504f353593da4bbb2c489d132cf55"
+  },
+  "operators/qa-forward-journal-v4.py": {
+    "bytes": 30747,
+    "sha256": "602bbee24d829ca8def4b5a267d1ef8824d72227dcf23dbad336070929220fa2"
+  },
+  "operators/qa-normal-return-journal-v4.py": {
+    "bytes": 18598,
+    "sha256": "20377218c8eca9da38617d354070b3de25542934df526420ae391167eeaced71"
+  },
+  "operators/qa-return-drain-snapshot.py": {
+    "bytes": 17031,
+    "sha256": "0948aeb31f0df49fd6d4afaec0e1a6c5b430f587cd7719a4813e7116bd6d0683"
+  },
+  "qualification/frontend-stdin-transport.json": {
+    "bytes": 78,
+    "sha256": "4cf5bb03710494c3b2fa368cef6b2ea30b3b1555f4ff2cf1948103315604c8bb"
+  },
+  "qualification/melamed-ftps-before-read-reconnect.json": {
+    "bytes": 1649,
+    "sha256": "7c917f1d004a75f38f1438ac19e2dcabbe9057fa1c195967cde57c7d019ef6e6"
+  },
+  "qualification/melamed-ftps.json": {
+    "bytes": 1814,
+    "sha256": "98778b0f936e927f7fc4120e7a47898f3e2edc481aaede47d90607764e3fdec2"
+  },
+  "qualification/production-guards.json": {
+    "bytes": 1446,
+    "sha256": "fcf0760a9eaef548ad77b0d716d67a0c85d570a970c17486599cf8c9d7772abf"
+  },
+  "qualification/qa-frontend-handoff.json": {
+    "bytes": 1096,
+    "sha256": "87c4b2aa609462f78fd01051f3308710b05bc01aa318b0b2f51a9f1988f0fe59"
+  },
+  "qualification/qa-transition-delta.json": {
+    "bytes": 1670,
+    "sha256": "9122a7df972f3ccf133ff1b5e005f71ab9a79f7bc04292ce1fd5e99bc3c89c2b"
+  },
+  "qualification/stopped-session-drain.json": {
+    "bytes": 368,
+    "sha256": "801de498b12776d359d891fea859267673e04a52976da6efea4f776c9a7513da"
+  }
+}

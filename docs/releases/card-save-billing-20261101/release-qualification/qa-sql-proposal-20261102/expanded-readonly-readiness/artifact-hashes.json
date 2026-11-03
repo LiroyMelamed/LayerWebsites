@@ -1,0 +1,12 @@
+{
+  "README.md": "b78219389ca671c09bfc491ea936c8c164ddc776de74568d52d178b95f256881",
+  "backend-expanded-inventory.json": "292006fc1ecfc19d4562d7aded067b8b9d72a41341b52d1420c6e9629c2a2241",
+  "backend-targeted-archive-evidence.json": "f54bc1a2b0013c75d856e86a94ff7db54a95cf5326552dcadca11acd495fc07e",
+  "current-qa-preflight.json": "576c51d0ce50139709655f42b1758069d484880e7a3a344cada36c8add23ab3c",
+  "expanded-readiness-summary.json": "f239eb7103c6e56b45fb7c3acc77e384c4f858c2ad11466522f395330fcef8ae",
+  "frontend-expanded-inventory.json": "640c8ad1a36c3edfbfb939bd5f9c0179b607c50f4cdb3801c467685260a984d2",
+  "local-rollback/README.md": "771ea8857d58418df76b1bdca10fa3fa68efd96e9bc06527ff28f4590067d0d5",
+  "local-rollback/archive-evidence.json": "ee7fcd9aba01a1addbbb32f8c75d2cebdf097753fd4118136b5bf57ea29ef30b",
+  "local-rollback/summary.json": "a38eaa52b2487c67e9416c5208e0d49ff0989a865a6089ccd07228df014a17b5",
+  "preflight-collector.py": "64ea66420548773401174df35e8a6e1bd985781784856bbe70dd5fbf2d9b9693"
+}

@@ -1,0 +1,25 @@
+# REVIEW TEMPLATE ONLY — NOT EXECUTED.
+# Existing QA selector shown. For a customer, substitute BOTH exact selector and
+# matching existing tenant lock from routine-backup-review.json.
+# If the coordinator already holds the maintenance lock exclusively, reuse its
+# approved lock lifetime; do not reopen the same lock and deadlock yourself.
+set -eu
+exec 8</run/lock/melamedia-release-maintenance.lock
+flock --shared --nonblock 8
+exec 9</run/lock/melamedia-legal-melamedia-release.lock
+flock --shared --nonblock 9
+# Retention checks service state, not manual producers. Its existing lock is
+# therefore held shared for this entire manual run. Missing/busy means HOLD.
+exec 7</var/lib/melamedia-backup-retention/.lock
+flock --shared --nonblock 7
+sha256sum --status --check <<'EXPECTED_SHA256'
+085b3d946f475d1ad8ebd78f60aed389d6fea661963e34389b8991d339b2d160  /usr/local/sbin/melamedia-server-backup.py
+a9368f14409c3c8551af638d2de5a679fde66e2fb90e803f65655fe1c06286f9  /etc/melamedia-backup.d/config.json
+EXPECTED_SHA256
+# Existing producer itself obtains this global backup lock EX/NB for its whole
+# run. Do not hold it SH while invoking the producer; do not create a replacement.
+test -f /var/backups/melamedia-recovery/.lock
+test ! -L /var/backups/melamedia-recovery/.lock
+python3 -I /usr/local/sbin/melamedia-server-backup.py \
+  --config /etc/melamedia-backup.d/config.json \
+  --project melamedia-recovery

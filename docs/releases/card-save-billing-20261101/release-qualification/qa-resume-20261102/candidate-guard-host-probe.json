@@ -1,0 +1,34 @@
+{
+  "atUtc": "2026-11-02T04:37:02.149313+00:00",
+  "qaPidBeforeAfter": 2729957,
+  "qaHeadBeforeAfter": "545779e4b99e111959f4684167dfdf46da1f3186",
+  "probeScriptSha256": "69d37412957fe047e148e8f7e28db1c5882c01cb5f7f5213b4628443e2adfdc6",
+  "nodeExecutableSha256": "3517c2df0b2f8cd7f422b4b8450ef81c6889f08eb03e281d6de9079b15e6a327",
+  "result": {
+    "node": "v22.23.2",
+    "platform": "linux",
+    "arch": "x64",
+    "probe": "FROZEN_CANDIDATE_ONLY_NOT_RUNNING_QA_APP",
+    "qualifiedSource": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+    "sourceHashes": {
+      "backend/lib/billing/billingOperations.js": "50932a1b1e8d9e167cd6ae377d2cea21d45344f191a24dce59aca6cb74f3d10f",
+      "backend/lib/payments/takbullCredentials.js": "5289997c9dbea082bdfff6c7437935236cbf02235819e8b69e8e29b51d429c8d",
+      "backend/lib/payments/takbullClient.js": "9cd2d96d4644071de5baad44035a925d71085bad55f18ff30cff3a3aecb6afa6",
+      "backend/lib/payments/verifySignupPayment.js": "65157d1c97ac6a7f7f87fd9b5c8891df9e65c3e21d77aae71c50ecbf43e90c90"
+    },
+    "passedProviderBoundaryCases": 9,
+    "flagCases": 7,
+    "networkCanaries": 4,
+    "nativeFetchCalls": 0,
+    "injectedFetchCalls": 0,
+    "unmockedNetworkAttempts": 0,
+    "applicationDatabaseImports": 0,
+    "qaApplicationBoots": 0,
+    "newDatabaseOrRole": 0,
+    "sourceOrConfigurationWrites": 0
+  },
+  "qaServiceChanges": 0,
+  "newDatabaseOrEnvironment": 0,
+  "providerRequests": 0,
+  "mode": "one-shot no-IO VM candidate probe on existing QA host, not QA app/payment integration"
+}
