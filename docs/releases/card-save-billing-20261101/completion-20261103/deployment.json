@@ -1,0 +1,178 @@
+{
+  "status": "ALL_FOUR_DEPLOYED_AND_BROWSER_VERIFIED",
+  "recordedAtUtc": "2026-11-03T11:39:22.186745+00:00",
+  "order": [
+    "Melamedia",
+    "AshrafEssa",
+    "MelamedLaw",
+    "MorLevi"
+  ],
+  "excluded": [
+    "Idm"
+  ],
+  "sharedRuntime": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "upstreamCutoff": "074df7520497a0cd6bd95ad70353201c905f0aa6",
+  "targets": [
+    {
+      "target": "Melamedia",
+      "sourceCommit": "8d897c207d6bd30fdee108a52e0eb3b89f025f03",
+      "backendStatus": "PASS_QA_SOURCE_ACTIVATED_AND_NORMAL_BEHAVIOR_RETURNED",
+      "backendCompletedAtUtc": "2026-11-03T10:54:09.284218+00:00",
+      "frontendStatus": "PASS_QA_FRONTEND_STATIC_AND_HTTPS_NORMAL_BACKEND_ALREADY_VERIFIED_BROWSER_QA_PENDING",
+      "frontendCompletedAtUtc": "2026-11-03T10:57:15.990488+00:00",
+      "originalBehaviorRestored": true,
+      "backendReceiptSha256": "42868009a3170e72ef8c6ae01e5d90222af5503bf1669bee05ae6b2ed7f90d5c",
+      "frontendReceiptSha256": "a734fc258d1e7a9bc3ba8a4d54a0be9f0bf00ab3720572a1b10d439d6d2bced7",
+      "browser": {
+        "page": "https://melamedia.mela-media.co.il/AdminStack/PlanUsage",
+        "mainBundle": "main.4fac0bab.js",
+        "rendered": true,
+        "consoleErrors": 0,
+        "paymentControlsActivated": false
+      }
+    },
+    {
+      "target": "AshrafEssa",
+      "sourceCommit": "bb43a7efa687403576b53c3c331b37e7c673f52f",
+      "backendStatus": "PASS_NAMED_PRODUCTION_BACKEND_SOURCE_AND_HEALTH",
+      "backendCompletedAtUtc": "2026-11-03T11:13:13.994212+00:00",
+      "frontendStatus": "PASS_PRODUCTION_FRONTEND_VERIFIED",
+      "frontendCompletedAtUtc": "2026-11-03T11:21:56.505739+00:00",
+      "healthStatus": 200,
+      "originalBehaviorFlagsPreserved": true,
+      "observedFinancialWorkerRowsUnchanged": true,
+      "backendReceiptSha256": "5355202d829d41d8ad9e3bf78c85df616ae0b53cd40bb349d695ea5e136fff8d",
+      "frontendReceiptSha256": "24040db580f76a312045b61107cb0e5046f68bcd4fd56ce492e4a4f390782699",
+      "httpsReadbacks": [
+        {
+          "url": "https://ashrafessa.mela-media.co.il/",
+          "sha256": "ecd3a647875b726145fc96dc8be7490037c2a37fca82fdea8a9c13d28d906161",
+          "httpStatus": 200
+        },
+        {
+          "url": "https://ashrafessa.mela-media.co.il/asset-manifest.json",
+          "sha256": "11c71d828966d9edb79dbb5b3d663bca229cc353bc56f13b64744090954e103b",
+          "httpStatus": 200
+        }
+      ],
+      "oldChunksDeleted": 0,
+      "browser": {
+        "page": "https://ashrafessa.mela-media.co.il/LoginStack/LoginScreen",
+        "mainBundle": "main.70cbd7b3.js",
+        "rendered": true,
+        "consoleErrors": 0,
+        "loginOrPaymentControlsActivated": false
+      }
+    },
+    {
+      "target": "MelamedLaw",
+      "sourceCommit": "054de1ce94f9937e4694e11ac864690c32c6789b",
+      "backendStatus": "PASS_NAMED_PRODUCTION_BACKEND_SOURCE_AND_HEALTH",
+      "backendCompletedAtUtc": "2026-11-03T11:26:43.301637+00:00",
+      "frontendStatus": "PASS_PRODUCTION_FRONTEND_VERIFIED",
+      "frontendCompletedAtUtc": "2026-11-03T11:33:08.088785+00:00",
+      "healthStatus": 200,
+      "originalBehaviorFlagsPreserved": true,
+      "observedFinancialWorkerRowsUnchanged": true,
+      "backendReceiptSha256": "74e71cca2a698baabcbfb4cc3f164bc4d0848e96ce283b2daecdb240198cc98e",
+      "frontendReceiptSha256": "533a70ea9e281537b64710eb2cfac90dd2ba17385a8462ac882f1a5eeac587fb",
+      "httpsReadbacks": [
+        {
+          "path": "index.html",
+          "httpStatus": 200,
+          "sha256": "dd22569aab1c2b5496e571dd8f31b110562c31ad6ab97c6db333b556cfb61969"
+        },
+        {
+          "path": "asset-manifest.json",
+          "httpStatus": 200,
+          "sha256": "1b3fe3e59fcb125c990b9c7a46c44694e8cece9da5db4d31775af915c4b57045"
+        },
+        {
+          "path": "static/js/vendor-pdf.9b7d4296.js",
+          "httpStatus": 200,
+          "sha256": "8f440f93f296a3995c5c232a9ed0b6107cc5dca0817fe01fdc3e1158ce5007b8"
+        },
+        {
+          "path": "static/js/vendor-i18n.074fe7e8.js",
+          "httpStatus": 200,
+          "sha256": "0b54c73fe503ff070e0be2973e3ef62d598aa9a463ab0cde147c30da36e5f8b3"
+        },
+        {
+          "path": "static/js/vendor-react.bc82a7fe.js",
+          "httpStatus": 200,
+          "sha256": "042761bb8b22548a8908f1cc753ec1002c6f020201818dcd77e49076a14aeaa7"
+        },
+        {
+          "path": "static/js/vendor.7b6aff43.js",
+          "httpStatus": 200,
+          "sha256": "874b9c0c8aa07a5227e01df45b2fac7d8822e159a655f770ae5486efcb218117"
+        },
+        {
+          "path": "static/css/main.4d9ec64c.css",
+          "httpStatus": 200,
+          "sha256": "ab844801462f1e34a41161761b5b6564f02598e758025382123431abdcc6e349"
+        },
+        {
+          "path": "static/js/main.811b5597.js",
+          "httpStatus": 200,
+          "sha256": "84d880473291e21aaa75974ab68d0c2028827f0f6bf0c87fdec68a33cfffeda5"
+        }
+      ],
+      "oldChunksDeleted": 0,
+      "browser": {
+        "page": "https://client.melamedlaw.co.il/LoginStack/LoginScreen",
+        "mainBundle": "main.811b5597.js",
+        "rendered": true,
+        "consoleErrors": 0,
+        "loginOrPaymentControlsActivated": false
+      }
+    },
+    {
+      "target": "MorLevi",
+      "sourceCommit": "4626da74b64ad4189f8a71515c1bc04ba45378cd",
+      "backendStatus": "PASS_NAMED_PRODUCTION_BACKEND_SOURCE_AND_HEALTH",
+      "backendCompletedAtUtc": "2026-11-03T11:34:17.287834+00:00",
+      "frontendStatus": "PASS_PRODUCTION_FRONTEND_VERIFIED",
+      "frontendCompletedAtUtc": "2026-11-03T11:34:51.045927+00:00",
+      "healthStatus": 200,
+      "originalBehaviorFlagsPreserved": true,
+      "observedFinancialWorkerRowsUnchanged": true,
+      "backendReceiptSha256": "ddedc3784b6c95bf1e95996176f601db1d2b3804d5891e79e0b9351a3d4fabf7",
+      "frontendReceiptSha256": "683041d7afbe28af4875902520a71812725ea48cc6ed85ae3a2d7bf93fd95f7c",
+      "httpsReadbacks": [
+        {
+          "url": "https://morlevy.mela-media.co.il/",
+          "sha256": "5535f7bd0b19569539606195f47c51c240542ee996546fce58af30cf9fa098f1",
+          "httpStatus": 200
+        },
+        {
+          "url": "https://morlevy.mela-media.co.il/asset-manifest.json",
+          "sha256": "e37ec7ed29bb1ea0b8868b750b7e3b993bc5c08893bedbd9f84d7726e1df3aba",
+          "httpStatus": 200
+        }
+      ],
+      "oldChunksDeleted": 0,
+      "browser": {
+        "page": "https://morlevy.mela-media.co.il/LoginStack/LoginScreen",
+        "mainBundle": "main.bc38222f.js",
+        "rendered": true,
+        "consoleErrors": 0,
+        "loginOrPaymentControlsActivated": false
+      }
+    }
+  ],
+  "databaseMigrations": 0,
+  "manualCustomerDataWrites": 0,
+  "intentionalProviderOperations": 0,
+  "testChargesDocumentsEmailsSMS": 0,
+  "ownerWaivedPeriodsPreserved": true,
+  "applicationTestsRerunOnWindows": 0,
+  "gitPublication": "Separate atomic fast-forward/tag push after this receipt; do not infer remote Git completion from deployment status",
+  "knownLimits": [
+    "No real provider end-to-end payment/document/email operation",
+    "Production browser checks cover login rendering, not authenticated payment submission",
+    "Historical full signup/profile fixtures unavailable",
+    "One current Melamed frontend runtime checkpoint; three inactive full FTP frontend releases not certified",
+    "Selected unrelated signup/integration SELECT privileges unavailable in Ashraf/Mor; no alternative role or grants used"
+  ]
+}

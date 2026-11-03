@@ -1,0 +1,45 @@
+{
+  "status": "PASS_NEW_PRODUCTION_OPERATION_GUARDS",
+  "financialGuardCases": 18,
+  "namedPm2VmCases": 30,
+  "applicationTestsRerun": 0,
+  "operatorSha256": "2850a70e14b43bf5febf6ca681e38b322063b599027d014db127fde6874c711f",
+  "tests": [
+    "AshrafEssa existing financial state accepted",
+    "AshrafEssa rejects transaction",
+    "AshrafEssa rejects unresolved",
+    "AshrafEssa rejects due",
+    "AshrafEssa rejects claim",
+    "AshrafEssa detects billing field drift",
+    "MelamedLaw existing financial state accepted",
+    "MelamedLaw rejects transaction",
+    "MelamedLaw rejects unresolved",
+    "MelamedLaw rejects due",
+    "MelamedLaw rejects claim",
+    "MelamedLaw detects billing field drift",
+    "MorLevi existing financial state accepted",
+    "MorLevi rejects transaction",
+    "MorLevi rejects unresolved",
+    "MorLevi rejects due",
+    "MorLevi rejects claim",
+    "MorLevi detects billing field drift",
+    {
+      "target": "AshrafEssa",
+      "checks": 10,
+      "status": "PASS_FAKE_OS_NAMED_PM2_CONTRACT"
+    },
+    {
+      "target": "MelamedLaw",
+      "checks": 10,
+      "status": "PASS_FAKE_OS_NAMED_PM2_CONTRACT"
+    },
+    {
+      "target": "MorLevi",
+      "checks": 10,
+      "status": "PASS_FAKE_OS_NAMED_PM2_CONTRACT"
+    }
+  ],
+  "additionalMetadataContractCases": 3,
+  "previous48CasesReused": true,
+  "inspectionNowAlsoVerifiesSnapshotConsumerContract": true
+}

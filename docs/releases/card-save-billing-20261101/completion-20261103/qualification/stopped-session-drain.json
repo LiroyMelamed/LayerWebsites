@@ -1,0 +1,8 @@
+{
+  "status": "PASS_NEW_PRODUCTION_OPERATION_GUARDS",
+  "operatorSha256": "d09394cd260c6d08c94beebb3d875938b4609d8193e203b738023b3848a493e1",
+  "newDrainTests": 5,
+  "recoveryBindingChecks": 2,
+  "reusedOriginalQualificationSha256": "fcf0760a9eaef548ad77b0d716d67a0c85d570a970c17486599cf8c9d7772abf",
+  "unchangedFinancialAndNoActiveTransactionGuards": true
+}
