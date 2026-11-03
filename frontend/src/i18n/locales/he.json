@@ -1131,6 +1131,8 @@
     "reminder1d": "יום לפני",
     "reminder2d": "יומיים לפני",
     "reminder1w": "שבוע לפני",
+    "reminder2w": "שבועיים לפני",
+    "reminder30d": "חודש לפני (30 יום)",
     "activeFilters": "סינון פעיל",
     "lawyersLegend": "מקרא עורכי דין",
     "noLawyers": "אין עורכי דין להצגה",
