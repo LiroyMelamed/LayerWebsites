@@ -2977,6 +2977,8 @@
     "reminder1d": "1 day before",
     "reminder2d": "2 days before",
     "reminder1w": "1 week before",
+    "reminder2w": "2 weeks before",
+    "reminder30d": "1 month before (30 days)",
     "activeFilters": "Active filters",
     "lawyersLegend": "Lawyer legend",
     "noLawyers": "No lawyers to display",
