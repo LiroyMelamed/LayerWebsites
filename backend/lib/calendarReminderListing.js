@@ -34,7 +34,7 @@ const calendarReminderSql = `
         CASE WHEN EXISTS(SELECT 1 FROM jsonb_array_elements_text(COALESCE(ce.reminders_sent_offsets,'[]'::jsonb)) k WHERE CASE WHEN k ~ ('^claim:'||audience.role||':'||offsets.minutes||':[0-9]+$') THEN split_part(k,':',4)::numeric ELSE NULL END < extract(epoch FROM NOW())*1000-900000) THEN 'פעולת השליחה הופסקה; יש לבדוק אם ההודעה נמסרה לפני שליחה חוזרת' ELSE NULL END::text AS error, ce.created_at, NULL::timestamptz AS sent_at,
         CASE WHEN ce.event_status = 'cancelled' THEN ce.updated_at ELSE NULL END AS cancelled_at,
         ce.id AS calendar_event_id, 'calendar'::text AS source,
-        audience.role::text AS audience, ce.reminder_channels AS channels,
+        audience.role::text AS audience, COALESCE(ce.reminder_channels->audience.role, ce.reminder_channels) AS channels,
         ce.start_time AS event_start_time
  FROM calendar_events ce
  CROSS JOIN LATERAL (VALUES

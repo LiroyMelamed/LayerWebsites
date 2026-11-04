@@ -305,3 +305,19 @@ test('company-name bindings fill human and legal-entity names independently', ()
     assert.equal(importDocx(result.buffer).parts[0].paragraphs[0].text, 'איש קשר דנה חברה חברת דוגמה');
     assert.equal(bind(model, 'role.landlord.companyName', 18, 22, { id: 'roleEntity' }).field, 'role.landlord.companyName');
 });
+
+test('named manual fields reuse the original template with different per-document values', () => {
+    const original = fixture(paragraph('גוש ____ חלקה ____'));
+    const model = importDocx(original);
+    const block = bind(model, 'manual.block', 4, 8, { fieldLabel: 'גוש' });
+    const parcel = bind(model, 'manual.parcel', 14, 18, { fieldLabel: 'חלקה', id: 'parcel' });
+    assert.equal(block.fieldLabel, 'גוש');
+    for (const [a,b] of [['0012','0034'], ['9876','54']]) {
+        const result = materializeDocx(original, { sourceHash: model.sourceHash, bindings: [block,parcel], values: { 'manual.block': a, 'manual.parcel': b } });
+        assert.equal(importDocx(result.buffer).parts[0].paragraphs[0].text, `גוש ${a} חלקה ${b}`);
+    }
+    assert.equal(importDocx(original).parts[0].paragraphs[0].text, 'גוש ____ חלקה ____');
+    assert.throws(() => bind(model, 'manual.block', 4, 8), code('INVALID_BINDING'));
+    assert.throws(() => bind(model, 'manual.block', 4, 8, { fieldLabel: 'x'.repeat(81) }), code('INVALID_BINDING'));
+    assert.throws(() => materializeDocx(original, { sourceHash: model.sourceHash, bindings: [block,parcel], values: { 'manual.block':'12' } }), code('MISSING_REQUIRED_VALUE'));
+});

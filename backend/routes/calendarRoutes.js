@@ -103,6 +103,7 @@ router.get('/google/callback', require('../middlewares/publicOfficeScope').calen
 router.get('/google/status', ...calView, cal.getGoogleStatus);
 router.delete('/google/disconnect', ...calManage, cal.disconnectGoogle);
 router.post('/google/sync', ...calManage, cal.syncGoogleEvents);
+router.post('/google/conflicts/:eventId', ...calManage, cal.resolveGoogleConflict);
 
 // ─── Outlook Calendar ───────────────────────────────────────────────────────
 router.get('/outlook/auth-url', ...calManage, cal.getOutlookAuthUrl);

@@ -1067,7 +1067,7 @@
     "googleSyncSuccess": "סונכרנו {{count}} אירועים",
     "googleSyncError": "שגיאה בסנכרון Google Calendar",
     "googleCalendarTitle": "Google Calendar",
-    "googleConnectHint": "חבר את חשבון Google האישי שלך כדי לייבא אירועים ליומן במערכת.",
+    "googleConnectHint": "כל מנהל מחבר פעם אחת את חשבון Google האישי שלו. לאחר האישור, הפגישות שלו מסתנכרנות אוטומטית בשני הכיוונים — 30 יום אחורה ושנה קדימה.",
     "googleSyncDisabledByFirm": "סנכרון Google מושבת על ידי מנהל המשרד. ניתן להשתמש בקישור iCal האישי למטה.",
     "googleSyncFirmEnabled": "אפשר חיבור Google Calendar לעורכי דין",
     "googleSyncFirmEnabledHint": "כאשר כבוי, לא ניתן לחבר או לסנכרן Google — רק מדיניות המשרד. כל עורך דין מנהל את החיבור האישי שלו ממסך היומן.",
@@ -1248,7 +1248,21 @@
     "importInviteConfirm": "אישור הייבוא ליומן שלי",
     "importInviteResult": "נוספו {{created}}, עודכנו {{updated}}, בוטלו {{cancelled}}, ללא שינוי {{unchanged}}.",
     "sendInvitationOnSave": "שליחת זימון במייל וב־SMS עם שמירת הפגישה",
-    "recurrenceEndRequired": "בחרו תאריך סיום לחזרה, שאינו מוקדם מהאירוע הראשון."
+    "recurrenceEndRequired": "בחרו תאריך סיום לחזרה, שאינו מוקדם מהאירוע הראשון.",
+    "lawyerReminderChannels": "ערוצי תזכורת לעורכי דין",
+    "clientReminderChannels": "ערוצי תזכורת ללקוח",
+    "googleAutomaticActive": "סנכרון דו־כיווני אוטומטי פעיל. השינויים נבדקים מדי דקה.",
+    "googleAutomaticPaused": "הסנכרון האוטומטי אינו פעיל כרגע. אפשר לסנכרן ידנית.",
+    "googleLastSync": "סנכרון אחרון: {{time}}",
+    "googleSubscriptionHint": "אם הוספת בעבר את יומן המשרד ל־Google דרך קישור לקריאה בלבד, הסתר אותו ב־Google כדי לא להציג את אותם אירועים פעמיים.",
+    "googleSyncNeedsAttention": "חלק מהאירועים דורשים בדיקה. שינויים שנכשלו ינסו להסתנכרן שוב; הבדלים מוצגים כאן לבחירתך.",
+    "googleSyncBusy": "הסנכרון כבר מתבצע ברקע.",
+    "googleConflictTitle": "שינויים בשני היומנים",
+    "googleConflictHint": "האירוע השתנה בשני היומנים. בחרו איזו גרסה לשמור.",
+    "googleUsePlatform": "שמירת גרסת הפלטפורמה",
+    "googleUseGoogle": "שמירת גרסת Google",
+    "googleCancelledVersion": "האירוע בוטל",
+    "googleConflictResolved": "הבחירה נשמרה והיומנים סונכרנו."
   },
   "planUsage": {
     "title": "תכנית ושימוש",
@@ -2266,8 +2280,8 @@
     "calendarReminderOptionsTitle": "זמני תזכורת זמינים",
     "calendarReminderOptionsHint": "בחרו אילו זמנים יהיו זמינים לבחירה. ברירות המחדל לעורכי דין וללקוחות מוגדרות בנפרד בהמשך.",
     "calendarRemindersPollMinutes": "תדירות בדיקה (דקות)",
-    "calendarReminderChannelsTitle": "ערוצי שליחה זמינים לעורכי דין",
-    "calendarReminderChannelsHint": "בחר אילו ערוצים יוצגו בעת יצירת תזכורות לאירוע (Push, SMS, אימייל).",
+    "calendarReminderChannelsTitle": "ערוצי תזכורת זמינים",
+    "calendarReminderChannelsHint": "בחרו אילו ערוצים אפשר לבחור לתזכורות לעורכי דין וללקוחות.",
     "leadNotifEmail": "📧 אימייל להתראות לידים",
     "leadNotifEmailDesc": "כאשר מבקר משאיר מספר טלפון בצ'אט, תישלח התראה עם תמלול השיחה לכתובת זו",
     "notifEmailPlaceholder": "כתובת אימייל להתראות",
@@ -2327,7 +2341,10 @@
     "calendarInviteRsvpHint": "הזמנת הגעה נשלחת בהקדם. תזכורות נשלחות לפי לוח הזמנים שנבחר — ללא תלות בסטטוס RSVP.",
     "calendarLawyerDefaults": "ברירת מחדל — תזכורות לעורכי דין",
     "calendarClientDefaults": "ברירת מחדל — תזכורות ללקוחות",
-    "calendarDefaultsHint": "הזמנים שיסומנו מראש באירוע חדש. ללא בחירה לא יישלחו תזכורות לקבוצה זו. אירועים קיימים אינם משתנים."
+    "calendarDefaultsHint": "הזמנים שיסומנו מראש באירוע חדש. ללא בחירה לא יישלחו תזכורות לקבוצה זו. אירועים קיימים אינם משתנים.",
+    "calendarLawyerChannelDefaults": "ערוצי ברירת מחדל לעורכי דין",
+    "calendarClientChannelDefaults": "ערוצי ברירת מחדל ללקוחות",
+    "calendarChannelDefaultsHint": "נבחרים מראש באירוע חדש. אפשר לשנות בכל אירוע; אירועים קיימים נשארים כפי שנשמרו."
   },
   "firmStaffRoles": {
     "title": "תפקידים והרשאות",
@@ -4031,6 +4048,9 @@
     "withdrawPrevious": "ביטול ההסכמה הקודמת"
   },
   "signingWord": {
+    "customFieldName": "שם השדה, למשל גוש או חלקה",
+    "addCustomField": "הוספת שדה ידני",
+    "customFieldHelp": "בכל מסמך חדש מהתבנית מזינים ערך לשדה הזה. הוא נשמר במסמך בלבד.",
     "open": "תבניות Word ומילוי נתונים",
     "title": "תבניות Word",
     "intro": "מעלים מקור, מסמנים מקומות למילוי ושומרים תבנית פרטית. לכל לקוח יוצרים מסמך חדש ובודקים אותו לפני הכנת החתימות.",
@@ -4095,6 +4115,7 @@
     "fieldLabel": "{{group}} · {{field}}",
     "roleField": "{{role}} · {{field}}",
     "groups": {
+      "manual": "מילוי ידני",
       "client": "לקוח",
       "case": "תיק",
       "office": "משרד"
@@ -4151,6 +4172,7 @@
     "useIntro": "בוחרים תבנית שמורה, ממלאים את פרטי המסמך ובודקים את התוצאה לפני הכנת החתימות.",
     "manageIntro": "מכינים תבנית לשימוש חוזר. פרטי לקוחות ומסמכים שמולאו אינם נשמרים בתבנית.",
     "manageTemplates": "ניהול תבניות",
+    "editTemplate": "עריכת התבנית",
     "useTemplates": "חזרה ליצירת מסמך",
     "chooseSourceHelp": "בחרו תבנית כדי להתחיל. הוספה ושינוי של תבניות זמינים בניהול התבניות.",
     "noTemplates": "עדיין אין תבניות Word שמורות. עברו לניהול תבניות כדי להעלות מקור ולהכין תבנית.",

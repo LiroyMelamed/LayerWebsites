@@ -83,17 +83,15 @@ export default function PotentialClientsPanel({
                                 clientDisplayName: item.leadName,
                             })}
                         >
-                            <TextBold14 numberOfLines={1}>
+                            <TextBold14 className="lw-commandCenter__potentialName" numberOfLines={1}>
                                 {item.leadName || item.title}
                             </TextBold14>
-                            <Text12 color={colors.winter} numberOfLines={1}>
+                            <Text12 className="lw-commandCenter__potentialTime" color={colors.winter} numberOfLines={1}>
                                 {formatDisplayTime(item.startTime)}
                                 {item.meetingCount > 1 ? ` · ${item.meetingCount} פגישות` : ""}
                                 {item.leadCaseName ? ` · ${item.leadCaseName}` : ""}
                             </Text12>
-                            {item.leadPhone && (
-                                <Text12 color={colors.winter}>{item.leadPhone}</Text12>
-                            )}
+                            <Text12 className="lw-commandCenter__potentialPhone" color={colors.winter}><bdi dir="ltr">{item.leadPhone || "—"}</bdi></Text12>
                         </SimpleContainer>
                     ))}
                 </SimpleContainer>

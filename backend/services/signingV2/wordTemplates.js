@@ -84,9 +84,14 @@ function rolesAndBindings(model, input, bytes) {
         if (spec.kind === 'insert' && input.bindingSchemaVersion !== 2) fail('WORD_AUTHORING_RENDER_REQUIRED', 422);
         if (typeof spec.field === 'string' && spec.field.startsWith('role.')) expect(keys.has(spec.field.split('.')[1]), 'INVALID_WORD_ROLE');
         // Rebuild hashes and ranges using the freshly imported server model.
-        return word(() => createBinding(model, { id: spec.id, field: spec.field, part: spec.part, paragraphId: spec.paragraphId,
+        return word(() => createBinding(model, { id: spec.id, field: spec.field, fieldLabel: spec.fieldLabel, part: spec.part, paragraphId: spec.paragraphId,
             start: spec.start, end: spec.end, required: spec.required, kind: spec.kind, affinity: spec.affinity }));
     });
+    const manualLabels = new Map();
+    for (const binding of bindings.filter(item => item.field.startsWith('manual.'))) {
+        expect(!manualLabels.has(binding.field) || manualLabels.get(binding.field) === binding.fieldLabel, 'INVALID_BINDING');
+        manualLabels.set(binding.field, binding.fieldLabel);
+    }
     if (bindings.length) word(() => materializeDocx(bytes, { sourceHash: model.sourceHash, bindings,
         values: Object.fromEntries(bindings.map(binding => [binding.field, 'x'])) }));
     return { roles, bindings, bindingsHash: digest({ roles, bindings }) };
@@ -156,7 +161,7 @@ async function save(pool, scope, id, input, { storage } = {}) {
             checkedInput = { ...input, bindings: input.bindings.map(spec => {
                 expect(plain(spec), 'INVALID_BINDING');
                 const selected = word(() => visual.resolveSelection(render.map, spec.selector));
-                return { ...selected.anchor, id: spec.id, field: spec.field, required: spec.required };
+                return { ...selected.anchor, id: spec.id, field: spec.field, fieldLabel: spec.fieldLabel, required: spec.required };
             }) };
         }
         const checked = rolesAndBindings(model, checkedInput, bytes);

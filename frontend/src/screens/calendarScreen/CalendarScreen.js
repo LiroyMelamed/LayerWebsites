@@ -672,6 +672,15 @@ export default function CalendarScreen() {
 
     fetchEventsRef.current = fetchEvents;
 
+    useEffect(() => {
+        const refreshVisible = () => {
+            if (document.visibilityState === 'visible') fetchEventsRef.current?.(null, { force: true });
+        };
+        const timer = setInterval(refreshVisible, 60_000);
+        document.addEventListener('visibilitychange', refreshVisible);
+        return () => { clearInterval(timer); document.removeEventListener('visibilitychange', refreshVisible); };
+    }, []);
+
     const scheduleFetchEvents = useCallback((range, opts) => {
         if (fetchDebounceRef.current) clearTimeout(fetchDebounceRef.current);
         fetchDebounceRef.current = setTimeout(() => {
@@ -1149,20 +1158,16 @@ export default function CalendarScreen() {
                             { value: "dayGridMonth", label: t("calendar.monthView") },
                         ]} />
 
-                    <SecondaryButton size={buttonSizes.SMALL}
-                        onPress={() => setFiltersPanelOpen((v) => !v)}
-                        aria-expanded={filtersPanelOpen} aria-controls="calendar-advanced-filters"
-                        aria-label={filtersPanelOpen ? t("calendar.closeFiltersAria") : t("calendar.openFiltersAria")}
-                        className={hasActiveFilters || query ? "lw-calendarScreen__filtersActive" : undefined}>
-                        {t("calendar.filtersTitle")}{hasActiveFilters || query ? " •" : ""}
-                    </SecondaryButton>
+
                 </div>
-                                <div className="lw-calendarRedesign__tools">
+                                <div className="lw-calendarRedesign__quickTools">
                                 <SecondaryButton size={buttonSizes.SMALL} onPress={() => selectDate(toLocalYmd(new Date()))}>{t("calendar.today")}</SecondaryButton>
                                 <SimpleButton type="button" className="lw-calendarRedesign__arrow" onPress={() => fetchEvents(null, { force: true })} aria-label={t("calendar.refreshEvents")}><RotateCw size={18} /></SimpleButton>
                                 {view !== "dayGridMonth" && <SecondaryButton size={buttonSizes.SMALL} onPress={() => setTimeLayout((value) => !value)} aria-pressed={timeLayout}>
                                     {timeLayout ? t("calendar.agendaLayout") : t("calendar.hoursLayout")}
                                 </SecondaryButton>}
+                                </div>
+                                <div className="lw-calendarRedesign__tools">
                                 <SecondaryButton
                                     size={buttonSizes.SMALL}
                                     className="lw-calendarScreen__expandBtn"
@@ -1171,6 +1176,13 @@ export default function CalendarScreen() {
                                 >
                                     {calendarExpanded ? t("calendar.collapseCalendar") : t("calendar.expandCalendar")}
                                 </SecondaryButton>
+                    <SecondaryButton size={buttonSizes.SMALL}
+                        onPress={() => setFiltersPanelOpen((v) => !v)}
+                        aria-expanded={filtersPanelOpen} aria-controls="calendar-advanced-filters"
+                        aria-label={filtersPanelOpen ? t("calendar.closeFiltersAria") : t("calendar.openFiltersAria")}
+                        className={hasActiveFilters || query ? "lw-calendarScreen__filtersActive" : undefined}>
+                        {t("calendar.filtersTitle")}{hasActiveFilters || query ? " •" : ""}
+                    </SecondaryButton>
                                 </div>
                             </SimpleContainer>
                     {/* Advanced filters stay inside the calendar, including fullscreen. */}

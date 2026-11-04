@@ -54,8 +54,6 @@ const { resolveShortLink } = require('../lib/publicShortLinks');
 const { lawyerMatchSql, personalCalendarSql } = require('../lib/calendarVisibility');
 const { isEventCancelled, normalizeEventStatus } = require('../lib/calendarEventStatus');
 const { signOAuthState, verifyOAuthState } = require('../lib/calendarOAuthState');
-const { googleCalendarEventTimes } = require('../lib/googleCalendarEventTimes');
-const { importInvitations } = require('../services/calendarInvitationImport');
 const { sendMessage } = require('../utils/sendMessage');
 const { sendTransactionalCustomHtmlEmail } = require('../utils/smooveEmailCampaignService');
 const { composeCalendarEmail } = require('../lib/calendarEmail');
@@ -148,7 +146,7 @@ function _buildOAuth2Client() {
     return new google.auth.OAuth2(
         process.env.GOOGLE_CLIENT_ID,
         process.env.GOOGLE_CLIENT_SECRET,
-        process.env.GOOGLE_OAUTH_REDIRECT_URI
+        require('../lib/googleCalendarCallback')()
     );
 }
 
@@ -306,7 +304,7 @@ async function _requireExistingOwner(userId) {
     return { ok: true };
 }
 
-async function _resolveReminderChannels(body, eventType, reminderOffsets) {
+async function _resolveReminderChannels(body, eventType, reminderOffsets, audienceOffsets = {}) {
     if (!REMINDABLE_EVENT_TYPES.has(eventType)) {
         return { push: false, sms: false, email: false };
     }
@@ -317,6 +315,11 @@ async function _resolveReminderChannels(body, eventType, reminderOffsets) {
     const channels = normalizeReminderChannels(body.reminder_channels, allowed);
     if (reminderOffsets.length > 0 && !hasAnyReminderChannel(channels)) {
         return { error: 'נבחרו תזכורות אך לא נבחר ערוץ שליחה (Push, SMS או אימייל).' };
+    }
+    for (const audience of ['lawyer', 'client']) {
+        if (audienceOffsets[audience]?.length && !hasAnyReminderChannel(channels[audience] || channels)) {
+            return { error: audience === 'client' ? 'בחרו ערוץ שליחה לתזכורות הלקוח.' : 'בחרו ערוץ שליחה לתזכורות עורכי הדין.' };
+        }
     }
     return channels;
 }
@@ -1192,7 +1195,7 @@ const createEvent = async (req, res) => {
         ...storedLawyerOffsets,
         ...storedClientOffsets,
     ]);
-    const resolvedChannels = await _resolveReminderChannels(req.body, eventType, storedReminderOffsets);
+    const resolvedChannels = await _resolveReminderChannels(req.body, eventType, storedReminderOffsets, { lawyer: storedLawyerOffsets, client: storedClientOffsets });
     if (resolvedChannels?.error) {
         return res.status(400).json({ message: resolvedChannels.error });
     }
@@ -1578,7 +1581,7 @@ const updateEvent = async (req, res) => {
             || offsetsToJson(nextReminderOffsets) !== offsetsToJson(parseStoredOffsets(ev.reminder_offsets))
         );
 
-        const resolvedChannels = await _resolveReminderChannels(req.body, newEventType, nextReminderOffsets);
+        const resolvedChannels = await _resolveReminderChannels(req.body, newEventType, nextReminderOffsets, { lawyer: nextLawyerOffsets, client: nextClientOffsets });
         if (resolvedChannels?.error) {
             return res.status(400).json({ message: resolvedChannels.error });
         }
@@ -2143,6 +2146,8 @@ const handleGoogleCallback = async (req, res) => {
         const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
         const userInfo = await oauth2.userinfo.get();
         const googleEmail = userInfo.data.email || '';
+        const previousLinks = await pool.query('SELECT 1 FROM calendar_google_links WHERE owner_id=$1 AND account_email<>$2 LIMIT 1', [userId, googleEmail]);
+        if (previousLinks.rows.length) return res.redirect(errorRedirect + '&reason=original_google_account');
 
         const encAccessToken = tokens.access_token ? encrypt(tokens.access_token) : null;
         const encRefreshToken = tokens.refresh_token ? encrypt(tokens.refresh_token) : null;
@@ -2158,7 +2163,7 @@ const handleGoogleCallback = async (req, res) => {
                google_connected    = TRUE,
                google_email        = $2,
                google_access_token = $3,
-               google_refresh_token = COALESCE($4, user_calendar_tokens.google_refresh_token),
+               google_refresh_token = COALESCE($4, CASE WHEN user_calendar_tokens.google_email=$2 THEN user_calendar_tokens.google_refresh_token ELSE NULL END),
                google_token_expiry  = $5,
                google_scope         = $6`,
             [userId, googleEmail, encAccessToken, encRefreshToken, tokenExpiry, scope]
@@ -2180,17 +2185,23 @@ const getGoogleStatus = async (req, res) => {
     try {
         const googleSyncAllowed = await _isGoogleSyncEnabledForFirm();
         const { rows } = await pool.query(
-            'SELECT google_connected, google_email, google_scope FROM user_calendar_tokens WHERE user_id = $1',
+            'SELECT google_connected, google_email, google_scope, google_last_sync_at, google_sync_error FROM user_calendar_tokens WHERE user_id = $1',
             [userId]
         );
         if (!rows.length || !rows[0].google_connected) {
             return res.json({ connected: false, googleSyncAllowed });
         }
+        const hasCalendarScope = String(rows[0].google_scope || '').split(' ').includes('https://www.googleapis.com/auth/calendar.events');
         return res.json({
             connected: true,
             email: rows[0].google_email,
             scope: rows[0].google_scope,
             googleSyncAllowed,
+            automatic: hasCalendarScope && googleSyncAllowed && String(process.env.MULTI_TENANT_MODE).toLowerCase() !== 'true' && !rows[0].google_sync_error && process.env.GOOGLE_CALENDAR_SYNC_ENABLED !== 'false' && (require('../lib/backgroundJobsEnabled')() || process.env.GOOGLE_CALENDAR_SYNC_ENABLED === 'true'),
+            lastSyncAt: rows[0].google_last_sync_at,
+            syncError: hasCalendarScope ? rows[0].google_sync_error : 'GOOGLE_SYNC_RECONNECT_REQUIRED',
+            conflicts: (await pool.query(`SELECT local_key AS id,conflict,updated_at AS revision FROM calendar_google_links
+                WHERE owner_id=$1 AND account_email=$2 AND conflict IS NOT NULL ORDER BY local_key`, [userId,rows[0].google_email])).rows,
         });
     } catch (err) {
         console.error('[calendarController] getGoogleStatus error:', err.message);
@@ -2248,173 +2259,27 @@ const disconnectGoogle = async (req, res) => {
  * Uses google_event_id as the idempotency key.
  */
 const syncGoogleEvents = async (req, res) => {
-    if (!googleapis) {
-        return res.status(503).json({ message: 'Google Calendar integration not configured' });
-    }
-    if (!(await _isGoogleSyncEnabledForFirm())) {
-        return res.status(403).json({
-            message: 'סנכרון Google Calendar מושבת בהגדרות המשרד',
-            code: 'GOOGLE_SYNC_DISABLED',
-        });
-    }
-
-    const userId = req.user.UserId;
-
+    if (!(await _isGoogleSyncEnabledForFirm())) return res.status(403).json({ message: 'סנכרון Google מושבת במשרד', code: 'GOOGLE_SYNC_DISABLED' });
     try {
-        const { rows } = await pool.query(
-            `SELECT google_access_token, google_refresh_token, google_token_expiry
-             FROM user_calendar_tokens
-             WHERE user_id = $1 AND google_connected = TRUE`,
-            [userId]
-        );
-
-        if (!rows.length) {
-            return res.status(400).json({ message: 'Google Calendar לא מחובר. יש לחבר קודם.' });
-        }
-
-        const row = rows[0];
-        const accessToken = decrypt(row.google_access_token);
-        const refreshToken = decrypt(row.google_refresh_token);
-
-        if (!accessToken && !refreshToken) {
-            return res.status(400).json({ message: 'אסימון Google אינו תקין. יש לחבר מחדש.' });
-        }
-
-        const oauth2Client = _buildOAuth2Client();
-        oauth2Client.setCredentials({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-            expiry_date: row.google_token_expiry ? new Date(row.google_token_expiry).getTime() : undefined,
-        });
-
-        // Auto-refresh handler: persist new tokens to DB
-        oauth2Client.on('tokens', async (newTokens) => {
-            try {
-                const updates = [];
-                const vals = [userId];
-                let i = 2;
-                if (newTokens.access_token) {
-                    updates.push(`google_access_token = $${i++}`);
-                    vals.push(encrypt(newTokens.access_token));
-                }
-                if (newTokens.refresh_token) {
-                    updates.push(`google_refresh_token = $${i++}`);
-                    vals.push(encrypt(newTokens.refresh_token));
-                }
-                if (newTokens.expiry_date) {
-                    updates.push(`google_token_expiry = $${i++}`);
-                    vals.push(new Date(newTokens.expiry_date));
-                }
-                if (updates.length) {
-                    await pool.query(
-                        `UPDATE user_calendar_tokens SET ${updates.join(', ')} WHERE user_id = $1`,
-                        vals
-                    );
-                }
-            } catch (persistErr) {
-                console.warn('[calendarController] Failed to persist refreshed tokens:', persistErr.message);
-            }
-        });
-
-        const { google } = googleapis;
-        const calendarApi = google.calendar({ version: 'v3', auth: oauth2Client });
-
-        // Match iCal feed window: recent past + upcoming year. Paginate through all pages.
-        const timeMin = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-        const timeMax = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
-
-        const googleEvents = [];
-        let pageToken;
-        do {
-            const listRes = await calendarApi.events.list({
-                calendarId: 'primary',
-                timeMin,
-                timeMax,
-                singleEvents: true,
-                showDeleted: true,
-                orderBy: 'startTime',
-                maxResults: 250,
-                pageToken: pageToken || undefined,
-            });
-            googleEvents.push(...(listRes.data.items || []));
-            pageToken = listRes.data.nextPageToken;
-        } while (pageToken);
-
-        let upsertCount = 0;
-        let failedCount = 0;
-
-        for (const gev of googleEvents) {
-            if (!gev.id) continue;
-            if (gev.status === 'cancelled') {
-                // Cancellation payloads may omit UID, title and times. Never infer deletion from absence.
-                await pool.query("UPDATE calendar_events SET event_status='cancelled',invite_deferred_until=NULL WHERE owner_id=$1 AND google_event_id=$2", [userId, gev.id]);
-                continue;
-            }
-
-            const times = googleCalendarEventTimes(gev);
-            if (!times) continue;
-            const { startTime, endTime, allDay } = times;
-
-            try {
-                if (gev.iCalUID && gev.organizer?.email) {
-                    const original = gev.originalStartTime;
-                    await importInvitations(userId, [{
-                        uid: gev.iCalUID,
-                        organizer: gev.organizer.email.trim().toLowerCase(),
-                        recurrenceKey: original?.date || (original?.dateTime ? new Date(original.dateTime).toISOString() : ''),
-                        sequence: Number(gev.sequence) || 0,
-                        stamp: gev.updated || null,
-                        title: (gev.summary || '(ללא כותרת)').trim(),
-                        description: gev.description || null,
-                        location: gev.location || null,
-                        startTime, endTime, allDay, googleEventId: gev.id,
-                        responseStatus: gev.attendees?.find(a => a.self)?.responseStatus || null,
-                    }], 'google');
-                    upsertCount++;
-                    continue;
-                }
-                await pool.query(
-                    `INSERT INTO calendar_events
-                       (owner_id, title, description, location, start_time, end_time, all_day, google_event_id)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                     ON CONFLICT (owner_id, google_event_id) WHERE google_event_id IS NOT NULL DO UPDATE SET
-                       title       = EXCLUDED.title,
-                       description = EXCLUDED.description,
-                       location    = EXCLUDED.location,
-                       start_time  = EXCLUDED.start_time,
-                       end_time    = EXCLUDED.end_time,
-                       all_day     = EXCLUDED.all_day`,
-                    [
-                        userId,
-                        (gev.summary || '(ללא כותרת)').trim(),
-                        gev.description || null,
-                        gev.location || null,
-                        startTime,
-                        endTime,
-                        allDay,
-                        gev.id,
-                    ]
-                );
-                upsertCount++;
-            } catch (upsertErr) {
-                failedCount++;
-                console.error('[calendarController] Google sync upsert failed:', gev.id, upsertErr.message);
-            }
-        }
-
-        return res.json({ ok: true, synced: upsertCount, total: googleEvents.length, failed: failedCount });
-    } catch (err) {
-        console.error('[calendarController] syncGoogleEvents error:', err.message);
-        // Token revoked / expired and couldn't refresh → prompt reconnect
-        if (err.code === 401 || String(err.message).includes('invalid_grant')) {
-            await pool.query(
-                `UPDATE user_calendar_tokens SET google_connected = FALSE WHERE user_id = $1`,
-                [userId]
-            );
-            return res.status(401).json({ message: 'חיבור Google פג תוקפו. יש לחבר מחדש.', reconnect: true });
-        }
-        return res.status(500).json({ message: 'שגיאה בסנכרון Google Calendar' });
+        const result = await require('../services/googleCalendarSync').syncAccount(req.user.UserId);
+        return res.json(result);
+    } catch (error) {
+        return res.status(error.status || 503).json({ message: 'לא ניתן להשלים את הסנכרון. בדקו את מצב החיבור ונסו שוב.', code: error.message,
+            reconnect: error.message === 'GOOGLE_SYNC_RECONNECT_REQUIRED' });
     }
+};
+
+const resolveGoogleConflict = async (req, res) => {
+    const choice = req.body?.choice, key = Number(req.params.eventId);
+    if (!['local','google'].includes(choice) || !Number.isSafeInteger(key)) return res.status(400).json({ message: 'בחירה לא תקינה' });
+    try {
+        const result = await pool.query(`UPDATE calendar_google_links l SET resolution=$3
+            FROM user_calendar_tokens t WHERE l.owner_id=$1 AND l.local_key=$2 AND t.user_id=l.owner_id
+            AND t.google_email=l.account_email AND t.google_connected=true AND l.conflict IS NOT NULL
+            AND l.updated_at=$4::timestamptz RETURNING l.local_key`, [req.user.UserId,key,choice,req.body.revision]);
+        if (!result.rows.length) return res.status(409).json({ message: 'האירוע השתנה. רעננו את מצב הסנכרון.' });
+        return res.json(await require('../services/googleCalendarSync').syncAccount(req.user.UserId));
+    } catch (error) { return res.status(503).json({ message: 'לא ניתן להשלים את הסנכרון כעת' }); }
 };
 
 
@@ -4021,6 +3886,7 @@ module.exports = {
     getGoogleStatus,
     disconnectGoogle,
     syncGoogleEvents,
+    resolveGoogleConflict,
     // Outlook
     getOutlookAuthUrl,
     handleOutlookCallback,
