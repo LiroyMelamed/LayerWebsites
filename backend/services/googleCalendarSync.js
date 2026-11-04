@@ -69,6 +69,16 @@ async function attachIncoming(db, owner, account, remote, namespace) {
         row = (await db.query(`SELECT ce.* FROM calendar_external_invitations i JOIN calendar_events ce ON ce.id=i.event_id
             WHERE i.owner_id=$1 AND i.external_uid=$2 AND i.recurrence_key=$3 FOR UPDATE OF ce`, [owner, remote.iCalUID, recurrenceKey(remote)])).rows[0];
     }
+    if (!row && remote.iCalUID && remote.organizer?.email) {
+        // A shared event can already exist through another manager's calendar.
+        // Reuse its stable invitation identity only when this manager is already
+        // assigned to it; matching titles/times must never merge private events.
+        row = (await db.query(`SELECT ce.* FROM calendar_external_invitations i
+            JOIN calendar_events ce ON ce.id=i.event_id
+            WHERE i.external_uid=$2 AND i.recurrence_key=$3 AND lower(i.organizer)=$4
+            AND ${personalCalendarSql(1)} ORDER BY ce.id LIMIT 1 FOR UPDATE OF ce`,
+        [owner, remote.iCalUID, recurrenceKey(remote), remote.organizer.email.toLowerCase()])).rows[0];
+    }
     if (!row && remote.status === 'cancelled') return;
     if (!row) {
         const state = remoteState(remote);
