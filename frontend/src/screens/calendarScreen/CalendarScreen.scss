@@ -1059,13 +1059,13 @@ body.lw-fromApp .lw-calendarRedesign.has-nativeFooter .lw-calendarScreen__scroll
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    .lw-calendarRedesign__primaryTools { grid-column: 1; display: flex; align-items: center; gap: .5rem; }
+    .lw-calendarRedesign__primaryTools { grid-column: 1; display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
     .lw-calendarRedesign__date { flex: 0 0 auto; }
     .lw-calendarRedesign__quickTools { display: flex; gap: .25rem; align-items: center; }
     .lw-calendarRedesign__controls { grid-column: 2; order: initial; justify-self: center; }
     .lw-calendarRedesign__tools { grid-column: 3; order: initial; justify-self: end; flex-wrap: nowrap; }
 }
-@container (max-width: 62rem) {
+@container (max-width: 58rem) {
     .lw-calendarRedesign .lw-calendarScreen__calendarToolbar {
         grid-template-columns: minmax(0, 1fr) auto;
         .lw-calendarRedesign__primaryTools { display: contents; }
@@ -1079,7 +1079,7 @@ body.lw-fromApp .lw-calendarRedesign.has-nativeFooter .lw-calendarScreen__scroll
     .lw-calendarRedesign .lw-calendarScreen__calendarToolbar {
         gap: .375rem .25rem;
         .lw-calendarRedesign__date { gap: 0; }
-        .lw-calendarRedesign__date h2 { font-size: .75rem; }
+        .lw-calendarRedesign__date h2 { font-size: .75rem; white-space: normal; }
         .lw-calendarRedesign__date button { min-inline-size: 1.5rem; padding-inline: .125rem; }
         .lw-segmentedSwitch__option { padding-inline: .25rem; }
     }
