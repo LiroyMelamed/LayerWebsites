@@ -532,14 +532,8 @@
 }
 
 .lw-uploadSigningScreen__textarea {
-    width: 100%;
-    min-height: 5rem;
-    padding: 0.5rem;
-    border-radius: 0.25rem;
-    border: 0.0625rem solid #ddd;
-    font-size: 0.875rem;
-    resize: vertical;
-    box-sizing: border-box;
+    inline-size: 100%;
+    margin: 0;
 }
 
 .lw-uploadSigningScreen__viewerHeaderRow {
@@ -670,4 +664,13 @@
 // Match the actual desktop sidebar; mobile/app layouts omit this sibling.
 .lw-topAndRightNavBar__sidebar ~ .lw-topAndRightNavBar__content .lw-uploadSigningScreen__stickySendBar {
     inset-inline-start: 15.625rem;
+}
+
+.lw-uploadSigningScreen__deliverySelect.lw-signingSelect {
+    inline-size: auto;
+    min-inline-size: 7rem;
+    max-inline-size: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
 }

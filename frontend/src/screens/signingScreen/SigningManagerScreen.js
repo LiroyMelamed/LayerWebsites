@@ -794,7 +794,8 @@ export function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownload
         <SimpleContainer className="lw-signingManagerScreen__detailsPopup">
             {isEditingName ? (
                 <SimpleContainer className="lw-signingManagerScreen__renameRow">
-                    <input
+                    <SimpleInput timeToWaitInMilli={0} acceptExternalValueWhileFocused
+                        aria-label={t('signingManager.details.titleFallback')}
                         className="lw-signingManagerScreen__renameInput"
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
