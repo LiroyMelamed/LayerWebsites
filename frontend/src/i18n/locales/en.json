@@ -3496,6 +3496,7 @@
     "conflict": "This template changed after you opened it. Reopen the saved version before saving again. Your local changes are still displayed.",
     "converterUnavailable": "Document generation is currently unavailable. You can still prepare and save the template.",
     "fileInvalid": "Choose a non-empty DOCX file up to 20 MB.",
+    "sourceInvalid": "This Word file could not be read. Open it in Word, save a valid DOCX copy without a password, and upload it again.",
     "selectionInvalid": "Select text within an available paragraph. The end must come after the start.",
     "selectionOverlap": "This selection overlaps an existing mapping. Choose another location or remove that mapping first.",
     "referenceInvalid": "Choose a valid person or case from the results, or continue with manual entry.",
