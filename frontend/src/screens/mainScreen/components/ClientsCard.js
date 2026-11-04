@@ -63,7 +63,7 @@ const ClientsCard = forwardRef(({ rePerformRequest, customerList, style: _style,
                     imageSrc={images.Defaults.SearchingClient}
                     className="lw-clientsCard__empty"
                     imageClassName="lw-clientsCard__emptyImage"
-                    actionButton={t("customers.addCustomer")}
+                    actionButton={!hideButtons && allowEdit ? t("customers.addCustomer") : undefined}
                     actionButtonPressFunction={() => openPopup(<ClientPopup closePopUpFunction={closePopup} rePerformRequest={rePerformRequest} />)}
                 />
             </SimpleCard>
@@ -113,7 +113,7 @@ const ClientsCard = forwardRef(({ rePerformRequest, customerList, style: _style,
                 ))}
             </SimpleScrollView>
 
-            {!hideButtons && (
+            {!hideButtons && allowEdit && (
                 <SimpleContainer className="lw-clientsCard__buttonsRow">
                     <PrimaryButton
                         onPress={() => openPopup(<ClientPopup closePopUpFunction={closePopup} rePerformRequest={rePerformRequest} />)}
