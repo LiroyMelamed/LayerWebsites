@@ -1141,21 +1141,6 @@ export default function CalendarScreen() {
                                     </SimpleButton>
                                 </div>
                 <div className="lw-calendarRedesign__controls">
-                        {canUseFirmView && (
-                            <SegmentedSwitch
-                                className="lw-calendarScreen__scopeSwitch"
-                                ariaLabel={t("calendar.scopeMine")}
-                                value={scope}
-                                onChange={(next) => {
-                                    if (next === SCOPE_FIRM) switchToFirmScope();
-                                    else switchToMineScope();
-                                }}
-                                options={[
-                                    { value: SCOPE_MINE, label: t("calendar.scopeMine") },
-                                    { value: SCOPE_FIRM, label: t("calendar.scopeFirm") },
-                                ]}
-                            />
-                        )}
 
                     <SegmentedSwitch ariaLabel={t("calendar.viewAria")} value={view} onChange={selectView}
                         options={[
@@ -1163,9 +1148,7 @@ export default function CalendarScreen() {
                             { value: "timeGridWeek", label: t("calendar.weekView") },
                             { value: "dayGridMonth", label: t("calendar.monthView") },
                         ]} />
-                    {canManageCalendar && <SecondaryButton size={buttonSizes.SMALL} onPress={() => openPopup(
-                        <CalendarInvitationImport onImported={() => fetchEvents(null, { force: true })} />
-                    )}>{t("calendar.importInviteTitle")}</SecondaryButton>}
+
                     <SecondaryButton size={buttonSizes.SMALL}
                         onPress={() => setFiltersPanelOpen((v) => !v)}
                         aria-expanded={filtersPanelOpen} aria-controls="calendar-advanced-filters"
@@ -1197,6 +1180,22 @@ export default function CalendarScreen() {
                                 <TextBold14 color="#2A4365">{t("calendar.filtersTitle")}</TextBold14>
 
                             </SimpleContainer>
+
+                        {canUseFirmView && (
+                            <SegmentedSwitch
+                                className="lw-calendarScreen__scopeSwitch"
+                                ariaLabel={t("calendar.scopeMine")}
+                                value={scope}
+                                onChange={(next) => {
+                                    if (next === SCOPE_FIRM) switchToFirmScope();
+                                    else switchToMineScope();
+                                }}
+                                options={[
+                                    { value: SCOPE_MINE, label: t("calendar.scopeMine") },
+                                    { value: SCOPE_FIRM, label: t("calendar.scopeFirm") },
+                                ]}
+                            />
+                        )}
 
                             <div className="lw-calendarRedesign__search">
                                 <SimpleInput title={t("calendar.searchEvents")} value={query} timeToWaitInMilli={0}
@@ -1284,6 +1283,9 @@ export default function CalendarScreen() {
                             </div>
 
                             <div className="lw-calendarScreen__filterTools">
+                    {canManageCalendar && <SecondaryButton size={buttonSizes.SMALL} onPress={() => openPopup(
+                        <CalendarInvitationImport onImported={() => fetchEvents(null, { force: true })} />
+                    )}>{t("calendar.importInviteTitle")}</SecondaryButton>}
                                 <SecondaryButton size={buttonSizes.SMALL} onPress={openPersonalSyncModal} aria-label={t("calendar.openPersonalSyncAria")}>
                                     {t("calendar.openPersonalSync")}
                                 </SecondaryButton>
