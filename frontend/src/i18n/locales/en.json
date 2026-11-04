@@ -3398,6 +3398,7 @@
       "title": "Case title"
     },
     "fileInvalid": "Choose a non-empty DOCX file up to 20 MB.",
+    "sourceInvalid": "This Word file could not be read. Open it in Word, save a valid DOCX copy without a password, and upload it again.",
     "fill": "Generate a document for a client",
     "fillHelp": "Choose a client and case if needed, then prepare the document for signing. After reviewing it, choose signers and add signatures.",
     "finalPreview": "Review the generated document",

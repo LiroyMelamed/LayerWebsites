@@ -131,6 +131,18 @@ test('explicit manage mode imports DOCX, safely maps a blank and saves version w
     expect(screen.getByText('signatureFlowHelp')).toBeVisible();
 });
 
+test('invalid Word source reports a file problem rather than missing client values', async () => {
+    uploadFileToR2.mockResolvedValue({ success: true, data: { key: 'private/invalid.docx' } });
+    api.create.mockRejectedValue({ status: 422 });
+    render(<WordTemplatesWorkspace onBack={jest.fn()} />);
+    fireEvent.click(screen.getByText('manageTemplates'));
+    fireEvent.change(screen.getByLabelText('upload'), { target: { files: [new File(['invalid'], 'Invalid.docx')] } });
+    fireEvent.click(screen.getByText('import'));
+    expect(await screen.findByText('sourceInvalid')).toBeInTheDocument();
+    expect(screen.queryByText('missingValues')).not.toBeInTheDocument();
+    expect(screen.getByText('import')).toBeEnabled();
+});
+
 test('preview sends explicit string overrides and references; final PDF load and review are both required', async () => {
     const onContinue = jest.fn(); await open(mapped(), { onContinue });
     fireEvent.change(screen.getByLabelText('clientId'), { target: { value: '23' } });
