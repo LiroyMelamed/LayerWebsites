@@ -276,6 +276,11 @@
     width: auto;
 }
 
+.lw-signingManagerScreen__renameRow > button {
+    block-size: 2.75rem !important;
+    min-inline-size: 2.75rem;
+}
+
 .lw-signingManagerScreen__renameInput {
     flex: 1;
     min-inline-size: 0;
