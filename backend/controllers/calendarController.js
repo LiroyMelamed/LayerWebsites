@@ -2191,14 +2191,15 @@ const getGoogleStatus = async (req, res) => {
         if (!rows.length || !rows[0].google_connected) {
             return res.json({ connected: false, googleSyncAllowed });
         }
+        const hasCalendarScope = String(rows[0].google_scope || '').split(' ').includes('https://www.googleapis.com/auth/calendar.events');
         return res.json({
             connected: true,
             email: rows[0].google_email,
             scope: rows[0].google_scope,
             googleSyncAllowed,
-            automatic: process.env.GOOGLE_CALENDAR_SYNC_ENABLED !== 'false' && (require('../lib/backgroundJobsEnabled')() || process.env.GOOGLE_CALENDAR_SYNC_ENABLED === 'true'),
+            automatic: hasCalendarScope && googleSyncAllowed && String(process.env.MULTI_TENANT_MODE).toLowerCase() !== 'true' && !rows[0].google_sync_error && process.env.GOOGLE_CALENDAR_SYNC_ENABLED !== 'false' && (require('../lib/backgroundJobsEnabled')() || process.env.GOOGLE_CALENDAR_SYNC_ENABLED === 'true'),
             lastSyncAt: rows[0].google_last_sync_at,
-            syncError: rows[0].google_sync_error,
+            syncError: hasCalendarScope ? rows[0].google_sync_error : 'GOOGLE_SYNC_RECONNECT_REQUIRED',
             conflicts: (await pool.query(`SELECT local_key AS id,conflict,updated_at AS revision FROM calendar_google_links
                 WHERE owner_id=$1 AND account_email=$2 AND conflict IS NOT NULL ORDER BY local_key`, [userId,rows[0].google_email])).rows,
         });

@@ -17,3 +17,15 @@ test('manual synchronization uses the same owner-scoped two-way service as the w
     let body;await handler({user:{UserId:42}},{json:value=>{body=value;}});
     assert.equal(called,42);assert.equal(body.synced,3);
 });
+
+test('email-only authorization cannot be reported as automatic calendar sync', async () => {
+    const source=fs.readFileSync(require.resolve('../controllers/calendarController'),'utf8');
+    const start=source.indexOf('const getGoogleStatus ='),end=source.indexOf('const disconnectGoogle',start);
+    const row={google_connected:true,google_email:'qa@example.com',google_scope:'openid https://www.googleapis.com/auth/userinfo.email'};
+    const handler=vm.runInNewContext(source.slice(start,end)+';getGoogleStatus',{
+        _isGoogleSyncEnabledForFirm:async()=>true,process:{env:{GOOGLE_CALENDAR_SYNC_ENABLED:'true'}},require:()=>()=>true,
+        pool:{query:async sql=>({rows:sql.includes('FROM user_calendar_tokens')?[row]:[]})},console,
+    });
+    let body;await handler({user:{UserId:42}},{json:value=>{body=value;}});
+    assert.equal(body.automatic,false);assert.equal(body.syncError,'GOOGLE_SYNC_RECONNECT_REQUIRED');
+});
