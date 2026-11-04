@@ -201,7 +201,7 @@
     "firmWazeUrlHint": "Paste a Waze place link, for example https://waze.com/ul/hsv9n8gwrw",
     "freeDay": "Free",
     "googleCalendarTitle": "Google Calendar",
-    "googleConnectHint": "Connect your personal Google account to import events into the system calendar.",
+    "googleConnectHint": "Each manager connects their personal Google account once. After consent, their appointments synchronize automatically in both directions, from 30 days ago to one year ahead.",
     "googleConnected": "Connected to Google: {{email}}",
     "googleSyncDisabledByFirm": "Google sync has been disabled by the office administrator. You can use your personal iCal link below.",
     "googleSyncError": "Google Calendar could not be synced",
@@ -442,7 +442,21 @@
     "importInviteConfirm": "Import into my calendar",
     "importInviteResult": "Added {{created}}, updated {{updated}}, cancelled {{cancelled}}, unchanged {{unchanged}}.",
     "sendInvitationOnSave": "Send an email and SMS invitation when saving the meeting",
-    "recurrenceEndRequired": "Choose a recurrence end date on or after the first event."
+    "recurrenceEndRequired": "Choose a recurrence end date on or after the first event.",
+    "lawyerReminderChannels": "Lawyer reminder channels",
+    "clientReminderChannels": "Client reminder channels",
+    "googleAutomaticActive": "Automatic two-way synchronization is active. Changes are checked every minute.",
+    "googleAutomaticPaused": "Automatic synchronization is currently paused. Manual synchronization is available.",
+    "googleLastSync": "Last synchronization: {{time}}",
+    "googleSubscriptionHint": "If you previously subscribed to the office calendar using a read-only link, hide that subscription in Google to avoid showing the same events twice.",
+    "googleSyncNeedsAttention": "Some events need attention. Failed changes will retry; conflicting versions are shown here for your choice.",
+    "googleSyncBusy": "Synchronization is already running in the background.",
+    "googleConflictTitle": "Changes in both calendars",
+    "googleConflictHint": "This event changed in both calendars. Choose which version to keep.",
+    "googleUsePlatform": "Keep platform version",
+    "googleUseGoogle": "Keep Google version",
+    "googleCancelledVersion": "Event cancelled",
+    "googleConflictResolved": "Your choice was saved and the calendars synchronized."
   },
   "caseTypes": {
     "addStage": "Add stage",
@@ -1474,8 +1488,8 @@
     "used": "Used:"
   },
   "platformSettings": {
-    "calendarReminderChannelsHint": "Choose which channels appear when lawyers set event reminders.",
-    "calendarReminderChannelsTitle": "Delivery channels for lawyers",
+    "calendarReminderChannelsHint": "Choose which reminder channels are available for lawyers and clients.",
+    "calendarReminderChannelsTitle": "Available reminder channels",
     "calendarReminderOptionsHint": "Choose available reminder times. Default selections for lawyers and clients are configured separately below.",
     "calendarReminderOptionsTitle": "Available reminder times",
     "calendarRemindersEnabled": "Push reminder worker enabled",
@@ -1520,7 +1534,10 @@
     "workingHoursStartCol": "Start",
     "calendarLawyerDefaults": "Default lawyer reminders",
     "calendarClientDefaults": "Default client reminders",
-    "calendarDefaultsHint": "Times selected for new events. No selection means no reminders for this audience. Existing events remain unchanged."
+    "calendarDefaultsHint": "Times selected for new events. No selection means no reminders for this audience. Existing events remain unchanged.",
+    "calendarLawyerChannelDefaults": "Default channels for lawyers",
+    "calendarClientChannelDefaults": "Default channels for clients",
+    "calendarChannelDefaultsHint": "Preselected for new events. Each event can override these choices; existing events are unchanged."
   },
   "pricingPage": {
     "calculator": {
@@ -3409,7 +3426,8 @@
     "groups": {
       "case": "Case",
       "client": "Client",
-      "office": "Office"
+      "office": "Office",
+      "manual": "Manual entry"
     },
     "import": "Upload and open document",
     "importFailed": "The document could not be loaded. Retry or return to the template and generate a new document.",
@@ -3519,7 +3537,11 @@
     "whatReplacesText": "What replaces this text?",
     "withoutCase": "No saved case",
     "withoutClient": "Enter client details for this document only",
-    "working": "Working…"
+    "working": "Working…",
+    "customFieldName": "Field name, e.g. block or parcel",
+    "addCustomField": "Add manual field",
+    "customFieldHelp": "Enter a new value each time you use this template. Values belong only to that document.",
+    "editTemplate": "Edit template"
   },
   "stageAutomation": {
     "active": "Active",

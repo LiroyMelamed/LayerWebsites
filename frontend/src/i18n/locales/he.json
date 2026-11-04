@@ -216,7 +216,7 @@
     "firmWazeUrlHint": "הדביקו קישור מקום מוויז, למשל https://waze.com/ul/hsv9n8gwrw",
     "freeDay": "פנוי",
     "googleCalendarTitle": "Google Calendar",
-    "googleConnectHint": "חבר את חשבון Google האישי שלך כדי לייבא אירועים ליומן במערכת.",
+    "googleConnectHint": "כל מנהל מחבר פעם אחת את חשבון Google האישי שלו. לאחר האישור, הפגישות שלו מסתנכרנות אוטומטית בשני הכיוונים — 30 יום אחורה ושנה קדימה.",
     "googleConnected": "מחובר ל-Google: {{email}}",
     "googleSyncDisabledByFirm": "סנכרון Google מושבת על ידי מנהל המשרד. ניתן להשתמש בקישור iCal האישי למטה.",
     "googleSyncError": "שגיאה בסנכרון Google Calendar",
@@ -443,7 +443,21 @@
     "importInviteConfirm": "אישור הייבוא ליומן שלי",
     "importInviteResult": "נוספו {{created}}, עודכנו {{updated}}, בוטלו {{cancelled}}, ללא שינוי {{unchanged}}.",
     "sendInvitationOnSave": "שליחת זימון במייל וב־SMS עם שמירת הפגישה",
-    "recurrenceEndRequired": "בחרו תאריך סיום לחזרה, שאינו מוקדם מהאירוע הראשון."
+    "recurrenceEndRequired": "בחרו תאריך סיום לחזרה, שאינו מוקדם מהאירוע הראשון.",
+    "lawyerReminderChannels": "ערוצי תזכורת לעורכי דין",
+    "clientReminderChannels": "ערוצי תזכורת ללקוח",
+    "googleAutomaticActive": "סנכרון דו־כיווני אוטומטי פעיל. השינויים נבדקים מדי דקה.",
+    "googleAutomaticPaused": "הסנכרון האוטומטי אינו פעיל כרגע. אפשר לסנכרן ידנית.",
+    "googleLastSync": "סנכרון אחרון: {{time}}",
+    "googleSubscriptionHint": "אם הוספת בעבר את יומן המשרד ל־Google דרך קישור לקריאה בלבד, הסתר אותו ב־Google כדי לא להציג את אותם אירועים פעמיים.",
+    "googleSyncNeedsAttention": "חלק מהאירועים דורשים בדיקה. שינויים שנכשלו ינסו להסתנכרן שוב; הבדלים מוצגים כאן לבחירתך.",
+    "googleSyncBusy": "הסנכרון כבר מתבצע ברקע.",
+    "googleConflictTitle": "שינויים בשני היומנים",
+    "googleConflictHint": "האירוע השתנה בשני היומנים. בחרו איזו גרסה לשמור.",
+    "googleUsePlatform": "שמירת גרסת הפלטפורמה",
+    "googleUseGoogle": "שמירת גרסת Google",
+    "googleCancelledVersion": "האירוע בוטל",
+    "googleConflictResolved": "הבחירה נשמרה והיומנים סונכרנו."
   },
   "caseTypes": {
     "addStage": "הוסף שלב",
@@ -1860,8 +1874,8 @@
     "backToSimple": "חזרה למצב פשוט",
     "builtin": "מובנית",
     "calendarInviteRsvpHint": "הזמנת הגעה נשלחת בהקדם. תזכורות נשלחות לפי לוח הזמנים שנבחר — ללא תלות בסטטוס RSVP.",
-    "calendarReminderChannelsHint": "בחר אילו ערוצים יוצגו בעת יצירת תזכורות לאירוע (Push, SMS, אימייל).",
-    "calendarReminderChannelsTitle": "ערוצי שליחה זמינים לעורכי דין",
+    "calendarReminderChannelsHint": "בחרו אילו ערוצים אפשר לבחור לתזכורות לעורכי דין וללקוחות.",
+    "calendarReminderChannelsTitle": "ערוצי תזכורת זמינים",
     "calendarReminderOptionsHint": "בחרו אילו זמנים יהיו זמינים לבחירה. ברירות המחדל לעורכי דין וללקוחות מוגדרות בנפרד בהמשך.",
     "calendarReminderOptionsTitle": "זמני תזכורת זמינים",
     "calendarRemindersEnabled": "מנגנון תזכורות Push פעיל",
@@ -2014,7 +2028,10 @@
     "workingHoursStartCol": "התחלה",
     "calendarLawyerDefaults": "ברירת מחדל — תזכורות לעורכי דין",
     "calendarClientDefaults": "ברירת מחדל — תזכורות ללקוחות",
-    "calendarDefaultsHint": "הזמנים שיסומנו מראש באירוע חדש. ללא בחירה לא יישלחו תזכורות לקבוצה זו. אירועים קיימים אינם משתנים."
+    "calendarDefaultsHint": "הזמנים שיסומנו מראש באירוע חדש. ללא בחירה לא יישלחו תזכורות לקבוצה זו. אירועים קיימים אינם משתנים.",
+    "calendarLawyerChannelDefaults": "ערוצי ברירת מחדל לעורכי דין",
+    "calendarClientChannelDefaults": "ערוצי ברירת מחדל ללקוחות",
+    "calendarChannelDefaultsHint": "נבחרים מראש באירוע חדש. אפשר לשנות בכל אירוע; אירועים קיימים נשארים כפי שנשמרו."
   },
   "pricingPage": {
     "calculator": {
@@ -3996,7 +4013,8 @@
     "groups": {
       "case": "תיק",
       "client": "לקוח",
-      "office": "משרד"
+      "office": "משרד",
+      "manual": "מילוי ידני"
     },
     "import": "העלאה ופתיחת המסמך",
     "importFailed": "המסמך לא נטען. נסו שוב או חזרו לתבנית והפיקו מסמך חדש.",
@@ -4106,7 +4124,11 @@
     "whatReplacesText": "מה יחליף את הטקסט?",
     "withoutCase": "ללא תיק שמור",
     "withoutClient": "הזנת נתוני לקוח למסמך בלבד",
-    "working": "הפעולה מתבצעת…"
+    "working": "הפעולה מתבצעת…",
+    "customFieldName": "שם השדה, למשל גוש או חלקה",
+    "addCustomField": "הוספת שדה ידני",
+    "customFieldHelp": "בכל מסמך חדש מהתבנית מזינים ערך לשדה הזה. הוא נשמר במסמך בלבד.",
+    "editTemplate": "עריכת התבנית"
   },
   "stageAutomation": {
     "active": "פעיל",

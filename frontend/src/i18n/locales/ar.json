@@ -207,7 +207,7 @@
     "firmWazeUrlHint": "الصق رابط مكان من Waze، مثل https://waze.com/ul/hsv9n8gwrw",
     "freeDay": "متاح",
     "googleCalendarTitle": "تقويم Google",
-    "googleConnectHint": "اربط حسابك الشخصي في Google لاستيراد الأحداث إلى تقويم النظام.",
+    "googleConnectHint": "يربط كل مدير حساب Google الشخصي مرة واحدة. بعد الموافقة تُزامن مواعيده تلقائيًا في الاتجاهين، من 30 يومًا مضت إلى سنة قادمة.",
     "googleConnected": "متصل بـ Google: {{email}}",
     "googleSyncDisabledByFirm": "عطّل مسؤول المكتب المزامنة مع Google. يمكنك استخدام رابط iCal الشخصي أدناه.",
     "googleSyncError": "تعذرت مزامنة تقويم Google",
@@ -454,7 +454,21 @@
     "importInviteConfirm": "استيراد إلى تقويمي",
     "importInviteResult": "أُضيف {{created}}، حُدّث {{updated}}، أُلغي {{cancelled}}، دون تغيير {{unchanged}}.",
     "sendInvitationOnSave": "إرسال دعوة بالبريد وSMS عند حفظ الموعد",
-    "recurrenceEndRequired": "اختر تاريخ انتهاء للتكرار لا يسبق الموعد الأول."
+    "recurrenceEndRequired": "اختر تاريخ انتهاء للتكرار لا يسبق الموعد الأول.",
+    "lawyerReminderChannels": "قنوات تذكير المحامين",
+    "clientReminderChannels": "قنوات تذكير العميل",
+    "googleAutomaticActive": "المزامنة التلقائية ثنائية الاتجاه نشطة. تُفحص التغييرات كل دقيقة.",
+    "googleAutomaticPaused": "المزامنة التلقائية متوقفة حاليًا. يمكن المزامنة يدويًا.",
+    "googleLastSync": "آخر مزامنة: {{time}}",
+    "googleSubscriptionHint": "إذا اشتركت سابقًا في تقويم المكتب برابط للقراءة فقط، أخفِ هذا الاشتراك في Google لتجنب عرض الأحداث مرتين.",
+    "googleSyncNeedsAttention": "بعض الأحداث تحتاج إلى مراجعة. ستُعاد محاولة التغييرات الفاشلة وتظهر الإصدارات المتعارضة هنا للاختيار.",
+    "googleSyncBusy": "المزامنة قيد التنفيذ في الخلفية.",
+    "googleConflictTitle": "تغييرات في التقويمين",
+    "googleConflictHint": "تغير الحدث في التقويمين. اختر الإصدار الذي تريد الاحتفاظ به.",
+    "googleUsePlatform": "الاحتفاظ بإصدار المنصة",
+    "googleUseGoogle": "الاحتفاظ بإصدار Google",
+    "googleCancelledVersion": "أُلغي الحدث",
+    "googleConflictResolved": "تم حفظ اختيارك ومزامنة التقويمين."
   },
   "caseTypes": {
     "addStage": "إضافة مرحلة",
@@ -1698,7 +1712,12 @@
     "calendarClientDefaults": "تذكيرات العملاء الافتراضية",
     "calendarDefaultsHint": "الأوقات المحددة للمواعيد الجديدة. عدم الاختيار يعني عدم إرسال تذكيرات لهذه المجموعة. لا تتغير المواعيد الحالية.",
     "calendarReminderOptionsTitle": "أوقات التذكير المتاحة",
-    "calendarReminderOptionsHint": "اختر أوقات التذكير المتاحة. تُحدد الأوقات الافتراضية للمحامين والعملاء بشكل منفصل أدناه."
+    "calendarReminderOptionsHint": "اختر أوقات التذكير المتاحة. تُحدد الأوقات الافتراضية للمحامين والعملاء بشكل منفصل أدناه.",
+    "calendarLawyerChannelDefaults": "القنوات الافتراضية للمحامين",
+    "calendarClientChannelDefaults": "القنوات الافتراضية للعملاء",
+    "calendarChannelDefaultsHint": "تُحدد مسبقًا للأحداث الجديدة ويمكن تغييرها لكل حدث. لا تتغير الأحداث المحفوظة.",
+    "calendarReminderChannelsTitle": "قنوات التذكير المتاحة",
+    "calendarReminderChannelsHint": "اختر قنوات التذكير المتاحة للمحامين والعملاء."
   },
   "pricingPage": {
     "calculator": {
@@ -3732,7 +3751,8 @@
     "groups": {
       "case": "الملف",
       "client": "العميل",
-      "office": "المكتب"
+      "office": "المكتب",
+      "manual": "إدخال يدوي"
     },
     "import": "رفع المستند وفتحه",
     "importFailed": "تعذر تحميل المستند. أعد المحاولة أو ارجع إلى القالب وأنشئ مستندًا جديدًا.",
@@ -3842,7 +3862,11 @@
     "whatReplacesText": "ما الذي سيحل محل النص؟",
     "withoutCase": "دون ملف محفوظ",
     "withoutClient": "إدخال بيانات العميل لهذا المستند فقط",
-    "working": "جارٍ التنفيذ…"
+    "working": "جارٍ التنفيذ…",
+    "customFieldName": "اسم الحقل، مثل الحوض أو القطعة",
+    "addCustomField": "إضافة حقل يدوي",
+    "customFieldHelp": "أدخل قيمة جديدة في كل مستند من هذا القالب. تُحفظ القيمة في المستند فقط.",
+    "editTemplate": "تعديل القالب"
   },
   "stageAutomation": {
     "active": "مفعّل",

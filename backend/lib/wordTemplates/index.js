@@ -18,6 +18,7 @@ const hash = data => crypto.createHash('sha256').update(data).digest('hex');
 const xmlEscape = value => value.replace(/&/gu, '&amp;').replace(/</gu, '&lt;').replace(/>/gu, '&gt;').replace(/"/gu, '&quot;').replace(/'/gu, '&apos;');
 function validField(field) {
     return typeof field === 'string' && (FIELD_NAMES.includes(field)
+        || /^manual\.[A-Za-z0-9_-]{1,64}$/u.test(field)
         || /^role\.[A-Za-z0-9_-]{1,64}\.(?:fullName|companyName|identityNumber|companyNumber|capacity|authority)$/u.test(field));
 }
 function xmlString(data) {
@@ -175,6 +176,10 @@ function createBinding(model, spec) {
     if (!model || model.version !== 1 || !/^[a-f0-9]{64}$/u.test(model.sourceHash || '')) reject('INVALID_IMPORT_MODEL');
     if (!spec || !/^[A-Za-z0-9_-]{1,64}$/u.test(spec.id || '') || !validField(spec.field)
         || (spec.required !== undefined && typeof spec.required !== 'boolean')) reject('INVALID_BINDING');
+    const manual = spec.field.startsWith('manual.');
+    if (manual && (typeof spec.fieldLabel !== 'string' || !spec.fieldLabel.trim() || spec.fieldLabel.length > 80
+        || /[\u0000-\u001f\u007f]/u.test(spec.fieldLabel))) reject('INVALID_BINDING');
+    const label = manual ? { fieldLabel: spec.fieldLabel.trim() } : {};
     const p = findParagraph(model, spec.part, spec.paragraphId);
     if (spec.kind === 'insert') {
         const offset = spec.start;
@@ -188,13 +193,13 @@ function createBinding(model, spec) {
         if (offset && /[\uD800-\uDBFF]/u.test(p.text[offset - 1]) && /[\uDC00-\uDFFF]/u.test(p.text[offset] || '')) reject('INVALID_INSERTION_ANCHOR');
         return { id: spec.id, kind: 'insert', affinity: spec.affinity, sourceHash: model.sourceHash, part: spec.part,
             paragraphId: p.id, paragraphHash: p.textHash, start: offset, end: offset,
-            selectedTextHash: hash(''), field: spec.field, required: spec.required !== false };
+            selectedTextHash: hash(''), field: spec.field, ...label, required: spec.required !== false };
     }
     if (spec.kind !== undefined && spec.kind !== 'range') reject('INVALID_BINDING');
     rangeValid(p, spec.start, spec.end);
     return { id: spec.id, sourceHash: model.sourceHash, part: spec.part, paragraphId: p.id,
         paragraphHash: p.textHash, start: spec.start, end: spec.end,
-        selectedTextHash: hash(p.text.slice(spec.start, spec.end)), field: spec.field, required: spec.required !== false };
+        selectedTextHash: hash(p.text.slice(spec.start, spec.end)), field: spec.field, ...label, required: spec.required !== false };
 }
 function insertionSpan(spans, offset, affinity) {
     const candidates = spans.filter(span => span.start <= offset && offset <= span.end);

@@ -26,3 +26,12 @@ test('an explicit field name is retained and typing still reaches the caller', (
     expect(change).toHaveBeenCalled();
     expect(change.mock.calls.at(-1)[0].target.value).toBe('0501234567');
 });
+
+test('a disabled containing fieldset prevents local edits as well as caller changes', () => {
+    const change = jest.fn();
+    render(<fieldset disabled><SimpleInput title="שם" value="מקורי" onChange={change} timeToWaitInMilli={0} /></fieldset>);
+    const field = screen.getByRole('textbox', { name: 'שם' });
+    fireEvent.change(field, { target: { value: 'שינוי' } });
+    expect(field).toHaveValue('מקורי');
+    expect(change).not.toHaveBeenCalled();
+});

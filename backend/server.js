@@ -52,6 +52,7 @@ const server = app.listen(PORT, HOST, async () => {
     // The explicitly isolated demo worker can simulate case groups while all
     // delivery schedulers remain disabled. Live work still obeys the job boundary.
     require('./services/integrations/runtime').start();
+    require('./tasks/googleCalendarSync/scheduler').start();
     // QA can disable the complete delivery/job boundary without changing provider credentials.
     if (!require('./lib/backgroundJobsEnabled')(process.env)) {
         console.log('[scheduled-jobs] disabled by BACKGROUND_JOBS_ENABLED');
@@ -91,6 +92,7 @@ const SHUTDOWN_GRACE_MS = Number(process.env.SHUTDOWN_GRACE_MS || 10_000);
 let shuttingDown = false;
 
 async function gracefulShutdown(signal) {
+    require('./tasks/googleCalendarSync/scheduler').stop();
     require('./services/integrations/runtime').stop();
     require('./lib/systemMessages').stopWorker();
     if (shuttingDown) return;

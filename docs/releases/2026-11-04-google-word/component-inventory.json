@@ -1,0 +1,695 @@
+[
+  {
+    "file": "frontend/src/components/CreateCaseType.js",
+    "input:text": 4,
+    "button": 1
+  },
+  {
+    "file": "frontend/src/components/billing/SystemMessageConsent.js",
+    "PrimaryButton": 1,
+    "SecondaryButton": 1
+  },
+  {
+    "file": "frontend/src/components/chatbot/ChatInput.js",
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/components/i18n/FloatingLanguageBubble.js",
+    "button": 2
+  },
+  {
+    "file": "frontend/src/components/i18n/LanguageSwitcher.js",
+    "button": 4
+  },
+  {
+    "file": "frontend/src/components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen.js",
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/components/simpleComponents/BlockDateInput.js",
+    "input:text": 2,
+    "button": 1
+  },
+  {
+    "file": "frontend/src/components/simpleComponents/SimpleButton.js",
+    "button": 1
+  },
+  {
+    "file": "frontend/src/components/simpleComponents/SimpleCheckbox.js",
+    "input:checkbox": 1
+  },
+  {
+    "file": "frontend/src/components/simpleComponents/SimpleInput.js",
+    "button": 1,
+    "input:text": 3
+  },
+  {
+    "file": "frontend/src/components/simpleComponents/SimpleNav.js",
+    "TertiaryButton": 1
+  },
+  {
+    "file": "frontend/src/components/simpleComponents/SimpleTextArea.js",
+    "textarea": 1
+  },
+  {
+    "file": "frontend/src/components/specializedComponents/containers/SearchInput.js",
+    "SimpleInput": 1
+  },
+  {
+    "file": "frontend/src/components/specializedComponents/signFiles/LawyerStampPopup.js",
+    "SecondaryButton": 5,
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/components/specializedComponents/signFiles/SignatureCanvas.js",
+    "TertiaryButton": 6,
+    "PrimaryButton": 15,
+    "SecondaryButton": 20,
+    "input:checkbox": 2,
+    "input:text": 2,
+    "button": 8,
+    "input:file": 2,
+    "select": 1
+  },
+  {
+    "file": "frontend/src/components/specializedComponents/signFiles/SignatureSpotMarker.js",
+    "SecondaryButton": 1,
+    "input:text": 1,
+    "input:number": 5,
+    "input:checkbox": 1
+  },
+  {
+    "file": "frontend/src/components/specializedComponents/signFiles/fieldToolbar/AddFieldPanel.js",
+    "SecondaryButton": 2
+  },
+  {
+    "file": "frontend/src/components/specializedComponents/signFiles/fieldToolbar/FloatingAddField.js",
+    "button": 1
+  },
+  {
+    "file": "frontend/src/components/specializedComponents/signFiles/signatureSpots/SignatureSpot.js",
+    "button": 1
+  },
+  {
+    "file": "frontend/src/components/styledComponents/SegmentedSwitch.js",
+    "button": 1
+  },
+  {
+    "file": "frontend/src/components/styledComponents/buttons/ChooseButton.js",
+    "SecondaryButton": 1
+  },
+  {
+    "file": "frontend/src/components/styledComponents/cases/CaseFullView.js",
+    "SimpleInput": 8,
+    "button": 5,
+    "input:checkbox": 1,
+    "SecondaryButton": 5,
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/components/styledComponents/cases/CaseTypeFullView.js",
+    "SimpleInput": 2,
+    "button": 3,
+    "TertiaryButton": 1,
+    "SecondaryButton": 2,
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/components/styledComponents/cases/StageFileUpload.js",
+    "input:file": 1
+  },
+  {
+    "file": "frontend/src/components/styledComponents/defaultState/DefaultState.js",
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/components/styledComponents/fileUpload/FileUploadBox.js",
+    "input:file": 1
+  },
+  {
+    "file": "frontend/src/components/styledComponents/menuItems/CaseTypeMenuItem.js",
+    "SecondaryButton": 2
+  },
+  {
+    "file": "frontend/src/components/styledComponents/menuItems/components/CaseMenuItemOpen.js",
+    "SimpleInput": 1,
+    "SecondaryButton": 4,
+    "PrimaryButton": 3,
+    "TertiaryButton": 1
+  },
+  {
+    "file": "frontend/src/components/styledComponents/menuItems/components/LicenseExpiryUpdateModal.js",
+    "SimpleInput": 1,
+    "SecondaryButton": 2,
+    "PrimaryButton": 2,
+    "input:checkbox": 1
+  },
+  {
+    "file": "frontend/src/components/styledComponents/popups/ConfirmationDialog.js",
+    "SecondaryButton": 1,
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/components/styledComponents/popups/ErrorPopup.js",
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/components/templateAttachments/TemplateAttachmentsSection.js",
+    "TertiaryButton": 1
+  },
+  {
+    "file": "frontend/src/components/ui/StatusNotice.js",
+    "SecondaryButton": 1
+  },
+  {
+    "file": "frontend/src/components/ui/button.tsx",
+    "button": 1
+  },
+  {
+    "file": "frontend/src/screens/admin/support/AdminSupportScreen.js",
+    "SimpleInput": 1,
+    "PrimaryButton": 1,
+    "button": 1,
+    "SecondaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/allCasesScreen/AllCasesScreen.js",
+    "ChooseButton": 3
+  },
+  {
+    "file": "frontend/src/screens/allCasesTypeScreen/AllCasesTypeScreen.js",
+    "ChooseButton": 1,
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/allClientsScreen/AllClientsScreen.js",
+    "PrimaryButton": 1,
+    "SecondaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/allMangerScreen/AllMangerScreen.js",
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/allMangerScreen/components/AdminPopup.js",
+    "SimpleInput": 4,
+    "select": 1,
+    "SecondaryButton": 2,
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/billingScreen/PlanUsageScreen.js",
+    "button": 2
+  },
+  {
+    "file": "frontend/src/screens/calendarScreen/CalendarInviteScreen.js",
+    "PrimaryButton": 1,
+    "TertiaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/calendarScreen/CalendarScreen.js",
+    "SecondaryButton": 8,
+    "button": 5,
+    "SimpleInput": 1
+  },
+  {
+    "file": "frontend/src/screens/calendarScreen/DailyAgendaScreen.js",
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/calendarScreen/components/CalendarInvitationImport.js",
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/calendarScreen/components/CalendarInviteActionIcons.js",
+    "button": 1
+  },
+  {
+    "file": "frontend/src/screens/calendarScreen/components/CalendarSmsTemplateEditor.js",
+    "SecondaryButton": 1,
+    "TertiaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/calendarScreen/components/EventFormModal.js",
+    "SimpleInput": 10,
+    "input:checkbox": 3,
+    "button": 6,
+    "SecondaryButton": 12,
+    "ChooseButton": 1,
+    "PrimaryButton": 3
+  },
+  {
+    "file": "frontend/src/screens/calendarScreen/components/PersonalSyncModal.js",
+    "SimpleInput": 1,
+    "PrimaryButton": 7,
+    "SecondaryButton": 7
+  },
+  {
+    "file": "frontend/src/screens/chatbot/ChatBotPage.js",
+    "SimpleInput": 2,
+    "PrimaryButton": 1,
+    "SecondaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/client/clientCasesScreen/ClientCasesScreen.js",
+    "SecondaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/client/clientDocumentsScreen/ClientDocumentsScreen.js",
+    "TertiaryButton": 3,
+    "SimpleInput": 1,
+    "SecondaryButton": 3,
+    "button": 1,
+    "PrimaryButton": 2
+  },
+  {
+    "file": "frontend/src/screens/client/clientMainScreen/ClientMainScreen.js",
+    "SecondaryButton": 1,
+    "PrimaryButton": 1,
+    "TertiaryButton": 6
+  },
+  {
+    "file": "frontend/src/screens/client/notifications/NotificationsScreen.js",
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/client/profile/ProfileScreen.js",
+    "input:file": 1,
+    "SimpleInput": 5,
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/client/ticket/ClientTicketScreen.js",
+    "input:text": 1,
+    "textarea": 2,
+    "button": 1
+  },
+  {
+    "file": "frontend/src/screens/evidenceDocuments/EvidenceDocumentsScreen.js",
+    "PrimaryButton": 1,
+    "SimpleInput": 3,
+    "ChooseButton": 1,
+    "TertiaryButton": 1,
+    "SecondaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/firmStaffRoles/FirmStaffRolesScreen.js",
+    "SimpleInput": 1,
+    "input:checkbox": 2,
+    "input:radio": 2,
+    "PrimaryButton": 2,
+    "SecondaryButton": 3
+  },
+  {
+    "file": "frontend/src/screens/loginScreen/LoginScreen.js",
+    "SimpleInput": 1
+  },
+  {
+    "file": "frontend/src/screens/loginScreen/components/NextLoginButton.js",
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/mainScreen/components/ClientPopUp.js",
+    "SimpleInput": 4,
+    "SecondaryButton": 7,
+    "PrimaryButton": 2,
+    "SigningSelect": 2
+  },
+  {
+    "file": "frontend/src/screens/mainScreen/components/ClientsCard.js",
+    "PrimaryButton": 1,
+    "SecondaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/mainScreen/components/ImportClientsModal.js",
+    "SecondaryButton": 2,
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/mainScreen/components/commandCenter/CaseOperationsPanel.js",
+    "button": 2
+  },
+  {
+    "file": "frontend/src/screens/mainScreen/components/commandCenter/ManagerWorkloadChart.js",
+    "button": 2
+  },
+  {
+    "file": "frontend/src/screens/mainScreen/components/commandCenter/SigningOperationsPanel.js",
+    "button": 3,
+    "SecondaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/myCasesScreen/MyCasesScreen.js",
+    "ChooseButton": 3
+  },
+  {
+    "file": "frontend/src/screens/noPermissions/NoPermissionsScreen.js",
+    "SecondaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/officeIntegrations/OfficeIntegrations.js",
+    "PrimaryButton": 1,
+    "SimpleInput": 4
+  },
+  {
+    "file": "frontend/src/screens/officeIntegrations/WhatsappSafety.js",
+    "SecondaryButton": 2,
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/officeIntegrations/newWhatsappLinkedDevice.js",
+    "PrimaryButton": 2,
+    "SecondaryButton": 4,
+    "SimpleInput": 1
+  },
+  {
+    "file": "frontend/src/screens/otpScreen/OtpScreen.js/LoginOtpScreen.js",
+    "SimpleInput": 1
+  },
+  {
+    "file": "frontend/src/screens/platformSettingsScreen/PlatformSettingsScreen.js",
+    "input:checkbox": 6,
+    "SimpleInput": 10,
+    "SecondaryButton": 6,
+    "TertiaryButton": 8,
+    "textarea": 2,
+    "PrimaryButton": 6,
+    "button": 1
+  },
+  {
+    "file": "frontend/src/screens/pricingScreen/PricingScreen.js",
+    "PrimaryButton": 2,
+    "SecondaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/remindersScreen/RemindersScreen.js",
+    "SecondaryButton": 4,
+    "ChooseButton": 1,
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/remindersScreen/components/AddReminderModal.js",
+    "SimpleInput": 5,
+    "ChooseButton": 1,
+    "PrimaryButton": 1,
+    "SecondaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/remindersScreen/components/ImportRemindersModal.js",
+    "ChooseButton": 1,
+    "SecondaryButton": 2,
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/remindersScreen/components/ReminderDetailPopup.js",
+    "SimpleInput": 4,
+    "PrimaryButton": 4,
+    "SecondaryButton": 3
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/PublicSigningScreen.js",
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/ShortSignRedirectScreen.js",
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/SigningManagerScreen.js",
+    "SimpleInput": 4,
+    "button": 1,
+    "PrimaryButton": 5,
+    "SecondaryButton": 13,
+    "input:text": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/SigningScreen.js",
+    "SecondaryButton": 3,
+    "button": 1,
+    "PrimaryButton": 3
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/SigningSpotsPreviewScreen.js",
+    "SecondaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/UploadFileForSigningScreen.js",
+    "input:checkbox": 2,
+    "select": 2,
+    "SecondaryButton": 22,
+    "SimpleInput": 5,
+    "PrimaryButton": 9,
+    "button": 2,
+    "textarea": 1,
+    "input:radio": 4
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/publicV2/CompletedPackageCopy.js",
+    "PrimaryButton": 1,
+    "SecondaryButton": 2
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/publicV2/PublicPackageSigning.js",
+    "SecondaryButton": 3
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/publicV2/SignaturePad.js",
+    "SecondaryButton": 1,
+    "input:text": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/ApprovalReviewerField.js",
+    "SimpleInput": 1,
+    "SigningSelect": 1,
+    "SecondaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/BatchComposer.js",
+    "input:text": 2,
+    "button": 6,
+    "input:file": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/BulkActionsWorkspace.js",
+    "SecondaryButton": 9,
+    "input:checkbox": 1,
+    "PrimaryButton": 3
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/CaseContextPicker.js",
+    "TertiaryButton": 3
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/CaseStageAutomationPanel.js",
+    "SecondaryButton": 8,
+    "SigningSelect": 1,
+    "input:text": 1,
+    "input:checkbox": 1,
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/ClientSendContext.js",
+    "TertiaryButton": 3
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/CompletionMarkDialog.js",
+    "SigningSelect": 1,
+    "input:checkbox": 1,
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/DraftRecoveryList.js",
+    "SigningSelect": 1,
+    "SecondaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/PackageApprovalDialog.js",
+    "SecondaryButton": 4,
+    "input:checkbox": 1,
+    "PrimaryButton": 2
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/PackageComposer.js",
+    "input:text": 3,
+    "button": 11,
+    "SigningSelect": 3,
+    "SecondaryButton": 17,
+    "input:search": 1,
+    "input:radio": 3,
+    "PrimaryButton": 6,
+    "input:checkbox": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/PackageLifecycleDialog.js",
+    "SimpleInput": 1,
+    "input:checkbox": 1,
+    "PrimaryButton": 2,
+    "SecondaryButton": 3
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/PackageReplacementDialog.js",
+    "input:checkbox": 1,
+    "PrimaryButton": 1,
+    "SecondaryButton": 2
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/ParticipantActionDialog.js",
+    "PrimaryButton": 1,
+    "SecondaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/ParticipantContactDialog.js",
+    "SimpleInput": 2,
+    "PrimaryButton": 1,
+    "SecondaryButton": 3
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/ParticipantDirectoryFields.js",
+    "input:text": 1,
+    "SecondaryButton": 8,
+    "SigningSelect": 4,
+    "input:file": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/PublicBatchSigning.js",
+    "button": 7,
+    "input:text": 2,
+    "input:checkbox": 2
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/RecipientFields.js",
+    "button": 2,
+    "input:text": 2,
+    "input:email": 1,
+    "input:tel": 1,
+    "SigningSelect": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/SelectedTemplateEntry.js",
+    "SecondaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/SigningBackButton.js",
+    "TertiaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/SigningPackagesHub.js",
+    "SecondaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/SigningPackagesWorkspace.js",
+    "SecondaryButton": 19,
+    "button": 2,
+    "PrimaryButton": 2
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/SigningSelect.js",
+    "ChooseButton": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/TaskIssueDialog.js",
+    "PrimaryButton": 1,
+    "SecondaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/TemplateBuilder.js",
+    "SigningSelect": 7,
+    "button": 8,
+    "input:text": 3,
+    "input:file": 1,
+    "SecondaryButton": 4,
+    "input:checkbox": 5,
+    "input:email": 1,
+    "input:number": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/TemplateDataKeys.js",
+    "input:text": 1,
+    "SigningSelect": 1,
+    "textarea": 1,
+    "input:checkbox": 2,
+    "button": 2
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/TemplateDataValueInput.js",
+    "SigningSelect": 1,
+    "input:text": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/TemplateDocumentCondition.js",
+    "SigningSelect": 3,
+    "button": 7
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/TemplateRoles.js",
+    "input:text": 1,
+    "SigningSelect": 5,
+    "button": 4
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/TemplatesWorkspace.js",
+    "button": 15,
+    "input:text": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/templates/WorkbookImport.js",
+    "SigningSelect": 2,
+    "input:file": 1,
+    "PrimaryButton": 2,
+    "SecondaryButton": 2
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/word/WordDataFieldPanel.js",
+    "SigningSelect": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/word/WordRecordPicker.js",
+    "TertiaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/word/WordSourceViewer.js",
+    "button": 1,
+    "SigningSelect": 2,
+    "SecondaryButton": 2
+  },
+  {
+    "file": "frontend/src/screens/signingScreen/word/WordTemplatesWorkspace.js",
+    "SimpleInput": 4,
+    "SecondaryButton": 5,
+    "SigningSelect": 1,
+    "TertiaryButton": 5,
+    "PrimaryButton": 4,
+    "input:checkbox": 3
+  },
+  {
+    "file": "frontend/src/screens/signup/SignupLogoPicker.js",
+    "button": 1,
+    "input:file": 1
+  },
+  {
+    "file": "frontend/src/screens/signup/SignupScreen.js",
+    "button": 1,
+    "SecondaryButton": 1,
+    "PrimaryButton": 3,
+    "SimpleInput": 5,
+    "input:checkbox": 1
+  },
+  {
+    "file": "frontend/src/screens/taggedCasesScreen/TaggedCasesScreen.js",
+    "ChooseButton": 3,
+    "PrimaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/taggedCasesScreen/components/TagCasePopup.js",
+    "SecondaryButton": 1
+  },
+  {
+    "file": "frontend/src/screens/verify/EvidenceVerifyScreen.js",
+    "PrimaryButton": 4
+  },
+  {
+    "file": "frontend/src/screens/viewSignedDocument/ViewSignedDocument.js",
+    "PrimaryButton": 1,
+    "SecondaryButton": 1
+  }
+]

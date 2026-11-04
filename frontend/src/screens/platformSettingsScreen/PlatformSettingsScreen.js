@@ -1879,23 +1879,6 @@ export default function PlatformSettingsScreen() {
                             <SimpleContainer className="lw-platformSettings__settingRow">
                                 <SimpleContainer className="lw-platformSettings__settingLabel">
                                     <TextBold14 className="lw-platformSettings__settingName">
-                                        {t("platformSettings.calendarRemindersEnabled")}
-                                    </TextBold14>
-                                    <Text12 className="lw-platformSettings__settingDescription">
-                                        {t("platformSettings.calendarRemindersEnabledHint")}
-                                    </Text12>
-                                </SimpleContainer>
-                                <SimpleContainer className="lw-platformSettings__settingInput">
-                                    <SettingInput
-                                        setting={{ valueType: "boolean" }}
-                                        value={getVal("CALENDAR_REMINDERS_ENABLED", "true")}
-                                        onChange={(val) => handleChange("CALENDAR_REMINDERS_ENABLED", val)}
-                                    />
-                                </SimpleContainer>
-                            </SimpleContainer>
-                            <SimpleContainer className="lw-platformSettings__settingRow">
-                                <SimpleContainer className="lw-platformSettings__settingLabel">
-                                    <TextBold14 className="lw-platformSettings__settingName">
                                         {t("platformSettings.calendarReminderOptionsTitle")}
                                     </TextBold14>
                                     <Text12 className="lw-platformSettings__settingDescription">
@@ -1986,6 +1969,26 @@ export default function PlatformSettingsScreen() {
                                     })}
                                 </SimpleContainer>
                             </SimpleContainer>
+                            {['LAWYER', 'CLIENT'].map(audience => {
+                                const key = `CALENDAR_${audience}_REMINDER_CHANNEL_DEFAULTS`;
+                                const selected = new Set(parseChannelsList(getVal(key, 'push,sms')));
+                                const allowed = new Set(parseChannelsList(getVal('CALENDAR_REMINDER_CHANNELS', 'push,sms,email')));
+                                return <SimpleContainer key={key} className="lw-platformSettings__settingRow">
+                                    <SimpleContainer className="lw-platformSettings__settingLabel">
+                                        <TextBold14>{t(audience === 'LAWYER' ? 'platformSettings.calendarLawyerChannelDefaults' : 'platformSettings.calendarClientChannelDefaults')}</TextBold14>
+                                        <Text12>{t('platformSettings.calendarChannelDefaultsHint')}</Text12>
+                                    </SimpleContainer>
+                                    <SimpleContainer className="lw-platformSettings__reminderOptions">
+                                        {REMINDER_CHANNEL_OPTIONS.filter(c => allowed.has(c.key)).map(channel => <SimpleButton key={channel.key}
+                                            className={`lw-platformSettings__dayChip ${selected.has(channel.key) ? 'lw-platformSettings__dayChip--active' : ''}`}
+                                            aria-pressed={selected.has(channel.key)} onPress={() => {
+                                                const next = new Set(selected);
+                                                if (next.has(channel.key)) next.delete(channel.key); else next.add(channel.key);
+                                                handleChange(key, [...next].filter(k => allowed.has(k)).join(','));
+                                            }}><Text14>{t(channel.labelKey)}</Text14></SimpleButton>)}
+                                    </SimpleContainer>
+                                </SimpleContainer>;
+                            })}
                             <SimpleContainer className="lw-platformSettings__settingRow">
                                 <SimpleContainer className="lw-platformSettings__settingLabel">
                                     <TextBold14 className="lw-platformSettings__settingName">

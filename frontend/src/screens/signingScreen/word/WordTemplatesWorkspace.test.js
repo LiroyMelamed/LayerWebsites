@@ -51,7 +51,7 @@ async function open(saved = source(), props = {}, manage = false) {
     await waitFor(() => expect(screen.getByRole('option', { name: saved.name })).toBeInTheDocument());
     fireEvent.change(screen.getByLabelText('library'), { target: { value: saved.id } });
     await waitFor(() => expect(screen.getByLabelText('clientId')).toBeInTheDocument());
-    if (manage) { fireEvent.click(screen.getByText('manageTemplates')); await waitFor(() => expect(screen.getByText('chooseBlank')).toBeInTheDocument()); }
+    if (manage) { fireEvent.click(screen.getByText('editTemplate')); await waitFor(() => expect(screen.getByText('chooseBlank')).toBeInTheDocument()); }
     return result;
 }
 async function chooseReplacement(value = 'client.fullName') {
@@ -108,7 +108,7 @@ test('a fresh ordinary entry with explicit null context and no draft opens the l
     expect(screen.getByText('preview')).toBeEnabled();
     expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: false, inputs: expect.objectContaining({
         clientId: '', caseId: '', clientRecord: null, caseRecord: null, manualValues: { 'client.identityNumber': '000031' } }) }));
-    fireEvent.click(screen.getByText('manageTemplates')); await screen.findByTestId('original-pdf');
+    fireEvent.click(screen.getByText('editTemplate')); await screen.findByTestId('original-pdf');
     expect(api.authoringRender).toHaveBeenCalledWith(saved.id, { expectedVersion: saved.version, sourceHash: saved.sourceHash });
     expect(api.create).not.toHaveBeenCalled(); expect(api.save).not.toHaveBeenCalled(); expect(api.preview).not.toHaveBeenCalled(); expect(onContinue).not.toHaveBeenCalled();
 });
@@ -251,7 +251,7 @@ test('input and context changes close inline reading; stale ready callbacks cann
 
 test('a mismatched authoring source cannot expose selection or save; stale selection response cannot add a binding', async () => {
     api.authoringRender.mockResolvedValueOnce({ authoring: { schemaVersion: 2 } });
-    await open(source()); fireEvent.click(screen.getByText('manageTemplates'));
+    await open(source()); fireEvent.click(screen.getByText('editTemplate'));
     await waitFor(() => expect(screen.getByText('authoringUnavailable')).toBeInTheDocument());
     expect(screen.queryByTestId('original-pdf')).not.toBeInTheDocument(); expect(api.authoringPdf).not.toHaveBeenCalled(); expect(api.save).not.toHaveBeenCalled();
     fireEvent.click(screen.getByText('retryAuthoring')); await waitFor(() => expect(screen.getByText('chooseBlank')).toBeInTheDocument());
@@ -273,7 +273,7 @@ test('reopening a412 conflict loads the current saved source before rendering an
     await open(mapped(), { initialContext: context(), onDraftChange });
     fireEvent.change(screen.getByLabelText('clientId'), { target: { value: '23' } });
     fireEvent.change(screen.getByLabelText('caseId'), { target: { value: '32' } });
-    fireEvent.click(screen.getByText('manageTemplates'));
+    fireEvent.click(screen.getByText('editTemplate'));
     await screen.findByText('conflict'); expect(screen.queryByTestId('original-pdf')).not.toBeInTheDocument();
     api.load.mockResolvedValue({ source: latest });
     fireEvent.click(screen.getByText('retryAuthoring'));
@@ -293,7 +293,7 @@ test('reopen confirms before discarding dirty edits and cancellation preserves e
     const onDraftChange = jest.fn(); const latest = { ...mapped(), name: 'Saved version four', version: 4 };
     api.authoringRender.mockRejectedValueOnce({ status: 412 });
     await open(mapped(), { initialContext: context(), onDraftChange });
-    fireEvent.click(screen.getByText('manageTemplates')); await screen.findByText('conflict');
+    fireEvent.click(screen.getByText('editTemplate')); await screen.findByText('conflict');
     fireEvent.change(screen.getByLabelText('name'), { target: { value: 'Unsaved local name' } });
     api.load.mockResolvedValue({ source: latest });
     fireEvent.click(screen.getByText('retryAuthoring'));
@@ -321,7 +321,7 @@ test('same-source reopen retains manual values and role selections plus context 
     fireEvent.change(screen.getByLabelText('roleClientId Landlord'), { target: { value: '77' } });
     fireEvent.change(screen.getByLabelText('roleClientId Old role'), { target: { value: '88' } });
     api.authoringRender.mockRejectedValueOnce({ status: 412 });
-    fireEvent.click(screen.getByText('manageTemplates')); await screen.findByText('conflict');
+    fireEvent.click(screen.getByText('editTemplate')); await screen.findByText('conflict');
     let complete; api.load.mockReturnValueOnce(new Promise(resolve => { complete = resolve; }));
     fireEvent.click(screen.getByText('retryAuthoring')); await waitFor(() => expect(api.load).toHaveBeenCalledTimes(2));
     // Editing controls are locked during reload, but a legitimate parent context
@@ -369,7 +369,7 @@ test('ordinary source switching still clears document-only values and role choic
 test('a late reopen load after unmount cannot replace the draft or start another render', async () => {
     const onDraftChange = jest.fn(); api.authoringRender.mockRejectedValueOnce({ status: 412 });
     const view = await open(mapped(), { onDraftChange });
-    fireEvent.click(screen.getByText('manageTemplates')); await screen.findByText('conflict');
+    fireEvent.click(screen.getByText('editTemplate')); await screen.findByText('conflict');
     let complete; api.load.mockReturnValueOnce(new Promise(resolve => { complete = resolve; }));
     fireEvent.click(screen.getByText('retryAuthoring')); await waitFor(() => expect(api.load).toHaveBeenCalledTimes(2));
     const notifications = onDraftChange.mock.calls.length; view.unmount();
@@ -540,7 +540,7 @@ test('the document area announces preparation until both the deferred authoring 
     const prepare = api.authoringRender.getMockImplementation(); let finishMap, finishPdf;
     api.authoringRender.mockImplementationOnce((...args) => new Promise(done => { finishMap = async () => done(await prepare(...args)); }));
     api.authoringPdf.mockImplementationOnce(() => new Promise(done => { finishPdf = done; }));
-    await open(source()); fireEvent.click(screen.getByText('manageTemplates'));
+    await open(source()); fireEvent.click(screen.getByText('editTemplate'));
     const editor = screen.getByRole('region', { name: 'mapping' });
     const expectPreparing = () => {
         const status = within(editor).getByRole('status');
@@ -575,7 +575,7 @@ test('the temporary picker keeps its quote, required setting and cancel together
 
 test('authoring admission busy feedback preserves the source and offers an explicit retry', async () => {
     const onDraftChange = jest.fn(); api.authoringRender.mockRejectedValueOnce({ status: 429, code: 'WORD_CONVERSION_BUSY' });
-    await open(source(), { onDraftChange }); fireEvent.click(screen.getByText('manageTemplates'));
+    await open(source(), { onDraftChange }); fireEvent.click(screen.getByText('editTemplate'));
     await screen.findByText('converterBusy');
     expect(screen.queryByTestId('original-pdf')).not.toBeInTheDocument(); expect(screen.queryByLabelText('field')).not.toBeInTheDocument();
     expect(screen.getByText('save')).toBeDisabled(); expect(api.authoringPdf).not.toHaveBeenCalled();
@@ -649,4 +649,27 @@ test('each role uses its explicitly chosen person in the preview payload', async
     fireEvent.click(screen.getByText('preview'));
     await waitFor(() => expect(api.preview).toHaveBeenCalledTimes(1));
     expect(api.preview.mock.calls[0][1].inputs.roleClientIds).toEqual({ tenant: 23, owner: 24 });
+});
+
+test('a named manual field can be marked, saved and filled without a client record', async () => {
+    await open(source(), {}, true);
+    fireEvent.click(screen.getByText('groups.manual'));
+    fireEvent.click(screen.getByText('chooseBlank'));
+    await waitFor(() => expect(screen.getByLabelText('customFieldName')).toBeEnabled());
+    fireEvent.change(screen.getByLabelText('customFieldName'), { target: { value: 'גוש' } });
+    fireEvent.click(screen.getByText('addCustomField'));
+    api.save.mockImplementation((id, payload) => Promise.resolve({ source: { ...source(), ...payload, id, version: 4 } }));
+    fireEvent.click(screen.getByText('save'));
+    await waitFor(() => expect(api.save).toHaveBeenCalled());
+    const payload = api.save.mock.calls[0][1];
+    expect(payload.bindings[0]).toMatchObject({ field: expect.stringMatching(/^manual\./), fieldLabel: 'גוש', required: true });
+    expect(payload.inputs).toBeUndefined();
+    await waitFor(() => expect(screen.getByText('saved')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('previewTemplate'));
+    expect(screen.getByLabelText('גוש')).toBeInTheDocument();
+    expect(screen.getByText('preview')).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('גוש'), { target: { value: '00123' } });
+    fireEvent.click(screen.getByText('preview'));
+    await waitFor(() => expect(api.preview).toHaveBeenCalled());
+    expect(api.preview.mock.calls[0][1].inputs.manualValues[payload.bindings[0].field]).toBe('00123');
 });
