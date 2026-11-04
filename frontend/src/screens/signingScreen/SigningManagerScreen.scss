@@ -629,3 +629,24 @@
     .lw-signingManagerScreen__footer { padding-inline: 0.75rem; }
     .lw-signingManagerScreen__footer > * { flex: 1 1 12rem; }
 }
+
+/* Keep search and both date inputs together, with a compact scope switch. */
+.lw-signingManagerScreen__topRow {
+  display: grid; grid-template-columns: minmax(12rem, 1fr) minmax(16rem, 22rem) auto;
+  align-items: center; gap: .625rem; margin: .5rem 0 1rem;
+  .lw-signingManagerScreen__searchContainer, .lw-signingManagerScreen__dateFilters { min-inline-size: 0; margin: 0; }
+  .lw-signingManagerScreen__dateFilters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lw-signingManagerScreen__dateInput { min-inline-size: 0; inline-size: 100%; }
+  .lw-simpleInput { margin-block: 0; }
+  .lw-signingManagerScreen__scopeSwitch { align-self: center; justify-self: start; }
+  .lw-segmentedSwitch__track { inline-size: max-content; max-inline-size: 100%; min-block-size: 2.25rem; }
+  .lw-segmentedSwitch__option { flex: 0 0 auto; white-space: nowrap; padding: .375rem .625rem; font-size: .8125rem; line-height: 1.4; }
+  @media (max-width: 70rem) {
+    grid-template-columns: minmax(10rem, 1fr) minmax(16rem, 1fr);
+    .lw-signingManagerScreen__scopeSwitch { grid-column: 1 / -1; }
+  }
+  @media (max-width: 32rem) {
+    grid-template-columns: minmax(0, 1fr);
+    .lw-signingManagerScreen__scopeSwitch { grid-column: 1; }
+  }
+}
