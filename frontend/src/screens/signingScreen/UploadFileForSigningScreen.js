@@ -9,7 +9,6 @@ import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
 import Skeleton from "../../components/simpleComponents/Skeleton";
 
 import SimpleTextArea from "../../components/simpleComponents/SimpleTextArea";
-import SigningSelect from "./templates/SigningSelect";
 import SimpleInput from "../../components/simpleComponents/SimpleInput";
 
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
