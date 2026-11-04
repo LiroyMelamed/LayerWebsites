@@ -55,6 +55,7 @@ const { lawyerMatchSql, personalCalendarSql } = require('../lib/calendarVisibili
 const { isEventCancelled, normalizeEventStatus } = require('../lib/calendarEventStatus');
 const { signOAuthState, verifyOAuthState } = require('../lib/calendarOAuthState');
 const { googleCalendarEventTimes } = require('../lib/googleCalendarEventTimes');
+const { importInvitations } = require('../services/calendarInvitationImport');
 const { sendMessage } = require('../utils/sendMessage');
 const { sendTransactionalCustomHtmlEmail } = require('../utils/smooveEmailCampaignService');
 const { composeCalendarEmail } = require('../lib/calendarEmail');
@@ -1206,8 +1207,9 @@ const createEvent = async (req, res) => {
 
     const shouldInviteClient = (
         (eventType === 'appointment' || eventType === 'hearing')
-        && storedReminderTargets.client
-        && hasAnyReminderChannel(storedReminderChannels)
+        && (req.body?.send_invitation !== undefined
+            ? req.body.send_invitation === true
+            : storedReminderTargets.client && hasAnyReminderChannel(storedReminderChannels))
         && (clientIds.length > 0 || lead_phone || lead_email
             || (Array.isArray(lead_participants) && lead_participants.length))
     );
@@ -1345,6 +1347,14 @@ const createEvent = async (req, res) => {
                 if (clientMeta.inviteStatus) created.invite_status = clientMeta.inviteStatus;
             }
 
+            if (recurrenceEnabled && eventType === 'reminder') {
+                const occurrenceReminderId = await reminderCalendarSync.createReminderForCalendarEvent(created, {
+                    toEmail: reminder_to_email, clientName: reminder_client_name,
+                    templateKey: reminder_template_key, templateData: reminder_template_data,
+                    subject: reminder_subject, createdBy: userId,
+                }, { client: dbClient });
+                if (i === 0) linkedReminderId = occurrenceReminderId;
+            }
             if (i === 0) {
                 firstCreated = created;
                 firstClientMeta = clientMeta;
@@ -1365,7 +1375,7 @@ const createEvent = async (req, res) => {
         }
 
         // Side-effects after commit (SMS / email / reminder sync must not leave orphan rows).
-        if (firstCreated && eventType === 'reminder') {
+        if (firstCreated && eventType === 'reminder' && !recurrenceEnabled) {
             try {
                 linkedReminderId = await reminderCalendarSync.createReminderForCalendarEvent(
                     firstCreated,
@@ -2320,6 +2330,7 @@ const syncGoogleEvents = async (req, res) => {
                 timeMin,
                 timeMax,
                 singleEvents: true,
+                showDeleted: true,
                 orderBy: 'startTime',
                 maxResults: 250,
                 pageToken: pageToken || undefined,
@@ -2332,14 +2343,35 @@ const syncGoogleEvents = async (req, res) => {
         let failedCount = 0;
 
         for (const gev of googleEvents) {
-            if (gev.status === 'cancelled') continue;
             if (!gev.id) continue;
+            if (gev.status === 'cancelled') {
+                // Cancellation payloads may omit UID, title and times. Never infer deletion from absence.
+                await pool.query("UPDATE calendar_events SET event_status='cancelled',invite_deferred_until=NULL WHERE owner_id=$1 AND google_event_id=$2", [userId, gev.id]);
+                continue;
+            }
 
             const times = googleCalendarEventTimes(gev);
             if (!times) continue;
             const { startTime, endTime, allDay } = times;
 
             try {
+                if (gev.iCalUID && gev.organizer?.email) {
+                    const original = gev.originalStartTime;
+                    await importInvitations(userId, [{
+                        uid: gev.iCalUID,
+                        organizer: gev.organizer.email.trim().toLowerCase(),
+                        recurrenceKey: original?.date || (original?.dateTime ? new Date(original.dateTime).toISOString() : ''),
+                        sequence: Number(gev.sequence) || 0,
+                        stamp: gev.updated || null,
+                        title: (gev.summary || '(ללא כותרת)').trim(),
+                        description: gev.description || null,
+                        location: gev.location || null,
+                        startTime, endTime, allDay, googleEventId: gev.id,
+                        responseStatus: gev.attendees?.find(a => a.self)?.responseStatus || null,
+                    }], 'google');
+                    upsertCount++;
+                    continue;
+                }
                 await pool.query(
                     `INSERT INTO calendar_events
                        (owner_id, title, description, location, start_time, end_time, all_day, google_event_id)
@@ -2784,7 +2816,8 @@ const syncOutlookEvents = async (req, res) => {
  */
 const checkConflict = async (req, res) => {
     const userId = req.user.UserId;
-    const { start_time, end_time, lawyer_id, lawyer_ids, exclude_event_id } = req.body || {};
+    const { start_time, end_time, lawyer_id, lawyer_ids, exclude_event_id, event_type } = req.body || {};
+    if (event_type === 'reminder') return res.json({ hasConflict: false, hasLeaveConflict: false, conflicts: [] });
 
     if (!start_time || !end_time) {
         return res.status(400).json({ message: 'נא לציין שעת התחלה וסיום לבדיקת התנגשויות' });
@@ -2827,6 +2860,7 @@ const checkConflict = async (req, res) => {
                  LEFT JOIN cases c        ON c.caseid        = ce.case_id
                  WHERE  ${_lawyerMatchSql(1)}
                    AND COALESCE(ce.event_status, 'scheduled') = 'scheduled'
+                   AND COALESCE(ce.event_type, 'appointment') <> 'reminder'
                    AND  ($4::int IS NULL OR ce.id <> $4)
                    AND  tstzrange(ce.start_time, ce.end_time, '[)')
                         && tstzrange($2::timestamptz, $3::timestamptz, '[)')
@@ -3428,6 +3462,7 @@ async function _sendCalendarInvite(ev, { force = false, retry = false } = {}) {
                     subject: composed.subject,
                     htmlBody: composed.htmlBody,
                     logLabel: 'CALENDAR_INVITE',
+                    calendarInvitation: ev,
                 }), retry);
                 if (!emailResult?.accepted) throw new Error(emailResult?.errorCode || 'email_failed');
                 entry.sentEmail = true;

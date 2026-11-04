@@ -1,3 +1,5 @@
+const { responsiveEmailHtml } = require('../lib/responsiveEmailHtml');
+const { buildCalendarInvitation } = require('../lib/calendarInvitation');
 const { qaOutboundNoop } = require("../lib/qaOutboundNoop");
 const nodemailer = require('nodemailer');
 require('dotenv').config();
@@ -256,7 +258,7 @@ async function sendEmailCampaign({ toEmail, campaignKey, contactFields, attachme
     });
 }
 
-async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shouldSendRealEmail, logLabel, ccEmails, replyTo, fromName: fromNameOverride, fromEmail: fromEmailOverride } = {}) {
+async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shouldSendRealEmail, logLabel, ccEmails, replyTo, fromName: fromNameOverride, fromEmail: fromEmailOverride, calendarInvitation } = {}) {
     const suppressed = qaOutboundNoop('email', [toEmail, ...(Array.isArray(ccEmails) ? ccEmails.filter(Boolean) : [])]);
     if (suppressed) return suppressed;
     const email = String(toEmail || '').trim();
@@ -311,7 +313,14 @@ async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shou
             ...(ccEmail && ccEmail.toLowerCase() !== email.toLowerCase() ? { cc: ccEmail } : {}),
             subject: String(subject || '').trim(),
             text: plainText || undefined,
-            html: String(htmlBody || ''),
+            html: responsiveEmailHtml(htmlBody),
+            ...(calendarInvitation ? { icalEvent: buildCalendarInvitation({
+                event: calendarInvitation,
+                recipientEmail: email,
+                organizerEmail: smtpFrom,
+                organizerName: fromName,
+                domain: process.env.WEBSITE_DOMAIN,
+            }) } : {}),
         };
 
         const info = await transporter.sendMail(mailOptions);
@@ -327,7 +336,7 @@ async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shou
  * Send a one-off transactional HTML email.
  * Reuses the same SMTP transport as other transactional emails.
  */
-async function sendTransactionalCustomHtmlEmail({ toEmail, subject, htmlBody, logLabel, replyTo, fromName, fromEmail } = {}) {
+async function sendTransactionalCustomHtmlEmail({ toEmail, subject, htmlBody, logLabel, replyTo, fromName, fromEmail, calendarInvitation } = {}) {
     const suppressed = qaOutboundNoop('email', toEmail);
     if (suppressed) return suppressed;
     const email = String(toEmail || '').trim();
@@ -347,6 +356,7 @@ async function sendTransactionalCustomHtmlEmail({ toEmail, subject, htmlBody, lo
         replyTo,
         fromName,
         fromEmail,
+        calendarInvitation,
     });
 }
 
@@ -409,7 +419,7 @@ async function sendEmailWithAttachments({ toEmail, subject, htmlBody, attachment
             ...(replyToEmail ? { replyTo: replyToEmail } : {}),
             ...(ccEmail && ccEmail.toLowerCase() !== email.toLowerCase() ? { cc: ccEmail } : {}),
             subject: String(subject || '').trim(),
-            html: String(htmlBody || ''),
+            html: responsiveEmailHtml(htmlBody),
             attachments: (attachments || []).map(att => ({
                 filename: att.filename,
                 content: att.content,

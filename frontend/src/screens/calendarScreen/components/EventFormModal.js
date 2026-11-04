@@ -28,6 +28,7 @@ import {
     hasAnyReminderChannel,
     defaultReminderOffsets,
     defaultReminderChannels,
+    configuredReminderOffsets,
     defaultReminderTargets,
     parseReminderTargets,
 } from "../utils/eventReminders";
@@ -251,11 +252,12 @@ function _resolveSplitReminderOffsets(event, isEdit, isCreateCapable) {
     const hasSplit = lawyerRaw != null || clientRaw != null;
 
     if (isEdit) {
+        const targets = parseReminderTargets(event?.reminderTargets ?? event?.reminder_targets);
         return {
-            lawyerReminderOffsets: hasSplit
+            lawyerReminderOffsets: !targets.managers ? [] : hasSplit
                 ? parseOffsetsList(lawyerRaw ?? legacy)
                 : legacy,
-            clientReminderOffsets: hasSplit
+            clientReminderOffsets: !targets.client ? [] : hasSplit
                 ? parseOffsetsList(clientRaw ?? legacy)
                 : legacy,
         };
@@ -477,6 +479,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const [endTime, setEndTime] = useState(toDatetimeLocal(event?.endTime) || "");
     const [allDay, setAllDay] = useState(event?.allDay || false);
     const [recurring, setRecurring] = useState(false);
+    const [sendInvitation, setSendInvitation] = useState(false);
     const [recurrenceFreq, setRecurrenceFreq] = useState("weekly");
     const [recurrenceUntil, setRecurrenceUntil] = useState("");
     const [color, setColor] = useState(() => resolveFormColor(event, event?.eventType || EVENT_TYPE_APPT));
@@ -553,10 +556,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         const s = _formStateFromEvent(event);
         return s.reminderChannels;
     });
-    const [reminderTargets, setReminderTargets] = useState(() => {
-        const s = _formStateFromEvent(event);
-        return s.reminderTargets;
-    });
+
     const [clientReminderSms, setClientReminderSms] = useState(
         () => upgradeLegacyCalendarSmsTemplate(
             String(event?.clientReminderSms || "").trim() || DEFAULT_CLIENT_REMINDER_SMS
@@ -670,6 +670,9 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setEndTime(s.endTime);
         endTimeTouchedRef.current = Boolean(isEdit && s.endTime);
         setAllDay(s.allDay);
+        setSendInvitation(false);
+        setRecurring(false);
+        setRecurrenceUntil("");
         setColor(s.color);
         colorTouchedRef.current = !isStockEventColor(event?.color, s.eventType);
         setClients(s.clients);
@@ -691,10 +694,10 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setDraftLeadPhoneError(null);
         setDraftLeadEmailError(null);
         setOptionalConvertCaseName(s.leadCaseName || "");
+        reminderOffsetsTouchedRef.current = { lawyer: false, client: false };
         setLawyerReminderOffsets(s.lawyerReminderOffsets);
         setClientReminderOffsets(s.clientReminderOffsets);
         setReminderChannels(s.reminderChannels);
-        setReminderTargets(s.reminderTargets);
         setClientReminderSms(upgradeLegacyCalendarSmsTemplate(
             String(event?.clientReminderSms || "").trim() || DEFAULT_CLIENT_REMINDER_SMS
         ));
@@ -761,7 +764,6 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 setReminderClientName(reminder.client_name || "");
                 setReminderToEmail(reminder.to_email || "");
                 if (reminder.client_name || reminder.to_email) {
-                    setReminderTargets((prev) => ({ ...prev, client: true }));
                     setShowClientAttachPanel(true);
                 }
                 setReminderSubject(reminder.subject || "");
@@ -849,6 +851,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     }, [eventType]);
 
     // ─── Effect: apply yellow defaults when switching into a remindable type on create ─
+    const reminderDefaultsRef = useRef({});
+    const reminderOffsetsTouchedRef = useRef({ lawyer: false, client: false });
     const prevEventTypeRef = useRef(eventType);
     useEffect(() => {
         const prevType = prevEventTypeRef.current;
@@ -868,22 +872,17 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         }
         if (!isReminderCapableEventType(eventType)) return;
         if (eventType === EVENT_TYPE_REMINDER) {
-            setReminderTargets({ client: false, managers: true });
             if (!clients.length && !reminderClientName.trim() && !reminderToEmail.trim()) {
                 setShowClientAttachPanel(false);
             }
         }
         // Coming from leave/holiday (or empty offsets): seed yellow defaults.
-        setLawyerReminderOffsets((prev) => (
-            prev?.length
-                ? normalizeSelectedOffsets(prev, allowedReminderMinutes)
-                : defaultReminderOffsets(allowedReminderMinutes)
-        ));
-        setClientReminderOffsets((prev) => (
-            prev?.length
-                ? normalizeSelectedOffsets(prev, allowedReminderMinutes)
-                : defaultReminderOffsets(allowedReminderMinutes)
-        ));
+        if (!reminderOffsetsTouchedRef.current.lawyer) setLawyerReminderOffsets(
+            configuredReminderOffsets(reminderDefaultsRef.current, 'lawyer', allowedReminderMinutes)
+        );
+        if (!reminderOffsetsTouchedRef.current.client) setClientReminderOffsets(
+            configuredReminderOffsets(reminderDefaultsRef.current, 'client', allowedReminderMinutes)
+        );
         setReminderChannels((prev) => normalizeChannelsForEventType(
             eventType,
             hasAnyReminderChannel(prev) ? prev : defaultReminderChannels(allowedReminderChannelKeys),
@@ -978,8 +977,9 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 }
                 // On create, re-apply defaults against the firm allowlist once settings load.
                 if (!isEdit) {
-                    setLawyerReminderOffsets((prev) => (prev?.length ? normalizeSelectedOffsets(prev, allowed) : defaultReminderOffsets(allowed)));
-                    setClientReminderOffsets((prev) => (prev?.length ? normalizeSelectedOffsets(prev, allowed) : defaultReminderOffsets(allowed)));
+                    reminderDefaultsRef.current = cal;
+                    if (!reminderOffsetsTouchedRef.current.lawyer) setLawyerReminderOffsets(configuredReminderOffsets(cal, 'lawyer', allowed));
+                    if (!reminderOffsetsTouchedRef.current.client) setClientReminderOffsets(configuredReminderOffsets(cal, 'client', allowed));
                     setReminderChannels((prev) => normalizeChannelsForEventType(
                         eventTypeRef.current,
                         hasAnyReminderChannel(prev) ? prev : defaultReminderChannels(calChannelKeys),
@@ -1088,7 +1088,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         () => channelsForEventType(eventType, allowedReminderChannelKeys),
         [eventType, allowedReminderChannelKeys]
     );
-    // Reminder timing + "למי לשלוח" for appointment, hearing, AND general reminder.
+    // Selected timing groups determine reminder recipients for every reminder-capable event.
     const showReminderPicker = isReminderCapableEventType(eventType);
     const isReminderEventType = eventType === EVENT_TYPE_REMINDER;
     const isLeaveEventType = eventType === EVENT_TYPE_LEAVE;
@@ -1100,9 +1100,6 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         || !!(leadName.trim() || leadPhone.trim() || leadEmail.trim())
         || !!(draftLeadName.trim() || draftLeadPhone.trim() || draftLeadEmail.trim())
         || (isReminderEventType && !!(reminderClientName.trim() || reminderToEmail.trim()));
-    const hasManagerRecipients = managers.length > 0;
-    /** "למי לשלוח" chips only matter when both audiences exist. */
-    const showAudienceTargetChips = hasClientRecipient && hasManagerRecipients;
     const anyReminderOffsets = lawyerReminderOffsets.length > 0
         || (hasClientRecipient && clientReminderOffsets.length > 0);
     const reminderTemplateItems = useMemo(
@@ -1150,6 +1147,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     };
 
     const toggleLawyerReminderOffset = (minutes) => {
+        reminderOffsetsTouchedRef.current.lawyer = true;
         setLawyerReminderOffsets((prev) => {
             const set = new Set(prev);
             if (set.has(minutes)) set.delete(minutes);
@@ -1159,6 +1157,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     };
 
     const toggleClientReminderOffset = (minutes) => {
+        reminderOffsetsTouchedRef.current.client = true;
         if (!hasClientRecipient) return;
         setClientReminderOffsets((prev) => {
             const set = new Set(prev);
@@ -1175,13 +1174,12 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         });
     };
 
-    const toggleReminderTarget = (key) => {
-        setReminderTargets((prev) => ({ ...prev, [key]: !prev[key] }));
-    };
 
     // ─── Effect: live conflict check (debounced) ──────────────────────────
     useEffect(() => {
-        if (isInternalScopedEventType(eventType)) {
+        if (eventType === EVENT_TYPE_REMINDER || isInternalScopedEventType(eventType)) {
+            lastConflictKeyRef.current = null;
+            setColorCollision(false);
             setConflictState({ loading: false, hasConflict: false, hasLeaveConflict: false });
             return undefined;
         }
@@ -1211,7 +1209,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setConflictState((prev) => ({ ...prev, loading: true }));
 
         const handle = setTimeout(async () => {
-            if (isInternalScopedEventType(eventTypeRef.current)) {
+            if (eventTypeRef.current === EVENT_TYPE_REMINDER || isInternalScopedEventType(eventTypeRef.current)) {
                 return;
             }
             try {
@@ -1220,6 +1218,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     end_time: endISO,
                     lawyer_ids: lawyerIds.length ? lawyerIds : undefined,
                     exclude_event_id: isEdit ? event.id : undefined,
+                    event_type: eventType,
                 });
                 if (cancelled) return;
                 const data = res?.data || {};
@@ -1273,6 +1272,9 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             return false;
         }
         if (!startTime) { notifyError("חובה להזין שעת התחלה"); return false; }
+        if (!isEdit && recurring && (!/^\d{4}-\d{2}-\d{2}$/.test(recurrenceUntil) || recurrenceUntil < toLocalYmdFromInput(startTime))) {
+            notifyError(t("calendar.recurrenceEndRequired")); return false;
+        }
         if (isReminderEventType) {
             // General reminders may be created without a linked client.
             if (reminderToEmail.trim()) {
@@ -1404,27 +1406,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 .sort((a, b) => b - a);
             const nextReminderTargets = (() => {
                 if (!showReminderPicker) return { client: false, managers: false };
-                if (isReminderEventType) {
-                    // Explicit chips when both; otherwise whoever was added.
-                    if (showAudienceTargetChips) {
-                        return {
-                            client: !!reminderTargets.client,
-                            managers: !!reminderTargets.managers,
-                        };
-                    }
-                    return {
-                        client: hasClientRecipient,
-                        managers: hasManagerRecipients || !hasClientRecipient,
-                    };
-                }
-                if (showAudienceTargetChips) {
-                    return {
-                        client: !!reminderTargets.client,
-                        managers: !!reminderTargets.managers,
-                    };
-                }
-                if (hasClientRecipient) return { client: true, managers: false };
-                return { client: false, managers: true };
+                return { client: clientOff.length > 0, managers: lawyerOff.length > 0 };
             })();
             const payload = {
                 title: title.trim() || reminderTitleFallback || (eventType === EVENT_TYPE_LEAVE
@@ -1465,10 +1447,11 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     : { push: false, sms: false, email: false },
                 reminder_targets: nextReminderTargets,
                 client_reminder_sms: showReminderPicker ? clientReminderSms : null,
+                send_invitation: !isEdit && sendInvitation,
                 invite_sms: showReminderPicker && supportsCalendarInviteSms(eventType) ? inviteSms : null,
             };
 
-            if (!isEdit && recurring && recurrenceUntil && !isReminderEventType && !isInternalScopedEventType(eventType)) {
+            if (!isEdit && recurring && recurrenceUntil && !isInternalScopedEventType(eventType)) {
                 payload.recurrence = {
                     enabled: true,
                     frequency: recurrenceFreq || "weekly",
@@ -1868,7 +1851,6 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             return next;
         });
         setShowClientAttachPanel(true);
-        setReminderTargets((prev) => ({ ...prev, client: true }));
         setClientName("");
         searchCustomers("");
     };
@@ -1925,7 +1907,6 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 name: selectedAdmin.name || selectedManagerName || "",
             }];
         });
-        setReminderTargets((prev) => ({ ...prev, managers: true }));
         setManagerSearch("");
         searchAdmins("");
     };
@@ -2092,7 +2073,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             lawyerReminderOffsets,
             clientReminderOffsets,
             reminderChannels,
-            reminderTargets,
+            reminderTargets: { client: hasClientRecipient && clientReminderOffsets.length > 0, managers: lawyerReminderOffsets.length > 0 },
             clientReminderSms,
             inviteSms,
             inviteStatus: "none",
@@ -2116,7 +2097,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const showConvertCta = hasLeadDataPersisted && !converting;
     const showOpenCaseCta = isEdit && !!linkedClientId && !linkedCaseId && !showConvertCta && !caseFormDraft;
     const showCaseLinker = showExistingClientFields && !!linkedClientId;
-    const showConflictBanner = !isInternalScopedType && (conflictState.hasConflict || conflictState.hasLeaveConflict);
+    const showConflictBanner = !isReminderEventType && !isInternalScopedType && (conflictState.hasConflict || conflictState.hasLeaveConflict);
 
     const modalRootRef = useRef(null);
     
@@ -2358,7 +2339,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                         )}
                     </SimpleContainer>
 
-                    {!isEdit && !isReminderEventType && !isInternalScopedType && (
+                    {!isEdit && !isInternalScopedType && (
                         <SimpleContainer className="lw-eventFormModal__recurrence">
                             <SimpleContainer className="lw-eventFormModal__allDay">
                                 <input
@@ -2439,31 +2420,6 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                         <SimpleContainer className="lw-eventFormModal__reminderEmail">
                             <TextBold14 color={NAVY}>{t("reminders.add.title")}</TextBold14>
                             <Text12 color="#718096">{t("calendar.eventRemindersHintReminderType")}</Text12>
-
-                            {showAudienceTargetChips && (
-                                <SimpleContainer className="lw-eventFormModal__reminderChannels">
-                                    <TextBold14 color={NAVY}>{t("calendar.reminderTargetsLabel")}</TextBold14>
-                                    <Text12 color="#718096">{t("calendar.reminderTargetsHint")}</Text12>
-                                    <SimpleContainer className="lw-eventFormModal__reminderChips">
-                                        <SimpleButton
-                                            className={`lw-eventFormModal__reminderChip ${reminderTargets.managers ? "is-active" : ""}`}
-                                            onPress={() => toggleReminderTarget("managers")}
-                                            aria-pressed={!!reminderTargets.managers}
-                                            tabIndex={-1}
-                                        >
-                                            <Text14>{t("calendar.reminderTargetManagers")}</Text14>
-                                        </SimpleButton>
-                                        <SimpleButton
-                                            className={`lw-eventFormModal__reminderChip ${reminderTargets.client ? "is-active" : ""}`}
-                                            onPress={() => toggleReminderTarget("client")}
-                                            aria-pressed={!!reminderTargets.client}
-                                            tabIndex={-1}
-                                        >
-                                            <Text14>{t("calendar.reminderTargetClient")}</Text14>
-                                        </SimpleButton>
-                                    </SimpleContainer>
-                                </SimpleContainer>
-                            )}
 
                             <SearchInput
                                 title={t("calendar.remindWho")}
@@ -2935,6 +2891,12 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     )}
 
                     {/* Keep reminder settings after participant entry so client options appear below the selected client. */}
+                    {!isEdit && supportsCalendarInviteSms(eventType) && hasClientRecipient && (
+                        <label className="lw-eventFormModal__allDay">
+                            <input type="checkbox" checked={sendInvitation} onChange={(e) => setSendInvitation(e.target.checked)} />
+                            <Text14>{t("calendar.sendInvitationOnSave")}</Text14>
+                        </label>
+                    )}
                     {showReminderPicker && (
                         <SimpleContainer className="lw-eventFormModal__reminders">
                             {event?.reminderDeliveryWarning && <Text14 role="alert">{t("calendar.reminderDeliveryUncertain")}</Text14>}
@@ -3010,33 +2972,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                     </SimpleContainer>
                                 </SimpleContainer>
                             )}
-                            <SimpleContainer className="lw-eventFormModal__reminderChannels">
-                                {!isReminderEventType && showAudienceTargetChips && (
-                                    <>
-                                        <TextBold14 color={NAVY}>{t("calendar.reminderTargetsLabel")}</TextBold14>
-                                        <Text12 color="#718096">{t("calendar.reminderTargetsHint")}</Text12>
-                                        <SimpleContainer className="lw-eventFormModal__reminderChips">
-                                            <SimpleButton
-                                                className={`lw-eventFormModal__reminderChip ${reminderTargets.client ? "is-active" : ""}`}
-                                                onPress={() => toggleReminderTarget("client")}
-                                                aria-pressed={!!reminderTargets.client}
-                                                tabIndex={-1}
-                                            >
-                                                <Text14>{t("calendar.reminderTargetClient")}</Text14>
-                                            </SimpleButton>
-                                            <SimpleButton
-                                                className={`lw-eventFormModal__reminderChip ${reminderTargets.managers ? "is-active" : ""}`}
-                                                onPress={() => toggleReminderTarget("managers")}
-                                                aria-pressed={!!reminderTargets.managers}
-                                                tabIndex={-1}
-                                            >
-                                                <Text14>{t("calendar.reminderTargetManagers")}</Text14>
-                                            </SimpleButton>
-                                        </SimpleContainer>
-                                    </>
-                                )}
-                            </SimpleContainer>
-                            {reminderTargets.client && hasClientRecipient && (
+                            {clientReminderOffsets.length > 0 && hasClientRecipient && (
                                 <SimpleContainer className="lw-eventFormModal__smsTemplates">
                                     <Text12 color="#718096">
                                         {t("calendar.inviteRemindersIndependentHint")}

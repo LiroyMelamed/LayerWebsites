@@ -131,6 +131,16 @@ async function getUsageForFirm(_firmId) {
         ]);
 
         const docs = docsRes.rows?.[0] || {};
+        // Opted-in dedicated offices retain usage when a document is deleted and
+        // count committed packages/replacements as well as legacy uploads.
+        try {
+            const metered = await pool.query(`SELECT coalesce(sum(documents),0)::bigint AS count
+                FROM signing_billing_usage WHERE month_start=($1::timestamptz AT TIME ZONE 'Asia/Jerusalem')::date
+                AND EXISTS(SELECT 1 FROM firm_billing WHERE id=1 AND law_firm_tenant_id IS NULL AND signing_auto_tier_enabled)`, [startIso]);
+            docs.DocumentsCreatedThisMonth = Math.max(Number(docs.DocumentsCreatedThisMonth || 0), Number(metered.rows[0]?.count || 0));
+        } catch (error) {
+            if (!isRelationMissingError(error) && error?.code !== '42703') throw error;
+        }
         const seats = seatsRes || {};
         const sms = smsRes.rows?.[0] || {};
         const storageBytesTotal = signingBytes + stageBytes + templateBytes;
