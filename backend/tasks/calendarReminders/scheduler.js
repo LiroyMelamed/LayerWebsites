@@ -104,7 +104,8 @@ async function _enrichWithNames(rows) {
 
     try {
         const { rows: reminderRows } = await pool.query(
-            `SELECT calendar_event_id, template_key, subject
+            `SELECT calendar_event_id, template_key, subject, template_data,
+                   COALESCE((to_jsonb(scheduled_email_reminders)->>'calendar_managed')::boolean, false) AS calendar_managed
              FROM scheduled_email_reminders
              WHERE calendar_event_id = ANY($1::int[])`,
             [ids]
@@ -128,6 +129,8 @@ async function _enrichWithNames(rows) {
             clients_names: names,
             reminder_template_key: reminderMeta?.template_key || r.reminder_template_key || null,
             reminder_subject: reminderMeta?.subject || r.reminder_subject || null,
+            reminder_template_data: reminderMeta?.template_data || null,
+            calendar_managed_reminder: reminderMeta?.calendar_managed === true,
         };
     });
 }

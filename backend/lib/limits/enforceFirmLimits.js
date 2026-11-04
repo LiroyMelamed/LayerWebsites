@@ -39,7 +39,7 @@ async function checkFirmLimitsOrNull({ action, increments } = {}) {
     const blocks = [];
 
     if (action === 'upload_signing_file') {
-        if (quotaExceeded({ used: usage.documents.createdThisMonth, add: increments?.documentsCreatedThisMonth || 0, quota: quotas.documentsMonthlyQuota })) {
+        if (!limits.featureFlags?.signing_auto_tier_enabled && quotaExceeded({ used: usage.documents.createdThisMonth, add: increments?.documentsCreatedThisMonth || 0, quota: quotas.documentsMonthlyQuota })) {
             const msg = 'Documents monthly quota exceeded';
             warnings.push(msg);
             blocks.push(msg);

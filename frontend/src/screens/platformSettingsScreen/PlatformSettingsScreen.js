@@ -1985,6 +1985,26 @@ export default function PlatformSettingsScreen() {
                                     })}
                                 </SimpleContainer>
                             </SimpleContainer>
+                            {['LAWYER', 'CLIENT'].map((audience) => {
+                                const key = `CALENDAR_${audience}_REMINDER_DEFAULTS`;
+                                const selected = new Set(parseOffsetsList(getVal(key, '30,60,120,1440,2880')));
+                                const allowed = new Set(parseOffsetsList(getVal('CALENDAR_REMINDER_OPTIONS', '0,15,30,60,120,1440,2880,10080')));
+                                return <SimpleContainer key={key} className="lw-platformSettings__settingRow">
+                                    <SimpleContainer className="lw-platformSettings__settingLabel">
+                                        <TextBold14>{t(audience === 'LAWYER' ? 'platformSettings.calendarLawyerDefaults' : 'platformSettings.calendarClientDefaults')}</TextBold14>
+                                        <Text12>{t('platformSettings.calendarDefaultsHint')}</Text12>
+                                    </SimpleContainer>
+                                    <SimpleContainer className="lw-platformSettings__reminderOptions">
+                                        {REMINDER_PRESETS.filter(p => allowed.has(p.minutes)).map(({ minutes, labelKey }) => <SimpleButton key={minutes}
+                                            className={`lw-platformSettings__dayChip ${selected.has(minutes) ? 'lw-platformSettings__dayChip--active' : ''}`}
+                                            aria-pressed={selected.has(minutes)} onPress={() => {
+                                                const next = new Set(selected);
+                                                if (next.has(minutes)) next.delete(minutes); else next.add(minutes);
+                                                handleChange(key, [...next].join(','));
+                                            }}><Text14>{t(labelKey)}</Text14></SimpleButton>)}
+                                    </SimpleContainer>
+                                </SimpleContainer>;
+                            })}
                             <SimpleContainer className="lw-platformSettings__settingRow">
                                 <SimpleContainer className="lw-platformSettings__settingLabel">
                                     <TextBold14 className="lw-platformSettings__settingName">

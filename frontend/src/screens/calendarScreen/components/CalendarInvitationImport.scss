@@ -1,0 +1,13 @@
+.lw-calendarInvitationImport {
+    padding: 1.25rem;
+    max-inline-size: 42rem;
+    max-block-size: 80dvh;
+    overflow: auto;
+    h2 { margin-block: 0 1rem; }
+    p { line-height: 1.6; }
+    &__file { display: flex; flex-direction: column; gap: .75rem; }
+    input { max-inline-size: 100%; }
+    &__events { list-style: none; padding: 0; }
+    li { display: flex; flex-direction: column; gap: .375rem; padding-block: .75rem; border-block-end: 1px solid var(--lw-border, #e2e8f0); overflow-wrap: anywhere; }
+    footer { display: flex; flex-wrap: wrap; gap: .75rem; margin-block-start: 1rem; }
+}
