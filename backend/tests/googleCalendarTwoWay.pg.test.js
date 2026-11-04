@@ -108,6 +108,16 @@ test('PostgreSQL two-way convergence, retry, conflicts, shared participants and 
     assert.equal((await pool.query("SELECT count(*)::int n FROM calendar_events WHERE title='Shared'")).rows[0].n,1);
     providers[2].write({...providers[2].events.get(participant),status:'cancelled'});await run(2);await run(2);
     assert.equal((await row(shared.id)).event_status,'scheduled');assert.equal((await link(shared.id,2)).suppressed,true);
+    // Existing Google invitations for a shared event must not create a second
+    // platform event or an extra exported copy for the invited manager.
+    const invited=await create('Shared invitation');
+    await pool.query('INSERT INTO calendar_event_managers VALUES($1,1),($1,2)',[invited.id]);await run(1);
+    const inviterRemote=providers[1].events.get((await link(invited.id)).remote_id);
+    providers[2].events.set('received-shared',{...clone(inviterRemote),id:'received-shared',organizer:{email:'one@example.invalid',self:false}});
+    const insertsBefore=providers[2].inserts();await run(2);await run(2);
+    assert.equal((await link(invited.id,2)).remote_id,'received-shared');
+    assert.equal(providers[2].inserts(),insertsBefore);
+    assert.equal((await pool.query("SELECT count(*)::int n FROM calendar_events WHERE title='Shared invitation'")).rows[0].n,1);
     // A Google edit racing our patch cannot be overwritten; a stale resolution cannot win later.
     const race=await create('Race');await run(1);const raceId=(await link(race.id)).remote_id;
     await pool.query('UPDATE calendar_events SET title=$2 WHERE id=$1',[race.id,'Local race']);
