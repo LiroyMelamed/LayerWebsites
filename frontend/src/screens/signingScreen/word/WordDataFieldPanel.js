@@ -1,21 +1,17 @@
-import React, { useState } from 'react';
-import AddFieldPanel from '../../../components/specializedComponents/signFiles/fieldToolbar/AddFieldPanel';
-import SearchInput from '../../../components/specializedComponents/containers/SearchInput';
+import React from 'react';
 import SigningSelect from '../templates/SigningSelect';
 
-export default function WordDataFieldPanel({ definitions, roles, value, onChange, disabled, fieldLabel, text }) {
-    const [group, setGroup] = useState(() => value.startsWith('role.') ? value.split('.').slice(0, 2).join('.') : value.split('.')[0]); const [query, setQuery] = useState('');
-    const groups = ['client', 'case', 'office', ...roles.map(role => `role.${role.key}`)];
-    const activeGroup = groups.includes(group) ? group : 'client';
-    const matches = definitions.filter(item => item.available !== false && item.phase === 'storedData' &&
-        item.key.startsWith(`${activeGroup}.`) && fieldLabel(item.key).toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
+// One compact field choice. The selected person/source is owned by the workspace,
+// so adding another field never silently falls back to a different person.
+export default function WordDataFieldPanel({ definitions, group, value, onChange, disabled, fieldLabel, text }) {
+    const matches = definitions.filter(item => item.available !== false && item.phase === 'storedData' && item.key.startsWith(`${group}.`));
+    const current = matches.some(item => item.key === value) ? value : '';
     return <div className="lw-word__dataPanel" aria-label={text('dataFields')}>
-        <label>{text('dataGroup')}<SigningSelect value={activeGroup} disabled={disabled} onChange={event => { setGroup(event.target.value); setQuery(''); }}>
-            {groups.map(key => <option key={key} value={key}>{key.startsWith('role.') ? roles.find(role => `role.${role.key}` === key)?.label : text(`groups.${key}`)}</option>)}
+        <label>{text('whatReplacesText')}<SigningSelect aria-label={text('whatReplacesText')} value={current} disabled={disabled}
+            onChange={event => onChange(event.target.value)}>
+            <option value="" disabled>{text('chooseReplacementField')}</option>
+            {matches.map(item => <option key={item.key} value={item.key}>{fieldLabel(item.key, true)}</option>)}
         </SigningSelect></label>
-        <SearchInput title={text('findDataField')} aria-label={text('findDataField')} value={query} onSearch={setQuery} disabled={disabled} />
-        {disabled ? <p>{text('working')}</p> : <AddFieldPanel fieldTypeOptions={matches.map(item => ({ id: item.key, label: fieldLabel(item.key, true) }))}
-            onSelectField={onChange} isInline />}
         {matches.length === 0 && <p>{text('noMatchingFields')}</p>}
         {definitions.find(item => item.key === value)?.resolver === 'manual' && <p>{text('manualDataFieldHelp')}</p>}
     </div>;

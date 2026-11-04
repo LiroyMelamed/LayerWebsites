@@ -4197,6 +4197,8 @@
     "textSelected": "הטקסט שנבחר",
     "insertionSelected": "נקודת הוספה לצד הטקסט",
     "dataFields": "נתונים למילוי המסמך",
+    "chooseReplacementField": "בחירת נתון",
+    "editPeople": "עריכת תפקידים",
     "dataGroup": "מקור הנתון",
     "findDataField": "חיפוש נתון",
     "noMatchingFields": "לא נמצאו נתונים בקבוצה הזו.",

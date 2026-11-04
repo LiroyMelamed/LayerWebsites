@@ -1,27 +1,31 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import WordDataFieldPanel from './WordDataFieldPanel';
-jest.mock('../../../components/specializedComponents/signFiles/fieldToolbar/AddFieldPanel', () => ({ fieldTypeOptions, onSelectField }) => <div>{fieldTypeOptions.map(item => <button key={item.id} onClick={() => onSelectField(item.id)}>{item.label}</button>)}</div>);
-jest.mock('../../../components/specializedComponents/containers/SearchInput', () => ({ title, value, onSearch, disabled }) => <label>{title}<input value={value} disabled={disabled} onChange={event => onSearch(event.target.value)} /></label>);
 jest.mock('../templates/SigningSelect', () => ({ children, ...props }) => <select {...props}>{children}</select>);
 const definitions = [
     { key: 'client.fullName', phase: 'storedData', available: true, resolver: 'client' },
     { key: 'client.firstName', phase: 'storedData', available: true, resolver: 'manual' },
-    { key: 'case.courtNumber', phase: 'storedData', available: true, resolver: 'case' },
-    { key: 'signature', phase: 'signature', available: false },
+    { key: 'role.tenant.fullName', phase: 'storedData', available: true, resolver: 'role' },
+    { key: 'role.owner.fullName', phase: 'storedData', available: true, resolver: 'role' },
+    { key: 'role.owner.hidden', phase: 'storedData', available: false },
+    { key: 'role.owner.signature', phase: 'signature', available: true },
 ];
-
-test('the backend catalog limits the data picker; search and explicit selection do not create a signer or write data', () => {
-    const onChange = jest.fn(); render(<WordDataFieldPanel definitions={definitions} roles={[]} value="client.fullName" onChange={onChange} fieldLabel={value => value} text={value => value} />);
-    expect(screen.queryByRole('button', { name: 'signature' })).not.toBeInTheDocument(); expect(screen.queryByRole('button', { name: 'case.courtNumber' })).not.toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('findDataField'), { target: { value: 'first' } });
-    expect(screen.queryByRole('button', { name: 'client.fullName' })).not.toBeInTheDocument(); fireEvent.click(screen.getByRole('button', { name: 'client.firstName' }));
-    expect(onChange).toHaveBeenCalledTimes(1); expect(onChange).toHaveBeenCalledWith('client.firstName');
+const props = { definitions, value: '', onChange: jest.fn(), fieldLabel: value => value, text: value => value };
+test('only stored fields belonging to the chosen role can be selected in one action', () => {
+    const onChange = jest.fn(); const { rerender } = render(<WordDataFieldPanel {...props} group="role.tenant" onChange={onChange} />);
+    expect(screen.queryByRole('option', { name: 'role.owner.fullName' })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'role.tenant.fullName' } });
+    expect(onChange).toHaveBeenCalledWith('role.tenant.fullName');
+    rerender(<WordDataFieldPanel {...props} group="role.owner" value="role.tenant.fullName" onChange={onChange} />);
+    expect(screen.getByRole('combobox')).toHaveValue('');
+    expect(screen.queryByRole('option', { name: 'role.tenant.fullName' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'role.owner.hidden' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'role.owner.signature' })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'role.owner.fullName' } });
+    expect(onChange).toHaveBeenLastCalledWith('role.owner.fullName');
 });
-
-test('manual-only fields and disabled state are explicit', () => {
-    const onChange = jest.fn(); const { rerender } = render(<WordDataFieldPanel definitions={definitions} roles={[]} value="client.firstName" onChange={onChange} fieldLabel={value => value} text={value => value} />);
+test('manual-only fields and disabled state remain explicit', () => {
+    render(<WordDataFieldPanel {...props} group="client" value="client.firstName" disabled />);
     expect(screen.getByText('manualDataFieldHelp')).toBeInTheDocument();
-    rerender(<WordDataFieldPanel definitions={definitions} roles={[]} value="client.firstName" disabled onChange={onChange} fieldLabel={value => value} text={value => value} />);
-    expect(screen.queryByRole('button')).not.toBeInTheDocument(); expect(screen.getByLabelText('findDataField')).toBeDisabled(); expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('combobox')).toBeDisabled();
 });

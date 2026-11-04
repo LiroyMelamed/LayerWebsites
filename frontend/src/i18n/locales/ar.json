@@ -3633,6 +3633,8 @@
     "textSelected": "النص المحدد",
     "insertionSelected": "نقطة إضافة بجانب النص",
     "dataFields": "بيانات تعبئة المستند",
+    "chooseReplacementField": "اختيار معلومة",
+    "editPeople": "تعديل الأدوار",
     "dataGroup": "مصدر البيانات",
     "findDataField": "البحث عن بيانات",
     "noMatchingFields": "لا توجد بيانات مطابقة في هذه المجموعة.",
