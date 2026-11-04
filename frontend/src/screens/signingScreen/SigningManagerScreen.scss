@@ -278,11 +278,9 @@
 
 .lw-signingManagerScreen__renameInput {
     flex: 1;
-    font-size: 1rem;
-    padding: 0.4rem 0.6rem;
-    border: 0.0625rem solid #ccc;
-    border-radius: 0.25rem;
-    direction: rtl;
+    min-inline-size: 0;
+    margin: 0;
+    block-size: 2.75rem;
 }
 
 .lw-signingManagerScreen__detailsTabsRow {

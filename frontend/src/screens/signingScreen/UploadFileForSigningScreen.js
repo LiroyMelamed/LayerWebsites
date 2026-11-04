@@ -8,6 +8,8 @@ import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
 import Skeleton from "../../components/simpleComponents/Skeleton";
 
+import SimpleTextArea from "../../components/simpleComponents/SimpleTextArea";
+import SigningSelect from "./templates/SigningSelect";
 import SimpleInput from "../../components/simpleComponents/SimpleInput";
 
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
@@ -184,8 +186,9 @@ function FieldSettingsPopup({
                 {signers.length > 1 && (
                     <SimpleContainer className="lw-fieldSettingsPopup__row">
                         <Text14 className="lw-fieldSettingsPopup__label">{t('signing.fieldSettings.signerLabel')}</Text14>
-                        <select
+                        <SigningSelect
                             className="lw-fieldSettingsPopup__select"
+                            aria-label={t('signing.fieldSettings.signerLabel')}
                             value={signerIndex}
                             onChange={(e) => setSignerIndex(Number(e.target.value))}
                         >
@@ -194,7 +197,7 @@ function FieldSettingsPopup({
                                     {s?.Name || t('signing.signerFallback', { index: idx + 1 })}
                                 </option>
                             ))}
-                        </select>
+                        </SigningSelect>
                     </SimpleContainer>
                 )}
 
@@ -1688,8 +1691,9 @@ export default function UploadFileForSigningScreen({ onWordBack } = {}) {
                                                     );
                                                 }
                                                 return (
-                                                    <select
+                                                    <SigningSelect
                                                         className="lw-uploadSigningScreen__deliverySelect"
+                                                        aria-label={t('signing.upload.deliveryBoth')}
                                                         value={deliveryValue}
                                                         onChange={(e) => {
                                                             const method = e.target.value;
@@ -1712,7 +1716,7 @@ export default function UploadFileForSigningScreen({ onWordBack } = {}) {
                                                         {allowed.includes('phone') && (
                                                             <option value="phone">{t('signing.upload.deliveryPhone')}</option>
                                                         )}
-                                                    </select>
+                                                    </SigningSelect>
                                                 );
                                             })()}
                                             <button
@@ -1758,11 +1762,13 @@ export default function UploadFileForSigningScreen({ onWordBack } = {}) {
 
                         <SimpleContainer className="lw-uploadSigningScreen__formGroup lw-uploadSigningScreen__notesGroup">
                             <div className="lw-uploadSigningScreen__notesTitle">{t('signing.upload.notesTitle')}</div>
-                            <textarea
+                            <SimpleTextArea
+                                aria-label={t('signing.upload.notesTitle')}
+                                rows={3}
                                 className="lw-uploadSigningScreen__textarea"
                                 dir="rtl"
                                 value={notes}
-                                onChange={(e) => setNotes(e.target.value)}
+                                onChange={setNotes}
                             />
                         </SimpleContainer>
 
