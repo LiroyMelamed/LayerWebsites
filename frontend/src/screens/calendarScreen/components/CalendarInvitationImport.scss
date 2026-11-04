@@ -1,7 +1,7 @@
 .lw-calendarInvitationImport {
     box-sizing: border-box;
     padding: clamp(1rem, 3vw, 2rem);
-    inline-size: min(42rem, 100%);
+    inline-size: 100%;
     max-block-size: 80dvh;
     overflow: auto;
     color: var(--lw-color-text, #2d3748);
@@ -14,4 +14,8 @@
     li strong { color: var(--lw-color-primary, #2a4365); }
     [role="alert"] { color: var(--lw-color-error, #b42318); }
     footer:not(:empty) { display: flex; flex-wrap: wrap; gap: .75rem; margin-block-start: 1.25rem; }
+}
+
+.lw-simplePopUp__container:has(.lw-calendarInvitationImport) {
+    width: min(42rem, calc(100vw - 3rem));
 }
