@@ -532,7 +532,7 @@ const SimpleInputCore = forwardRef(
                             maxLength={type === 'datetime-local' ? 16 : type === 'date' ? 10 : 5}
                             {...safeProps}
                             aria-label={safeProps['aria-label'] || (typeof title === 'string' ? title : undefined)}
-                            aria-invalid={Boolean(error)}
+                            aria-invalid={error ? true : (props['aria-invalid'] ?? false)}
                             aria-errormessage={error ? accessibleErrorId : undefined}
                             style={{
                                 textAlign: 'right',
@@ -569,7 +569,7 @@ const SimpleInputCore = forwardRef(
                         dir={inputDir}
                         {...safeProps}
                         aria-label={safeProps['aria-label'] || (typeof title === 'string' ? title : undefined)}
-                        aria-invalid={Boolean(error)}
+                        aria-invalid={error ? true : (props['aria-invalid'] ?? false)}
                         aria-errormessage={error ? accessibleErrorId : undefined}
                         style={{
                             textAlign: 'right',
