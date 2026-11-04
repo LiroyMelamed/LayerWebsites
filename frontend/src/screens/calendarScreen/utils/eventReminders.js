@@ -74,7 +74,7 @@ export function parseOffsetsList(raw) {
 export function parseAllowedOptionsFromSettings(calSettings = {}) {
     const raw = calSettings?.CALENDAR_REMINDER_OPTIONS?.effectiveValue;
     const parsed = parseOffsetsList(raw);
-    return parsed.length ? parsed : DEFAULT_ALLOWED;
+    return raw == null ? DEFAULT_ALLOWED : parsed;
 }
 
 export function presetsForAllowedMinutes(allowedMinutes) {
@@ -97,12 +97,9 @@ export function parseChannelsList(raw) {
     if (typeof raw === "string") {
         const trimmed = raw.trim();
         if (!trimmed) return [];
-        if (trimmed.startsWith("{")) {
+        if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
             try {
-                const parsed = JSON.parse(trimmed);
-                return Object.entries(parsed)
-                    .filter(([k, v]) => DEFAULT_ALLOWED_CHANNELS.includes(k) && (v === true || v === "true" || v === 1))
-                    .map(([k]) => k);
+                return parseChannelsList(JSON.parse(trimmed));
             } catch {
                 return [];
             }
@@ -135,7 +132,7 @@ export function parseStoredChannels(raw) {
 export function parseAllowedChannelsFromSettings(calSettings = {}) {
     const raw = calSettings?.CALENDAR_REMINDER_CHANNELS?.effectiveValue;
     const parsed = parseChannelsList(raw);
-    return parsed.length ? parsed : DEFAULT_ALLOWED_CHANNELS;
+    return raw == null ? DEFAULT_ALLOWED_CHANNELS : [...new Set(parsed)];
 }
 
 export function channelsForAllowedKeys(allowedKeys) {

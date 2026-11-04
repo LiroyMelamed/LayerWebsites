@@ -10,7 +10,7 @@
   h2 { font-size: 1rem; margin: 2rem 0 1rem; font-weight: 500; }
   h3 { font-size: 0.875rem; margin: 0 0 .7rem; font-weight: 500; }
   p { line-height: 1.6; margin: .4rem 0; max-width: 72ch; }
-  button, input, select, textarea { font: inherit; }
+  button, input, select, textarea:not(.lw-simpleTextArea__field) { font: inherit; }
   button:not(.lw-textButtonWithTwoOptionalIcons):not(.lw-signing-spotResize):not(.lw-segmentedSwitch__option):not(.lw-floatingAddField__btn), .lw-templates__file {
     border: 1px solid #c8d1dd; border-radius: .6rem; padding: .65rem 1rem; min-height: 2.75rem;
     color: var(--template-accent); background: white; cursor: pointer; font-weight: 600; line-height: 1.4;
@@ -20,7 +20,7 @@
     &.is-primary, &[aria-selected="true"] { color: white; background: var(--template-accent); border-color: var(--template-accent); }
     &.is-primary:hover:not(:disabled), &[aria-selected="true"]:hover:not(:disabled) { background: var(--template-accent); filter: brightness(.9); }
   }
-  input:not(.lw-simpleInput__field):not([type="checkbox"]):not([type="file"]), select, textarea {
+  input:not(.lw-simpleInput__field):not([type="checkbox"]):not([type="file"]), select, textarea:not(.lw-simpleTextArea__field) {
     box-sizing: border-box; width: 100%; min-width: 0; padding: .65rem .8rem; min-height: 2.75rem;
     border: 1px solid #b9c5d3; border-radius: .5rem; background: white; color: var(--template-ink); caret-color: var(--template-accent);
     &::placeholder { color: #637184; }
@@ -150,3 +150,5 @@
 // Shared inputs own their borders and focus states; keep all form controls aligned.
 .lw-templates .lw-simpleInput { min-inline-size: 0; inline-size: 100%; block-size: 2.75rem; margin-block: 0; box-sizing: border-box; }
 .lw-templates .lw-signingSelect .lw-textButtonWithTwoOptionalIcons { min-block-size: 2.75rem; block-size: 2.75rem !important; padding-block: .375rem !important; }
+
+.lw-templates .lw-simpleTextArea { inline-size: 100%; min-inline-size: 0; margin: 0; }

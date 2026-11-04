@@ -1,3 +1,4 @@
+import SimpleInput from '../../../components/simpleComponents/SimpleInput';
 import React, { useEffect, useRef, useState } from 'react';
 import api from '../../../api/signingTemplatesApi';
 import TemplateBuilder from './TemplateBuilder';
@@ -206,7 +207,7 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSe
                 {batch.canDeliver && <button type="button" onClick={() => getLink(person)}>{text('signingLink')}</button>}
             </li>)}</ul>
             {link && <div>
-                <label>{text('linkForRecipient')}<input readOnly dir="ltr" value={link} onFocus={event => event.target.select()} /></label>
+                <label>{text('linkForRecipient')}<SimpleInput timeToWaitInMilli={0} acceptExternalValueWhileFocused readOnly dir="ltr" value={link} onFocus={event => event.target.select()} /></label>
                 <button type="button" onClick={async () => {
                     try { await navigator.clipboard.writeText(link); }
                     catch { setError({ code: 'CLIPBOARD_UNAVAILABLE' }); }

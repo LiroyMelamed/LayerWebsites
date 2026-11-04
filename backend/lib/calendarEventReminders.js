@@ -139,7 +139,7 @@ async function loadAllowedReminderOffsets(settingsServiceArg) {
         DEFAULT_ALLOWED_OFFSETS.join(',')
     );
     const parsed = uniqueSortedDesc(parseOffsetsList(raw));
-    return parsed.length ? parsed : DEFAULT_ALLOWED_OFFSETS;
+    return raw == null ? DEFAULT_ALLOWED_OFFSETS : parsed;
 }
 
 function normalizeReminderOffsets(input, allowedOffsets) {
@@ -265,7 +265,7 @@ function parseChannelsList(raw) {
     if (typeof raw === 'string') {
         const trimmed = raw.trim();
         if (!trimmed) return [];
-        if (trimmed.startsWith('{')) {
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
             try {
                 return parseChannelsList(JSON.parse(trimmed));
             } catch {
@@ -318,7 +318,7 @@ async function loadAllowedReminderChannels(settingsServiceArg) {
         DEFAULT_ALLOWED_CHANNELS.join(',')
     );
     const parsed = [...new Set(parseChannelsList(raw))];
-    return parsed.length ? parsed : DEFAULT_ALLOWED_CHANNELS;
+    return raw == null ? DEFAULT_ALLOWED_CHANNELS : parsed;
 }
 
 function normalizeReminderChannels(input, allowedChannels) {

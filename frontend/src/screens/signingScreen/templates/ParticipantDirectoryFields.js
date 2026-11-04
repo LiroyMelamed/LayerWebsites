@@ -1,3 +1,4 @@
+import SimpleInput from '../../../components/simpleComponents/SimpleInput';
 import SigningSelect from './SigningSelect';
 import React, { useEffect, useRef, useState } from 'react';
 import api from '../../../api/signingPackagesApi';
@@ -58,7 +59,7 @@ export default function ParticipantDirectoryFields({ person = {}, capacity = 'pe
     const availableParties=[...new Map([...directory.parties,...personParties].map(item=>[item.id,item])).values()];
     const selectedParty = availableParties.find(item => item.id === person.partyId);
     const activeAuthority = item => item.status === 'approved' && new Date(item.validFrom) <= new Date() && (!item.validUntil || new Date(item.validUntil) > new Date()) && (item.scope.allSigning || item.scope.roleKeys?.includes(roleKey));
-    const text = (key,value,change,extra={}) => <label className="lw-signingCompose__field">{tr(key)}<input dir={direction} value={value} onChange={event=>change(event.target.value)} disabled={busy} {...extra}/></label>;
+    const text = (key,value,change,extra={}) => <label className="lw-signingCompose__field">{tr(key)}<SimpleInput timeToWaitInMilli={0} acceptExternalValueWhileFocused dir={direction} value={value} onChange={event=>change(event.target.value)} disabled={busy} {...extra}/></label>;
     const upload = file => run(async()=>{
         if (!file || !/\.pdf$/i.test(file.name) || file.size > 20*1024*1024) throw new Error(tr('pdfOnly'));
         const result=await uploadFileToR2(file);if(!result.success)throw new Error(tr('uploadFailed'));
