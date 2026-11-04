@@ -428,14 +428,6 @@ export default function SigningManagerScreen() {
             )}
 
             <SimpleScrollView className="lw-signingManagerScreen__scroll">
-                {error ? <RequestLoadError onRetry={reloadFiles} /> : <>
-                <ListPageTitle
-                    title={t("nav.signingFiles")}
-                    count={filteredFiles.length}
-                    isLoading={isPerforming}
-                    className="lw-signingManagerScreen__pageTitle"
-                />
-
                 <SimpleContainer className="lw-signingManagerScreen__topRow">
                     <SimpleContainer className="lw-signingManagerScreen__searchContainer">
                         <SearchInput
@@ -473,6 +465,14 @@ export default function SigningManagerScreen() {
                     />
                 </SimpleContainer>
 
+                <SimpleCard className="lw-signingManagerScreen__listCard">
+                    <ListPageTitle
+                        title={t("nav.signingFiles")}
+                        count={filteredFiles.length}
+                        isLoading={isPerforming || Boolean(error)}
+                        className="lw-signingManagerScreen__pageTitle"
+                    />
+                    {error ? <RequestLoadError onRetry={reloadFiles} /> : <>
                 {/* Status tabs */}
                 <SimpleContainer className="lw-signingManagerScreen__tabsRow">
                     <TabButton
@@ -489,14 +489,14 @@ export default function SigningManagerScreen() {
 
                 {/* List */}
                 {isPerforming ? (
-                    <SimpleCard>
+                    <SimpleContainer>
                         {[1, 2, 3].map(i => (
                             <SimpleContainer key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0' }}>
                                 <Skeleton width="40%" height={14} />
                                 <Skeleton width="20%" height={14} />
                             </SimpleContainer>
                         ))}
-                    </SimpleCard>
+                    </SimpleContainer>
                 ) : filteredFiles.length === 0 ? (
                     <SimpleContainer className="lw-signingManagerScreen__emptyState">
                         <Text14>
@@ -531,6 +531,7 @@ export default function SigningManagerScreen() {
                     })
                 )}
                 </>}
+                </SimpleCard>
             </SimpleScrollView>
 
             <SimpleContainer className="lw-signingManagerScreen__footer">

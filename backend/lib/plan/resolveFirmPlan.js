@@ -115,13 +115,16 @@ async function resolveFirmPlan(_firmId) {
         }
 
         let billingPackage = null;
+        let signingAutoTierEnabled = false;
         try {
             const billingRes = await pool.query(
-                `SELECT platform_id, resource_id, signing_id, billing_enabled, complimentary_until, status
+                `SELECT platform_id, resource_id, signing_id, billing_enabled, complimentary_until, status,
+                    coalesce((to_jsonb(firm_billing)->>'signing_auto_tier_enabled')::boolean,false) AS signing_auto_tier_enabled
                  FROM firm_billing WHERE id = 1 LIMIT 1`
             );
             const b = billingRes.rows?.[0];
             if (b) {
+                signingAutoTierEnabled = b.signing_auto_tier_enabled === true;
                 billingPackage = resolvePricingLineItems({
                     platformId: b.platform_id,
                     resourceId: b.resource_id,
@@ -188,6 +191,7 @@ async function resolveFirmPlan(_firmId) {
             name: plan.name,
             featureFlags: {
                 ...(plan.featureFlags || {}),
+                signing_auto_tier_enabled: signingAutoTierEnabled,
                 unlimited: isUnlimited,
             },
 
