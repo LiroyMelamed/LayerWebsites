@@ -3609,6 +3609,8 @@
     "textSelected": "Selected text",
     "insertionSelected": "Insertion point beside text",
     "dataFields": "Document data fields",
+    "chooseReplacementField": "Choose a field",
+    "editPeople": "Edit roles",
     "dataGroup": "Data source",
     "findDataField": "Find a data field",
     "noMatchingFields": "No matching fields in this group.",

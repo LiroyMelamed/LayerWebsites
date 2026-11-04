@@ -667,3 +667,7 @@
     justify-content: flex-end;
     gap: 0.5rem;
 }
+// Match the actual desktop sidebar; mobile/app layouts omit this sibling.
+.lw-topAndRightNavBar__sidebar ~ .lw-topAndRightNavBar__content .lw-uploadSigningScreen__stickySendBar {
+    inset-inline-start: 15.625rem;
+}
