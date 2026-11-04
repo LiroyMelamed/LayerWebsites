@@ -160,7 +160,7 @@
   &__people { display: flex; flex-wrap: wrap; gap: .375rem; }
   &__personTools { display: grid; gap: .25rem; }
   &__mappingForm .lw-textButtonWithTwoOptionalIcons {
-    min-inline-size: 0; min-block-size: 2.25rem; block-size: auto !important;
+    box-sizing: border-box; min-inline-size: 0; min-block-size: 2.25rem; block-size: auto !important;
     padding: .375rem .625rem !important; font-size: .8125rem;
     .lw-simpleText { font-size: inherit !important; line-height: 1.4; }
   }
@@ -187,11 +187,12 @@
     .lw-word__visualRow > .lw-word__mappingForm { gap: .375rem; padding: 0; }
     .lw-word__selectionOptions { display: flex; flex-wrap: wrap; gap: .25rem .5rem; align-items: center; }
     .lw-word__selectionOptions > .lw-word__actions { flex: 1 1 12rem; margin: 0; }
-    .lw-word__selectionOptions > p, .lw-word__keyboardSelection { flex-basis: 100%; }
-    .lw-word__selectionOptions > .lw-textButtonWithTwoOptionalIcons { flex: 0 1 auto; }
+    .lw-word__selectionOptions > p, .lw-word__keyboardSelection { flex-basis: 100%; order: 2; }
+    .lw-word__selectionOptions > .lw-textButtonWithTwoOptionalIcons { flex: 0 1 auto; order: 1; }
     .lw-word__personTools { display: flex; align-items: center; flex-wrap: wrap; gap: .375rem; }
     .lw-word__mappingForm > p { margin: .125rem 0; font-size: .75rem; }
-    .lw-word__selectionBar > .lw-word__selected { flex: 1 1 6rem; }
+    .lw-word__selectionBar > .lw-word__selected { flex: 1 1 4rem; }
+    .lw-word__selectionBar .lw-textButtonWithTwoOptionalIcons { padding-inline: .375rem !important; }
     .lw-word__replacementChoices { display: grid; gap: .25rem; }
     .lw-word__currentReplacement { order: 1; }
   }
