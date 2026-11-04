@@ -751,6 +751,7 @@ async function _syncReminderForUpdatedEvent(updatedRow, rawBody, payload) {
 
         if (existing.length) {
             await reminderCalendarSync.updateReminderForCalendarEvent(updatedRow, {
+                calendarManaged: rawBody?.lawyer_reminder_offsets !== undefined || rawBody?.client_reminder_offsets !== undefined || rawBody?.reminder_offsets !== undefined,
                 toEmail: payload.reminder_to_email,
                 clientName: payload.reminder_client_name,
                 templateKey: payload.reminder_template_key,

@@ -5,7 +5,7 @@
  */
 
 const { getEmailTemplate, getSetting } = require('../services/settingsService');
-const { wrapEmailHtml } = require('../tasks/emailReminders/templates');
+const { wrapEmailHtml, getTemplateByKey, renderTemplate } = require('../tasks/emailReminders/templates');
 const { getFirmDisplayName, getLawFirmNameHe } = require('./firmBranding');
 const { loadCalendarSmsContext } = require('./calendarEventReminders');
 const { meetingPlaceMode, isRemoteMeetingUrl, resolveEffectivePlaceMode } = require('./publicShortLinks');
@@ -198,6 +198,19 @@ async function buildCalendarEmailFields(ev, { recipientName, clientsNames, whenL
  */
 async function composeCalendarEmail(templateKey, ev, opts = {}) {
     const fields = await buildCalendarEmailFields(ev, opts);
+    if (templateKey === 'CALENDAR_REMINDER' && ev.event_type === 'reminder' && ev.calendar_managed_reminder) {
+        const template = await getTemplateByKey(ev.reminder_template_key || 'GENERAL') || await getTemplateByKey('GENERAL');
+        if (template) {
+            let data = ev.reminder_template_data || {};
+            if (typeof data === 'string') { try { data = JSON.parse(data); } catch { data = {}; } }
+            const values = { ...data, client_name: fields.recipient_name, firm_name: fields.firm_name,
+                subject: ev.reminder_subject || fields.title, date: fields.date, time: fields.time };
+            const subject = String(ev.reminder_subject || renderTemplate(template.subject, values, { escapeHtml: false })).replace(/\r?\n/g, ' ');
+            return { subject, htmlBody: wrapEmailHtml(renderTemplate(template.body, values), {
+                firmName: fields.firm_name, firmLogoUrl: fields.firm_logo_url, title: subject,
+            }) };
+        }
+    }
     const dbTemplate = await getEmailTemplate(templateKey).catch(() => null);
 
     const defaultSubject = templateKey === 'CALENDAR_INVITE'

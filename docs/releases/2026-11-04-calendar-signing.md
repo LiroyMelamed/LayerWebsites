@@ -6,6 +6,7 @@ Candidate work, not a deployment receipt. Product source must reach main, then M
 
 - Dedicated-office signing can be enabled independently of its paid document pack. The opt-in `firm_billing.signing_auto_tier_enabled` selects upward signing tiers from successful document creation (legacy, committed packages and published replacements), with a durable monthly meter. Failed transactions roll back the meter and tier together. Storage/SMS limits and the explicit operational signing disable remain enforced. Complimentary periods, renewal dates and payment-provider state are unchanged; this migration does not charge a card or downgrade purchased packs.
 - Calendar reminders no longer participate in appointment conflicts. Lawyer/client timing selections determine their respective audiences, without a second target selector. Available timing options and new-event defaults are separate settings; existing events retain their own choices.
+- Calendar-authored reminder metadata is excluded from the independent email queue and list. Only the selected calendar timing/audience/channel jobs send; clearing all timings sends nothing. Existing independent email reminders retain their delivery owner until explicitly edited in the calendar.
 - The reminder form exposes weekly/daily/monthly recurrence through a chosen end date. Each occurrence can have its own linked reminder, created in the same transaction as the series.
 - An explicit invitation checkbox is independent of reminder timings. Email invitations contain a standard iCalendar REQUEST with a stable per-office event UID and one recipient. Internal case notes and other recipients' contact details are omitted.
 - ICS import previews before saving to the authenticated user's calendar. The import never sends RSVP or executes alarms/fetches attachments. Google and ICS identity use UID and occurrence identity, with owner isolation, revision checks and transactional deduplication. Imports cover 30 days back through one year ahead. Existing pre-upgrade Google rows must be synchronized once before ICS import; the UI explains this prerequisite. Cancellations affect existing linked events, not unrelated meetings. Manual cancellations remain cancelled.
@@ -15,7 +16,7 @@ Candidate work, not a deployment receipt. Product source must reach main, then M
 ## Migration order
 
 1. Install the exact backend lockfile, including `ical.js`.
-2. Apply `2026-11-04_00_automatic_signing_tiers.sql`, `2026-11-04_01_calendar_invitations.sql`, `2026-11-04_02_calendar_reminder_defaults.sql`, `2026-11-04_03_calendar_signing_runtime_grants.sql`.
+2. Apply `2026-11-04_00_automatic_signing_tiers.sql`, `2026-11-04_01_calendar_invitations.sql`, `2026-11-04_02_calendar_reminder_defaults.sql`, `2026-11-04_03_calendar_signing_runtime_grants.sql`, `2026-11-04_04_calendar_reminder_delivery_owner.sql`.
 3. Enable automatic signing tiers only for the intended dedicated office after QA qualification. Existing billing row and complimentary details must be recorded before and verified after.
 4. Restart only the tenant API. Publish its branded frontend while retaining old immutable chunks and root assets.
 

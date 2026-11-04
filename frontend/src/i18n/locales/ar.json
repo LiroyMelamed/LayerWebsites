@@ -3344,7 +3344,7 @@
     "inviteStatusBadgeAccepted": "مؤكد",
     "inviteStatusBadgeDeclined": "اعتذر عن الحضور",
     "inviteStatusBadgePending": "بانتظار الرد",
-    "inviteRemindersIndependentHint": "تُرسل الدعوة فورًا. وتُرسل التذكيرات وفق الجدول المختار، حتى إذا كان العميل قد أكد الحضور أو اعتذر عنه.",
+    "inviteRemindersIndependentHint": "عند اختيار إرسال الدعوة، تُرسل فورًا. تُرسل التذكيرات فقط في الأوقات المحددة.",
     "smsEditToggle": "تعديل الرسالة",
     "smsEditClose": "إغلاق التحرير",
     "smsInsertHint": "اضغط على تسمية لإدراجها في موضع المؤشر",

@@ -47,6 +47,7 @@ async function processEmailReminders() {
         `SELECT id, client_name, to_email, subject, template_key, template_data, scheduled_for
          FROM scheduled_email_reminders
          WHERE status = 'PENDING' AND scheduled_for <= NOW()
+           AND COALESCE((to_jsonb(scheduled_email_reminders)->>'calendar_managed')::boolean, false) = false
          ORDER BY scheduled_for ASC
          LIMIT $1`,
         [batchSize],
@@ -71,10 +72,10 @@ async function processEmailReminders() {
 
             // Re-check status inside the transaction
             const { rows: [current] } = await client.query(
-                'SELECT status FROM scheduled_email_reminders WHERE id = $1',
+                "SELECT status, COALESCE((to_jsonb(scheduled_email_reminders)->>'calendar_managed')::boolean, false) AS calendar_managed FROM scheduled_email_reminders WHERE id = $1",
                 [reminder.id],
             );
-            if (!current || current.status !== 'PENDING') {
+            if (!current || current.status !== 'PENDING' || current.calendar_managed) {
                 await client.query('COMMIT');
                 skipped++;
                 continue;

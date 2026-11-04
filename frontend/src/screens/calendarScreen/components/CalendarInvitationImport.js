@@ -22,7 +22,7 @@ export default function CalendarInvitationImport({ onImported, onClose }) {
         try {
             const text = await file.text();
             const response = await calendarApi.importInvitation(text, true);
-            if (!response.success) throw new Error(response.message || response.data?.message || t('calendar.importInviteError'));
+            if (!response.success) throw new Error(response.data?.message || response.message || t('calendar.importInviteError'));
             setContent(text); setPreview(response.data);
         } catch (err) { setError(err.message || t('calendar.importInviteError')); }
         finally { setBusy(false); }
@@ -31,7 +31,7 @@ export default function CalendarInvitationImport({ onImported, onClose }) {
         setBusy(true); setError('');
         try {
             const response = await calendarApi.importInvitation(content, false);
-            if (!response.success) throw new Error(response.message || response.data?.message || t('calendar.importInviteError'));
+            if (!response.success) throw new Error(response.data?.message || response.message || t('calendar.importInviteError'));
             setResult(response.data); setPreview(null); setContent(''); onImported?.();
         } catch (err) { setError(err.message || t('calendar.importInviteError')); }
         finally { setBusy(false); }

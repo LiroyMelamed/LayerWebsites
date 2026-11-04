@@ -5,7 +5,9 @@
  *
  * A "reminder" is a scheduled email to a client at a specific time. The calendar
  * gets a paired event of event_type = 'reminder' as a visual marker only; the
- * actual email is dispatched by the reminders worker.
+ * actual email is dispatched by the reminders worker for independently authored
+ * email reminders. Calendar-authored rows have calendar_managed=true: they store
+ * template metadata only; calendar offsets/channels own delivery and listing.
  *
  * Synced calendar events have:
  *   - reminder_offsets       = '[]'                              (no push pings)
@@ -187,8 +189,8 @@ async function createReminderForCalendarEvent(event, payload = {}, opts = {}) {
     const { rows } = await dbClient.query(
         `INSERT INTO scheduled_email_reminders
             (user_id, client_name, to_email, subject, template_key, template_data,
-             scheduled_for, status, created_by, calendar_event_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 'PENDING', $8, $9)
+             scheduled_for, status, created_by, calendar_event_id, calendar_managed)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'PENDING', $8, $9, TRUE)
          RETURNING id`,
         [
             userId,
@@ -272,7 +274,7 @@ async function updateReminderForCalendarEvent(event, payload = {}, opts = {}) {
     const reminderRow = linked[0];
     if (!reminderRow || reminderRow.status !== 'PENDING') return;
 
-    const updates = [];
+    const updates = payload.calendarManaged ? ['calendar_managed = TRUE'] : [];
     const values = [];
     let idx = 1;
 

@@ -5,7 +5,7 @@
 const pool = require('../config/db');
 const sendAndStoreNotification = require('../utils/sendAndStoreNotification');
 const { sendMessage } = require('../utils/sendMessage');
-const { sendTransactionalCustomHtmlEmail } = require('../utils/smooveEmailCampaignService');
+const { sendTransactionalCustomHtmlEmail, sendEmailWithAttachments } = require('../utils/smooveEmailCampaignService');
 const { formatPhoneNumber } = require('../utils/phoneUtils');
 const { parseStoredChannels } = require('./calendarEventReminders');
 const { composeCalendarEmail } = require('./calendarEmail');
@@ -122,7 +122,13 @@ async function dispatchCalendarReminder({
                 if (!htmlBody) {
                     htmlBody = `<div dir="rtl" style="font-family:Arial,sans-serif">${String(body || '').replace(/\n/g, '<br>')}</div>`;
                 }
-                const r = await sendTransactionalCustomHtmlEmail({
+                const managedTemplate = emailTemplateKey === 'CALENDAR_REMINDER' && emailEvent?.calendar_managed_reminder;
+                const attachments = managedTemplate
+                    ? await require('../controllers/templateAttachmentController').getAttachmentBuffers('reminder', emailEvent.reminder_template_key || 'GENERAL')
+                    : [];
+                const sendEmail = attachments.length ? sendEmailWithAttachments : sendTransactionalCustomHtmlEmail;
+                const r = await sendEmail({
+                    attachments,
                     toEmail: resolvedEmail,
                     subject,
                     htmlBody,
