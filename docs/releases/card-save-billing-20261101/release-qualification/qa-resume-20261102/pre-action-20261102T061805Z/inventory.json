@@ -1,0 +1,929 @@
+{
+  "startedAtUtc": "2026-11-02T06:18:07.680977+00:00",
+  "target": "existing Melamedia QA only",
+  "process": "melamedia-api",
+  "database": "melamedia",
+  "role": "melamedia_app",
+  "remoteMutations": 0,
+  "providerCalls": 0,
+  "customerOrReferenceRowsExported": 0,
+  "credentialSelection": "Only required DB keys and explicit nonsecret flag/metadata allowlist; no full env/jlist/dump dictionary parsed/exported",
+  "samples": [
+    {
+      "atUtc": "2026-11-02T06:18:09.000434+00:00",
+      "socketBefore": {
+        "ssExit": 0,
+        "connections": [
+          {
+            "state": "ESTAB",
+            "direction": "outbound_or_other",
+            "localPort": 62894,
+            "peerPort": 5432,
+            "peerCategory": "loopback_db",
+            "peerIsLoopbackAfterNormalization": true,
+            "peerUsesIpv4Mapping": false,
+            "inode": "13036470",
+            "qaFdNumbers": [
+              25
+            ],
+            "inodeBelongsToQaFd": true,
+            "tcpInfo": {
+              "bytes_sent": 405193,
+              "bytes_acked": 405194,
+              "bytes_received": 107028,
+              "lastsnd": 156,
+              "lastrcv": 153,
+              "lastack": 153,
+              "segs_out": 385,
+              "segs_in": 322
+            }
+          }
+        ],
+        "rawAddressOrPacketOutput": false
+      },
+      "aggregates": {
+        "paymentIntents": {
+          "ok": true,
+          "rows": [
+            {
+              "scope": "dedicated",
+              "kind": "retry",
+              "status": "succeeded",
+              "count": 1,
+              "hostedReferences": 1,
+              "transactionReferences": 0,
+              "pendingWithoutProviderReference": 0,
+              "createdHighWater": "2026-10-03T23:56:34.76328+02:00",
+              "updatedHighWater": "2026-10-03T23:57:02.988668+02:00"
+            },
+            {
+              "scope": "dedicated",
+              "kind": "setup",
+              "status": "succeeded",
+              "count": 1,
+              "hostedReferences": 1,
+              "transactionReferences": 0,
+              "pendingWithoutProviderReference": 0,
+              "createdHighWater": "2026-10-03T23:45:06.477551+02:00",
+              "updatedHighWater": "2026-10-03T23:46:04.707218+02:00"
+            }
+          ],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        },
+        "billingCandidates": {
+          "ok": true,
+          "rows": [
+            {
+              "rows": 1,
+              "billingEnabled": 0,
+              "autoRenewEnabled": 0,
+              "activeDueCandidates": 0,
+              "pastDueRetryCandidates": 0,
+              "updatedHighWater": "2026-10-04T00:03:20.806+02:00"
+            }
+          ],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        },
+        "activeMethodCounts": {
+          "ok": true,
+          "rows": [
+            {
+              "rows": 0,
+              "active": 0,
+              "updatedHighWater": null
+            }
+          ],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        },
+        "signupStates": {
+          "ok": true,
+          "rows": [],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        },
+        "welcomeStates": {
+          "ok": true,
+          "rows": [],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        },
+        "signingJobs": {
+          "ok": true,
+          "rows": [
+            {
+              "state": "complete",
+              "rows": 198,
+              "liveLeases": 0,
+              "staleRunning": 0,
+              "duePendingOrRetry": 0,
+              "creationHighWater": "2026-11-01T23:45:02.697862+01:00"
+            },
+            {
+              "state": "needs_attention",
+              "rows": 3,
+              "liveLeases": 0,
+              "staleRunning": 0,
+              "duePendingOrRetry": 0,
+              "creationHighWater": "2026-10-07T15:39:15.712829+02:00"
+            }
+          ],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        },
+        "signingDeliveries": {
+          "ok": true,
+          "rows": [
+            {
+              "state": "bundled",
+              "rows": 2,
+              "attemptHighWater": null,
+              "creationHighWater": "2026-10-08T20:50:17.156317+02:00"
+            },
+            {
+              "state": "pending",
+              "rows": 38,
+              "attemptHighWater": null,
+              "creationHighWater": "2026-10-09T20:00:36.001876+02:00"
+            },
+            {
+              "state": "provider_accepted",
+              "rows": 39,
+              "attemptHighWater": "2026-11-01T23:45:04.053474+01:00",
+              "creationHighWater": "2026-11-01T23:45:02.697862+01:00"
+            }
+          ],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        },
+        "signingErrorEmails": {
+          "ok": true,
+          "rows": [
+            {
+              "state": "simulated",
+              "rows": 4,
+              "liveLeases": 0
+            }
+          ],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        },
+        "integrationClaims": {
+          "ok": true,
+          "rows": [
+            {
+              "provider": "court_demo",
+              "rows": 1,
+              "enabled": 1,
+              "dispatchClaims": 0,
+              "courtDue": 0
+            },
+            {
+              "provider": "whatsapp",
+              "rows": 1,
+              "enabled": 0,
+              "dispatchClaims": 0,
+              "courtDue": 0
+            }
+          ],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        },
+        "whatsappJobs": {
+          "ok": true,
+          "rows": [
+            {
+              "status": "invitations_sent",
+              "rows": 2,
+              "due": 0,
+              "recipientSendingRows": 0,
+              "updatedHighWater": "2026-10-24T21:54:57.847113+02:00"
+            },
+            {
+              "status": "simulated",
+              "rows": 6,
+              "due": 0,
+              "recipientSendingRows": 0,
+              "updatedHighWater": "2026-10-24T02:36:01.062679+02:00"
+            }
+          ],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        },
+        "legacySigningBatches": {
+          "ok": true,
+          "rows": [],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        },
+        "legacySigningRecipients": {
+          "ok": true,
+          "rows": [],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        },
+        "legacyCompletionMessages": {
+          "ok": true,
+          "rows": [],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        },
+        "legacyReminders": {
+          "ok": true,
+          "rows": [],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        },
+        "signingOtp": {
+          "ok": true,
+          "rows": [
+            {
+              "state": "sent",
+              "rows": 2,
+              "unexpiredPending": 0,
+              "creationHighWater": "2026-10-07T12:30:15.852178+02:00"
+            },
+            {
+              "state": "verified",
+              "rows": 18,
+              "unexpiredPending": 0,
+              "creationHighWater": "2026-11-01T23:37:20.041707+01:00"
+            }
+          ],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        },
+        "centralRelationKind": {
+          "ok": true,
+          "rows": [
+            {
+              "relationPresent": false,
+              "kind": null
+            }
+          ],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        },
+        "ownRoleSessions": {
+          "ok": true,
+          "rows": [
+            {
+              "state": "idle",
+              "sessions": 1,
+              "oldestTransaction": null,
+              "oldestQuery": "2026-11-02T07:18:09.167475+01:00",
+              "waitEventType": "Client"
+            }
+          ],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        },
+        "intentMarkers": {
+          "ok": true,
+          "rows": [
+            {
+              "rows": 2,
+              "createdHighWater": "2026-10-03T23:56:34.76328+02:00",
+              "updatedHighWater": "2026-10-03T23:57:02.988668+02:00",
+              "settledHighWater": "2026-10-03T23:57:02.988668+02:00",
+              "selectedFieldFingerprint": "82d716a6924c09656d16a4288364d5f8"
+            }
+          ],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        },
+        "billingMarkers": {
+          "ok": true,
+          "rows": [
+            {
+              "rows": 1,
+              "updatedHighWater": "2026-10-04T00:03:20.806+02:00",
+              "selectedFieldFingerprint": "8d655cd4f7e81cd9584f37b71f892656"
+            }
+          ],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        },
+        "methodMarkers": {
+          "ok": true,
+          "rows": [
+            {
+              "rows": 0,
+              "createdHighWater": null,
+              "updatedHighWater": null,
+              "selectedFieldFingerprint": "d41d8cd98f00b204e9800998ecf8427e"
+            }
+          ],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        },
+        "paymentEventMarkers": {
+          "ok": true,
+          "rows": [
+            {
+              "rows": 4,
+              "createdHighWater": "2026-10-03T23:57:02.997842+02:00",
+              "selectedFieldFingerprint": "9b62469ef0be3dc29cfe6546d578d931"
+            }
+          ],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        },
+        "signupMarkers": {
+          "ok": true,
+          "rows": [
+            {
+              "rows": 0,
+              "createdHighWater": null,
+              "updatedHighWater": null,
+              "selectedFieldFingerprint": "d41d8cd98f00b204e9800998ecf8427e"
+            }
+          ],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        },
+        "transactionIdentity": {
+          "ok": true,
+          "rows": [
+            {
+              "role": "melamedia_app",
+              "database": "melamedia",
+              "readOnly": "on",
+              "transactionTime": "2026-11-02T07:18:09.165817+01:00"
+            }
+          ],
+          "transactionEnded": "ROLLBACK",
+          "singleConsistentSnapshot": true
+        }
+      },
+      "consistentTransaction": true,
+      "socketAfter": {
+        "ssExit": 0,
+        "connections": [
+          {
+            "state": "ESTAB",
+            "direction": "outbound_or_other",
+            "localPort": 62894,
+            "peerPort": 5432,
+            "peerCategory": "loopback_db",
+            "peerIsLoopbackAfterNormalization": true,
+            "peerUsesIpv4Mapping": false,
+            "inode": "13036470",
+            "qaFdNumbers": [
+              25
+            ],
+            "inodeBelongsToQaFd": true,
+            "tcpInfo": {
+              "bytes_sent": 405571,
+              "bytes_acked": 405572,
+              "bytes_received": 107102,
+              "lastsnd": 133,
+              "lastrcv": 131,
+              "lastack": 131,
+              "segs_out": 387,
+              "segs_in": 323
+            }
+          }
+        ],
+        "rawAddressOrPacketOutput": false
+      },
+      "finishedAtUtc": "2026-11-02T06:18:09.301475+00:00"
+    }
+  ],
+  "locks": "existing maintenance and QA tenant shared/nonblocking held for complete observation",
+  "processBefore": {
+    "pid": 2729957,
+    "procCwd": "/root/Melamedia/backend",
+    "procExe": "/usr/bin/node",
+    "startTicks": 124260326,
+    "cmdlineContainsExpectedServerPath": true
+  },
+  "daemonKillTimeout": {
+    "daemonPid": 948103,
+    "initialPM2_KILL_TIMEOUT": null,
+    "limit": "Only this allowlisted nonsecret daemon value exported; unset is unknown, not a default."
+  },
+  "initialFlags": {
+    "BILLING_OPERATIONS_ENABLED": null,
+    "BACKGROUND_JOBS_ENABLED": "false",
+    "BILLING_RENEWAL_SCHEDULER_ENABLED": null,
+    "SIGNING_V2_WORKER_ENABLED": null,
+    "WHATSAPP_WORKER_ENABLED": "false",
+    "WHATSAPP_DEMO_WORKER_ENABLED": "true",
+    "COURT_DEMO_SYNC_WORKER_ENABLED": "true",
+    "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": null,
+    "GIT_SHA": null,
+    "MULTI_TENANT_MODE": null,
+    "TENANT_DB_ISOLATION_ENABLED": null,
+    "SELF_SERVICE_SIGNUP_ENABLED": null,
+    "TAKBULL_MODE": null,
+    "QA_OUTBOUND_MODE": "noop",
+    "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": null,
+    "WHATSAPP_DEMO_ONLY": "false",
+    "WHATSAPP_CONNECT_ONLY": "true"
+  },
+  "fileFlags": {
+    "BILLING_OPERATIONS_ENABLED": null,
+    "BACKGROUND_JOBS_ENABLED": "false",
+    "BILLING_RENEWAL_SCHEDULER_ENABLED": null,
+    "SIGNING_V2_WORKER_ENABLED": "true",
+    "WHATSAPP_WORKER_ENABLED": "false",
+    "WHATSAPP_DEMO_WORKER_ENABLED": "true",
+    "COURT_DEMO_SYNC_WORKER_ENABLED": "true",
+    "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": null,
+    "GIT_SHA": null,
+    "MULTI_TENANT_MODE": null,
+    "TENANT_DB_ISOLATION_ENABLED": null,
+    "SELF_SERVICE_SIGNUP_ENABLED": null,
+    "TAKBULL_MODE": "prod",
+    "QA_OUTBOUND_MODE": "noop",
+    "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": null,
+    "WHATSAPP_DEMO_ONLY": "false",
+    "WHATSAPP_CONNECT_ONLY": "true"
+  },
+  "effectiveProjection": {
+    "BILLING_OPERATIONS_ENABLED": null,
+    "BACKGROUND_JOBS_ENABLED": "false",
+    "BILLING_RENEWAL_SCHEDULER_ENABLED": null,
+    "SIGNING_V2_WORKER_ENABLED": "true",
+    "WHATSAPP_WORKER_ENABLED": "false",
+    "WHATSAPP_DEMO_WORKER_ENABLED": "true",
+    "COURT_DEMO_SYNC_WORKER_ENABLED": "true",
+    "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": null,
+    "GIT_SHA": null,
+    "MULTI_TENANT_MODE": null,
+    "TENANT_DB_ISOLATION_ENABLED": null,
+    "SELF_SERVICE_SIGNUP_ENABLED": null,
+    "TAKBULL_MODE": "prod",
+    "QA_OUTBOUND_MODE": "noop",
+    "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": null,
+    "WHATSAPP_DEMO_ONLY": "false",
+    "WHATSAPP_CONNECT_ONLY": "true"
+  },
+  "initialProcessMetadataAllowlist": {
+    "kill_timeout": null,
+    "autorestart": "true",
+    "exec_mode": "fork_mode",
+    "instances": null,
+    "pm_id": 5,
+    "pm_uptime": 1793573164106,
+    "status": "launching",
+    "PM2_KILL_TIMEOUT": null
+  },
+  "processEnvironmentLimit": "Initial /proc values plus current file boot projection do not prove arbitrary in-process changes.",
+  "envFileSha256": "9fc4bc04f6faa9e88347d3f94aa926750f616a54d2c9754fd86bc1bf94945281",
+  "sourceBefore": {
+    "head": {
+      "exit": 0,
+      "stdout": "545779e4b99e111959f4684167dfdf46da1f3186",
+      "stderrBytes": 0
+    },
+    "branch": {
+      "exit": 0,
+      "stdout": "",
+      "stderrBytes": 0
+    },
+    "trackedStatus": {
+      "exit": 0,
+      "stdout": "",
+      "stderrBytes": 0
+    },
+    "backendTree": {
+      "exit": 0,
+      "stdout": "4ffd075308c7054a9f46ddac59f74accee4c6a4b",
+      "stderrBytes": 0
+    },
+    "backendEntries": {
+      "exit": 0,
+      "stdout": "100644 blob 082ca4a1f6f6af2c6821c3ff55b7cf7dd0754518\tbackend/.gitignore\n100644 blob c78931b15022c4e21d2bd0db4dbd6a9aa44af590\tbackend/.vscode/launch.json\n100644 blob 7e0ba38985c29e2202edd32b98daf13c6b775c82\tbackend/app.js\n100644 blob e69de29bb2d1d6434b8b29ae775ad8c2e48c5391\tbackend/assets/fonts/.gitkeep\n100644 blob c82d72e422e2d08c5ab439b6bac7c2177ea0c565\tbackend/assets/fonts/NotoSansArabic-OFL.txt\n100644 blob ce21d4f5ac8765b51b9eedb1bb5c0069ee8115a4\tbackend/assets/fonts/NotoSansArabic-Regular.ttf\n100644 blob ba7d86ddbdc35e7a4bdb6c2e66f6c756f9f7594b\tbackend/assets/fonts/NotoSansArabic-provenance.json\n100644 blob 5b43c56fa688b0ff9302a82cbebb1dae1201cf7f\tbackend/assets/fonts/NotoSansHebrew-Regular.ttf\n100644 blob c82d72e422e2d08c5ab439b6bac7c2177ea0c565\tbackend/assets/fonts/OFL.txt\n100644 blob fe5b680bb688c5c06a6f2dbfdb8fe7ccd82d54bf\tbackend/assets/fonts/README.md\n100644 blob a85f6fd38fbe4fb2f806a8a7fbb9277072ef813d\tbackend/assets/logoLMwhite.png\n100644 blob f6ed3e3b0a1223b73c78118e8db9260f8e33f8db\tbackend/config/compliance.js\n100644 blob 7fd4cf04799a87ceaa3ba3dc87a73f683e686706\tbackend/config/db.js\n100644 blob cabc78bd806a82c2cf1d44da349692a8011bf625\tbackend/config/dbTargetPolicy.js\n100644 blob 82782ab55db1bd1a63c28664b5f098ec475bb0ba\tbackend/config/officeIntegrations.env.example\n100644 blob 60d3b42d6b89086ae3601af1de9f44dc985b3ad2\tbackend/config/productIdentity.js\n100644 blob 736054412cc5e934bfc9130b872113aaab32586c\tbackend/config/whatsappPricing.js\n100644 blob 87c4c592ebdbb950011ad667d835e2f525af5bec\tbackend/controllers/adminController.js\n100644 blob 8fd538a49446246192e6da469b9f7a2faa1f4412\tbackend/controllers/auditEventsController.js\n100644 blob 629b6f7578d71df85d88769a3c3ff8741f172a72\tbackend/controllers/authController.js\n100644 blob f4c26ca1ec87d15c745cbfbd71419b447ba8f251\tbackend/controllers/billingController.js\n100644 blob 7910909f3f160bddb173a3b2537d384708e6c665\tbackend/controllers/calendarController.js\n100644 blob 84bd9ee928100d6cd8b7612d7f63831426b55940\tbackend/controllers/caseController.js\n100644 blob 6048a5a2839b582e9eed8f27ec66cab397ea3588\tbackend/controllers/caseTypeController.js\n100644 blob f7c5b8b3151f4c7b28104cc2203f524099845320\tbackend/controllers/chatbotController.js\n100644 blob aebaa240b4023ff6e541ad43249786a01fddf86a\tbackend/controllers/complianceController.js\n100644 blob 79a631300046be37678b4c24f81a2c13eb7af730\tbackend/controllers/customerController.js\n100644 blob db85c94dd2b63cfb1c814e2aa35a18d27c0b12fc\tbackend/controllers/dataController.js\n100644 blob f5fb2aaf5b4373e4b0b6342bf583de154718ae7b\tbackend/controllers/emailCampaignController.js\n100644 blob c22fb3ef92aacf132a8e809952086361477e5e7a\tbackend/controllers/evidenceDocumentsController.js\n100644 blob 2b45b25bf045780bcae4659134f19f0b0f1391fe\tbackend/controllers/filesController.js\n100644 blob 623c6e644913c11525ee97250daf78f08eb675d3\tbackend/controllers/masterAdminController.js\n100644 blob f3afa96ef8c20f363b27d49a95a2030d3047263a\tbackend/controllers/notificationController.js\n100644 blob c5e28ca6eb9ffbac2306a1693e7ee377fd06b1fd\tbackend/controllers/notificationOrchestratorController.js\n100644 blob d429522608ecc3b05b425f0ff9104a6092293077\tbackend/controllers/platformAdminController.js\n100644 blob 4efa44be6d0c7a85472a41cd0d8415c6b764201b\tbackend/controllers/platformSettingsController.js\n100644 blob 61586a220b3f0a16d767d74e713e8bbfd385cb62\tbackend/controllers/publicSignupController.js\n100644 blob 76e8d9a96b30c2f9b7a605823634d027e3096ce2\tbackend/controllers/reminderController.js\n100644 blob 83b43aae51a0871e460c987bd294fa75d3373283\tbackend/controllers/signingFileController.js\n100644 blob ae5d322e14f08c3a55318fe5a47643e48b1678a7\tbackend/controllers/staffRolesController.js\n100644 blob 70bb57f0a5a09e7cdce0196af40627eec4238952\tbackend/controllers/stageFilesController.js\n100644 blob b9f47c8b01d5399278e83a47e58c07a159fe2bab\tbackend/controllers/systemMessageConsentController.js\n100644 blob 5e876a8b82ba6a255d937c0bd6303501dc12521b\tbackend/controllers/templateAttachmentController.js\n100644 blob dd03ead5a4a24a6c35fa43a192aaf7a826c6dff6\tbackend/docs/ENDPOINT_PERMISSION_MATRIX.md\n100644 blob b7aa36ec9cc62ec6dbe515904871ec52a78858fe\tbackend/docs/FIRM_PERMISSION_PAGE_INVENTORY.md\n100644 blob bf3831cedb274044556328da545f7acf5a6eaaef\tbackend/docs/FIRM_STAFF_QA_PLAN.md\n100644 blob 7c897af1a8a2cf420d7aa49ac7d6197d2409b9e3\tbackend/docs/HARD_CODED_ROLE_CHECKS.md\n100644 blob e749a0175b9b28485e25947bda18a246f0308215\tbackend/docs/HTTP_DEPENDENCY_PATCHES_20261006.md\n100644 blob 230f2cb97ac09736abc73b90c597b3dd65911c8a\tbackend/docs/LAWYER_CUSTOM_ROLES.md\n100644 blob 5f617c6853588264aaf75dca98fa82c14796b993\tbackend/docs/LIVE_SERVER_PRESERVATION_20261006.md\n100644 blob c87b95db8a94fb367bd653688338fe8b8fac98f1\tbackend/docs/SETTINGS_CONSUMER_REGRESSION.md\n100644 blob b2bfc4b82ba02821204900b417e18960079a1cda\tbackend/ecosystem.config.js\n100644 blob 6820063a8350208eead67208dbbf840e7fe963bf\tbackend/knowledge/README.md\n100644 blob f5567dc1b28b3e68b7d149cccb469a9087232e1d\tbackend/knowledge/licensing_procedure.txt\n100644 blob 2083d1ac06938e28a2578dfed4f2d3c1455511a1\t\"backend/knowledge/\\342\\200\\216\\342\\201\\250\\327\\220\\327\\244\\327\\231\\327\\225\\327\\237 \\327\\236\\327\\242\\327\\250\\327\\233\\327\\252 \\327\\241\\327\\225\\327\\244\\327\\231\\342\\201\\251.pdf\"\n100644 blob dfb661b5620bd1d1611929403b5d37e67ebc0577\t\"backend/knowledge/\\342\\200\\216\\342\\201\\250\\327\\230\\327\\221\\327\\234\\327\\252 \\327\\250\\327\\231\\327\\251\\327\\231\\327\\225\\327\\240\\327\\225\\327\\252\\342\\201\\251.pdf\"\n100644 blob 572b85514aecd520b3114a4edcbeeec134eca18c\t\"backend/knowledge/\\342\\200\\216\\342\\201\\250\\327\\240\\327\\225\\327\\224\\327\\234 \\327\\250\\327\\231\\327\\251\\327\\225\\327\\231 \\327\\251\\327\\231\\327\\250\\327\\225\\327\\252\\327\\231\\327\\235 \\327\\244\\327\\231\\327\\240\\327\\240\\327\\241\\327\\231\\327\\231\\327\\235 \\327\\236\\327\\225\\327\\241\\327\\223\\327\\250\\327\\231\\327\\235\\342\\201\\251.pdf\"\n100644 blob e2eceb36600a897c1872456d193bc1ebea952b5e\t\"backend/knowledge/\\342\\200\\216\\342\\201\\250\\327\\251\\327\\220\\327\\234\\327\\225\\327\\252 \\327\\225\\327\\252\\327\\251\\327\\225\\327\\221\\327\\225\\327\\252 \\327\\241\\327\\225\\327\\233\\327\\237 AI\\342\\201\\251.pdf\"\n100644 blob f5567dc1b28b3e68b7d149cccb469a9087232e1d\tbackend/knowledge_base_licensing.txt\n100644 blob 657c344285eee98f6f25855b55a4d5b19697bbaa\tbackend/lib/backgroundJobsEnabled.js\n100644 blob b01ba388cdb79bf7a41b9046681b306513b0d94e\tbackend/lib/billing/billingEmailBranding.js\n100644 blob f62b7ffb8452de225cef06fbb0d0a13a6109654c\tbackend/lib/billing/billingEmails.js\n100644 blob d5359ecfe7d9bd0dda8059204b493668beaf8fe8\tbackend/lib/billing/calendarMonths.js\n100644 blob c7efa566d3c7c9364b234b45db6370caeded0452\tbackend/lib/billing/firmBillingService.js\n100644 blob 75c5f5ede66cea8f3654e80e7cd00be1901b4179\tbackend/lib/billing/platformBilling.js\n100644 blob 1151b5470490237a9325cb14023b780c47714d4f\tbackend/lib/billing/pricingPackage.js\n100644 blob 8f115972590ffdb496ac69b96a581128e925f993\tbackend/lib/billing/secrets.js\n100644 blob 2e50bc55669fa7dd660104a6978b34b9cd535701\tbackend/lib/billing/selfServiceRenewal.js\n100644 blob c7e8ba1feaed4ce9e049cf335427c2d3d8ebc5dc\tbackend/lib/billing/selfServiceUpgrade.js\n100644 blob ba3b169e9540f7b26ea3e188c58b0db770d07577\tbackend/lib/billing/signupQuote.js\n100644 blob 1aeea4fe8dfd9fca8e2d95eab90871222c88e14a\tbackend/lib/billing/tenantBillingDefaults.js\n100644 blob ccfad5a1c3aecabe82f046499b6c65a399277ea2\tbackend/lib/calendarEmail.js\n100644 blob 3397fd0db6c5fb835f37c8eb61fe9d7d3dc29c9d\tbackend/lib/calendarEventReminders.js\n100644 blob 570e9e8dc4bc41ca5155eaedfd8fe7b11710145f\tbackend/lib/calendarEventStatus.js\n100644 blob 9d1f7b00d77f8652c8b35b9f59c7837830621473\tbackend/lib/calendarOAuthState.js\n100644 blob 03009f541fa042c8d0203c4ccef5b8c74383934b\tbackend/lib/calendarRecurrence.js\n100644 blob c1ba61285a17cf9ae6a3660d6745d9bb6747b6c4\tbackend/lib/calendarReminderDispatch.js\n100644 blob 8c84a43fce235caabe162fa87a0bd57224441faa\tbackend/lib/calendarReminderListing.js\n100644 blob 23dc860d4f4acdf3a74dbef73bbf0b5c6bf58bb4\tbackend/lib/calendarVisibility.js\n100644 blob e1820edfb5102efa16857c767cf1ba3a992d909a\tbackend/lib/calendarWorkingHours.js\n100644 blob ac08c28c0652099602bacdb701e7d54a70f76887\tbackend/lib/caseClosureAudit.js\n100644 blob 5d2b7245980d791990d09770d5924c0cfba89d62\tbackend/lib/clientSigningReadiness.js\n100644 blob 77f4b703b5ba09b9d88e07496896d5d678a4fcca\tbackend/lib/firm/resolveFirmContext.js\n100644 blob 148c4b88437da8ab679add1030bba0599f99e5a6\tbackend/lib/firm/resolveFirmSigningPolicy.js\n100644 blob b6e4c71b3a45ae3f3cc1a242cc44aa3b8ee7f331\tbackend/lib/firmBranding.js\n100644 blob 3f75b307acf91e0f30dfaee33961e001d1c12be7\tbackend/lib/firmPermissions/accessPure.js\n100644 blob 14914b6731f7cb85372d5f0ca8649ac841fa552e\tbackend/lib/firmPermissions/caseAccess.js\n100644 blob 0c8b959260a8f94980bea76e921e039aab153737\tbackend/lib/firmPermissions/caseScope.js\n100644 blob 76b4eb5bd8379fb0b476853cddf84a8664bf9e1a\tbackend/lib/firmPermissions/signingAccess.js\n100644 blob 699be39318b57f894da3cf92dc9d9017b33fd10e\tbackend/lib/firmPermissionsRuntime.js\n100644 blob 06db5fd52d46283325e6a7f7ec6747c990484e85\tbackend/lib/firmRolePermissions.js\n100644 blob 368a7000134428b4c50fa17952dbf35c67a8d0d9\tbackend/lib/firmStaffOfficeUsers.js\n100644 blob 9117a04f49178885ecec536bb4b0d543c644b2d6\tbackend/lib/firmStaffTenant.js\n100644 blob 3f4fadd70cb5ac85ff9457e2c13ed11ef47d20da\tbackend/lib/hebcalHolidays.js\n100644 blob 58d00e80afe209fec5ffa57c1d58db19f2269b21\tbackend/lib/limits/enforceFirmLimits.js\n100644 blob 1deb56eb77e2955196bcfeeabbc0326028a94a84\tbackend/lib/limits/getLimitsForFirm.js\n100644 blob cdc1bef742c758c2a0d303d1fecd0278ba0a7b71\tbackend/lib/limits/getLimitsForTenant.js\n100644 blob e64aa3dffbba090e7fbb74bdf3bde655665e7325\tbackend/lib/limits/getUsageForFirm.js\n100644 blob c685ec335fbd6fff77819a498aa1a62512cff78f\tbackend/lib/limits/getUsageForTenant.js\n100644 blob 999d539765b45468e7819dc4ea757a49b013e0c0\tbackend/lib/limits/seatExclusions.js\n100644 blob 81f0525f38bb9e590ef5ad503de924cfc1628bc7\tbackend/lib/melamediaServiceRequests.js\n100644 blob acb10e3ef3a461678c03bb816753dce47f7b7979\tbackend/lib/officeBaselineRole.js\n100644 blob c50fd5a8e8682c76d1399522516acf9db33281fa\tbackend/lib/officeRole.js\n100644 blob f91e9157dcaddb6b66faed5ae5a29e0945af947e\tbackend/lib/payments/takbullClient.js\n100644 blob d640f37c8040f484d0c2909b94f2b73b3cb2b35d\tbackend/lib/payments/takbullCredentials.js\n100644 blob f31b3c82ab0374c613cd0a895abc3803c1508ad7\tbackend/lib/payments/verifySignupPayment.js\n100644 blob a89b999855cb83f3400bd26ff16f056a04c5391d\tbackend/lib/plan/resolveFirmPlan.js\n100644 blob 497dc34bb77a86ff99f99f886bfb72b7a4527009\tbackend/lib/plan/resolveTenantPlan.js\n100644 blob 799535a316330d661bd10347516eaa1f05fa0001\tbackend/lib/publicShortLinks.js\n100644 blob 67b155ed41d05c66c069b1c8e40275164a76c731\tbackend/lib/qaOutboundNoop.js\n100644 blob efbd80c25ddf0b882164c58e8f1fdae239a1d2b1\tbackend/lib/reminderCalendarSync.js\n100644 blob effac60d0d3ec69ad0981bb64357382dcf75349c\tbackend/lib/reminderKindLabelHe.js\n100644 blob e5cc9f8071227f8364f3262245f8c06a72e6e39b\tbackend/lib/renderEvidencePdf.js\n100644 blob 26dc30f8033f45e2579515967a71657ae5a0bcad\tbackend/lib/shabbatDeferral.js\n100644 blob 070ecae5dc0a5f5367a975d564708a3cbee5afb4\tbackend/lib/signingBatchOtpGrant.js\n100644 blob 4f82c86e1cc57062c7a272192b6fd88b477fac3e\tbackend/lib/signingBatchRecipients.js\n100644 blob 45ab7b15a70a3b928bb1af66a5a4a4fd58a4cb99\tbackend/lib/signingDetailsSummary.js\n100644 blob 3f5efd9a30124929b4e1d752e92ca018280b8907\tbackend/lib/signingFileReminders.js\n100644 blob 4161b5e5daa794363c51b0a874050964d7a073bd\tbackend/lib/signingGeometry.js\n100644 blob 04f5084131b40365ee57d564bd7d42ae6f2d713b\tbackend/lib/signingPendingCleanup.js\n100644 blob 95ccadc5511777abefc7b7a0cfd228e83c96e780\tbackend/lib/signingRecipientsWorkbook.js\n100644 blob 3d7976b09a938f5283e5e9f836ab10b4a9b3e4d1\tbackend/lib/signingSignerContact.js\n100644 blob b4c2f68f4f96a3a0dcc855f8c1fb57b762aa5183\tbackend/lib/signingTemplateDefinition.js\n100644 blob df9c2288b90ef26640c18888adefbacc6ac610e2\tbackend/lib/signingV2/canonical.js\n100644 blob 48070d9ce67ca477eda52d125a0de2ff3fe4d9d5\tbackend/lib/signingV2/compiler.js\n100644 blob 655ad0098b015405a9b9d70247aadbd47032a1a2\tbackend/lib/signingV2/dataRenderer.js\n100644 blob 8d5ee3aea0d7a52de233b0cda93d5fd2db03f144\tbackend/lib/signingV2/errors.js\n100644 blob 247c7ce71d0e5ab02f73a9b767a7354d93f3eb62\tbackend/lib/signingV2/limits.js\n100644 blob 04459e8c037b20796b74e26163fb15012d1f0dc2\tbackend/lib/signingV2/personalEvidence.js\n100644 blob ed66d576b6afb01107942740d791efc5bde11a4f\tbackend/lib/signingV2/recipientBindings.js\n100644 blob 6103955766ac1fdc0ebdde56497e7f03fc99f5cc\tbackend/lib/signingV2/recipientLayout.js\n100644 blob 9346c5a0eab244667f2ff5899c566276fe13145e\tbackend/lib/signingV2/signerFieldValue.js\n100644 blob 28493b34f94080e3273b459839f36842b363d162\tbackend/lib/signingV2/signingOrder.js\n100644 blob e3eb5afbbdd33a5b581ad95c10cd58681d1acc8c\tbackend/lib/signingV2/sourceCache.js\n100644 blob bcfc777c116f285c8dd2d5285d66a2d7ff95de8c\tbackend/lib/signingV2/stamp.js\n100644 blob ef8e2451ca6aac7b9558b72a1be457ccfc4f7782\tbackend/lib/signingV2/workbook.js\n100644 blob b9084bb37c3217018d6890bb2bf4f53de18b4544\tbackend/lib/stampImageAlpha.js\n100644 blob 9efeeea4e8e91506ec7c3f2eec2d38ab8d44c856\tbackend/lib/systemMessages/config.js\n100644 blob fdc9c22a08f969d90ddda8643935e2f9ed01505a\tbackend/lib/systemMessages/index.js\n100644 blob ed716b6d3d80ae3515eb5d4b65e711fdeb044651\tbackend/lib/systemMessages/vendor/SOURCE.json\n100644 blob 8f3455f83f158c20bc62f2a77996a93492041433\tbackend/lib/systemMessages/vendor/index.cjs\n100644 blob 1829d535d4e0b0e5c5ee1d6f4a55acc9e9075881\tbackend/lib/systemMessages/vendor/index.d.cts\n100644 blob df68e5dd8f778a831ac9111e34cb9f7378b94e40\tbackend/lib/systemMessages/vendor/package.json\n100644 blob 6e9fe554eaf2f1bcae6062f43a3ad7f95a8e92e5\tbackend/lib/tenant/databaseScope.js\n100644 blob 70f0fd566d8a6b1340c6d487005a26782eabdaa8\tbackend/lib/tenant/isolationSchema.js\n100644 blob 5606d3bcb13a6435a703eae69469acb63241d1a6\tbackend/lib/tenant/officeJobs.js\n100644 blob a7caea09d3fbfda43f9a2117d33659ed839fab64\tbackend/lib/tenant/scopedPool.js\n100644 blob bedef874435c19b59b4b51a5f536d55cea221754\tbackend/lib/tenant/seedOfficeDefaults.js\n100644 blob c4a24631b8ed5eee6a2da91cbea6b2547c47fe35\tbackend/lib/tenant/signupAvailability.js\n100644 blob b712c4212ace208222459ee6b1c32d8ddb2d1118\tbackend/lib/tenant/signupLogo.js\n100644 blob d01b4e26a0d9d96cba0f55ef1b30fa9ecd965efa\tbackend/lib/tenant/signupService.js\n100644 blob 74e6d59ae9e1f05bf13cf082f6355140d66bc8cb\tbackend/lib/tenant/signupSystemMessages.js\n100644 blob f128e7f38872d16de206cbbe478b908189bfb37d\tbackend/lib/tenant/signupWelcomeEmail.js\n100644 blob 5c10638ee7ab3ffa48826a2dae0aee1b17f15ad8\tbackend/lib/tenant/signupWelcomeTemplate.js\n100644 blob fe38eb47f12db323c04f00ed7db7e768be7ad1d8\tbackend/lib/tenant/tenantContext.js\n100644 blob 0abd7eaf7a016a8d2a0c10a46a91cf6170d94aba\tbackend/lib/tenant/tenantService.js\n100644 blob 61f4d22890ced66c2cf6a677507598db8b9cd249\tbackend/lib/usage/recordFirmUsage.js\n100644 blob 928b52cd8fe0e30728f8e0632dab11abef9a26ec\tbackend/lib/wordTemplates/README.md\n100644 blob 9336b992c94475d3ffe721fe84244b5380e39cab\tbackend/lib/wordTemplates/catalog.js\n100644 blob a83f4dfeab51670f243278f76489890e2bb619ea\tbackend/lib/wordTemplates/clientValues.js\n100644 blob 4a00fa2179e3682ca8ddacfad7b8a3e8ec66c531\tbackend/lib/wordTemplates/converter.js\n100644 blob f412362046a030fc7445f9c92d41c3f8dc718e3d\tbackend/lib/wordTemplates/errors.js\n100644 blob d08f72425ced291ae536fe76bca6034b3028744a\tbackend/lib/wordTemplates/index.js\n100644 blob db96aa364623beab573c3c46ff70c85e4d2d5dd0\tbackend/lib/wordTemplates/pdfWorker.cjs\n100644 blob 5733f794fcfefa236defb3e38c30bcbaff4a5a84\tbackend/lib/wordTemplates/visual.js\n100644 blob fd0598982360e8544d50f1d169e8e48123564210\tbackend/lib/wordTemplates/zip.js\n100644 blob 5d3fd33044bca202888ea7b54a67a5db405eaa56\tbackend/middlewares/attachFirmPermissions.js\n100644 blob 8cd513200c03d92eeff7d672bffef5f2d43c3d80\tbackend/middlewares/authMiddleware.js\n100644 blob ec5c35196a7373b94bf35aa4194df7a764dd6576\tbackend/middlewares/errorHandler.js\n100644 blob 2610f9985ed5f1cfb03b44e2362be912c52afb20\tbackend/middlewares/optionalAuthMiddleware.js\n100644 blob cc2fbcb8140e740cd7dfa3e744df185fa593dd93\tbackend/middlewares/publicOfficeScope.js\n100644 blob a02b86a7889be482465deccddf5d924dd8df750f\tbackend/middlewares/requireAdmin.js\n100644 blob f5bf9b1f209f7d8cd6fbc24528b06a93e7ca6a3e\tbackend/middlewares/requireBillingAccess.js\n100644 blob cc3eb24d8277000a937d4b454330e6d746d3de65\tbackend/middlewares/requireCaseTypePickerAccess.js\n100644 blob e2091b56610197429715ab590677f4be8a5c7074\tbackend/middlewares/requireCaseWriteReferences.js\n100644 blob 03af72ac40e8ebe642ea0bad454075506bc74c42\tbackend/middlewares/requireClientSigningLink.js\n100644 blob 7451e716d59b47973fe3f42c7dcbd941edd55a6b\tbackend/middlewares/requireFirmAction.js\n100644 blob 93f5bd0ba6b38adb15538346f63eb04c62d1dfff\tbackend/middlewares/requireFirmAreaVisible.js\n100644 blob c919dcabd53b7ef6d796192ad167c34dc5397db0\tbackend/middlewares/requireFirmEvidencePackageAccess.js\n100644 blob ec3124a097ea839f808bc439e9b4c38470b9a90a\tbackend/middlewares/requireFirmStaffLookup.js\n100644 blob 5268461c68859328f4698ed142e73bddd9d8cddf\tbackend/middlewares/requireGlobalMaster.js\n100644 blob 3dec5758be6d722a860117b34fcdb9cd11805996\tbackend/middlewares/requireLawyerOrAdmin.js\n100644 blob cc3889f960e8a65b9e38f776c83714dbe47874c7\tbackend/middlewares/requireOfficeOwner.js\n100644 blob 5f578b920834eb4ec1f92db91c0e59d4e3aa6995\tbackend/middlewares/requireOfficeUserAction.js\n100644 blob 5a8e393609bd4945e68959f288e5370078439aac\tbackend/middlewares/requirePlatformAdmin.js\n100644 blob 8f84b53ad30e0c251159b7f18aaf3b1b46c4e4d1\tbackend/middlewares/requireSigningEnabled.js\n100644 blob 572f3dc66308edce9b5e7269f80c2d054d178eea\tbackend/middlewares/requireSigningOfficeAccess.js\n100644 blob 4672307fb7ff4c81322771ef80e453d558b01686\tbackend/middlewares/requireSigningReadAccess.js\n100644 blob e136e544767b1a58b5f7df11f2dfc82940bd2449\tbackend/middlewares/requireUploadPermission.js\n100644 blob 03d88c7caa6d4d0261ab08e50c7c64ffc03e5106\tbackend/middlewares/resolveTenant.js\n100644 blob 3b45360050247c10a383de241f005005f3d5928e\tbackend/migrations/2025-12-23_01_add_signeruserid_to_signaturespots.sql\n100644 blob 1ad387954bb1661ffa08da7fadb50717d3c4f889\tbackend/migrations/2025-12-23_02_make_signingfiles_caseid_optional.sql\n100644 blob 1b3cb881b6908629e89c0eabe74ac4e39580846e\tbackend/migrations/2025-12-30_00_create_signing_base_schema.sql\n100644 blob 17bba8ebd2b3dcce3828ed782a0e8b513737aa0c\tbackend/migrations/2025-12-30_03_signing_schema_hardening.sql\n100644 blob cf7501cbec8c605b6b0960a4ddb700b14ff5cb8b\tbackend/migrations/2025-12-30_04_notifications_schema_indexes.sql\n100644 blob 47343e20ae48615f6703443630d3b11c89209c8a\tbackend/migrations/2025-12-30_05_cases_add_whatsappgrouplink.sql\n100644 blob a138be34051810bc1d856d58515b5e6aa61caa37\tbackend/migrations/2026-01-08_00_create_refresh_tokens.sql\n100644 blob 982aefcbe482d187a7b16089f095ba17a5b13373\tbackend/migrations/2026-01-08_01_refresh_tokens_grants.sql\n100644 blob efbfc3c2c07e6acd8468bccc35e0b38c0e8ab8f3\tbackend/migrations/2026-01-10_00_signingfiles_user_fks_on_delete_cascade.sql\n100644 blob def6d72398e0e573d01c2b563a37ee4eb86826b0\tbackend/migrations/2026-01-11_00_signing_evidence_and_audit.sql\n100644 blob 1b62ae72b4b280f2aef340ab586284694a0ab0ef\tbackend/migrations/2026-01-11_01_signing_evidence_and_audit_grants.sql\n100644 blob 59cb78d6ee2849ffe5168107c2cd9552dd3f6f45\tbackend/migrations/2026-01-15_00_signing_spot_fields.sql\n100644 blob c2962f65f46575999a468cd8f082d8d6c8bcd57c\tbackend/migrations/2026-01-15_01_signing_spot_schema_otp_policy.sql\n100644 blob bd1784dd73f9c5dc161ed171352ff2050127d6d9\tbackend/migrations/2026-01-15_02_signing_spot_fieldvalue.sql\n100644 blob fca85f65ea47642bd51a741cb41b63ac000ba357\tbackend/migrations/2026-01-16_00_subscription_plans_and_retention_runs.sql\n100644 blob dedc6a8489f87ecff0b6a1584e7d6e6673a513d8\tbackend/migrations/2026-01-16_01_legalhold_and_audit_retention_override.sql\n100644 blob 57d33c0b0adb302c45154eec9a7e6b67e3c5e1a2\tbackend/migrations/2026-01-16_02_plans_limits_v2_and_retention_markers.sql\n100644 blob 60d070f1a323280bee28891468fb7d392a80afe2\tbackend/migrations/2026-01-16_03_firm_scope_and_usage.sql\n100644 blob fb50e892fb7ef7cdea35c6ef31a77434076914e4\tbackend/migrations/2026-01-17_00_firm_signing_policy.sql\n100644 blob 81b46cedc129ecc76b4c6a4bc18b9b45158cbe57\tbackend/migrations/2026-02-15_00_deprecate_uploadedfiles.sql\n100644 blob 4fdd87f1ab0de1027467183df41a0e244282cdd6\tbackend/migrations/2026-02-16_00_create_scheduled_email_reminders.sql\n100644 blob c213652a281c518c282a5a2b731ee222cc3b2be5\tbackend/migrations/2026-02-16_01_create_message_delivery_events.sql\n100644 blob 1075c66d4cfceeb1e7de6a52c4756eb8887f9703\tbackend/migrations/2026-02-16_02_drop_redundant_firm_tables.sql\n100644 blob c3e8f3d916a74acd57105053f86053f96e2aacbf\tbackend/migrations/2026-02-16_03_audit_events_allow_fk_set_null.sql\n100644 blob 2bef5db86278d990af38e6cbad547f2673d08168\tbackend/migrations/2026-02-17_00_create_case_users_junction.sql\n100644 blob efaa2218ce4fbb035cb82a861fde63baa6ce7650\tbackend/migrations/2026-02-21_00_otps_widen_otp_column_for_hash.sql\n100644 blob 09cfa11a3404c0496eefd3330c65e196abfa14f3\tbackend/migrations/2026-02-22_00_platform_settings.sql\n100644 blob b2ba9cabd61cb6337476a8eb989a7791e2e13ce4\tbackend/migrations/2026-02-23_00_add_manager_cc_to_channels.sql\n100644 blob d3858fdc87aa898d210bd5ea51779636c1b4e973\tbackend/migrations/2026-02-23_01_split_case_update_email_into_per_type.sql\n100644 blob aa32a20bc7feffde39334e1f63d6dfd36891100d\tbackend/migrations/2026-02-23_02_cleanup_messaging_settings.sql\n100644 blob 2e1b548f3aa1117f7eaf036de3afe2ab73ba836d\tbackend/migrations/2026-02-23_03_add_new_client_notification.sql\n100644 blob d95b658f6ad516c0c3eac1052670c13c1f8a8f9a\tbackend/migrations/2026-02-26_00_add_website_domain_setting.sql\n100644 blob 535cfd71ced4e7f00d7c2e41f28291fbdecee2dd\tbackend/migrations/2026-02-27_00_birthday_greetings.sql\n100644 blob 2ee3c0ba08dd7472f067e05830061199aaabd820\tbackend/migrations/2026-02-28_00_remove_ceo_email_settings.sql\n100644 blob 7a8e77078f5bc4b40c6bfe2a39c1d8af8b84a955\tbackend/migrations/2026-02-28_01_email_templates.sql\n100644 blob b8dac8f46d5ee928b4eb09efa222c15b714e6a83\tbackend/migrations/2026-03-01_00_update_email_template_vars.sql\n100644 blob 3742b02f950f10d2005ec59a109aa022d92416a6\tbackend/migrations/2026-03-01_01_add_all_sms_templates_and_fix_email_rtl.sql\n100644 blob b6d69bcc1bcfaa1b50088360e7dbab222f9e0283\tbackend/migrations/2026-03-01_02_create_stage_files.sql\n100644 blob 6dbfb80017c5b3b979b4419ac9534dce5a7d81d7\tbackend/migrations/2026-03-05_00_create_reminder_templates.sql\n100644 blob 933e04adaa5666bd0e1464b7515f3974ffc1d55b\tbackend/migrations/2026-03-14_00_chatbot_sessions_and_messages.sql\n100644 blob a3a7392bca9d534303b90a76e5841f228d7c4523\tbackend/migrations/2026-03-14_01_document_rag.sql\n100644 blob 686ff85f372ec69bd31f0ae3f7e4f283532c974c\tbackend/migrations/2026-03-17_00_remove_case_number_from_email_templates.sql\n100644 blob d42054fef284f727d682dd712a2c83646c13fc09\tbackend/migrations/2026-03-19_00_fix_grants_and_add_transaction_safety.sql\n100644 blob fe1740bedf686ef5a788e970549fe93505b5799b\tbackend/migrations/2026-03-19_01_remove_reminder_time_settings.sql\n100644 blob 19812e7579a77ac24643f734138060a955d56eb7\tbackend/migrations/2026-03-19_02_reseed_platform_settings_and_channels.sql\n100644 blob 48d4d3ee3fb52ce104fc7a9f338c7ac93e7838c0\tbackend/migrations/2026-03-20_00_disable_admin_cc_sign_invite.sql\n100644 blob 81d7e935f39b81590a5157145fbb081ae66e0162\tbackend/migrations/2026-03-20_01_add_signing_order.sql\n100644 blob b79ad49a3b5a5e0f33ab78cfb991110aa74afe80\tbackend/migrations/2026-03-23_00_create_template_attachments.sql\n100644 blob ea547d24f66856dfc55df5f81645164de4be5b71\tbackend/migrations/2026-03-23_01_add_haslicenseexpiry_to_cases.sql\n100644 blob afb8c3aaf002afe81b767e4ee3a8dc56266fd389\tbackend/migrations/2026-04-05_00_add_completionemail_to_signingfiles.sql\n100644 blob 7bafae59689bc658b5efafdaeaef9ff123423949\tbackend/migrations/2026-04-15_00_firm_logo_url_and_template_branding.sql\n100644 blob 3f1ef55b29a66295bb2f90c2060615a75c808035\tbackend/migrations/2026-04-16_00_fix_grants_for_all_app_users.sql\n100644 blob e069ffa699d684a3188dc757bc79bab6bdaf44bd\tbackend/migrations/2026-04-16_01_contractor_monitor_settings.sql\n100644 blob 7f2a60cad6fca36cf50504100b5be89f6dae4731\tbackend/migrations/2026-04-29_00_contractor_monitor_settings_descriptions.sql\n100644 blob d5e9a56b881469a2a4cd722fa60779b3f4ceabd9\tbackend/migrations/2026-05-24_00_storage_quota_mb.sql\n100644 blob 7cdde9471c3f70c6671d175e98438e74e029ce74\tbackend/migrations/2026-05-25_00_storage_quota_sensible_mb.sql\n100644 blob 8f65da47a4feab70f929b14ad144d2fd47566f6c\tbackend/migrations/2026-05-25_01_storage_quota_lower_mb.sql\n100644 blob 0a7706b7f0172991fa1ac2dce64a280d3fcdd0ad\tbackend/migrations/2026-06-05_00_create_calendar_tables.sql\n100644 blob 0b16798298d45f7a16e7353a6b1f995cd4f8ecce\tbackend/migrations/2026-06-05_01_calendar_google_sync_unique_index.sql\n100644 blob 98c5d93efcaccb64b075870293a7652ae568eeff\tbackend/migrations/2026-06-05_02_add_calendar_event_participants_and_color.sql\n100644 blob 774f4628357760522d1f6f5496fb3dcbc55940ac\tbackend/migrations/2026-06-05_03_calendar_user_links_and_settings_seed.sql\n100644 blob 49589afca934bd3839c281902ac51798a008056d\tbackend/migrations/2026-06-07_00_calendar_working_hours_settings.sql\n100644 blob db7c61c8373b3bc80f9bad3960fe221bfca5ba8d\tbackend/migrations/2026-06-07_01_calendar_crm_leads_and_leave.sql\n100644 blob 6d223fd0397b97bd6d308e5f1f7eb92d5f5814ae\tbackend/migrations/2026-06-07_02_calendar_event_types_hearing_reminder.sql\n100644 blob 29e8fd0645b3c14d5ef5e6100497ae1467c272a9\tbackend/migrations/2026-06-07_03_calendar_lead_case_name.sql\n100644 blob b76b34f5873a7de0abf3d6a89cc3ea29012f0828\tbackend/migrations/2026-06-07_04_calendar_google_sync_firm_toggle.sql\n100644 blob f54a65335f5242664f6fcaf32408b3386ca404e8\tbackend/migrations/2026-06-08_00_calendar_event_managers_junction.sql\n100644 blob 346f421951db62de2259383101b0a73b00264c40\tbackend/migrations/2026-06-10_00_calendar_holiday_event_type.sql\n100644 blob 9efea14f3bf9e656fd45ae4d447837915363f1b3\tbackend/migrations/2026-06-10_01_calendar_outlook_sync.sql\n100644 blob 5c100afd15483b0e218eecefeb640431f6011f48\tbackend/migrations/2026-06-11_00_calendar_per_day_working_hours.sql\n100644 blob 359ad74fea9a094616c1fc47e87c3a1e9c55dddd\tbackend/migrations/2026-06-11_01_calendar_event_reminder_offsets.sql\n100644 blob cb5ca94a9fff6af30e0e8ea5ef705be54c987137\tbackend/migrations/2026-06-11_02_calendar_reminder_channels.sql\n100644 blob c9c897ae4859b5b509cacc9ac66ff144d99e8dfb\tbackend/migrations/2026-06-12_00_dashboard_query_indexes.sql\n100644 blob 5b4e4ccafb8c6a396e5aef3001c0bd5d7e439a48\tbackend/migrations/2026-06-14_00_deduplicate_platform_settings.sql\n100644 blob 2fd126fd6133fa956c5e6635df262f809d1edc2f\tbackend/migrations/2026-06-14_01_link_reminders_to_calendar_events.sql\n100644 blob 9f0d612f83165fe86cd9d058d508ee3c02cead48\tbackend/migrations/2026-06-24_00_storage_quota_recalc.sql\n100644 blob f7c1e098ec5388dd4b31df96b25f90246d47d079\tbackend/migrations/2026-06-24_01_inforu_sms_sender.sql\n100644 blob b9ae8ceea0a99c78d6905668b06137435637c540\tbackend/migrations/2026-07-10_00_consolidate_sms_sender_setting.sql\n100644 blob 4503f396f279e8cb480303cf6538f6139e2501e6\tbackend/migrations/2026-07-18_00_signing_short_links.sql\n100644 blob 7d80650cf043bfce19b91b1f29f96c5188641473\tbackend/migrations/2026-07-18_01_email_templates_replace_hardcoded_morlevy_logo.sql\n100644 blob 321a481f5615fda60cb4a042d1243321814d6082\tbackend/migrations/2026-07-21_00_signing_show_public_consent_setting.sql\n100644 blob 4deb85ab8eaf304ac19034d3c76c7007057e5d55\tbackend/migrations/2026-07-21_01_usernotifications_data_jsonb.sql\n100644 blob ebef58e26bfa3e1dd4febb3c646f416276eb7dd1\tbackend/migrations/2026-07-23_00_clarify_signing_otp_settings.sql\n100644 blob fb6e1f42abad37b34b4aa17a1040a8e2bbbabee3\tbackend/migrations/2026-07-27_00_module_visibility_platform_settings.sql\n100644 blob 87743c8d64cd63ac817ef519679e5559775bc77f\tbackend/migrations/2026-07-27_01_signing_file_reminders.sql\n100644 blob 922fd4a912da8f2c00083501030153095c937c95\tbackend/migrations/2026-07-27_02_email_templates_case_manager_label.sql\n100644 blob 45f7c7bc5f6b379d352380eed94a44c91cb9cda7\tbackend/migrations/2026-07-29_00_sms_sender_label_independent.sql\n100644 blob 1e0b705ae090500c1eaef7ca6b1ea2af98fd6b88\tbackend/migrations/2026-07-29_01_sms_sender_name_and_number.sql\n100644 blob 33f90df222579d68dcbcfd0919f407ec65608606\tbackend/migrations/2026-08-03_00_calendar_reminder_options_expand.sql\n100644 blob 0094bbf5b0fc7ad56903f177344a05ca8a587b27\tbackend/migrations/2026-08-03_01_calendar_ux_overhaul.sql\n100644 blob 68c645c189098dca647ef30bf1515bdaeae31149\tbackend/migrations/2026-08-03_02_holidays_date_hebcal.sql\n100644 blob e2bf56bf0f024076a16b1502c9fda40e2fdb9cc5\tbackend/migrations/2026-08-03_03_user_daily_agenda_settings.sql\n100644 blob f4a0faba119c4975a2e6f7218d33255b70b47d87\tbackend/migrations/2026-08-04_00_calendar_visible_hours.sql\n100644 blob fd66342ec769183aebf3f384fe936fb6706187c4\tbackend/migrations/2026-08-04_01_backfill_calendar_reminder_links.sql\n100644 blob 795c5a5e9d8ecc5498b7e7141ab49e14d2803651\tbackend/migrations/2026-08-04_02_calendar_sms_short_links.sql\n100644 blob e9ab85b8b596060c62e0aaf958a6354925428374\tbackend/migrations/2026-08-04_02_usernotifications_message_text.sql\n100644 blob af2fcf9bd7b62a4d0ec49dee4bcfa45633a36db9\tbackend/migrations/2026-08-04_03_firm_nav_place_links.sql\n100644 blob 029ae59f803ff40eba538684ddde86555c69b917\tbackend/migrations/2026-08-06_00_calendar_sms_templates_by_type.sql\n100644 blob 5e1be5a8ae60f60a5e3d977154f71128ac752b20\tbackend/migrations/2026-08-10_00_calendar_multi_client_split_reminders_shabbat.sql\n100644 blob 9159ae29f70401fce35a5a8d366b3fd92fb39260\tbackend/migrations/2026-08-10_01_calendar_email_templates.sql\n100644 blob c4b395e712ed180cae1504d238bd8dcd599c3f7c\tbackend/migrations/2026-08-17_00_firm_billing_takbull.sql\n100644 blob b0e8ebb83abae22ae29a791d9365fac5ea012011\tbackend/migrations/2026-08-17_01_firm_billing_yearly.sql\n100644 blob 831cbc6371af455f02bb8afbbfada44569c88259\tbackend/migrations/2026-08-24_01_calendar_meeting_type_leads_audit.sql\n100644 blob 6178466f821821fa29540b12ef3bafcd75ddf6a5\tbackend/migrations/2026-08-25_01_calendar_lead_phone_unique_exclude_series.sql\n100644 blob b67b51f3de89158cea5903e35c7385d484dde20d\tbackend/migrations/2026-08-25_01_signing_otp_email_channel.sql\n100644 blob 19b3ff8b75a0b289e537f4551aadf7b54bf79164\tbackend/migrations/2026-08-27_01_calendar_allow_client_and_lead.sql\n100644 blob fba8af2acc0b08c4d1a64a50e18203b6882655c2\tbackend/migrations/2026-08-27_02_calendar_drop_lead_phone_unique.sql\n100644 blob a2252cdc621d392fec5a7318912af8f80751881d\tbackend/migrations/2026-08-27_03_calendar_email_location_label.sql\n100644 blob 372b4f1b43425a1509e35131212da7d42e5e3f0a\tbackend/migrations/2026-08-27_04_calendar_email_strip_legacy_address.sql\n100644 blob 31073559ba530b2e5f4e9c6ed42af45370853d38\tbackend/migrations/2026-08-27_05_calendar_sms_dynamic_meeting_label.sql\n100644 blob 44ba5e46bf95a0e11b39aa69cbf6c3e0fcdf126a\tbackend/migrations/2026-09-02_01_signing_signer_delivery.sql\n100644 blob 69c62b57b7a861fb75fcf2a575dc3d56f1e84caf\tbackend/migrations/2026-09-06_00_manager_home_ai_insights.sql\n100644 blob 346e06a80a0f07929609563459d94266232b5fdc\tbackend/migrations/2026-09-08_00_signing_otp_dedup_index.sql\n100644 blob 49c011a60d1b9d40e0bc01822a40d37e2c992db7\tbackend/migrations/2026-09-08_01_law_firm_multi_tenant.sql\n100644 blob e94ec134b17767593c78a5084de2bfa7a5229d78\tbackend/migrations/2026-09-08_02_calendar_reminder_allow_lead_recipient.sql\n100644 blob d01a63cca22f1123357f539b4e1ab8461e197cde\tbackend/migrations/2026-09-10_00_case_closure_and_stage_audit.sql\n100644 blob da234ad5cb58400d5bd35d87a1c49554a29d099f\tbackend/migrations/2026-09-14_00_calendar_event_status.sql\n100644 blob 95c1e4895cd42759a3c7d1f9bf1184eb98183a16\tbackend/migrations/2026-10-03_00_firm_staff_roles.sql\n100644 blob 51118bf2f0d56b05e5b2f731914fb133dd99e553\tbackend/migrations/2026-10-04_00_firm_staff_roles_unique_nulls_not_distinct.sql\n100644 blob af0dfadb601faf54933e94a0ce5ab9d228c36921\tbackend/migrations/2026-10-05_00_firm_staff_roles_reassign_orphan_users.sql\n100644 blob c925906fad5d3a15d815d2b87b9f52d67633ac3d\tbackend/migrations/2026-10-06_00_cases_tenant_scope.sql\n100644 blob d5293fbcd8e508089fdb5155ff3fc88cff3eaa24\tbackend/migrations/2026-10-06_00_signing_templates_and_batches.sql\n100644 blob 9584ec080e490cd955e7b08428421a514d61dea5\tbackend/migrations/2026-10-07_00_signing_workflow_v2.sql\n100644 blob 08bc03bc69b9598ebefa1d96659192bfa7e523f7\tbackend/migrations/2026-10-07_01_signing_v2_reference_integrity.sql\n100644 blob 24b35328e2bba22e69af77a4079b60c4bfcfd42b\tbackend/migrations/2026-10-07_02_signing_v2_preflight.sql\n100644 blob 341b30b7673307c497ae1e1db3e689dc579a7e67\tbackend/migrations/2026-10-07_03_signing_v2_public_signing.sql\n100644 blob cc0fb5e14200dca7afa1114d91128af9d2e4e589\tbackend/migrations/2026-10-08_00_signing_creation_drafts.sql\n100644 blob 139b063eceada6b81056e498b4a09ac7fe7afc23\tbackend/migrations/2026-10-08_01_signing_error_alerts.sql\n100644 blob dccf7765399dbfa1eba689bdc758ff37447baa10\tbackend/migrations/2026-10-08_02_signing_template_draft_base.sql\n100644 blob a30814293f8689f9eab89e8669983e450ddfa619\tbackend/migrations/2026-10-08_03_signing_template_lifecycle.sql\n100644 blob f388d825c77b2b63a72f2678d7b8d821e7e79a9c\tbackend/migrations/2026-10-08_04_signing_client_context.sql\n100644 blob fea76251db7707d4768e19a7ba006e2c6b4f52d8\tbackend/migrations/2026-10-08_05_signing_task_issues.sql\n100644 blob f7224440e1aa2abd0312af8bdeae9e4563ced3f6\tbackend/migrations/2026-10-08_06_signing_followup_scope.sql\n100644 blob 91dbf34c75b964e10af5d7f42df3f60916e0fa9f\tbackend/migrations/2026-10-08_07_signing_selection_snapshots.sql\n100644 blob 5a29d8305c6c5a8b867eec5a05e44176a80aa746\tbackend/migrations/2026-10-08_08_signing_bulk_reviews.sql\n100644 blob 73462626c865df73d9400dd446d97d2cf4d34417\tbackend/migrations/2026-10-08_09_signing_bulk_dispatch.sql\n100644 blob 82b3a478140969ffba10113b350406453ffcc9df\tbackend/migrations/2026-10-08_10_signing_approval_requests.sql\n100644 blob 6c74269248da466cf5275154d48a045531f95641\tbackend/migrations/2026-10-08_11_signing_package_replacement.sql\n100644 blob d91189d1d4bb14f9b71f9128f64763e6ecfbf9c5\tbackend/migrations/2026-10-11_00_signup_consent.sql\n100644 blob 6f0ff65596e148ec127d155eef330300c0d82113\tbackend/migrations/2026-10-12_00_calendar_daily_agenda_delivery_receipts.sql\n100644 blob 5019b9f853528b22877e65a39b1bf47f168e1828\tbackend/migrations/2026-10-12_90_signup_logo.sql\n100644 blob 5368a31fa6cfe596d97c25c1d5a666c1c17f813b\tbackend/migrations/2026-10-12_firm_auto_renew.sql\n100644 blob 715a72e5e236ed95f8fb77f074a0d682068915e9\tbackend/migrations/2026-10-12_signup_recurring_quote.sql\n100644 blob 53b100a7d2e466f40555dc77e827cbb3715b4e68\tbackend/migrations/2026-10-12_signup_renewal_cycle.sql\n100644 blob 796efa5fb1eea0e78914d2a6e7d9e4d89bfbd6f0\tbackend/migrations/2026-10-13_signup_retry_cycle.sql\n100644 blob c60513a8ac9004cc89f279e82114f345fd230de6\tbackend/migrations/2026-10-13_signup_welcome_email.sql\n100644 blob 918eac005e6354c71e41097f555d645d193514f5\tbackend/migrations/2026-10-14_00_office_integrations.sql\n100644 blob 48cc1c450ebe5065eab29d8d7387dd0ed941cd15\tbackend/migrations/2026-10-15_00_case_court_reference.sql\n100644 blob 1492a306f20a9253a49062bac3ece8f486faac12\tbackend/migrations/2026-10-15_00_manager_case_activity.sql\n100644 blob 3a6040c52f7199042d7a356d770bddada180fb3c\tbackend/migrations/2026-10-15_01_court_daily_sync.sql\n100644 blob ab6db3b640a16abcf3144c19f504f838f8e90294\tbackend/migrations/2026-10-16_00_manager_platform_activity.sql\n100644 blob 03221563c3abb9f7803e49e79f15168a99981c95\tbackend/migrations/2026-10-23_00_client_document_profile.sql\n100644 blob e67383ae249222af7940f0559f7d698f372eb4f4\tbackend/migrations/2026-10-23_01_signing_word_sources.sql\n100644 blob 54eb652ceff6aee9c6c27b48d7e99d063e75f371\tbackend/migrations/2026-10-24_00_case_stage_documents.sql\n100644 blob bc69e0f6bcf2ef41135f99420bb2013a1df4c8ec\tbackend/migrations/2026-10-24_01_whatsapp_safety.sql\n100644 blob 27f7be7682d48bf3922e58375ab3f61f879a8467\tbackend/migrations/2026-10-24_02_whatsapp_linked_device.sql\n100644 blob a38f19227df651ea0692dd61146442ce2370de04\tbackend/migrations/2026-10-25_signup_system_message_consent.sql\n100644 blob 491415111633372375b241353a013d000b5db8f0\tbackend/migrations/2026-10-25_system_messages.sql\n100644 blob 20f08450a888c778145b697e25e9f911d90d490e\tbackend/migrations/2026-10-26_01_signing_word_authoring_renders.sql\n100755 blob be9b41efa4e40d209798d9ea45b6dcbdd1e41666\tbackend/migrations/migration-backfill-applied.sh\n100755 blob c9163ac79bac7d3035905578cd682aeea6a904c8\tbackend/migrations/migration-run.sh\n100644 blob dc66bf378072eb82582d5a9fdf262b8be50ffbc6\tbackend/migrations/migration-verify.sql\n100644 blob 01079613fa64e99cd3c8ec8bc3e0c435d2bcbe2a\tbackend/package-lock.json\n100644 blob 7f45335ec5f566cc50be091125e1b41f232f88ad\tbackend/package.json\n100644 blob 87719be33c4bf1a24c5f598080008c3d63270203\tbackend/routes/adminRoutes.js\n100644 blob 0587feef4746305a432b7ce38d7a5c2535ea0c54\tbackend/routes/auditEventsRoutes.js\n100644 blob 40396a79e17907a0586ccc1739d8f2ef87b76406\tbackend/routes/auth.js\n100644 blob 4893fedf15781918f91e72e7345118d6686d73a1\tbackend/routes/billingRoutes.js\n100644 blob 128066f85f0d0fd93fd05c42dc26fc6d5e2ff40c\tbackend/routes/businessControl.js\n100644 blob 710891c53f4998c6c8a30496631b6d1e89281549\tbackend/routes/calendarRoutes.js\n100644 blob 699fb02027df535d685dab3aa542889d99b4a473\tbackend/routes/caseRoutes.js\n100644 blob b7dc16c3e2b12c55d941c11ced47f61377a17c61\tbackend/routes/caseTypeRoutes.js\n100644 blob 1590f3cc5e0e4d7db5440082578dc297df77bd5e\tbackend/routes/chatbotRoutes.js\n100644 blob 89e797beb5793ec9a567d52cf54cf730d8a8694c\tbackend/routes/complianceRoutes.js\n100644 blob 6c1f3afe157206b993cf0d0b69a4b3305b3ac250\tbackend/routes/customerRoutes.js\n100644 blob b7b591a8d20f001a36966b7efd05fd546261d9e7\tbackend/routes/dataRoutes.js\n100644 blob bb60e715b25bc225b611d3c237cf26812146108c\tbackend/routes/emailCampaignRoutes.js\n100644 blob a72254e84a85f4d95fcf24e9f2f244ce722dbd6a\tbackend/routes/evidenceDocumentsRoutes.js\n100644 blob 1a91e0abf4b5b4b4ed945b08a74ed5ad72a5fd1b\tbackend/routes/filesRoutes.js\n100644 blob 64f3435f87e84cacf86e46142ed5b6dc75ee9c70\tbackend/routes/masterAdminRoutes.js\n100644 blob cac3468a13654d6b1b790805600879b5b7e1cd2e\tbackend/routes/notificationOrchestratorRoutes.js\n100644 blob 254aa18c769e8b473de848458e0e89123467c7be\tbackend/routes/notificationRoutes.js\n100644 blob 9b4669aad6cc6f2152bb80dec76031561c11145c\tbackend/routes/officeIntegrationsRoutes.js\n100644 blob a95d12c39d4e00d5b6808aeb28d05f4ed260f9cd\tbackend/routes/paymentWebhookRoutes.js\n100644 blob 622e9cec864304bf4baba5d0d5c623e51338d91f\tbackend/routes/platformAdminRoutes.js\n100644 blob f91a0ab3a44fbc32bda33643b45e64cd1a154cd5\tbackend/routes/platformRoutes.js\n100644 blob b86a51ec9b88fdacfb06e763c0eedc563defae48\tbackend/routes/platformSettingsRoutes.js\n100644 blob f2d573fb7b8254445b8a76716fc7d713a9217aca\tbackend/routes/publicSignupRoutes.js\n100644 blob 2e828a0ec5e3a4bcb7c2e5c85bb542b9ac9cb3d4\tbackend/routes/reminderRoutes.js\n100644 blob 045ca37fe00be3242a13c6250155f713e7df3759\tbackend/routes/signingBatchRoutes.js\n100644 blob d2a88ddb8b14f2cb05954f3e3153b8f0dd37dacb\tbackend/routes/signingFileRoutes.js\n100644 blob 13b8d977a0e5374bd507f2204e35cc672cf17eba\tbackend/routes/signingTemplateRoutes.js\n100644 blob a07a43dacdae7ed7520d540ff32fad9037ce924c\tbackend/routes/signingV2ClientRoutes.js\n100644 blob b2655a292ef9f6f59800adbef4188de65d42505e\tbackend/routes/signingV2PublicRoutes.js\n100644 blob f11599df9881df459449a43250596fa4a8393653\tbackend/routes/signingV2Routes.js\n100644 blob 9510833508da4dfd5019f2a7bc7ce80971f263c6\tbackend/routes/signingWordRoutes.js\n100644 blob a47ad3a001958629598aa24e94b6e196f06ad282\tbackend/routes/staffRoutes.js\n100644 blob 5a3919302c5044e33656c24b13f16c995899ed8f\tbackend/routes/supportRoutes.js\n100644 blob 46c56945e83c33be06860e70ad8eda52a6feb710\tbackend/routes/systemMessageConsentRoutes.js\n100644 blob b1732c4f910fd877861a633fca03a191e25098e5\tbackend/routes/templateAttachmentRoutes.js\n100644 blob b6c8b0d6c7c651d9621dc9fd7abfe259e84efa52\tbackend/routes/whatsappLinkedWebhookRoutes.js\n100644 blob 7b75ec8e8e59e33481bc769341b46362193af538\tbackend/routes/whatsappWebhookRoutes.js\n100644 blob 5349a251d6dd26a8661515217adccbae034b3ccc\tbackend/scripts/_neon-sync-common.sh\n100644 blob 2874c5849affbd1437ae94d2f0eadae170adc528\tbackend/scripts/_tmp-make-test-xlsx.js\n100644 blob 62b62f5d0491931dcb6869f7ae2c5b365b439dcd\tbackend/scripts/align-firm-package-to-usage.js\n100644 blob 6dfd7d46e3815de2e47763e2bc1016c029cd58c0\tbackend/scripts/ashrafessa-init-prod.sql\n100644 blob 418d16b218f32f59ab0234d605e58b0652c3db44\tbackend/scripts/backup-db-to-r2.sh\n100644 blob 8338093c2a1f1821ed1931c4dd584a417009e9e2\tbackend/scripts/bench-public-signing.js\n100644 blob bb40d8e5415de5e6944db7101a648ae5583eed15\tbackend/scripts/checkReminderTable.js\n100644 blob 96d2e200b99498dd60f541b26c1aba24feeaca0a\tbackend/scripts/check_birthday.js\n100644 blob 92e59f312b9c2b20e20f2cc914f1e350cab20261\tbackend/scripts/cleanup-signing-audit.js\n100644 blob 90e3bb2739a9b4b619296b2339bf83e4ef42e98c\tbackend/scripts/debugSearch.js\n100755 blob 1deec352982afc662e9f55a1d33c6dd066ec7f9b\tbackend/scripts/explain-perf-queries.sh\n100644 blob e3188c3c6a3cf8ae02ec0b29abf4317a4da154c2\tbackend/scripts/explain-perf-queries.sql\n100644 blob fdbffbdfd3ca251baa8b542cd8b46a2c3529dad4\tbackend/scripts/firmBackfill.js\n100644 blob e87e262337384b2db02b955d80772b20d2f9c497\tbackend/scripts/fixQAChunks.js\n100644 blob 23b141efb688f213eea964c87e8af5e60431763b\tbackend/scripts/generate-ashrafessa-logos.py\n100644 blob 6b2eb1166ff6774df4de0df50b3cd476f752f358\tbackend/scripts/indexDocuments.js\n100644 blob 524c52152f48c399bad68873afcc7145a2308428\tbackend/scripts/install-office-isolation.js\n100644 blob 3632784e635d6665065f961a4bc7f2918be43a69\tbackend/scripts/measure-storage.js\n100644 blob 88884dd99b95fbbb371d57db077b44a86936b84a\tbackend/scripts/melamedlaw-billing-start-2026-10-01.sql\n100644 blob 51c05df04d6d60f4aeb0527e48f00543f39083d7\tbackend/scripts/morlevy-init-prod.sql\n100644 blob aadbae5e84dd5c5f9f261e107887c069b62905d5\tbackend/scripts/pp-cleanup-customers-preserve-phone.js\n100644 blob c587fdb6861effa8938ae0bef1259c9e144ad9f8\tbackend/scripts/pp-cleanup-test-admins.js\n100644 blob 6b04a480b00f4693f93f61e968efe5f2c41981a5\tbackend/scripts/pp-cleanup-test-users.js\n100644 blob d9ef92e9a1d7beb36116ee834ab537b370a69cc9\tbackend/scripts/pp-reset-admins-preserved.js\n100644 blob da8780ea3b23135b9cd9c4446cb8a4c9ed9b2602\tbackend/scripts/pp-reset-full.js\n100644 blob df02fe8544f88ecb7a61f14244b4edd04381a0c9\tbackend/scripts/pp-schema-inspect.js\n100644 blob 66e60eb87006319af8c3709c35651066d9a8fa0e\tbackend/scripts/prod-preflight-check.sql\n100644 blob 8f7b1018b09c81e741374a234c4873b1098d9d87\tbackend/scripts/prod-reset-preserve-admin-phone.js\n100644 blob f189086794bfec44579c24b52e6110cafa5b82fc\tbackend/scripts/qa-billing-grace.js\n100644 blob 762026a6bb2bbf41c49790e4895b3008f7f51049\tbackend/scripts/restore-db-from-r2.js\n100644 blob 02a144a03853ab0a3a52dbffe75ca9754188c230\tbackend/scripts/retentionCleanup.js\n100644 blob 7eb603a4f631c3a91d2219e0db953cc90b8f0325\tbackend/scripts/run-chatbot-migration.js\n100755 blob 3b8bd95c296c9d1460a3083cedddb6489eef701e\tbackend/scripts/schedule-outreach-after-shabbat.sh\n100644 blob 3bc5ec07a07d271dea6218aa289a24605fbd60b0\tbackend/scripts/seed-ashrafessa-qa-calendar.sql\n100644 blob dc5095341ca9f89aaeecb6efbb7b1272c32b6e85\tbackend/scripts/seed-lawyer-platform.js\n100644 blob da043a9b59b04c2ef8164d430f7658da713dd836\tbackend/scripts/seed-melamedia-demo.js\n100644 blob 4849c8babaff2e780d56be284d45a6b8c79db494\tbackend/scripts/seed-office-baseline-role.js\n100644 blob e07f4e038186f913fbaa53e4b0dcc396bd9f6582\tbackend/scripts/seedChatbotTestData.js\n100644 blob 02985ab77427872e20b73044dac933b8a19dfe88\tbackend/scripts/send-law-firm-outreach-real.js\n100644 blob 068bd4db6b49096816f21e14cf4ee681b592b760\tbackend/scripts/send-law-firm-outreach.js\n100644 blob 6660182dc3def39aae34a7060ae6e0cf1ba52155\tbackend/scripts/send-test-outreach.js\n100644 blob 21ff126409d6f03e5c6f3d4353cbba20a7e40213\tbackend/scripts/sendSmooveEmailChecks.js\n100755 blob 9f1bd5cd220b7206a956b938b0024054adef8620\tbackend/scripts/sync-prod-to-ashrafessa-neon.sh\n100755 blob 7e40bf3245c1f3af969d5d7bff623d8edce18c35\tbackend/scripts/sync-prod-to-melamed-neon.sh\n100755 blob edb17159da021535f3324246fee0fc109898ba36\tbackend/scripts/sync-prod-to-morlevy-neon.sh\n100644 blob 4ca39f01b657f935d5f61b1e0373e0ec27ce6f98\tbackend/scripts/sync-prod-to-neon.ps1\n100644 blob 5667987f14e525052a0a3fe68180ad3e21c42d31\tbackend/scripts/test-all-templates.js\n100644 blob f69118fc6867a065fd88707a32ac4d0e3db72f7b\tbackend/scripts/test-email-templates.js\n100644 blob 2454bdd9a463bb1389072890921eaa121dacac82\tbackend/scripts/test-email.js\n100755 blob 1762ddbcc61c9541a90f5023731bd85f6f68feca\tbackend/scripts/test-smtp.js\n100644 blob caf4cfe1b0953fdb2eee869e7adc1a51afeb7d73\tbackend/server.js\n100644 blob 729d82116f769329d2c21a5e573ab99b59d598f7\tbackend/services/aiChatService.js\n100644 blob 6ac24314e2b944e6eb460596604358db23f6016c\tbackend/services/cursorLlm.service.js\n100644 blob 765466ea7b599f4135d4e32625ba788d55310899\tbackend/services/integrations/appSyncStatus.js\n100644 blob c0d167570a0fe630b2efae3939ee6509f33282fc\tbackend/services/integrations/callbackConfiguration.js\n100644 blob ea6b3f79efe37cf4db6d5c6c0c22f9d8199da656\tbackend/services/integrations/courtCaseReference.js\n100644 blob 6b9baa5fa8809b509567e0a2b40d352e83365247\tbackend/services/integrations/courtSchedule.js\n100644 blob cc608ef2225be76b267a3d484f99a9ef131e2cbb\tbackend/services/integrations/deliveryPolicy.js\n100644 blob e38efef034fe90cd74aec060ad044528ed4fd162\tbackend/services/integrations/linkedDevicePolicy.js\n100644 blob e641cb08f69fb5098771399f73c3d9b4626e490c\tbackend/services/integrations/linkedDeviceService.js\n100644 blob f9060c3388fa77239b517be6bdad932e5729ea4f\tbackend/services/integrations/metaProvider.js\n100644 blob d09dc576806febf43446d1274257698b8668dc22\tbackend/services/integrations/providerRouter.js\n100644 blob 36659facbe3c137fbd144a991edf04382d938617\tbackend/services/integrations/runtime.js\n100644 blob f4ebd25426cb9986e341dc31ae5cf169f87feb00\tbackend/services/integrations/secrets.js\n100644 blob 78ef703dd2ba06f9b2b31e448fceb48ef462d995\tbackend/services/integrations/service.js\n100644 blob c1b589f00b620c6faa5a1cd0a3df5c76f383f147\tbackend/services/integrations/validation.js\n100644 blob f7ffb0ac724439c3079583c02bf929af01c1959d\tbackend/services/integrations/wahaProvider.js\n100644 blob 7bdc2fa13061377cdce90453beceb3cd02bb9f49\tbackend/services/integrations/whatsappContactPermissions.js\n100644 blob 9ce6d819ae6ae90e9af3bce429b20ef00b09a4e0\tbackend/services/integrations/whatsappSafety.js\n100644 blob 22054f98b1651c080156d426d1c05ff905fe8fbf\tbackend/services/integrations/worker.js\n100644 blob fd646adf21ba1852c7318ef55a7d0633a5a01e42\tbackend/services/knowledgeBase.js\n100644 blob 97d2fa91765e562a7313bb6e9795b8cad512f184\tbackend/services/knowledgeDocService.js\n100644 blob 2288d150d799a2f6db850f2c80e60cea4704e13e\tbackend/services/managerHome/aiBrief.service.js\n100644 blob eb3b7640642191256a7fcfad597e1722282d6d75\tbackend/services/managerHome/bottlenecks.js\n100644 blob 91284a094d3ee70d1852722d7f30869bc8db4c4f\tbackend/services/managerHome/constants.js\n100644 blob 89be1cab5c86f097df2e8136b14dc4e71662c537\tbackend/services/managerHome/managerHome.service.js\n100644 blob dc0d9852b5f36cba01a38777ae56a2d282bf5d9c\tbackend/services/managerHome/operationalInsights.js\n100644 blob 0fe5b72ddd3825896702cabb7c7ecace0383ca50\tbackend/services/managerHome/platformActivity.js\n100644 blob c6f324a128968d43286397e3d3a278d7c938c827\tbackend/services/managerHome/scoring.js\n100644 blob ecf7341da22091ac92699bd8958bdb49d7a31cc1\tbackend/services/managerHome/teamActivity.js\n100644 blob 86edd3755ec5fe4d738cfd70c4db9420a98d9c08\tbackend/services/notifications/notificationOrchestrator.js\n100644 blob c37a76b186f9648becd8a6b1ff490c45109465f8\tbackend/services/settingsService.js\n100644 blob f0c7595cae315425b16dc9e1f5b6808bd0b6ac53\tbackend/services/signingBatchDelivery.js\n100644 blob 7ac04155f830403bb812c0be738dfe3f20072763\tbackend/services/signingBatchPublicService.js\n100644 blob 8129a2ac8440dca93f8a01900fd98cd874d391c4\tbackend/services/signingBatchReminders.js\n100644 blob fffb4b572c361adc6af500f0ac7a5a3d1a176c75\tbackend/services/signingBatchService.js\n100644 blob cadacf6cd38f71d8dc979b62aa585b7f9089b1e3\tbackend/services/signingPackageCompletion.js\n100644 blob ceced26a1abaee8041494bc8de5a26d7d4d3568d\tbackend/services/signingTemplateService.js\n100644 blob 6c25d577a18509d6b1341cd722fb0f3f4b42f574\tbackend/services/signingV2/access.js\n100644 blob 2f493c80d5dc21a7ffc1ae15d3868391e956a2c3\tbackend/services/signingV2/actions.js\n100644 blob 1339527a8d30046940ce12557b326ec4060fa116\tbackend/services/signingV2/approvals.js\n100644 blob 7b734e6b356ecbcb7820760596e3b5d74846624a\tbackend/services/signingV2/authoring.js\n100644 blob 74644b0f937f5d2ee59c8f17f63ca575dfcd10ec\tbackend/services/signingV2/authorities.js\n100644 blob 87752661d3e7162f75330ae10bac82e314e21659\tbackend/services/signingV2/bulkActions.js\n100644 blob 413096b98d8fee9b8d5b72f70d7fb6d4da7d22e6\tbackend/services/signingV2/bulkDispatch.js\n100644 blob 44ddcef6f8736370d4bac7d50b9bb62e160a46a3\tbackend/services/signingV2/bulkReview.js\n100644 blob fd59f8097f9290435f68d5ff44698a55d4ab6cfa\tbackend/services/signingV2/caseContext.js\n100644 blob f730bc8d7520fdcea1f0f7cbc14bb045a81871a2\tbackend/services/signingV2/caseStageAutomation.js\n100644 blob ac0f8bdf670b1f11500fb873394ed5900a33b232\tbackend/services/signingV2/clientContext.js\n100644 blob 41d1e28260b5662a374de348c0197d16b8ba58ce\tbackend/services/signingV2/clientPortal.js\n100644 blob 94253f9efb02cd8a56b507b976599a9ca690da5a\tbackend/services/signingV2/completedCopy.js\n100644 blob ce4d35de33fa76219b0d60d6be718712bb3ded76\tbackend/services/signingV2/completion.js\n100644 blob ef92054b7edf4ffeb5e795f2c3b1a0d4f956c8dc\tbackend/services/signingV2/completionMarks.js\n100644 blob 6b9a5750b0a067682ca1dbb17084df24c4f49739\tbackend/services/signingV2/contactChanges.js\n100644 blob 179d12b92460dd3ac4528e09bd6709903277638b\tbackend/services/signingV2/creation.js\n100644 blob ca8c7021997e4a3b60ed6e45afb448fee115e2ea\tbackend/services/signingV2/delivery.js\n100644 blob 3204ef0157314703c29c09178fb69e600aff8aea\tbackend/services/signingV2/directoryAccess.js\n100644 blob 5a049fe3e20d08abf3d39b031ed0c8677b293ff8\tbackend/services/signingV2/drafts.js\n100644 blob d56cd63d4855e444af84f96b434e4fe1d31ee672\tbackend/services/signingV2/errorAlerts.js\n100644 blob 0bf9f30f822cdd957e1464c29dfacea3fe0a3fc1\tbackend/services/signingV2/fieldDrawings.js\n100644 blob b38d3982217cac1df3dfa030a00b4c8deca79b35\tbackend/services/signingV2/followupScope.js\n100644 blob 25a5d86a6f223ebc65d7d47531c47063eec813a3\tbackend/services/signingV2/grants.js\n100644 blob 6d7af900274e70c4c68eaafd0281f7b2a626c378\tbackend/services/signingV2/jobs.js\n100644 blob 50533057c586cdb2db14d5701bbf5d0ce3d1d85c\tbackend/services/signingV2/management.js\n100644 blob c9336fc85028ce5974ada5217d11e48b7d55329b\tbackend/services/signingV2/packageLifecycle.js\n100644 blob 19bc4ea3315de6930bfef557119fdf20e98d9b03\tbackend/services/signingV2/participantDirectory.js\n100644 blob edd8466d1b2ab3deb4f4766426ab14a132259b40\tbackend/services/signingV2/participantSummary.js\n100644 blob 5b32d79073ecc56f32f50759b90c551bd7c7415e\tbackend/services/signingV2/people.js\n100644 blob c05d603e42743f7c03be6f3fbee08bbaeef38dea\tbackend/services/signingV2/preparation.js\n100644 blob 00141569c151ec0b428e010a3e9b1ab38c024d0b\tbackend/services/signingV2/publicSigning.js\n100644 blob ba6dcc06b6f8e44afdbd204c7e60223bc74db91a\tbackend/services/signingV2/renderPool.js\n100644 blob 3eb697fcf2a633d92dad805a5d1221902ef52dab\tbackend/services/signingV2/renderWorker.js\n100644 blob bd6bb73623407b328941abef2f90bd5b60406524\tbackend/services/signingV2/replacement.js\n100644 blob e35ec9cd8a99517a5a6b29155af86b74ce8646b5\tbackend/services/signingV2/runtime.js\n100644 blob 56856b754cafd446206a1a72a288f4d9b57f77ce\tbackend/services/signingV2/selections.js\n100644 blob 289c1ac3906db7597f64b59e7d4879a96ecd6321\tbackend/services/signingV2/submissions.js\n100644 blob 8ac0ceaf4f674a2e7ac6271c73ce9d29c8c32970\tbackend/services/signingV2/taskIssues.js\n100644 blob 4091047d33cc5cbf69244fb75693ce9151e7e435\tbackend/services/signingV2/templateAvailability.js\n100644 blob b4dc9fd43a9ce2d6ce7c486c9ed37308f4c78e41\tbackend/services/signingV2/templates.js\n100644 blob 4838d4368c10ef0c9868beebe040b3a8aa689abb\tbackend/services/signingV2/transaction.js\n100644 blob c2768bf4c4d1c38459ecf7cb36b87632334b78bc\tbackend/services/signingV2/wordOrigin.js\n100644 blob a0aa5ceb087aa8df34b9e06c3cd324045f9d799b\tbackend/services/signingV2/wordSigning.js\n100644 blob 7dbcc361d6aa840d6ca98a139b7631a2dbb7d782\tbackend/services/signingV2/wordTemplates.js\n100644 blob f8a5c35c41150fd6ed6278e6d86430fb14c93a1a\tbackend/services/signingV2/workflow.js\n100644 blob 759252e82a20e05f098fe5cb894e9c4aed5ea079\tbackend/tasks/billingRenewal/scheduler.js\n100644 blob da7cad5fdcff207c14061bc16613201683104c4d\tbackend/tasks/birthdayGreetings/scheduler.js\n100644 blob caec01ad860d9f3c6f8ed904355dcd3fe765f871\tbackend/tasks/birthdayGreetings/service.js\n100644 blob 50e678f8228084da1bab825d638d14af6826a384\tbackend/tasks/calendarReminders/scheduler.js\n100644 blob 8d084d4594e5886e49140760c0a1cac904ead506\tbackend/tasks/dailyAgenda/scheduler.js\n100644 blob bd9f7a92e23ae7544efb3364b002779a201acf02\tbackend/tasks/emailReminders/scheduler.js\n100644 blob 692fb7dd0aa38ee4431d3a11399ecffaabe23e10\tbackend/tasks/emailReminders/service.js\n100644 blob a227c8569b9e419cbba25a93f8f50e0ecada4f9b\tbackend/tasks/emailReminders/templates.js\n100644 blob 09626fcf2670a2c24ac0cad7807ce9c889331fcd\tbackend/tasks/hebcalHolidays/scheduler.js\n100644 blob 14a0361183db3e0259492091c7da5975144dde59\tbackend/tasks/licenseRenewal/dateCalc.js\n100644 blob cfc561edbdb8e0986867f03b05b2fb1b805be161\tbackend/tasks/licenseRenewal/render.js\n100644 blob ca772c9773e71b9239d0d17c3da091580aeaa12b\tbackend/tasks/licenseRenewal/scheduler.js\n100644 blob 5d165f39952566e44f7ff1d43ceb14b6df18a452\tbackend/tasks/licenseRenewal/service.js\n100644 blob fdcbd27b73cc79202db0133b1403486f82a5b590\tbackend/tasks/licenseRenewal/templates.js\n100644 blob 21d5e57cffb0ce9a1b9f77275c6b3edc1df8d133\tbackend/tasks/signPendingCleanup/scheduler.js\n100644 blob 2fc790045e16dfdedbe2a472c38339d7c8bf9382\tbackend/tasks/signReminders/scheduler.js\n100644 blob 3bc5ae203a520f6b60319420b406eea373a8c3ce\tbackend/tests/attachFirmPermissions.recovery.test.js\n100644 blob afa60d74ca10587845e1f02fdba92979121c1d29\tbackend/tests/authMiddleware.shape.test.js\n100644 blob 80b39e876caf4acf8f55b47dafd9b74796265a50\tbackend/tests/authOtp.customer.recovery.test.js\n100644 blob 9d1d06336134667e80709005bfd9a38b7cd1eb08\tbackend/tests/authOtp.lifecycle.test.js\n100644 blob 486234bd02b65b2db3a725ddec2a581503b04dd5\tbackend/tests/authOtpSend.test.js\n100644 blob 9529ae81ca97289202f3c78fff9b30b7acd631be\tbackend/tests/billingDefaults.lock.test.js\n100644 blob 08e877633c2e397a17026a42c4e98201cb295330\tbackend/tests/billingEmails.test.js\n100644 blob c1d71b6bcf56fe782983a84c572ef39d1e013473\tbackend/tests/billingIdentity.test.js\n100644 blob b452183ff7bc1f9a9c4ad8e3641748b50076c49e\tbackend/tests/billingPrivacy.test.js\n100644 blob f50355c313143450c587410ebff287890e5d6605\tbackend/tests/billingRenewal.officeScope.test.js\n100644 blob 840d1b47ccffba22e6ba0764cf8c3d834f796ba6\tbackend/tests/cache.caseTypes.test.js\n100644 blob 58b885f0a4e173b123fd37e07aba99f17d7e93b5\tbackend/tests/cache.mainScreenData.test.js\n100644 blob 692d1f6524b5b5ad17734d6179a72cfbc952d89a\tbackend/tests/calendar.deleteReminder.integration.test.js\n100644 blob 4c75f7da1ebde42b556aca7fb519426e769c76eb\tbackend/tests/calendar.integration.test.js\n100644 blob 9744d682b5b56574cbcbdcdab2548274fe040e48\tbackend/tests/calendar.managerJunction.integration.test.js\n100644 blob 1b1eb9cc33a5c8371d8f9f2cb6ab3da7db0ebafb\tbackend/tests/calendar.personalVisibility.integration.test.js\n100644 blob 1262f8437d8f29ca3fd4d93258c54da64a68887a\tbackend/tests/calendar.releaseReadiness.integration.test.js\n100644 blob 9850427c4523a38f0d8fec0882d5f30910e5d0ae\tbackend/tests/calendarDailyAgenda.release.integration.test.js\n100644 blob 1e7cc5674e2cce89e684e75e1af7e8f36412f4a1\tbackend/tests/calendarDispatch.release.test.js\n100644 blob 250fdb0dbdb1cd3e30dc6c5e98aaac9bffe9223c\tbackend/tests/calendarEventStatus.test.js\n100644 blob 9d0979b29f9732f0a33eec2f703640cfa0181e31\tbackend/tests/calendarInviteDelivery.release.integration.test.js\n100644 blob fae75a1f8004dcbe936f37ff42e4eff0f1972b97\tbackend/tests/calendarMessageSettings.release.integration.test.js\n100644 blob 263c9f3617d0f6fb987b76b13ec02694c1980d5c\tbackend/tests/calendarOAuthState.test.js\n100644 blob 7a584218c9489998638c87e4f504bb3f620cddab\tbackend/tests/calendarRecurrence.release.test.js\n100644 blob f8168d74ca57d0dd48bac18dc44c1a497a718711\tbackend/tests/calendarReminderDelivery.release.integration.test.js\n100644 blob 31688a4ec43e661e1faa49b6a5c2083a281acf19\tbackend/tests/calendarReminderListing.integration.test.js\n100644 blob 848e9e1bc9491f4ce06a7935f0be6011c135dcff\tbackend/tests/calendarRuntimeSwitch.test.js\n100644 blob 8ab6a5d045e49478b13ff536f58d4dfb8f1d5511\tbackend/tests/calendarToday.release.integration.test.js\n100644 blob 2c5d9878dcf1af6eef6b800abb81d21643794ab5\tbackend/tests/calendarVisibility.test.js\n100644 blob ef856d1f403b89d3bdf6cf1644fe436552a456d4\tbackend/tests/caseClosureAudit.test.js\n100644 blob 4ad029b7c81e6209326fac6732acfc086eb8256b\tbackend/tests/caseLegalDataPreservation.integration.test.js\n100644 blob a7609889d9a464a21ed581b81f77e3de643b74d5\tbackend/tests/caseNotificationSettings.integration.test.js\n100644 blob 9912bdd35188f5b1e8940f5fb09e93690f7841cc\tbackend/tests/caseScope.recovery.test.js\n100644 blob c845cae42a3a4f390592a766f5b72ade10a16d0b\tbackend/tests/caseTypeCatalog.recovery.test.js\n100644 blob 4e30d045b8b8ff57abf8762f18d38d6e5b77cfcd\tbackend/tests/caseTypePickerAccess.integration.test.js\n100644 blob 40264a2fe977e2184bd6199326437e3bafd202c8\tbackend/tests/chatbot.integration.test.js\n100644 blob 875dca8f9b340388707f6218a0c0f655cba04710\tbackend/tests/chatbot.test.js\n100644 blob 48d7dbdf627b5ad3af7cdd0a46064d9a1feff486\tbackend/tests/chatbotOtpDelivery.integration.test.js\n100644 blob 5c6c92477ebc7bdf53610081fc9eabadd763b364\tbackend/tests/clientDocumentProfile.postgres.test.js\n100644 blob dc638b3abd43ff0c3fb8ab9786539a680420b895\tbackend/tests/clientDocumentProfile.readScope.test.js\n100644 blob df60d749a98f34a64544c45a3273ea13fb03084b\tbackend/tests/clientDocumentProfile.test.js\n100644 blob 33acadf1a6b00c6f192c944bf6191e18b51b35e3\tbackend/tests/clientPortal.integration.test.js\n100644 blob 02797b172cb9007eff1a7c0578a915ac29d5379e\tbackend/tests/clientPortal.mainScope.test.js\n100644 blob 56be8a80e202084888b74c7d4e7e85d087f5f403\tbackend/tests/clientPortal.signingEntry.integration.test.js\n100644 blob c0379ae8f2a4a758d737e6016fc647b388774ed2\tbackend/tests/clientPortal.unit.test.js\n100644 blob 56bbfbac55432accf7d8ad449021a63479f79654\tbackend/tests/customerIdentity.recovery.test.js\n100644 blob e8c341812154fbe3e19ea5f7d48ca18e52eb346d\tbackend/tests/customerRefresh.recovery.test.js\n100644 blob 0260fe4e42c4d32abaeea221c429faf44d8e59ad\tbackend/tests/dbTargetPolicy.test.js\n100644 blob 0ce235289167419d2b1e7d4c3d81932520d30fb5\tbackend/tests/evidencePdfResources.integration.test.js\n100644 blob 54d4c9b116226039fb1535bb607ab5f012f67731\tbackend/tests/firmPermissionsRuntime.test.js\n100644 blob 95893bd9034d1520daf1f3e40ffe2c62cbfa938e\tbackend/tests/firmRolePermissions.test.js\n100644 blob e61acb55e9049ca2fc9c1f99354d5c7fb52d1b04\tbackend/tests/firmRolesLifecycle.candidate.integration.test.js\n100644 blob 793adbd8dadb4c1b1e143595545a35f889367d23\tbackend/tests/firmStaffPermissions.candidate.integration.test.js\n100644 blob a7e327c7d379796b66bd904f9282eda8bfcaf4d0\tbackend/tests/firmStaffPermissions.integration.test.js\n100644 blob ef92771fec28532de68f315da17a7125af23cbdf\tbackend/tests/firmStaffRoles.dedupeMigration.integration.test.js\n100644 blob 47cd9e46a956074977b264d3894150dd0a19e060\tbackend/tests/firmStaffRoles.duplicate.integration.test.js\n100644 blob c8da018f9bf8bf0d9087574291ebbe55107d269f\tbackend/tests/getUsageForFirm.seats.test.js\n100644 blob c8d293d9c87fc7c024a52deb5272afd1843ac44d\tbackend/tests/helpers/completionMarkPng.js\n100644 blob 64a04dac42c68b6183d1e36e8a2c5248c7c706a7\tbackend/tests/helpers/identityFixture.js\n100644 blob 68e886b192ec4e8f46bfb2767313cfeb33479fdb\tbackend/tests/helpers/integrationEnv.js\n100644 blob d7aabbf7e3af998c376dead4652d014390835250\tbackend/tests/helpers/pgTestHarness.js\n100644 blob 92cbc054926a4852cc1c7117eac05b925d3edcc5\tbackend/tests/helpers/preload.js\n100644 blob b84bacc99b57346694e013a4f354b78032619f11\tbackend/tests/helpers/settingsIsolation.js\n100644 blob 4768b591030918ce30f6c9e9697c591d6124ce1a\tbackend/tests/helpers/signingCrashStorage.cjs\n100644 blob 6af0833953ba760c0cc4f5b53cbe74d38d860608\tbackend/tests/helpers/signingDraftCrashChild.cjs\n100644 blob 76618411fda3cbdb086d81cf56e36fc301ea21d6\tbackend/tests/helpers/signingStageCrashChild.cjs\n100644 blob 332e43f3666277741779e47502ee0cb677e7de49\tbackend/tests/helpers/signingTemplateFixture.js\n100644 blob 2c46eb5316f527fa25ac71271e7e79e3a87d302c\tbackend/tests/helpers/signingTemplateIsolation.cjs\n100644 blob 8aa8415e90c2d95aa93ba70dac50cab6d33a7f6b\tbackend/tests/helpers/signingV2Delivery.js\n100644 blob be5e36782cd3ead3fb32645b416ae7511420ef9a\tbackend/tests/helpers/signingV2Fixture.js\n100644 blob f7c989f05bce21a0a9423a49dfcf35bcd63345a3\tbackend/tests/helpers/signingWorkerCrashChild.cjs\n100644 blob 37b4ad6a76d9a9baec3997d48e8ed45e801ba37a\tbackend/tests/hostedPaymentVerification.test.js\n100644 blob 23f4653a219f639e531803f85b20475987e4c93f\tbackend/tests/httpDependencyRegression.test.js\n100644 blob f6fab812e9b0fba746742d9ec19c9f640fe1e82a\tbackend/tests/liveServerPreservation.test.js\n100644 blob 7dda2c0c67ffe102d99f837ec01c5ff1201e561f\tbackend/tests/managerHome.aiBrief.test.js\n100644 blob d5fb938adb176edf8d9b0aaca765d4228f0b4bf2\tbackend/tests/managerHome.bottlenecks.test.js\n100644 blob bd79fadb043bb666296a1ca81aa01db2a10cf49e\tbackend/tests/managerHome.creationFlow.integration.test.js\n100644 blob a2c6f8dbccc645819fbd81aedaed72a85b9b3f78\tbackend/tests/managerHome.expandedActivity.test.js\n100644 blob f0e6ca6f2f290da7a7ae231f2dd78ad54036e14c\tbackend/tests/managerHome.octoberHistory.test.js\n100644 blob ea02ffe4c597a467256c94a87a9a46fa611f8521\tbackend/tests/managerHome.scoring.test.js\n100644 blob 4afa10cd2de744717cc5a2bf17e5dbded7744f2a\tbackend/tests/managerHome.teamActivity.test.js\n100644 blob 41b769d40b0726fec1c0b34e97dea53789dadd83\tbackend/tests/managerHome.todayEvents.test.js\n100644 blob 8d4436e1462b139b7f300ca4aa64e1f25f8e6f98\tbackend/tests/messageSettingsConsumers.integration.test.js\n100644 blob 9f33227824e662d28c0f82e898f011fb1f187ffc\tbackend/tests/myCases.integration.test.js\n100644 blob ff8063e8c025e1e06dd95d3bacdd377112831bee\tbackend/tests/notificationLogs.test.js\n100644 blob 085839aebd7077d76ec022d7225bbaee8bd642e9\tbackend/tests/numericParamValidation.integration.test.js\n100644 blob af5d75fc8f2bcc7ae2d85254d9e929647af1f887\tbackend/tests/officeBaselineRole.recovery.test.js\n100644 blob 2ac70ff228ced694fe5888a41d2fa36f4cb3ba01\tbackend/tests/officeIntegrations.connectionOnly.test.js\n100644 blob 904987cbe465c30e057007e3847a6bcb9a06b902\tbackend/tests/officeIntegrations.demoOnly.test.js\n100644 blob c6b86fe9949ec6d94bce1ea3f22c73392c9bf141\tbackend/tests/officeIntegrations.http.test.js\n100644 blob 4d04356d1c73e744ac244dcf4672806c17fadca0\tbackend/tests/officeIntegrations.linkedDeviceLifecycle.test.js\n100644 blob 961a2a0c95e456838f0f1f422fd57b98536d3d9c\tbackend/tests/officeIntegrations.linkedWebhook.test.js\n100644 blob 3147a2640eea8d69486c960d5d82f5ee60b68d14\tbackend/tests/officeIntegrations.linkedWorker.test.js\n100644 blob 2de340fbbcad38bf6ded9484ce8966fe6e9e2e83\tbackend/tests/officeIntegrations.manualGroup.test.js\n100644 blob d4e14b5c17e3d1780f525bd14c38bbfd74032e6e\tbackend/tests/officeIntegrations.providerRouting.test.js\n100644 blob 822892ceca73c037fc6094d28714d733e55b3cfc\tbackend/tests/officeIntegrations.revocation.test.js\n100644 blob cfb87ba867580b9caee008736abf0b37ebbc942c\tbackend/tests/officeIntegrations.safetyPolicy.test.js\n100644 blob 5c9ff9689affca7dd2aaf403aeccdc9daec79cdf\tbackend/tests/officeIntegrations.safetyWorker.test.js\n100644 blob d8c8ec52a895d695a997f9981550f1056a33b990\tbackend/tests/officeIntegrations.test.js\n100644 blob c8cd59ec940ea3821d50286abcdbcd0fa390679f\tbackend/tests/officeIntegrations.wahaProvider.test.js\n100644 blob 13beb46b0934df05f6475742d1fa319b9610e046\tbackend/tests/officeIntegrations.whatsappContacts.test.js\n100644 blob eaf0dac253973f83fd24517b64be3113575ad278\tbackend/tests/officeIsolation.integration.test.js\n100644 blob e877a4df6f5300952b0883cd7eb4c4c5707f2e45\tbackend/tests/officeRoleParity.recovery.test.js\n100644 blob 7f5ede731a0e56af092f4360243f78b1d6fa7221\tbackend/tests/platformBilling.test.js\n100644 blob 970b96a61e9fc9b70d5dd64042a71adab63c83ff\tbackend/tests/platformRuntimeSettings.integration.test.js\n100644 blob cbe33858181c19f083816e950a80759cc385d7a4\tbackend/tests/pricingPackage.test.js\n100644 blob 66f808abfcd38e75b8affc14c86b0aa3aab23838\tbackend/tests/qaOutboundNoop.recovery.test.js\n100644 blob c245c4555be1afb68a96b962a9a585529c114d44\tbackend/tests/rateLimiter.middleware.test.js\n100644 blob f1f32d7b9e958b8ef1c278e466ef0870ac02456a\tbackend/tests/rateLimiter.test.js\n100644 blob 6edfa029b8d55d0d3adb3ba438cdb3b5e61e979d\tbackend/tests/reminderTemplates.test.js\n100644 blob b2178524c5ad9199c0bff3480ff24edd058e848a\tbackend/tests/renderEvidencePdf.test.js\n100644 blob 22a2681e8505b76217ab320af6e547645c08bf00\tbackend/tests/requestTooLarge.integration.test.js\n100644 blob 2857be37122c07d86fcd684c151460a25b0f27f4\tbackend/tests/requireBillingAccess.test.js\n100644 blob 69bb180baa0265919d3f811b15ac27fdf048fdbe\tbackend/tests/runtimeDependencies.recovery.test.js\n100644 blob 44402b2d1682ce249d0bc7522304580822f28cd2\tbackend/tests/savePackage.chargeOrder.test.js\n100644 blob 8a061782d66a64ac014a7434ec28592908412d60\tbackend/tests/savePackage.idempotency.test.js\n100644 blob 000b7c5b253f8728332b2e5a0dff5a662f163d92\tbackend/tests/settingsConsumers.integration.test.js\n100644 blob ce48920ef71733bfe7ff63e7075759cac96dd0ef\tbackend/tests/settingsValueTypes.integration.test.js\n100644 blob f7b9ec987f75cadff043ca92673a74e5f33dd3dd\tbackend/tests/settingsWorkflowConsumers.integration.test.js\n100644 blob 41b0b0fc5059eb23a9c404911c3339e6d88153c6\tbackend/tests/settlePackageSnapshot.test.js\n100644 blob 8815fe4f93620fdc3475d1e43b79913d8a51efc9\tbackend/tests/signatureDetection.controller.test.js\n100644 blob 4eb65c50baffc3281478d76ef69b293f7126e27d\tbackend/tests/signatureDetection.geometry.test.js\n100644 blob d0e188e4461322b537fd1f7eb708cc74c9e98766\tbackend/tests/signatureDetection.quality.test.js\n100644 blob df8145400c18bd2fc07464d152276ea1027777a0\tbackend/tests/signatureDetection.resources.test.js\n100644 blob 918259369b60d2cc52ef07172bdb1ff2b18d1040\tbackend/tests/signingBatchContacts.clientFilter.test.js\n100644 blob cb11cc673c39a9be0dcdd1aa1a1f95f93086759a\tbackend/tests/signingBatchReminders.integration.test.js\n100644 blob 37f8e60f7a53b64e311cc327c2ec27f17fa1ddf8\tbackend/tests/signingBrowserLinks.unit.test.js\n100644 blob d2fc5a8a5fd24c9c435eea85b43e542d7c70dbc5\tbackend/tests/signingConsentSettings.integration.test.js\n100644 blob 934e25238f489f9b9b0f8470fcbae52e182b4514\tbackend/tests/signingContact.integration.test.js\n100644 blob 51dc85bef21cdd5b1c187cee323d23907bae269a\tbackend/tests/signingDelete.integration.test.js\n100644 blob 2c6005fc32d93735a7f77718c0c0fbddc59efa7b\tbackend/tests/signingDetailsSummary.test.js\n100644 blob 0cfb962aed03a00bd908bc887e4179e8fc47a607\tbackend/tests/signingFinalArtifact.test.js\n100644 blob f8a92d88d56c8a6c3c0f73a08c1269f0cfd7b962\tbackend/tests/signingGeometry.test.js\n100644 blob 5acb006325d9a7580332bdce5bb47824fa92b8c6\tbackend/tests/signingMessageSettings.integration.test.js\n100644 blob 4e1d0fdf9434a04306b90bbdbc95a36d6f304015\tbackend/tests/signingPdfLifecycle.candidate.integration.test.js\n100644 blob c9e5c3b168b778443479d1313b68cca3602c030d\tbackend/tests/signingPdfLifecycle.integration.test.js\n100644 blob e72c65b49dad0c961f6e582fad30e4006259f216\tbackend/tests/signingPdfRendering.test.js\n100644 blob b72e00954cb07f86899f581f9a33b2792e991254\tbackend/tests/signingPendingCleanup.test.js\n100644 blob 384dbb0de6a75ea6073689f9de41fa874f162156\tbackend/tests/signingReadAccess.test.js\n100644 blob 8e0acefdfb36cda75648d2c4469b7513bd34bbed\tbackend/tests/signingRecipients.generic.integration.test.js\n100644 blob f003db214b591420ac6d287108cd0ccdaefc40f7\tbackend/tests/signingRecipientsWorkbook.test.js\n100644 blob ef402858fd324b58653e6b030694e5b92ca3f324\tbackend/tests/signingScope.recovery.test.js\n100644 blob 5a32129804e65b628a2924102e5a47b26021ece4\tbackend/tests/signingSignerContact.integration.test.js\n100644 blob af4c9688684627be86bea282af383a55f153ab3e\tbackend/tests/signingSpotGeometry.parity.test.js\n100644 blob 0aa8cd4db97b63e59150830c4e99599a704e3f91\tbackend/tests/signingStorageRace.integration.test.js\n100644 blob de3152618d3acc261315cac9f141e96467e81655\tbackend/tests/signingTemplateDefinition.test.js\n100644 blob 9dc87043441deee48cbbac6e8886c898dc508d83\tbackend/tests/signingTemplates.integration.test.js\n100644 blob f9472dbfae0488d3ade4f1d86740a872bcda16f2\tbackend/tests/signingTemplates.recovery.integration.test.js\n100644 blob ff3e0249396bee94c23c69159668b1022adf7892\tbackend/tests/signingV2.actionPermissions.integration.test.js\n100644 blob 48570c3f3d180ca58419d584b11ab1cf0f1b8b8f\tbackend/tests/signingV2.approvalAuthoring.integration.test.js\n100644 blob e13230326e4afe32ba9645b35b051d0159d30d68\tbackend/tests/signingV2.approvalNonOwner.integration.test.js\n100644 blob 578987b351f0b51698f641d857b2a859d67195f8\tbackend/tests/signingV2.authoring.integration.test.js\n100644 blob 346ca1c4c4d45fc04623a0c2c7794e10d69289e6\tbackend/tests/signingV2.authoringRoutes.integration.test.js\n100644 blob 9a61ff1302294e7f5d96631abb79058846017ad9\tbackend/tests/signingV2.authorities.integration.test.js\n100644 blob 37f45a4c14f9edd05fcb39025621a72bc6c378c4\tbackend/tests/signingV2.bulkActions.integration.test.js\n100644 blob a1ffc3e4b60775fb380b6c5ad67a02d1fd453e43\tbackend/tests/signingV2.bulkReview.integration.test.js\n100644 blob 6171128dba7631aa1e45998b8f163183cbd8f65c\tbackend/tests/signingV2.caseContext.integration.test.js\n100644 blob 194517444e1b2e642e69f90204a2a7ed6c362bd2\tbackend/tests/signingV2.caseStageAutomation.integration.test.js\n100644 blob caf282ef5c0f8bf49b534c51bca17bfe8d9ed9c2\tbackend/tests/signingV2.clientContext.integration.test.js\n100644 blob 748b64c8f8368ccab3f6f2ffad75ed1a8d48f529\tbackend/tests/signingV2.clientPortal.integration.test.js\n100644 blob 0b05cb0f94af3440587f6a29aa85395965f90f54\tbackend/tests/signingV2.compiler.test.js\n100644 blob 732c43fb5258a368dfe901d032c3b742851d8e9e\tbackend/tests/signingV2.completedCopyNotification.test.js\n100644 blob 09934a4be73855cd2feddd2bcbfe0fec2d9c2eb8\tbackend/tests/signingV2.completionMarks.integration.test.js\n100644 blob 3d4c79302f38d5a315a2e3c0497b2c5c8e593c1d\tbackend/tests/signingV2.completionMarks.test.js\n100644 blob b05aca11f8383ae9ce0181aa3f971fd96046110c\tbackend/tests/signingV2.conditionalRoles.integration.test.js\n100644 blob 244e267407d8bce789e125cf82f7d8c20967bd27\tbackend/tests/signingV2.contactChanges.integration.test.js\n100644 blob d2ea263198b826d580f87e9d9f336508186de896\tbackend/tests/signingV2.creation.integration.test.js\n100644 blob 4c1e11499871bf51820ac04a973a60b732d970ca\tbackend/tests/signingV2.creationData.integration.test.js\n100644 blob 58a9edede6db7c7d4b46c180c6bd7355320a8d6a\tbackend/tests/signingV2.delivery.integration.test.js\n100644 blob 442bd67a025b72aef69bff7ac0c374852f09cf7f\tbackend/tests/signingV2.directory.integration.test.js\n100644 blob cbdb5ed9def5ff952e27221fa1e50dda712398db\tbackend/tests/signingV2.documentConditions.integration.test.js\n100644 blob 616cb88e056931c04da371cdae5d6f4c4eb0fbf7\tbackend/tests/signingV2.drafts.integration.test.js\n100644 blob c7b305f9b31a30a5c1516e4b778e11f450d44db5\tbackend/tests/signingV2.errorAlerts.integration.test.js\n100644 blob 46c4b54643a42957bee2f8fd8ef20c1e7b3d9de6\tbackend/tests/signingV2.featureEntryRoutes.test.js\n100644 blob a1bd5532a1fba7fc5f190d23b539a5cce733af8f\tbackend/tests/signingV2.fieldDrawings.test.js\n100644 blob b8b6784f2115f030e683479f47c8de99e178faa3\tbackend/tests/signingV2.followupScope.integration.test.js\n100644 blob 3e586ceac1d0b15d25e82ee4a9f684541976e189\tbackend/tests/signingV2.internalApproval.integration.test.js\n100644 blob 5dd3365074bafbb560ce2e24010ae2bd6fdee4a4\tbackend/tests/signingV2.linkRenewal.integration.test.js\n100644 blob 66155040b7924f077f9f8541f21742a45c55f9df\tbackend/tests/signingV2.management.integration.test.js\n100644 blob 914a5579d000e127bc70b1ceba6253e595edd7b5\tbackend/tests/signingV2.managementGaps.integration.test.js\n100644 blob 48f0c3eb995777aae75a0648dfe3ca594d7aac9d\tbackend/tests/signingV2.managementJobFailure.integration.test.js\n100644 blob 987d53cdbcbe3762d747cddfb6e30bf1bf488698\tbackend/tests/signingV2.multiPeople.integration.test.js\n100644 blob cc7511ccc6d97b5a2657c81437a3594143ed8699\tbackend/tests/signingV2.packageLifecycle.integration.test.js\n100644 blob b1e0a2a60a00bcf0402def210f0c0fe3504940a1\tbackend/tests/signingV2.participantSummary.integration.test.js\n100644 blob 7a83f29bbc64d461c31a2cdfa4318bcced2ebd86\tbackend/tests/signingV2.persistence.integration.test.js\n100644 blob b60e54671d179cfe306a07f86ae3e4e28ef00263\tbackend/tests/signingV2.personalEvidence.test.js\n100644 blob f4942c4e29ebb98468bb01d28fcb3b94fc361168\tbackend/tests/signingV2.preparation.integration.test.js\n100644 blob d5e6eea7b8b2bfd958a593562dc3641b97eea7eb\tbackend/tests/signingV2.progression.integration.test.js\n100644 blob de088aa49eebd3f7e7f5ffb6a5963ca9f33d08dd\tbackend/tests/signingV2.publicSigning.integration.test.js\n100644 blob 8912597557604eefa79362adfac28db60e6a0ad2\tbackend/tests/signingV2.recipientBindings.integration.test.js\n100644 blob 8de79bd422d13149262bf0e54130f7f10aea7967\tbackend/tests/signingV2.renderBrowserDisconnect.integration.test.js\n100644 blob 4e0c0ab08518bb5f3bf0487d4d5945d10d9d7040\tbackend/tests/signingV2.renderer.test.js\n100644 blob ff5ddf3312d289749612484009dbe5c7aa8606e8\tbackend/tests/signingV2.replacement.integration.test.js\n100644 blob 11bd53edb5a85e267013902ecc25115016c5a4b7\tbackend/tests/signingV2.replacementFence.integration.test.js\n100644 blob 7ee22e084c132cd38ad53c87f119b63e408823a0\tbackend/tests/signingV2.replacementPermissions.integration.test.js\n100644 blob 77d1b862ed6aee97315e5ca6f9a57d04b07411f5\tbackend/tests/signingV2.returningSigner.integration.test.js\n100644 blob 22f448d4766bad2d507de4caf9931bd64768545c\tbackend/tests/signingV2.routes.integration.test.js\n100644 blob c16cb397c13264d9d20724ab22a6dc99ee6ca409\tbackend/tests/signingV2.selections.integration.test.js\n100644 blob dd384c4c1a953c5d9bd9b23666936e1f21cb08df\tbackend/tests/signingV2.taskIssues.integration.test.js\n100644 blob 29ddcb21b22ad4f30313a07b0bb42c871779c878\tbackend/tests/signingV2.templateLifecycle.integration.test.js\n100644 blob bb46004ea4f156018081aba14c28cbb1ba1ea33c\tbackend/tests/signingV2.transportOutcomes.test.js\n100644 blob c5de0e5510c0f0b19c67bb4980f1d0adce145378\tbackend/tests/signingV2.volumeConsent.integration.test.js\n100644 blob 2792e441af68693a57b1151a413f3638401ac33e\tbackend/tests/signingV2.wordOriginBoundary.test.js\n100644 blob ea780d5df2c7c63de6867331ae5255553164da01\tbackend/tests/signingV2.workbookMapping.test.js\n100644 blob 2d99ea0b420536c99e2d76f22795ba697759930e\tbackend/tests/signingV2.workerRecovery.integration.test.js\n100644 blob e38ca7f99484fb93be414d35ef512a3e5049ffae\tbackend/tests/signingV2.workflow.integration.test.js\n100644 blob 49c3470716aa6a2c4b72f35f986eeda8543c2d3b\tbackend/tests/signingWordRoutes.test.js\n100644 blob 57cf8d36a59288bb57f74f0ba614bc6984e727db\tbackend/tests/signupAvailability.test.js\n100644 blob 27136d2bf417059e174a6b7a3689b18b20aec2d3\tbackend/tests/signupGatewayReturn.test.js\n100644 blob 1e66f7fdec313fa0f90bcfdf6b5954500b6aedbc\tbackend/tests/signupHttp.test.js\n100644 blob 370a395c341eae4217795cb19e39aef30174802b\tbackend/tests/signupLifecycle.officeIsolation.integration.test.js\n100644 blob 40c6ab247c588c1c8ff7dc9d1a859085177833f6\tbackend/tests/signupLogo.test.js\n100644 blob 3fcab62e295be5ae9410990546665a5d15620140\tbackend/tests/signupPaymentVerification.test.js\n100644 blob a7edc2b753ce2e1bd5661a669f0249e01ac039af\tbackend/tests/signupQuote.test.js\n100644 blob 78034ec81e4c558b7b017b384e01b8c36b3c70bf\tbackend/tests/signupSystemMessages.test.js\n100644 blob e6e35807c2dd502a5059e61e475e7764e5dd7a49\tbackend/tests/signupWelcomeEmail.test.js\n100644 blob a90b32d83468673acaa22850bd628362a8b3f549\tbackend/tests/stageFiles.integration.test.js\n100644 blob 578b55b3f5823c18ee78c4d06e87bef2dc22ad16\tbackend/tests/systemMessageBillingSettlement.test.js\n100644 blob 50871a35cdb82b387418e0ec0fdbc9be1000375f\tbackend/tests/systemMessageConsentController.test.js\n100644 blob 653c64266e983be7ff1e7bec1709b9ea1637c24d\tbackend/tests/systemMessageSharedSettlement.test.js\n100644 blob 77bc87b6ee7b5f12971f6da563b00450b2f9db06\tbackend/tests/systemMessagesOutbox.test.js\n100644 blob f726ee7c8463e2ff555af81396a522bccc7d05fa\tbackend/tests/systemMessagesSdkRecovery.test.js\n100644 blob c0aaff417c80954184de5785e343b32405329b02\tbackend/tests/test-license-renewal-reminder.js\n100644 blob 38e4b9c5db0e7b430e978792508090e6ee878825\tbackend/tests/test-notification-combinations.js\n100644 blob e43bc2e0e5d7f9f4e44a77e081068fa19d14c452\tbackend/tests/uploadPermission.recovery.test.js\n100644 blob e6d0007d9013d0438af8143194ddfb050dbd0120\tbackend/tests/wordSigning.test.js\n100644 blob 3322a26b67c9665f3287e4444da0f3a619513391\tbackend/tests/wordTemplateConcurrency.test.js\n100644 blob 42f4001f3a45c9ffcb47aa8d0c18dcfa227a7bf8\tbackend/tests/wordTemplateConversion.test.js\n100644 blob f9df69da13fc10eef7949d09dfbab8b1899ffb2e\tbackend/tests/wordTemplates.actualConverter.test.js\n100644 blob 7899dbbfd5aa471d22923dd569786d64df7e0143\tbackend/tests/wordTemplates.authoringService.test.js\n100644 blob 92efadc6d1ffc8b35c4be98a2c39741fde60032d\tbackend/tests/wordTemplates.autoFillAcceptance.test.js\n100644 blob 58cc7a79b6cc95f8274e39f49d988d0a32b403dd\tbackend/tests/wordTemplates.http.integration.test.js\n100644 blob b79f5a6f28c26adc52efb15aee695272afa93a27\tbackend/tests/wordTemplates.multilingualConversion.test.js\n100644 blob 6e7d105d227c7330de78ce2c692d0605ae9786c5\tbackend/tests/wordTemplates.service.test.js\n100644 blob 758f0a0b17fabc1a7dbf9c2679affba5f01b44f2\tbackend/tests/wordTemplates.test.js\n100644 blob 228039e2d7b09fbdb06ad3e2529c9058d69b6691\tbackend/tests/wordTemplates.visual.test.js\n100644 blob 5784f63d0e79a278e5af5ec7f3532b4f7f109f24\tbackend/tests/wordTemplates.workerAdmission.test.js\n100644 blob 964b5d6872cb542f645a988edb1be9f489f671a9\tbackend/tests/writeReferences.recovery.test.js\n100644 blob 03c03b56980db6499b2bbe0ad4491d52fa9ab06a\tbackend/utils/appDeepLinks.js\n100644 blob 9d5d19e1fba5a8c680abf166e96416ad87143030\tbackend/utils/appError.js\n100644 blob 1e95b1ef8f81b3f7d60db5df17937b6c57cd1bd2\tbackend/utils/auditEvents.js\n100644 blob dfeb106ffcf64533078ecb3be619588bf18f9448\tbackend/utils/caseTypesCache.js\n100644 blob fb8a13a877b5786cfbadd0699def7164299d1423\tbackend/utils/centralHandoff.js\n100644 blob 7edb032adf0d7e23f3e1372e10da006a639221da\tbackend/utils/clientProfile.js\n100644 blob 7340c406fdbbeeb5e6f4129b400182b7f317e950\tbackend/utils/errors.he.js\n100644 blob 6f07ca75eb751dc23eba320a3f979c994e4e7cf0\tbackend/utils/fileScan.js\n100644 blob 4cfd25c92c26c1a19ab2a5da2b95ee35e21fbadd\tbackend/utils/incidentLogger.js\n100644 blob 97221586f6867e6b59265909bb16e13e68756992\tbackend/utils/legalData.js\n100644 blob f58fe8edab22b68dc0a334ec213e96aea9355681\tbackend/utils/mainScreenDataCache.js\n100644 blob 8272356d1c58986eff99743a47e52cc56a524dcd\tbackend/utils/memoryCache.js\n100644 blob 6a185d03c02355ff6be36961b8e7c0847c268d49\tbackend/utils/operationalDashboardCache.js\n100644 blob 604c620c7962fd5af93ae57347ede2d15096fad6\tbackend/utils/otpBruteForce.js\n100644 blob f5464fc39f25f506522d3974cd84950ba3cc11a8\tbackend/utils/pagination.js\n100644 blob 71543ba53977782546577230b9b8ddbc500adee1\tbackend/utils/paramValidation.js\n100644 blob 53e02358d1d246a38410b97046a572b21208846f\tbackend/utils/parseExcel.js\n100644 blob caaab00c93f9b98d2828d0926fe1965c03967d9a\tbackend/utils/phoneUtils.js\n100644 blob 64b33be211b0b72976c59afb3c3a0e6c2741b042\tbackend/utils/r2.js\n100644 blob a8e9da2eaf4fede95c256d6f9c5706a9fe819180\tbackend/utils/rateLimiter.js\n100644 blob c2055fda7b0ee13cc718a9d3bdb026d46a48c1c7\tbackend/utils/runtimeTenantGuard.js\n100644 blob e77eb3447bc87ff8219c83527172d70f2903949d\tbackend/utils/securityAuditLogger.js\n100644 blob c4f2dff4bfaf365e23eb77d085c50bf5db978122\tbackend/utils/sendAndStoreNotification.js\n100644 blob c6a43e3b692a7c176916cb9466b97aa3dc0bb84e\tbackend/utils/sendMessage.js\n100644 blob bcc28e855c30b58cba3ef9b98d20baaf2b8aa9e5\tbackend/utils/signatureDetection.js\n100644 blob fc70ad9d4f52095e20a1d42fe869ba4cc9947dab\tbackend/utils/smooveEmailCampaignService.js\n100644 blob 9039764fd2968e822ee32486a0d0319327107494\tbackend/utils/startupSchemaCheck.js\n100644 blob 18ebfd83ef04fe9b5f5de7dd10968f29790c8560\tbackend/utils/syslogForwarder.js\n100644 blob 33fe942892115191a53e7a4cabedf45b85e68684\tbackend/utils/templateRenderer.js",
+      "stderrBytes": 0
+    }
+  },
+  "protected": {
+    "entries": 103,
+    "mismatches": []
+  },
+  "catalog": {
+    "ok": true,
+    "rows": [
+      {
+        "identity": {
+          "user": "melamedia_app",
+          "database": "melamedia",
+          "readOnly": "on"
+        },
+        "tables": [
+          {
+            "name": "case_whatsapp_groups",
+            "can_select": true,
+            "columns": [
+              "id",
+              "law_firm_tenant_id",
+              "case_id",
+              "connection_id",
+              "mode",
+              "status",
+              "subject",
+              "recipients",
+              "template_name",
+              "template_language",
+              "template_parameters",
+              "group_id",
+              "invite_link",
+              "request_id",
+              "phone_number_id",
+              "waba_id",
+              "error_code",
+              "created_at",
+              "updated_at",
+              "next_attempt_at",
+              "gateway",
+              "session_name",
+              "connection_generation",
+              "is_pilot"
+            ]
+          },
+          {
+            "name": "firm_billing",
+            "can_select": true,
+            "columns": [
+              "id",
+              "platform_id",
+              "resource_id",
+              "signing_id",
+              "price_monthly_ils",
+              "status",
+              "billing_enabled",
+              "complimentary_until",
+              "renews_at",
+              "grace_until",
+              "last_payment_error",
+              "last_failed_at",
+              "last_paid_at",
+              "created_at",
+              "updated_at",
+              "billing_interval",
+              "law_firm_tenant_id",
+              "auto_renew"
+            ]
+          },
+          {
+            "name": "firm_payment_events",
+            "can_select": true,
+            "columns": [
+              "id",
+              "intent_id",
+              "event_type",
+              "payload",
+              "created_at"
+            ]
+          },
+          {
+            "name": "firm_payment_intents",
+            "can_select": true,
+            "columns": [
+              "id",
+              "kind",
+              "status",
+              "amount_ils",
+              "currency",
+              "order_reference",
+              "takbull_uniq_id",
+              "takbull_transaction_id",
+              "purpose",
+              "error_message",
+              "package_snapshot",
+              "created_at",
+              "updated_at",
+              "settled_at",
+              "law_firm_tenant_id",
+              "signup_intent_id",
+              "signup_cycle_at"
+            ]
+          },
+          {
+            "name": "firm_payment_methods",
+            "can_select": true,
+            "columns": [
+              "id",
+              "provider",
+              "token_encrypted",
+              "last4",
+              "exp_month",
+              "exp_year",
+              "card_brand",
+              "is_active",
+              "created_at",
+              "updated_at",
+              "law_firm_tenant_id"
+            ]
+          },
+          {
+            "name": "office_integrations",
+            "can_select": true,
+            "columns": [
+              "id",
+              "law_firm_tenant_id",
+              "provider",
+              "enabled",
+              "status",
+              "settings",
+              "secret_ciphertext",
+              "phone_number_id",
+              "waba_id",
+              "display_phone",
+              "token_expires_at",
+              "last_checked_at",
+              "last_synced_at",
+              "updated_at",
+              "next_sync_at",
+              "last_scheduled_sync_date",
+              "safety_state",
+              "dispatch_claim"
+            ]
+          },
+          {
+            "name": "signing_batch_recipients",
+            "can_select": true,
+            "columns": [
+              "id",
+              "batch_id",
+              "user_id",
+              "delivery_method",
+              "status",
+              "invited_file_ids",
+              "attempted_at",
+              "sent_at",
+              "error_code"
+            ]
+          },
+          {
+            "name": "signing_batch_reminders",
+            "can_select": true,
+            "columns": [
+              "id",
+              "recipient_id",
+              "invited_at",
+              "scheduled_for",
+              "status",
+              "attempted_at",
+              "sent_at"
+            ]
+          },
+          {
+            "name": "signing_batches",
+            "can_select": true,
+            "columns": [
+              "id",
+              "law_firm_tenant_id",
+              "owner_userid",
+              "template_id",
+              "template_version",
+              "name",
+              "snapshot",
+              "request_hash",
+              "idempotency_key",
+              "status",
+              "created_at"
+            ]
+          },
+          {
+            "name": "signing_deliveries",
+            "can_select": true,
+            "columns": [
+              "id",
+              "owner_context_id",
+              "profile_id",
+              "profile_version",
+              "grant_id",
+              "event_key",
+              "purpose",
+              "channel",
+              "target_snapshot",
+              "state",
+              "provider_id",
+              "attempted_at",
+              "provider_accepted_at",
+              "delivered_at",
+              "error_code",
+              "created_at"
+            ]
+          },
+          {
+            "name": "signing_error_emails",
+            "can_select": true,
+            "columns": [
+              "id",
+              "batch_id",
+              "recipient_user_id",
+              "recipient_email",
+              "state",
+              "attempts",
+              "available_at",
+              "lease_until",
+              "claim_token",
+              "provider_id",
+              "error_code",
+              "accepted_at",
+              "created_at"
+            ]
+          },
+          {
+            "name": "signing_jobs",
+            "can_select": true,
+            "columns": [
+              "id",
+              "owner_context_id",
+              "kind",
+              "subject_id",
+              "dedupe_key",
+              "input_hash",
+              "state",
+              "attempts",
+              "max_attempts",
+              "available_at",
+              "lease_until",
+              "leased_by",
+              "fencing_token",
+              "error_code",
+              "created_at",
+              "completed_at"
+            ]
+          },
+          {
+            "name": "signing_otp_challenges_v2",
+            "can_select": true,
+            "columns": [
+              "id",
+              "owner_context_id",
+              "session_id",
+              "person_id",
+              "manifest_hash",
+              "channel",
+              "endpoint_hint",
+              "code_salt",
+              "code_hash",
+              "attempts",
+              "max_attempts",
+              "state",
+              "expires_at",
+              "sent_at",
+              "verified_at",
+              "created_at"
+            ]
+          },
+          {
+            "name": "signing_package_completions",
+            "can_select": true,
+            "columns": [
+              "batch_id",
+              "package_index",
+              "recipient_email",
+              "status",
+              "attempted_at",
+              "sent_at"
+            ]
+          },
+          {
+            "name": "signup_intents",
+            "can_select": true,
+            "columns": [
+              "id",
+              "slug",
+              "firm_name",
+              "admin_name",
+              "admin_phone",
+              "admin_email",
+              "lawyer_count",
+              "practice_areas",
+              "platform_id",
+              "resource_id",
+              "signing_id",
+              "billing_interval",
+              "price_monthly_ils",
+              "status",
+              "law_firm_tenant_id",
+              "payment_intent_id",
+              "error_message",
+              "created_at",
+              "updated_at",
+              "completed_at",
+              "consent_version",
+              "consented_at",
+              "request_hash",
+              "recurring_amount_ils",
+              "vat_percent",
+              "logo",
+              "welcome_email",
+              "welcome_email_status",
+              "welcome_email_attempts",
+              "welcome_email_next_at",
+              "welcome_email_updated_at",
+              "welcome_email_sent_at",
+              "welcome_email_error"
+            ]
+          }
+        ]
+      }
+    ],
+    "transactionEnded": "ROLLBACK"
+  },
+  "aggregationGaps": [
+    {
+      "key": "centralOutbox",
+      "reason": "TABLE_ABSENT_OR_EXISTING_SELECT_DENIED"
+    }
+  ],
+  "querySha256": {
+    "paymentIntents": "c388807b6d813bf6035741bf13360486c0eb6f28cb316c9e55f73127139d7ebb",
+    "billingCandidates": "471b38d66bd83e20c40d63a0a5dc0140b446de91967f00e4cb5ec7c3834c1479",
+    "activeMethodCounts": "7583d8b6ec67fb0e10c32d77ffbc57682e9fe815ddfdf1cbe6940ef5e8c142ee",
+    "signupStates": "db05a5f8d5a85ec96216ffae4e21c5262ebb4a5a5fe4da00c426d42bf26d6c1a",
+    "welcomeStates": "7a82bcb42d8e9db56f8ba11a6006fcece70bb435d2833a99d33492f486256a79",
+    "signingJobs": "cb792a60aeaf5119c0817eb571c2f1c4088e2a6d2a6b8faca7070b17e4d3ab0d",
+    "signingDeliveries": "04e0ff62331993366247cc75790b1cd08a1a05f6f75035aa14c6416addfbdf8e",
+    "signingErrorEmails": "8fd06ab7c2d7328a14a2b2615bcca69dcce862bec71631c70c021c89b938ccea",
+    "integrationClaims": "d96c688a540eb1ec605863efdea402681b033631104f588569fe832fdb161f54",
+    "whatsappJobs": "6ec6976ed1b95829dbdc83cd84cdb07ed87a95e303a2ad9edacbe1246342c7a4",
+    "legacySigningBatches": "4c2a4229352d2936ece0c198ccbb438202d11978b63e48206156614ae04328e6",
+    "legacySigningRecipients": "f75cb215836dcad3e05c58b90d83fcf02006c77fe6bcbaedf1c47d82d7a7dc48",
+    "legacyCompletionMessages": "bbd445e3d33540b5f76e3b05896d7386a4f226f2691c5a171744bc44c387cd3f",
+    "legacyReminders": "eda57386ba7eed67ab761521602478ac11692bd950435e19718324389fa912e7",
+    "signingOtp": "854a7cccc542a14bff44147f0fc8c7981e6f3a1f14ceed0c41462c1d1016c723",
+    "centralRelationKind": "3f965c11b957dd954f90c5fdea59cc527f25c1839017946b611afa5cca4bef68",
+    "ownRoleSessions": "ffafd40239bcd555dd609047fc51ea2b16b657a7802c5f6e5dd1793bae0fa1cf",
+    "intentMarkers": "57e33c020435448cfc44149057c90e74b6394097574915c45d66ef9158836677",
+    "billingMarkers": "f07d79ec1f4033f378dd97998e6299b2d1631fed8397eb1dd854b4a0472eb221",
+    "methodMarkers": "5e160eadd29b7b1ed2a13052f81e2c4b45fc64d050fbdd2bd811bbb2f64141e1",
+    "paymentEventMarkers": "d9bc58ff3e2997e8e71af9044017e9d2703c85d4d164473366ff15466cc6f7f5",
+    "signupMarkers": "cfeda0c548cab2d1045489ecb40393b602bd48d97f92e59d35f26ba7d13ec91d",
+    "transactionIdentity": "74ec51102f824ac77e47d5b1ec152126cac91af996c96067061aa875227f2374"
+  },
+  "hostBootIdBefore": "79d5ef26-007c-4ee2-bfba-15db6bd5b1aa",
+  "daemonBefore": {
+    "pid": 948103,
+    "procCwd": "/",
+    "procExe": "/usr/bin/node",
+    "startTicks": 48642921
+  },
+  "dependenciesBefore": {
+    "isSymlink": true,
+    "linkTarget": "/root/qa-new-features-20261023-5ce621ee/staging/source02/backend/node_modules",
+    "resolvedTarget": "/root/qa-new-features-20261023-5ce621ee/staging/source02/backend/node_modules",
+    "targetExists": true,
+    "sourcePackageLockSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+    "installedPackageLockSha256": "bf476467ea9c57c366d6a610852233c85505ae450a25b95919165c44bf7b249f"
+  },
+  "nodeExeSha256": "3517c2df0b2f8cd7f422b4b8450ef81c6889f08eb03e281d6de9079b15e6a327",
+  "phase": "ONE_ADJACENT_SNAPSHOT_NO_POLLING",
+  "hostBootIdAfter": "79d5ef26-007c-4ee2-bfba-15db6bd5b1aa",
+  "daemonAfter": {
+    "pid": 948103,
+    "procCwd": "/",
+    "procExe": "/usr/bin/node",
+    "startTicks": 48642921
+  },
+  "dependenciesAfter": {
+    "isSymlink": true,
+    "linkTarget": "/root/qa-new-features-20261023-5ce621ee/staging/source02/backend/node_modules",
+    "resolvedTarget": "/root/qa-new-features-20261023-5ce621ee/staging/source02/backend/node_modules",
+    "targetExists": true,
+    "sourcePackageLockSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+    "installedPackageLockSha256": "bf476467ea9c57c366d6a610852233c85505ae450a25b95919165c44bf7b249f"
+  },
+  "envFileSha256After": "9fc4bc04f6faa9e88347d3f94aa926750f616a54d2c9754fd86bc1bf94945281",
+  "sourceAfter": {
+    "head": {
+      "exit": 0,
+      "stdout": "545779e4b99e111959f4684167dfdf46da1f3186",
+      "stderrBytes": 0
+    },
+    "trackedStatus": {
+      "exit": 0,
+      "stdout": "",
+      "stderrBytes": 0
+    }
+  },
+  "processAfter": {
+    "pid": 2729957,
+    "procCwd": "/root/Melamedia/backend",
+    "procExe": "/usr/bin/node",
+    "startTicks": 124260326,
+    "cmdlineContainsExpectedServerPath": true
+  },
+  "sourceAndPidStable": true,
+  "status": "READONLY_QA_ADJACENT_SNAPSHOT_COMPLETED",
+  "locksReleasedAtRemoteExit": true,
+  "limitations": [
+    "One adjacent consistent SQL snapshot plus socket metadata does not freeze HTTP, scheduler or CLI issuance and is not an atomic drain proof.",
+    "Only existing app-role database session metadata is visible; no other-role activity/grants were requested.",
+    "No raw vendor reference/status was read; historical hosted pages remain externally unassessed.",
+    "No provider endpoint, app bootstrap, HTTP business route, PM2/config/service mutation or data write occurred.",
+    "No HTTP financial request metric/access-log mapping was safely established in this collection."
+  ],
+  "finishedAtUtc": "2026-11-02T06:18:09.614083+00:00",
+  "sshExit": 0,
+  "executedRemoteSha256": "1ff14f46028d4815f21484e502ece02bcd2d18995f0f65705b4bb7fb8bbe6a45"
+}

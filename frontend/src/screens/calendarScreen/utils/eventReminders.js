@@ -17,6 +17,8 @@ export const REMINDER_PRESETS = [
     { minutes: 1440, labelKey: "calendar.reminder1d" },
     { minutes: 2880, labelKey: "calendar.reminder2d" },
     { minutes: 10080, labelKey: "calendar.reminder1w" },
+    { minutes: 20160, labelKey: "calendar.reminder2w" },
+    { minutes: 43200, labelKey: "calendar.reminder30d" },
 ];
 
 const DEFAULT_ALLOWED = [0, 15, 30, 60, 120, 1440, 2880, 10080];

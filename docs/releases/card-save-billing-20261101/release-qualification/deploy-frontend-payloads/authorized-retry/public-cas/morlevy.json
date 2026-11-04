@@ -1,0 +1,678 @@
+{
+  "tenant": "morlevy",
+  "baseUrl": "https://morlevy.mela-media.co.il/",
+  "historicalPublicReceiptSha256": "c39beb248d0386b6268da258e5b25736a353b0245bf691f3c41866b098fa31f7",
+  "historicalCandidate": "f5220552918507a8b34b30cb7fb0cc41f3f0710b",
+  "requests": [
+    {
+      "url": "https://morlevy.mela-media.co.il/",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:50.289148+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:50.652029+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://morlevy.mela-media.co.il/",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "text/html"
+        ],
+        "last-modified": [
+          "Sun, 01 Nov 2026 22:00:11 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "cache-control": [
+          "no-cache"
+        ],
+        "x-frame-options": [
+          "SAMEORIGIN"
+        ],
+        "x-content-type-options": [
+          "nosniff"
+        ],
+        "referrer-policy": [
+          "strict-origin-when-cross-origin"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 7912,
+      "bodySha256": "624a600c5287e83d89a73f3a45965bf51cdc9aba82a48fbcac60cad7506a9899",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/morlevy/index.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://morlevy.mela-media.co.il/asset-manifest.json",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:50.652324+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:50.798277+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://morlevy.mela-media.co.il/asset-manifest.json",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "application/json"
+        ],
+        "last-modified": [
+          "Sun, 01 Nov 2026 22:00:11 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "etag": [
+          "W/\"6ae7b66b-3e29\""
+        ],
+        "x-frame-options": [
+          "SAMEORIGIN"
+        ],
+        "x-content-type-options": [
+          "nosniff"
+        ],
+        "referrer-policy": [
+          "strict-origin-when-cross-origin"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 15913,
+      "bodySha256": "701c12dea0b77a2823415d6a36de9bb0d29f55a10ae37327632e37db147da9aa",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/morlevy/manifest.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://morlevy.mela-media.co.il/static/js/vendor-pdf.f63c2819.js",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:50.799248+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:50.908602+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://morlevy.mela-media.co.il/static/js/vendor-pdf.f63c2819.js",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "application/javascript"
+        ],
+        "last-modified": [
+          "Sun, 25 Oct 2026 18:34:28 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "etag": [
+          "W/\"6ade4bb4-6969f\""
+        ],
+        "cache-control": [
+          "public, max-age=31536000, immutable"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 431775,
+      "bodySha256": "0848428eb81a4c5936b219d82f3e476bcea679ef940cc6cd184a91ef14055607",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/morlevy/entry-0.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://morlevy.mela-media.co.il/static/js/vendor-i18n.40936357.js",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:50.909193+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:52.217334+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://morlevy.mela-media.co.il/static/js/vendor-i18n.40936357.js",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "application/javascript"
+        ],
+        "last-modified": [
+          "Sun, 25 Oct 2026 18:34:28 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "etag": [
+          "W/\"6ade4bb4-e52a\""
+        ],
+        "cache-control": [
+          "public, max-age=31536000, immutable"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 58666,
+      "bodySha256": "db33fc70cd1ea43bcaed46ca02cb186cdd8480a3580b8f17af4eade2a341100c",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/morlevy/entry-1.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://morlevy.mela-media.co.il/static/js/vendor-react.094da8d9.js",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:52.217713+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:52.671565+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://morlevy.mela-media.co.il/static/js/vendor-react.094da8d9.js",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "application/javascript"
+        ],
+        "last-modified": [
+          "Sun, 25 Oct 2026 18:34:28 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "etag": [
+          "W/\"6ade4bb4-2d658\""
+        ],
+        "cache-control": [
+          "public, max-age=31536000, immutable"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 185944,
+      "bodySha256": "d7a816163d60b5282f0f8a1de60af3ac73d46ec4413680af99e540d0e0d8bfc5",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/morlevy/entry-2.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://morlevy.mela-media.co.il/static/js/vendor.2a0dc768.js",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:52.671971+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:54.131554+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://morlevy.mela-media.co.il/static/js/vendor.2a0dc768.js",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "application/javascript"
+        ],
+        "last-modified": [
+          "Sun, 01 Nov 2026 18:28:47 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "etag": [
+          "W/\"6ae784df-39cd7\""
+        ],
+        "cache-control": [
+          "public, max-age=31536000, immutable"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 236759,
+      "bodySha256": "25569d049b110b7f71fa75ef8bc1319953db4bf4bd680c6c5fadec3f33916386",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/morlevy/entry-3.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://morlevy.mela-media.co.il/static/css/main.42e8b4df.css",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:54.132028+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:54.603100+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://morlevy.mela-media.co.il/static/css/main.42e8b4df.css",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "text/css"
+        ],
+        "last-modified": [
+          "Sun, 01 Nov 2026 18:28:47 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "etag": [
+          "W/\"6ae784df-3b7ef\""
+        ],
+        "cache-control": [
+          "public, max-age=31536000, immutable"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 243695,
+      "bodySha256": "1f46257b0dc85897caf35388b1d6898e330e126aa4c9fec75f3df0486f0afcd2",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/morlevy/entry-4.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://morlevy.mela-media.co.il/static/js/main.15483ae9.js",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:54.603549+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:55.294484+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://morlevy.mela-media.co.il/static/js/main.15483ae9.js",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "application/javascript"
+        ],
+        "last-modified": [
+          "Sun, 01 Nov 2026 22:00:10 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "etag": [
+          "W/\"6ae7b66a-1d4f44\""
+        ],
+        "cache-control": [
+          "public, max-age=31536000, immutable"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 1920836,
+      "bodySha256": "9a7e53efcc315979251fdfd5215161e0a00751331ba0bb80db1917833e661281",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/morlevy/entry-5.body",
+      "httpErrorCodeOnly": null
+    }
+  ],
+  "holds": [],
+  "scope": "Public static bytes only; no JavaScript execution/API/provider/customer data",
+  "htmlReferences": [
+    {
+      "tag": "link",
+      "reference": "https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap",
+      "attributes": {
+        "href": "https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap",
+        "rel": "stylesheet"
+      }
+    },
+    {
+      "tag": "script",
+      "reference": "/static/js/vendor-pdf.f63c2819.js",
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-pdf.f63c2819.js"
+      }
+    },
+    {
+      "tag": "script",
+      "reference": "/static/js/vendor-i18n.40936357.js",
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-i18n.40936357.js"
+      }
+    },
+    {
+      "tag": "script",
+      "reference": "/static/js/vendor-react.094da8d9.js",
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-react.094da8d9.js"
+      }
+    },
+    {
+      "tag": "script",
+      "reference": "/static/js/vendor.2a0dc768.js",
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor.2a0dc768.js"
+      }
+    },
+    {
+      "tag": "script",
+      "reference": "/static/js/main.15483ae9.js",
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/main.15483ae9.js"
+      }
+    },
+    {
+      "tag": "link",
+      "reference": "/static/css/main.42e8b4df.css",
+      "attributes": {
+        "href": "/static/css/main.42e8b4df.css",
+        "rel": "stylesheet"
+      }
+    },
+    {
+      "tag": "script",
+      "reference": "/mela-accessibility-534abbadadf2.js",
+      "attributes": {
+        "defer": null,
+        "src": "/mela-accessibility-534abbadadf2.js"
+      }
+    }
+  ],
+  "metaCsp": [],
+  "headerCsp": [],
+  "headerCspReportOnly": [],
+  "currentEntrypoints": [
+    "static/js/vendor-pdf.f63c2819.js",
+    "static/js/vendor-i18n.40936357.js",
+    "static/js/vendor-react.094da8d9.js",
+    "static/js/vendor.2a0dc768.js",
+    "static/css/main.42e8b4df.css",
+    "static/js/main.15483ae9.js"
+  ],
+  "historicalEntrypoints": [
+    "static/js/vendor-pdf.f63c2819.js",
+    "static/js/vendor-i18n.40936357.js",
+    "static/js/vendor-react.094da8d9.js",
+    "static/js/vendor.2a0dc768.js",
+    "static/css/main.42e8b4df.css",
+    "static/js/main.15483ae9.js"
+  ],
+  "indexMatchesHistoricalPublished": true,
+  "manifestMatchesHistoricalPublished": true,
+  "assets": [
+    {
+      "path": "static/js/vendor-pdf.f63c2819.js",
+      "httpBodySha256": "0848428eb81a4c5936b219d82f3e476bcea679ef940cc6cd184a91ef14055607",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    },
+    {
+      "path": "static/js/vendor-i18n.40936357.js",
+      "httpBodySha256": "db33fc70cd1ea43bcaed46ca02cb186cdd8480a3580b8f17af4eade2a341100c",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    },
+    {
+      "path": "static/js/vendor-react.094da8d9.js",
+      "httpBodySha256": "d7a816163d60b5282f0f8a1de60af3ac73d46ec4413680af99e540d0e0d8bfc5",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    },
+    {
+      "path": "static/js/vendor.2a0dc768.js",
+      "httpBodySha256": "25569d049b110b7f71fa75ef8bc1319953db4bf4bd680c6c5fadec3f33916386",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    },
+    {
+      "path": "static/css/main.42e8b4df.css",
+      "httpBodySha256": "1f46257b0dc85897caf35388b1d6898e330e126aa4c9fec75f3df0486f0afcd2",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    },
+    {
+      "path": "static/js/main.15483ae9.js",
+      "httpBodySha256": "9a7e53efcc315979251fdfd5215161e0a00751331ba0bb80db1917833e661281",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    }
+  ],
+  "entrypointsMatchHistorical": true,
+  "allFetchedEntrypointsBound": true,
+  "indexSha256": "624a600c5287e83d89a73f3a45965bf51cdc9aba82a48fbcac60cad7506a9899",
+  "manifestSha256": "701c12dea0b77a2823415d6a36de9bb0d29f55a10ae37327632e37db147da9aa",
+  "privateIndexPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/morlevy/index.body",
+  "privateManifestPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/morlevy/manifest.body",
+  "snapshotResult": "PASS_STATIC_SNAPSHOT",
+  "allScriptAndLinkIntegrityAttributes": [],
+  "scriptBodies": [
+    {
+      "bodySha256": "acb6b434e59b772c91060eb1bccf45c0ce273d0311f2070b65fc885d99e6ed3b",
+      "bodyBytes": 872,
+      "attributes": {
+        "type": "application/ld+json"
+      }
+    },
+    {
+      "bodySha256": "cbe4af039dc301394e96e17ec344838f11ae84507c3286718957eeaad472f967",
+      "bodyBytes": 243,
+      "attributes": {
+        "type": "application/ld+json"
+      }
+    },
+    {
+      "bodySha256": "621826cb12a4663b3177e8fbe497b8cb167cd8d70b3a92889834eac321780766",
+      "bodyBytes": 2954,
+      "attributes": {}
+    },
+    {
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyBytes": 0,
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-pdf.f63c2819.js"
+      }
+    },
+    {
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyBytes": 0,
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-i18n.40936357.js"
+      }
+    },
+    {
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyBytes": 0,
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-react.094da8d9.js"
+      }
+    },
+    {
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyBytes": 0,
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor.2a0dc768.js"
+      }
+    },
+    {
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyBytes": 0,
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/main.15483ae9.js"
+      }
+    },
+    {
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyBytes": 0,
+      "attributes": {
+        "defer": null,
+        "src": "/mela-accessibility-534abbadadf2.js"
+      }
+    }
+  ],
+  "styleBodies": [],
+  "structureScope": "All actual script/link tags checked, including non-entrypoint and inline tags; no JavaScript executed."
+}

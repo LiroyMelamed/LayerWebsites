@@ -1,3 +1,5 @@
+> **Current status — 3 November 2026:** QA and all three active customers are deployed. See the [completion report](../completion-20261103/README.md) for exact versions, preserved data, verification and remaining limits. The planning/HOLD statements and test counts below are historical snapshots, not the current deployment status.
+
 # Local release qualification — 1 November 2026
 
 **Status: common source and all four client candidates locally qualified at cutoff `074df752`; deployment and financial activation remain HOLD.**

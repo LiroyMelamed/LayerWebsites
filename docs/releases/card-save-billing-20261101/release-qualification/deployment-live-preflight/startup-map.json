@@ -1,0 +1,90 @@
+{
+  "frozenRuntime": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "currentLocalAuditHead": "41ab84c003a27ced9f2a4a2fdd74bc05ad999ab4",
+  "upstreamCutoff": "074df7520497a0cd6bd95ad70353201c905f0aa6",
+  "source": {
+    "backend/server.js": {
+      "frozenSha256": "d218094676f43004841ead11d27299a8b2219d7542fd93e8df419388f3f1bc4e",
+      "actualSha256": "d218094676f43004841ead11d27299a8b2219d7542fd93e8df419388f3f1bc4e",
+      "identical": true
+    },
+    "backend/config/db.js": {
+      "frozenSha256": "20e712f89bf1cbf315ef6786112113f6f88ec180e4341a0d824587f3e0603890",
+      "actualSha256": "20e712f89bf1cbf315ef6786112113f6f88ec180e4341a0d824587f3e0603890",
+      "identical": true
+    },
+    "backend/lib/tenant/scopedPool.js": {
+      "frozenSha256": "af32b014f3e7da2a36005b2d5a25fef83ab0824a1f11100200d4afee3b983f9f",
+      "actualSha256": "af32b014f3e7da2a36005b2d5a25fef83ab0824a1f11100200d4afee3b983f9f",
+      "identical": true
+    },
+    "backend/lib/tenant/isolationSchema.js": {
+      "frozenSha256": "0e130d5256501dafc94b8cb093d251ebb670af813a34a61e9b394b656fe16527",
+      "actualSha256": "0e130d5256501dafc94b8cb093d251ebb670af813a34a61e9b394b656fe16527",
+      "identical": true
+    },
+    "backend/lib/tenant/databaseScope.js": {
+      "frozenSha256": "d52da30120356be7526d9257edc237ed36c877a00dacfeabfac93eece0e1eaab",
+      "actualSha256": "d52da30120356be7526d9257edc237ed36c877a00dacfeabfac93eece0e1eaab",
+      "identical": true
+    },
+    "backend/utils/runtimeTenantGuard.js": {
+      "frozenSha256": "c1224dfef8b159754016f8eb8d3a6bf1cb142eb417badf00dbb98d2a37b4a8d7",
+      "actualSha256": "c1224dfef8b159754016f8eb8d3a6bf1cb142eb417badf00dbb98d2a37b4a8d7",
+      "identical": true
+    },
+    "backend/utils/startupSchemaCheck.js": {
+      "frozenSha256": "46da904262bf2a72ce3eaa8b6d9ea78d3891320648f816d79021f017a45ce076",
+      "actualSha256": "46da904262bf2a72ce3eaa8b6d9ea78d3891320648f816d79021f017a45ce076",
+      "identical": true
+    },
+    "backend/config/dbTargetPolicy.js": {
+      "frozenSha256": "2b4bba37a85e7ebfb7f8aac93345e9f90dadd30585ccaca1a41836d952a74926",
+      "actualSha256": "2b4bba37a85e7ebfb7f8aac93345e9f90dadd30585ccaca1a41836d952a74926",
+      "identical": true
+    },
+    "backend/lib/backgroundJobsEnabled.js": {
+      "frozenSha256": "af50a15c1159f7527a5ca2526a106b7670f7c91052a1dc27eeace16227270b45",
+      "actualSha256": "af50a15c1159f7527a5ca2526a106b7670f7c91052a1dc27eeace16227270b45",
+      "identical": true
+    },
+    "backend/lib/billing/billingOperations.js": {
+      "frozenSha256": "50932a1b1e8d9e167cd6ae377d2cea21d45344f191a24dce59aca6cb74f3d10f",
+      "actualSha256": "50932a1b1e8d9e167cd6ae377d2cea21d45344f191a24dce59aca6cb74f3d10f",
+      "identical": true
+    },
+    "backend/lib/tenant/tenantContext.js": {
+      "frozenSha256": "a331286551df528aceaf1ed52b6eb899b9bf9d9139bfd535e7ec3970868154cb",
+      "actualSha256": "a331286551df528aceaf1ed52b6eb899b9bf9d9139bfd535e7ec3970868154cb",
+      "identical": true
+    },
+    "backend/services/integrations/runtime.js": {
+      "frozenSha256": "0a26b55a9335fa7ab05bf1dd6851283b0558fcfe09a7ce0832255e950d896414",
+      "actualSha256": "0a26b55a9335fa7ab05bf1dd6851283b0558fcfe09a7ce0832255e950d896414",
+      "identical": true
+    },
+    "backend/services/signingV2/runtime.js": {
+      "frozenSha256": "7ae7721347313e46a7036c5bbfe098b516bebd862ba89913e50821f12e5a3d70",
+      "actualSha256": "7ae7721347313e46a7036c5bbfe098b516bebd862ba89913e50821f12e5a3d70",
+      "identical": true
+    }
+  },
+  "catalogQuerySha256": "682ffc4bd906a9240a8c68945482bdb7d90a72eebb4aaf2f19afbc6c48962cde",
+  "classifiedTables": 115,
+  "conditions": {
+    "dedicated": "MULTI_TENANT_MODE trim/lower !=true: ensureOfficeIsolation returns without role/RLS assertions",
+    "invalidShared": "MULTI_TENANT_MODE true without exact TENANT_DB_ISOLATION_ENABLED=1 fails configuration before DB",
+    "shared": "role not superuser/BYPASSRLS; every existing nonextension public r/p table classified+RLS+FORCE+notowned+office_boundary RESTRICTIVE; no completeness assertion for115 names",
+    "startupFieldValue": "signaturespots fieldtype present+fieldvalue absent logs nonfatal warning; catalog only",
+    "tenantBrandGuard": "platform_settings row values are required for recognized client branch; NOT executed because only catalog reads authorized"
+  },
+  "notExecuted": [
+    "application boot/imports",
+    "custom SQL functions",
+    "set_config/SET ROLE",
+    "DDL/grants/new roles/access",
+    "platform_settings or any other application/customer/billing rows",
+    "provider or SMTP calls"
+  ],
+  "pausedBootLimit": "unset financial flag enables; independent signing/integration/court workers may run; ipify is unconditional after isolation guard; existing current config not a zero-IO pause contract"
+}

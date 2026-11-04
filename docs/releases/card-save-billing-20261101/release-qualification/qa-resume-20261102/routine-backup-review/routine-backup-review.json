@@ -1,0 +1,429 @@
+{
+  "status": "PASS_EXISTING_ROUTINE_BACKUP_AVAILABILITY__NO_REDUNDANT_RUN__RESTORE_NOT_CERTIFIED",
+  "decision": "Coordinator chose no redundant backup while cutover gates remain open. Existing normal overnight receipts are availability evidence only. If required at a later cutover, a fresh normal same-config per-project backup is routine deploy preparation, subject to adjacent lock/resource/source checks; it was not executed here.",
+  "observedUtc": {
+    "sourceConfig": [
+      "2026-11-02T06:31:23.633763+00:00",
+      "2026-11-02T06:31:23.661143+00:00"
+    ],
+    "locksTimersManifests": [
+      "2026-11-02T06:33:29.031868+00:00",
+      "2026-11-02T06:33:29.153401+00:00"
+    ]
+  },
+  "producer": {
+    "path": "/usr/local/sbin/melamedia-server-backup.py",
+    "sha256": "085b3d946f475d1ad8ebd78f60aed389d6fea661963e34389b8991d339b2d160",
+    "bytes": 12909,
+    "mode": "0o700"
+  },
+  "config": {
+    "path": "/etc/melamedia-backup.d/config.json",
+    "sha256": "a9368f14409c3c8551af638d2de5a679fde66e2fb90e803f65655fe1c06286f9",
+    "bytes": 2476,
+    "mode": "0o600",
+    "topLevelKeys": [
+      "backup_scope",
+      "host",
+      "projects",
+      "recipient",
+      "retention_days",
+      "root"
+    ],
+    "backup_scope": "database-only",
+    "root": "/var/backups/melamedia-recovery",
+    "retention_days": 3,
+    "local_generation_only": null,
+    "projectCount": 8,
+    "hostIdentityMatches": true,
+    "recipientExists": true,
+    "projects": [
+      {
+        "name": "melamedlaw-recovery",
+        "database": "melamedlaw",
+        "retention_days": 3,
+        "source_status": null,
+        "shared_recovery_project": null,
+        "keys": [
+          "database",
+          "name",
+          "recovery_paths",
+          "retention_days",
+          "storage"
+        ],
+        "recoveryPathCount": 0,
+        "objectSnapshotConfigured": false,
+        "sqliteConfigured": false,
+        "storageKeys": [
+          "bucket",
+          "env"
+        ],
+        "storageConfigured": true,
+        "storageNonsecretStructure": {}
+      },
+      {
+        "name": "morlevi-recovery",
+        "database": "morlevy",
+        "retention_days": 3,
+        "source_status": null,
+        "shared_recovery_project": null,
+        "keys": [
+          "database",
+          "name",
+          "recovery_paths",
+          "retention_days",
+          "storage"
+        ],
+        "recoveryPathCount": 0,
+        "objectSnapshotConfigured": false,
+        "sqliteConfigured": false,
+        "storageKeys": [
+          "bucket",
+          "env"
+        ],
+        "storageConfigured": true,
+        "storageNonsecretStructure": {}
+      },
+      {
+        "name": "ashrafessa-recovery",
+        "database": "ashrafessa",
+        "retention_days": 3,
+        "source_status": null,
+        "shared_recovery_project": null,
+        "keys": [
+          "database",
+          "name",
+          "recovery_paths",
+          "retention_days",
+          "storage"
+        ],
+        "recoveryPathCount": 0,
+        "objectSnapshotConfigured": false,
+        "sqliteConfigured": false,
+        "storageKeys": [
+          "bucket",
+          "env"
+        ],
+        "storageConfigured": true,
+        "storageNonsecretStructure": {}
+      },
+      {
+        "name": "melamedia-recovery",
+        "database": "melamedia",
+        "retention_days": 3,
+        "source_status": null,
+        "shared_recovery_project": null,
+        "keys": [
+          "database",
+          "name",
+          "recovery_paths",
+          "retention_days",
+          "storage"
+        ],
+        "recoveryPathCount": 0,
+        "objectSnapshotConfigured": false,
+        "sqliteConfigured": false,
+        "storageKeys": [
+          "bucket",
+          "env"
+        ],
+        "storageConfigured": true,
+        "storageNonsecretStructure": {}
+      }
+    ]
+  },
+  "selectors": [
+    {
+      "target": "MelamedLaw",
+      "selector": "melamedlaw-recovery",
+      "database": "melamedlaw",
+      "tenantLock": "/run/lock/melamedia-legal-melamedlaw-release.lock"
+    },
+    {
+      "target": "MorLevi",
+      "selector": "morlevi-recovery",
+      "database": "morlevy",
+      "tenantLock": "/run/lock/melamedia-legal-morlevy-release.lock"
+    },
+    {
+      "target": "AshrafEssa",
+      "selector": "ashrafessa-recovery",
+      "database": "ashrafessa",
+      "tenantLock": "/run/lock/melamedia-legal-ashrafessa-release.lock"
+    },
+    {
+      "target": "Melamedia",
+      "selector": "melamedia-recovery",
+      "database": "melamedia",
+      "tenantLock": "/run/lock/melamedia-legal-melamedia-release.lock"
+    }
+  ],
+  "routineIdentity": {
+    "role": "existing postgres via runuser, source lines185-186",
+    "storage": "existing configured direct R2 per-project storage; no destination/key/role/config alteration",
+    "scope": "database-only; no recovery files or object snapshots",
+    "newInfrastructure": false,
+    "newPrivilegesOrGrants": false
+  },
+  "locks": {
+    "externalMaintenance": "/run/lock/melamedia-release-maintenance.lock SH/nonblocking, existing readonly open",
+    "targetTenant": "matching existing tenant lock SH/nonblocking, existing readonly open",
+    "retention": "/var/lib/melamedia-backup-retention/.lock SH/nonblocking for manual run lifetime",
+    "producer": "/var/backups/melamedia-recovery/.lock EX/nonblocking acquired by installed producer main248-249 for entire selected run",
+    "snapshotObservations": [
+      {
+        "path": "/var/backups/melamedia-recovery/.lock",
+        "exists": true,
+        "symlink": false,
+        "inode": 3708514,
+        "mode": "0o600",
+        "uid": 0,
+        "sharedNonblockingProbe": "ACQUIRED_EXISTING_ONLY"
+      },
+      {
+        "path": "/var/lib/melamedia-backup-retention/.lock",
+        "exists": true,
+        "symlink": false,
+        "inode": 3709205,
+        "mode": "0o600",
+        "uid": 0,
+        "sharedNonblockingProbe": "ACQUIRED_EXISTING_ONLY"
+      }
+    ],
+    "releaseState": "All inspection locks released at SSH exit; no future availability inferred."
+  },
+  "serviceTimerMetadata": {
+    "melamedia-backup-retention.service": {
+      "exit": 0,
+      "properties": {
+        "MainPID": "0",
+        "Result": "success",
+        "ExecMainStartTimestamp": "Mon 2026-11-02 06:40:36 CET",
+        "ExecMainExitTimestamp": "Mon 2026-11-02 06:40:42 CET",
+        "ExecMainStatus": "0",
+        "Id": "melamedia-backup-retention.service",
+        "Triggers": "",
+        "TriggeredBy": "melamedia-backup-retention.timer",
+        "LoadState": "loaded",
+        "ActiveState": "inactive",
+        "SubState": "dead",
+        "UnitFileState": "static"
+      }
+    },
+    "melamedia-backup-retention.timer": {
+      "exit": 0,
+      "properties": {
+        "NextElapseUSecRealtime": "Mon 2026-11-02 07:40:20 CET",
+        "NextElapseUSecMonotonic": "0",
+        "LastTriggerUSec": "Mon 2026-11-02 06:40:36 CET",
+        "Result": "success",
+        "Id": "melamedia-backup-retention.timer",
+        "Triggers": "melamedia-backup-retention.service",
+        "TriggeredBy": "",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "waiting",
+        "UnitFileState": "enabled"
+      }
+    },
+    "melamedia-server-backup.service": {
+      "exit": 0,
+      "properties": {
+        "MainPID": "0",
+        "Result": "success",
+        "ExecMainStartTimestamp": "Mon 2026-11-02 03:30:39 CET",
+        "ExecMainExitTimestamp": "Mon 2026-11-02 03:30:48 CET",
+        "ExecMainStatus": "0",
+        "Id": "melamedia-server-backup.service",
+        "Triggers": "",
+        "TriggeredBy": "melamedia-server-backup.timer",
+        "LoadState": "loaded",
+        "ActiveState": "inactive",
+        "SubState": "dead",
+        "UnitFileState": "static"
+      }
+    },
+    "melamedia-server-backup.timer": {
+      "exit": 0,
+      "properties": {
+        "NextElapseUSecRealtime": "Tue 2026-11-03 03:38:11 CET",
+        "NextElapseUSecMonotonic": "0",
+        "LastTriggerUSec": "Mon 2026-11-02 03:30:39 CET",
+        "Result": "success",
+        "Id": "melamedia-server-backup.timer",
+        "Triggers": "melamedia-server-backup.service",
+        "TriggeredBy": "",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "waiting",
+        "UnitFileState": "enabled"
+      }
+    }
+  },
+  "activeProducerProcessesAtSourceObservation": [],
+  "activeHelperProcessCountsAtLockObservation": {},
+  "filesystemAtSourceObservation": {
+    "backupRoot": "/var/backups/melamedia-recovery",
+    "freeBytes": 38961803264,
+    "totalBytes": 76887154688,
+    "loadAverage": [
+      1.166015625,
+      0.5126953125,
+      0.34326171875
+    ]
+  },
+  "existingGenerations": [
+    {
+      "project": "melamedlaw-recovery",
+      "partialDirectories": [],
+      "readbackDirectories": [],
+      "latestManifest": {
+        "generation": "20261102T023039Z-2da02ae6",
+        "project": "melamedlaw-recovery",
+        "created_at": "2026-11-02T02:30:40.899337+00:00",
+        "local_complete": true,
+        "encrypted": true,
+        "bytes": 2693842,
+        "sha256": "b1b50d4090a0378194b46b6e5a4a1fd549e4c5ed209c66bf8cb343d076cbeaf2",
+        "offsite": "verified_readback",
+        "backup_scope": "database-only",
+        "database_kind": "postgresql",
+        "cipherExists": true,
+        "manifestSha256": "e137ae4aca99dd49abb430a48ae7a3046de965068a5cfe0bbd43a6e8f4fe5131"
+      },
+      "orphanFinalDirectories": 0
+    },
+    {
+      "project": "morlevi-recovery",
+      "partialDirectories": [],
+      "readbackDirectories": [],
+      "latestManifest": {
+        "generation": "20261102T023039Z-e956fe4d",
+        "project": "morlevi-recovery",
+        "created_at": "2026-11-02T02:30:42.503704+00:00",
+        "local_complete": true,
+        "encrypted": true,
+        "bytes": 1137362,
+        "sha256": "7ddbcc9ba346d53dda94df861119e9b7a9642ec8bc226dc9981adbbd444ee068",
+        "offsite": "verified_readback",
+        "backup_scope": "database-only",
+        "database_kind": "postgresql",
+        "cipherExists": true,
+        "manifestSha256": "8c6994ee9446e01b7b0d43221ebc477e63b96d7870efb42fcdf3ed4fbc42925d"
+      },
+      "orphanFinalDirectories": 0
+    },
+    {
+      "project": "ashrafessa-recovery",
+      "partialDirectories": [],
+      "readbackDirectories": [],
+      "latestManifest": {
+        "generation": "20261102T023039Z-20f90fe3",
+        "project": "ashrafessa-recovery",
+        "created_at": "2026-11-02T02:30:43.615641+00:00",
+        "local_complete": true,
+        "encrypted": true,
+        "bytes": 1116882,
+        "sha256": "deaf27d7ef1a376c3880e43e096ee2a6929d7c1f85f4fa8972e68f170f3210a4",
+        "offsite": "verified_readback",
+        "backup_scope": "database-only",
+        "database_kind": "postgresql",
+        "cipherExists": true,
+        "manifestSha256": "1a9e3ebb432eb6627c6d667a8c5fb719f0d77e25ed9e2ba6a306e622225f252b"
+      },
+      "orphanFinalDirectories": 0
+    },
+    {
+      "project": "melamedia-recovery",
+      "partialDirectories": [],
+      "readbackDirectories": [],
+      "latestManifest": {
+        "generation": "20261102T023039Z-3a7c5edf",
+        "project": "melamedia-recovery",
+        "created_at": "2026-11-02T02:30:44.970728+00:00",
+        "local_complete": true,
+        "encrypted": true,
+        "bytes": 2038482,
+        "sha256": "06d0b9fb1197c483e4c4ccc55cffa7c921f328a729fe7b60045ae3b1e51cc2bf",
+        "offsite": "verified_readback",
+        "backup_scope": "database-only",
+        "database_kind": "postgresql",
+        "cipherExists": true,
+        "manifestSha256": "a1f8c32b34e6c2e5b77f8c762c4bb1ee569eb0acee197d4a6cb38f0a5b861942"
+      },
+      "orphanFinalDirectories": 0
+    }
+  ],
+  "effectsOfFutureRoutineRun": [
+    "Consistent pg_dump reads and normal PostgreSQL read locks using existing backup identity; no intended application record write.",
+    "CPU, disk and network usage; root-private temporary database.dump and bundle.tar.",
+    "New randomly named encrypted local generation and manifests; direct R2 PUT then GET ciphertext SHA verification.",
+    "No producer retention/deletion is invoked; separate existing 72h retention remains unchanged.",
+    "Existing backup watchers/timers may later react to receipts through their normal independent schedule; no watcher was invoked by this review."
+  ],
+  "sourceContract": {
+    "databaseOnlyValidationLines": "144-164,194-200",
+    "archiveReadabilityValidationLines": "185-189",
+    "CMSAES256GCMEncryptionLines": "202-208",
+    "offsitePUTGETReadbackLines": "219-227",
+    "successExitLines": "234,264",
+    "defaultCommandTimeoutSeconds": 600,
+    "transferBudget": "source68-118; bounded retries, same ciphertext/key per transfer retry",
+    "internalCredentialHandling": "Existing source env_values47-59 parses the full configured storage .env into an in-memory map; remote_transfer78 reads required S3 values and passes credentials over curl stdin93-113. This is installed routine job behavior; the review did not read .env values and did not change it.",
+    "logging": "Source suppresses subprocess stderr; JSON receipts contain project/host/generation metadata and checksum/size/offsite status, not database rows/card/contact/credential values. Keep full operational receipts private if they include remote keys."
+  },
+  "cleanup": {
+    "normalCompletionOrHandledFailure": "TemporaryDirectory177/222 removes plaintext and readback temporary trees; only ciphertext and outer receipt retained in final generation.",
+    "abruptTermination": "SIGKILL/host failure may leave .partial-* plaintext, .readback-* or cipher-only/truncated-manifest final. Separate-session children may survive parent death. Never force cleanup during uncertain active child state.",
+    "observedResiduals": "No partial/readback directories or orphan final directories observed for all four legal projects06:33:29UTC. No deletion/cleanup performed."
+  },
+  "unknownOutcomeStrategy": [
+    "Record exact selected project, invocation start window and preexisting generation set privately before a future run.",
+    "SSH timeout/disconnect is UNCERTAIN, not failure and not permission to rerun. Check producer/global lock and helper process metadata first.",
+    "Inspect only same-window new generation manifests and encrypted artifact size/SHA; do not decrypt or read customer payload to reconcile.",
+    "Success requires expected project/scope, local_complete=true, encrypted=true, offsite=verified_readback, matching on-disk ciphertext size/SHA, and observed successful completion (or a separately reviewed reconciliation if connection was lost).",
+    "A failed/pending/missing/truncated receipt may coexist with an already uploaded object. Do not call the whole producer again blindly: each invocation generates a new random generation.",
+    "If no complete local receipt proves supplier readback, HOLD the seal; reconcile the same exact immutable generation/key through a separately scoped existing R2 readback if authorized. Never forge/edit receipts, backdate, delete unknown artifacts, invoke watchdog freshness for a read-only check or rerun automatically."
+  ],
+  "limitations": [
+    "Manifest verified_readback is the existing job receipt; this review made no independent R2 call and did not hash ciphertext payloads.",
+    "No authenticated CMS decryption or SQL restore is proved. Restore gate remains open.",
+    "02:30 receipts do not establish a deploy-cutover RPO; coordinator must decide accepted age and take a fresh routine backup if the cutover requires it.",
+    "Process/lock/timer observations are time-bound. Credentials were not read or validated here; the existing job validates bucket/HTTPS R2 settings when executed.",
+    "No service stop/restart/timer change, new environment/database/role/schema/grant, provider call, backup run or cleanup occurred."
+  ],
+  "operations": {
+    "sshReadOnlyCaptures": 2,
+    "sshExitCodes": [
+      0,
+      0
+    ],
+    "newBackups": 0,
+    "restores": 0,
+    "decryption": 0,
+    "databaseConnections": 0,
+    "storageCalls": 0,
+    "providerCalls": 0,
+    "environmentValuesRead": false,
+    "configurationChanges": 0,
+    "newEnvironments": 0,
+    "cleanup": 0,
+    "reviewDenials": 0,
+    "uncertainActions": 0
+  },
+  "gates": {
+    "routineAvailabilityAndExistingReadbackReceipts": "PASS_METADATA_ONLY",
+    "freshCutoverSnapshotSeal": "PENDING_NO_CUTOVER_PLANNED_NO_NEW_RUN",
+    "authenticatedRestore": "HOLD_NOT_PROVED"
+  },
+  "existingFreshnessPolicy": {
+    "sourcePath": "/usr/local/sbin/melamedia-backup-watch.py",
+    "sourceSha256": "6c4bd6bf8f04c0381aebfcb5de22c65e4387c266a4ca8b96b71d120af71994ae",
+    "sourceLine": 84,
+    "maxAgeHours": 30,
+    "configurationKind": "Hardcoded existing watchdog assessment threshold, not an exported configurable RPO field",
+    "retentionHours": 72,
+    "cutoverRpoAccepted": false,
+    "limit": "Watchdog healthy age threshold is not approval of a deployment-cutover recovery point. No watchdog run performed."
+  }
+}

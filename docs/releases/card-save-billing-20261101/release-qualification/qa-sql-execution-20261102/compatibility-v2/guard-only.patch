@@ -1,0 +1,74 @@
+--- a/strict-test-guard.cjs
++++ b/strict-test-guard.cjs
+@@ -16,6 +16,35 @@
+ const inside = filename => filename === root || filename.startsWith(root + path.sep);
+ const fail = kind => { counts[kind]++; throw Object.assign(new Error('SQL_QA_' + kind.toUpperCase() + '_BLOCKED'), { code: 'SQL_QA_BOUNDARY_BLOCKED' }); };
+ const denyNetwork = () => fail('network');
++
++// PGlite0.5.10 NODEFS.staticInit reads exactly these public O_* enum values.
++// Under Node permission mode native process.binding is forbidden. Supply inert
++// same-platform data, never the native binding or any filesystem capability.
++const requiredFsConstantNames = Object.freeze([
++    'O_APPEND', 'O_CREAT', 'O_EXCL', 'O_NOCTTY', 'O_RDONLY',
++    'O_RDWR', 'O_SYNC', 'O_TRUNC', 'O_WRONLY', 'O_NOFOLLOW',
++]);
++const inertFsConstants = Object.create(null);
++for (const name of requiredFsConstantNames) {
++    const descriptor = Object.getOwnPropertyDescriptor(fs.constants, name);
++    assert.ok(descriptor && Object.hasOwn(descriptor, 'value') && Number.isSafeInteger(descriptor.value), 'Missing numeric public fs constant');
++    Object.defineProperty(inertFsConstants, name, { value: descriptor.value, enumerable: true });
++}
++Object.freeze(inertFsConstants);
++const inertConstantsBinding = Object.create(null);
++Object.defineProperty(inertConstantsBinding, 'fs', { value: inertFsConstants, enumerable: true });
++Object.freeze(inertConstantsBinding);
++let allowedBindingCalls = 0, rejectedBindingCalls = 0, completedBindingCanaries = 0;
++function inertBinding(name) {
++    if (arguments.length !== 1 || name !== 'constants') {
++        rejectedBindingCalls++;
++        return fail('forbiddenImport');
++    }
++    allowedBindingCalls++;
++    return inertConstantsBinding;
++}
++Object.freeze(inertBinding);
++Object.defineProperty(process, 'binding', { value: inertBinding, configurable: false, writable: false });
+ net.Socket.prototype.connect = denyNetwork;
+ net.Server.prototype.listen = denyNetwork;
+ tls.connect = denyNetwork;
+@@ -97,7 +126,33 @@
+         assert.throws(() => net.connect({ path: '/var/run/postgresql/.s.PGSQL.5432' }), /SQL_QA_NETWORK_BLOCKED/);
+         await assert.rejects(global.fetch('https://api.takbull.co.il/'), /SQL_QA_NETWORK_BLOCKED/);
+         assert.throws(() => child.execFile('/usr/bin/true'), /SQL_QA_NETWORK_BLOCKED/);
+-        assert.equal(counts.network, 4); counts.network = 0; return 4;
++        assert.deepEqual(counts, { network: 4, forbiddenImport: 0, forbiddenFs: 0 });
++        assert.equal(allowedBindingCalls, 0); assert.equal(rejectedBindingCalls, 0);
++        const enums = process.binding('constants');
++        assert.equal(Object.getPrototypeOf(enums), null);
++        assert.equal(Object.getPrototypeOf(enums.fs), null);
++        assert.ok(Object.isFrozen(enums) && Object.isFrozen(enums.fs));
++        assert.deepEqual(Object.keys(enums), ['fs']);
++        assert.deepEqual(Object.keys(enums.fs), [...requiredFsConstantNames]);
++        for (const name of requiredFsConstantNames) assert.equal(enums.fs[name], fs.constants[name]);
++        assert.equal(allowedBindingCalls, 1);
++        assert.throws(() => process.binding('tcp_wrap'), /SQL_QA_FORBIDDENIMPORT_BLOCKED/);
++        assert.equal(rejectedBindingCalls, 1);
++        assert.deepEqual(counts, { network: 4, forbiddenImport: 1, forbiddenFs: 0 });
++        // Reset only the exact, checked canary effects before original tests.
++        counts.network = 0; counts.forbiddenImport = 0;
++        allowedBindingCalls = 0; rejectedBindingCalls = 0; completedBindingCanaries = 2;
++        return 4;
+     },
+-    assertClean() { assert.deepEqual(counts, { network: 0, forbiddenImport: 0, forbiddenFs: 0 }); return { ...counts }; },
++    assertClean() {
++        assert.deepEqual(counts, { network: 0, forbiddenImport: 0, forbiddenFs: 0 });
++        assert.equal(process.binding, inertBinding);
++        assert.equal(rejectedBindingCalls, 0);
++        assert.equal(completedBindingCanaries, 2);
++        return { ...counts };
++    },
++    bindingCompatibility() {
++        return { inertConstants: true, allowedBindingCalls, rejectedBindingCalls, nativeBindingDelegations: 0 };
++    },
++    bindingCanaryCount() { return completedBindingCanaries; },
+ };

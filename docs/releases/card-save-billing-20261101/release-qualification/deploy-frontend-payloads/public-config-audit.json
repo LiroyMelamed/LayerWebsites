@@ -1,0 +1,56 @@
+{
+  "recordedAtUtc": "2026-11-01T23:31:40.281602+00:00",
+  "status": "READ_ONLY_PUBLIC_CONFIG_AUDIT_COMPLETED_BEFORE_DENIED_BUILD",
+  "canonicalAllowlistSha256": "a291ed29cdcd85bb809471ffbf48e70890b3206037be9096a2b40bf6d84c8667",
+  "productionUsedReactAppNames": [
+    "REACT_APP_API_BASE_URL",
+    "REACT_APP_APP_NAME",
+    "REACT_APP_NOREPLY_EMAIL",
+    "REACT_APP_CENTRAL_API_URL",
+    "REACT_APP_DEFAULT_LANG",
+    "REACT_APP_MULTI_TENANT",
+    "REACT_APP_FIRM_NAME",
+    "REACT_APP_VERSION"
+  ],
+  "publicSourceProvenance": {
+    "melamedia": {
+      "contract": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/cursor-reconciliation-20261101/fleet-rollout/build-contract-melamedia-sms-number-hidden-20261101.json",
+      "contractSha256": "f357623cba1428f54eb2a687fbac3d0e99796ad0c7fe7c61dbed8b4241da8219",
+      "publicHttpsReceipt": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/cursor-reconciliation-20261101/fleet-rollout/final/PUBLIC-melamedia-20261101T222305908107Z.json",
+      "publicBuildReceipt": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/build/melamedia-sms-number-hidden-20261101/build.json"
+    },
+    "melamedlaw": {
+      "contract": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/cursor-reconciliation-20261101/fleet-rollout/build-contract-melamedlaw-sms-number-hidden-20261101.json",
+      "contractSha256": "9efd3d9f445802f9d48be42c04bd1399f1f2a6b955f641019854b31a78690a61",
+      "publicHttpsReceipt": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/cursor-reconciliation-20261101/fleet-rollout/final/PUBLIC-melamedlaw-20261101T222346373465Z.json",
+      "publicBuildReceipt": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/build/melamedlaw-sms-number-hidden-20261101/build.json"
+    },
+    "morlevy": {
+      "contract": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/cursor-reconciliation-20261101/fleet-rollout/build-contract-morlevy-sms-number-hidden-20261101.json",
+      "contractSha256": "332ba6af87cf68b9458153817be79f59e260df17526736bf13e1cad7a504c690",
+      "publicHttpsReceipt": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/cursor-reconciliation-20261101/fleet-rollout/final/PUBLIC-morlevy-20261101T222332841457Z.json",
+      "publicBuildReceipt": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/build/morlevy-sms-number-hidden-20261101/build.json"
+    },
+    "ashrafessa": {
+      "contract": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/cursor-reconciliation-20261101/fleet-rollout/build-contract-ashrafessa-sms-number-hidden-20261101.json",
+      "contractSha256": "088dd8d665c556ef0bd369287266a30ed1db37f5e14966ce1c57fcd45a40ea22",
+      "publicHttpsReceipt": "/Users/liroymelamed/Documents/Codex/2026-10-25/melamedlaw/outputs/cursor-reconciliation-20261101/fleet-rollout/final/PUBLIC-ashrafessa-20261101T222316351085Z.json",
+      "publicBuildReceipt": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/outputs/word-stage-candidate-20261026/build/ashrafessa-sms-number-hidden-20261101/build.json"
+    }
+  },
+  "auditMethod": "Read-only source inspection and safe extraction of explicit public values from existing published-JS archives whose hashes are bound to the existing public HTTPS receipts. No private dotenv was read or copied.",
+  "preservedSourceDefaults": {
+    "REACT_APP_MULTI_TENANT": "Omitted for all tenants; strict true comparison remains false.",
+    "REACT_APP_FIRM_NAME": "Omitted for all tenants; source getFirmName()/existing fallback retained.",
+    "REACT_APP_VERSION": "Omitted for all tenants; source web-1.0.0 fallback retained.",
+    "MelamedLaw.REACT_APP_DEFAULT_LANG": "Omitted; source Hebrew fallback retained."
+  },
+  "historicalNativeSchemeNames": "Known in old public env objects but not used by current production source; not part of new allowlist.",
+  "apiKeyRequirement": "No production REACT_APP_API_KEY required; only synthetic safety-test fixture references it.",
+  "liveBaselineLimit": "Historical published receipts prove cutoff public API/config, not current served headers/index/CSP/protected-root bytes. Activation requires separately authorized fresh compare-and-swap preflight.",
+  "privateDotenvReads": 0,
+  "networkOperations": 0,
+  "buildsPerformed": 0,
+  "deploymentPerformed": false,
+  "buildStatus": "AUTOMATIC_APPROVAL_REVIEW_DENIED_BEFORE_PROCESS_CREATION; see approval-block.json"
+}

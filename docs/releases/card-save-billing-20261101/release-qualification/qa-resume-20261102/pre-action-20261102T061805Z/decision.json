@@ -1,0 +1,414 @@
+{
+  "classification": "GO_CANDIDATE_NO_ACTIVE_OBSERVED__NOT_ATOMIC_DRAIN_CERTIFICATION",
+  "receiptObservationUtc": [
+    "2026-11-02T06:18:07.680977+00:00",
+    "2026-11-02T06:18:09.614083+00:00"
+  ],
+  "sqlObservationUtc": [
+    "2026-11-02T06:18:09.000434+00:00",
+    "2026-11-02T06:18:09.301475+00:00"
+  ],
+  "scope": "One adjacent read-only snapshot of existing QA only; same existing app role and database. No more polls after handoff.",
+  "consistentSqlSnapshot": true,
+  "transactionIdentity": [
+    {
+      "role": "melamedia_app",
+      "database": "melamedia",
+      "readOnly": "on",
+      "transactionTime": "2026-11-02T07:18:09.165817+01:00"
+    }
+  ],
+  "beforeAfterIdentityStability": {
+    "appProcess": true,
+    "daemonProcess": true,
+    "hostBoot": true,
+    "envFileHash": true,
+    "dependenciesSymlinkAndLockHashes": true,
+    "sourceAndPid": true
+  },
+  "source": {
+    "head": "545779e4b99e111959f4684167dfdf46da1f3186",
+    "backendTree": "4ffd075308c7054a9f46ddac59f74accee4c6a4b",
+    "trackedClean": true,
+    "protectedEntries": 103,
+    "protectedMismatches": [],
+    "currentCodeHasFinancialGate": false,
+    "frozenCandidateRuntimeDifferenceCount": 14,
+    "frozenCandidateTestDifferenceCount": 11
+  },
+  "process": {
+    "pid": 2729957,
+    "procCwd": "/root/Melamedia/backend",
+    "procExe": "/usr/bin/node",
+    "startTicks": 124260326,
+    "cmdlineContainsExpectedServerPath": true
+  },
+  "daemon": {
+    "pid": 948103,
+    "procCwd": "/",
+    "procExe": "/usr/bin/node",
+    "startTicks": 48642921
+  },
+  "hostBootId": "79d5ef26-007c-4ee2-bfba-15db6bd5b1aa",
+  "environmentFileSha256": "9fc4bc04f6faa9e88347d3f94aa926750f616a54d2c9754fd86bc1bf94945281",
+  "dependencies": {
+    "isSymlink": true,
+    "linkTarget": "/root/qa-new-features-20261023-5ce621ee/staging/source02/backend/node_modules",
+    "resolvedTarget": "/root/qa-new-features-20261023-5ce621ee/staging/source02/backend/node_modules",
+    "targetExists": true,
+    "sourcePackageLockSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+    "installedPackageLockSha256": "bf476467ea9c57c366d6a610852233c85505ae450a25b95919165c44bf7b249f"
+  },
+  "nodeExeSha256": "3517c2df0b2f8cd7f422b4b8450ef81c6889f08eb03e281d6de9079b15e6a327",
+  "nineFlagProjection": {
+    "BILLING_OPERATIONS_ENABLED": {
+      "initial": null,
+      "file": null,
+      "effectiveProjection": null
+    },
+    "BACKGROUND_JOBS_ENABLED": {
+      "initial": "false",
+      "file": "false",
+      "effectiveProjection": "false"
+    },
+    "BILLING_RENEWAL_SCHEDULER_ENABLED": {
+      "initial": null,
+      "file": null,
+      "effectiveProjection": null
+    },
+    "SIGNING_V2_WORKER_ENABLED": {
+      "initial": null,
+      "file": "true",
+      "effectiveProjection": "true"
+    },
+    "WHATSAPP_WORKER_ENABLED": {
+      "initial": "false",
+      "file": "false",
+      "effectiveProjection": "false"
+    },
+    "WHATSAPP_DEMO_WORKER_ENABLED": {
+      "initial": "true",
+      "file": "true",
+      "effectiveProjection": "true"
+    },
+    "COURT_DEMO_SYNC_WORKER_ENABLED": {
+      "initial": "true",
+      "file": "true",
+      "effectiveProjection": "true"
+    },
+    "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": {
+      "initial": null,
+      "file": null,
+      "effectiveProjection": null
+    },
+    "CENTRAL_SYSTEM_MESSAGES_CAPTURE_ENABLED": {
+      "initial": null,
+      "file": null,
+      "effectiveProjection": null
+    }
+  },
+  "flagProjectionLimit": "Initial /proc values plus current file boot projection do not prove arbitrary in-process changes.",
+  "financialModeProjection": {
+    "TAKBULL_MODE": "prod",
+    "QA_OUTBOUND_MODE": "noop",
+    "SELF_SERVICE_SIGNUP_ENABLED": null
+  },
+  "initialProcessMetadata": {
+    "kill_timeout": null,
+    "autorestart": "true",
+    "exec_mode": "fork_mode",
+    "instances": null,
+    "pm_id": 5,
+    "pm_uptime": 1793573164106,
+    "status": "launching",
+    "PM2_KILL_TIMEOUT": null
+  },
+  "daemonKillTimeout": {
+    "daemonPid": 948103,
+    "initialPM2_KILL_TIMEOUT": null,
+    "limit": "Only this allowlisted nonsecret daemon value exported; unset is unknown, not a default."
+  },
+  "metadataLimit": "The process /proc environment reflects initial spawn metadata. status=launching is not live PM2 monitor status; unset timeout is not a measured grace period.",
+  "paymentIntents": [
+    {
+      "scope": "dedicated",
+      "kind": "retry",
+      "status": "succeeded",
+      "count": 1,
+      "hostedReferences": 1,
+      "transactionReferences": 0,
+      "pendingWithoutProviderReference": 0,
+      "createdHighWater": "2026-10-03T23:56:34.76328+02:00",
+      "updatedHighWater": "2026-10-03T23:57:02.988668+02:00"
+    },
+    {
+      "scope": "dedicated",
+      "kind": "setup",
+      "status": "succeeded",
+      "count": 1,
+      "hostedReferences": 1,
+      "transactionReferences": 0,
+      "pendingWithoutProviderReference": 0,
+      "createdHighWater": "2026-10-03T23:45:06.477551+02:00",
+      "updatedHighWater": "2026-10-03T23:46:04.707218+02:00"
+    }
+  ],
+  "billing": [
+    {
+      "rows": 1,
+      "billingEnabled": 0,
+      "autoRenewEnabled": 0,
+      "activeDueCandidates": 0,
+      "pastDueRetryCandidates": 0,
+      "updatedHighWater": "2026-10-04T00:03:20.806+02:00"
+    }
+  ],
+  "paymentMethods": [
+    {
+      "rows": 0,
+      "active": 0,
+      "updatedHighWater": null
+    }
+  ],
+  "signup": [],
+  "welcome": [],
+  "financialMarkers": {
+    "intentMarkers": [
+      {
+        "rows": 2,
+        "createdHighWater": "2026-10-03T23:56:34.76328+02:00",
+        "updatedHighWater": "2026-10-03T23:57:02.988668+02:00",
+        "settledHighWater": "2026-10-03T23:57:02.988668+02:00",
+        "selectedFieldFingerprint": "82d716a6924c09656d16a4288364d5f8"
+      }
+    ],
+    "billingMarkers": [
+      {
+        "rows": 1,
+        "updatedHighWater": "2026-10-04T00:03:20.806+02:00",
+        "selectedFieldFingerprint": "8d655cd4f7e81cd9584f37b71f892656"
+      }
+    ],
+    "methodMarkers": [
+      {
+        "rows": 0,
+        "createdHighWater": null,
+        "updatedHighWater": null,
+        "selectedFieldFingerprint": "d41d8cd98f00b204e9800998ecf8427e"
+      }
+    ],
+    "paymentEventMarkers": [
+      {
+        "rows": 4,
+        "createdHighWater": "2026-10-03T23:57:02.997842+02:00",
+        "selectedFieldFingerprint": "9b62469ef0be3dc29cfe6546d578d931"
+      }
+    ],
+    "signupMarkers": [
+      {
+        "rows": 0,
+        "createdHighWater": null,
+        "updatedHighWater": null,
+        "selectedFieldFingerprint": "d41d8cd98f00b204e9800998ecf8427e"
+      }
+    ]
+  },
+  "fingerprintLimit": "MD5 fingerprints cover selected identifiers, categorical state, timestamps and reference-presence booleans only. No amounts, raw references, tokens, card/contact values or payloads selected. Equal fingerprints are not proof that every financial field is unchanged.",
+  "workers": {
+    "signingJobs": [
+      {
+        "state": "complete",
+        "rows": 198,
+        "liveLeases": 0,
+        "staleRunning": 0,
+        "duePendingOrRetry": 0,
+        "creationHighWater": "2026-11-01T23:45:02.697862+01:00"
+      },
+      {
+        "state": "needs_attention",
+        "rows": 3,
+        "liveLeases": 0,
+        "staleRunning": 0,
+        "duePendingOrRetry": 0,
+        "creationHighWater": "2026-10-07T15:39:15.712829+02:00"
+      }
+    ],
+    "signingDeliveries": [
+      {
+        "state": "bundled",
+        "rows": 2,
+        "attemptHighWater": null,
+        "creationHighWater": "2026-10-08T20:50:17.156317+02:00"
+      },
+      {
+        "state": "pending",
+        "rows": 38,
+        "attemptHighWater": null,
+        "creationHighWater": "2026-10-09T20:00:36.001876+02:00"
+      },
+      {
+        "state": "provider_accepted",
+        "rows": 39,
+        "attemptHighWater": "2026-11-01T23:45:04.053474+01:00",
+        "creationHighWater": "2026-11-01T23:45:02.697862+01:00"
+      }
+    ],
+    "signingErrorEmails": [
+      {
+        "state": "simulated",
+        "rows": 4,
+        "liveLeases": 0
+      }
+    ],
+    "integrationClaims": [
+      {
+        "provider": "court_demo",
+        "rows": 1,
+        "enabled": 1,
+        "dispatchClaims": 0,
+        "courtDue": 0
+      },
+      {
+        "provider": "whatsapp",
+        "rows": 1,
+        "enabled": 0,
+        "dispatchClaims": 0,
+        "courtDue": 0
+      }
+    ],
+    "whatsappJobs": [
+      {
+        "status": "invitations_sent",
+        "rows": 2,
+        "due": 0,
+        "recipientSendingRows": 0,
+        "updatedHighWater": "2026-10-24T21:54:57.847113+02:00"
+      },
+      {
+        "status": "simulated",
+        "rows": 6,
+        "due": 0,
+        "recipientSendingRows": 0,
+        "updatedHighWater": "2026-10-24T02:36:01.062679+02:00"
+      }
+    ],
+    "legacySigningBatches": [],
+    "legacySigningRecipients": [],
+    "legacyCompletionMessages": [],
+    "legacyReminders": [],
+    "signingOtp": [
+      {
+        "state": "sent",
+        "rows": 2,
+        "unexpiredPending": 0,
+        "creationHighWater": "2026-10-07T12:30:15.852178+02:00"
+      },
+      {
+        "state": "verified",
+        "rows": 18,
+        "unexpiredPending": 0,
+        "creationHighWater": "2026-11-01T23:37:20.041707+01:00"
+      }
+    ]
+  },
+  "centralOutboxRelation": [
+    {
+      "relationPresent": false,
+      "kind": null
+    }
+  ],
+  "ownRoleSessions": [
+    {
+      "state": "idle",
+      "sessions": 1,
+      "oldestTransaction": null,
+      "oldestQuery": "2026-11-02T07:18:09.167475+01:00",
+      "waitEventType": "Client"
+    }
+  ],
+  "socketBefore": {
+    "ssExit": 0,
+    "connections": [
+      {
+        "state": "ESTAB",
+        "direction": "outbound_or_other",
+        "localPort": 62894,
+        "peerPort": 5432,
+        "peerCategory": "loopback_db",
+        "peerIsLoopbackAfterNormalization": true,
+        "peerUsesIpv4Mapping": false,
+        "inode": "13036470",
+        "qaFdNumbers": [
+          25
+        ],
+        "inodeBelongsToQaFd": true,
+        "tcpInfo": {
+          "bytes_sent": 405193,
+          "bytes_acked": 405194,
+          "bytes_received": 107028,
+          "lastsnd": 156,
+          "lastrcv": 153,
+          "lastack": 153,
+          "segs_out": 385,
+          "segs_in": 322
+        }
+      }
+    ],
+    "rawAddressOrPacketOutput": false
+  },
+  "socketAfter": {
+    "ssExit": 0,
+    "connections": [
+      {
+        "state": "ESTAB",
+        "direction": "outbound_or_other",
+        "localPort": 62894,
+        "peerPort": 5432,
+        "peerCategory": "loopback_db",
+        "peerIsLoopbackAfterNormalization": true,
+        "peerUsesIpv4Mapping": false,
+        "inode": "13036470",
+        "qaFdNumbers": [
+          25
+        ],
+        "inodeBelongsToQaFd": true,
+        "tcpInfo": {
+          "bytes_sent": 405571,
+          "bytes_acked": 405572,
+          "bytes_received": 107102,
+          "lastsnd": 133,
+          "lastrcv": 131,
+          "lastack": 131,
+          "segs_out": 387,
+          "segs_in": 323
+        }
+      }
+    ],
+    "rawAddressOrPacketOutput": false
+  },
+  "socketLimit": "Only sockets attributed to the QA PID via inode/fd at observation times. Normalized IPv4-mapped IPv6 loopback classification; no peer address or payload exported. Traffic byte increments do not prove business purpose or an atomic drain.",
+  "preserveHistoricalWork": [
+    "Two succeeded hosted-reference intents remain externally unassessed; no vendor request was made.",
+    "38 historical pending signing deliveries and 39 provider_accepted deliveries must not be cleared or replayed.",
+    "4 simulated error emails and 6 simulated WhatsApp jobs remain historical."
+  ],
+  "parentStillMustProveBeforeAction": [
+    "Exclusive existing maintenance/QA locks and continuous adjacent boundary which prevents or handles new issuance; a shared-lock snapshot did not freeze workers or HTTP.",
+    "Safe same-code/config/dependency return, PM2 stop timeout and saved-resurrect hazards; this agent did not mutate PM2 or config.",
+    "Controlled STOP/probe/return contract must verify process/listener/producer absence and compare financial watermarks before treating pause as established.",
+    "No billing-capable QA tests until provider isolation and all remaining test boundaries are certified."
+  ],
+  "limits": [
+    "One adjacent consistent SQL snapshot plus socket metadata does not freeze HTTP, scheduler or CLI issuance and is not an atomic drain proof.",
+    "Only existing app-role database session metadata is visible; no other-role activity/grants were requested.",
+    "No raw vendor reference/status was read; historical hosted pages remain externally unassessed.",
+    "No provider endpoint, app bootstrap, HTTP business route, PM2/config/service mutation or data write occurred.",
+    "No HTTP financial request metric/access-log mapping was safely established in this collection."
+  ],
+  "locksReleased": true,
+  "sshExit": 0,
+  "mutations": false,
+  "providerCalls": false,
+  "otherCustomerOrLiavDataRead": false,
+  "collectorSha256": "1ff14f46028d4815f21484e502ece02bcd2d18995f0f65705b4bb7fb8bbe6a45"
+}

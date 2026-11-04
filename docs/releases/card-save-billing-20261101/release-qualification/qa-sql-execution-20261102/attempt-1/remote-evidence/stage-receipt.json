@@ -1,0 +1,76 @@
+{
+  "after": {
+    "boot": "79d5ef26-007c-4ee2-bfba-15db6bd5b1aa",
+    "daemon": {
+      "cwd": "/",
+      "exe": "/usr/bin/node",
+      "pid": 948103,
+      "startTicks": 48642921
+    },
+    "dependencyTarget": "/root/qa-new-features-20261023-5ce621ee/staging/source02/backend/node_modules",
+    "envSha256": "9fc4bc04f6faa9e88347d3f94aa926750f616a54d2c9754fd86bc1bf94945281",
+    "head": "545779e4b99e111959f4684167dfdf46da1f3186",
+    "installedLockSha256": "bf476467ea9c57c366d6a610852233c85505ae450a25b95919165c44bf7b249f",
+    "nodeSha256": "3517c2df0b2f8cd7f422b4b8450ef81c6889f08eb03e281d6de9079b15e6a327",
+    "projectLockSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+    "qa": {
+      "cwd": "/root/Melamedia/backend",
+      "exe": "/usr/bin/node",
+      "pid": 2729957,
+      "startTicks": 124260326
+    }
+  },
+  "archiveBytes": 9903203,
+  "archiveSha256": "10908a08142a108e63247797fd1f334e63892dc87b1d5747aa5770ff4911f7e9",
+  "atUtc": "2026-11-02T07:59:21.809669+00:00",
+  "before": {
+    "boot": "79d5ef26-007c-4ee2-bfba-15db6bd5b1aa",
+    "daemon": {
+      "cwd": "/",
+      "exe": "/usr/bin/node",
+      "pid": 948103,
+      "startTicks": 48642921
+    },
+    "dependencyTarget": "/root/qa-new-features-20261023-5ce621ee/staging/source02/backend/node_modules",
+    "envSha256": "9fc4bc04f6faa9e88347d3f94aa926750f616a54d2c9754fd86bc1bf94945281",
+    "head": "545779e4b99e111959f4684167dfdf46da1f3186",
+    "installedLockSha256": "bf476467ea9c57c366d6a610852233c85505ae450a25b95919165c44bf7b249f",
+    "nodeSha256": "3517c2df0b2f8cd7f422b4b8450ef81c6889f08eb03e281d6de9079b15e6a327",
+    "projectLockSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+    "qa": {
+      "cwd": "/root/Melamedia/backend",
+      "exe": "/usr/bin/node",
+      "pid": 2729957,
+      "startTicks": 124260326
+    }
+  },
+  "cleanupPerformed": false,
+  "databaseConnections": 0,
+  "expandedBytes": 35714602,
+  "finishedAtUtc": "2026-11-02T07:59:24.528396+00:00",
+  "manifestSha256": "a9465814bcbf84438ccf85c4cfa5c49f805a0b6008d280b9be447b5f6537d9f1",
+  "nodeExecuted": false,
+  "payload": "/tmp/layer-billing-sql-sequences-20261102-6a3bd299/payload",
+  "providerCalls": 0,
+  "regularFiles": 324,
+  "resourcesBefore": {
+    "memAvailableBytes": 5770432512,
+    "tmpFreeBytes": 38959890432
+  },
+  "scopeAfter": {
+    "ActiveState": "inactive",
+    "ControlGroup": "",
+    "LoadState": "not-found"
+  },
+  "scopeBefore": {
+    "ActiveState": "inactive",
+    "ControlGroup": "",
+    "LoadState": "not-found"
+  },
+  "scopeCreated": false,
+  "serviceChanges": 0,
+  "serviceIdentityStable": true,
+  "sqlExecuted": false,
+  "status": "STAGED_VERIFIED_NOT_EXECUTED",
+  "target": "/tmp/layer-billing-sql-sequences-20261102-6a3bd299"
+}

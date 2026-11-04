@@ -1,0 +1,678 @@
+{
+  "tenant": "ashrafessa",
+  "baseUrl": "https://ashrafessa.mela-media.co.il/",
+  "historicalPublicReceiptSha256": "842ee6ffa044c34b22d02feb2fbdb8ca87d93f49062aceed265e9f35c6ee3db9",
+  "historicalCandidate": "bc964428a38bfa63a62b3ef6a5782c9b2e86d28a",
+  "requests": [
+    {
+      "url": "https://ashrafessa.mela-media.co.il/",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:55.297427+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:55.705855+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://ashrafessa.mela-media.co.il/",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "text/html"
+        ],
+        "last-modified": [
+          "Sun, 01 Nov 2026 21:59:51 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "cache-control": [
+          "no-cache"
+        ],
+        "x-frame-options": [
+          "SAMEORIGIN"
+        ],
+        "x-content-type-options": [
+          "nosniff"
+        ],
+        "referrer-policy": [
+          "strict-origin-when-cross-origin"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 8062,
+      "bodySha256": "74119c645e44b9e646b02e056e9ba3100db78cc252c48eecb932b660b013acb6",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/ashrafessa/index.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://ashrafessa.mela-media.co.il/asset-manifest.json",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:55.706091+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:55.932161+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://ashrafessa.mela-media.co.il/asset-manifest.json",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "application/json"
+        ],
+        "last-modified": [
+          "Sun, 01 Nov 2026 21:59:51 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "etag": [
+          "W/\"6ae7b657-3ed3\""
+        ],
+        "x-frame-options": [
+          "SAMEORIGIN"
+        ],
+        "x-content-type-options": [
+          "nosniff"
+        ],
+        "referrer-policy": [
+          "strict-origin-when-cross-origin"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 16083,
+      "bodySha256": "4cbb0e7150688d038a174fe922b4bae50316a437a16bcc893edfcd8815993529",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/ashrafessa/manifest.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://ashrafessa.mela-media.co.il/static/js/vendor-pdf.f63c2819.js",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:55.933169+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:56.352986+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://ashrafessa.mela-media.co.il/static/js/vendor-pdf.f63c2819.js",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "application/javascript"
+        ],
+        "last-modified": [
+          "Sun, 25 Oct 2026 18:13:39 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "etag": [
+          "W/\"6ade46d3-6969f\""
+        ],
+        "cache-control": [
+          "public, max-age=31536000, immutable"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 431775,
+      "bodySha256": "0848428eb81a4c5936b219d82f3e476bcea679ef940cc6cd184a91ef14055607",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/ashrafessa/entry-0.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://ashrafessa.mela-media.co.il/static/js/vendor-i18n.40936357.js",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:56.353641+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:56.432119+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://ashrafessa.mela-media.co.il/static/js/vendor-i18n.40936357.js",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "application/javascript"
+        ],
+        "last-modified": [
+          "Sun, 25 Oct 2026 18:13:39 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "etag": [
+          "W/\"6ade46d3-e52a\""
+        ],
+        "cache-control": [
+          "public, max-age=31536000, immutable"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 58666,
+      "bodySha256": "db33fc70cd1ea43bcaed46ca02cb186cdd8480a3580b8f17af4eade2a341100c",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/ashrafessa/entry-1.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://ashrafessa.mela-media.co.il/static/js/vendor-react.094da8d9.js",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:56.432503+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:56.876144+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://ashrafessa.mela-media.co.il/static/js/vendor-react.094da8d9.js",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "application/javascript"
+        ],
+        "last-modified": [
+          "Sun, 25 Oct 2026 18:13:39 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "etag": [
+          "W/\"6ade46d3-2d658\""
+        ],
+        "cache-control": [
+          "public, max-age=31536000, immutable"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 185944,
+      "bodySha256": "d7a816163d60b5282f0f8a1de60af3ac73d46ec4413680af99e540d0e0d8bfc5",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/ashrafessa/entry-2.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://ashrafessa.mela-media.co.il/static/js/vendor.2a0dc768.js",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:56.876563+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:56.974225+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://ashrafessa.mela-media.co.il/static/js/vendor.2a0dc768.js",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "application/javascript"
+        ],
+        "last-modified": [
+          "Wed, 28 Oct 2026 12:12:04 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "etag": [
+          "W/\"6ae1e694-39cd7\""
+        ],
+        "cache-control": [
+          "public, max-age=31536000, immutable"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 236759,
+      "bodySha256": "25569d049b110b7f71fa75ef8bc1319953db4bf4bd680c6c5fadec3f33916386",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/ashrafessa/entry-3.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://ashrafessa.mela-media.co.il/static/css/main.42e8b4df.css",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:56.974661+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:57.065912+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://ashrafessa.mela-media.co.il/static/css/main.42e8b4df.css",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "text/css"
+        ],
+        "last-modified": [
+          "Sun, 01 Nov 2026 17:28:10 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "etag": [
+          "W/\"6ae776aa-3b7ef\""
+        ],
+        "cache-control": [
+          "public, max-age=31536000, immutable"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 243695,
+      "bodySha256": "1f46257b0dc85897caf35388b1d6898e330e126aa4c9fec75f3df0486f0afcd2",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/ashrafessa/entry-4.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://ashrafessa.mela-media.co.il/static/js/main.b15bba80.js",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:57.066398+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:57.623558+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://ashrafessa.mela-media.co.il/static/js/main.b15bba80.js",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "application/javascript"
+        ],
+        "last-modified": [
+          "Sun, 01 Nov 2026 21:59:50 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "etag": [
+          "W/\"6ae7b656-1d1330\""
+        ],
+        "cache-control": [
+          "public, max-age=31536000, immutable"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 1905456,
+      "bodySha256": "7e948bc3de129c8417db4cd7fb4da5c3952c1b0be7d3d7a530fb2c5c3bd7fd3d",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/ashrafessa/entry-5.body",
+      "httpErrorCodeOnly": null
+    }
+  ],
+  "holds": [],
+  "scope": "Public static bytes only; no JavaScript execution/API/provider/customer data",
+  "htmlReferences": [
+    {
+      "tag": "link",
+      "reference": "https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap",
+      "attributes": {
+        "href": "https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap",
+        "rel": "stylesheet"
+      }
+    },
+    {
+      "tag": "script",
+      "reference": "/static/js/vendor-pdf.f63c2819.js",
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-pdf.f63c2819.js"
+      }
+    },
+    {
+      "tag": "script",
+      "reference": "/static/js/vendor-i18n.40936357.js",
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-i18n.40936357.js"
+      }
+    },
+    {
+      "tag": "script",
+      "reference": "/static/js/vendor-react.094da8d9.js",
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-react.094da8d9.js"
+      }
+    },
+    {
+      "tag": "script",
+      "reference": "/static/js/vendor.2a0dc768.js",
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor.2a0dc768.js"
+      }
+    },
+    {
+      "tag": "script",
+      "reference": "/static/js/main.b15bba80.js",
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/main.b15bba80.js"
+      }
+    },
+    {
+      "tag": "link",
+      "reference": "/static/css/main.42e8b4df.css",
+      "attributes": {
+        "href": "/static/css/main.42e8b4df.css",
+        "rel": "stylesheet"
+      }
+    },
+    {
+      "tag": "script",
+      "reference": "/mela-accessibility-534abbadadf2.js",
+      "attributes": {
+        "defer": null,
+        "src": "/mela-accessibility-534abbadadf2.js"
+      }
+    }
+  ],
+  "metaCsp": [],
+  "headerCsp": [],
+  "headerCspReportOnly": [],
+  "currentEntrypoints": [
+    "static/js/vendor-pdf.f63c2819.js",
+    "static/js/vendor-i18n.40936357.js",
+    "static/js/vendor-react.094da8d9.js",
+    "static/js/vendor.2a0dc768.js",
+    "static/css/main.42e8b4df.css",
+    "static/js/main.b15bba80.js"
+  ],
+  "historicalEntrypoints": [
+    "static/js/vendor-pdf.f63c2819.js",
+    "static/js/vendor-i18n.40936357.js",
+    "static/js/vendor-react.094da8d9.js",
+    "static/js/vendor.2a0dc768.js",
+    "static/css/main.42e8b4df.css",
+    "static/js/main.b15bba80.js"
+  ],
+  "indexMatchesHistoricalPublished": true,
+  "manifestMatchesHistoricalPublished": true,
+  "assets": [
+    {
+      "path": "static/js/vendor-pdf.f63c2819.js",
+      "httpBodySha256": "0848428eb81a4c5936b219d82f3e476bcea679ef940cc6cd184a91ef14055607",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    },
+    {
+      "path": "static/js/vendor-i18n.40936357.js",
+      "httpBodySha256": "db33fc70cd1ea43bcaed46ca02cb186cdd8480a3580b8f17af4eade2a341100c",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    },
+    {
+      "path": "static/js/vendor-react.094da8d9.js",
+      "httpBodySha256": "d7a816163d60b5282f0f8a1de60af3ac73d46ec4413680af99e540d0e0d8bfc5",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    },
+    {
+      "path": "static/js/vendor.2a0dc768.js",
+      "httpBodySha256": "25569d049b110b7f71fa75ef8bc1319953db4bf4bd680c6c5fadec3f33916386",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    },
+    {
+      "path": "static/css/main.42e8b4df.css",
+      "httpBodySha256": "1f46257b0dc85897caf35388b1d6898e330e126aa4c9fec75f3df0486f0afcd2",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    },
+    {
+      "path": "static/js/main.b15bba80.js",
+      "httpBodySha256": "7e948bc3de129c8417db4cd7fb4da5c3952c1b0be7d3d7a530fb2c5c3bd7fd3d",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    }
+  ],
+  "entrypointsMatchHistorical": true,
+  "allFetchedEntrypointsBound": true,
+  "indexSha256": "74119c645e44b9e646b02e056e9ba3100db78cc252c48eecb932b660b013acb6",
+  "manifestSha256": "4cbb0e7150688d038a174fe922b4bae50316a437a16bcc893edfcd8815993529",
+  "privateIndexPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/ashrafessa/index.body",
+  "privateManifestPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/ashrafessa/manifest.body",
+  "snapshotResult": "PASS_STATIC_SNAPSHOT",
+  "allScriptAndLinkIntegrityAttributes": [],
+  "scriptBodies": [
+    {
+      "bodySha256": "10651b13ce77e7177193902d69860cb3c4602ece01da95bcace625783283d15e",
+      "bodyBytes": 872,
+      "attributes": {
+        "type": "application/ld+json"
+      }
+    },
+    {
+      "bodySha256": "e2514252417c896f58f3710ebe92508a274a230f9e738539c3688eeb3a2cb7a5",
+      "bodyBytes": 258,
+      "attributes": {
+        "type": "application/ld+json"
+      }
+    },
+    {
+      "bodySha256": "46d1961d8b3b5b228c523049e383c6a2dbdc7a9cc429beb438d5816c84043b8c",
+      "bodyBytes": 2960,
+      "attributes": {}
+    },
+    {
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyBytes": 0,
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-pdf.f63c2819.js"
+      }
+    },
+    {
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyBytes": 0,
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-i18n.40936357.js"
+      }
+    },
+    {
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyBytes": 0,
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-react.094da8d9.js"
+      }
+    },
+    {
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyBytes": 0,
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor.2a0dc768.js"
+      }
+    },
+    {
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyBytes": 0,
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/main.b15bba80.js"
+      }
+    },
+    {
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyBytes": 0,
+      "attributes": {
+        "defer": null,
+        "src": "/mela-accessibility-534abbadadf2.js"
+      }
+    }
+  ],
+  "styleBodies": [],
+  "structureScope": "All actual script/link tags checked, including non-entrypoint and inline tags; no JavaScript executed."
+}

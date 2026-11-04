@@ -1,0 +1,55 @@
+{
+  "capturedAtUtc": "2026-11-02T00:07:59.463508+00:00",
+  "scope": "One non-secret flag only; fixed stream filters emit only enabled/disabled/unset; no DB/application/provider calls",
+  "rows": [
+    {
+      "tenant": "AshrafEssa",
+      "status": "READONLY_SINGLE_FLAG_CONFIRMED",
+      "selfServiceSignupFlagEnabled": false,
+      "initialProcessFlagPresent": false,
+      "currentEnvFileFlagPresent": false,
+      "effectiveOrigin": "unset_default_false",
+      "candidateModeFromRetainedPreflight": "dedicated"
+    },
+    {
+      "tenant": "MorLevi",
+      "status": "READONLY_SINGLE_FLAG_CONFIRMED",
+      "selfServiceSignupFlagEnabled": false,
+      "initialProcessFlagPresent": false,
+      "currentEnvFileFlagPresent": false,
+      "effectiveOrigin": "unset_default_false",
+      "candidateModeFromRetainedPreflight": "dedicated"
+    },
+    {
+      "tenant": "MelamedLaw",
+      "status": "READONLY_SINGLE_FLAG_CONFIRMED",
+      "selfServiceSignupFlagEnabled": false,
+      "initialProcessFlagPresent": false,
+      "currentEnvFileFlagPresent": false,
+      "effectiveOrigin": "unset_default_false",
+      "candidateModeFromRetainedPreflight": "dedicated"
+    }
+  ],
+  "completedAtUtc": "2026-11-02T00:08:00.453854+00:00",
+  "writes": 0,
+  "databaseQueries": 0,
+  "providerCalls": 0,
+  "sshExit": 0,
+  "retainedQa": {
+    "tenant": "Melamedia",
+    "capturedAtUtc": "2026-11-01T23:36:36.926546+00:00",
+    "selfServiceSignupFlagEnabled": false,
+    "candidateMode": "dedicated",
+    "freshRemoteReadForQa": false
+  },
+  "classification": "DISABLED_PATH_COVERAGE_GAP_AT_OBSERVED_CONFIGURATIONS",
+  "allFourSignupFlagsDisabled": true,
+  "productRuntimeFreeze": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "scopeCalibration": "With signup flag disabled and the retained dedicated modes unchanged, the missing full shared-signup fixture is disabled-path coverage, not an observed shared-startup failure. No test is marked PASS. Enabling signup or changing modes requires separate safe qualification and owner approval; profile and financial release holds remain.",
+  "projectionLimit": "Initial process flag plus current env-file fallback only; no in-process memory, application data, other flags or provider settings inspected.",
+  "approvalReview": {
+    "initialBroadCommandRejectedBeforeExecution": true,
+    "reason": "Unnecessary complete process environment/env-file extraction could expose credentials",
+    "safeAlternative": "Fixed single-key stream filters emitting Boolean enums only; no complete environment collection or PM2 jlist"
+  }
+}

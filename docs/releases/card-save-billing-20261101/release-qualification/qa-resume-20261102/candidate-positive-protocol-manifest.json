@@ -1,0 +1,40 @@
+{
+  "qualifiedSource": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "scope": "34 unchanged protocol/pricing tests only; no service arrears/next-cycle settlement proof",
+  "tests": [
+    "backend/tests/hostedPaymentVerification.test.js",
+    "backend/tests/signupPaymentVerification.test.js",
+    "backend/tests/takbullDocuments.test.js",
+    "backend/tests/pricingPackage.test.js",
+    "backend/tests/signupQuote.test.js"
+  ],
+  "modules": [
+    "backend/lib/billing/billingOperations.js",
+    "backend/lib/billing/pricingPackage.js",
+    "backend/lib/billing/signupQuote.js",
+    "backend/lib/billing/calendarMonths.js",
+    "backend/lib/payments/verifySignupPayment.js",
+    "backend/lib/payments/takbullClient.js",
+    "backend/lib/payments/takbullCredentials.js"
+  ],
+  "sourceSha256": {
+    "backend/lib/billing/billingOperations.js": "50932a1b1e8d9e167cd6ae377d2cea21d45344f191a24dce59aca6cb74f3d10f",
+    "backend/lib/billing/pricingPackage.js": "f5a6b2d1710a7ef3ad13df2e279261bd61769aa3d7640a58ef01bbfb002f1ffe",
+    "backend/lib/billing/signupQuote.js": "1c375fb2fd6380e25bbfdfe69c1705c139ed717858f0692493cb04aa2aa57f73",
+    "backend/lib/billing/calendarMonths.js": "69df959760a476d367de1b1a46ca81555b19b9eb08349815b3ee0c6e1d1ed87d",
+    "backend/lib/payments/verifySignupPayment.js": "65157d1c97ac6a7f7f87fd9b5c8891df9e65c3e21d77aae71c50ecbf43e90c90",
+    "backend/lib/payments/takbullClient.js": "9cd2d96d4644071de5baad44035a925d71085bad55f18ff30cff3a3aecb6afa6",
+    "backend/lib/payments/takbullCredentials.js": "5289997c9dbea082bdfff6c7437935236cbf02235819e8b69e8e29b51d429c8d",
+    "backend/tests/hostedPaymentVerification.test.js": "d28aea4e1bf451e82e32cd3e3f846b860c98628acfe125e61f5d2f4b90bc3b00",
+    "backend/tests/signupPaymentVerification.test.js": "595af5846da66d114bedc10072621dc1a00bde48d1482d001e7ef46e5e8f07c2",
+    "backend/tests/takbullDocuments.test.js": "0940270e94d2b9b761abb28d346a429e65de64246b669e8c8a0cb3ba479b3a08",
+    "backend/tests/pricingPackage.test.js": "685a7820fc456507075b05630556536293bf3b54afb927f8d6da2a1318bf8aa3",
+    "backend/tests/signupQuote.test.js": "c8526e2b884511fc2811c5ddae6557eadf56bb3e7ad9da8ab4117e952b646054"
+  },
+  "network": "No external or loopback sockets; VM default fetch throws; test fake fetch only; 4 outer deny canaries",
+  "database": "No application or synthetic database imported",
+  "environment": "VM synthetic env only, no host process/environment exposed",
+  "sourceChanges": false,
+  "bundleSha256": "5b6234611f5fea37c5e9d03cb96cf126733f842b63e7e0830521a3c31405035b",
+  "bundleBytes": 69216
+}

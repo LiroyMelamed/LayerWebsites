@@ -1,0 +1,82 @@
+{
+  "atUtc": "2026-11-01T23:24:36.981610+00:00",
+  "markdownLinks": [
+    {
+      "source": "README.md",
+      "target": "/Users/liroymelamed/Projects/WORKSPACE.md:62",
+      "exists": true
+    },
+    {
+      "source": "README.md",
+      "target": "/Users/liroymelamed/Projects/AGENTS.md:47",
+      "exists": true
+    },
+    {
+      "source": "README.md",
+      "target": "/Users/liroymelamed/Projects/LayerWebsites/AGENTS.md:79",
+      "exists": true
+    },
+    {
+      "source": "README.md",
+      "target": "MELAMED-FRONTEND.md",
+      "exists": true
+    },
+    {
+      "source": "README.md",
+      "target": "/Users/liroymelamed/Projects/ops/server-backup/server_backup.py:244",
+      "exists": true
+    },
+    {
+      "source": "README.md",
+      "target": "sources-and-format.json",
+      "exists": true
+    },
+    {
+      "source": "README.md",
+      "target": "/Users/liroymelamed/Projects/social-publish/engine/knowledge/audits/2026-10-11-r2-storage/recovery-tools/verify-completed-backups.py:83",
+      "exists": true
+    },
+    {
+      "source": "README.md",
+      "target": "/Users/liroymelamed/Projects/social-publish/engine/knowledge/audits/2026-10-11-r2-storage/recovery-tools/restore-in-isolation.py:31",
+      "exists": true
+    },
+    {
+      "source": "README.md",
+      "target": "/Users/liroymelamed/Projects/ops/server-cleanup/manual-review/verify_pack.py:19",
+      "exists": true
+    },
+    {
+      "source": "README.md",
+      "target": "ACTIONS.md",
+      "exists": true
+    },
+    {
+      "source": "README.md",
+      "target": "/Users/liroymelamed/Projects/ops/server-cleanup/release_cleaner.py:243",
+      "exists": true
+    },
+    {
+      "source": "MELAMED-FRONTEND.md",
+      "target": "melamed-frontend-archives.json",
+      "exists": true
+    },
+    {
+      "source": "MELAMED-FRONTEND.md",
+      "target": "/tmp/layer-billing-main-current-20261101/docs/releases/card-save-billing-20261101/rollout-plan/live-baselines/local-health-receipt-review.md",
+      "exists": true
+    },
+    {
+      "source": "ACTIONS.md",
+      "target": "sources-and-format.json",
+      "exists": true
+    }
+  ],
+  "brokenLinks": [],
+  "validJsonFiles": [
+    "sources-and-format.json",
+    "melamed-frontend-archives.json"
+  ],
+  "allValid": true,
+  "scope": "Read-only source/metadata review outputs only; no operational tests or actions run"
+}

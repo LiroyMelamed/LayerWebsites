@@ -1,0 +1,634 @@
+{
+  "tenant": "melamedia",
+  "baseUrl": "https://melamedia.mela-media.co.il/",
+  "historicalPublicReceiptSha256": "061e691ea4236ef48891e3b176fb9858c4a8e32689f0db9014eadb97f3e02365",
+  "historicalCandidate": "615078693afd117e2d488f5c5355f1338d622ad8",
+  "requests": [
+    {
+      "url": "https://melamedia.mela-media.co.il/",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:45.690848+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:46.118862+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://melamedia.mela-media.co.il/",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "text/html"
+        ],
+        "last-modified": [
+          "Sun, 01 Nov 2026 21:56:21 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 7060,
+      "bodySha256": "647fa89d259aa983335012867ea80c221585eef93a94cc25b47fc401e3aca5b7",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/melamedia/index.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://melamedia.mela-media.co.il/asset-manifest.json",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:46.119228+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:46.254596+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://melamedia.mela-media.co.il/asset-manifest.json",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "application/json"
+        ],
+        "last-modified": [
+          "Sun, 01 Nov 2026 21:56:21 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "etag": [
+          "W/\"6ae7b585-3ed3\""
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 16083,
+      "bodySha256": "caf65131a5c99f25a624954fb1a7a7252972f23a729644e3a930c29904acaed7",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/melamedia/manifest.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://melamedia.mela-media.co.il/static/js/vendor-pdf.f63c2819.js",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:46.256036+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:46.890569+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://melamedia.mela-media.co.il/static/js/vendor-pdf.f63c2819.js",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "application/javascript"
+        ],
+        "last-modified": [
+          "Sun, 25 Oct 2026 14:20:23 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "etag": [
+          "W/\"6ade1027-6969f\""
+        ],
+        "cache-control": [
+          "public, max-age=31536000, immutable"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 431775,
+      "bodySha256": "0848428eb81a4c5936b219d82f3e476bcea679ef940cc6cd184a91ef14055607",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/melamedia/entry-0.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://melamedia.mela-media.co.il/static/js/vendor-i18n.40936357.js",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:46.891127+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:47.226943+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://melamedia.mela-media.co.il/static/js/vendor-i18n.40936357.js",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "application/javascript"
+        ],
+        "last-modified": [
+          "Sun, 25 Oct 2026 14:20:23 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "etag": [
+          "W/\"6ade1027-e52a\""
+        ],
+        "cache-control": [
+          "public, max-age=31536000, immutable"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 58666,
+      "bodySha256": "db33fc70cd1ea43bcaed46ca02cb186cdd8480a3580b8f17af4eade2a341100c",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/melamedia/entry-1.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://melamedia.mela-media.co.il/static/js/vendor-react.094da8d9.js",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:47.227380+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:47.314892+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://melamedia.mela-media.co.il/static/js/vendor-react.094da8d9.js",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "application/javascript"
+        ],
+        "last-modified": [
+          "Sun, 25 Oct 2026 14:20:23 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "etag": [
+          "W/\"6ade1027-2d658\""
+        ],
+        "cache-control": [
+          "public, max-age=31536000, immutable"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 185944,
+      "bodySha256": "d7a816163d60b5282f0f8a1de60af3ac73d46ec4413680af99e540d0e0d8bfc5",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/melamedia/entry-2.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://melamedia.mela-media.co.il/static/js/vendor.2a0dc768.js",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:47.315349+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:47.470267+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://melamedia.mela-media.co.il/static/js/vendor.2a0dc768.js",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "application/javascript"
+        ],
+        "last-modified": [
+          "Mon, 26 Oct 2026 18:53:08 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "etag": [
+          "W/\"6adfa194-39cd7\""
+        ],
+        "cache-control": [
+          "public, max-age=31536000, immutable"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 236759,
+      "bodySha256": "25569d049b110b7f71fa75ef8bc1319953db4bf4bd680c6c5fadec3f33916386",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/melamedia/entry-3.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://melamedia.mela-media.co.il/static/css/main.9bf17f76.css",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:47.470710+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:47.935144+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://melamedia.mela-media.co.il/static/css/main.9bf17f76.css",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "text/css"
+        ],
+        "last-modified": [
+          "Sun, 01 Nov 2026 16:46:57 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "etag": [
+          "W/\"6ae76d01-3b807\""
+        ],
+        "cache-control": [
+          "public, max-age=31536000, immutable"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 243719,
+      "bodySha256": "4d30484d8b3bf5ac6030c336ce9c97efa411319e591023a9cc00253399d04b3b",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/melamedia/entry-4.body",
+      "httpErrorCodeOnly": null
+    },
+    {
+      "url": "https://melamedia.mela-media.co.il/static/js/main.ae388fc0.js",
+      "method": "GET",
+      "startedAtUtc": "2026-11-02T04:37:47.935633+00:00",
+      "finishedAtUtc": "2026-11-02T04:37:48.491856+00:00",
+      "curlExit": 0,
+      "httpStatus": 200,
+      "effectiveUrl": "https://melamedia.mela-media.co.il/static/js/main.ae388fc0.js",
+      "tlsVerifyResult": "0",
+      "tlsVerificationEnabled": true,
+      "redirectsFollowed": false,
+      "credentialsSent": false,
+      "cookiesSent": false,
+      "requestAcceptEncoding": "identity",
+      "retainedHeaders": {
+        "content-type": [
+          "application/javascript"
+        ],
+        "last-modified": [
+          "Sun, 01 Nov 2026 21:56:20 GMT"
+        ],
+        "vary": [
+          "Accept-Encoding"
+        ],
+        "etag": [
+          "W/\"6ae7b584-1d2f0b\""
+        ],
+        "cache-control": [
+          "public, max-age=31536000, immutable"
+        ]
+      },
+      "retainedHeaderAllowlist": [
+        "cache-control",
+        "content-encoding",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "content-type",
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy",
+        "etag",
+        "last-modified",
+        "permissions-policy",
+        "referrer-policy",
+        "strict-transport-security",
+        "vary",
+        "x-content-type-options",
+        "x-frame-options"
+      ],
+      "setCookieRetained": false,
+      "bodyBytes": 1912587,
+      "bodySha256": "fc1ad2bdaed19addd19554da0c451d8f346d28edfa17eaa272bc9afea3cbf5fd",
+      "privateBodyPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/melamedia/entry-5.body",
+      "httpErrorCodeOnly": null
+    }
+  ],
+  "holds": [],
+  "scope": "Public static bytes only; no JavaScript execution/API/provider/customer data",
+  "htmlReferences": [
+    {
+      "tag": "link",
+      "reference": "https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap",
+      "attributes": {
+        "href": "https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap",
+        "rel": "stylesheet"
+      }
+    },
+    {
+      "tag": "script",
+      "reference": "/static/js/vendor-pdf.f63c2819.js",
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-pdf.f63c2819.js"
+      }
+    },
+    {
+      "tag": "script",
+      "reference": "/static/js/vendor-i18n.40936357.js",
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-i18n.40936357.js"
+      }
+    },
+    {
+      "tag": "script",
+      "reference": "/static/js/vendor-react.094da8d9.js",
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-react.094da8d9.js"
+      }
+    },
+    {
+      "tag": "script",
+      "reference": "/static/js/vendor.2a0dc768.js",
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor.2a0dc768.js"
+      }
+    },
+    {
+      "tag": "script",
+      "reference": "/static/js/main.ae388fc0.js",
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/main.ae388fc0.js"
+      }
+    },
+    {
+      "tag": "link",
+      "reference": "/static/css/main.9bf17f76.css",
+      "attributes": {
+        "href": "/static/css/main.9bf17f76.css",
+        "rel": "stylesheet"
+      }
+    }
+  ],
+  "metaCsp": [],
+  "headerCsp": [],
+  "headerCspReportOnly": [],
+  "currentEntrypoints": [
+    "static/js/vendor-pdf.f63c2819.js",
+    "static/js/vendor-i18n.40936357.js",
+    "static/js/vendor-react.094da8d9.js",
+    "static/js/vendor.2a0dc768.js",
+    "static/css/main.9bf17f76.css",
+    "static/js/main.ae388fc0.js"
+  ],
+  "historicalEntrypoints": [
+    "static/js/vendor-pdf.f63c2819.js",
+    "static/js/vendor-i18n.40936357.js",
+    "static/js/vendor-react.094da8d9.js",
+    "static/js/vendor.2a0dc768.js",
+    "static/css/main.9bf17f76.css",
+    "static/js/main.ae388fc0.js"
+  ],
+  "indexMatchesHistoricalPublished": true,
+  "manifestMatchesHistoricalPublished": true,
+  "assets": [
+    {
+      "path": "static/js/vendor-pdf.f63c2819.js",
+      "httpBodySha256": "0848428eb81a4c5936b219d82f3e476bcea679ef940cc6cd184a91ef14055607",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    },
+    {
+      "path": "static/js/vendor-i18n.40936357.js",
+      "httpBodySha256": "db33fc70cd1ea43bcaed46ca02cb186cdd8480a3580b8f17af4eade2a341100c",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    },
+    {
+      "path": "static/js/vendor-react.094da8d9.js",
+      "httpBodySha256": "d7a816163d60b5282f0f8a1de60af3ac73d46ec4413680af99e540d0e0d8bfc5",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    },
+    {
+      "path": "static/js/vendor.2a0dc768.js",
+      "httpBodySha256": "25569d049b110b7f71fa75ef8bc1319953db4bf4bd680c6c5fadec3f33916386",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    },
+    {
+      "path": "static/css/main.9bf17f76.css",
+      "httpBodySha256": "4d30484d8b3bf5ac6030c336ce9c97efa411319e591023a9cc00253399d04b3b",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    },
+    {
+      "path": "static/js/main.ae388fc0.js",
+      "httpBodySha256": "fc1ad2bdaed19addd19554da0c451d8f346d28edfa17eaa272bc9afea3cbf5fd",
+      "htmlReferenceCount": 1,
+      "integrityPresent": false,
+      "integrityChecks": [],
+      "matchesHistoricalReceipt": true
+    }
+  ],
+  "entrypointsMatchHistorical": true,
+  "allFetchedEntrypointsBound": true,
+  "indexSha256": "647fa89d259aa983335012867ea80c221585eef93a94cc25b47fc401e3aca5b7",
+  "manifestSha256": "caf65131a5c99f25a624954fb1a7a7252972f23a729644e3a930c29904acaed7",
+  "privateIndexPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/melamedia/index.body",
+  "privateManifestPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-preflight/melamedia/manifest.body",
+  "snapshotResult": "PASS_STATIC_SNAPSHOT",
+  "allScriptAndLinkIntegrityAttributes": [],
+  "scriptBodies": [
+    {
+      "bodySha256": "405ed5f710fdb7db5409d81ed73479e35660eb5b9d60ea374a7a689a7e8ee1ba",
+      "bodyBytes": 168,
+      "attributes": {
+        "type": "application/ld+json"
+      }
+    },
+    {
+      "bodySha256": "88c675c85496b14a9aba586dce8482384ed45e2cb828afe118ce8afce1ca600b",
+      "bodyBytes": 3587,
+      "attributes": {}
+    },
+    {
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyBytes": 0,
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-pdf.f63c2819.js"
+      }
+    },
+    {
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyBytes": 0,
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-i18n.40936357.js"
+      }
+    },
+    {
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyBytes": 0,
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor-react.094da8d9.js"
+      }
+    },
+    {
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyBytes": 0,
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/vendor.2a0dc768.js"
+      }
+    },
+    {
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyBytes": 0,
+      "attributes": {
+        "defer": "defer",
+        "src": "/static/js/main.ae388fc0.js"
+      }
+    }
+  ],
+  "styleBodies": [],
+  "structureScope": "All actual script/link tags checked, including non-entrypoint and inline tags; no JavaScript executed."
+}

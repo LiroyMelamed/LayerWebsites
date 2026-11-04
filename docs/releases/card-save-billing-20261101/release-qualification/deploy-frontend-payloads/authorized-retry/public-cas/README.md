@@ -1,0 +1,13 @@
+# Persisted public frontend/CSP/SRI snapshot and local collision expectations
+
+All four previously captured public frontends passed32 TLS-verified GETs: rootHTML, asset manifest and six exact static entrypoints each. The captures are from the timestamps in the retained [summary](summary.json); this reconnection check made NOnewHTTPSrequest, API/provider call or JavaScript execution. Cookies/credentials were not sent and Set-Cookie was not retained. Header allowlists and HTML were captured from the same response.
+
+The retained index/manifest/entrypoint hashes and paths match the latest source-bound public publication receipts from1November22:23UTC. Their original snapshot proofs remain intact: [QA](melamedia.json), [Ashraf](ashrafessa.json), [Mor](morlevy.json), [Melamed](melamedlaw.json). Raw public bodies stay private0600 in their recorded/tmpcachepaths.
+
+The captured root responses had no enforced/report-onlyCSPheaders, no metaCSP and no integrityattribute on any actual script/linktag. This is measured absence atcapturetime, not a security-policy certification or permission to add/strip policy. Inline script hashes were recorded without execution (QA2, others3).
+
+The [four pure CASdryruns](../cas-review/README.md) replace only six src/href entrypointattributes by reviewed CRAroles. The inverse restores every captured HTMLbyte; inlinecontent, nativehandoff, branding/metadata and other rootreferences remain unchanged. Current and proposed nonstatic manifest mappings are identical(index.html only), so the static-only payload introduces no unuploadedrootreference.
+
+[Expected staticcollision hashes](expected-static-collision-hashes.json) now additionally match the SHA-bound published local archives forQA21, Ashraf21, Mor19 and Melamed19intersections. The actual newcandidatefiles have the same bytes. These are EXPECTATIONS, not current remote filesystemhashes. Each colliding remote path must still be checked under the canonical publicationlock; same-name/different-content aborts, never overwrites. Retain all oldchunks and protectedrootfiles.
+
+Closed for the captured inputs: public snapshot/sourcebinding, actualCSP/SRI observation, entrypointcontentbinding and invertible byte-preserving HTMLplan. Stillopen: fresh lock-held canonicalroot/protected/oldchunk inventory and finaltarget/source/index/manifestCAS immediately beforewrites. Publicbytes may be cache-served and cannot replace an actualfilesystem/verifiedFTPpreimage. Refresh beforeactivation; do not reuse expiredbackendproofs or stale publisherconstants. BackendQA/backup/restore/rollback/drain/financialsafety gates remain separate. No remote file was uploaded/replaced/removed.

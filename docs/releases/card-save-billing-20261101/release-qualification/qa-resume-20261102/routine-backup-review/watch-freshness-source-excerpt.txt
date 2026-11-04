@@ -1,0 +1,20 @@
+75:  failures=[];checks=[]
+76:  for project in config['projects']:
+77:   name=project['name'];folder=Path(root)/name;items=[]
+78:   for p in folder.glob('*/manifest.json'):
+79:    if p.is_symlink():continue
+80:    try:items.append((dt.datetime.fromisoformat(json.loads(p.read_text())['created_at']),p,json.loads(p.read_text())))
+81:    except (ValueError,KeyError,json.JSONDecodeError):continue
+82:   if not items:failures.append(name+': no_complete_manifest');continue
+83:   created,p,item=max(items,key=lambda x:x[0]);age=(now-created).total_seconds()
+84:   if not 0<=age<=30*3600:failures.append(name+': backup_stale')
+85:   if item.get('local_complete') is not True or item.get('encrypted') is not True:failures.append(name+': incomplete_or_unencrypted')
+86:   if item.get('offsite')!='verified_readback' and not (config.get('local_generation_only') and age<3600):failures.append(name+': offsite_unverified')
+87:   artifact=p.parent/'bundle.cms'
+88:   if not artifact.is_file() or artifact.stat().st_size!=item['bytes']:failures.append(name+': local_ciphertext_missing_or_size_changed')
+89:   if head and project.get('storage') and item.get('remote_key'):
+90:    try:head(project['storage'],item['remote_key'],item['bytes'])
+91:    except Exception:failures.append(name+': remote_ciphertext_unavailable')
+92:   checks.append({'project':name,'age_hours':round(age/3600,2),'offsite':item.get('offsite'),'generation':p.parent.name})
+93:  if publisher:
+94:   names={x['project'] for x in receipts or []}

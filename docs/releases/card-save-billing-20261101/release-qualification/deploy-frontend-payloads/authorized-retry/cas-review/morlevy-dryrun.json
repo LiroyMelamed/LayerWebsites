@@ -1,0 +1,113 @@
+{
+  "tenant": "morlevy",
+  "scope": "pure local CAS plan on current public HTTPS snapshot, no publication",
+  "actualCompileSource": "b05d66f9f7873753e520c554f4b2c1c540e6682b",
+  "freshPublicSnapshotSha256": "3b904dcde76505c4030a55fabd676dbf9bbc2cd6f6da7c12ae9dc66d8c5ec0d9",
+  "oldIndexSha256": "624a600c5287e83d89a73f3a45965bf51cdc9aba82a48fbcac60cad7506a9899",
+  "oldManifestSha256": "701c12dea0b77a2823415d6a36de9bb0d29f55a10ae37327632e37db147da9aa",
+  "proposedIndexSha256": "5535f7bd0b19569539606195f47c51c240542ee996546fce58af30cf9fa098f1",
+  "proposedManifestSha256": "e37ec7ed29bb1ea0b8868b750b7e3b993bc5c08893bedbd9f84d7726e1df3aba",
+  "mergeProof": {
+    "oldIndexSha256": "624a600c5287e83d89a73f3a45965bf51cdc9aba82a48fbcac60cad7506a9899",
+    "newIndexSha256": "5535f7bd0b19569539606195f47c51c240542ee996546fce58af30cf9fa098f1",
+    "entrypointMap": {
+      "static/js/vendor-pdf.f63c2819.js": "static/js/vendor-pdf.9b7d4296.js",
+      "static/js/vendor-i18n.40936357.js": "static/js/vendor-i18n.074fe7e8.js",
+      "static/js/vendor-react.094da8d9.js": "static/js/vendor-react.bc82a7fe.js",
+      "static/js/vendor.2a0dc768.js": "static/js/vendor.7b6aff43.js",
+      "static/css/main.42e8b4df.css": "static/css/main.4d9ec64c.css",
+      "static/js/main.15483ae9.js": "static/js/main.bc38222f.js"
+    },
+    "referenceCounts": {
+      "static/js/vendor-pdf.f63c2819.js": 1,
+      "static/js/vendor-i18n.40936357.js": 1,
+      "static/js/vendor-react.094da8d9.js": 1,
+      "static/js/vendor.2a0dc768.js": 1,
+      "static/css/main.42e8b4df.css": 1,
+      "static/js/main.15483ae9.js": 1
+    },
+    "inverseRestoresEveryOriginalByte": true,
+    "otherInlineBootstrapMetaSeoNativeHtmlBytesUnchanged": true,
+    "publicAssetsToReplace": [
+      "index.html",
+      "asset-manifest.json"
+    ],
+    "newStaticChunksAddedWithoutDeletingOldChunks": true
+  },
+  "sameNonEntryRootReferences": true,
+  "rootReferenceCount": 10,
+  "sameInlineScriptsAndStyles": true,
+  "inlineBlockHashes": [
+    {
+      "tag": "script",
+      "sha256": "acb6b434e59b772c91060eb1bccf45c0ce273d0311f2070b65fc885d99e6ed3b"
+    },
+    {
+      "tag": "script",
+      "sha256": "cbe4af039dc301394e96e17ec344838f11ae84507c3286718957eeaad472f967"
+    },
+    {
+      "tag": "script",
+      "sha256": "621826cb12a4663b3177e8fbe497b8cb167cd8d70b3a92889834eac321780766"
+    }
+  ],
+  "sriNonemptyAttributeCount": 0,
+  "cspObservation": {
+    "enforcedHeaderCount": 0,
+    "reportOnlyHeaderCount": 0,
+    "metaPolicyCount": 0,
+    "classification": "CSP_ABSENT_ON_CAPTURED_PUBLIC_RESPONSES; preserve absence, not a CSP enforcement/security acceptance claim",
+    "httpHeaderConfigurationChanged": false
+  },
+  "entrypointsAllIncludedInVerifiedStaticArchive": true,
+  "newManifestNonStaticRefs": {
+    "index.html": "/index.html"
+  },
+  "privateProposedIndexPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-dryrun/morlevy/index.proposed.html",
+  "privateProposedManifestPath": "/tmp/layer-billing-deploy-payloads-20261101/public-cas-dryrun/morlevy/asset-manifest.proposed.json",
+  "publicSnapshotGateClosed": true,
+  "bytePreservingMergeGateClosed": true,
+  "fullLockedRootOrPublicationGateClosed": false,
+  "remainingActivationGates": [
+    "fresh canonical root/index/manifest/protected-file/old-chunk inventory under existing locks",
+    "current raw root bytes must bind captured public bytes; no unreviewed dynamic HTML transform",
+    "current root/server CSP/branding/handoff preserved; no wholesale compiled-root copy",
+    "exact frozen backend readiness/QA/backup/restore/drain approval conditions",
+    "reviewed new publisher contract; historical constants/QA acceptance/expiry cannot be reused blindly",
+    "static first, fullhash collision checks, old chunks retained, last-moment CAS of mutable files",
+    "post-publication exact public hash/header verification; partial outcomes inspected before any retry"
+  ],
+  "currentNonStaticManifestMappings": {
+    "index.html": "/index.html"
+  },
+  "newNonStaticManifestMappings": {
+    "index.html": "/index.html"
+  },
+  "manifestNonStaticMappingsExactlyUnchanged": true,
+  "staticCollisionPreflight": {
+    "intersectingCurrentManifestPaths": 19,
+    "freshPublicEntrypointHashMatches": [],
+    "otherPathsRequiringLockedCanonicalFilesystemHashChecks": [
+      "static/media/AllManagers.7126a03d7c27213de2ad.png",
+      "static/media/AppBackground.620be0dabb2027013c3f.jpg",
+      "static/media/ISO-27701-logo.01351318947ec05ce0f5.png",
+      "static/media/ISO-logo.7ef757781907c8eef229.png",
+      "static/media/Iso22301-logo.14c4de0849abf697840c.png",
+      "static/media/MagnifyingGlass.d466bf7953662b736fc7.png",
+      "static/media/Weight.ee6259e93735981156d0.png",
+      "static/media/X.28e784309fe66fcff48d.png",
+      "static/media/analytics.bf28dfb8ee06dc5f0eba.png",
+      "static/media/apple-calendar.c79c232980dc078c4ba7.png",
+      "static/media/cases.bafbde8cf2510c7929f7.png",
+      "static/media/casesType.d6cef8ef5aef864321f3.png",
+      "static/media/dataFlowing.9f81647815d15e83ce62.png",
+      "static/media/google-maps.f8ffe032804f4d25073f.png",
+      "static/media/logo.2c5d6b013a8ac4d265ae.png",
+      "static/media/logo2.50b70182ecf501da0321.png",
+      "static/media/managers.fadbb2bc0cda1f1394dc.png",
+      "static/media/searchingClient.f27d1f338e64df970a12.png",
+      "static/media/taggedCase.dea931141e9585cbfd33.png"
+    ],
+    "overwritePermittedOnSamePathDifferentBytes": false
+  }
+}
