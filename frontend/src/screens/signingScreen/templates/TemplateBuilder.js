@@ -1,3 +1,4 @@
+import SimpleInput from '../../../components/simpleComponents/SimpleInput';
 import SimplePopUp from '../../../components/simpleComponents/SimplePopUp';
 import ConfirmationDialog from '../../../components/styledComponents/popups/ConfirmationDialog';
 import SigningSelect from './SigningSelect';
@@ -209,7 +210,7 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
             {['setup', 'documents', 'review'].map((key, index) => <button key={key} type="button" aria-current={step === index ? 'step' : undefined} disabled={busy || (index > 0 && (!draft.name.trim() || draft.roles.some(role => !role.name.trim())))} onClick={() => setStep(index)}><span>{number(index + 1)}</span>{t(key)}</button>)}
         </nav>
         {step === 0 && <><div className="lw-templates__setup">
-            <label>{t('name')}<input value={draft.name} maxLength={120} onChange={e => change({ name: e.target.value })} placeholder={t('nameExample')} /></label>
+            <label>{t('name')}<SimpleInput timeToWaitInMilli={0} value={draft.name} maxLength={120} onChange={e => change({ name: e.target.value })} placeholder={t('nameExample')} /></label>
             <label>{t('order')}<SigningSelect dir={direction} value={draft.signingOrder} onChange={e => change({ signingOrder: e.target.value, ...(e.target.value === 'grouped' ? { signingGroups: draft.signingOrder === 'sequential' ? draft.roles.map(role => [role.id]) : [draft.roles.map(role => role.id)] } : {}) })}><option value="parallel">{t('parallel')}</option><option value="sequential">{t('sequential')}</option>{native && <option value="grouped">{translate('signingV2.compose.order.grouped')}</option>}</SigningSelect></label>
         </div>
         <TemplateRoles draft={draft} onChange={change} roleId={roleId} onRoleId={setRoleId} native={native} />
@@ -222,7 +223,7 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
         {!document ? <div className="lw-templates__empty"><h3>{t('emptyTitle')}</h3><p>{t('emptyBody')}</p></div> : <>
             <details className="lw-templates__documentSettings"><summary>{translate('signingV2.authoring.documentSettings')}</summary>
                 <div className="lw-templates__setup">
-                    <label>{t('documentName')}<input value={document.name} maxLength={160} onChange={e => updateDocument(doc => ({ ...doc, name: e.target.value }))} /></label>
+                    <label>{t('documentName')}<SimpleInput timeToWaitInMilli={0} value={document.name} maxLength={160} onChange={e => updateDocument(doc => ({ ...doc, name: e.target.value }))} /></label>
                     {native && <TemplateDocumentCondition key={document.id} fields={draft.dataKeys || []} condition={document.nativeDocument?.when}
                         onChange={when => updateDocument(doc => ({ ...doc, nativeDocument: { ...doc.nativeDocument, when } }))} />}
                     <button type="button" onClick={() => { change({ documents: draft.documents.filter((_, i) => i !== activeDoc) });setActiveDoc(0);setSelected(null); }}>{t('removeDoc')}</button>
@@ -290,7 +291,7 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
                 {(draft.nativeDefinition?.policy?.internalApproval || draft.nativeDefinition?.policy?.requiredAllPdfReview) && <label className="lw-templates__check"><input type="checkbox" checked={!!draft.nativeDefinition?.policy?.soloApproval}
                     onChange={e=>change({nativeDefinition:{...draft.nativeDefinition,policy:{...draft.nativeDefinition.policy,soloApproval:e.target.checked}}})}/>{translate('signingV2.approval.templateSolo')}</label>}
             </div>}
-            {!native && <details><summary>{t('extra')}</summary><div className="lw-templates__setup">            <label>{t('completionEmail')}<input type="email" dir="ltr" value={draft.completionEmail} onChange={e => change({ completionEmail: e.target.value })} placeholder="office@example.com" /></label>
+            {!native && <details><summary>{t('extra')}</summary><div className="lw-templates__setup">            <label>{t('completionEmail')}<SimpleInput timeToWaitInMilli={0} type="email" dir="ltr" value={draft.completionEmail} onChange={e => change({ completionEmail: e.target.value })} placeholder="office@example.com" /></label>
             <label>{t('completionMode')}<SigningSelect dir={direction} value={draft.completionMode || 'document'} onChange={e => change({ completionMode: e.target.value })}><option value="document">{t('completionDocument')}</option><option value="package">{t('completionPackage')}</option></SigningSelect></label>
 </div></details>}
         </section>}
@@ -314,7 +315,7 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
                 <fieldset disabled={busy}><legend>{t('selectedField')}</legend>
                     {field.fieldType === 'data' ? <>
                         <label>{translate('signingV2.authoring.dataField')}<SigningSelect dir={direction} value={field.dataKey || ''} onChange={e => updateField(selected, { dataKey: e.target.value })}>{draft.dataKeys.map(key => <option value={key.key} key={key.key}>{key.label || key.key}</option>)}</SigningSelect></label>
-                        <label>{translate('signingV2.authoring.fontSize')}<input type="number" min="8" max="72" value={field.fontSize || 14} onChange={e => updateField(selected, { fontSize: Number(e.target.value) })} /></label>
+                        <label>{translate('signingV2.authoring.fontSize')}<SimpleInput timeToWaitInMilli={0} type="number" min="8" max="72" value={field.fontSize || 14} onChange={e => updateField(selected, { fontSize: Number(e.target.value) })} /></label>
                         <p>{translate('signingV2.authoring.overflow')}</p>
                     </> : field.fieldType === 'completionMark' ? <p>{translate('signingV2.completionMark.help')}</p> : <label>{t('signer')}<SigningSelect dir={direction} value={field.roleId} onChange={e => updateField(selected, { roleId: e.target.value, occurrence: 0 })}>{draft.roles.map(role => <option key={role.id} value={role.id}>{role.name}</option>)}</SigningSelect></label>}
                     {!['data', 'completionMark'].includes(field.fieldType) && slotSelect('selected-field-person', draft.roles.find(role => role.id === field.roleId), field.occurrence ?? field.nativeField?.occurrence ?? 0, next => updateField(selected, { occurrence: next }))}
@@ -326,7 +327,7 @@ export default function TemplateBuilder({ template, onBack, onSaved, adapter, on
                                 {['exclude_document', 'authored_inactive'].map(value => <option key={value} value={value}>{translate(`signingV2.authoring.condition.${value}`)}</option>)}
                             </SigningSelect></label>;
                     })()}
-                    <label>{t('label')}<input value={field.fieldLabel || ''} maxLength={120} onChange={e => updateField(selected, { fieldLabel: e.target.value })} /></label>
+                    <label>{t('label')}<SimpleInput timeToWaitInMilli={0} value={field.fieldLabel || ''} maxLength={120} onChange={e => updateField(selected, { fieldLabel: e.target.value })} /></label>
                     {!['data', 'completionMark'].includes(field.fieldType) && <label className="lw-templates__check"><input type="checkbox" checked={field.isRequired} onChange={e => updateField(selected, { isRequired: e.target.checked })} />{t('required')}</label>}
                     {native && <details className="lw-templates__fieldSize"><summary>{t('fieldSize')}</summary>
                         <p>{t('fieldSizeHelp')}</p>

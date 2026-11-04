@@ -3,6 +3,7 @@ const fs=require('node:fs'),vm=require('node:vm');const {createRequire}=require(
 const filename=require.resolve('../tasks/calendarReminders/scheduler');
 const localRequire=createRequire(filename);
 function fixture(){
+ const env={CALENDAR_REMINDERS_ENABLED:'false'};
  let enabled='false',minutes=5,now=1000000,callback,queries=0;
  const module={exports:{}};
  const requireStub=name=>{
@@ -13,10 +14,10 @@ function fixture(){
   return localRequire(name);
  };
  class Clock extends Date{static now(){return now;}}
- vm.runInNewContext(fs.readFileSync(filename,'utf8')+'\nmodule.exports.offsetsForRole=_offsetsForRole;', {require:requireStub,module,process:{env:{}},Date:Clock,console:{log(){},error(){}}});
- return{api:module.exports,get queries(){return queries;},setEnabled(v){enabled=v;},setMinutes(v){minutes=v;},advance(v){now+=v;},async tick(){callback();for(let i=0;i<25;i++)await Promise.resolve();}};
+ vm.runInNewContext(fs.readFileSync(filename,'utf8')+'\nmodule.exports.offsetsForRole=_offsetsForRole;', {require:requireStub,module,process:{env},Date:Clock,console:{log(){},error(){}}});
+ return{api:module.exports,get queries(){return queries;},setEnabled(v){enabled=v;env.CALENDAR_REMINDERS_ENABLED=v;},setMinutes(v){minutes=v;},advance(v){now+=v;},async tick(){callback();for(let i=0;i<25;i++)await Promise.resolve();}};
 }
-test('disabled scheduler stays subscribed, activates without restart, then stops when disabled',async()=>{
+test('operational environment stop stays effective; event choices do not depend on a hidden UI switch',async()=>{
  const f=fixture();const started=await f.api.initCalendarReminderScheduler();assert.equal(started.taskStarted,true);assert.equal(f.queries,0);
  await f.api.processCalendarReminders();await f.api.fireImmediateRemindersForEvent(1);assert.equal(f.queries,0);
  f.setEnabled('true');await f.tick();const after=f.queries;assert.ok(after>0);

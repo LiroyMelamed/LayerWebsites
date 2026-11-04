@@ -287,8 +287,12 @@ export default function PersonalSyncModal({ onEventsChanged }) {
         try {
             const res = await calendarApi.syncGoogleEvents();
             if (res?.success && res?.data?.synced !== undefined) {
-                setGoogleSyncMsg(t("calendar.googleSyncSuccess", { count: res.data.synced }));
+                const needsAttention = res.data.failed > 0 || res.data.conflicts > 0;
+                setGoogleSyncError(needsAttention);
+                setGoogleSyncMsg(t(needsAttention ? 'calendar.googleSyncNeedsAttention' : 'calendar.googleSyncSuccess', { count: res.data.synced }));
                 onEventsChanged?.();
+            } else if (res?.success && res?.data?.busy) {
+                setGoogleSyncMsg(t('calendar.googleSyncBusy'));
             } else {
                 setGoogleSyncMsg(res?.data?.message || t("calendar.googleSyncError"));
                 setGoogleSyncError(true);
@@ -300,6 +304,26 @@ export default function PersonalSyncModal({ onEventsChanged }) {
             setGoogleSyncError(true);
             if (err?.response?.data?.reconnect) refetchGoogleStatus();
         } finally {
+            await refetchGoogleStatus();
+            setGoogleSyncing(false);
+        }
+    };
+
+    const resolveGoogleConflict = async (item, choice) => {
+        setGoogleSyncing(true);
+        setGoogleSyncMsg('');
+        try {
+            const res = await calendarApi.resolveGoogleConflict(item.id, choice, item.revision);
+            if (!res?.success) throw new Error(res?.data?.message || t('calendar.googleSyncError'));
+            const pending = res.data?.failed > 0 || res.data?.conflicts > 0 || res.data?.busy;
+            setGoogleSyncError(!!pending);
+            setGoogleSyncMsg(t(pending ? 'calendar.googleSyncNeedsAttention' : 'calendar.googleConflictResolved'));
+            onEventsChanged?.();
+        } catch (error) {
+            setGoogleSyncError(true);
+            setGoogleSyncMsg(error.message || t('calendar.googleSyncError'));
+        } finally {
+            await refetchGoogleStatus();
             setGoogleSyncing(false);
         }
     };
@@ -449,9 +473,9 @@ export default function PersonalSyncModal({ onEventsChanged }) {
                         <PrimaryButton onPress={handleSubscribePhone} isPerforming={icalLoading}>
                             {t("calendar.icalSubscribeDevice")}
                         </PrimaryButton>
-                        <SecondaryButton onPress={handleSubscribeGoogle} isPerforming={icalLoading}>
+                        {!googleConnected && <SecondaryButton onPress={handleSubscribeGoogle} isPerforming={icalLoading}>
                             {t("calendar.icalSubscribeGoogle")}
-                        </SecondaryButton>
+                        </SecondaryButton>}
                     </SimpleContainer>
 
                     {icalError && <Text14 color="#E53E3E">{icalError}</Text14>}
@@ -485,6 +509,24 @@ export default function PersonalSyncModal({ onEventsChanged }) {
                             <Text14 color={colors.positive}>
                                 {t("calendar.googleConnected", { email: googleEmail || "" })}
                             </Text14>
+                            <Text12>{t(googleStatus?.automatic ? 'calendar.googleAutomaticActive' : 'calendar.googleAutomaticPaused')}</Text12>
+                            {googleStatus?.lastSyncAt && <Text12>{t('calendar.googleLastSync', { time: new Date(googleStatus.lastSyncAt).toLocaleString() })}</Text12>}
+                            <Text12>{t('calendar.googleSubscriptionHint')}</Text12>
+                            {googleStatus?.syncError && <Text12 role="alert">{t('calendar.googleSyncNeedsAttention')}</Text12>}
+                            {googleStatus?.syncError === 'GOOGLE_SYNC_RECONNECT_REQUIRED' && <SecondaryButton onPress={handleConnectGoogle}>{t('calendar.connectGoogle')}</SecondaryButton>}
+                            {(googleStatus?.conflicts || []).map(item => <SimpleContainer key={item.id} className="lw-personalSyncModal__section lw-personalSyncModal__section--border">
+                                <TextBold14>{item.conflict.local.title || item.conflict.google.title || t('calendar.googleConflictTitle')}</TextBold14>
+                                <Text12>{t('calendar.googleConflictHint')}</Text12>
+                                {['local', 'google'].map(choice => {
+                                    const version = item.conflict[choice];
+                                    const label = t(choice === 'local' ? 'calendar.googleUsePlatform' : 'calendar.googleUseGoogle');
+                                    const cannotRestore = !version.cancelled && (item.conflict.local.cancelled || item.conflict.google.cancelled);
+                                    return <SimpleContainer key={choice} className="lw-personalSyncModal__section">
+                                        <Text12>{label}: {version.cancelled ? t('calendar.googleCancelledVersion') : `${version.title} · ${new Date(version.time.start).toLocaleString()} · ${version.location || ''}`}</Text12>
+                                        {!cannotRestore && !(choice === 'local' && item.conflict.reason === 'readOnly') && <SecondaryButton onPress={() => resolveGoogleConflict(item, choice)} isPerforming={googleSyncing}>{label}</SecondaryButton>}
+                                    </SimpleContainer>;
+                                })}
+                            </SimpleContainer>)}
                             <SimpleContainer className="lw-personalSyncModal__btnRow">
                                 <PrimaryButton onPress={handleSyncGoogle} isPerforming={googleSyncing}>
                                     {googleSyncing ? t("calendar.googleSyncing") : t("calendar.syncGoogle")}

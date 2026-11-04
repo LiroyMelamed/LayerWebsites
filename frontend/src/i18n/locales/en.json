@@ -1423,11 +1423,14 @@
     "calendarReminderOptionsTitle": "Available reminder times",
     "calendarReminderOptionsHint": "Choose available reminder times. Default selections for lawyers and clients are configured separately below.",
     "calendarRemindersPollMinutes": "Poll interval (minutes)",
-    "calendarReminderChannelsTitle": "Delivery channels for lawyers",
-    "calendarReminderChannelsHint": "Choose which channels appear when lawyers set event reminders.",
+    "calendarReminderChannelsTitle": "Available reminder channels",
+    "calendarReminderChannelsHint": "Choose which reminder channels are available for lawyers and clients.",
     "calendarLawyerDefaults": "Default lawyer reminders",
     "calendarClientDefaults": "Default client reminders",
-    "calendarDefaultsHint": "Times selected for new events. No selection means no reminders for this audience. Existing events remain unchanged."
+    "calendarDefaultsHint": "Times selected for new events. No selection means no reminders for this audience. Existing events remain unchanged.",
+    "calendarLawyerChannelDefaults": "Default channels for lawyers",
+    "calendarClientChannelDefaults": "Default channels for clients",
+    "calendarChannelDefaultsHint": "Preselected for new events. Each event can override these choices; existing events are unchanged."
   },
   "viewSignedDoc": {
     "invalidLink": "Invalid link",
@@ -2916,7 +2919,7 @@
     "googleSyncSuccess": "Events synced: {{count}}",
     "googleSyncError": "Google Calendar could not be synced",
     "googleCalendarTitle": "Google Calendar",
-    "googleConnectHint": "Connect your personal Google account to import events into the system calendar.",
+    "googleConnectHint": "Each manager connects their personal Google account once. After consent, their appointments synchronize automatically in both directions, from 30 days ago to one year ahead.",
     "googleSyncDisabledByFirm": "Google sync has been disabled by the office administrator. You can use your personal iCal link below.",
     "googleSyncFirmEnabled": "Allow lawyers to connect Google Calendar",
     "googleSyncFirmEnabledHint": "When disabled, Google cannot be connected or synced. This is an office policy; each lawyer manages their own connection from the calendar screen.",
@@ -3080,7 +3083,21 @@
     "importInviteConfirm": "Import into my calendar",
     "importInviteResult": "Added {{created}}, updated {{updated}}, cancelled {{cancelled}}, unchanged {{unchanged}}.",
     "sendInvitationOnSave": "Send an email and SMS invitation when saving the meeting",
-    "recurrenceEndRequired": "Choose a recurrence end date on or after the first event."
+    "recurrenceEndRequired": "Choose a recurrence end date on or after the first event.",
+    "lawyerReminderChannels": "Lawyer reminder channels",
+    "clientReminderChannels": "Client reminder channels",
+    "googleAutomaticActive": "Automatic two-way synchronization is active. Changes are checked every minute.",
+    "googleAutomaticPaused": "Automatic synchronization is currently paused. Manual synchronization is available.",
+    "googleLastSync": "Last synchronization: {{time}}",
+    "googleSubscriptionHint": "If you previously subscribed to the office calendar using a read-only link, hide that subscription in Google to avoid showing the same events twice.",
+    "googleSyncNeedsAttention": "Some events need attention. Failed changes will retry; conflicting versions are shown here for your choice.",
+    "googleSyncBusy": "Synchronization is already running in the background.",
+    "googleConflictTitle": "Changes in both calendars",
+    "googleConflictHint": "This event changed in both calendars. Choose which version to keep.",
+    "googleUsePlatform": "Keep platform version",
+    "googleUseGoogle": "Keep Google version",
+    "googleCancelledVersion": "Event cancelled",
+    "googleConflictResolved": "Your choice was saved and the calendars synchronized."
   },
   "clientPortal": {
     "home": "My home",
@@ -3443,6 +3460,9 @@
     }
   },
   "signingWord": {
+    "customFieldName": "Field name, e.g. block or parcel",
+    "addCustomField": "Add manual field",
+    "customFieldHelp": "Enter a new value each time you use this template. Values belong only to that document.",
     "open": "Word templates and data filling",
     "title": "Word templates",
     "intro": "Upload an original, map text to data and save a private template. Generate and review a fresh document for each client before placing signature fields.",
@@ -3507,6 +3527,7 @@
     "fieldLabel": "{{group}} · {{field}}",
     "roleField": "{{role}} · {{field}}",
     "groups": {
+      "manual": "Manual entry",
       "client": "Client",
       "case": "Case",
       "office": "Office"
@@ -3563,6 +3584,7 @@
     "useIntro": "Choose a saved template, complete document details and review the result before preparing signatures.",
     "manageIntro": "Prepare a reusable template. Client details and filled documents are not saved in the template.",
     "manageTemplates": "Manage templates",
+    "editTemplate": "Edit template",
     "useTemplates": "Back to creating a document",
     "chooseSourceHelp": "Choose a template to begin. Add or edit templates in Manage templates.",
     "noTemplates": "No saved Word templates yet. Open Manage templates to upload a source and prepare a template.",

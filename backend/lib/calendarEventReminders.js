@@ -298,11 +298,16 @@ function parseStoredChannels(raw) {
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
         return defaultReminderChannels();
     }
-    return {
+    const flat = {
         push: parsed.push === true || parsed.push === 'true' || parsed.push === 1 || parsed.push === '1',
         sms: parsed.sms === true || parsed.sms === 'true' || parsed.sms === 1 || parsed.sms === '1',
         email: parsed.email === true || parsed.email === 'true' || parsed.email === 1 || parsed.email === '1',
     };
+    if (!parsed.lawyer && !parsed.client) return flat;
+    const audience = value => Object.fromEntries(['push', 'sms', 'email'].map(k => [k, value?.[k] === true || value?.[k] === 'true' || value?.[k] === 1]));
+    const lawyer = parsed.lawyer ? audience(parsed.lawyer) : flat;
+    const client = parsed.client ? audience(parsed.client) : flat;
+    return { push: lawyer.push || client.push, sms: lawyer.sms || client.sms, email: lawyer.email || client.email, lawyer, client };
 }
 
 async function loadAllowedReminderChannels(settingsServiceArg) {
@@ -319,11 +324,9 @@ async function loadAllowedReminderChannels(settingsServiceArg) {
 function normalizeReminderChannels(input, allowedChannels) {
     const allowed = new Set(allowedChannels);
     const parsed = parseStoredChannels(input);
-    return {
-        push: allowed.has('push') && parsed.push,
-        sms: allowed.has('sms') && parsed.sms,
-        email: allowed.has('email') && parsed.email,
-    };
+    const filter = value => Object.fromEntries(['push', 'sms', 'email'].map(k => [k, allowed.has(k) && value[k]]));
+    if (!parsed.lawyer && !parsed.client) return filter(parsed);
+    return parseStoredChannels({ lawyer: filter(parsed.lawyer), client: filter(parsed.client) });
 }
 
 function channelsToJson(channels) {

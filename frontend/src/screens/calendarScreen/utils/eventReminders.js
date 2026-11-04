@@ -124,11 +124,12 @@ export function parseStoredChannels(raw) {
     if (!raw || typeof raw !== "object") {
         return { push: false, sms: false, email: false };
     }
-    return {
-        push: raw.push === true || raw.push === "true",
-        sms: raw.sms === true || raw.sms === "true",
-        email: raw.email === true || raw.email === "true",
-    };
+    const flat = { push: raw.push === true || raw.push === "true", sms: raw.sms === true || raw.sms === "true", email: raw.email === true || raw.email === "true" };
+    if (!raw.lawyer && !raw.client) return flat;
+    const audience = value => Object.fromEntries(DEFAULT_ALLOWED_CHANNELS.map(k => [k, value?.[k] === true || value?.[k] === 'true']));
+    const lawyer = raw.lawyer ? audience(raw.lawyer) : flat;
+    const client = raw.client ? audience(raw.client) : flat;
+    return { push: lawyer.push || client.push, sms: lawyer.sms || client.sms, email: lawyer.email || client.email, lawyer, client };
 }
 
 export function parseAllowedChannelsFromSettings(calSettings = {}) {
@@ -154,11 +155,9 @@ export function normalizeChannelsForEventType(_eventType, selected, allowedKeys)
 export function normalizeSelectedChannels(selected, allowedKeys) {
     const allowed = new Set(parseChannelsList(allowedKeys));
     const src = parseStoredChannels(selected);
-    return {
-        push: allowed.has("push") && src.push,
-        sms: allowed.has("sms") && src.sms,
-        email: allowed.has("email") && src.email,
-    };
+    const filter = value => Object.fromEntries(DEFAULT_ALLOWED_CHANNELS.map(k => [k, allowed.has(k) && value[k]]));
+    if (!src.lawyer && !src.client) return filter(src);
+    return parseStoredChannels({ lawyer: filter(src.lawyer), client: filter(src.client) });
 }
 
 export function hasAnyReminderChannel(channels) {
@@ -170,4 +169,15 @@ export function hasAnyReminderChannel(channels) {
 export function configuredReminderOffsets(settings, audience, allowedMinutes) {
     const raw = settings?.[audience === 'client' ? 'CALENDAR_CLIENT_REMINDER_DEFAULTS' : 'CALENDAR_LAWYER_REMINDER_DEFAULTS']?.effectiveValue;
     return raw == null ? defaultReminderOffsets(allowedMinutes) : normalizeSelectedOffsets(parseOffsetsList(raw), allowedMinutes);
+}
+
+/** Defaults affect only new events; an explicit empty choice remains empty. */
+export function configuredReminderChannels(settings, allowedKeys = DEFAULT_ALLOWED_CHANNELS) {
+    const audience = role => {
+        const raw = settings?.[`CALENDAR_${role}_REMINDER_CHANNEL_DEFAULTS`]?.effectiveValue;
+        if (raw == null) return defaultReminderChannels(allowedKeys);
+        const selected = new Set(parseChannelsList(raw));
+        return normalizeSelectedChannels(Object.fromEntries(DEFAULT_ALLOWED_CHANNELS.map(k => [k, selected.has(k)])), allowedKeys);
+    };
+    return parseStoredChannels({ lawyer: audience('LAWYER'), client: audience('CLIENT') });
 }

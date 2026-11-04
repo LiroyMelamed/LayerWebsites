@@ -1,3 +1,4 @@
+import SimpleInput from '../../../components/simpleComponents/SimpleInput';
 import SigningSelect from './SigningSelect';
 import React from 'react';
 import useSigningLocale from './useSigningLocale';
@@ -21,7 +22,7 @@ export default function TemplateRoles({ draft, onChange, roleId, onRoleId, nativ
             const used = draft.documents.some(doc => doc.fields.some(field => field.roleId === role.id));
             return <div className={`lw-templates__role${draft.signingOrder === 'grouped' ? ' is-grouped' : ''}`} key={role.id}>
                 <span>{number(index + 1)}</span>
-                <label>{t('roleName')}<input aria-label={t('roleLabel', { index: number(index + 1) })} value={role.name} maxLength={80} dir="auto" onChange={event => update(role.id, { name: event.target.value })} /></label>
+                <label>{t('roleName')}<SimpleInput timeToWaitInMilli={0} aria-label={t('roleLabel', { index: number(index + 1) })} value={role.name} maxLength={80} dir="auto" onChange={event => update(role.id, { name: event.target.value })} /></label>
                 <label>{t('audience')}<SigningSelect dir={direction} value={['shared', 'lawyer'].includes(role.kind) ? role.kind : 'custom'} onChange={event => update(role.id, { kind: event.target.value })}>
                     <option value="custom">{t('each')}</option>
                     <option value="shared">{t('shared')}</option>

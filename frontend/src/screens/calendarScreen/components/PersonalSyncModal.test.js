@@ -12,7 +12,7 @@ jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: mockT }) }));
 jest.mock('../../../api/calendarApi', () => ({ __esModule: true, default: {
     getIcalToken: jest.fn(), rotateIcalToken: jest.fn(), getDailyAgendaSettings: jest.fn(), updateDailyAgendaSettings: jest.fn(),
     getGoogleStatus: jest.fn(), getOutlookStatus: jest.fn(), getGoogleAuthUrl: jest.fn(), getOutlookAuthUrl: jest.fn(),
-    syncGoogleEvents: jest.fn(), syncOutlookEvents: jest.fn(), disconnectGoogle: jest.fn(), disconnectOutlook: jest.fn(),
+    syncGoogleEvents: jest.fn(), resolveGoogleConflict: jest.fn(), syncOutlookEvents: jest.fn(), disconnectGoogle: jest.fn(), disconnectOutlook: jest.fn(),
 } }));
 jest.mock('../../../hooks/useAutoHttpRequest', () => ({ __esModule: true, default: fn => {
     const api = require('../../../api/calendarApi').default;
@@ -119,4 +119,25 @@ test.each(['Google', 'Outlook'])('%s resolved disconnect failure is actionable a
     render(<PersonalSyncModal />); fireEvent.click(screen.getByRole('button', { name: 'calendar.disconnect'+provider }));
     expect(await screen.findByText('Synthetic disconnect failure')).toBeInTheDocument();
     expect(provider === 'Google' ? mockGoogleRefetch : mockOutlookRefetch).not.toHaveBeenCalled();
+});
+
+test('partial sync never reports complete success and always refreshes status', async () => {
+    mockGoogleStatus = { connected:true, automatic:true };
+    calendarApi.syncGoogleEvents.mockResolvedValue(ok({synced:3,failed:1,conflicts:0}));
+    render(<PersonalSyncModal />);
+    fireEvent.click(screen.getByRole('button',{name:'calendar.syncGoogle'}));
+    expect(await screen.findByText('calendar.googleSyncNeedsAttention')).toBeInTheDocument();
+    expect(screen.queryByText('calendar.googleSyncSuccess')).not.toBeInTheDocument();
+    expect(mockGoogleRefetch).toHaveBeenCalled();
+    expect(screen.queryByRole('button',{name:'calendar.icalSubscribeGoogle'})).not.toBeInTheDocument();
+});
+test('read-only Google conflict offers only the valid choice and submits its revision', async () => {
+    const state={cancelled:false,title:'Synthetic conflict',location:'',time:{start:'2026-11-04T10:00:00Z'}};
+    mockGoogleStatus={connected:true,conflicts:[{id:7,revision:'2026-11-04T11:00:00Z',conflict:{local:state,google:state,reason:'readOnly'}}]};
+    calendarApi.resolveGoogleConflict.mockResolvedValue(ok({synced:1,failed:0,conflicts:0}));
+    render(<PersonalSyncModal />);
+    expect(screen.queryByRole('button',{name:'calendar.googleUsePlatform'})).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button',{name:'calendar.googleUseGoogle'}));
+    expect(await screen.findByText('calendar.googleConflictResolved')).toBeInTheDocument();
+    expect(calendarApi.resolveGoogleConflict).toHaveBeenCalledWith(7,'google','2026-11-04T11:00:00Z');
 });

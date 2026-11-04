@@ -1615,7 +1615,12 @@
     "calendarClientDefaults": "تذكيرات العملاء الافتراضية",
     "calendarDefaultsHint": "الأوقات المحددة للمواعيد الجديدة. عدم الاختيار يعني عدم إرسال تذكيرات لهذه المجموعة. لا تتغير المواعيد الحالية.",
     "calendarReminderOptionsTitle": "أوقات التذكير المتاحة",
-    "calendarReminderOptionsHint": "اختر أوقات التذكير المتاحة. تُحدد الأوقات الافتراضية للمحامين والعملاء بشكل منفصل أدناه."
+    "calendarReminderOptionsHint": "اختر أوقات التذكير المتاحة. تُحدد الأوقات الافتراضية للمحامين والعملاء بشكل منفصل أدناه.",
+    "calendarLawyerChannelDefaults": "القنوات الافتراضية للمحامين",
+    "calendarClientChannelDefaults": "القنوات الافتراضية للعملاء",
+    "calendarChannelDefaultsHint": "تُحدد مسبقًا للأحداث الجديدة ويمكن تغييرها لكل حدث. لا تتغير الأحداث المحفوظة.",
+    "calendarReminderChannelsTitle": "قنوات التذكير المتاحة",
+    "calendarReminderChannelsHint": "اختر قنوات التذكير المتاحة للمحامين والعملاء."
   },
   "firmStaffRoles": {
     "title": "الأدوار والصلاحيات",
@@ -3218,7 +3223,7 @@
     "googleSyncSuccess": "عدد الأحداث التي تمت مزامنتها: {{count}}",
     "googleSyncError": "تعذرت مزامنة تقويم Google",
     "googleCalendarTitle": "تقويم Google",
-    "googleConnectHint": "اربط حسابك الشخصي في Google لاستيراد الأحداث إلى تقويم النظام.",
+    "googleConnectHint": "يربط كل مدير حساب Google الشخصي مرة واحدة. بعد الموافقة تُزامن مواعيده تلقائيًا في الاتجاهين، من 30 يومًا مضت إلى سنة قادمة.",
     "googleSyncDisabledByFirm": "عطّل مسؤول المكتب المزامنة مع Google. يمكنك استخدام رابط iCal الشخصي أدناه.",
     "googleSyncFirmEnabled": "السماح للمحامين بربط تقويم Google",
     "googleSyncFirmEnabledHint": "عند تعطيل هذا الخيار، لا يمكن الربط أو المزامنة مع Google. هذا الخيار يحدد سياسة المكتب فقط؛ ويدير كل محامٍ ربط حسابه الشخصي من شاشة التقويم.",
@@ -3379,7 +3384,21 @@
     "importInviteConfirm": "استيراد إلى تقويمي",
     "importInviteResult": "أُضيف {{created}}، حُدّث {{updated}}، أُلغي {{cancelled}}، دون تغيير {{unchanged}}.",
     "sendInvitationOnSave": "إرسال دعوة بالبريد وSMS عند حفظ الموعد",
-    "recurrenceEndRequired": "اختر تاريخ انتهاء للتكرار لا يسبق الموعد الأول."
+    "recurrenceEndRequired": "اختر تاريخ انتهاء للتكرار لا يسبق الموعد الأول.",
+    "lawyerReminderChannels": "قنوات تذكير المحامين",
+    "clientReminderChannels": "قنوات تذكير العميل",
+    "googleAutomaticActive": "المزامنة التلقائية ثنائية الاتجاه نشطة. تُفحص التغييرات كل دقيقة.",
+    "googleAutomaticPaused": "المزامنة التلقائية متوقفة حاليًا. يمكن المزامنة يدويًا.",
+    "googleLastSync": "آخر مزامنة: {{time}}",
+    "googleSubscriptionHint": "إذا اشتركت سابقًا في تقويم المكتب برابط للقراءة فقط، أخفِ هذا الاشتراك في Google لتجنب عرض الأحداث مرتين.",
+    "googleSyncNeedsAttention": "بعض الأحداث تحتاج إلى مراجعة. ستُعاد محاولة التغييرات الفاشلة وتظهر الإصدارات المتعارضة هنا للاختيار.",
+    "googleSyncBusy": "المزامنة قيد التنفيذ في الخلفية.",
+    "googleConflictTitle": "تغييرات في التقويمين",
+    "googleConflictHint": "تغير الحدث في التقويمين. اختر الإصدار الذي تريد الاحتفاظ به.",
+    "googleUsePlatform": "الاحتفاظ بإصدار المنصة",
+    "googleUseGoogle": "الاحتفاظ بإصدار Google",
+    "googleCancelledVersion": "أُلغي الحدث",
+    "googleConflictResolved": "تم حفظ اختيارك ومزامنة التقويمين."
   },
   "clientPortal": {
     "home": "صفحتي الرئيسية",
