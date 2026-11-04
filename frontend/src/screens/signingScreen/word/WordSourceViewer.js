@@ -9,7 +9,7 @@ import SigningSelect from '../templates/SigningSelect';
 import { itemTuple, selectorForTextItem, selectorFromDom, sha256Bytes, tagVerifiedTextLayer, verifyPageGeometry, verifyPageItems } from './wordAuthoringSelection';
 import { layoutSourceChips } from './wordSourceChipLayout';
 
-function PageMarks({ host, page, bindings, selection, activeBindingId, onSelectBinding, disabled, fieldLabel, text, revision, displayWidth, viewportWidth }) {
+function PageMarks({ host, page, bindings, selection, activeBindingId, onSelectBinding, disabled, fieldLabel, fieldColorClass, pendingField, text, revision, displayWidth, viewportWidth }) {
     const [measurement, setMeasurement] = useState({ marks: [], width: 0, viewportWidth });
     const { marks } = measurement;
     const overlay = useRef(null);
@@ -42,7 +42,7 @@ function PageMarks({ host, page, bindings, selection, activeBindingId, onSelectB
                     });
                 });
                 if (boxes.length) {
-                    next.push({ id: binding.id, label: binding.pending ? text(binding.kind === 'insert' ? 'insertionSelected' : 'selectedLocation') : fieldLabel(binding.field), pending: binding.pending, boxes });
+                    next.push({ id: binding.id, label: binding.pending ? text(binding.kind === 'insert' ? 'insertionSelected' : 'selectedLocation') : fieldLabel(binding.field), pending: binding.pending, colorClass: fieldColorClass?.(binding.pending ? pendingField : binding.field) || '', boxes });
                 }
             });
             setMeasurement({ marks: next, width: origin.width || displayWidth || 600, viewportWidth });
@@ -54,7 +54,7 @@ function PageMarks({ host, page, bindings, selection, activeBindingId, onSelectB
         document.fonts?.addEventListener?.('loadingdone', measureActive);
         document.fonts?.ready?.then(measureActive);
         return () => { active = false; observer?.disconnect(); document.fonts?.removeEventListener?.('loadingdone', measureActive); };
-    }, [host, page, bindings, selection, fieldLabel, text, revision, displayWidth, viewportWidth]);
+    }, [host, page, bindings, selection, fieldLabel, fieldColorClass, pendingField, text, revision, displayWidth, viewportWidth]);
     useLayoutEffect(() => {
         if (!host || !page || !marks.length || !overlay.current) return undefined;
         const chips = Array.from(overlay.current.querySelectorAll('[data-word-chip]'));
@@ -101,20 +101,20 @@ function PageMarks({ host, page, bindings, selection, activeBindingId, onSelectB
     }, [selection, marks, positions, host, measurement, viewportWidth]);
     return <div ref={overlay} className="lw-word-source__marks">
         <svg className="lw-word-source__leaders" aria-hidden="true">{positions.map((position, index) => position.leader &&
-            <line key={marks[index].id} {...position.leader} className={marks[index].pending ? 'is-pending' : undefined} />)}</svg>
+            <line key={marks[index].id} {...position.leader} className={`${marks[index].colorClass}${marks[index].pending ? ' is-pending' : ''}`} />)}</svg>
         {marks.map((mark, index) => <React.Fragment key={mark.id}>
-            {mark.boxes.map((box, boxIndex) => <span key={boxIndex} aria-hidden="true" className={`lw-word-source__mark${mark.pending ? ' is-pending' : ''}${activeBindingId === mark.id ? ' is-active' : ''}`} style={box} />)}
-            {mark.pending ? <span data-word-chip="" aria-hidden="true" className="lw-word-source__chip is-pending"
+            {mark.boxes.map((box, boxIndex) => <span key={boxIndex} aria-hidden="true" className={`lw-word-source__mark ${mark.colorClass}${mark.pending ? ' is-pending' : ''}${activeBindingId === mark.id ? ' is-active' : ''}`} style={box} />)}
+            {mark.pending ? <span data-word-chip="" aria-hidden="true" className={`lw-word-source__chip is-pending ${mark.colorClass}`}
                 style={{ left: positions[index]?.left || 0, top: positions[index]?.top || 0, visibility: positions[index] ? 'visible' : 'hidden' }}>{mark.label}</span> :
                 <button type="button" data-word-chip="" data-word-binding-id={mark.id} disabled={disabled} aria-pressed={activeBindingId === mark.id}
                     aria-label={text('editReplacement', { field: mark.label })} onClick={() => onSelectBinding?.(mark.id)}
-                    className={`lw-word-source__chip${activeBindingId === mark.id ? ' is-active' : ''}`}
+                    className={`lw-word-source__chip ${mark.colorClass}${activeBindingId === mark.id ? ' is-active' : ''}`}
                     style={{ left: positions[index]?.left || 0, top: positions[index]?.top || 0, visibility: positions[index] ? 'visible' : 'hidden' }}>{mark.label}</button>}
         </React.Fragment>)}
     </div>;
 }
 
-export default function WordSourceViewer({ authoring, pdfFile, paragraphs = [], bindings, selection, activeBindingId, onSelectBinding, disabled, onSelect, onError, fieldLabel, text, controlsContainer }) {
+export default function WordSourceViewer({ authoring, pdfFile, paragraphs = [], bindings, selection, activeBindingId, onSelectBinding, disabled, onSelect, onError, fieldLabel, fieldColorClass, pendingField, text, controlsContainer }) {
     const root = useRef(null); const generation = useRef(0); const callbacks = useRef({ onSelect, onError });
     const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth);
     useEffect(() => {
@@ -190,10 +190,10 @@ export default function WordSourceViewer({ authoring, pdfFile, paragraphs = [], 
     }, [readSelection]);
     const layer = useMemo(() => ({ onPageTextReady: verifyLayer, onPageError: pageError,
         renderPageOverlay: ({ pageNumber, host, displayWidth }) => <PageMarks host={host}
-            page={authoring.pages.find(page => page.pageNum === pageNumber)} bindings={bindings} selection={selection} fieldLabel={fieldLabel} text={text}
+            page={authoring.pages.find(page => page.pageNum === pageNumber)} bindings={bindings} selection={selection} fieldLabel={fieldLabel} fieldColorClass={fieldColorClass} pendingField={pendingField} text={text}
             activeBindingId={activeBindingId} onSelectBinding={onSelectBinding} disabled={disabled} viewportWidth={viewportWidth}
             revision={pageStates[pageNumber] === 'verified' ? `${identity}:${pageRevisions[pageNumber] || 0}` : null} displayWidth={displayWidth} />,
-    }), [verifyLayer, pageError, authoring.pages, bindings, selection, fieldLabel, text, pageStates, pageRevisions, identity, activeBindingId, onSelectBinding, disabled, viewportWidth]);
+    }), [verifyLayer, pageError, authoring.pages, bindings, selection, fieldLabel, fieldColorClass, pendingField, text, pageStates, pageRevisions, identity, activeBindingId, onSelectBinding, disabled, viewportWidth]);
     const accessibleItems = authoring.pages.filter(page => pageStates[page.pageNum] === 'verified').flatMap(page =>
         page.items.filter(item => item.text && item.segments.length && !item.readOnlyReason).map(item => ({ ...item, pageNum: page.pageNum })));
     const accessibleItem = accessibleItems.find(item => item.id === accessibleItemId) || accessibleItems[0];
