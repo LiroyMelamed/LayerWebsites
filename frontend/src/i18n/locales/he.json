@@ -260,7 +260,7 @@
     "inviteHeroTitle": "הזמנה לפגישה",
     "inviteLoading": "טוען הזמנה...",
     "inviteNotFound": "הזמנה לא נמצאה",
-    "inviteRemindersIndependentHint": "הזמנה נשלחת מיד; תזכורות לפי הלוח שנבחר — גם אם הלקוח כבר אישר או דחה.",
+    "inviteRemindersIndependentHint": "אם בחרתם לשלוח זימון, הוא יישלח מיד. תזכורות יישלחו רק במועדים שסומנו.",
     "inviteResend": "שלח הזמנה מחדש",
     "inviteResendDeferred": "יישלח לאחר חלון השקט",
     "inviteResendFailed": "שליחת ההזמנה נכשלה. נסו שוב.",
@@ -428,7 +428,22 @@
     "widgetTomorrowHeading": "מחר",
     "zoomLink": "קישור זום",
     "reminder30d": "חודש לפני (30 יום)",
-    "reminder2w": "שבועיים לפני"
+    "reminder2w": "שבועיים לפני",
+    "recurringReminder": "תזכורת חוזרת",
+    "importInviteTitle": "ייבוא זימון",
+    "importInviteHint": "בחרו קובץ זימון מהמייל. הפרטים יוצגו לבדיקה לפני הוספה ליומן שלכם. זימון שכבר יובא יתעדכן בלי ליצור עותק. הייבוא אינו שולח אישור למארגן.",
+    "importInviteChoose": "בחירת קובץ זימון (ICS)",
+    "importInviteInvalidFile": "יש לבחור קובץ ICS בגודל של עד 512KB",
+    "importInviteError": "לא ניתן לייבא את הזימון. נסו שוב.",
+    "importInviteLoading": "טוען את הזימון…",
+    "importInvitePreview": "{{count}} אירועים לבדיקה",
+    "importInviteOrganizer": "מארגן",
+    "importInviteCancellation": "ביטול זימון קיים",
+    "importInviteOutside": "{{count}} מופעים מחוץ לטווח לא יועתקו. טווח הייבוא הוא מ־30 יום אחורה ועד שנה קדימה.",
+    "importInviteConfirm": "אישור הייבוא ליומן שלי",
+    "importInviteResult": "נוספו {{created}}, עודכנו {{updated}}, בוטלו {{cancelled}}, ללא שינוי {{unchanged}}.",
+    "sendInvitationOnSave": "שליחת זימון במייל וב־SMS עם שמירת הפגישה",
+    "recurrenceEndRequired": "בחרו תאריך סיום לחזרה, שאינו מוקדם מהאירוע הראשון."
   },
   "caseTypes": {
     "addStage": "הוסף שלב",
@@ -1847,8 +1862,8 @@
     "calendarInviteRsvpHint": "הזמנת הגעה נשלחת בהקדם. תזכורות נשלחות לפי לוח הזמנים שנבחר — ללא תלות בסטטוס RSVP.",
     "calendarReminderChannelsHint": "בחר אילו ערוצים יוצגו בעת יצירת תזכורות לאירוע (Push, SMS, אימייל).",
     "calendarReminderChannelsTitle": "ערוצי שליחה זמינים לעורכי דין",
-    "calendarReminderOptionsHint": "בחר אילו מרווחי תזכורת יוצגו בעת יצירת אירוע (כולל מיידי). הזמנת הגעה נשלחת מיד; תזכורות אינן תלויות באישור RSVP.",
-    "calendarReminderOptionsTitle": "אפשרויות תזכורת לעורכי דין",
+    "calendarReminderOptionsHint": "בחרו אילו זמנים יהיו זמינים לבחירה. ברירות המחדל לעורכי דין וללקוחות מוגדרות בנפרד בהמשך.",
+    "calendarReminderOptionsTitle": "זמני תזכורת זמינים",
     "calendarRemindersEnabled": "מנגנון תזכורות Push פעיל",
     "calendarRemindersEnabledHint": "כאשר כבוי, לא יישלחו תזכורות גם אם נבחרו באירוע.",
     "calendarRemindersHint": "עורכי דין בוחרים תזכורות לכל אירוע בנפרד. כאן מגדירים את מנגנון השליחה ואת האפשרויות הזמינות.",
@@ -1996,7 +2011,10 @@
     "workingHoursDayCol": "יום",
     "workingHoursEndCol": "סיום",
     "workingHoursOpenCol": "פתוח",
-    "workingHoursStartCol": "התחלה"
+    "workingHoursStartCol": "התחלה",
+    "calendarLawyerDefaults": "ברירת מחדל — תזכורות לעורכי דין",
+    "calendarClientDefaults": "ברירת מחדל — תזכורות ללקוחות",
+    "calendarDefaultsHint": "הזמנים שיסומנו מראש באירוע חדש. ללא בחירה לא יישלחו תזכורות לקבוצה זו. אירועים קיימים אינם משתנים."
   },
   "pricingPage": {
     "calculator": {

@@ -251,7 +251,7 @@
     "inviteHeroTitle": "دعوة إلى اجتماع",
     "inviteLoading": "جارٍ تحميل الدعوة…",
     "inviteNotFound": "لم يُعثر على الدعوة",
-    "inviteRemindersIndependentHint": "تُرسل الدعوة فورًا. وتُرسل التذكيرات وفق الجدول المختار، حتى إذا كان العميل قد أكد الحضور أو اعتذر عنه.",
+    "inviteRemindersIndependentHint": "عند اختيار إرسال الدعوة، تُرسل فورًا. تُرسل التذكيرات فقط في الأوقات المحددة.",
     "inviteResend": "إعادة إرسال الدعوة",
     "inviteResendDeferred": "ستُرسل بعد انتهاء ساعات الهدوء",
     "inviteResendFailed": "تعذر إرسال الدعوة. حاول مجددًا.",
@@ -439,7 +439,22 @@
     "widgetTomorrowHeading": "غدًا",
     "zoomLink": "رابط Zoom",
     "reminder30d": "قبل شهر (30 يومًا)",
-    "reminder2w": "قبل أسبوعين"
+    "reminder2w": "قبل أسبوعين",
+    "recurringReminder": "تذكير متكرر",
+    "importInviteTitle": "استيراد دعوة",
+    "importInviteHint": "اختر ملف دعوة من البريد وراجع التفاصيل قبل إضافته إلى تقويمك. إعادة الاستيراد تحدّث الموعد دون تكراره. الاستيراد لا يرسل ردًا إلى المنظم.",
+    "importInviteChoose": "اختيار ملف الدعوة (ICS)",
+    "importInviteInvalidFile": "اختر ملف ICS بحجم حتى 512KB",
+    "importInviteError": "تعذّر استيراد الدعوة. حاول مجددًا.",
+    "importInviteLoading": "جارٍ تحميل الدعوة…",
+    "importInvitePreview": "{{count}} مواعيد للمراجعة",
+    "importInviteOrganizer": "المنظم",
+    "importInviteCancellation": "إلغاء دعوة موجودة",
+    "importInviteOutside": "لن تُنسخ {{count}} مواعيد خارج نطاق الاستيراد. النطاق من 30 يومًا مضت وحتى سنة قادمة.",
+    "importInviteConfirm": "استيراد إلى تقويمي",
+    "importInviteResult": "أُضيف {{created}}، حُدّث {{updated}}، أُلغي {{cancelled}}، دون تغيير {{unchanged}}.",
+    "sendInvitationOnSave": "إرسال دعوة بالبريد وSMS عند حفظ الموعد",
+    "recurrenceEndRequired": "اختر تاريخ انتهاء للتكرار لا يسبق الموعد الأول."
   },
   "caseTypes": {
     "addStage": "إضافة مرحلة",
@@ -1678,7 +1693,12 @@
     "var_signed_document_url": "رابط المستند الموقّع",
     "var_stageName": "المرحلة الحالية",
     "var_subject": "الموضوع",
-    "var_websiteUrl": "رابط الموقع"
+    "var_websiteUrl": "رابط الموقع",
+    "calendarLawyerDefaults": "تذكيرات المحامين الافتراضية",
+    "calendarClientDefaults": "تذكيرات العملاء الافتراضية",
+    "calendarDefaultsHint": "الأوقات المحددة للمواعيد الجديدة. عدم الاختيار يعني عدم إرسال تذكيرات لهذه المجموعة. لا تتغير المواعيد الحالية.",
+    "calendarReminderOptionsTitle": "أوقات التذكير المتاحة",
+    "calendarReminderOptionsHint": "اختر أوقات التذكير المتاحة. تُحدد الأوقات الافتراضية للمحامين والعملاء بشكل منفصل أدناه."
   },
   "pricingPage": {
     "calculator": {

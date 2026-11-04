@@ -245,7 +245,7 @@
     "inviteHeroTitle": "Meeting invitation",
     "inviteLoading": "Loading invitation…",
     "inviteNotFound": "Invitation not found",
-    "inviteRemindersIndependentHint": "Invitations are sent immediately. Reminders follow the selected schedule, even if the client has already confirmed or declined.",
+    "inviteRemindersIndependentHint": "If selected, the invitation is sent immediately. Reminders are sent only at the selected times.",
     "inviteResend": "Resend invitation",
     "inviteResendDeferred": "Will be sent after quiet hours",
     "inviteResendFailed": "The invitation could not be sent. Try again.",
@@ -427,7 +427,22 @@
     "widgetTomorrowHeading": "Tomorrow",
     "zoomLink": "Zoom link",
     "reminder30d": "1 month before (30 days)",
-    "reminder2w": "2 weeks before"
+    "reminder2w": "2 weeks before",
+    "recurringReminder": "Recurring reminder",
+    "importInviteTitle": "Import invitation",
+    "importInviteHint": "Choose an invitation file from email and review it before adding it to your calendar. Reimporting updates the existing event. Importing does not send a response to the organizer.",
+    "importInviteChoose": "Choose invitation file (ICS)",
+    "importInviteInvalidFile": "Choose an ICS file up to 512KB",
+    "importInviteError": "Could not import the invitation. Please try again.",
+    "importInviteLoading": "Loading invitation…",
+    "importInvitePreview": "{{count}} events to review",
+    "importInviteOrganizer": "Organizer",
+    "importInviteCancellation": "Cancel existing invitation",
+    "importInviteOutside": "{{count}} occurrences outside the import window will not be copied. The window runs from 30 days ago through one year ahead.",
+    "importInviteConfirm": "Import into my calendar",
+    "importInviteResult": "Added {{created}}, updated {{updated}}, cancelled {{cancelled}}, unchanged {{unchanged}}.",
+    "sendInvitationOnSave": "Send an email and SMS invitation when saving the meeting",
+    "recurrenceEndRequired": "Choose a recurrence end date on or after the first event."
   },
   "caseTypes": {
     "addStage": "Add stage",
@@ -1461,8 +1476,8 @@
   "platformSettings": {
     "calendarReminderChannelsHint": "Choose which channels appear when lawyers set event reminders.",
     "calendarReminderChannelsTitle": "Delivery channels for lawyers",
-    "calendarReminderOptionsHint": "Choose which reminder intervals appear when creating an event.",
-    "calendarReminderOptionsTitle": "Reminder options for lawyers",
+    "calendarReminderOptionsHint": "Choose available reminder times. Default selections for lawyers and clients are configured separately below.",
+    "calendarReminderOptionsTitle": "Available reminder times",
     "calendarRemindersEnabled": "Push reminder worker enabled",
     "calendarRemindersEnabledHint": "When off, no reminders are sent even if selected on an event.",
     "calendarRemindersHint": "Lawyers choose reminders per event. Configure the delivery worker and which options are available.",
@@ -1502,7 +1517,10 @@
     "workingHoursDayCol": "Day",
     "workingHoursEndCol": "End",
     "workingHoursOpenCol": "Open",
-    "workingHoursStartCol": "Start"
+    "workingHoursStartCol": "Start",
+    "calendarLawyerDefaults": "Default lawyer reminders",
+    "calendarClientDefaults": "Default client reminders",
+    "calendarDefaultsHint": "Times selected for new events. No selection means no reminders for this audience. Existing events remain unchanged."
   },
   "pricingPage": {
     "calculator": {

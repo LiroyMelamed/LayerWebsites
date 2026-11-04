@@ -5,14 +5,15 @@ import SigningManagerScreen from './SigningManagerScreen';
 
 const mockNavigate = jest.fn(), mockReload = jest.fn();
 let mockWorkspaceProps, mockWordSigningProps;
+let mockFilesState = { result: { files: [] }, isPerforming: false, error: null };
 jest.mock('react-router-dom', () => ({ ...jest.requireActual('react-router-dom'), useNavigate: () => mockNavigate }));
 jest.mock('../../providers/ScreenSizeProvider', () => ({ useScreenSize: () => ({ isSmallScreen: true }) }));
 jest.mock('../../providers/FirmPermissionsProvider', () => ({ useFirmPermissions: () => ({ loaded: true, permissionMode: 'legacy', canAction: () => true }) }));
 jest.mock('../../providers/FromAppProvider', () => ({ useFromApp: () => ({ isFromApp: false }) }));
 jest.mock('../../providers/PopUpProvider', () => ({ usePopup: () => ({ openPopup: jest.fn(), closePopup: jest.fn() }) }));
-jest.mock('../../hooks/useAutoHttpRequest', () => () => ({ result: { files: [] }, isPerforming: false, performRequest: mockReload, error: null }));
+jest.mock('../../hooks/useAutoHttpRequest', () => () => ({ ...mockFilesState, performRequest: mockReload }));
 jest.mock('../../hooks/useHttpRequest', () => () => ({ result: [], isPerforming: false, performRequest: jest.fn() }));
-jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: key => key }) }));
+jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key, options) => key === 'common.listTitleWithCount' ? `${options.title} (${options.count})` : key }) }));
 jest.mock('../../services/firmSettings', () => ({ useSigningOtpEnabled: () => false }));
 jest.mock('../../api/apiUtils', () => ({ __esModule: true, default: { defaults: { baseURL: '' } } }));
 jest.mock('../../components/ui/toast', () => ({ toastError: jest.fn(), toastSuccess: jest.fn() }));
@@ -74,4 +75,23 @@ test('return context follows the user confirmed draft choices without inferring 
     expect(mockWorkspaceProps.resumeDraft.inputs.clientRecord).toEqual(changedContext.clientRecord);
     expect(mockWorkspaceProps.resumeDraft.inputs.caseRecord).toBeNull();
     expect(mockNavigate).not.toHaveBeenCalled();
+});
+
+
+test('document list preserves the shared title, empty state and upload action', () => {
+    render(<MemoryRouter><SigningManagerScreen /></MemoryRouter>);
+    expect(screen.getByText(/nav.signingFiles/)).toBeVisible();
+    expect(screen.getByText('signingManager.empty.pending')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'signingManager.actions.uploadNew' }));
+    expect(mockNavigate).toHaveBeenCalled();
+});
+
+test('failed list keeps its title and working retry instead of blanking the page shell', () => {
+    mockFilesState = { result: { files: [] }, isPerforming: false, error: new Error('offline') };
+    render(<MemoryRouter><SigningManagerScreen /></MemoryRouter>);
+    expect(screen.getByText('nav.signingFiles')).toBeVisible();
+    const before = mockReload.mock.calls.length;
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(mockReload.mock.calls.length).toBe(before + 1);
+    mockFilesState = { result: { files: [] }, isPerforming: false, error: null };
 });

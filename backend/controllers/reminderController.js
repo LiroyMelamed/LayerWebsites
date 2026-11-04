@@ -418,7 +418,7 @@ const listReminders = async (req, res, next) => {
                     'email'::text AS source,
                     NULL::text AS audience, NULL::jsonb AS channels, NULL::timestamptz AS event_start_time
                 FROM scheduled_email_reminders
-                WHERE 1=1
+                WHERE COALESCE((to_jsonb(scheduled_email_reminders)->>'calendar_managed')::boolean, false) = false
 
                 UNION ALL
 
