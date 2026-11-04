@@ -27,6 +27,20 @@ async function mount(element) {
     return render(<I18nextProvider i18n={i18n}>{element}</I18nextProvider>);
 }
 beforeEach(() => { jest.clearAllMocks(); mockAvailable = true; mockUpload = true; mockView = true; });
+test.each([{ customers: [] }, { customers: [client] }])('a view-only client card never offers creation or import: $customers', async ({ customers }) => {
+    await mount(<ClientsCard customerList={customers} allowEdit={false} />);
+    expect(screen.queryByRole('button', { name: en.customers.addCustomer })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: en.clientImport.button })).not.toBeInTheDocument();
+});
+test('the empty card defers creation to the parent footer when actions are hidden', async () => {
+    await mount(<ClientsCard customerList={[]} hideButtons />);
+    expect(screen.queryByRole('button', { name: en.customers.addCustomer })).not.toBeInTheDocument();
+});
+test('a standalone editable empty card keeps its create action', async () => {
+    await mount(<ClientsCard customerList={[]} />);
+    fireEvent.click(screen.getByRole('button', { name: en.customers.addCustomer }));
+    expect(mockOpen).toHaveBeenCalledTimes(1);
+});
 test('entering and returning uses persisted ID, preserves unsaved client edits, and never saves them implicitly', async () => {
     await mount(<ClientPopup clientDetails={client} closePopUpFunction={mockClose} />);
     const email = screen.getByDisplayValue('stored@example.invalid');
