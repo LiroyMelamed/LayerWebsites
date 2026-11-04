@@ -265,6 +265,7 @@ const SimpleInputCore = forwardRef(
         };
 
         const handleNativeInputChange = (e) => {
+            if (disabled || e.target.matches?.(':disabled')) return;
             const newValue = e.target.value;
             delayedValueRef.current = newValue;
             setDelayedValue(newValue);
