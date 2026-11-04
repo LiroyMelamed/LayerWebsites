@@ -441,12 +441,11 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
                                                 else setRequired(checked);
                                             }} />{text('required')}</label>
                                         <TertiaryButton disabled={busy} onPress={cancelSelection}>{text('cancelSelection')}</TertiaryButton>
+                                        {activeBinding && <TertiaryButton disabled={mappingDisabled} onPress={() => {
+                                            edit(() => setBindings(previous => previous.filter(binding => binding.id !== activeBinding.id))); cancelSelection();
+                                        }}>{text('removeBinding')}</TertiaryButton>}
                                     </div>
                                     {(selection || activeBinding) && <div className="lw-word__replacementChoices">
-                                        {activeBinding && <div className="lw-word__currentReplacement"><p>{text('currentReplacement')}: <strong>{fieldLabel(activeBinding.field)}</strong></p>
-                                            <TertiaryButton disabled={mappingDisabled} onPress={() => {
-                                                edit(() => setBindings(previous => previous.filter(binding => binding.id !== activeBinding.id))); cancelSelection();
-                                            }}>{text('removeBinding')}</TertiaryButton></div>}
                                         <WordDataFieldPanel definitions={definitions} group={activeGroup} value={activeBinding?.field || ''}
                                             disabled={mappingDisabled || resolvingSelection} onChange={chooseDataField} fieldLabel={fieldLabel} text={text} />
                                     </div>}
