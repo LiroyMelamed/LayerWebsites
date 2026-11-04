@@ -49,11 +49,11 @@ async function resolveFirmSigningPolicy(_firmId) {
     const signingClientOtpRequired = pickFlag(flags, ['signing_client_otp_required', 'signingClientOtpRequired']);
 
     return {
-        signingEnabled: signingEnabled === null ? true : signingEnabled,
+        signingEnabled: flags.signing_auto_tier_enabled === true || (signingEnabled === null ? true : signingEnabled),
         signingClientOtpRequired: signingClientOtpRequired === null
             ? readEnvBool('SIGNING_CLIENT_OTP_REQUIRED', false)
             : signingClientOtpRequired,
-        source: signingEnabled !== null ? 'plan_feature_flags' : 'defaults',
+        source: flags.signing_auto_tier_enabled === true ? 'automatic_signing_tier' : (signingEnabled !== null ? 'plan_feature_flags' : 'defaults'),
     };
 }
 

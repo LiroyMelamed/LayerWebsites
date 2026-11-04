@@ -1,0 +1,35 @@
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import CalendarInvitationImport from './CalendarInvitationImport';
+import calendarApi from '../../../api/calendarApi';
+jest.mock('../../../api/calendarApi', () => ({ __esModule: true, default: { importInvitation: jest.fn() } }));
+jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: k => k, i18n: { language: 'he' } }) }));
+jest.mock('../../../components/styledComponents/buttons/PrimaryButton', () => ({ children, onPress, disabled }) => <button disabled={disabled} onClick={onPress}>{children}</button>);
+jest.mock('../../../components/styledComponents/buttons/SecondaryButton', () => ({ children, onPress, disabled }) => <button disabled={disabled} onClick={onPress}>{children}</button>);
+const file = { name: 'meeting.ics', size: 100, text: async () => 'SYNTHETIC-ICS' };
+const preview = { events: [{ uid: 'qa', title: 'בדיקת זימון', organizer: 'qa@example.invalid', startTime: '2026-11-05T08:00:00Z' }], outsideWindow: 0 };
+beforeEach(() => jest.clearAllMocks());
+test('choosing previews only; confirmation imports once and signals success after the response', async () => {
+    const imported = jest.fn();
+    calendarApi.importInvitation.mockResolvedValueOnce({ success: true, data: preview }).mockResolvedValueOnce({ success: true, data: { created: 1 } });
+    const { container } = render(<CalendarInvitationImport onImported={imported} />);
+    fireEvent.change(container.querySelector('input'), { target: { files: [file] } });
+    await screen.findByText('בדיקת זימון');
+    expect(calendarApi.importInvitation).toHaveBeenCalledWith('SYNTHETIC-ICS', true);
+    expect(imported).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText('calendar.importInviteConfirm'));
+    await screen.findByText('calendar.importInviteResult');
+    expect(calendarApi.importInvitation).toHaveBeenLastCalledWith('SYNTHETIC-ICS', false);
+    expect(imported).toHaveBeenCalledTimes(1);
+});
+test('a failed save retains the preview and never reports a successful import', async () => {
+    const imported = jest.fn();
+    calendarApi.importInvitation.mockResolvedValueOnce({ success: true, data: preview }).mockResolvedValueOnce({ success: false, message: 'Import failed' });
+    const { container } = render(<CalendarInvitationImport onImported={imported} />);
+    fireEvent.change(container.querySelector('input'), { target: { files: [file] } });
+    fireEvent.click(await screen.findByText('calendar.importInviteConfirm'));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Import failed');
+    expect(imported).not.toHaveBeenCalled();
+    expect(screen.queryByText('calendar.importInviteResult')).toBeNull();
+    await waitFor(() => expect(screen.getByText('calendar.importInviteConfirm')).not.toBeDisabled());
+});

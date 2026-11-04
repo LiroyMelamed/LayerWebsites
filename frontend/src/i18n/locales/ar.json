@@ -1610,7 +1610,12 @@
     "var_amount": "المبلغ",
     "var_content_1": "محتوى 1",
     "var_content_2": "محتوى 2",
-    "var_content_3": "محتوى 3"
+    "var_content_3": "محتوى 3",
+    "calendarLawyerDefaults": "تذكيرات المحامين الافتراضية",
+    "calendarClientDefaults": "تذكيرات العملاء الافتراضية",
+    "calendarDefaultsHint": "الأوقات المحددة للمواعيد الجديدة. عدم الاختيار يعني عدم إرسال تذكيرات لهذه المجموعة. لا تتغير المواعيد الحالية.",
+    "calendarReminderOptionsTitle": "أوقات التذكير المتاحة",
+    "calendarReminderOptionsHint": "اختر أوقات التذكير المتاحة. تُحدد الأوقات الافتراضية للمحامين والعملاء بشكل منفصل أدناه."
   },
   "firmStaffRoles": {
     "title": "الأدوار والصلاحيات",
@@ -3359,7 +3364,21 @@
     "smsVarLabel_websiteUrl": "موقع المكتب الإلكتروني",
     "smsVarLabel_lawyerName": "اسم المحامي",
     "smsVarLabel_title": "عنوان الحدث",
-    "smsVarLabel_meetingTypeLabel": "نوع الاجتماع"
+    "smsVarLabel_meetingTypeLabel": "نوع الاجتماع",
+    "importInviteTitle": "استيراد دعوة",
+    "importInviteHint": "اختر ملف دعوة من البريد وراجع التفاصيل قبل إضافته إلى تقويمك. إعادة الاستيراد تحدّث الموعد دون تكراره. الاستيراد لا يرسل ردًا إلى المنظم.",
+    "importInviteChoose": "اختيار ملف الدعوة (ICS)",
+    "importInviteInvalidFile": "اختر ملف ICS بحجم حتى 512KB",
+    "importInviteError": "تعذّر استيراد الدعوة. حاول مجددًا.",
+    "importInviteLoading": "جارٍ تحميل الدعوة…",
+    "importInvitePreview": "{{count}} مواعيد للمراجعة",
+    "importInviteOrganizer": "المنظم",
+    "importInviteCancellation": "إلغاء دعوة موجودة",
+    "importInviteOutside": "لن تُنسخ {{count}} مواعيد خارج نطاق الاستيراد. النطاق من 30 يومًا مضت وحتى سنة قادمة.",
+    "importInviteConfirm": "استيراد إلى تقويمي",
+    "importInviteResult": "أُضيف {{created}}، حُدّث {{updated}}، أُلغي {{cancelled}}، دون تغيير {{unchanged}}.",
+    "sendInvitationOnSave": "إرسال دعوة بالبريد وSMS عند حفظ الموعد",
+    "recurrenceEndRequired": "اختر تاريخ انتهاء للتكرار لا يسبق الموعد الأول."
   },
   "clientPortal": {
     "home": "صفحتي الرئيسية",

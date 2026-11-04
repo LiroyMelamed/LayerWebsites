@@ -165,3 +165,9 @@ export function hasAnyReminderChannel(channels) {
     const c = parseStoredChannels(channels);
     return c.push || c.sms || c.email;
 }
+
+/** An explicitly empty default disables reminders; missing settings retain the legacy defaults. */
+export function configuredReminderOffsets(settings, audience, allowedMinutes) {
+    const raw = settings?.[audience === 'client' ? 'CALENDAR_CLIENT_REMINDER_DEFAULTS' : 'CALENDAR_LAWYER_REMINDER_DEFAULTS']?.effectiveValue;
+    return raw == null ? defaultReminderOffsets(allowedMinutes) : normalizeSelectedOffsets(parseOffsetsList(raw), allowedMinutes);
+}

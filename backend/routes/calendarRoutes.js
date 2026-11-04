@@ -74,6 +74,7 @@ router.get('/short-links/:slug', require('../middlewares/publicOfficeScope').cal
 // ─── CRM (Step 2) ─────────────────────────────────────────────────────────────
 // All named routes go BEFORE the generic /:id handlers below.
 router.post('/check-conflict', ...calView, cal.checkConflict);
+router.post('/invitations/import', ...calManage, require('../controllers/calendarInvitationController').importFile);
 router.post('/convert-lead', ...calManage, cal.convertLead);
 router.get('/clients/:clientUserId/cases', ...calView, cal.getClientCases);
 router.patch('/:id/link-case', ...calManage, cal.linkCase);
