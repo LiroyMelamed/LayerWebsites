@@ -979,7 +979,6 @@ export function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownload
                             {isDeleting ? t('common.deleting') : t('signingManager.actions.deleteFile')}
                         </SecondaryButton>
                     )}
-                    <SecondaryButton onPress={onClose}>{t('common.close')}</SecondaryButton>
                 </SimpleContainer>
 
                 {spotsPreviewError && (
