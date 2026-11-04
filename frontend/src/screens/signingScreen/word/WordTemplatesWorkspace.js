@@ -195,7 +195,13 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
         if (lock.current) return;
         lock.current = true; setBusyMessage(message); setBusy(true); setError(''); setNotice('');
         try { await operation(); }
-        catch (err) { if (alive.current) { setError([409, 412].includes(err?.status) ? 'conflict' : err?.status === 429 ? 'converterBusy' : err?.status === 503 ? 'converterUnavailable' : err?.status === 422 ? 'missingValues' : 'requestFailed'); if (err?.status === 422) setShowOverrides(true); } }
+        catch (err) {
+            if (alive.current) {
+                const invalidSource = message === 'uploadingSource' && err?.status === 422;
+                setError([409, 412].includes(err?.status) ? 'conflict' : err?.status === 429 ? 'converterBusy' : err?.status === 503 ? 'converterUnavailable' : invalidSource ? 'sourceInvalid' : err?.status === 422 ? 'missingValues' : 'requestFailed');
+                if (err?.status === 422 && !invalidSource) setShowOverrides(true);
+            }
+        }
         finally { lock.current = false; if (alive.current) setBusy(false); }
     }
     function openSource(id, { preserveDocumentInputs = false } = {}) {
