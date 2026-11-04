@@ -138,7 +138,7 @@
   .lw-word__selectionOptions { border: 0; margin: 0; }
   .lw-word__selectionOptions > .lw-word__actions { margin-block: 0 .5rem; }
   .lw-word__selectionOptions .lw-segmentedSwitch { inline-size: 100%; }
-  .lw-word__selectionOptions .lw-segmentedSwitch__option { white-space: normal; }
+  .lw-word__selectionOptions .lw-segmentedSwitch__option { white-space: nowrap; }
   .lw-word__roles { border-block-start: 1px solid var(--lw-color-secondary-highlighted); padding-block-start: 1rem; margin: 0; }
   .lw-word__role { gap: .375rem; margin-block: .5rem; }
   .lw-word__role > .lw-simpleInput { flex-basis: 100%; }
