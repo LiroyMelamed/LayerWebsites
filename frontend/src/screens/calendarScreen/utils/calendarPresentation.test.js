@@ -68,6 +68,13 @@ test('RSVP totals include all invited clients while uninvited clients are not co
     expect(calendarRsvp(event(2, meeting.start, meeting.end, { eventType: 'leave' }))).toBeNull();
 });
 
+test('agenda uses the legacy lead only as fallback and retains distinct participants with the same name', () => {
+    const { calendarEventPeopleText } = require('./calendarPresentation');
+    const details = { clients: [{ name: 'Client' }], leadName: 'Lead', leadParticipants: [{ name: 'Lead' }, { name: 'Lead' }] };
+    expect(calendarEventPeopleText(event(1, '2026-11-04T08:00', '2026-11-04T08:30', details))).toBe('Client · Lead · Lead');
+    expect(calendarEventPeopleText(event(2, '2026-11-04T08:00', '2026-11-04T08:30', { leadName: 'Legacy' }))).toBe('Legacy');
+});
+
 test('search indexes the second manager, all clients, leads, case and long mixed-language title without mutating the event', () => {
     const meeting = event(1, '2026-10-12T09:00', '2026-10-12T10:00', {
         managers: [{ userId: 1, name: 'First' }, { userId: 2, name: 'Second' }],

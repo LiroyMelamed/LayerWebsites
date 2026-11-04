@@ -209,7 +209,8 @@ export function calendarEventStartTime(event, language, t, displayDay) {
 
 export function calendarEventPeopleText(event) {
     const raw = calendarRawEvent(event);
-    return [...(raw.clients || []).map(personName), ...(raw.leadParticipants || []).map(personName), raw.leadName || '']
+    const leads = (raw.leadParticipants || []).map(personName).filter(Boolean);
+    return [...(raw.clients || []).map(personName), ...(leads.length ? leads : [raw.leadName || ''])]
         .filter(Boolean).join(' · ');
 }
 
