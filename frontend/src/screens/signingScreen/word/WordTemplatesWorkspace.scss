@@ -134,3 +134,34 @@
     &.is-active { outline: 2px solid var(--lw-color-primary, #2a4365); outline-offset: 1px; }
     &:disabled { cursor: default; pointer-events: none; opacity: .65; } }
 }
+
+/* Match the incumbent signing editor: one document with a persistent control rail. */
+.lw-word {
+  .lw-word__visualRow { display: grid; grid-template-columns: 19rem minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+  .lw-word__visualRow > .lw-signing-pdfViewerMain { grid-column: 2; grid-row: 1; max-block-size: 76dvh; overflow: auto; }
+  .lw-word__visualRow > .lw-word__mappingForm {
+    grid-column: 1; grid-row: 1; display: grid; position: sticky; inset-block-start: 1rem;
+    inline-size: 100%; max-inline-size: none; max-block-size: 76dvh; overflow-y: auto;
+    padding: 0 0 1rem; gap: 1rem; border: 0; border-radius: 0; box-shadow: none;
+    box-sizing: border-box; background: transparent;
+  }
+  .lw-word__editorHeader > .lw-simpleInput { flex: 1 1 16rem; max-inline-size: 24rem; }
+  .lw-word__selectionOptions { border: 0; margin: 0; }
+  .lw-word__selectionOptions > .lw-word__actions { margin-block: 0 .5rem; }
+  .lw-word__selectionOptions .lw-segmentedSwitch { inline-size: 100%; }
+  .lw-word__selectionOptions .lw-segmentedSwitch__option { white-space: normal; }
+  .lw-word__roles, .lw-word__bindingDetails { border-block-start: 1px solid var(--lw-color-secondary-highlighted); padding-block-start: 1rem; margin: 0; }
+  .lw-word__role { gap: .375rem; margin-block: .5rem; }
+  .lw-word__role > .lw-simpleInput { flex-basis: 100%; }
+  .lw-word__bindings { margin: 0; }
+  .lw-word__bindings li { padding-block: .5rem; gap: .5rem; }
+  .lw-word__keyboardSelection { display: grid; gap: .75rem; padding-block: .75rem; }
+  .lw-word__keyboardSelection > label { display: grid; gap: .5rem; }
+  @media (max-width: 48rem) {
+    .lw-word__visualRow { grid-template-columns: minmax(0, 1fr); }
+    .lw-word__visualRow > .lw-word__mappingForm { grid-column: 1; grid-row: 1; position: static; max-block-size: 45dvh; overflow-y: auto; inset: auto; }
+    .lw-word__visualRow > .lw-signing-pdfViewerMain { grid-column: 1; grid-row: 2; max-block-size: 65dvh; }
+    .lw-word__editor--choosing { padding-block-end: 0; }
+    .lw-word__replacementChoices { overflow: visible; }
+  }
+}
