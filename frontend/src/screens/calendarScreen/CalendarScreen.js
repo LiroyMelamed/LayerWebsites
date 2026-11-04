@@ -1140,14 +1140,23 @@ export default function CalendarScreen() {
                         {/* Calendar */}
                         <SimpleCard className={`lw-calendarScreen__calendarCard${calendarExpanded ? " is-expanded" : ""}`}>
                             <SimpleContainer className="lw-calendarScreen__calendarToolbar">
-                                <div className="lw-calendarRedesign__date">
-                                    <SimpleButton type="button" aria-label={t("calendar.previousPeriod")} className="lw-calendarRedesign__arrow" onPress={() => moveDate(-1)}>
-                                        {locale === "en-GB" ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-                                    </SimpleButton>
-                                    <h2>{dateTitle}</h2>
-                                    <SimpleButton type="button" aria-label={t("calendar.nextPeriod")} className="lw-calendarRedesign__arrow" onPress={() => moveDate(1)}>
-                                        {locale === "en-GB" ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-                                    </SimpleButton>
+                                <div className="lw-calendarRedesign__primaryTools">
+                                    <div className="lw-calendarRedesign__date">
+                                        <SimpleButton type="button" aria-label={t("calendar.previousPeriod")} className="lw-calendarRedesign__arrow" onPress={() => moveDate(-1)}>
+                                            {locale === "en-GB" ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+                                        </SimpleButton>
+                                        <h2>{dateTitle}</h2>
+                                        <SimpleButton type="button" aria-label={t("calendar.nextPeriod")} className="lw-calendarRedesign__arrow" onPress={() => moveDate(1)}>
+                                            {locale === "en-GB" ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+                                        </SimpleButton>
+                                    </div>
+                                    <div className="lw-calendarRedesign__quickTools">
+                                    <SecondaryButton size={buttonSizes.SMALL} onPress={() => selectDate(toLocalYmd(new Date()))}>{t("calendar.today")}</SecondaryButton>
+                                    <SimpleButton type="button" className="lw-calendarRedesign__arrow" onPress={() => fetchEvents(null, { force: true })} aria-label={t("calendar.refreshEvents")}><RotateCw size={18} /></SimpleButton>
+                                    {view !== "dayGridMonth" && <SecondaryButton size={buttonSizes.SMALL} onPress={() => setTimeLayout((value) => !value)} aria-pressed={timeLayout}>
+                                        {timeLayout ? t("calendar.agendaLayout") : t("calendar.hoursLayout")}
+                                    </SecondaryButton>}
+                                    </div>
                                 </div>
                 <div className="lw-calendarRedesign__controls">
 
@@ -1160,13 +1169,6 @@ export default function CalendarScreen() {
 
 
                 </div>
-                                <div className="lw-calendarRedesign__quickTools">
-                                <SecondaryButton size={buttonSizes.SMALL} onPress={() => selectDate(toLocalYmd(new Date()))}>{t("calendar.today")}</SecondaryButton>
-                                <SimpleButton type="button" className="lw-calendarRedesign__arrow" onPress={() => fetchEvents(null, { force: true })} aria-label={t("calendar.refreshEvents")}><RotateCw size={18} /></SimpleButton>
-                                {view !== "dayGridMonth" && <SecondaryButton size={buttonSizes.SMALL} onPress={() => setTimeLayout((value) => !value)} aria-pressed={timeLayout}>
-                                    {timeLayout ? t("calendar.agendaLayout") : t("calendar.hoursLayout")}
-                                </SecondaryButton>}
-                                </div>
                                 <div className="lw-calendarRedesign__tools">
                                 <SecondaryButton
                                     size={buttonSizes.SMALL}
