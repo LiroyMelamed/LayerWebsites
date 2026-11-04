@@ -1053,21 +1053,34 @@ body.lw-fromApp .lw-calendarRedesign.has-nativeFooter .lw-calendarScreen__scroll
     .lw-calendarRedesign .lw-calendarScreen__scroll { padding-inline: .625rem; padding-block-start: .625rem; }
 }
 
-/* One compact actions row with the view switch at its actual center. */
+/* Keep the date and actions in one row, with the view switch centered. */
+.lw-calendarRedesign .lw-calendarScreen__calendarCard { container-type: inline-size; }
 .lw-calendarRedesign .lw-calendarScreen__calendarToolbar {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    .lw-calendarRedesign__date { grid-column: 1 / -1; grid-row: 1; justify-self: center; }
-    .lw-calendarRedesign__quickTools { grid-column: 1; grid-row: 2; display: flex; gap: .25rem; justify-self: start; align-items: center; }
-    .lw-calendarRedesign__controls { grid-column: 2; grid-row: 2; order: initial; justify-self: center; }
-    .lw-calendarRedesign__tools { grid-column: 3; grid-row: 2; order: initial; justify-self: end; flex-wrap: nowrap; }
+    .lw-calendarRedesign__primaryTools { grid-column: 1; display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+    .lw-calendarRedesign__date { flex: 0 0 auto; }
+    .lw-calendarRedesign__quickTools { display: flex; gap: .25rem; align-items: center; }
+    .lw-calendarRedesign__controls { grid-column: 2; order: initial; justify-self: center; }
+    .lw-calendarRedesign__tools { grid-column: 3; order: initial; justify-self: end; flex-wrap: nowrap; }
 }
-@media (max-width: 36rem) {
+@container (max-width: 58rem) {
     .lw-calendarRedesign .lw-calendarScreen__calendarToolbar {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        .lw-calendarRedesign__controls { grid-column: 1 / -1; grid-row: 2; }
-        .lw-calendarRedesign__quickTools { grid-column: 1; grid-row: 3; flex-wrap: wrap; }
-        .lw-calendarRedesign__tools { grid-column: 2; grid-row: 3; flex-wrap: wrap; justify-content: end; }
+        grid-template-columns: minmax(0, 1fr) auto;
+        .lw-calendarRedesign__primaryTools { display: contents; }
+        .lw-calendarRedesign__date { grid-column: 1; grid-row: 1; justify-self: start; justify-content: start; }
+        .lw-calendarRedesign__controls { grid-column: 2; grid-row: 1; justify-self: end; }
+        .lw-calendarRedesign__quickTools { grid-column: 1; grid-row: 2; flex-wrap: wrap; }
+        .lw-calendarRedesign__tools { grid-column: 2; grid-row: 2; flex-wrap: wrap; justify-content: end; }
+    }
+}
+@container (max-width: 26rem) {
+    .lw-calendarRedesign .lw-calendarScreen__calendarToolbar {
+        gap: .375rem .25rem;
+        .lw-calendarRedesign__date { gap: 0; }
+        .lw-calendarRedesign__date h2 { font-size: .75rem; white-space: normal; }
+        .lw-calendarRedesign__date button { min-inline-size: 1.5rem; padding-inline: .125rem; }
+        .lw-segmentedSwitch__option { padding-inline: .25rem; }
     }
 }
