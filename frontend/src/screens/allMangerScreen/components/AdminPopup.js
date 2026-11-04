@@ -2,6 +2,7 @@ import { useFirmPermissions } from '../../../providers/FirmPermissionsProvider';
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
+import ChooseButton from "../../../components/styledComponents/buttons/ChooseButton";
 import SimpleInput from "../../../components/simpleComponents/SimpleInput";
 import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
 import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
@@ -251,20 +252,14 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
                         <label className="lw-adminPopup__firmStaffRoleLabel">
                             {t("admins.firmStaffRoleSection", "תפקיד והרשאות")}
                         </label>
-                        <select
-                            className="lw-adminPopup__firmStaffRoleSelect"
-                            value={firmStaffRoleId}
-                            onChange={(e) => setFirmStaffRoleId(e.target.value)}
-                        >
-                            <option value="">
-                                {t("admins.firmStaffRoleNone", "ללא תפקיד מותאם")}
-                            </option>
-                            {firmStaffRoles.map((r) => (
-                                <option key={r.id} value={r.id}>
-                                    {r.name}
-                                </option>
-                            ))}
-                        </select>
+                        <ChooseButton
+                            showAll={false}
+                            controlledValue={firmStaffRoleId}
+                            items={[{ value: '', label: t("admins.firmStaffRoleNone", "ללא תפקיד מותאם") }, ...firmStaffRoles.map(r => ({ value: String(r.id), label: r.name }))]}
+                            props={{ className: 'lw-adminPopup__firmStaffRoleSelect', 'aria-label': t("admins.firmStaffRoleSection", "תפקיד והרשאות"), type: 'button' }}
+                            dropdownProps={{ keyboardNavigation: true, withinDialog: true }}
+                            OnPressChoiceFunction={setFirmStaffRoleId}
+                        />
                         <p className="lw-adminPopup__firmStaffRoleHint">
                             {t(
                                 "admins.firmStaffRoleHint",
