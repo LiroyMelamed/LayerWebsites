@@ -46,7 +46,7 @@ import { calendarNativeCapabilities } from "./utils/calendarNativeBridge";
 import EventFormModal from "./components/EventFormModal";
 import PersonalSyncModal from "./components/PersonalSyncModal";
 import CalendarInvitationImport from "./components/CalendarInvitationImport";
-import { colorForKey, colorKeyForEvent, leaveColor, holidayColor, buildLawyerLegend, getEventTypeDefaultColor, isStockEventColor } from "./utils/lawyerColors";
+import { colorForKey, colorKeyForEvent, leaveColor, holidayColor, getEventTypeDefaultColor, isStockEventColor } from "./utils/lawyerColors";
 import { toastError, toastSuccess, toastWarning } from "../../components/ui/toast";
 import { buildNewEventPrefill } from "./utils/eventDefaults";
 import { calendarEventInteractionOptions } from "./utils/eventInteraction";
@@ -925,6 +925,7 @@ export default function CalendarScreen() {
 
     const switchToFirmScope = useCallback(() => setScope(SCOPE_FIRM), []);
     const clearAllFilters = () => {
+        setQuery("");
         setFilters({ lawyer_id: null, client_id: null, case_id: null, event_type: EVENT_TYPE_ALL });
         setManagerFilterLabel("");
         setClientFilterLabel("");
@@ -935,7 +936,6 @@ export default function CalendarScreen() {
         (filters.event_type && filters.event_type !== EVENT_TYPE_ALL);
 
     // ── Derived dropdown data ──────────────────────────────────────────────
-    const lawyerLegend = useMemo(() => buildLawyerLegend(lawyers), [lawyers]);
 
     const handleManagerFilterSearch = useCallback((name) => {
         setManagerFilterLabel(name);
@@ -1068,26 +1068,6 @@ export default function CalendarScreen() {
             )}
 
             <SimpleScrollView className={`lw-calendarScreen__scroll${calendarExpanded ? " is-calendarExpanded" : ""}`}>
-                {canUseFirmView && scope === SCOPE_FIRM && lawyers.length > 0 && (
-                    <div className="lw-calendarRedesign__managers" aria-label={t("calendar.lawyersLegend")}>
-                        <SimpleButton type="button" className={`lw-calendarRedesign__manager${!filters.lawyer_id ? " is-active" : ""}`}
-                            aria-pressed={!filters.lawyer_id} onPress={() => { setFilter("lawyer_id", null); setManagerFilterLabel(""); }}>
-                            {t("calendar.eventTypeAll")}
-                        </SimpleButton>
-                        {lawyers.map((manager) => {
-                            const id = manager.userid ?? manager.UserId ?? manager.id;
-                            const name = manager.name ?? manager.Name;
-                            return <SimpleButton key={id} type="button" className={`lw-calendarRedesign__manager${Number(filters.lawyer_id) === Number(id) ? " is-active" : ""}`}
-                                aria-pressed={Number(filters.lawyer_id) === Number(id)} onPress={() => {
-                                    const next = Number(filters.lawyer_id) === Number(id) ? null : id;
-                                    setFilter("lawyer_id", next); setManagerFilterLabel(next ? name : "");
-                                }}>
-                                <CalendarOwners event={{ extendedProps: { managers: [{ userId: id, name }] } }} lawyers={lawyers} small />
-                                <span>{name}</span>
-                            </SimpleButton>;
-                        })}
-                    </div>
-                )}
 
                 {viewingOtherEmployee && (
                     <SimpleContainer className="lw-calendarScreen__employeeBanner">
@@ -1142,8 +1122,107 @@ export default function CalendarScreen() {
                     </SimpleContainer>
                 )}
 
-                {/* ── Manager / client / case filters (one row) ── */}
-                {filtersPanelOpen && (
+                {/* ── Layout: sidebar + calendar ── */}
+                <SimpleContainer className={`lw-calendarScreen__layout is-sidebarClosed${calendarExpanded ? " is-calendarExpanded" : ""}`}>
+
+                    {/* ── Calendar column ── */}
+                    <SimpleContainer className="lw-calendarScreen__calendarCol">
+
+                        {/* Calendar */}
+                        <SimpleCard className={`lw-calendarScreen__calendarCard${calendarExpanded ? " is-expanded" : ""}`}>
+                            <SimpleContainer className="lw-calendarScreen__calendarToolbar">
+                                <div className="lw-calendarRedesign__date">
+                                    <SimpleButton type="button" aria-label={t("calendar.previousPeriod")} className="lw-calendarRedesign__arrow" onPress={() => moveDate(-1)}>
+                                        {locale === "en-GB" ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+                                    </SimpleButton>
+                                    <h2>{dateTitle}</h2>
+                                    <SimpleButton type="button" aria-label={t("calendar.nextPeriod")} className="lw-calendarRedesign__arrow" onPress={() => moveDate(1)}>
+                                        {locale === "en-GB" ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+                                    </SimpleButton>
+                                </div>
+                <div className="lw-calendarRedesign__controls">
+
+                    <SegmentedSwitch ariaLabel={t("calendar.viewAria")} value={view} onChange={selectView}
+                        options={[
+                            { value: "timeGridDay", label: t("calendar.dayView") },
+                            { value: "timeGridWeek", label: t("calendar.weekView") },
+                            { value: "dayGridMonth", label: t("calendar.monthView") },
+                        ]} />
+
+                    <SecondaryButton size={buttonSizes.SMALL}
+                        onPress={() => setFiltersPanelOpen((v) => !v)}
+                        aria-expanded={filtersPanelOpen} aria-controls="calendar-advanced-filters"
+                        aria-label={filtersPanelOpen ? t("calendar.closeFiltersAria") : t("calendar.openFiltersAria")}
+                        className={hasActiveFilters || query ? "lw-calendarScreen__filtersActive" : undefined}>
+                        {t("calendar.filtersTitle")}{hasActiveFilters || query ? " •" : ""}
+                    </SecondaryButton>
+                </div>
+                                <div className="lw-calendarRedesign__tools">
+                                <SecondaryButton size={buttonSizes.SMALL} onPress={() => selectDate(toLocalYmd(new Date()))}>{t("calendar.today")}</SecondaryButton>
+                                <SimpleButton type="button" className="lw-calendarRedesign__arrow" onPress={() => fetchEvents(null, { force: true })} aria-label={t("calendar.refreshEvents")}><RotateCw size={18} /></SimpleButton>
+                                {view !== "dayGridMonth" && <SecondaryButton size={buttonSizes.SMALL} onPress={() => setTimeLayout((value) => !value)} aria-pressed={timeLayout}>
+                                    {timeLayout ? t("calendar.agendaLayout") : t("calendar.hoursLayout")}
+                                </SecondaryButton>}
+                                <SecondaryButton
+                                    size={buttonSizes.SMALL}
+                                    className="lw-calendarScreen__expandBtn"
+                                    onPress={() => setCalendarExpanded((v) => !v)}
+                                    aria-label={calendarExpanded ? t("calendar.collapseCalendarAria") : t("calendar.expandCalendarAria")}
+                                >
+                                    {calendarExpanded ? t("calendar.collapseCalendar") : t("calendar.expandCalendar")}
+                                </SecondaryButton>
+                                </div>
+                            </SimpleContainer>
+                    {/* Advanced filters stay inside the calendar, including fullscreen. */}
+                    {filtersPanelOpen && (
+                        <section id="calendar-advanced-filters" className="lw-calendarScreen__advancedFilters" aria-label={t("calendar.filtersTitle")}>
+                            <SimpleContainer className="lw-calendarScreen__sidebarHeader">
+                                <TextBold14 color="#2A4365">{t("calendar.filtersTitle")}</TextBold14>
+
+                            </SimpleContainer>
+
+                        {canUseFirmView && (
+                            <SegmentedSwitch
+                                className="lw-calendarScreen__scopeSwitch"
+                                ariaLabel={t("calendar.scopeMine")}
+                                value={scope}
+                                onChange={(next) => {
+                                    if (next === SCOPE_FIRM) switchToFirmScope();
+                                    else switchToMineScope();
+                                }}
+                                options={[
+                                    { value: SCOPE_MINE, label: t("calendar.scopeMine") },
+                                    { value: SCOPE_FIRM, label: t("calendar.scopeFirm") },
+                                ]}
+                            />
+                        )}
+
+                            <div className="lw-calendarRedesign__search">
+                                <SimpleInput title={t("calendar.searchEvents")} value={query} timeToWaitInMilli={0}
+                                    onChange={(event) => setQuery(event.target.value)} aria-label={t("calendar.searchEvents")} />
+                                <Search size={18} aria-hidden="true" />
+                            </div>
+                {canUseFirmView && scope === SCOPE_FIRM && lawyers.length > 0 && (
+                    <div className="lw-calendarRedesign__managers" aria-label={t("calendar.lawyersLegend")}>
+                        <SimpleButton type="button" className={`lw-calendarRedesign__manager${!filters.lawyer_id ? " is-active" : ""}`}
+                            aria-pressed={!filters.lawyer_id} onPress={() => { setFilter("lawyer_id", null); setManagerFilterLabel(""); }}>
+                            {t("calendar.eventTypeAll")}
+                        </SimpleButton>
+                        {lawyers.map((manager) => {
+                            const id = manager.userid ?? manager.UserId ?? manager.id;
+                            const name = manager.name ?? manager.Name;
+                            return <SimpleButton key={id} type="button" className={`lw-calendarRedesign__manager${Number(filters.lawyer_id) === Number(id) ? " is-active" : ""}`}
+                                aria-pressed={Number(filters.lawyer_id) === Number(id)} onPress={() => {
+                                    const next = Number(filters.lawyer_id) === Number(id) ? null : id;
+                                    setFilter("lawyer_id", next); setManagerFilterLabel(next ? name : "");
+                                }}>
+                                <CalendarOwners event={{ extendedProps: { managers: [{ userId: id, name }] } }} lawyers={lawyers} small />
+                                <span>{name}</span>
+                            </SimpleButton>;
+                        })}
+                    </div>
+                )}
+
                     <div className="lw-calendarScreen__filterRow lw-calendarScreen__filterRow--two">
                         <div className="lw-calendarScreen__filterGroup">
                             <SearchInput
@@ -1171,27 +1250,6 @@ export default function CalendarScreen() {
                             />
                         </div>
                     </div>
-                )}
-
-                {/* ── Layout: sidebar + calendar ── */}
-                <SimpleContainer className={`lw-calendarScreen__layout ${filtersPanelOpen && !calendarExpanded ? "is-sidebarOpen" : "is-sidebarClosed"}${calendarExpanded ? " is-calendarExpanded" : ""}`}>
-
-                    {/* ── Sidebar filter panel ── */}
-                    {filtersPanelOpen && !calendarExpanded && (
-                        <SimpleCard className="lw-calendarScreen__sidebar">
-                            <SimpleContainer className="lw-calendarScreen__sidebarHeader">
-                                <TextBold14 color="#2A4365">{t("calendar.filtersTitle")}</TextBold14>
-                                {isSmallScreen && (
-                                    <SimpleButton
-                                        className="lw-calendarScreen__sidebarClose"
-                                        onPress={() => setFiltersPanelOpen(false)}
-                                        aria-label={t("calendar.closeFiltersAria")}
-                                    >
-                                        ✕
-                                    </SimpleButton>
-                                )}
-                            </SimpleContainer>
-
                             {canPickEmployeeCalendar && (
                                 <div className="lw-calendarScreen__filterGroup">
                                     <SearchInput
@@ -1224,117 +1282,23 @@ export default function CalendarScreen() {
                                 </div>
                             </div>
 
+                            <div className="lw-calendarScreen__filterTools">
+                    {canManageCalendar && <SecondaryButton size={buttonSizes.SMALL} onPress={() => openPopup(
+                        <CalendarInvitationImport onImported={() => fetchEvents(null, { force: true })} />
+                    )}>{t("calendar.importInviteTitle")}</SecondaryButton>}
+                                <SecondaryButton size={buttonSizes.SMALL} onPress={openPersonalSyncModal} aria-label={t("calendar.openPersonalSyncAria")}>
+                                    {t("calendar.openPersonalSync")}
+                                </SecondaryButton>
+                            </div>
                             {/* Clear-all */}
-                            {hasActiveFilters && (
+                            {(hasActiveFilters || query) && (
                                 <SecondaryButton onPress={clearAllFilters} className="lw-calendarScreen__clearBtn">
                                     {t("calendar.clearFilters")}
                                 </SecondaryButton>
                             )}
 
-                            {/* Lawyer legend — visible whenever firm view is active */}
-                            {canUseFirmView && scope === SCOPE_FIRM && (
-                                <SimpleContainer className="lw-calendarScreen__legend">
-                                    <TextBold14 color="#2A4365">{t("calendar.lawyersLegend")}</TextBold14>
-                                    {lawyerLegend.length === 0 ? (
-                                        <Text12 color="#718096">{t("calendar.noLawyers")}</Text12>
-                                    ) : (
-                                        <SimpleContainer className="lw-calendarScreen__legendList">
-                                            {lawyerLegend.map((l) => (
-                                                <SimpleContainer key={l.id} className="lw-calendarScreen__legendItem">
-                                                    <span className="lw-calendarScreen__legendDot" style={{ backgroundColor: l.color }} />
-                                                    <Text12 color="#2D3748">{l.name}</Text12>
-                                                </SimpleContainer>
-                                            ))}
-                                        </SimpleContainer>
-                                    )}
-
-                                    {/* Leave color row */}
-                                    <SimpleContainer className="lw-calendarScreen__legendItem lw-calendarScreen__legendItem--leave">
-                                        <span className="lw-calendarScreen__legendDot lw-calendarScreen__legendDot--striped" style={{ backgroundColor: leaveColor() }} />
-                                        <Text12 color="#2D3748">{t("calendar.leaveLabel")}</Text12>
-                                    </SimpleContainer>
-                                </SimpleContainer>
-                            )}
-                        </SimpleCard>
+                        </section>
                     )}
-
-                    {/* ── Calendar column ── */}
-                    <SimpleContainer className="lw-calendarScreen__calendarCol">
-
-                        {/* Calendar */}
-                        <SimpleCard className={`lw-calendarScreen__calendarCard${calendarExpanded ? " is-expanded" : ""}`}>
-                            <SimpleContainer className="lw-calendarScreen__calendarToolbar">
-                                <div className="lw-calendarRedesign__date">
-                                    <SimpleButton type="button" aria-label={t("calendar.previousPeriod")} className="lw-calendarRedesign__arrow" onPress={() => moveDate(-1)}>
-                                        {locale === "en-GB" ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-                                    </SimpleButton>
-                                    <h2>{dateTitle}</h2>
-                                    <SimpleButton type="button" aria-label={t("calendar.nextPeriod")} className="lw-calendarRedesign__arrow" onPress={() => moveDate(1)}>
-                                        {locale === "en-GB" ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-                                    </SimpleButton>
-                                </div>
-                <div className="lw-calendarRedesign__controls">
-                        {canUseFirmView && (
-                            <SegmentedSwitch
-                                className="lw-calendarScreen__scopeSwitch"
-                                ariaLabel={t("calendar.scopeMine")}
-                                value={scope}
-                                onChange={(next) => {
-                                    if (next === SCOPE_FIRM) switchToFirmScope();
-                                    else switchToMineScope();
-                                }}
-                                options={[
-                                    { value: SCOPE_MINE, label: t("calendar.scopeMine") },
-                                    { value: SCOPE_FIRM, label: t("calendar.scopeFirm") },
-                                ]}
-                            />
-                        )}
-
-                    <SegmentedSwitch ariaLabel={t("calendar.viewAria")} value={view} onChange={selectView}
-                        options={[
-                            { value: "timeGridDay", label: t("calendar.dayView") },
-                            { value: "timeGridWeek", label: t("calendar.weekView") },
-                            { value: "dayGridMonth", label: t("calendar.monthView") },
-                        ]} />
-                    <SecondaryButton size={buttonSizes.SMALL} className="lw-calendarScreen__syncBtn" onPress={openPersonalSyncModal} aria-label={t("calendar.openPersonalSyncAria")}>
-                        {t("calendar.openPersonalSync")}
-                    </SecondaryButton>
-                    {canManageCalendar && <SecondaryButton size={buttonSizes.SMALL} onPress={() => openPopup(
-                        <CalendarInvitationImport onClose={closePopup} onImported={() => fetchEvents(null, { force: true })} />
-                    )}>{t("calendar.importInviteTitle")}</SecondaryButton>}
-                    <div className="lw-calendarRedesign__searchRow">
-                    <div className="lw-calendarRedesign__search">
-                        <SimpleInput title={t(phone ? "calendar.searchEventsShort" : "calendar.searchEvents")} value={query} timeToWaitInMilli={0}
-                            onChange={(event) => setQuery(event.target.value)} aria-label={t("calendar.searchEvents")} />
-                        <Search size={18} aria-hidden="true" />
-                    </div>
-                        {(
-                            <SecondaryButton size={buttonSizes.SMALL}
-                                onPress={() => setFiltersPanelOpen((v) => !v)}
-                                aria-label={filtersPanelOpen ? t("calendar.closeFiltersAria") : t("calendar.openFiltersAria")}
-                            >
-                                {t("calendar.filtersTitle")}
-                            </SecondaryButton>
-                        )}
-
-                    </div>
-                </div>
-                                <div className="lw-calendarRedesign__tools">
-                                <SecondaryButton size={buttonSizes.SMALL} onPress={() => selectDate(toLocalYmd(new Date()))}>{t("calendar.today")}</SecondaryButton>
-                                <SimpleButton type="button" className="lw-calendarRedesign__arrow" onPress={() => fetchEvents(null, { force: true })} aria-label={t("calendar.refreshEvents")}><RotateCw size={18} /></SimpleButton>
-                                {view !== "dayGridMonth" && <SecondaryButton size={buttonSizes.SMALL} onPress={() => setTimeLayout((value) => !value)} aria-pressed={timeLayout}>
-                                    {timeLayout ? t("calendar.agendaLayout") : t("calendar.hoursLayout")}
-                                </SecondaryButton>}
-                                <SecondaryButton
-                                    size={buttonSizes.SMALL}
-                                    className="lw-calendarScreen__expandBtn"
-                                    onPress={() => setCalendarExpanded((v) => !v)}
-                                    aria-label={calendarExpanded ? t("calendar.collapseCalendarAria") : t("calendar.expandCalendarAria")}
-                                >
-                                    {calendarExpanded ? t("calendar.collapseCalendar") : t("calendar.expandCalendar")}
-                                </SecondaryButton>
-                                </div>
-                            </SimpleContainer>
                             <div className="lw-calendarRedesign__status" role="status" aria-live="polite">
                                 {loading && <span>{t("calendar.loadingEvents")}</span>}
                                 {loadError && <span>{t("calendar.loadFailed")} <SimpleButton type="button" onPress={() => fetchEvents(null, { force: true })}>{t("calendar.retry")}</SimpleButton></span>}
