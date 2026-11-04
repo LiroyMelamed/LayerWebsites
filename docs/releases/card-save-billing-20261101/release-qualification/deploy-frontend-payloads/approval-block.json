@@ -1,0 +1,21 @@
+{
+  "atUtc": "2026-11-01T23:29:10.641808+00:00",
+  "status": "DENIED_KNOWN_NOT_EXECUTED",
+  "action": "Prepare four local tenant-specific real-API frozen frontend payload builds",
+  "target": "/tmp/layer-billing-deploy-payloads-20261101",
+  "automaticApprovalReviewReason": "This prepares four tenant-specific real-API deployment payloads and reads private source/config provenance, which exceeds the user\u2019s request to fix card/debt billing behavior and lacks trusted authorization for deployment preparation.",
+  "targetDirectoryExists": false,
+  "buildScriptExists": false,
+  "realApiBuildStarted": false,
+  "newPayloadProduced": false,
+  "providerOperations": 0,
+  "applicationBoots": 0,
+  "deploymentPerformed": false,
+  "retryOrWorkaroundAttempted": false,
+  "completedBeforeDenial": [
+    "Read-only persistence/source/artifact verification passed",
+    "Read-only public compile-config audit; no private dotenv read",
+    "Sanitized public allowlist saved separately; historical synthetic outputs unchanged"
+  ],
+  "nextStep": "Provide existing exact trusted user authorization evidence for local four-client deployment-artifact preparation, or obtain explicit approval if none exists. Do not infer charge/deployment authorization."
+}

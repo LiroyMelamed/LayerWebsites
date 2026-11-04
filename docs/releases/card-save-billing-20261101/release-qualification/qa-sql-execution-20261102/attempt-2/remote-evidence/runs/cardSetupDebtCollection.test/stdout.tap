@@ -1,0 +1,170 @@
+{"selectedTest":"backend/tests/cardSetupDebtCollection.test.js","source":"6a3bd299227291feb0065ae3afa89a1f3ba2967a"}
+TAP version 13
+# Subtest: dedicated legacy card save collects the stored debt once, separately from ₪1
+ok 1 - dedicated legacy card save collects the stored debt once, separately from ₪1
+  ---
+  duration_ms: 20106.81017
+  type: 'test'
+  ...
+# Subtest: scoped legacy card save collects the stored debt once, separately from ₪1
+ok 2 - scoped legacy card save collects the stored debt once, separately from ₪1
+  ---
+  duration_ms: 10394.409345
+  type: 'test'
+  ...
+# Subtest: dedicated legacy existing customer pays the due month on card save and the full agreed price at next monthly renewal
+ok 3 - dedicated legacy existing customer pays the due month on card save and the full agreed price at next monthly renewal
+  ---
+  duration_ms: 9410.050476
+  type: 'test'
+  ...
+# Subtest: dedicated legacy declined card-save debt grants no free month; explicit recovery is followed by a full-price next renewal
+ok 4 - dedicated legacy declined card-save debt grants no free month; explicit recovery is followed by a full-price next renewal
+  ---
+  duration_ms: 10481.297438
+  type: 'test'
+  ...
+# Subtest: dedicated legacy uncertain card-save charge grants no free month; the same verified transaction settles before next full-price renewal
+ok 5 - dedicated legacy uncertain card-save charge grants no free month; the same verified transaction settles before next full-price renewal
+  ---
+  duration_ms: 12701.681983
+  type: 'test'
+  ...
+# Subtest: scoped legacy existing customer pays the due month on card save and the full agreed price at next monthly renewal
+ok 6 - scoped legacy existing customer pays the due month on card save and the full agreed price at next monthly renewal
+  ---
+  duration_ms: 10197.828856
+  type: 'test'
+  ...
+# Subtest: scoped legacy declined card-save debt grants no free month; explicit recovery is followed by a full-price next renewal
+ok 7 - scoped legacy declined card-save debt grants no free month; explicit recovery is followed by a full-price next renewal
+  ---
+  duration_ms: 9884.865482
+  type: 'test'
+  ...
+# Subtest: scoped legacy uncertain card-save charge grants no free month; the same verified transaction settles before next full-price renewal
+ok 8 - scoped legacy uncertain card-save charge grants no free month; the same verified transaction settles before next full-price renewal
+  ---
+  duration_ms: 9819.000963
+  type: 'test'
+  ...
+# Subtest: card verification leaves nonbillable subscription unchanged: {"amount":0}
+ok 9 - card verification leaves nonbillable subscription unchanged: {"amount":0}
+  ---
+  duration_ms: 10588.801155
+  type: 'test'
+  ...
+# Subtest: card verification leaves nonbillable subscription unchanged: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"}
+ok 10 - card verification leaves nonbillable subscription unchanged: {"status":"active","renewsAt":"2026-12-01T12:00:00Z"}
+  ---
+  duration_ms: 8990.571027
+  type: 'test'
+  ...
+# Subtest: card verification leaves nonbillable subscription unchanged: {"status":"complimentary","complimentaryUntil":"2026-12-01T12:00:00Z"}
+ok 11 - card verification leaves nonbillable subscription unchanged: {"status":"complimentary","complimentaryUntil":"2026-12-01T12:00:00Z"}
+  ---
+  duration_ms: 10319.493085
+  type: 'test'
+  ...
+# Subtest: card verification leaves nonbillable subscription unchanged: {"billingEnabled":false}
+ok 12 - card verification leaves nonbillable subscription unchanged: {"billingEnabled":false}
+  ---
+  duration_ms: 8597.626575
+  type: 'test'
+  ...
+# Subtest: card verification leaves nonbillable subscription unchanged: {"autoRenew":false,"status":"active","renewsAt":"2026-10-01T12:00:00Z"}
+ok 13 - card verification leaves nonbillable subscription unchanged: {"autoRenew":false,"status":"active","renewsAt":"2026-10-01T12:00:00Z"}
+  ---
+  duration_ms: 9590.034227
+  type: 'test'
+  ...
+# Subtest: one definite decline retains debt/grace and callback replay never retries that setup attempt
+ok 14 - one definite decline retains debt/grace and callback replay never retries that setup attempt
+  ---
+  duration_ms: 11008.670473
+  type: 'test'
+  ...
+# Subtest: timeout charge outcome retains a reservation and prevents alternate charges or checkout
+ok 15 - timeout charge outcome retains a reservation and prevents alternate charges or checkout
+  ---
+  duration_ms: 9185.256965
+  type: 'test'
+  ...
+# Subtest: ambiguous charge outcome retains a reservation and prevents alternate charges or checkout
+ok 16 - ambiguous charge outcome retains a reservation and prevents alternate charges or checkout
+  ---
+  duration_ms: 8715.20565
+  type: 'test'
+  ...
+# Subtest: malformed charge outcome retains a reservation and prevents alternate charges or checkout
+ok 17 - malformed charge outcome retains a reservation and prevents alternate charges or checkout
+  ---
+  duration_ms: 10278.107153
+  type: 'test'
+  ...
+# Subtest: an existing unresolved payment survives setup and blocks a second collection
+ok 18 - an existing unresolved payment survives setup and blocks a second collection
+  ---
+  duration_ms: 9207.824165
+  type: 'test'
+  ...
+# Subtest: concurrent setup callbacks, explicit retry and maintenance dispatch at most one subscription charge
+ok 19 - concurrent setup callbacks, explicit retry and maintenance dispatch at most one subscription charge
+  ---
+  duration_ms: 9000.353031
+  type: 'test'
+  ...
+# Subtest: unverified setup or missing trusted token cannot save a callback card or collect debt
+ok 20 - unverified setup or missing trusted token cannot save a callback card or collect debt
+  ---
+  duration_ms: 9312.958228
+  type: 'test'
+  ...
+# Subtest: initial signup payment provisions the signup without entering card debt collection
+ok 21 - initial signup payment provisions the signup without entering card debt collection
+  ---
+  duration_ms: 8971.480607
+  type: 'test'
+  ...
+# Subtest: a setup saved before the next bill cannot authorize that later bill when its callback replays
+ok 22 - a setup saved before the next bill cannot authorize that later bill when its callback replays
+  ---
+  duration_ms: 9713.533247
+  type: 'test'
+  ...
+# Subtest: pre-fix succeeded setup without collection authorization cannot start a historical live bill
+ok 23 - pre-fix succeeded setup without collection authorization cannot start a historical live bill
+  ---
+  duration_ms: 13415.95616
+  type: 'test'
+  ...
+# Subtest: a successful charge with unverifiable outcome remains reserved until its same transaction verifies
+ok 24 - a successful charge with unverifiable outcome remains reserved until its same transaction verifies
+  ---
+  duration_ms: 10417.826402
+  type: 'test'
+  ...
+# Subtest: setup settlement rejects a stored intent from a different office before saving its card
+ok 25 - setup settlement rejects a stored intent from a different office before saving its card
+  ---
+  duration_ms: 9367.172682
+  type: 'test'
+  ...
+# Subtest: a setup authorized for an unresolved old cycle cannot collect a different later cycle
+ok 26 - a setup authorized for an unresolved old cycle cannot collect a different later cycle
+  ---
+  duration_ms: 9523.357567
+  type: 'test'
+  ...
+# Subtest: hosted checkout racing setup collection reserves one payment route
+ok 27 - hosted checkout racing setup collection reserves one payment route
+  ---
+  duration_ms: 9979.090744
+  type: 'test'
+  ...
+# Subtest: yearly debt collection uses its stored agreed monthly amount and existing annual rule
+ok 28 - yearly debt collection uses its stored agreed monthly amount and existing annual rule
+  ---
+  duration_ms: 9505.723743
+  type: 'test'
+  ...

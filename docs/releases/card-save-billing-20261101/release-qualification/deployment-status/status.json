@@ -1,0 +1,38 @@
+{
+  "recordedAtUtc": "2026-11-02T00:06:16.478639+00:00",
+  "status": "CONDITIONAL_DEPLOYMENT_REQUESTED_BUT_GATES_OPEN_NO_DEPLOYMENT",
+  "frozenMain": "074df7520497a0cd6bd95ad70353201c905f0aa6",
+  "qualifiedRuntime": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "coreAudit": "41ab84c003a27ced9f2a4a2fdd74bc05ad999ab4",
+  "closed": [
+    "source/billing/frontend qualification for four clients",
+    "reconnection receipt/log/artifact integrity",
+    "clean delivery refs with exact qualified product input equivalence",
+    "verified Git bundle + five-ref import/connectivity",
+    "four live dedicated-mode source/catalog/lock/package preflights",
+    "12 encrypted DB archives size/hash/CMS structure,17 PostgreSQL TOC,9 source tar headers"
+  ],
+  "notPassed": [
+    "existing QA native positive paid/signup/profile integration: real Takbullprod enabled and no proved synthetic fixture",
+    "complete shared signup/RLS provisioning;57 SQL fixture cases do not replace it",
+    "full profile PostgreSQL fixture remains inherited unexecuted coverage; indirect billing-access dependency retained",
+    "authenticated restore into existing isolated authorized target (none identified in bounded documented roots)",
+    "three complete inactive rollback versions per component",
+    "old-producer drain, issued-page terminal status, callback retention/reconciliation",
+    "paused process source/env/startup binding",
+    "real-API deployment payload build blocked before execution by automatic approval review"
+  ],
+  "ownerDeniedActions": "ALLnewMacPG/database/role/extension/restore environments CANCELLED_NOT_PENDING; no new environment anywhere",
+  "extraAuthorizationBeforeExecution": [
+    "existing backup identity schema-only QA export with explicit identity/socket guard, no grant/fallback",
+    "QA-only financial/worker pause and process restart only after open safety gates close, using exactapproval packet",
+    "existing authorized restore target must be identified; no environment creation proposed",
+    "direct trusted forwarding of existing user deployment authorization for the denied local frontend preparation; no workaround/no new human reconfirmation if already authorized"
+  ],
+  "dataPolicy": "No customer/waived-period updates, retrospective collection, transaction/document/email or payment callback replay",
+  "performedLiveChanges": 0,
+  "newMacDatabasesOrRoles": 0,
+  "providerRequests": 0,
+  "deploymentPerformed": false,
+  "sharedSignupObservedScope": "All four dedicated deployments have SELF_SERVICE_SIGNUP_ENABLED effectively false; disabled-path coverage gap, not PASS or activation permission"
+}

@@ -1,0 +1,53 @@
+{
+  "atUtc": "2026-11-02T06:17:57.794950+00:00",
+  "previousUncertainCell": "g2:17",
+  "reconnectionObservation": "both expected output files absent; old cell unavailable; no completed extra proof persisted",
+  "localCompatibilityCorrection": "currentpython lacks hashlib.file_digest; initial completion failed before writes; bounded chunked SHA256 used instead",
+  "pythonVersion": "3.9.6",
+  "completedAction": "bounded local archive/hash validation and creation of only missing proof/docs",
+  "buildsRerun": 0,
+  "httpsRequestsRerun": 0,
+  "networkOperations": 0,
+  "remoteChanges": 0,
+  "allFourRetainedProofSetsValidated": true,
+  "retainedProofValidation": [
+    {
+      "tenant": "melamedia",
+      "publicCaptureFileSha256": "0baa941c6354ac8e6495a90a96910051be62b13ab9c296f9c3fcc5447ff38408",
+      "compiledReceiptSha256": "2d3c75f37061e8163b9a7d39550f24ddd83126a52afe96ea1fa34746766d5e35",
+      "casReceiptSha256": "d225484c084d01db5a18fb2e45574feaad85ff102794a58be107cc88770f4a7a",
+      "capturedBodiesAndProposedBytesIntact": true,
+      "inverseRestoresEveryCapturedByte": true
+    },
+    {
+      "tenant": "ashrafessa",
+      "publicCaptureFileSha256": "3dc1e732dfb8147b6634e4e09cacd8e16f07412dfb4c9ba3e6c83784e3ffa894",
+      "compiledReceiptSha256": "318135d5b87fa7f68cab6a75ae1dd7ee8af1227bdc7730081d8600f7a0349fd8",
+      "casReceiptSha256": "0b5934fb1eeb95636e58edb53a1c4eaec54ec04b29d0546b3d2c87fc516984a9",
+      "capturedBodiesAndProposedBytesIntact": true,
+      "inverseRestoresEveryCapturedByte": true
+    },
+    {
+      "tenant": "morlevy",
+      "publicCaptureFileSha256": "3b904dcde76505c4030a55fabd676dbf9bbc2cd6f6da7c12ae9dc66d8c5ec0d9",
+      "compiledReceiptSha256": "30774dab09c686ecde65acc553ffaa79d35e1c4197defc146d9ef3076d43d2ea",
+      "casReceiptSha256": "d19ed0afd0c6da598e4046634a066aa5a6a1e06b5e1c09b6847bc8477d625338",
+      "capturedBodiesAndProposedBytesIntact": true,
+      "inverseRestoresEveryCapturedByte": true
+    },
+    {
+      "tenant": "melamedlaw",
+      "publicCaptureFileSha256": "b729b9a9eb395eb863759d4278786164a8809c64066fe0847ccd9818b8cf8258",
+      "compiledReceiptSha256": "f56f5d8b2cdb0679c8e8687dbd06c9033887928853486833022e69dea822fdab",
+      "casReceiptSha256": "88e81b12db0d702188c656bf0fa0a485b6d47889041c4d0173128f9f3f2027d3",
+      "capturedBodiesAndProposedBytesIntact": true,
+      "inverseRestoresEveryCapturedByte": true
+    }
+  ],
+  "createdOutputs": {
+    "public-cas/expected-static-collision-hashes.json": "8f71bd2376e8faf823836e1abf5fee88286ae64438ecdf76cf9d69740295c134",
+    "public-cas/README.md": "f2ff407dfa432be6be4d7624d5ce0bd99f5a9a9a8d0e16aeb8bbbf9a8b6066a2"
+  },
+  "activationReady": false,
+  "outcome": "COMPLETE_LOCAL_PROOF_NO_REMOTE_EFFECTS"
+}

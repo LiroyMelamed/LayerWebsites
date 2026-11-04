@@ -425,7 +425,9 @@
     "widgetTitle": "Upcoming events",
     "widgetTodayHeading": "Today",
     "widgetTomorrowHeading": "Tomorrow",
-    "zoomLink": "Zoom link"
+    "zoomLink": "Zoom link",
+    "reminder30d": "1 month before (30 days)",
+    "reminder2w": "2 weeks before"
   },
   "caseTypes": {
     "addStage": "Add stage",

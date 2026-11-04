@@ -1,0 +1,121 @@
+{
+  "status": "PROPOSAL_ONLY_NOT_APPLIED_NOT_FULL_POSITIVE_TEST_ISOLATION",
+  "preparedAtUtc": "2026-11-02T00:01:34.682386+00:00",
+  "frozenProduct": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "upstreamCutoff": "074df7520497a0cd6bd95ad70353201c905f0aa6",
+  "qaDeliverySource": "8d897c207d6bd30fdee108a52e0eb3b89f025f03",
+  "ownerConstraints": [
+    "existing QA only",
+    "No new environment; Mac DB/cluster/role/extension and restore environment proposals CANCELLED_NOT_PENDING. Existing QA only.",
+    "no production change or customer/waived data mutation",
+    "no intentional charge/new provider transaction",
+    "no configuration/security action before explicit real-time approval"
+  ],
+  "target": {
+    "environment": "existing Melamedia QA",
+    "backendHost": "37.60.230.148",
+    "pm2Process": "melamedia-api",
+    "port": 3003,
+    "database": "melamedia",
+    "existingRole": "melamedia_app",
+    "otherProcessesChanged": []
+  },
+  "proposedEffectiveEnvironment": {
+    "BILLING_OPERATIONS_ENABLED": "false",
+    "BACKGROUND_JOBS_ENABLED": "false",
+    "BILLING_RENEWAL_SCHEDULER_ENABLED": "false",
+    "SIGNING_V2_WORKER_ENABLED": "false",
+    "WHATSAPP_WORKER_ENABLED": "false",
+    "WHATSAPP_DEMO_WORKER_ENABLED": "false",
+    "COURT_DEMO_SYNC_WORKER_ENABLED": "false",
+    "CENTRAL_SYSTEM_MESSAGES_DISPATCH_ENABLED": "false",
+    "GIT_SHA": "8d897c207d6bd30fdee108a52e0eb3b89f025f03"
+  },
+  "unchanged": [
+    "Takbull mode and keys",
+    "QA_OUTBOUND_MODE=noop and zero exceptions",
+    "SELF_SERVICE_SIGNUP_ENABLED=false",
+    "database/roles/grants/schema",
+    "customer rows, prices, periods, card/token fields",
+    "other tenant processes and configuration",
+    "nginx/firewall/access controls unless separately reviewed"
+  ],
+  "allowedSmokeAfterPrerequisites": [
+    "literal GET /health with new PID/startup/source binding",
+    "static HTML/JS/CSS artifact hashes without executing SPA",
+    "direct loopback GET and POST /api/webhooks/payments/takbull with no order/transaction/customer reference: expect503 Retry-After60 before business handler"
+  ],
+  "notAllowedSmoke": [
+    "positive charge/setup/checkout/renewal",
+    "real callback replay",
+    "document/email delivery",
+    "normal authenticated billing GET that may normalize old financial state",
+    "legacy fixture bootstrap against public.users or all qa-release rows"
+  ],
+  "guard": {
+    "primary": "BILLING_OPERATIONS_ENABLED=false in qualified new process before imports",
+    "boundaries": [
+      "financial service mutation/intent/token/provision/settle/fail paths",
+      "all Takbull native transports including ValidateNotification and failure lookup",
+      "direct hosted and token verification fetches",
+      "signup/renewal/upgrade/maintenance",
+      "billing/welcome mail and financial outbox"
+    ],
+    "localEvidence": "14 pause cases; fresh6a3 committed-source execution; provider calls zero in synthetic tests",
+    "secondary": "all general/independent/central workers explicitly false; existing messaging noop remains",
+    "notCovered": [
+      "old loaded code and already dispatched operations",
+      "already-issued vendor-hosted pages/browser navigation",
+      "upstream accepted documents/messages",
+      "durable callback retention/redelivery"
+    ],
+    "requireBeforeStart": [
+      "old producers drained and exact ambiguous outcomes reconciled without new charge",
+      "authoritative no-payable/retained-callback condition for existing issued pages",
+      "financial gate code source/PID/effective environment binding",
+      "complete QA startup checks, fresh backup/authenticated restore and rollback prerequisites"
+    ]
+  },
+  "revert": [
+    "capture private original code/artifact/PM2 environment preimages and hashes before changes",
+    "stop only named QA process if smoke/source/flags/startup mismatch",
+    "restore only exact code/artifact/configuration; never restore an old billing database",
+    "old code ignores new gate: do not automatically start old code or re-enable financial flags; keep stopped or separately verified fence until separately approved",
+    "verify other tenant PIDs/configuration unchanged; retain pending reservations/outbox, no replay/mark-paid/clear leases"
+  ],
+  "qaImpact": [
+    "one named QA maintenance stop/start after verified drain; no promised completion time before checks",
+    "billing/setup/checkout/signup financial actions return retryable503 while paused",
+    "signing/WhatsApp/demo/court/central scheduled work paused; queued state preserved",
+    "QA API briefly unavailable during stop/start; coordinate existing QA operators/tests",
+    "no other tenant service, production database or customer record intentionally changed"
+  ],
+  "positiveTestGap": "This is sufficient only for fail-closed/read-only QA smoke. Positive one-period collection still needs an independently proven synthetic fixture and non-settling in-process mock/transport. No native TakbullPROD test is authorized; legacy full-profile/signup fixtures cannot be retargeted or weakened.",
+  "firstOptionalReadOnlyApproval": {
+    "purpose": "current QA schema/trigger/default inspection after app-role pg_dump failed",
+    "identity": "existing backup OSpostgres, explicit DBpostgres after read-only identity/socket preflight; no fallback/grant",
+    "db": "melamedia",
+    "transport": "verified existing local Unix socket /5432 only",
+    "commandShape": [
+      "runuser",
+      "-u",
+      "postgres",
+      "--",
+      "pg_dump",
+      "--schema-only",
+      "--no-owner",
+      "--no-privileges",
+      "--no-comments",
+      "--no-security-labels",
+      "--lock-wait-timeout=1s",
+      "--host=<verified-existing-local-unix-socket>",
+      "--port=5432",
+      "--username=postgres",
+      "--dbname=melamedia"
+    ],
+    "result": "private0600artifact, only sanitized hashes/counts exported",
+    "sideEffects": "no app/provider request, no DML/DDL/GRANT, no service/config change; briefAccessShareLocks; abort on identity/lock/permission mismatch"
+  },
+  "approvalText": "מאשר ב־QA הקיים Melamedia בלבד, ובחלון תחזוקה מתואם, את שינוי שמונת דגלי ההשהיה המפורטים ל־false ואת תג הגרסה לתהליך melamedia-api בלבד. ההפעלה תתבצע רק לאחר סגירת שערי הגיבוי/restore/rollback, ניקוז והגנת callbacks וקשירת הקוד החדש לתהליך. מותרות רק בדיקות חסימה וקריאה שאינן נוגעות בנתוני לקוחות; אין חיוב, עסקת ספק, מסמך, מייל, שינוי DB/הרשאות או שינוי לקוח אחר. אם לא ניתן להוכיח חסימה/חזרה בטוחה, יש לעצור ולא להפעיל סליקה.",
+  "executionStatus": "NOT_EXECUTABLE_WHILE_BACKUP_RESTORE_ROLLBACK_AND_DRAIN_GATES_OPEN"
+}

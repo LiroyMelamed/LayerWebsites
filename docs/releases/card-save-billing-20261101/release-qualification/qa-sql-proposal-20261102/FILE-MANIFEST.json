@@ -1,0 +1,1660 @@
+{
+  "status": "REVIEW_ONLY_FINAL_HARDENED_ARCHIVE_NOT_EXECUTED",
+  "productCommit": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "opsDocsHead": "631012de8c13a3ebdb00b5e737ef4f1c1977a636",
+  "target": "existing QA host /tmp/layer-billing-sql-sequences-20261102-6a3bd299/payload",
+  "package": {
+    "name": "@electric-sql/pglite",
+    "version": "0.5.10",
+    "copiedFrom": "/tmp/layer-billing-lock-deps/node_modules/@electric-sql/pglite",
+    "packageFileCount": 308,
+    "declaredRuntimeDependencies": {},
+    "nativeBinaries": false,
+    "symlinks": false,
+    "lockEntry": {
+      "version": "0.5.10",
+      "resolved": "https://registry.npmjs.org/@electric-sql/pglite/-/pglite-0.5.10.tgz",
+      "integrity": "sha512-tXc/25U3ulOkiRQuTFdwIv+JhBqtMdAF7Gvo6CfZZWtSB4+hgC4Wr2vwK5ngvvN5PJfAAEGIsfyCVy1JhCOBYw==",
+      "dev": true,
+      "license": "Apache-2.0"
+    },
+    "frozenProjectLockSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+    "registryVerification": "no network/registry retrieval or new attestation performed"
+  },
+  "originalSourceFileCount": 9,
+  "originalTestsUnchanged": true,
+  "newDatabaseInstancesCreatedOrRun": 0,
+  "remoteActions": 0,
+  "testsExecuted": false,
+  "syntaxCheckOnly": true,
+  "fileCountExcludingManifest": 323,
+  "totalRegularBytesExcludingManifest": 35650539,
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 4565,
+      "sha256": "2aa805b2ac830b7956a5daf3f5549ae73df4df8cd442360c42e247807ad93bf6"
+    },
+    {
+      "path": "backend/lib/billing/billingOperations.js",
+      "bytes": 1400,
+      "sha256": "50932a1b1e8d9e167cd6ae377d2cea21d45344f191a24dce59aca6cb74f3d10f"
+    },
+    {
+      "path": "backend/lib/billing/calendarMonths.js",
+      "bytes": 1396,
+      "sha256": "69df959760a476d367de1b1a46ca81555b19b9eb08349815b3ee0c6e1d1ed87d"
+    },
+    {
+      "path": "backend/lib/billing/firmBillingService.js",
+      "bytes": 72706,
+      "sha256": "b651a79ec829b48a92536e07499def3b85b1a2b2eb051de6851a6f741bc4cda0"
+    },
+    {
+      "path": "backend/lib/billing/pricingPackage.js",
+      "bytes": 10820,
+      "sha256": "f5a6b2d1710a7ef3ad13df2e279261bd61769aa3d7640a58ef01bbfb002f1ffe"
+    },
+    {
+      "path": "backend/lib/billing/selfServiceRenewal.js",
+      "bytes": 12412,
+      "sha256": "a9d90f0fd6bf6e9fb97cc690e5973540e2a0836721ee13d418a51e3579c20c09"
+    },
+    {
+      "path": "backend/lib/billing/signupQuote.js",
+      "bytes": 2630,
+      "sha256": "1c375fb2fd6380e25bbfdfe69c1705c139ed717858f0692493cb04aa2aa57f73"
+    },
+    {
+      "path": "backend/lib/billing/tenantBillingDefaults.js",
+      "bytes": 4721,
+      "sha256": "2af840bbbf0f8ad0b2dc6b3c596d0c295ea3dd54d745d03b63e410acecd1adb7"
+    },
+    {
+      "path": "backend/tests/cardSetupDebtCollection.test.js",
+      "bytes": 54251,
+      "sha256": "d1086bc9b5e19d56ab23af2dcf71de5d61ec61a00f48cd0529c842c382888378"
+    },
+    {
+      "path": "backend/tests/selfServiceCardSetupCollection.test.js",
+      "bytes": 28182,
+      "sha256": "26ed71b456d5f1d206093f1e20a82b49320f37d7de379396c33e45c5cf499f41"
+    },
+    {
+      "path": "linux_sql_sandbox.py",
+      "bytes": 13103,
+      "sha256": "08707f14aa237ccd2e84235c7f921306078b0859452dde2bfcfed9ff3061dcae"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/LICENSE",
+      "bytes": 10173,
+      "sha256": "a6cba85bc92e0cff7a450b1d873c0eaa2e9fc96bf472df0247a26bec77bf3ff9"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/README.md",
+      "bytes": 7305,
+      "sha256": "eaf848b398aba0f455e7f15179f34131c82acd4d0c9aa2e4cd11ff9cb0a9bf20"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/amcheck.tar.gz",
+      "bytes": 21763,
+      "sha256": "f60a94eb44f3591372af9f6ad34f4b356b729cf8497b0a7ce975c9d10bd8cf4f"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/auto_explain.tar.gz",
+      "bytes": 2723,
+      "sha256": "1401b4acd28722495eb276d4bf8b853e0555ee6fac0f06ada8c7ec07d5894b34"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/bloom.tar.gz",
+      "bytes": 5472,
+      "sha256": "9025783a16bffc538611d75c6454cb499215566b50d8835b335a0903a10d314a"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/btree_gin.tar.gz",
+      "bytes": 5475,
+      "sha256": "bb1df6e31ba15793a99226fd6260ef45538f00ec4f5baba84eefae06e7885dd0"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/btree_gist.tar.gz",
+      "bytes": 22250,
+      "sha256": "1d0148491533739398109fa77873911fb8c3adc88bdfcf0625af573d79e9cd3c"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/chunk-3OMHRXTA.js",
+      "bytes": 18587,
+      "sha256": "5bb49743e0a917c92828f7558be3df26f549d64c0bffc80de92f5fbb21f37a79"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/chunk-3OMHRXTA.js.map",
+      "bytes": 82087,
+      "sha256": "f44fb7741ed2073a3d4cd2e97307373f50c450126a5756cba59e1b3cc6f2ee1c"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/chunk-6QROZKQ5.js",
+      "bytes": 99703,
+      "sha256": "0dfd8153da8b7dce187964811397e468ab14f33e999cbf10ca1e067500fbd039"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/chunk-6QROZKQ5.js.map",
+      "bytes": 301537,
+      "sha256": "6caf4450b24afcad3d2857fd3a368e50f3ec7fdb9bff823cbe2e6fe2558a0cc7"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/chunk-7NIVBDG7.js",
+      "bytes": 4220,
+      "sha256": "161f0b0ea69bcae99be2a09ddec378ca6d3d8687effdc8ee5cf6096dda843706"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/chunk-7NIVBDG7.js.map",
+      "bytes": 23398,
+      "sha256": "2ae973788049a45d78e65eb41be4a94c02164929ed6ce7636ae2750426a58415"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/chunk-F4GETNPB.js",
+      "bytes": 998,
+      "sha256": "5ab11fd9fd74b259484f42a7855cd9569a5fe6ee1cf3c032238ac43a59511d97"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/chunk-F4GETNPB.js.map",
+      "bytes": 6730,
+      "sha256": "741c3a24e8f6c0477110924ea4a436b7a44d481ac741f1bd9a4f59b9172c8f85"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/chunk-NNS5RQRF.js",
+      "bytes": 2174,
+      "sha256": "e04c14da71c248d5e7e02f45df665b8e2b136526ee0bef419274bb2b345a1017"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/chunk-NNS5RQRF.js.map",
+      "bytes": 8630,
+      "sha256": "ef26121a2bbbfd278145ffd4eb96bd4a7966d706267d2692c2300118fccbdb36"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/chunk-O56QGQDD.js",
+      "bytes": 917,
+      "sha256": "a3239ef94a90d12af61de0f79e096a1f52ca484aa35aed476b02f101fed7de41"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/chunk-O56QGQDD.js.map",
+      "bytes": 5191,
+      "sha256": "6a1653ffa15e5a61149410af187c1b5820f1cb07fec75d2f021c2babf8d00ef8"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/chunk-QY3QWFKW.js",
+      "bytes": 1335,
+      "sha256": "bff6d3144dd6ea2689b00d9d0eea1ea2267b9cc14505fb9107b6194c1832bdea"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/chunk-QY3QWFKW.js.map",
+      "bytes": 619,
+      "sha256": "2d34b5c41d4be94269266b25b97b6aa8dd36718ab7ba0dd6e3b9d62eff2abf68"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/citext.tar.gz",
+      "bytes": 5017,
+      "sha256": "af08ff37d9f97550bcf51e4271eda006d929acead2f49d5653e6cf930e9205e7"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/amcheck.cjs",
+      "bytes": 797,
+      "sha256": "062cd51f219906b086f6b8be75d632d77961f81ec5b8faa732b9993f0cea36a3"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/amcheck.cjs.map",
+      "bytes": 1639,
+      "sha256": "50eeee0d3dd6b2101a29765107ae807088591d575c41ad87b2d53d46b8248909"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/amcheck.d.cts",
+      "bytes": 233,
+      "sha256": "40d629f3217d8f3ba09deda898038243eb0f0072d7ff4c5200a3bf9271057d76"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/amcheck.d.ts",
+      "bytes": 232,
+      "sha256": "2bf8c79cfcf5abda5d5292a4aaff2e8116ab0a1e994433d6ae70c9ee88eda50a"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/amcheck.js",
+      "bytes": 207,
+      "sha256": "c42fb76c7abc11d63024115a024e21e00a57aa0a677ca5d4c99bf0a1e058cd2f"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/amcheck.js.map",
+      "bytes": 660,
+      "sha256": "c33339c40772a1579ec64f70648972f259bc899a3c65ae843781f83f3c870332"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/auto_explain.cjs",
+      "bytes": 822,
+      "sha256": "23154372eb48ed2a401c20f9d9c9a9e9cba56b3cd084d6125d8bd8444b6f3815"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/auto_explain.cjs.map",
+      "bytes": 1675,
+      "sha256": "ec1ba7f3708cc1d1f73280abbc55cfc5c226a847c996d7deb4887efa0918d2c1"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/auto_explain.d.cts",
+      "bytes": 243,
+      "sha256": "a7d39aeeca4024d4993cf5bea0482a275b2d28b648cef84618a07195db88e98c"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/auto_explain.d.ts",
+      "bytes": 242,
+      "sha256": "cc4c0ebc4d4170358f91685f656ada49ca3713812f4b87754ecb25ec00e03714"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/auto_explain.js",
+      "bytes": 227,
+      "sha256": "96ba0038c6735f4ded1cdded0307d02f9b2c076f31b78771c36e3ca3f2081b89"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/auto_explain.js.map",
+      "bytes": 685,
+      "sha256": "e9e32ec0390e9aef5f0276dc3f2f58baa86a4186494c22404affde1fba731c28"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/bloom.cjs",
+      "bytes": 787,
+      "sha256": "64454f3680e0fe148c237b41eb8c4f27dd216f1c302ac986c7c3e650fb798686"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/bloom.cjs.map",
+      "bytes": 1625,
+      "sha256": "4b59b2b9a37c0e400241d2c2f62f3cab8418ec582c6903fc3e292e1a54efc0f5"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/bloom.d.cts",
+      "bytes": 229,
+      "sha256": "97a4ac8aa2e91acd3465c8f67e7b79ec7c676eb793bfdf2f5ccdea9cd737474f"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/bloom.d.ts",
+      "bytes": 228,
+      "sha256": "280c1e36338cd63691f4f41ee429b510e041928dcc8647c9d465ffd12de42fdc"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/bloom.js",
+      "bytes": 199,
+      "sha256": "ea15d8c6f8f8dd7630e4f52241271d269d29a9ffcd75aeb6ffae61596ea39b63"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/bloom.js.map",
+      "bytes": 650,
+      "sha256": "c283e641ec7b368d67afb19e674949e0d0eca949ab00e5a4b95def3c40e9c95e"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/btree_gin.cjs",
+      "bytes": 807,
+      "sha256": "6d4bfa232e9d5d2970d4f610541acaece4d9ce5c66985ac5b1faeba4b80d8fd3"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/btree_gin.cjs.map",
+      "bytes": 1653,
+      "sha256": "2f12f7093a8e996449d1f5a4ecb22d7c4af1c52059251b1e38c77100de097bd7"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/btree_gin.d.cts",
+      "bytes": 237,
+      "sha256": "bd7e30476ad1f7756c6e33226cb7c54c5954e57b54145dc529f9c169953e3bcc"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/btree_gin.d.ts",
+      "bytes": 236,
+      "sha256": "8073d7249cac673c7750e001647afdb92c660972f088be598e597fd8eb57ae4d"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/btree_gin.js",
+      "bytes": 215,
+      "sha256": "92dcb866c14a569528474d8e2b4546240d8a36b7db323f49de80a1eaf3744b90"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/btree_gin.js.map",
+      "bytes": 670,
+      "sha256": "9bd9b495ed72aaffb16bb3c3ea472ad602070c1ffc542c6b930a8f08b3d0d635"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/btree_gist.cjs",
+      "bytes": 812,
+      "sha256": "40e5b8720fa1587740b9153ec1960fa6cf06b2d3bf8f9aa5432eb82bed961e3b"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/btree_gist.cjs.map",
+      "bytes": 1661,
+      "sha256": "28c01447632adddc989f20bca1facc04d66879ac7d579ffc0492fd8bc912e05a"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/btree_gist.d.cts",
+      "bytes": 239,
+      "sha256": "fb5058bb1e89b1f046a4dd734a850f3498547363036f12512df10fa8929c2e86"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/btree_gist.d.ts",
+      "bytes": 238,
+      "sha256": "a11e1f44a697236ebcdc86375d67940d232fbae3c7949dcd9f549e34a29f2b19"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/btree_gist.js",
+      "bytes": 219,
+      "sha256": "bc4fadb16724ada4ecda37d5883412ea7aa411ce43ad1c18876271334d410ddd"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/btree_gist.js.map",
+      "bytes": 675,
+      "sha256": "45cee059231c4ee04ccf592869d4f4c460f5ee3ad50188933b770e557644e189"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/citext.cjs",
+      "bytes": 792,
+      "sha256": "cede0868310c0cda7bb440394aaf9dc8daf2fd3abe640003e4f977ddcdfdc573"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/citext.cjs.map",
+      "bytes": 1632,
+      "sha256": "ed4133ef75babd286c90815750def5835a5cbce6d25d7520076fddf2a20e53cd"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/citext.d.cts",
+      "bytes": 231,
+      "sha256": "2b6639cb58ad059d8e943c0f05d19615f42a91349fdba9570a118064724c614a"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/citext.d.ts",
+      "bytes": 230,
+      "sha256": "35a43e4ab527a0dd10b722030c60b022d88da52269b9ef2767e540890b31b449"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/citext.js",
+      "bytes": 203,
+      "sha256": "c5eb17066467537414bcd5cd6286042525b0fe89db0b8bf50ee54694ed8911f1"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/citext.js.map",
+      "bytes": 655,
+      "sha256": "2b52c9023bf06472fc27803c7420afbc87e3a97d2a7d228d1630c257b9e857f4"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/cube.cjs",
+      "bytes": 782,
+      "sha256": "01b98922b58f992870e8f98f9fda5b57c5fd7b3fcf7cc23c27a6455bb59c531d"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/cube.cjs.map",
+      "bytes": 1618,
+      "sha256": "7e86cde6f2aa4e9beb19a71f13af7528869b3fe68cbf7441a4129dda2b485a52"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/cube.d.cts",
+      "bytes": 227,
+      "sha256": "dde538953d5970a7b0aa14d3646a835b70bb31cf100406d0edfaf7f4b0e538cd"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/cube.d.ts",
+      "bytes": 226,
+      "sha256": "b2db89ba00bf5afadf1836563462af4009025e4f31bdc3aab46c083f6f467d5d"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/cube.js",
+      "bytes": 195,
+      "sha256": "edc9a2d3682b2d561a83270233b5b8787333c320eb77bf96a9c6ef28a51e6e68"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/cube.js.map",
+      "bytes": 645,
+      "sha256": "3b560362e19cdbfc26e1a007e17ea3af82f28824ee42384a1dafc333ee933f52"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/dict_int.cjs",
+      "bytes": 802,
+      "sha256": "6bba45476a290f854c033e0313d992fb484f589accee8bc0d7ae8ef77ca7194d"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/dict_int.cjs.map",
+      "bytes": 1646,
+      "sha256": "dfea39b0340c95332a108b9453f7bcaeaea45d4eab2aea5bf0b1db24d05efa94"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/dict_int.d.cts",
+      "bytes": 235,
+      "sha256": "a7c9e1bb7c73435e968948109e20483ca1c44509aaca769b54cede164265e962"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/dict_int.d.ts",
+      "bytes": 234,
+      "sha256": "673f7a9ad4d9b65264f009d0bf81702301fec8e10380ff0359d1891e6131c189"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/dict_int.js",
+      "bytes": 211,
+      "sha256": "8436e2522b92d63213f640e0703949cb5d09872c5671c4e45c79a399a5a1d34f"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/dict_int.js.map",
+      "bytes": 665,
+      "sha256": "02f45409ae654f3f42f3ee5469c16d015750863e9d8cfe3b21e8bfcaa6559883"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/dict_xsyn.cjs",
+      "bytes": 807,
+      "sha256": "d24eba693b8ffec344aad7f191f826db7aaf138bff200ae35f9dbb0fb8aebf57"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/dict_xsyn.cjs.map",
+      "bytes": 1653,
+      "sha256": "b20a5c51164c3067d628022acf3658fa27c0e29024ec20c5f719c7e0fa8d0700"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/dict_xsyn.d.cts",
+      "bytes": 237,
+      "sha256": "5238f5ef6688c880cb503d5d0680c4c63fdb1c6a5bddae888d3ebe04c446e6c7"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/dict_xsyn.d.ts",
+      "bytes": 236,
+      "sha256": "0e61ab106407732ad786bb17db0c0377872deb451ecc1466349cf41a0047e70c"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/dict_xsyn.js",
+      "bytes": 215,
+      "sha256": "6fa675fc56557cb23c6410fa9065a054ea77ab85941f7a2bb3d3694ea4498693"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/dict_xsyn.js.map",
+      "bytes": 670,
+      "sha256": "bcc91c48ca50809575babac2f1031edef32de915ab7f151171385c6ce5d928ad"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/earthdistance.cjs",
+      "bytes": 827,
+      "sha256": "4faf1204195de5fcd2039998c17af2b6299d4150bb201ae5ad1a338000424f2c"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/earthdistance.cjs.map",
+      "bytes": 1684,
+      "sha256": "8fc34b35fbaca84af9ddc87fcca2a80f9c464cc2e52c831674ab1d7a791839c0"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/earthdistance.d.cts",
+      "bytes": 245,
+      "sha256": "3d45f1c23d871ae720cd0a2f900914bdbcd6614cfe1bb09ab5503bb5686ddcb9"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/earthdistance.d.ts",
+      "bytes": 244,
+      "sha256": "36a451329e32d35133ea34d7b9b5b8f571ca984a46327d9794fe905fab4ed106"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/earthdistance.js",
+      "bytes": 231,
+      "sha256": "b89864041ba8c7e46b36bf7714ab3d129fedc31240555adf718f7036a1f7b6cc"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/earthdistance.js.map",
+      "bytes": 692,
+      "sha256": "2dbe1564acbdcb3df58636e39505c8c5a2ae3dd3b75431f3526de7c1676cb768"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/file_fdw.cjs",
+      "bytes": 802,
+      "sha256": "b0764f9d204048508758a21395cb5bfbf5a4bc098b0362c0fcd9b778db7309c8"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/file_fdw.cjs.map",
+      "bytes": 1646,
+      "sha256": "395f2febe10563512a6727984d4d7dee161c72cafb8623ec946c3a2bb8b589eb"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/file_fdw.d.cts",
+      "bytes": 235,
+      "sha256": "e774c545fd160d36b17fc900908026aaf65e03413c5fe7136b9a80bb1c50fda0"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/file_fdw.d.ts",
+      "bytes": 234,
+      "sha256": "694c6e7829c95c7bfc52d45f16c51dbb156269242cf4a91e16420b8c7a7a8b42"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/file_fdw.js",
+      "bytes": 211,
+      "sha256": "732e3f3c8fdc93385da1c2893b51cfe9c4df038ab37ea6ee54941d0ecf9e9e78"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/file_fdw.js.map",
+      "bytes": 665,
+      "sha256": "0781e2f9a0b91458e069958d1a44450a5ce0d27f35729aebbd5f4da40e94e346"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/fuzzystrmatch.cjs",
+      "bytes": 827,
+      "sha256": "f97a690557436ed2ecaa9348e3912495951d1d3888bdbada616bf59424e8e45e"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/fuzzystrmatch.cjs.map",
+      "bytes": 1684,
+      "sha256": "b206ff6dc09e5c57ee3098563820af3e98e1a02b0b6073d1d97b79f9d626c0c9"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/fuzzystrmatch.d.cts",
+      "bytes": 245,
+      "sha256": "c3765f09eef63173311772b0bdff6ac23abc16afcf4d427b602ea7523cddade1"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/fuzzystrmatch.d.ts",
+      "bytes": 244,
+      "sha256": "ad791de46814610d2a327e841e8caf8060cabff8c3bd3a1b14a4e0086cb7f82a"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/fuzzystrmatch.js",
+      "bytes": 231,
+      "sha256": "2e6b73078c76b356864c1d732b1da780bed7a8779d0880d0582a2e085bae744c"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/fuzzystrmatch.js.map",
+      "bytes": 692,
+      "sha256": "0a5740134f47e2ca6c4b83b818efd0998c77ff20c320792c4e51e07f01fa6cc8"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/hstore.cjs",
+      "bytes": 792,
+      "sha256": "b9cc25abca8f62c495421b37233f957224a5b2ef8ea3e758f2edf58a4e832959"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/hstore.cjs.map",
+      "bytes": 1632,
+      "sha256": "3d6223c4b9a6397345cd6dfda39f0bed8cee78e9d457195609415768e95fac84"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/hstore.d.cts",
+      "bytes": 231,
+      "sha256": "849c322de63808f6b37d9c3caba0631a5d81bbcf110535b42d1d11abd06e44af"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/hstore.d.ts",
+      "bytes": 230,
+      "sha256": "edbbb8b91037cd38dad9e8bb1c75de23d122ae1e4d4716c03234888ccdbf1700"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/hstore.js",
+      "bytes": 203,
+      "sha256": "799850dc9028268567022b4302c45dac9a96b9999c996d53e613ff20cd71a795"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/hstore.js.map",
+      "bytes": 655,
+      "sha256": "42b1069b13b74634b6ce5f1a8cc27e78f0ff3c153e2db523b43f3d50ea85612c"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/intarray.cjs",
+      "bytes": 802,
+      "sha256": "3378adbfaddf4ca207a57931b37ab03ed46e327e7fb0d707590a5de6afea328f"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/intarray.cjs.map",
+      "bytes": 1646,
+      "sha256": "a8e066cd373679fc0447279da2bc97f040d7a9dbc510401130f027eb96729e99"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/intarray.d.cts",
+      "bytes": 235,
+      "sha256": "cc7b7da2166573c2d69fbcebe4243f633e382b14cd73066f120967263f42f894"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/intarray.d.ts",
+      "bytes": 234,
+      "sha256": "c01ad36e402016a21874ab23e8e174368a6c0d77e248b06c88fc1f7ed2952ab3"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/intarray.js",
+      "bytes": 211,
+      "sha256": "c25f1a12daa75db7f9ecf583dc81997a26be7f9aa399185ab460ac701725a414"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/intarray.js.map",
+      "bytes": 665,
+      "sha256": "c4c7b69917b3e95571124732ce9758c93450b8d5b7a3710b7bd09ee043bbf3b7"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/isn.cjs",
+      "bytes": 777,
+      "sha256": "0101e02258109846958a6840319b830bec1ceb3f9215e541e6b744926f0d94af"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/isn.cjs.map",
+      "bytes": 1611,
+      "sha256": "1b90d6d89cc5bc8f8b0922e9af7fcee987452f047aa2c6bac4a215b2ad32653b"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/isn.d.cts",
+      "bytes": 225,
+      "sha256": "6798bd787a42731157de927bd72c09872576ad7b6a7d44cca98e542bd109232b"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/isn.d.ts",
+      "bytes": 224,
+      "sha256": "6cb13cddd23ea51ecccf6b72a1bbb44997e2dd7f794c692fe860565381467d01"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/isn.js",
+      "bytes": 191,
+      "sha256": "794aaa661978527fcf6fea10bf148e98c7ddf447ef6971fb365a9e3ce596b7a8"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/isn.js.map",
+      "bytes": 640,
+      "sha256": "6eb1150e946e053a47233a7428c29d047e0407b05f45a03434ae3be2db7ad505"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/lo.cjs",
+      "bytes": 772,
+      "sha256": "659b1bf7bca0a8e23911d71b3ce3f2c7a778fd6f556f24873684de2f6de530d6"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/lo.cjs.map",
+      "bytes": 1604,
+      "sha256": "ebd7670aaeff48565fc8027b9180336d0c8a8c54eca2fa35e0d9be56467a7347"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/lo.d.cts",
+      "bytes": 223,
+      "sha256": "3ddb06e57bad694c1154ae2f6e7adb35d933c17ea0fcb2f45449a14e5e29844b"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/lo.d.ts",
+      "bytes": 222,
+      "sha256": "321f59824b392fa418d414b4e1a5caa14585bad3d8415a7b510206771c1d344a"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/lo.js",
+      "bytes": 187,
+      "sha256": "603445e6b73da0b5433463a214604d32d25962a25813512c4564f99aa3a5cf45"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/lo.js.map",
+      "bytes": 635,
+      "sha256": "5fd797fa73a6b3fabe94b22b18ec4d102322ce23ce6b9c0c3f6cd795ccc178c2"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/ltree.cjs",
+      "bytes": 787,
+      "sha256": "688fe32a68008894a5f0a2ffb990e3158bf6dcfe54aa8958aa36741a5dfa77ac"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/ltree.cjs.map",
+      "bytes": 1625,
+      "sha256": "4fa13e14c986d51c089362381d536fa6766b61dddb2dbce99fb10c4566fba096"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/ltree.d.cts",
+      "bytes": 229,
+      "sha256": "6bd66549c4d99cd44c2ac30af9c8248d3ad00c99079d7bf35132cdc77c91efe6"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/ltree.d.ts",
+      "bytes": 228,
+      "sha256": "5ccfe5ad1153ebe726c854c8db346c8cefaf31f6b53330d7271ea4a139dad82b"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/ltree.js",
+      "bytes": 199,
+      "sha256": "dc12e9e9bc4c4fa40a7562220eda38089d3384ba4132a22e980709d3fc13697d"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/ltree.js.map",
+      "bytes": 650,
+      "sha256": "7d9a50e769367c1c3517dc9b833ecce5ba16b131d338d36c0be038e5997826a1"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/moddatetime.cjs",
+      "bytes": 809,
+      "sha256": "34c84bd125bd84a2d96918c8f9248e85fff9071b03700b3eede4684a8cb34347"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/moddatetime.cjs.map",
+      "bytes": 1660,
+      "sha256": "1b5dcbf5118f5122d6511934abe8110a1d78ffdb3e263feb16a249fed9a1fadc"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/moddatetime.d.cts",
+      "bytes": 241,
+      "sha256": "50a23c9c7ce21a99cf0df9280868ec93a1172671c25c38e7963b91133ef65e0c"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/moddatetime.d.ts",
+      "bytes": 240,
+      "sha256": "e16eeb6933460f044a6eb6b6ffa2c2bbc51c71762bb422d897546ea5c3723373"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/moddatetime.js",
+      "bytes": 215,
+      "sha256": "812b3748fc94d2c67a36688612d11910176d55778b2cee3a565ff9f37b49fece"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/moddatetime.js.map",
+      "bytes": 672,
+      "sha256": "a39e66f8630bf6d1b0a3c20de1e9515e0566306e712013e7a2bb40869a2bedea"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pageinspect.cjs",
+      "bytes": 817,
+      "sha256": "df2b4bbb4c00d8b341d56fb0c2cff045e51add0bbc798baf16a9e02133f91905"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pageinspect.cjs.map",
+      "bytes": 1668,
+      "sha256": "b8b757ef5f985374b1a99a06703df8a98e0c889a59ac80cc1a0967f17c9eed07"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pageinspect.d.cts",
+      "bytes": 241,
+      "sha256": "3c5f25130fa286a8cd026ef5b8f290654be252c76a474ccf653a665459f47585"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pageinspect.d.ts",
+      "bytes": 240,
+      "sha256": "3901a9a43357362a9c41f84ff94b4fd44b1873d1516fb5efa991c4b258db6e05"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pageinspect.js",
+      "bytes": 223,
+      "sha256": "5ca11fa6667632867024123bd4c23e4e7acc945cd2946ffac2c862d84186e11c"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pageinspect.js.map",
+      "bytes": 680,
+      "sha256": "36df43e523464ffa015075631a97475e87cf35ee9a857d248d3b0b835cf0708f"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_buffercache.cjs",
+      "bytes": 832,
+      "sha256": "f0dcfc2317f01c079371bd5773ce33987b0ccda0b3122a453f420260abf2c58c"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_buffercache.cjs.map",
+      "bytes": 1691,
+      "sha256": "d23f9ef56f3aaaa6ae190d6f503e9c9e2eb606fd3e50e82b362e59495782239e"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_buffercache.d.cts",
+      "bytes": 247,
+      "sha256": "f38e2150669ef99d3d210a1f07082d21080061cef5b05077acbd86241784c5bb"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_buffercache.d.ts",
+      "bytes": 246,
+      "sha256": "8292bec848a92d345fb33f0bf681acd5bf5dea3d4ae755737dd16fcdd5d82f24"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_buffercache.js",
+      "bytes": 235,
+      "sha256": "939443efb3fea41b274e15bfd97b74dc80a125c81f7a6ffe2e32037a36690aa7"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_buffercache.js.map",
+      "bytes": 697,
+      "sha256": "29ae7663fe2750125e8e9de4aad96cc15976d6dca9e68736aebde833c82767e6"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_freespacemap.cjs",
+      "bytes": 837,
+      "sha256": "986ca38ba8f3811b419f8c28f7017148daa8d4041e15f27f9aa4cbac53e265aa"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_freespacemap.cjs.map",
+      "bytes": 1718,
+      "sha256": "eed1e0c8b35746de5fb536eb83c2ddf0475917550e1961dc627f3f8f911f3f16"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_freespacemap.d.cts",
+      "bytes": 249,
+      "sha256": "d96af523fc9364cf087b85e60a3bc0fa6ef6fa017bd71212c618714139a9c893"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_freespacemap.d.ts",
+      "bytes": 248,
+      "sha256": "0198bee69bb8adae868e872c93ff312288fa874bc36b190a546e400baa259423"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_freespacemap.js",
+      "bytes": 239,
+      "sha256": "545d804729452f73dd708eb3c55302026d0a906310d490e68bd0b66ad55eabdd"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_freespacemap.js.map",
+      "bytes": 722,
+      "sha256": "51620fbc1240a63c9b476e4d5a0d28da6b70c8a767bdfb7a026aa69e929d2be8"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_stat_statements.cjs",
+      "bytes": 898,
+      "sha256": "b920066a5cdded65a2b00a6dd790d2e5695a3caffd9c0dbc6c1bc6d035ca1b98"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_stat_statements.cjs.map",
+      "bytes": 1817,
+      "sha256": "915c4f52d2bb49a4613f645af981381822d2fff3ae9d9292b86c6dbf36641c19"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_stat_statements.d.cts",
+      "bytes": 297,
+      "sha256": "2d8d791530483df85f796b85df87a6b3f1249396a40e6ffd3edf285ac23c3e5b"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_stat_statements.d.ts",
+      "bytes": 296,
+      "sha256": "24389a4591f763805f888ab5bc90c9d1a981e9f466a1508c929e27b382595732"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_stat_statements.js",
+      "bytes": 297,
+      "sha256": "1a7419c8286bcd968bb06365efaa90f3eac11420457468219e774fbc70936533"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_stat_statements.js.map",
+      "bytes": 815,
+      "sha256": "8adbde884ad7ce9f200be909d59ed102fa1b7e483fd6c3a3b5ab1ff4d020916b"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_surgery.cjs",
+      "bytes": 812,
+      "sha256": "e2a665c333d718203cb3ab6e4cda3a8b0e6ad2067b7c25ec2862809468b748b7"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_surgery.cjs.map",
+      "bytes": 1661,
+      "sha256": "25223c2790fc92bacf1a6f73f982cf524f0373f11f68c4bdf055134b3389ad5d"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_surgery.d.cts",
+      "bytes": 239,
+      "sha256": "db1fe92c2f5756450823fe1c453545a06eca3993e82bc336cc0528aa28b55774"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_surgery.d.ts",
+      "bytes": 238,
+      "sha256": "40dceda2b3893aae13d6bd0719587a69048e2e81efa344fa5fe8d63cd83cb7c3"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_surgery.js",
+      "bytes": 219,
+      "sha256": "949a64f12498a8435b1f5268a682e625c31a4a18c9fe88fae88b58fed7d99686"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_surgery.js.map",
+      "bytes": 675,
+      "sha256": "7a4bdf336f354f543dbfdde84938d86a7721b61eab2311fba84986b4a9b99bfb"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_trgm.cjs",
+      "bytes": 797,
+      "sha256": "7b2a7831243a1db34523222c2e5e1e6cb5e229969e473dbb2632512ff4d2f2e6"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_trgm.cjs.map",
+      "bytes": 1639,
+      "sha256": "1e7c46947a4640345af891e713454a21f21c962f72ca33cdfccf4badf8036e56"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_trgm.d.cts",
+      "bytes": 233,
+      "sha256": "8ed9e3b99c1760d955f0f15926de9c7acbe0f769e86e19bc9db2b5d463066464"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_trgm.d.ts",
+      "bytes": 232,
+      "sha256": "c6321d4ba71c00aa7b51bbd3e5156c6025e5455293356185be6d319f76094bc8"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_trgm.js",
+      "bytes": 207,
+      "sha256": "fc5618e3a8633954902dedd9b4fe73c1aafe54c4b3745719ecc7873f35405384"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_trgm.js.map",
+      "bytes": 660,
+      "sha256": "2ad4bffbdfb387fc2490c5148633ed0bfd7efc4339cf2d8bd281361f8514aa19"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_visibility.cjs",
+      "bytes": 827,
+      "sha256": "099f67483a7827befcff361dae91a00ae07a312dadaa2e6ee3f4bd821faee037"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_visibility.cjs.map",
+      "bytes": 1684,
+      "sha256": "63a81d788e07363b85a50484c0d6b452f57ca810f11c017753956ebf91981595"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_visibility.d.cts",
+      "bytes": 245,
+      "sha256": "f705d54e9783f4385949fcca34f7cee3a50b0e2c09020e215554ca8382c073ca"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_visibility.d.ts",
+      "bytes": 244,
+      "sha256": "dbc833c2a5053d0e7dc084c917125d0192b8690f78c080cfc515b3338a01755b"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_visibility.js",
+      "bytes": 231,
+      "sha256": "1326d079a84fab5eaffdd88927fda54f8714886aae685ed81711c1042aee8a4d"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_visibility.js.map",
+      "bytes": 692,
+      "sha256": "c007aab79baf637b183b8c19c1137abb5fd54593684d7c24e78cc895109afee3"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_walinspect.cjs",
+      "bytes": 827,
+      "sha256": "9dce50af45067f4e0980f72067a3cf368098175136351c09a979cf3f9fd0d89b"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_walinspect.cjs.map",
+      "bytes": 1684,
+      "sha256": "f229bb9cc24593505b028c7142a1b803d58623c40c4f81f17b30a5d57d3429aa"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_walinspect.d.cts",
+      "bytes": 245,
+      "sha256": "f263079000d220f5d62f19c491163da59dde09d1db370578574b0f984b08371d"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_walinspect.d.ts",
+      "bytes": 244,
+      "sha256": "b7cb77738ed04ecaf1648f94e1544e7a1a530f3748ac2e5a7a1c38c80325169d"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_walinspect.js",
+      "bytes": 231,
+      "sha256": "1b85d87c17d9d6205dd1d38d7ce4891a59d4a63e54c704bc36901e79d35e0203"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pg_walinspect.js.map",
+      "bytes": 692,
+      "sha256": "65f93cc508807355d5f5725951203b2e53133556b9b08fa95e1c8a23075ab6cd"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pgcrypto.cjs",
+      "bytes": 802,
+      "sha256": "5b2251c6c3f782eaee84cb4c92ecfa89241f7712b10f6618e4dcf3108c692411"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pgcrypto.cjs.map",
+      "bytes": 1646,
+      "sha256": "046f42bfdaf99a72b18f53f43f1514b94ed06ee22409fb4770d5563f8cf78622"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pgcrypto.d.cts",
+      "bytes": 235,
+      "sha256": "71afe01124dcf15832bbd7d6fac6a8ed334860b6386d5121469faec0a9991564"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pgcrypto.d.ts",
+      "bytes": 234,
+      "sha256": "33ca14d820df5375a317eaec1b97dd706b302981a80f987dd058b9d3faf75b0c"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pgcrypto.js",
+      "bytes": 211,
+      "sha256": "3fb9b5f4c7eb15e29b3af759ffaa4e91c0c1a1d9707893cfb70a9255e0157a3b"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/pgcrypto.js.map",
+      "bytes": 665,
+      "sha256": "c2f2f044d73b323e60cd5f8ba949332a0bafc7bb46e0e9f04eafb86412d79947"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/seg.cjs",
+      "bytes": 777,
+      "sha256": "48904aad673cb2583c632d0b7fba3f6563ade283eb9cbf0ef1728ce71cd59956"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/seg.cjs.map",
+      "bytes": 1611,
+      "sha256": "794f32b13079f1a61e37467eff11138bbbbab2817acadd188790056df0776799"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/seg.d.cts",
+      "bytes": 225,
+      "sha256": "0105ece8cd63348f7581ee03f82766f7eb2b7a2b33f0c7524f4f0ee1b2c0e177"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/seg.d.ts",
+      "bytes": 224,
+      "sha256": "30e012b43bd88f93d4225c4ed90543b675367bd8901b068f871fff382ca5b587"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/seg.js",
+      "bytes": 191,
+      "sha256": "74860aca84b22803362df60cbb7caa264460d59bb19d5cb563edac4c887dc467"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/seg.js.map",
+      "bytes": 640,
+      "sha256": "17c39b1f00a68efa47ba50208f8f4fbd64574a54dd1b58aa80a799d55b127269"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tablefunc.cjs",
+      "bytes": 807,
+      "sha256": "0fce71ab50b5d9d089edb62d189ea638dbcf269a3f85d55052b5a64eb7167e1d"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tablefunc.cjs.map",
+      "bytes": 1653,
+      "sha256": "e365bbc9b4a08a4876eae0cdc231957d17ffc62274df138d9135b8d62f17fd2c"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tablefunc.d.cts",
+      "bytes": 237,
+      "sha256": "3d276ea1c0826f3b4091f79c2a720d830dd6309785d85075deb816c67411af1b"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tablefunc.d.ts",
+      "bytes": 236,
+      "sha256": "b55f57318e507d0ca0415b7ed11d4f41298b338846941ded1ebf28a4543952ec"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tablefunc.js",
+      "bytes": 215,
+      "sha256": "de057f87533442ee78b712fe86ae40364c4fda7e34e25e90ad0a702d5aa873c6"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tablefunc.js.map",
+      "bytes": 670,
+      "sha256": "14e1061f2298c954f2a2ddec4319d643d26199ebbd97a898c7741366181f263d"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tcn.cjs",
+      "bytes": 777,
+      "sha256": "c123f9ebd62dd8fca456c32f13a471f33f0caa7aab8dc3c1f8588a5e17e59236"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tcn.cjs.map",
+      "bytes": 1611,
+      "sha256": "be46eea14fa4b2b5d34fe1b5741f84109771cd9be472e42829722dd8254eb4d6"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tcn.d.cts",
+      "bytes": 225,
+      "sha256": "7c4db720977dda9eadbd601d4ebb217f1af6589416af97e1aaae9edb398a48b8"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tcn.d.ts",
+      "bytes": 224,
+      "sha256": "f1b32a808b5d06efc31ea78f8ff8eab200318c43b1a617c4a97281125ab83f85"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tcn.js",
+      "bytes": 191,
+      "sha256": "37ced01df24e3beb9ae475885999b381fff4470b89ee1650238abebf8b8a13ee"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tcn.js.map",
+      "bytes": 640,
+      "sha256": "84931f2c16ba3ac6c1e50b6f8c82daf2bbff48ce3f7c89f6433a035002ef868c"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tsm_system_rows.cjs",
+      "bytes": 837,
+      "sha256": "08a69f9c137463ec7ab9f04e76ce26fd206a11d56ebb2d8215bbf9e0763bda84"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tsm_system_rows.cjs.map",
+      "bytes": 1718,
+      "sha256": "e8d161bc5c791ec14b1f01c30d9904fafb598eaf736340124a3a9561417c591a"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tsm_system_rows.d.cts",
+      "bytes": 249,
+      "sha256": "ced08b4b7c38d9e4e32fbc96eef03710bf8b2ea316691a0fd5b2ba721318bb49"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tsm_system_rows.d.ts",
+      "bytes": 248,
+      "sha256": "f7d092da053bf8135e3490247e3050ba1753ee891a94dfc32ed6f9129553c2ee"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tsm_system_rows.js",
+      "bytes": 239,
+      "sha256": "c63c24b562c5f05a7c02877e17c673d381349e2152a60e4bb73e3bd75ceae8fd"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tsm_system_rows.js.map",
+      "bytes": 722,
+      "sha256": "0920c3596808d89a826c839492cd161349f534ca9c33adce8267c2a3674581fb"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tsm_system_time.cjs",
+      "bytes": 837,
+      "sha256": "77da6f3b4c00aa3d09bd9045f39b15e222fe56255e7e6959942fba7751ef753b"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tsm_system_time.cjs.map",
+      "bytes": 1718,
+      "sha256": "165160123f6b48d297fe4c955931b66fa7e37b82636923a72fb7b071a2ad2daf"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tsm_system_time.d.cts",
+      "bytes": 249,
+      "sha256": "daaba18fba7089cff1e1ebfd49ba6d731f48b725ecdae82f98a873a3ea7a8627"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tsm_system_time.d.ts",
+      "bytes": 248,
+      "sha256": "dba70e315d156df5d4a127aff93c9bfbc344bcc48caf9ad3b79eec5d86efd1f1"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tsm_system_time.js",
+      "bytes": 239,
+      "sha256": "a9d2e5e9b4ba3fceb9cc3c08e70f42d97e314901785ba907ca2a08d197c0e3f7"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/tsm_system_time.js.map",
+      "bytes": 722,
+      "sha256": "994d2365e2be0c622f53cd17d0957ab5c05abb52edac24904461d25c1ba435ee"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/unaccent.cjs",
+      "bytes": 802,
+      "sha256": "54dac231f5b1e57dca3c26361876545775fa925052f7b865e27f368235206f0f"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/unaccent.cjs.map",
+      "bytes": 1646,
+      "sha256": "489fe4dffda3b78c87a90bc4d24dacdcb96d4ffd7c86c0ab622f4cf89820eec5"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/unaccent.d.cts",
+      "bytes": 235,
+      "sha256": "e9ec2fa6bed141e7719e071aecdc9a172349a82dde7b13273647519218543e73"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/unaccent.d.ts",
+      "bytes": 234,
+      "sha256": "0a97d8ba0003ac697c7ffe329d3c26228de3f7e0a2486afa6a44c02b32dcf9a5"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/unaccent.js",
+      "bytes": 211,
+      "sha256": "525521d993dadca106c99e731e07c3baa10cce0cf7c73d834b0f65032c449111"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/unaccent.js.map",
+      "bytes": 665,
+      "sha256": "a4d287055c2cdbdb78f76bb1a02f46edd9ffd6141a370d5644ea17f89a64a5f4"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/uuid_ossp.cjs",
+      "bytes": 807,
+      "sha256": "2b6bc2576b908095b5d12cff4b33c9649bf2ca248a380bc67b3caf5d8b9d31bf"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/uuid_ossp.cjs.map",
+      "bytes": 1653,
+      "sha256": "a2934f563df02b0b3f3e6e0de01e5d5ee61c87574c3997c6479faa310ab68027"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/uuid_ossp.d.cts",
+      "bytes": 237,
+      "sha256": "a02362fc945500dbd316bd0633886b8f9dcbe1c7391762c789b7898f2015e443"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/uuid_ossp.d.ts",
+      "bytes": 236,
+      "sha256": "27154204bdd3b34e2c6c0b0466416cb8c3709e6f619b99d39c6a77a1dfe6611c"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/uuid_ossp.js",
+      "bytes": 215,
+      "sha256": "0d4a46aa5f8c3801f7c2ca7f4be7ac07936474c4d5526b2417ea663eb75451bd"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/contrib/uuid_ossp.js.map",
+      "bytes": 670,
+      "sha256": "a1b328a4d0e7c340ba47a767fd3961ddc8ddc9f644882112a50decfe4d5bc952"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/cube.tar.gz",
+      "bytes": 15615,
+      "sha256": "6548d32cd8972c0277c26ce50b7575a7ff4df3d01b4b8a82db888750fc67df6b"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/dict_int.tar.gz",
+      "bytes": 1359,
+      "sha256": "71ac37fb85534d59a5a0837e5bd0f35454843d8b4a2cc7e8780284c9d0bb38bb"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/dict_xsyn.tar.gz",
+      "bytes": 1998,
+      "sha256": "20e07a3011e985eda9e0d340365d02980792167ebabf5c545d66b2021c5995d2"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/earthdistance.tar.gz",
+      "bytes": 2353,
+      "sha256": "5bfe490438ab0da185fd474893e359e5845978d686ed4c1f9bd7641ad6ee21ef"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/file_fdw.tar.gz",
+      "bytes": 4837,
+      "sha256": "c666dbde6a9ee420a32ffd0a9a0257421bfa9bf36ce9cac1b339fdcdc8bd15a9"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/fs/base.cjs",
+      "bytes": 97182,
+      "sha256": "411f9cbd5b3f31de6cdfaaca72605445d722d4cb7be9fd8ee302e2bc8cf5cb36"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/fs/base.cjs.map",
+      "bytes": 301961,
+      "sha256": "f4107571fa12bfcad9dcfc62aefb88d852b1658746151e52e3398a81fbd3d87f"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/fs/base.d.cts",
+      "bytes": 158,
+      "sha256": "e29f1ff04ca0236ec36dc4940bc869866d15f063f4be4d877c56c50803b10ffe"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/fs/base.d.ts",
+      "bytes": 157,
+      "sha256": "9b56988f6fa74f63e60e761078976e3d36ae5233e35d8ad43910c6ce940d325c"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/fs/base.js",
+      "bytes": 224,
+      "sha256": "f61105770a725ab6d92becca6c20f12593cae66ee207eba018c1978cfa3f4062"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/fs/base.js.map",
+      "bytes": 71,
+      "sha256": "cba81f7ad4d5b1b629bf43823f1082e73a10d0c3114c937515e7f8c1047629b3"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/fs/nodefs.cjs",
+      "bytes": 93840,
+      "sha256": "088d00870abb96f0729df4fb78353eaad5e107a6b4dc0d25c409c64ce9c49946"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/fs/nodefs.cjs.map",
+      "bytes": 297532,
+      "sha256": "fb7db63b3f28215d9025f4f6eb8fafe2fdd129158f90ade766152a0117f13c8a"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/fs/nodefs.d.cts",
+      "bytes": 397,
+      "sha256": "8082214603ad3e7aa7363c919b006d6f2b80a2e6ee996d34f54e3a08a7abe48b"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/fs/nodefs.d.ts",
+      "bytes": 396,
+      "sha256": "b9b8bf8ba6016491e49f8b44bea9b406a14c01e73ec9e17ebc2bd7315936d71c"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/fs/nodefs.js",
+      "bytes": 569,
+      "sha256": "7eb2f29a834041a94cdcbeebd49d1619145b557448a1cec2aa32a459671d0dea"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/fs/nodefs.js.map",
+      "bytes": 1770,
+      "sha256": "531c733dd8bff1764a65594f986adeba268f8204607f6f2b500187b34b7d2df7"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/fs/opfs-ahp.cjs",
+      "bytes": 107279,
+      "sha256": "e21408ec7765dd68f919b0fb4a5a39a8e69083569c4e0db6a9b99967169e56a5"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/fs/opfs-ahp.cjs.map",
+      "bytes": 337912,
+      "sha256": "c00ff0f5cf9538fb3a1359f4f32a7638fc8332ff6dc7b998c0a9ab8fef729786"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/fs/opfs-ahp.d.cts",
+      "bytes": 3862,
+      "sha256": "1fec7f9280f5320e2a146901ec5c0713d06dadf0d6e0faf9cd10e0428d44aee3"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/fs/opfs-ahp.d.ts",
+      "bytes": 3861,
+      "sha256": "a3f81d186b055a196cd4bd4f2e08e8a512c8a80e5745840b47487a70c23e9977"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/fs/opfs-ahp.js",
+      "bytes": 10028,
+      "sha256": "f6c4b1d44778041d3d06b7978242d9427c87871ce6c08deeff573a9fb28cc197"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/fs/opfs-ahp.js.map",
+      "bytes": 36399,
+      "sha256": "24780df1fdf078bcf0f45ec57b980bdab091a7f8e67e4920b331d3f787ddd977"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/fuzzystrmatch.tar.gz",
+      "bytes": 11215,
+      "sha256": "e5186a462c3c76044f03afa82c36ccfde96db06fdbb05fe9e7f4fb51bcfb4c96"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/hstore.tar.gz",
+      "bytes": 22246,
+      "sha256": "d02bbf55ab2afbabd622be699fb7cc11642d829407439d910819759671da8208"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/index.cjs",
+      "bytes": 2066577,
+      "sha256": "64bc0b76b47b72ec1665a9569998751064dc36fe51bffa5d8717ce233631f021"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/index.cjs.map",
+      "bytes": 3336633,
+      "sha256": "834940ca85a5bbc57e54ea0f6888727778caaf6d9a99b543f8259c15160101e7"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/index.d.cts",
+      "bytes": 17304,
+      "sha256": "610e1a90ddfa3ddaead72dd3a54034ff259197cf2714c979fdca45e65bb8822a"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/index.d.ts",
+      "bytes": 17302,
+      "sha256": "5f586d71fd09266e6abeadd8f80bd69a91ddd91dca64369e576e17356d3e2c64"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/index.js",
+      "bytes": 1929131,
+      "sha256": "fa28c6daa43aa4de73fddd7a910cd183df4ef6b26410daf3582afc1d2a61512d"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/index.js.map",
+      "bytes": 2869852,
+      "sha256": "ae19db8968b4e890c18ee6a34824dbf911b716f5e06a332ded856d2cbe48a21e"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/initdb.js",
+      "bytes": 105955,
+      "sha256": "4510946b04f0f09b95ebe1f21b4f195c56e50eeb513285ca51964eecf41abef5"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/initdb.wasm",
+      "bytes": 300129,
+      "sha256": "b33b41af366b4f7909085bb360b37587e5fa57a26113d84c21f23f9bfd63c0f8"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/intarray.tar.gz",
+      "bytes": 15636,
+      "sha256": "02b42239784f1b655228d3ff063468e6f89708b1a0fc81f8b394892fdbe4ac14"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/isn.tar.gz",
+      "bytes": 32084,
+      "sha256": "c073518ba0afffa39bbffdc624db03027bd27273c348587243ca0d270d802e5c"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/live/index.cjs",
+      "bytes": 21542,
+      "sha256": "dd06033c6f2120842d66e0996e4689b0174822d5ba2b319b77cedf8167f993e3"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/live/index.cjs.map",
+      "bytes": 104770,
+      "sha256": "40549965dc163c26d1b1b178edf34a8ffced3d4dca17c48643dd82000329799d"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/live/index.d.cts",
+      "bytes": 5142,
+      "sha256": "ea8098fa4d075b6d2572aebf07a085c99e60413e651759e406cd395819b49556"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/live/index.d.ts",
+      "bytes": 5141,
+      "sha256": "5d75558740e3286a6110aba75eaca1f8b9d2944055cdd92a3cb4d08a0ba6adec"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/live/index.js",
+      "bytes": 11299,
+      "sha256": "7faf4f09a384898f9b35a343cb3d09c5a1ba99d3464b6942f90c6dd4bb463663"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/live/index.js.map",
+      "bytes": 38035,
+      "sha256": "ce0e637c848ecaaac18bdb286e1161ac0ede6fbd8188d7317d6e4544e8b94789"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/lo.tar.gz",
+      "bytes": 1619,
+      "sha256": "535196f7e863b218026fa4e8388f7015a757b793ae254c3efe1fc2978e7349d2"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/ltree.tar.gz",
+      "bytes": 21968,
+      "sha256": "910ba88a89e10c31727179d616d60256a69a7d78bb29f7fac0c377dd4208caa6"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/pageinspect.tar.gz",
+      "bytes": 16120,
+      "sha256": "ad9a8d8ad7fe4dd0b5d3d03e07dc80e4a08f017f98c61316d4ea003a95c0a0cc"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/passwordcheck.tar.gz",
+      "bytes": 1071,
+      "sha256": "f7abd5cf5abb2cb29bcc3f43294267269108f522bf650f49e268872779ad8808"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/pg_buffercache.tar.gz",
+      "bytes": 4561,
+      "sha256": "ef47ae98ea61472fd23671f5aa968cd9d33466b7f5b95126ff2002700419dab8"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/pg_freespacemap.tar.gz",
+      "bytes": 1599,
+      "sha256": "ba113836c04a9c8c6bef1efc117a6dd449d5c80bf7f4d4996887221db4fefb98"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/pg_logicalinspect.tar.gz",
+      "bytes": 1986,
+      "sha256": "63d80d1ea8a7fda30b8697d63529945e3c97672f743132f8d36a41ada5662b3e"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/pg_overexplain.tar.gz",
+      "bytes": 3180,
+      "sha256": "2ef6edcba4a0813eaeec9fb2901c2242dd6a6bec890834b02e8672507f0b7007"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/pg_stat_statements.tar.gz",
+      "bytes": 11560,
+      "sha256": "91c2664e49b7c0ccea30d6b139387524527daae549bc3251c7a69e56e19607ef"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/pg_surgery.tar.gz",
+      "bytes": 2712,
+      "sha256": "ccf748bd7323fd85e3c95e2cf9f0f327421e599dde26dccddf5ad448e8e6026b"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/pg_trgm.tar.gz",
+      "bytes": 15706,
+      "sha256": "f6bfca98bad062958a4629b32e72057ccaaf5ab2ed406c2011a7aaf1c1277675"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/pg_visibility.tar.gz",
+      "bytes": 4502,
+      "sha256": "bbeca9f2403551006c87c827e994eff37fa5916011841b736f4b7feca3ca604b"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/pg_walinspect.tar.gz",
+      "bytes": 4690,
+      "sha256": "935b6aaeefd8e71e802876a7b78b3007e512b69a6ce5f757e4477364d0bf574a"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/pgcrypto.tar.gz",
+      "bytes": 1150536,
+      "sha256": "172e0043fcdfce5fd43f914dfa085e0fe94523da3933ae7d025bfaf4d7e833e7"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/pglite-C1eAkqkG.d.cts",
+      "bytes": 48732,
+      "sha256": "129009e337973054900d9ecfc281de32398b923bbb02cccea65d692e511dcb12"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/pglite-C1eAkqkG.d.ts",
+      "bytes": 48732,
+      "sha256": "129009e337973054900d9ecfc281de32398b923bbb02cccea65d692e511dcb12"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/pglite.cjs",
+      "bytes": 1918598,
+      "sha256": "55307e28ab4c68ba8111a485a1b00d62a35c5bc54210217399ca09867f432dad"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/pglite.data",
+      "bytes": 6248214,
+      "sha256": "12384e109f1cea6edb978550d0445f8958ad4089cbbe3222d657f56e2e817d4b"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/pglite.js",
+      "bytes": 2117649,
+      "sha256": "cc7ca1ef26e0a5a49e73c2396b5b081db6d41aa68caa98b0b1fc78cb7f59ff3d"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/pglite.wasm",
+      "bytes": 10498455,
+      "sha256": "864c7651fe2f23c38ff9e047a0b8851af0a5dbcbbb244a6a985bc254f274659e"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/seg.tar.gz",
+      "bytes": 10058,
+      "sha256": "21b796febc325920b83df0a925b95296aa022b6cd0fc0abe7b729977114e9f01"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/spi.tar.gz",
+      "bytes": 6063,
+      "sha256": "fa26cff8fc75adac795db6a661edccbf8a84ba8fe6bad73a649e86091251c54b"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/tablefunc.tar.gz",
+      "bytes": 5200,
+      "sha256": "71e4782ad418cddaea44dddd1487d34396f9e96d0501ae3bc72d921b0a2227f4"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/tcn.tar.gz",
+      "bytes": 1687,
+      "sha256": "64d4ba2c8c17238944a1ed0bc82f95285bca5d389aa2c93e7bcce53388baa762"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/templating.cjs",
+      "bytes": 1472,
+      "sha256": "5032ae8d46d08f95bd84fbb4a72ab2f08a58853d868ac85dc66cf1f250d4e710"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/templating.cjs.map",
+      "bytes": 6877,
+      "sha256": "3afd16ad0731eb0791444d4d494cd40d8718b9fe5deb72389b0f937c428edab2"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/templating.d.cts",
+      "bytes": 2356,
+      "sha256": "521404dcba3a5aaa83dcd69db2cca7cd5ae87ff1f79e194c26667ab33690034a"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/templating.d.ts",
+      "bytes": 2356,
+      "sha256": "521404dcba3a5aaa83dcd69db2cca7cd5ae87ff1f79e194c26667ab33690034a"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/templating.js",
+      "bytes": 161,
+      "sha256": "99508ccae5c9848d45b22d714a75649c5f8121840cf8000fda10000e3eaad767"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/templating.js.map",
+      "bytes": 71,
+      "sha256": "cba81f7ad4d5b1b629bf43823f1082e73a10d0c3114c937515e7f8c1047629b3"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/tsm_system_rows.tar.gz",
+      "bytes": 1615,
+      "sha256": "2673947116fd110f017cd57175a5a25869173960c927958e31d7affafedcb6d5"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/tsm_system_time.tar.gz",
+      "bytes": 1715,
+      "sha256": "fa618740c458c09ae7d249fe49db7bcd0493c51ca404b5bc065d4d825fe3d6ad"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/unaccent.tar.gz",
+      "bytes": 12981,
+      "sha256": "1fdbde794e28fbd776c37ca0fbad6f7eeff8f7758b4bf49a23d19f9b7b580fb8"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/uuid-ossp.tar.gz",
+      "bytes": 16964,
+      "sha256": "9fe1b4af2d99f245e8ae9a4534eb60d7e45f159929d3e3722b3a56dce7efafda"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/worker/index.cjs",
+      "bytes": 25217,
+      "sha256": "bdd0893bbf9a3c5e726df8e872621d6750f2586827462d8cab899057f2a4e388"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/worker/index.cjs.map",
+      "bytes": 140489,
+      "sha256": "58d349dc43faf486234364a5a302790978565db1d142a131c0c384ef5e120115"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/worker/index.d.cts",
+      "bytes": 5714,
+      "sha256": "8eae2928264420b6ee3d331ed392c203d2eb8fe667c9fe8c0907c2f1b75e119a"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/worker/index.d.ts",
+      "bytes": 5713,
+      "sha256": "85d980ccffa5f65a6fb71059f885d6fd183c6f7f6a2124d6071a691eda1f7dbd"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/worker/index.js",
+      "bytes": 8698,
+      "sha256": "ee85e3b9fb46e45bc7e0d3514d583c0f3da2bb2530f59814d11499a7e4c9b83d"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/dist/worker/index.js.map",
+      "bytes": 36027,
+      "sha256": "26e5fdbf6b3a559438ba6e6dcf06a534f579e8db42ce7a45ccb2ed868108d1bf"
+    },
+    {
+      "path": "node_modules/@electric-sql/pglite/package.json",
+      "bytes": 5319,
+      "sha256": "4c965baf03e88b524919a862ae10f415d44aa3e840dc3004630e5538d5cef2cf"
+    },
+    {
+      "path": "package.json",
+      "bytes": 194,
+      "sha256": "dbb5ea35740388fb09ba894a3cedc8854c6835583665ab9cdcae19b06516d186"
+    },
+    {
+      "path": "qa_sql_controller.py",
+      "bytes": 19613,
+      "sha256": "e38ee2ce8a9206df5f1e3093402e1fec8685d23dd4788b1f7187745e0dd6a92c"
+    },
+    {
+      "path": "run-sql-sequences.cjs",
+      "bytes": 2055,
+      "sha256": "cca29f7f4675fecb0d9c5522c2d893b51732724b79a9dadc12474105f07bfcc5"
+    },
+    {
+      "path": "strict-test-guard.cjs",
+      "bytes": 7069,
+      "sha256": "c2761949ed58117fcda243c4b93ab0cf767e588578ab5135043fc917911c977b"
+    }
+  ],
+  "authorization": "PENDING_EXACT_TEMPORARY_TEST_ACTION_NO_REMOTE_EXECUTION",
+  "hardResourceScope": {
+    "unit": "layer-billing-sql-qa-20261102-6a3bd299.scope",
+    "MemoryMax": 2147483648,
+    "MemorySwapMax": 0,
+    "TasksMax": 32,
+    "CPUQuota": "50%",
+    "RuntimeMaxSec": 600,
+    "OOMPolicy": "kill"
+  },
+  "isolation": "per-file anonymous network namespace; existing nobody; seccomp all socket families incl AF_UNIX; no new privileges; Node read-only permissions; original fake-provider fixtures"
+}

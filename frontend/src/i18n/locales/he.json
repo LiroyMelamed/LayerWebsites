@@ -426,7 +426,9 @@
     "widgetTitle": "אירועים קרובים",
     "widgetTodayHeading": "היום",
     "widgetTomorrowHeading": "מחר",
-    "zoomLink": "קישור זום"
+    "zoomLink": "קישור זום",
+    "reminder30d": "חודש לפני (30 יום)",
+    "reminder2w": "שבועיים לפני"
   },
   "caseTypes": {
     "addStage": "הוסף שלב",

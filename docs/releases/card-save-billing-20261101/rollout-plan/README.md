@@ -1,3 +1,5 @@
+> **Current status — 3 November 2026:** QA and all three active customers are deployed. See the [completion report](../completion-20261103/README.md) for exact versions, preserved data, verification and remaining limits. The planning/HOLD statements and test counts below are historical snapshots, not the current deployment status.
+
 # תוכנית פריסה מדורגת — HOLD, ללא הרשאה לביצוע
 
 הבעלים מבקש פריסה מדורגת לכל הלקוחות הפעילים לאחר סגירת שערי הבטיחות. כל עוד המצב HOLD אין פריסה או הפעלה כספית; שינויי תצורת סליקה, תשתית וגישה מוצגים לאישור נפרד לפני ביצוע. לא בוצעו push, פריסה, שינוי שרת/הרשאות/נתוני לקוח, חיוב, מסמך או מייל, ואין הרשאה ליצור עסקת ספק חדשה או לחייב בכוונה. כל הצעת התאוששות פרטנית קודמת מבוטלת: תקופה שניתנה במתנה נשמרת ללא גבייה, replay או תיקון שדות.

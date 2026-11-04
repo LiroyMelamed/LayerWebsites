@@ -1,0 +1,54 @@
+{
+  "recordedAtUtc": "2026-11-02T04:19:58.132674+00:00",
+  "allFourBuilt": true,
+  "totalCompiledFileOccurrences": 1017,
+  "results": [
+    {
+      "tenant": "Melamedia",
+      "artifactCount": 256,
+      "staticMemberCount": 116,
+      "allArtifactAndArchiveMemberHashesMatch": true,
+      "logHashMatches": true,
+      "compilerWarningsRetained": true,
+      "staticOnlyArchiveSha256": "5ecead7c1478f081e23965f2438db77081bc1d9de569b8518dca6d694867db3d"
+    },
+    {
+      "tenant": "AshrafEssa",
+      "artifactCount": 255,
+      "staticMemberCount": 116,
+      "allArtifactAndArchiveMemberHashesMatch": true,
+      "logHashMatches": true,
+      "compilerWarningsRetained": true,
+      "staticOnlyArchiveSha256": "58e2950480fb0a37a9e048f54c084e671ce38c72141dedfc347035f82a824f01"
+    },
+    {
+      "tenant": "MorLevi",
+      "artifactCount": 253,
+      "staticMemberCount": 114,
+      "allArtifactAndArchiveMemberHashesMatch": true,
+      "logHashMatches": true,
+      "compilerWarningsRetained": true,
+      "staticOnlyArchiveSha256": "81399459985b1ec1863d77a565f20ac10e10855a0c7e4dda50099e2d6247a507"
+    },
+    {
+      "tenant": "MelamedLaw",
+      "artifactCount": 253,
+      "staticMemberCount": 114,
+      "allArtifactAndArchiveMemberHashesMatch": true,
+      "logHashMatches": true,
+      "compilerWarningsRetained": true,
+      "staticOnlyArchiveSha256": "acc1ddbca7a2a52e69041ec3f8282103d38d870ad72c866060a1f0c59535ac3b"
+    }
+  ],
+  "priorDenialAndConfigFilesUnchangedSha256": {
+    "approval-block.json": "b782fd82554f03d87308d1af978255d06bfd64e34321cbbab51866e363140656",
+    "README.md": "2add6c23ec9266bdf66d60315dbcb9f65012c7852c2e9e26e02600cde823ff61",
+    "public-config-audit.json": "56be2f4b4405712a9a57191a96a545005f9cc7356a28ff283f08c05fff3226c4",
+    "public-environment-allowlist.json": "948f96c25b53eccd82652025ca79b41d68f0601fea03484b1a1be59c33d1fc42"
+  },
+  "preparationScriptSha256": "1a60b53b9180921f891d9ad5e1e231f795592fd01a39db70ff60372801a665ca",
+  "noApplicationStartup": true,
+  "providerOperations": 0,
+  "deploymentPerformed": false,
+  "activationReady": false
+}

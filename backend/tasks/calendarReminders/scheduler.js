@@ -197,7 +197,14 @@ async function _claimDueReminders(pollMinutes, limit = 200) {
              OR COALESCE(ce.reminder_channels->>'email', 'false') IN ('true', '1')
           )
           AND ce.start_time > NOW() - INTERVAL '14 days'
-          AND (ce.start_time < NOW() + INTERVAL '14 days'
+          AND (ce.start_time <= NOW() + GREATEST(20160, COALESCE((
+                   SELECT MAX(CASE WHEN value ~ '^[0-9]{1,8}$' THEN value::integer ELSE 0 END)
+                   FROM jsonb_array_elements_text(
+                       COALESCE(ce.lawyer_reminder_offsets, '[]'::jsonb)
+                       || COALESCE(ce.client_reminder_offsets, '[]'::jsonb)
+                       || COALESCE(ce.reminder_offsets, '[]'::jsonb)
+                   ) AS offsets(value)
+               ), 0)) * INTERVAL '1 minute'
                OR COALESCE(ce.lawyer_reminder_offsets, '[]'::jsonb) @> '[0]'::jsonb
                OR COALESCE(ce.client_reminder_offsets, '[]'::jsonb) @> '[0]'::jsonb)
         ORDER BY ce.start_time ASC

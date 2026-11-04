@@ -1,0 +1,37 @@
+{
+  "atUtc": "2026-11-02T07:36:22.524567+00:00",
+  "remoteMutations": 0,
+  "scopeOrNamespaceCreated": false,
+  "databaseConnections": 0,
+  "providerCalls": 0,
+  "qaHead": "545779e4b99e111959f4684167dfdf46da1f3186",
+  "systemdVersion": "systemd 255 (255.4-1ubuntu8.18)",
+  "selfCgroup": [
+    "0::/user.slice/user-0.slice/session-41533.scope"
+  ],
+  "cgroupFiles": {
+    "cgroup.controllers": "cpuset cpu io memory hugetlb pids rdma misc",
+    "cgroup.subtree_control": "cpuset cpu io memory hugetlb pids rdma misc",
+    "memory.current": null,
+    "memory.max": null,
+    "memory.swap.max": null,
+    "system.slice/cgroup.controllers": "cpuset cpu io memory hugetlb pids rdma misc",
+    "system.slice/cgroup.subtree_control": "cpuset cpu io memory hugetlb pids rdma misc"
+  },
+  "scopeDocumentProperties": {
+    "systemd.scope.5.gz": {
+      "RuntimeMaxSec": true,
+      "CollectMode": false
+    },
+    "systemd.resource-control.5.gz": {
+      "MemoryMax": true,
+      "MemorySwapMax": true,
+      "CPUQuota": true,
+      "TasksMax": true
+    }
+  },
+  "status": "PASS_PASSIVE_RESOURCE_PREREQUISITES",
+  "finishedAtUtc": "2026-11-02T07:36:22.547999+00:00",
+  "sshExit": 0,
+  "executedRemoteSha256": "d5b40ad9e6f0d6dd0c7168bec402d718ea8487cf1a5586f3ef1190b02a19216a"
+}

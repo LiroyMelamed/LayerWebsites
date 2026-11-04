@@ -1,0 +1,117 @@
+{
+  "recordedAtUtc": "2026-11-02T04:41:00.794013+00:00",
+  "pureMergerSha256": "f14e06dc848c00e2780a2af1a9a6536aa04f71978d6e1b754121fe0f2d7f5fd1",
+  "networkOperations": 0,
+  "applicationOrJavaScriptExecuted": false,
+  "filesPublished": 0,
+  "allFourPublicSnapshotsAndPureMergesPass": true,
+  "publicCspAndSri": "none on four captured current public HTML responses; no policy was altered",
+  "publicSnapshotAndByteMergeClosed": true,
+  "activationReady": false,
+  "remainingGate": "locked canonical target inventory/CAS+current root protection/backend/release prerequisites, not a public/static drift failure",
+  "results": [
+    {
+      "tenant": "melamedia",
+      "oldIndexSha256": "647fa89d259aa983335012867ea80c221585eef93a94cc25b47fc401e3aca5b7",
+      "proposedIndexSha256": "4f14b45971bad41bea0d1542e98e985db332361e1a7be3d96e311e37138a7d0e",
+      "entrypointMap": {
+        "static/js/vendor-pdf.f63c2819.js": "static/js/vendor-pdf.9b7d4296.js",
+        "static/js/vendor-i18n.40936357.js": "static/js/vendor-i18n.074fe7e8.js",
+        "static/js/vendor-react.094da8d9.js": "static/js/vendor-react.bc82a7fe.js",
+        "static/js/vendor.2a0dc768.js": "static/js/vendor.7b6aff43.js",
+        "static/css/main.9bf17f76.css": "static/css/main.81512789.css",
+        "static/js/main.ae388fc0.js": "static/js/main.4fac0bab.js"
+      },
+      "sameInlineScriptsAndStyles": true,
+      "inverseRestoresEveryOriginalByte": true,
+      "fullLockedRootOrPublicationGateClosed": false
+    },
+    {
+      "tenant": "ashrafessa",
+      "oldIndexSha256": "74119c645e44b9e646b02e056e9ba3100db78cc252c48eecb932b660b013acb6",
+      "proposedIndexSha256": "ecd3a647875b726145fc96dc8be7490037c2a37fca82fdea8a9c13d28d906161",
+      "entrypointMap": {
+        "static/js/vendor-pdf.f63c2819.js": "static/js/vendor-pdf.9b7d4296.js",
+        "static/js/vendor-i18n.40936357.js": "static/js/vendor-i18n.074fe7e8.js",
+        "static/js/vendor-react.094da8d9.js": "static/js/vendor-react.bc82a7fe.js",
+        "static/js/vendor.2a0dc768.js": "static/js/vendor.7b6aff43.js",
+        "static/css/main.42e8b4df.css": "static/css/main.4d9ec64c.css",
+        "static/js/main.b15bba80.js": "static/js/main.70cbd7b3.js"
+      },
+      "sameInlineScriptsAndStyles": true,
+      "inverseRestoresEveryOriginalByte": true,
+      "fullLockedRootOrPublicationGateClosed": false
+    },
+    {
+      "tenant": "morlevy",
+      "oldIndexSha256": "624a600c5287e83d89a73f3a45965bf51cdc9aba82a48fbcac60cad7506a9899",
+      "proposedIndexSha256": "5535f7bd0b19569539606195f47c51c240542ee996546fce58af30cf9fa098f1",
+      "entrypointMap": {
+        "static/js/vendor-pdf.f63c2819.js": "static/js/vendor-pdf.9b7d4296.js",
+        "static/js/vendor-i18n.40936357.js": "static/js/vendor-i18n.074fe7e8.js",
+        "static/js/vendor-react.094da8d9.js": "static/js/vendor-react.bc82a7fe.js",
+        "static/js/vendor.2a0dc768.js": "static/js/vendor.7b6aff43.js",
+        "static/css/main.42e8b4df.css": "static/css/main.4d9ec64c.css",
+        "static/js/main.15483ae9.js": "static/js/main.bc38222f.js"
+      },
+      "sameInlineScriptsAndStyles": true,
+      "inverseRestoresEveryOriginalByte": true,
+      "fullLockedRootOrPublicationGateClosed": false
+    },
+    {
+      "tenant": "melamedlaw",
+      "oldIndexSha256": "422bb853e6101ee7827ea7e86e930041b62de064080d481d1cd1ea5dfec78e20",
+      "proposedIndexSha256": "dd22569aab1c2b5496e571dd8f31b110562c31ad6ab97c6db333b556cfb61969",
+      "entrypointMap": {
+        "static/js/vendor-pdf.f63c2819.js": "static/js/vendor-pdf.9b7d4296.js",
+        "static/js/vendor-i18n.40936357.js": "static/js/vendor-i18n.074fe7e8.js",
+        "static/js/vendor-react.094da8d9.js": "static/js/vendor-react.bc82a7fe.js",
+        "static/js/vendor.2a0dc768.js": "static/js/vendor.7b6aff43.js",
+        "static/css/main.42e8b4df.css": "static/css/main.4d9ec64c.css",
+        "static/js/main.3b3274f2.js": "static/js/main.811b5597.js"
+      },
+      "sameInlineScriptsAndStyles": true,
+      "inverseRestoresEveryOriginalByte": true,
+      "fullLockedRootOrPublicationGateClosed": false
+    }
+  ],
+  "manifestNonStaticMappingsExactlyUnchangedForAllFour": true,
+  "collisionScope": [
+    {
+      "tenant": "melamedia",
+      "nonStaticManifestMappings": {
+        "index.html": "/index.html"
+      },
+      "unchanged": true,
+      "knownCollisionMatches": 0,
+      "remainingCollisionPaths": 21
+    },
+    {
+      "tenant": "ashrafessa",
+      "nonStaticManifestMappings": {
+        "index.html": "/index.html"
+      },
+      "unchanged": true,
+      "knownCollisionMatches": 0,
+      "remainingCollisionPaths": 21
+    },
+    {
+      "tenant": "morlevy",
+      "nonStaticManifestMappings": {
+        "index.html": "/index.html"
+      },
+      "unchanged": true,
+      "knownCollisionMatches": 0,
+      "remainingCollisionPaths": 19
+    },
+    {
+      "tenant": "melamedlaw",
+      "nonStaticManifestMappings": {
+        "index.html": "/index.html"
+      },
+      "unchanged": true,
+      "knownCollisionMatches": 0,
+      "remainingCollisionPaths": 19
+    }
+  ]
+}

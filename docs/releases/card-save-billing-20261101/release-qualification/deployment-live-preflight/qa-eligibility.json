@@ -1,0 +1,56 @@
+{
+  "capturedAtUtc": "2026-11-01T23:36:36.926546+00:00",
+  "scope": "Existing QA only; nonsecret flags/address categories and catalog names/privileges, no customer rows/provider credentials or requests",
+  "credentialValuesInspectedForProvider": false,
+  "providerCalls": 0,
+  "customerRowQueries": 0,
+  "newDatabaseRoleAccessOrDDL": false,
+  "tenant": "Melamedia",
+  "processName": "melamedia-api",
+  "pid": 2729957,
+  "mode": "dedicated",
+  "configuration": {
+    "takbullModeCategory": "prod",
+    "takbullModeExplicitlyConfigured": true,
+    "providerEndpointCategory": "public_official_Takbull_host_shared_by_test_and_prod_source",
+    "separatelyVerifiedNonSettlingMerchant": false,
+    "billingOperationsGateWouldBePaused": false,
+    "selfServiceSignupFlagEnabled": false,
+    "qaOutboundModeCategory": "noop",
+    "qaNoopGuardInputsMatch": true,
+    "qaOutboundExceptionCount": 0,
+    "qaOutboundExceptionAddressCategories": {
+      "email": 0,
+      "phone_or_other": 0
+    },
+    "qaNoopAllowsSomeRecipientExceptions": false,
+    "qaNoopCoversTakbull": false,
+    "smtpHostCategory": "nonloopback_hostname_not_resolved",
+    "dbHostCategory": "loopback",
+    "credentialAbsenceOrProviderEgressFenceProven": false
+  },
+  "syntheticDataPopulationVerified": false,
+  "exclusiveSyntheticNamespaceVerified": false,
+  "existingPaidSignupProfileTestsSafeToRunNow": false,
+  "catalog": {
+    "identity": {
+      "role": "melamedia_app",
+      "database": "melamedia",
+      "readOnly": "on"
+    },
+    "roleCreationCapabilities": {
+      "create_database": false,
+      "create_role": false
+    },
+    "namespacePrivileges": {
+      "publicUsage": true,
+      "publicCreate": true,
+      "databaseCreate": true
+    },
+    "namedSignupFixtureDatabases": [],
+    "qaOrTestNamespaces": []
+  },
+  "transactionEnded": "ROLLBACK",
+  "status": "QA_READONLY_ELIGIBILITY_OBSERVED",
+  "sshExit": 0
+}

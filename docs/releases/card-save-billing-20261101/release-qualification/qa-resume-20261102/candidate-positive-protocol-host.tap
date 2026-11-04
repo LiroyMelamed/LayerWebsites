@@ -1,0 +1,215 @@
+{"probe":"FROZEN_PROTOCOL_PRICING_ONLY_NOT_QA_APP","node":"v22.23.2","qualifiedSource":"6a3bd299227291feb0065ae3afa89a1f3ba2967a","originalTests":34,"embeddedSourceFiles":12,"networkCanaries":4,"unmockedNetworkAttempts":0,"deniedImports":0,"applicationDatabaseImports":0,"realProviderRequests":0,"qaApplicationBoots":0,"remoteFileWrites":0,"sourceHashes":{"backend/lib/billing/billingOperations.js":"50932a1b1e8d9e167cd6ae377d2cea21d45344f191a24dce59aca6cb74f3d10f","backend/lib/billing/pricingPackage.js":"f5a6b2d1710a7ef3ad13df2e279261bd61769aa3d7640a58ef01bbfb002f1ffe","backend/lib/billing/signupQuote.js":"1c375fb2fd6380e25bbfdfe69c1705c139ed717858f0692493cb04aa2aa57f73","backend/lib/billing/calendarMonths.js":"69df959760a476d367de1b1a46ca81555b19b9eb08349815b3ee0c6e1d1ed87d","backend/lib/payments/verifySignupPayment.js":"65157d1c97ac6a7f7f87fd9b5c8891df9e65c3e21d77aae71c50ecbf43e90c90","backend/lib/payments/takbullClient.js":"9cd2d96d4644071de5baad44035a925d71085bad55f18ff30cff3a3aecb6afa6","backend/lib/payments/takbullCredentials.js":"5289997c9dbea082bdfff6c7437935236cbf02235819e8b69e8e29b51d429c8d","backend/tests/hostedPaymentVerification.test.js":"d28aea4e1bf451e82e32cd3e3f846b860c98628acfe125e61f5d2f4b90bc3b00","backend/tests/signupPaymentVerification.test.js":"595af5846da66d114bedc10072621dc1a00bde48d1482d001e7ef46e5e8f07c2","backend/tests/takbullDocuments.test.js":"0940270e94d2b9b761abb28d346a429e65de64246b669e8c8a0cb3ba479b3a08","backend/tests/pricingPackage.test.js":"685a7820fc456507075b05630556536293bf3b54afb927f8d6da2a1318bf8aa3","backend/tests/signupQuote.test.js":"c8526e2b884511fc2811c5ddae6557eadf56bb3e7ad9da8ab4117e952b646054"}}
+TAP version 13
+# Subtest: hosted subscription verification binds the exact approved order and transaction without requiring a saved card
+ok 1 - hosted subscription verification binds the exact approved order and transaction without requiring a saved card
+  ---
+  duration_ms: 4.844529
+  type: 'test'
+  ...
+# Subtest: foreign order identity, price, currency and ambiguous approved transaction are rejected before transaction lookup
+ok 2 - foreign order identity, price, currency and ambiguous approved transaction are rejected before transaction lookup
+  ---
+  duration_ms: 4.022576
+  type: 'test'
+  ...
+# Subtest: callback-like approval cannot replace independent transaction amount, identity and card evidence
+ok 3 - callback-like approval cannot replace independent transaction amount, identity and card evidence
+  ---
+  duration_ms: 3.347789
+  type: 'test'
+  ...
+# Subtest: unavailable provider reads and malformed expected prices never become verified receipts
+ok 4 - unavailable provider reads and malformed expected prices never become verified receipts
+  ---
+  duration_ms: 1.794023
+  type: 'test'
+  ...
+# Subtest: optional hosted token handling does not relax the one-shekel signup card-storage requirement
+ok 5 - optional hosted token handling does not relax the one-shekel signup card-storage requirement
+  ---
+  duration_ms: 1.085614
+  type: 'test'
+  ...
+# Subtest: signup uses authenticated order and card transaction, not callback amount/token
+ok 6 - signup uses authenticated order and card transaction, not callback amount/token
+  ---
+  duration_ms: 6.87874
+  type: 'test'
+  ...
+# Subtest: signup rejects foreign, missing, wrong amount/currency/type and missing token evidence
+ok 7 - signup rejects foreign, missing, wrong amount/currency/type and missing token evidence
+  ---
+  duration_ms: 15.710048
+  type: 'test'
+  ...
+# Subtest: saved-token renewal requires exact independently read transaction evidence
+ok 8 - saved-token renewal requires exact independently read transaction evidence
+  ---
+  duration_ms: 2.41436
+  type: 'test'
+  ...
+# Subtest: three calendar months use Israel local time and clamp month ends through DST
+ok 9 - three calendar months use Israel local time and clamp month ends through DST
+  ---
+  duration_ms: 33.945575
+  type: 'test'
+  ...
+# Subtest: hosted checkout and saved-card charge request one provider-native document with recipient and amount
+ok 10 - hosted checkout and saved-card charge request one provider-native document with recipient and amount
+  ---
+  duration_ms: 3.47692
+  type: 'test'
+  ...
+# Subtest: 1 ILS card verification remains a real payment document and gets a line item without a supplied purpose
+ok 11 - 1 ILS card verification remains a real payment document and gets a line item without a supplied purpose
+  ---
+  duration_ms: 0.774733
+  type: 'test'
+  ...
+# Subtest: explicit receipt type or existing configured type is validated before any payment request
+ok 12 - explicit receipt type or existing configured type is validated before any payment request
+  ---
+  duration_ms: 1.504173
+  type: 'test'
+  ...
+# Subtest: zero, negative, or invalid amount never reaches a payment/document operation
+ok 13 - zero, negative, or invalid amount never reaches a payment/document operation
+  ---
+  duration_ms: 1.846842
+  type: 'test'
+  ...
+# Subtest: timeout is not retried and cannot trigger a separate document operation
+ok 14 - timeout is not retried and cannot trigger a separate document operation
+  ---
+  duration_ms: 0.910748
+  type: 'test'
+  ...
+# Subtest: HTTP errors, malformed responses, and unbound provider errors remain uncertain
+ok 15 - HTTP errors, malformed responses, and unbound provider errors remain uncertain
+  ---
+  duration_ms: 1.349735
+  type: 'test'
+  ...
+# Subtest: document error after an approved charge is uncertain and never a safe new-charge signal
+ok 16 - document error after an approved charge is uncertain and never a safe new-charge signal
+  ---
+  duration_ms: 0.848783
+  type: 'test'
+  ...
+# Subtest: only a matching terminal failed card charge permits retry; mismatches and unavailable reads remain uncertain
+ok 17 - only a matching terminal failed card charge permits retry; mismatches and unavailable reads remain uncertain
+  ---
+  duration_ms: 3.1332
+  type: 'test'
+  ...
+# Subtest: document reference does not assert email delivery or mistake zero document ID for a receipt
+ok 18 - document reference does not assert email delivery or mistake zero document ID for a receipt
+  ---
+  duration_ms: 0.319145
+  type: 'test'
+  ...
+# Subtest: evaluatePackageChange blocks cheaper signing when documents exceed pack
+ok 19 - evaluatePackageChange blocks cheaper signing when documents exceed pack
+  ---
+  duration_ms: 1.054655
+  type: 'test'
+  ...
+# Subtest: evaluatePackageChange allows upgrade even when over current quota
+ok 20 - evaluatePackageChange allows upgrade even when over current quota
+  ---
+  duration_ms: 0.331748
+  type: 'test'
+  ...
+# Subtest: evaluatePackageChange blocks platform downgrade from site_app
+ok 21 - evaluatePackageChange blocks platform downgrade from site_app
+  ---
+  duration_ms: 0.356154
+  type: 'test'
+  ...
+# Subtest: evaluatePackageChange blocks resource downgrade when seats exceed
+ok 22 - evaluatePackageChange blocks resource downgrade when seats exceed
+  ---
+  duration_ms: 0.271847
+  type: 'test'
+  ...
+# Subtest: disabledOptionsForUsage marks cheaper signing packs
+ok 23 - disabledOptionsForUsage marks cheaper signing packs
+  ---
+  duration_ms: 1.408686
+  type: 'test'
+  ...
+# Subtest: resolvePricingLineItems default site_app + pro + 500 totals 972
+ok 24 - resolvePricingLineItems default site_app + pro + 500 totals 972
+  ---
+  duration_ms: 2.380146
+  type: 'test'
+  ...
+# Subtest: enterprise SMS monthly quota is 5000 not unlimited
+ok 25 - enterprise SMS monthly quota is 5000 not unlimited
+  ---
+  duration_ms: 0.35417
+  type: 'test'
+  ...
+# Subtest: recommendCheapestPackage: MelamedLaw-shaped usage needs enterprise 1353
+ok 26 - recommendCheapestPackage: MelamedLaw-shaped usage needs enterprise 1353
+  ---
+  duration_ms: 0.655512
+  type: 'test'
+  ...
+# Subtest: recommendCheapestPackage: MorLevi-shaped usage fits basic 845
+ok 27 - recommendCheapestPackage: MorLevi-shaped usage fits basic 845
+  ---
+  duration_ms: 0.302773
+  type: 'test'
+  ...
+# Subtest: recommendCheapestPackage: SMS above pro cap 2000 needs enterprise
+ok 28 - recommendCheapestPackage: SMS above pro cap 2000 needs enterprise
+  ---
+  duration_ms: 0.271416
+  type: 'test'
+  ...
+# Subtest: yearly billing is 10% off 12 months, rounded
+ok 29 - yearly billing is 10% off 12 months, rounded
+  ---
+  duration_ms: 0.198229
+  type: 'test'
+  ...
+# Subtest: new package choices reject a platform-free contract even from legacy none
+ok 30 - new package choices reject a platform-free contract even from legacy none
+  ---
+  duration_ms: 0.229176
+  type: 'test'
+  ...
+# Subtest: all 90 allowed signup choices use final prices and the existing annual discount
+ok 31 - all 90 allowed signup choices use final prices and the existing annual discount
+  ---
+  duration_ms: 1.806416
+  type: 'test'
+  ...
+# Subtest: website plus basic resources costs ₪532 final; historical system-only contracts remain unchanged
+ok 32 - website plus basic resources costs ₪532 final; historical system-only contracts remain unchanged
+  ---
+  duration_ms: 0.307954
+  type: 'test'
+  ...
+# Subtest: accepted plan changes use the agreed billing row, not an obsolete signup or live catalogue price
+ok 33 - accepted plan changes use the agreed billing row, not an obsolete signup or live catalogue price
+  ---
+  duration_ms: 0.137417
+  type: 'test'
+  ...
+# Subtest: invalid choices and missing new contract charge fail closed
+ok 34 - invalid choices and missing new contract charge fail closed
+  ---
+  duration_ms: 0.49867
+  type: 'test'
+  ...
+1..34
+# tests 34
+# suites 0
+# pass 34
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 168.724963

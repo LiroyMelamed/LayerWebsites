@@ -1,0 +1,113 @@
+{
+  "files": {
+    "README.md": {
+      "bytes": 8518,
+      "sha256": "b2fbc79624ea844472350f42b0552daf3dfe22c10a593e299a684abf1b340613"
+    },
+    "candidate-guard-host-probe.json": {
+      "bytes": 1533,
+      "sha256": "b78a80530a2ff91885b570411f27905e2e01b9628c13866710a93ad7773d36f1"
+    },
+    "candidate-guard-probe.js": {
+      "bytes": 27801,
+      "sha256": "69d37412957fe047e148e8f7e28db1c5882c01cb5f7f5213b4628443e2adfdc6"
+    },
+    "candidate-positive-protocol-host.json": {
+      "bytes": 1617,
+      "sha256": "b333db16a2d02530d90c2b8e6c07a396186df48fed091a8ce8c98f8cecf95c80"
+    },
+    "candidate-positive-protocol-host.tap": {
+      "bytes": 9601,
+      "sha256": "626265f237e42c8faa5fded0e2af32a26704f57d0eeb601e0376fad93fadd022"
+    },
+    "candidate-positive-protocol-manifest.json": {
+      "bytes": 2577,
+      "sha256": "e68a18100c5d5613058e918b47eef9f4df5004493fdd52b03ea29824c397b329"
+    },
+    "candidate-positive-protocol-probe.js": {
+      "bytes": 69216,
+      "sha256": "5b6234611f5fea37c5e9d03cb96cf126733f842b63e7e0830521a3c31405035b"
+    },
+    "execute-positive-protocol-remote.py": {
+      "bytes": 74744,
+      "sha256": "ee7d1010ccb60ed622f6e7ced0d11141487e1cdf98f51b2d2be7a7df217ecef4"
+    },
+    "pause-execution-contract.json": {
+      "bytes": 12740,
+      "sha256": "155a0f32baca9a4fdd39dd9c20787ee5685cf5167561079c538e91b8e5ae68af"
+    },
+    "pause-execution-contract.md": {
+      "bytes": 11492,
+      "sha256": "c2ca772957a4791ad27a27ab4fa4c7b20a7b83e7498213b29f32656791fc8f91"
+    },
+    "pre-action-20261102T061805Z/README.md": {
+      "bytes": 2237,
+      "sha256": "7af0e1b82d690b59f2a74cb3b0e40cee319158eaf438a01d8f79870fe5343715"
+    },
+    "pre-action-20261102T061805Z/artifact-hashes.json": {
+      "bytes": 450,
+      "sha256": "f0bf09bf5cf6fe25ac948725bb7d09bed8403e06c2c922c66c5b665ddd1224e5"
+    },
+    "pre-action-20261102T061805Z/decision.json": {
+      "bytes": 13043,
+      "sha256": "c32d62f61b1f811820d74a7b1bbe1aa1b2fed3b5c7e999aaf2158092eeff43d4"
+    },
+    "pre-action-20261102T061805Z/executed-remote.py": {
+      "bytes": 27484,
+      "sha256": "1ff14f46028d4815f21484e502ece02bcd2d18995f0f65705b4bb7fb8bbe6a45"
+    },
+    "pre-action-20261102T061805Z/inventory.json": {
+      "bytes": 113218,
+      "sha256": "c9bd0b629a078f978953396a46327a4586a0502fd2997993ca5a7b5414935223"
+    },
+    "pre-action-20261102T061805Z/source-equivalence.json": {
+      "bytes": 2258,
+      "sha256": "9b78663778d51be81c69089d0edb28c2233c4af0a7369971bff29b5d4aed03e3"
+    },
+    "routine-backup-review/README.md": {
+      "bytes": 4552,
+      "sha256": "e771e9a21c2d6188dd915fb2c295a189878719e955ab4c017dcace36feef280d"
+    },
+    "routine-backup-review/artifact-hashes.json": {
+      "bytes": 795,
+      "sha256": "ef221c867e79b202843490384ec5c630305afca240ac165b3c92b8f8c859db9f"
+    },
+    "routine-backup-review/lock-timer-metadata.json": {
+      "bytes": 7308,
+      "sha256": "98204407bec205601bec36c6414129df2c6000e96209228ed3e106e8244dd619"
+    },
+    "routine-backup-review/melamedia-backup-retention.py": {
+      "bytes": 9138,
+      "sha256": "f2dc2352c70a831935546fe9fb4f007182b03f560a8e0541f2e81f342939027c"
+    },
+    "routine-backup-review/melamedia-server-backup.py": {
+      "bytes": 12909,
+      "sha256": "085b3d946f475d1ad8ebd78f60aed389d6fea661963e34389b8991d339b2d160"
+    },
+    "routine-backup-review/reviewed-command-template.sh.txt": {
+      "bytes": 1412,
+      "sha256": "e01626cd575ee637513065f0ba0065c3ba63e2bd43af7b413592fd60270d42a5"
+    },
+    "routine-backup-review/routine-backup-review.json": {
+      "bytes": 16993,
+      "sha256": "95d375feab51dfe1dd2a51e85b44c4f38ad17c413670d8378a5f07e5865efc77"
+    },
+    "routine-backup-review/source-metadata.json": {
+      "bytes": 4553,
+      "sha256": "52e5dc01791a7d1d5bfdcde7d9b543788e9f87466940aea63eca280a6d091f38"
+    },
+    "routine-backup-review/watch-freshness-source-excerpt.txt": {
+      "bytes": 1504,
+      "sha256": "5065ffe85f330ce7567963080d9ce3d2b827df4381e6f4ad51e294ead7e2e6cd"
+    },
+    "static-payload-persistence.json": {
+      "bytes": 3101,
+      "sha256": "306f22b08a90ca2269cba4fc10b1fcefcd764d51b46f716f6e741721ce4413c6"
+    },
+    "status.json": {
+      "bytes": 5676,
+      "sha256": "13bbc4cbf73cd8f076e6ddafc075e2f8aa78262811560c730ac4373bad61501b"
+    }
+  },
+  "privatePreimageOrCredentialsCopied": false
+}

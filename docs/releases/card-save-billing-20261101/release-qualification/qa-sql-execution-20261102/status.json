@@ -1,0 +1,45 @@
+{
+  "atUtc": "2026-11-02T08:29:36.396391+00:00",
+  "product": "6a3bd299227291feb0065ae3afa89a1f3ba2967a",
+  "liveQA": "545779e4b99e111959f4684167dfdf46da1f3186",
+  "liveQaPid": 2729957,
+  "lastLiveIdentityAndCleanupVerifiedUtc": "2026-11-02T08:21:26Z",
+  "attempt1": {
+    "status": "FAILED_ENGINE_COMPATIBILITY",
+    "legacyCases": 57,
+    "passed": 0,
+    "sharedStarted": false,
+    "kernelAndJsBoundariesPassed": true,
+    "liveQaUnchanged": true,
+    "cleaned": true
+  },
+  "attempt2": {
+    "status": "INCOMPLETE_STOPPED_AT_300_SECOND_PER_FILE_BOUND",
+    "legacyPassed": 28,
+    "legacyFailedBeforeStop": 0,
+    "sharedStarted": false,
+    "expectedTotalOriginalCases": 79,
+    "kernelAndJsBoundariesPassed": true,
+    "peakChildRssBytes": 1023787008,
+    "liveQaUnchanged": true,
+    "cleaned": true
+  },
+  "attempt3": {
+    "status": "DENIED_BEFORE_PROCESS_STARTED",
+    "target": "QA staging temporary tree /tmp/layer-billing-sql-sequences-20261102-6a3bd299",
+    "archiveSha256": "cb2f03ea1a0e6141960d017897f11d0de868a3932d84e1d58ae74b4d5c70c08c",
+    "newExplicitApprovalRequested": true,
+    "executed": false,
+    "uncertainOutcome": false
+  },
+  "operations": {
+    "QAserviceStopsRestartsConfigOrDepsChanges": 0,
+    "hostDatabaseConnections": 0,
+    "realProviderDocumentMailOperations": 0,
+    "excludedCustomerReadsWrites": 0,
+    "newMacDatabases": 0,
+    "deployment": false,
+    "uncertainLiveOutcomes": 0
+  },
+  "release": "HOLD_restore_rollback_drain_gates_remain_open"
+}

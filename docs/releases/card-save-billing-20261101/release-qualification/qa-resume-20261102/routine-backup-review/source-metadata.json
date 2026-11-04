@@ -1,0 +1,167 @@
+{
+  "startedAtUtc": "2026-11-02T06:31:23.633763+00:00",
+  "remoteMutations": 0,
+  "databaseConnections": 0,
+  "providerCalls": 0,
+  "storageCalls": 0,
+  "environmentValuesRead": false,
+  "locks": {
+    "melamedia-release-maintenance": "EXISTING_SHARED_HELD",
+    "melamedia-legal-melamedlaw-release": "EXISTING_SHARED_HELD",
+    "melamedia-legal-morlevy-release": "EXISTING_SHARED_HELD",
+    "melamedia-legal-ashrafessa-release": "EXISTING_SHARED_HELD",
+    "melamedia-legal-melamedia-release": "EXISTING_SHARED_HELD"
+  },
+  "config": {
+    "path": "/etc/melamedia-backup.d/config.json",
+    "sha256": "a9368f14409c3c8551af638d2de5a679fde66e2fb90e803f65655fe1c06286f9",
+    "bytes": 2476,
+    "mode": "0o600",
+    "topLevelKeys": [
+      "backup_scope",
+      "host",
+      "projects",
+      "recipient",
+      "retention_days",
+      "root"
+    ],
+    "backup_scope": "database-only",
+    "root": "/var/backups/melamedia-recovery",
+    "retention_days": 3,
+    "local_generation_only": null,
+    "projectCount": 8,
+    "hostIdentityMatches": true,
+    "recipientExists": true,
+    "projects": [
+      {
+        "name": "melamedlaw-recovery",
+        "database": "melamedlaw",
+        "retention_days": 3,
+        "source_status": null,
+        "shared_recovery_project": null,
+        "keys": [
+          "database",
+          "name",
+          "recovery_paths",
+          "retention_days",
+          "storage"
+        ],
+        "recoveryPathCount": 0,
+        "objectSnapshotConfigured": false,
+        "sqliteConfigured": false,
+        "storageKeys": [
+          "bucket",
+          "env"
+        ],
+        "storageConfigured": true,
+        "storageNonsecretStructure": {}
+      },
+      {
+        "name": "morlevi-recovery",
+        "database": "morlevy",
+        "retention_days": 3,
+        "source_status": null,
+        "shared_recovery_project": null,
+        "keys": [
+          "database",
+          "name",
+          "recovery_paths",
+          "retention_days",
+          "storage"
+        ],
+        "recoveryPathCount": 0,
+        "objectSnapshotConfigured": false,
+        "sqliteConfigured": false,
+        "storageKeys": [
+          "bucket",
+          "env"
+        ],
+        "storageConfigured": true,
+        "storageNonsecretStructure": {}
+      },
+      {
+        "name": "ashrafessa-recovery",
+        "database": "ashrafessa",
+        "retention_days": 3,
+        "source_status": null,
+        "shared_recovery_project": null,
+        "keys": [
+          "database",
+          "name",
+          "recovery_paths",
+          "retention_days",
+          "storage"
+        ],
+        "recoveryPathCount": 0,
+        "objectSnapshotConfigured": false,
+        "sqliteConfigured": false,
+        "storageKeys": [
+          "bucket",
+          "env"
+        ],
+        "storageConfigured": true,
+        "storageNonsecretStructure": {}
+      },
+      {
+        "name": "melamedia-recovery",
+        "database": "melamedia",
+        "retention_days": 3,
+        "source_status": null,
+        "shared_recovery_project": null,
+        "keys": [
+          "database",
+          "name",
+          "recovery_paths",
+          "retention_days",
+          "storage"
+        ],
+        "recoveryPathCount": 0,
+        "objectSnapshotConfigured": false,
+        "sqliteConfigured": false,
+        "storageKeys": [
+          "bucket",
+          "env"
+        ],
+        "storageConfigured": true,
+        "storageNonsecretStructure": {}
+      }
+    ]
+  },
+  "filesystem": {
+    "backupRoot": "/var/backups/melamedia-recovery",
+    "freeBytes": 38961803264,
+    "totalBytes": 76887154688,
+    "loadAverage": [
+      1.166015625,
+      0.5126953125,
+      0.34326171875
+    ]
+  },
+  "backupProcesses": [],
+  "status": "READONLY_SOURCE_CONFIG_CAPTURED",
+  "finishedAtUtc": "2026-11-02T06:31:23.661143+00:00",
+  "locksReleasedAtExit": true,
+  "sshExit": 0,
+  "sources": [
+    {
+      "path": "/usr/local/sbin/melamedia-server-backup.py",
+      "sha256": "085b3d946f475d1ad8ebd78f60aed389d6fea661963e34389b8991d339b2d160",
+      "bytes": 12909,
+      "mode": "0o700"
+    },
+    {
+      "path": "/usr/local/sbin/melamedia-backup-retention.py",
+      "sha256": "f2dc2352c70a831935546fe9fb4f007182b03f560a8e0541f2e81f342939027c",
+      "bytes": 9138,
+      "mode": "0o700"
+    },
+    {
+      "path": "/usr/local/sbin/melamedia-backup-watch.py",
+      "sha256": "6c4bd6bf8f04c0381aebfcb5de22c65e4387c266a4ca8b96b71d120af71994ae",
+      "bytes": 9338,
+      "mode": "0o700"
+    }
+  ],
+  "scheduledDefinitionCount": 0,
+  "selectedCronLineCount": 0
+}

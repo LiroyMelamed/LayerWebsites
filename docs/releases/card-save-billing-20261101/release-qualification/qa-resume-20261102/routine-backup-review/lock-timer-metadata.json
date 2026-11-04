@@ -1,0 +1,218 @@
+{
+  "startedAtUtc": "2026-11-02T06:33:29.031868+00:00",
+  "remoteMutations": 0,
+  "databaseConnections": 0,
+  "storageCalls": 0,
+  "providerCalls": 0,
+  "environmentValuesRead": false,
+  "locks": {
+    "melamedia-release-maintenance": "EXISTING_SHARED_HELD",
+    "melamedia-legal-melamedlaw-release": "EXISTING_SHARED_HELD",
+    "melamedia-legal-morlevy-release": "EXISTING_SHARED_HELD",
+    "melamedia-legal-ashrafessa-release": "EXISTING_SHARED_HELD",
+    "melamedia-legal-melamedia-release": "EXISTING_SHARED_HELD"
+  },
+  "systemd": {
+    "melamedia-backup-retention.service": {
+      "exit": 0,
+      "properties": {
+        "MainPID": "0",
+        "Result": "success",
+        "ExecMainStartTimestamp": "Mon 2026-11-02 06:40:36 CET",
+        "ExecMainExitTimestamp": "Mon 2026-11-02 06:40:42 CET",
+        "ExecMainStatus": "0",
+        "Id": "melamedia-backup-retention.service",
+        "Triggers": "",
+        "TriggeredBy": "melamedia-backup-retention.timer",
+        "LoadState": "loaded",
+        "ActiveState": "inactive",
+        "SubState": "dead",
+        "UnitFileState": "static"
+      }
+    },
+    "melamedia-backup-retention.timer": {
+      "exit": 0,
+      "properties": {
+        "NextElapseUSecRealtime": "Mon 2026-11-02 07:40:20 CET",
+        "NextElapseUSecMonotonic": "0",
+        "LastTriggerUSec": "Mon 2026-11-02 06:40:36 CET",
+        "Result": "success",
+        "Id": "melamedia-backup-retention.timer",
+        "Triggers": "melamedia-backup-retention.service",
+        "TriggeredBy": "",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "waiting",
+        "UnitFileState": "enabled"
+      }
+    },
+    "melamedia-server-backup.service": {
+      "exit": 0,
+      "properties": {
+        "MainPID": "0",
+        "Result": "success",
+        "ExecMainStartTimestamp": "Mon 2026-11-02 03:30:39 CET",
+        "ExecMainExitTimestamp": "Mon 2026-11-02 03:30:48 CET",
+        "ExecMainStatus": "0",
+        "Id": "melamedia-server-backup.service",
+        "Triggers": "",
+        "TriggeredBy": "melamedia-server-backup.timer",
+        "LoadState": "loaded",
+        "ActiveState": "inactive",
+        "SubState": "dead",
+        "UnitFileState": "static"
+      }
+    },
+    "melamedia-server-backup.timer": {
+      "exit": 0,
+      "properties": {
+        "NextElapseUSecRealtime": "Tue 2026-11-03 03:38:11 CET",
+        "NextElapseUSecMonotonic": "0",
+        "LastTriggerUSec": "Mon 2026-11-02 03:30:39 CET",
+        "Result": "success",
+        "Id": "melamedia-server-backup.timer",
+        "Triggers": "melamedia-server-backup.service",
+        "TriggeredBy": "",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "waiting",
+        "UnitFileState": "enabled"
+      }
+    }
+  },
+  "backupLocks": [
+    {
+      "path": "/var/backups/melamedia-recovery/.lock",
+      "exists": true,
+      "symlink": false,
+      "inode": 3708514,
+      "mode": "0o600",
+      "uid": 0,
+      "sharedNonblockingProbe": "ACQUIRED_EXISTING_ONLY"
+    },
+    {
+      "path": "/var/lib/melamedia-backup-retention/.lock",
+      "exists": true,
+      "symlink": false,
+      "inode": 3709205,
+      "mode": "0o600",
+      "uid": 0,
+      "sharedNonblockingProbe": "ACQUIRED_EXISTING_ONLY"
+    }
+  ],
+  "processCounts": {},
+  "generations": [
+    {
+      "project": "melamedlaw-recovery",
+      "partialDirectories": [],
+      "readbackDirectories": [],
+      "latestManifest": {
+        "generation": "20261102T023039Z-2da02ae6",
+        "project": "melamedlaw-recovery",
+        "created_at": "2026-11-02T02:30:40.899337+00:00",
+        "local_complete": true,
+        "encrypted": true,
+        "bytes": 2693842,
+        "sha256": "b1b50d4090a0378194b46b6e5a4a1fd549e4c5ed209c66bf8cb343d076cbeaf2",
+        "offsite": "verified_readback",
+        "backup_scope": "database-only",
+        "database_kind": "postgresql",
+        "cipherExists": true,
+        "manifestSha256": "e137ae4aca99dd49abb430a48ae7a3046de965068a5cfe0bbd43a6e8f4fe5131"
+      },
+      "orphanFinalDirectories": 0
+    },
+    {
+      "project": "morlevi-recovery",
+      "partialDirectories": [],
+      "readbackDirectories": [],
+      "latestManifest": {
+        "generation": "20261102T023039Z-e956fe4d",
+        "project": "morlevi-recovery",
+        "created_at": "2026-11-02T02:30:42.503704+00:00",
+        "local_complete": true,
+        "encrypted": true,
+        "bytes": 1137362,
+        "sha256": "7ddbcc9ba346d53dda94df861119e9b7a9642ec8bc226dc9981adbbd444ee068",
+        "offsite": "verified_readback",
+        "backup_scope": "database-only",
+        "database_kind": "postgresql",
+        "cipherExists": true,
+        "manifestSha256": "8c6994ee9446e01b7b0d43221ebc477e63b96d7870efb42fcdf3ed4fbc42925d"
+      },
+      "orphanFinalDirectories": 0
+    },
+    {
+      "project": "ashrafessa-recovery",
+      "partialDirectories": [],
+      "readbackDirectories": [],
+      "latestManifest": {
+        "generation": "20261102T023039Z-20f90fe3",
+        "project": "ashrafessa-recovery",
+        "created_at": "2026-11-02T02:30:43.615641+00:00",
+        "local_complete": true,
+        "encrypted": true,
+        "bytes": 1116882,
+        "sha256": "deaf27d7ef1a376c3880e43e096ee2a6929d7c1f85f4fa8972e68f170f3210a4",
+        "offsite": "verified_readback",
+        "backup_scope": "database-only",
+        "database_kind": "postgresql",
+        "cipherExists": true,
+        "manifestSha256": "1a9e3ebb432eb6627c6d667a8c5fb719f0d77e25ed9e2ba6a306e622225f252b"
+      },
+      "orphanFinalDirectories": 0
+    },
+    {
+      "project": "melamedia-recovery",
+      "partialDirectories": [],
+      "readbackDirectories": [],
+      "latestManifest": {
+        "generation": "20261102T023039Z-3a7c5edf",
+        "project": "melamedia-recovery",
+        "created_at": "2026-11-02T02:30:44.970728+00:00",
+        "local_complete": true,
+        "encrypted": true,
+        "bytes": 2038482,
+        "sha256": "06d0b9fb1197c483e4c4ccc55cffa7c921f328a729fe7b60045ae3b1e51cc2bf",
+        "offsite": "verified_readback",
+        "backup_scope": "database-only",
+        "database_kind": "postgresql",
+        "cipherExists": true,
+        "manifestSha256": "a1f8c32b34e6c2e5b77f8c762c4bb1ee569eb0acee197d4a6cb38f0a5b861942"
+      },
+      "orphanFinalDirectories": 0
+    }
+  ],
+  "configurationHashes": [
+    {
+      "path": "/etc/melamedia-backup.d/config.json",
+      "sha256": "a9368f14409c3c8551af638d2de5a679fde66e2fb90e803f65655fe1c06286f9"
+    },
+    {
+      "path": "/etc/melamedia-backup.d/retention.json",
+      "sha256": "9c20cef9a5822ed80fa6e20afccf812807929685a705141b7297f592447ec170",
+      "retention_hours": 72,
+      "producer_units": [
+        "melamedia-server-backup.service",
+        "melamedia-publish-frontend.service"
+      ],
+      "excluded_projects": [],
+      "local_projects": [
+        "lawyer",
+        "central-platform",
+        "melamedlaw-recovery",
+        "morlevi-recovery",
+        "ashrafessa-recovery",
+        "melamedia-recovery",
+        "central-platform-db",
+        "appointments-legacy",
+        "contractor-monitor",
+        "central-office"
+      ]
+    }
+  ],
+  "status": "READONLY_LOCK_TIMER_METADATA_CAPTURED",
+  "finishedAtUtc": "2026-11-02T06:33:29.153401+00:00",
+  "locksReleasedAtExit": true,
+  "sshExit": 0
+}

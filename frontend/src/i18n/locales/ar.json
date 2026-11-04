@@ -437,7 +437,9 @@
     "widgetTitle": "الأحداث القادمة",
     "widgetTodayHeading": "اليوم",
     "widgetTomorrowHeading": "غدًا",
-    "zoomLink": "رابط Zoom"
+    "zoomLink": "رابط Zoom",
+    "reminder30d": "قبل شهر (30 يومًا)",
+    "reminder2w": "قبل أسبوعين"
   },
   "caseTypes": {
     "addStage": "إضافة مرحلة",

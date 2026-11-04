@@ -1,0 +1,78 @@
+{
+  "after": {
+    "boot": "79d5ef26-007c-4ee2-bfba-15db6bd5b1aa",
+    "daemon": {
+      "cwd": "/",
+      "exe": "/usr/bin/node",
+      "pid": 948103,
+      "startTicks": 48642921
+    },
+    "dependencyTarget": "/root/qa-new-features-20261023-5ce621ee/staging/source02/backend/node_modules",
+    "envSha256": "9fc4bc04f6faa9e88347d3f94aa926750f616a54d2c9754fd86bc1bf94945281",
+    "head": "545779e4b99e111959f4684167dfdf46da1f3186",
+    "installedLockSha256": "bf476467ea9c57c366d6a610852233c85505ae450a25b95919165c44bf7b249f",
+    "projectLockSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+    "qa": {
+      "cwd": "/root/Melamedia/backend",
+      "exe": "/usr/bin/node",
+      "pid": 2729957,
+      "startTicks": 124260326
+    }
+  },
+  "atUtc": "2026-11-02T08:02:19.522741+00:00",
+  "before": {
+    "boot": "79d5ef26-007c-4ee2-bfba-15db6bd5b1aa",
+    "daemon": {
+      "cwd": "/",
+      "exe": "/usr/bin/node",
+      "pid": 948103,
+      "startTicks": 48642921
+    },
+    "dependencyTarget": "/root/qa-new-features-20261023-5ce621ee/staging/source02/backend/node_modules",
+    "envSha256": "9fc4bc04f6faa9e88347d3f94aa926750f616a54d2c9754fd86bc1bf94945281",
+    "head": "545779e4b99e111959f4684167dfdf46da1f3186",
+    "installedLockSha256": "bf476467ea9c57c366d6a610852233c85505ae450a25b95919165c44bf7b249f",
+    "projectLockSha256": "d36bab8fed79c2e157d1b701a71d8e3a9dee014b19a12d20bd1fe376f4c3c651",
+    "qa": {
+      "cwd": "/root/Melamedia/backend",
+      "exe": "/usr/bin/node",
+      "pid": 2729957,
+      "startTicks": 124260326
+    }
+  },
+  "bundle": "/tmp/layer-billing-sql-sequences-20261102-6a3bd299/payload",
+  "errorType": "RuntimeError",
+  "finishedAtUtc": "2026-11-02T08:02:27.031837+00:00",
+  "hostDatabaseConnections": 0,
+  "manifest": {
+    "controllerSha256": "e38ee2ce8a9206df5f1e3093402e1fec8685d23dd4788b1f7187745e0dd6a92c",
+    "fileCount": 323,
+    "sha256": "a9465814bcbf84438ccf85c4cfa5c49f805a0b6008d280b9be447b5f6537d9f1",
+    "source": "6a3bd299227291feb0065ae3afa89a1f3ba2967a"
+  },
+  "providerCalls": 0,
+  "qaServiceChanges": 0,
+  "reason": "test launcher/Node exited nonzero",
+  "runRoot": "/tmp/layer-billing-sql-sequences-20261102-6a3bd299/runs",
+  "scope": {
+    "limits": {
+      "cpu.max": "50000 100000",
+      "memory.max": "2147483648",
+      "memory.oom.group": "1",
+      "memory.swap.max": "0",
+      "pids.max": "32"
+    },
+    "path": "/system.slice/layer-billing-sql-qa-20261102-6a3bd299.scope",
+    "properties": {
+      "ActiveState": "active",
+      "CollectMode": "inactive-or-failed",
+      "ControlGroup": "/system.slice/layer-billing-sql-qa-20261102-6a3bd299.scope",
+      "OOMPolicy": "kill",
+      "RuntimeMaxUSec": "10min"
+    }
+  },
+  "scopeCreatedByController": false,
+  "serviceIdentityStable": true,
+  "status": "FAIL",
+  "tests": []
+}
