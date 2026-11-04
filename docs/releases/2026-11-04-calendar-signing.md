@@ -15,7 +15,7 @@ Candidate work, not a deployment receipt. Product source must reach main, then M
 ## Migration order
 
 1. Install the exact backend lockfile, including `ical.js`.
-2. Apply `2026-11-04_00_automatic_signing_tiers.sql`, `2026-11-04_01_calendar_invitations.sql`, `2026-11-04_02_calendar_reminder_defaults.sql`.
+2. Apply `2026-11-04_00_automatic_signing_tiers.sql`, `2026-11-04_01_calendar_invitations.sql`, `2026-11-04_02_calendar_reminder_defaults.sql`, `2026-11-04_03_calendar_signing_runtime_grants.sql`.
 3. Enable automatic signing tiers only for the intended dedicated office after QA qualification. Existing billing row and complimentary details must be recorded before and verified after.
 4. Restart only the tenant API. Publish its branded frontend while retaining old immutable chunks and root assets.
 
@@ -28,3 +28,5 @@ Candidate work, not a deployment receipt. Product source must reach main, then M
 - Native source patch is tracked separately in LawyerApp: OTP LTR row and logical document coordinates. 167 native source tests and both-platform Expo export passed. These do not establish installed Android/iOS behavior.
 
 Evidence is stored outside the source tree in `~/.cache/melamedia-builds/automatic-signing-tier-20261104` and `~/.cache/melamedia-builds/native-rtl-20261104`, with signing ledger entries in the protected implementation ledger. Live UI, actual Gmail Android, signed native binaries, customer deployment and release tags must not be inferred from these source checks.
+
+This release targets the four active dedicated databases only. It does not qualify the separate shared-office database deployment; its isolation schema gate must continue rejecting these unclassified new tables until a separate RLS migration and multi-office tests are reviewed. The runtime-grant migration copies only existing non-PUBLIC DML grants from each parent table; it does not create roles or change authentication.
