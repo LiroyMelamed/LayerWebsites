@@ -11,6 +11,16 @@ const pool = require('../config/db');
 const dbScope = require('../lib/tenant/databaseScope');
 const { isMultiTenantMode } = require('../lib/tenant/tenantContext');
 
+// For these choices an empty saved value means "none", not "use the defaults".
+const EMPTY_CALENDAR_CHOICES = new Set([
+    'CALENDAR_REMINDER_OPTIONS', 'CALENDAR_REMINDER_CHANNELS',
+    'CALENDAR_LAWYER_REMINDER_DEFAULTS', 'CALENDAR_CLIENT_REMINDER_DEFAULTS',
+    'CALENDAR_LAWYER_REMINDER_CHANNEL_DEFAULTS', 'CALENDAR_CLIENT_REMINDER_CHANNEL_DEFAULTS',
+]);
+function hasStoredValue(category, key, value) {
+    return value != null && (value !== '' || (category === 'calendar' && EMPTY_CALENDAR_CHOICES.has(key)));
+}
+
 // ── Cache ───────────────────────────────────────────────────────────
 const CACHE_TTL_MS = 60_000; // 1 minute
 const caches = new Map();
@@ -99,7 +109,7 @@ async function getSetting(category, key, fallback = undefined) {
     if (!_isCacheFresh()) await _warmCache();
 
     const cached = scopeCache().values.get(`${category}:${key}`);
-    if (cached && cached.value !== null && cached.value !== undefined && cached.value !== '') {
+    if (cached && hasStoredValue(category, key, cached.value)) {
         return _castValue(cached.value, cached.type);
     }
 
@@ -133,7 +143,7 @@ async function getAllSettings() {
                 description: row.description,
                 updatedAt: row.updated_at,
                 // Also provide current effective value (DB || env)
-                effectiveValue: (row.setting_value !== null && row.setting_value !== '')
+                effectiveValue: hasStoredValue(row.category, row.setting_key, row.setting_value)
                     ? _castValue(row.setting_value, row.value_type)
                     : (process.env[row.setting_key] || null),
             };

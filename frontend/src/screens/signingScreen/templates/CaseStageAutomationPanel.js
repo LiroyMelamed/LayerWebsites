@@ -1,3 +1,4 @@
+import SimpleInput from '../../../components/simpleComponents/SimpleInput';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import signingStageAutomationApi from '../../../api/signingStageAutomationApi';
 import signingPackagesApi from '../../../api/signingPackagesApi';
@@ -175,7 +176,7 @@ export default function CaseStageAutomationPanel({ caseId, canEdit = false, init
                     {editor.template && <>
                         <p>{t('stageAutomation.revisionHelp')}</p>
                         <label htmlFor={`stage-name-${caseId}`}>{t('stageAutomation.name')}</label>
-                        <input id={`stage-name-${caseId}`} value={editor.name} maxLength={200} onChange={event => invalidate({ ...editor, name: event.target.value })} />
+                        <SimpleInput timeToWaitInMilli={0} acceptExternalValueWhileFocused id={`stage-name-${caseId}`} value={editor.name} maxLength={200} onChange={event => invalidate({ ...editor, name: event.target.value })} />
                         {roles.map(role => <fieldset key={role.key} className="lw-signingCompose__roleBlock">
                             <legend>{role.label}</legend>
                             <label className="lw-stageAutomation__toggle"><input type="checkbox" disabled={activeRoles.length <= 1 && !editor.omittedRoles.includes(role.key)} checked={!editor.omittedRoles.includes(role.key)} onChange={event => invalidate({ ...editor, omittedRoles: event.target.checked ? editor.omittedRoles.filter(key => key !== role.key) : [...editor.omittedRoles, role.key] })} />{t('stageAutomation.includeRole')}</label>

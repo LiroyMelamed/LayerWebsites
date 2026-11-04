@@ -27,3 +27,14 @@ test('scheduler selects only the current audience channels, including an explici
  sent.length=0;await dispatch({...ev,role:'client'}, {userId:2},{title:'Test',body:'Test'},{});assert.equal(sent[0].sms,true);assert.equal(sent[0].email,false);
  sent.length=0;await dispatch({...ev,reminder_channels:{lawyer:{},client:{sms:true}}},{userId:1},{title:'Test',body:'Test'},{});assert.equal(sent.length,0);
 });
+
+test('cleared available choices do not re-enable reminder channels or timings', async()=>{
+ for(const raw of ['', [], '[]', {}, '{"email":false,"sms":false,"push":false}']) {
+  const allowed=await mod.exports.loadAllowedReminderChannels({getSetting:async()=>raw});
+  assert.deepEqual(Array.from(allowed),[]);
+  assert.equal(mod.exports.hasAnyReminderChannel(normalizeReminderChannels({sms:true,email:true,push:true},allowed)),false);
+ }
+ assert.deepEqual(Array.from(await mod.exports.loadAllowedReminderChannels({getSetting:async()=> '["sms","email"]'})),['sms','email']);
+ assert.deepEqual(Array.from(await mod.exports.loadAllowedReminderChannels({getSetting:async(_c,_k,fallback)=>fallback})),['push','sms','email']);
+ assert.deepEqual(Array.from(await mod.exports.loadAllowedReminderOffsets({getSetting:async()=>''})),[]);
+});

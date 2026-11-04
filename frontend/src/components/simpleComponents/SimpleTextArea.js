@@ -69,6 +69,7 @@ const SimpleTextArea = forwardRef(
                 <textarea
                     ref={textareaRef}
                     className="lw-simpleTextArea__field"
+                    dir={dir}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     onFocus={() => setIsFocused(true)}
