@@ -3030,7 +3030,7 @@
     "inviteStatusBadgeAccepted": "Confirmed",
     "inviteStatusBadgeDeclined": "Declined",
     "inviteStatusBadgePending": "Pending",
-    "inviteRemindersIndependentHint": "Invitations are sent immediately. Reminders follow the selected schedule, even if the client has already confirmed or declined.",
+    "inviteRemindersIndependentHint": "If selected, the invitation is sent immediately. Reminders are sent only at the selected times.",
     "smsEditToggle": "Edit message",
     "smsEditClose": "Close editor",
     "smsInsertHint": "Select a label to insert it at the cursor",

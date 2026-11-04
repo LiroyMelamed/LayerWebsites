@@ -1193,7 +1193,7 @@
     "inviteStatusBadgeAccepted": "אושר",
     "inviteStatusBadgeDeclined": "נדחה",
     "inviteStatusBadgePending": "ממתין",
-    "inviteRemindersIndependentHint": "הזמנה נשלחת מיד; תזכורות לפי הלוח שנבחר — גם אם הלקוח כבר אישר או דחה.",
+    "inviteRemindersIndependentHint": "אם בחרתם לשלוח זימון, הוא יישלח מיד. תזכורות יישלחו רק במועדים שסומנו.",
     "smsEditToggle": "ערוך הודעה",
     "smsEditClose": "סגור עריכה",
     "smsInsertHint": "לחצו על תווית כדי להוסיף במקום הסמן",
