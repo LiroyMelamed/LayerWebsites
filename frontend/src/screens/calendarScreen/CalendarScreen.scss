@@ -1027,9 +1027,7 @@ body.lw-fromApp .lw-calendarRedesign.has-nativeFooter .lw-calendarScreen__scroll
 .lw-calendarRedesign .fc-timegrid .fc-daygrid-day-top { display: none; }
 .lw-calendarRedesign .fc-timegrid .fc-daygrid-day-frame { min-block-size: 2rem; }
 .lw-calendarRedesign .fc-timegrid .fc-daygrid-day-events { margin-block: .125rem; min-block-size: 1.5rem; }
-@media (max-width: 75rem) {
-    .lw-calendarRedesign .lw-calendarScreen__calendarToolbar .lw-calendarRedesign__controls { order: 3; flex: 1 1 100%; justify-content: flex-start; }
-}
+
 @media (max-width: 47.9375rem) {
     .lw-calendarRedesign .lw-calendarScreen__calendarToolbar {
         .lw-calendarRedesign__controls { flex-direction: row; align-items: center; }
@@ -1053,4 +1051,23 @@ body.lw-fromApp .lw-calendarRedesign.has-nativeFooter .lw-calendarScreen__scroll
     }
     .lw-calendarRedesign .lw-calendarScreen__calendarCard { padding: .625rem; }
     .lw-calendarRedesign .lw-calendarScreen__scroll { padding-inline: .625rem; padding-block-start: .625rem; }
+}
+
+/* One compact actions row with the view switch at its actual center. */
+.lw-calendarRedesign .lw-calendarScreen__calendarToolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    .lw-calendarRedesign__date { grid-column: 1 / -1; grid-row: 1; justify-self: center; }
+    .lw-calendarRedesign__quickTools { grid-column: 1; grid-row: 2; display: flex; gap: .25rem; justify-self: start; align-items: center; }
+    .lw-calendarRedesign__controls { grid-column: 2; grid-row: 2; order: initial; justify-self: center; }
+    .lw-calendarRedesign__tools { grid-column: 3; grid-row: 2; order: initial; justify-self: end; flex-wrap: nowrap; }
+}
+@media (max-width: 36rem) {
+    .lw-calendarRedesign .lw-calendarScreen__calendarToolbar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        .lw-calendarRedesign__controls { grid-column: 1 / -1; grid-row: 2; }
+        .lw-calendarRedesign__quickTools { grid-column: 1; grid-row: 3; flex-wrap: wrap; }
+        .lw-calendarRedesign__tools { grid-column: 2; grid-row: 3; flex-wrap: wrap; justify-content: end; }
+    }
 }

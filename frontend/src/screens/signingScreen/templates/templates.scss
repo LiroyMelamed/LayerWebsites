@@ -11,7 +11,7 @@
   h3 { font-size: 0.875rem; margin: 0 0 .7rem; font-weight: 500; }
   p { line-height: 1.6; margin: .4rem 0; max-width: 72ch; }
   button, input, select, textarea { font: inherit; }
-  button:not(.lw-signing-spotResize):not(.lw-segmentedSwitch__option):not(.lw-floatingAddField__btn), .lw-templates__file {
+  button:not(.lw-textButtonWithTwoOptionalIcons):not(.lw-signing-spotResize):not(.lw-segmentedSwitch__option):not(.lw-floatingAddField__btn), .lw-templates__file {
     border: 1px solid #c8d1dd; border-radius: .6rem; padding: .65rem 1rem; min-height: 2.75rem;
     color: var(--template-accent); background: white; cursor: pointer; font-weight: 600; line-height: 1.4;
     &:hover:not(:disabled) { background: #edf2f7; }
@@ -20,7 +20,7 @@
     &.is-primary, &[aria-selected="true"] { color: white; background: var(--template-accent); border-color: var(--template-accent); }
     &.is-primary:hover:not(:disabled), &[aria-selected="true"]:hover:not(:disabled) { background: var(--template-accent); filter: brightness(.9); }
   }
-  input:not([type="checkbox"]):not([type="file"]), select, textarea {
+  input:not(.lw-simpleInput__field):not([type="checkbox"]):not([type="file"]), select, textarea {
     box-sizing: border-box; width: 100%; min-width: 0; padding: .65rem .8rem; min-height: 2.75rem;
     border: 1px solid #b9c5d3; border-radius: .5rem; background: white; color: var(--template-ink); caret-color: var(--template-accent);
     &::placeholder { color: #637184; }
@@ -146,3 +146,7 @@
   .lw-segmentedSwitch__track { inline-size: max-content; max-inline-size: 100%; min-block-size: 2.25rem; }
   .lw-segmentedSwitch__option { flex: 0 0 auto; white-space: nowrap; padding: .375rem .625rem; font-size: .8125rem; line-height: 1.4; }
 }
+
+// Shared inputs own their borders and focus states; keep all form controls aligned.
+.lw-templates .lw-simpleInput { min-inline-size: 0; inline-size: 100%; block-size: 2.75rem; margin-block: 0; box-sizing: border-box; }
+.lw-templates .lw-signingSelect .lw-textButtonWithTwoOptionalIcons { min-block-size: 2.75rem; block-size: 2.75rem !important; padding-block: .375rem !important; }

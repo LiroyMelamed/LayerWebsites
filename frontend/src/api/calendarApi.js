@@ -109,9 +109,13 @@ const calendarApi = {
         return await ApiUtils.delete(`${base}/google/disconnect`);
     },
 
-    /** Pull the latest events from Google Calendar into the platform */
+    /** Reconcile both calendars using the same service as automatic synchronization */
     syncGoogleEvents: async () => {
         return await ApiUtils.post(`${base}/google/sync`);
+    },
+
+    resolveGoogleConflict: async (eventId, choice, revision) => {
+        return await ApiUtils.post(`${base}/google/conflicts/${eventId}`, { choice, revision });
     },
 
     // ── Outlook Calendar ───────────────────────────────────────────────────────

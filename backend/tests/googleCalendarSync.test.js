@@ -1,53 +1,31 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const vm = require('node:vm');
-const crypto = require('node:crypto');
-const { googleCalendarEventTimes } = require('../lib/googleCalendarEventTimes');
-
-test('controller paginates and upserts a repeat sync without duplicating recurring instances or touching manual events', async () => {
-    const key = 'ab'.repeat(32), iv = Buffer.alloc(12, 1);
-    const cipher = crypto.createCipheriv('aes-256-gcm', Buffer.from(key, 'hex'), iv);
-    const token = [iv, Buffer.concat([cipher.update('test-token'), cipher.final()]), cipher.getAuthTag()].map(x => x.toString('base64')).join(':');
-    const events = [
-        { id: 'series_20261103', start: { date: '2026-11-03' }, end: { date: '2026-11-04' } },
-        { id: 'series_20261104', start: { dateTime: '2026-11-04T09:00:00+02:00' }, end: { dateTime: '2026-11-04T10:00:00+02:00' } },
-    ];
-    const stored = new Map([['manual', ['untouched']]]), pages = [];
-    const pool = { query: async (sql, args) => {
-        if (sql.includes('FROM user_calendar_tokens')) return { rows: [{ google_access_token: token }] };
-        assert.match(sql, /ON CONFLICT \(owner_id, google_event_id\)/);
-        stored.set(`${args[0]}:${args[7]}`, args);
-        return { rows: [] };
-    } };
-    const module = { exports: {} };
-    const mockedRequire = name => {
-        if (name === 'crypto') return crypto;
-        if (name === '../config/db') return pool;
-        if (name === '../services/settingsService') return { getSetting: async () => 'true' };
-        if (name === '../lib/googleCalendarEventTimes') return { googleCalendarEventTimes };
-        if (name === 'googleapis') return { google: {
-            auth: { OAuth2: class { setCredentials() {} on() {} } },
-            calendar: () => ({ events: { list: async params => {
-                assert.equal(params.calendarId, 'primary'); assert.equal(params.singleEvents, true);
-                pages.push(params.pageToken || 'first');
-                return { data: { items: [events[params.pageToken ? 1 : 0]], nextPageToken: params.pageToken ? undefined : 'next' } };
-            } } }),
-        } };
-        // Unused collaborators intentionally cannot send invitations or messages.
-        return {};
-    };
-    vm.runInNewContext(fs.readFileSync(require.resolve('../controllers/calendarController'), 'utf8'), {
-        require: mockedRequire, module, process: { env: { CALENDAR_ENCRYPTION_KEY: key } }, Buffer, console,
+const fs = require('node:fs'), vm = require('node:vm');
+const callback = require('../lib/googleCalendarCallback');
+test('live callback derives from the public API origin despite copied localhost config', () => {
+    assert.equal(callback({NODE_ENV:'production',PUBLIC_API_BASE_URL:'https://api-qa.example.com',GOOGLE_OAUTH_REDIRECT_URI:'http://localhost:5001/api/calendar/google/callback'}),'https://api-qa.example.com/api/calendar/google/callback');
+    assert.throws(()=>callback({NODE_ENV:'production',GOOGLE_OAUTH_REDIRECT_URI:'http://localhost:5001/callback'}),/PUBLIC_ORIGIN/);
+});
+test('manual synchronization uses the same owner-scoped two-way service as the worker', async () => {
+    const source=fs.readFileSync(require.resolve('../controllers/calendarController'),'utf8');
+    const start=source.indexOf('const syncGoogleEvents ='),end=source.indexOf('const resolveGoogleConflict',start);
+    let called;
+    const handler=vm.runInNewContext(source.slice(start,end)+';syncGoogleEvents',{
+        _isGoogleSyncEnabledForFirm:async()=>true,
+        require:()=>({syncAccount:async id=>{called=id;return {ok:true,synced:3};}}),
     });
-    const result = [];
-    const res = { json: body => result.push(body), status: code => { throw Error(`Unexpected HTTP ${code}`); } };
-    await module.exports.syncGoogleEvents({ user: { UserId: 42 } }, res);
-    await module.exports.syncGoogleEvents({ user: { UserId: 42 } }, res);
-    assert.deepEqual(pages, ['first', 'next', 'first', 'next']);
-    assert.equal(stored.size, 3);
-    assert.deepEqual(stored.get('manual'), ['untouched']);
-    assert.equal(stored.get('42:series_20261103')[5], '2026-11-03T21:59:59.999Z');
-    assert.equal(stored.get('42:series_20261104')[4], '2026-11-04T09:00:00+02:00');
-    for (const body of result) assert.deepEqual(JSON.parse(JSON.stringify(body)), { ok: true, synced: 2, total: 2, failed: 0 });
+    let body;await handler({user:{UserId:42}},{json:value=>{body=value;}});
+    assert.equal(called,42);assert.equal(body.synced,3);
+});
+
+test('email-only authorization cannot be reported as automatic calendar sync', async () => {
+    const source=fs.readFileSync(require.resolve('../controllers/calendarController'),'utf8');
+    const start=source.indexOf('const getGoogleStatus ='),end=source.indexOf('const disconnectGoogle',start);
+    const row={google_connected:true,google_email:'qa@example.com',google_scope:'openid https://www.googleapis.com/auth/userinfo.email'};
+    const handler=vm.runInNewContext(source.slice(start,end)+';getGoogleStatus',{
+        _isGoogleSyncEnabledForFirm:async()=>true,process:{env:{GOOGLE_CALENDAR_SYNC_ENABLED:'true'}},require:()=>()=>true,
+        pool:{query:async sql=>({rows:sql.includes('FROM user_calendar_tokens')?[row]:[]})},console,
+    });
+    let body;await handler({user:{UserId:42}},{json:value=>{body=value;}});
+    assert.equal(body.automatic,false);assert.equal(body.syncError,'GOOGLE_SYNC_RECONNECT_REQUIRED');
 });

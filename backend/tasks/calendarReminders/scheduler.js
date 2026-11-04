@@ -308,7 +308,8 @@ async function _completeClaim(ev) {
 }
 
 async function _dispatchRecipient(ev, recipient, message, options) {
-    const selected = parseStoredChannels(ev.reminder_channels);
+    const stored = parseStoredChannels(ev.reminder_channels);
+    const selected = stored[ev.role] || stored;
     const recipientKey = recipient.userId ? `user${recipient.userId}` : require('node:crypto').createHash('sha256').update(`${recipient.phone || ''}|${recipient.email || ''}`).digest('hex').slice(0, 24);
     let complete = true;
     for (const channel of ['push', 'sms', 'email'].filter(channel => selected[channel])) {
@@ -639,11 +640,9 @@ function _minutesToCronExpression(minutes) {
 }
 
 async function _readSchedulerSettings() {
-    const enabledRaw = await settingsService.getSetting(
-        'calendar',
-        'CALENDAR_REMINDERS_ENABLED',
-        process.env.CALENDAR_REMINDERS_ENABLED || 'true'
-    );
+    // Event offsets and channels are the office user's delivery choice.
+    // Keep only the operational environment stop; do not silently override it with a UI toggle.
+    const enabledRaw = process.env.CALENDAR_REMINDERS_ENABLED || 'true';
     const pollMinutesRaw = await settingsService.getSetting(
         'calendar',
         'CALENDAR_REMINDERS_POLL_MINUTES',

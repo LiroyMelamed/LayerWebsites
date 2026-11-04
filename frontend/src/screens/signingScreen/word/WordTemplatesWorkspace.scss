@@ -72,8 +72,8 @@
   &__visualRow > &__mappingForm { flex: 0 0 18rem; max-inline-size: 22rem; padding: v.$space-4; }
   &__dataPanel { display: grid; gap: v.$space-3; > label { display: grid; gap: v.$space-2; } .lw-addFieldPanel { inline-size: 100%; max-block-size: 25rem; overflow-y: auto; } }
   &__selectedField { overflow-wrap: anywhere; }
-  &__review { min-inline-size: 0; }
-  &__review--readable { max-block-size: 80vh; overflow: auto; overscroll-behavior: contain; .lw-signing-pdfViewer { min-inline-size: 680px; } }
+  &__review { min-inline-size: 0; max-inline-size: 42rem; margin-inline: auto; }
+  &__review--readable { max-inline-size: none; max-block-size: 80vh; overflow: auto; overscroll-behavior: contain; .lw-signing-pdfViewer { min-inline-size: 680px; } }
 
   @media (max-width: v.$bp-md) {
     padding-inline: v.$space-4;
@@ -197,3 +197,16 @@
     .lw-word__currentReplacement { order: 1; }
   }
 }
+
+/* The entry step has one readable centered column; the document editor stays wide. */
+.lw-word--start {
+  max-inline-size: 52rem;
+  .lw-word__heading { flex-direction: column; align-items: center; text-align: center; gap: .75rem; margin-block-end: 1.5rem; }
+  .lw-word__heading > div { flex: 0 1 auto; }
+  .lw-word__heading p { margin-inline: auto; }
+  .lw-word__library { inline-size: 100%; margin-inline: auto; }
+  .lw-word__section { max-inline-size: 42rem; margin-inline: auto; margin-block-start: 1.5rem; padding-block-start: 1.5rem; }
+  .lw-word__section > .lw-fileUploadBox { inline-size: 100%; box-sizing: border-box; }
+}
+
+.lw-word__manualField { display: grid; gap: .75rem; margin-block-start: .75rem; }
