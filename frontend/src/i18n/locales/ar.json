@@ -3050,6 +3050,7 @@
     "openEventAria": "فتح {{title}} · {{time}}",
     "inviteStatusPartial": "أكد {{accepted}} من أصل {{count}}",
     "recurringMeeting": "اجتماع متكرر",
+    "recurringReminder": "تذكير متكرر",
     "inviteResponseError": "تعذر حفظ الرد. يرجى المحاولة مجددًا.",
     "dailyAgendaLoadError": "تعذر تحميل إعدادات جدول اليوم. حاول مجددًا قبل الحفظ.",
     "dailyAgendaDeliveryUncertain": "تعذر تأكيد تسليم آخر جدول يومي. لن يُعاد إرساله تلقائيًا لتجنب التكرار.",

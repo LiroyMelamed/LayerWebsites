@@ -2748,6 +2748,7 @@
     "openEventAria": "Open {{title}} · {{time}}",
     "inviteStatusPartial": "{{accepted}} of {{count}} confirmed",
     "recurringMeeting": "Recurring meeting",
+    "recurringReminder": "Recurring reminder",
     "inviteResponseError": "Your response could not be saved. Please try again.",
     "dailyAgendaLoadError": "Daily agenda settings could not be loaded. Try again before saving.",
     "dailyAgendaDeliveryUncertain": "Delivery of the latest daily agenda could not be confirmed. It will not be resent automatically to avoid duplicates.",

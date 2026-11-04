@@ -1451,7 +1451,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 invite_sms: showReminderPicker && supportsCalendarInviteSms(eventType) ? inviteSms : null,
             };
 
-            if (!isEdit && recurring && recurrenceUntil && !isInternalScopedEventType(eventType)) {
+            if (!isEdit && recurring && recurrenceUntil && !isLeaveOrHolidayEventType(eventType)) {
                 payload.recurrence = {
                     enabled: true,
                     frequency: recurrenceFreq || "weekly",
@@ -2339,7 +2339,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                         )}
                     </SimpleContainer>
 
-                    {!isEdit && !isInternalScopedType && (
+                    {!isEdit && !isLeaveOrHolidayEventType(eventType) && (
                         <SimpleContainer className="lw-eventFormModal__recurrence">
                             <SimpleContainer className="lw-eventFormModal__allDay">
                                 <input
@@ -2349,7 +2349,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                     onChange={(e) => setRecurring(e.target.checked)}
                                 />
                                 <label htmlFor="recurring">
-                                    <Text14>{t("calendar.recurringMeeting")}</Text14>
+                                    <Text14>{t(isReminderEventType ? "calendar.recurringReminder" : "calendar.recurringMeeting")}</Text14>
                                 </label>
                             </SimpleContainer>
                             {recurring && (
