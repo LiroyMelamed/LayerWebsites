@@ -1,13 +1,21 @@
 .lw-calendarInvitationImport {
-    padding: 1.25rem;
-    max-inline-size: 42rem;
+    box-sizing: border-box;
+    padding: clamp(1rem, 3vw, 2rem);
+    inline-size: 100%;
     max-block-size: 80dvh;
     overflow: auto;
-    h2 { margin-block: 0 1rem; }
-    p { line-height: 1.6; }
-    &__file { display: flex; flex-direction: column; gap: .75rem; }
-    input { max-inline-size: 100%; }
-    &__events { list-style: none; padding: 0; }
-    li { display: flex; flex-direction: column; gap: .375rem; padding-block: .75rem; border-block-end: 1px solid var(--lw-border, #e2e8f0); overflow-wrap: anywhere; }
-    footer { display: flex; flex-wrap: wrap; gap: .75rem; margin-block-start: 1rem; }
+    color: var(--lw-color-text, #2d3748);
+    text-align: start;
+    h2 { margin-block: 0 .75rem; font-size: 1.25rem; font-weight: 700; color: var(--lw-color-primary, #2a4365); }
+    p { margin-block: .75rem 1.25rem; font-size: .9375rem; line-height: 1.6; }
+    .lw-fileUploadBox { margin-block: 1.25rem; }
+    &__events { list-style: none; padding: 0; margin-block: .75rem; }
+    li { display: flex; flex-direction: column; gap: .375rem; padding-block: .75rem; border-block-end: 1px solid var(--lw-border, #e2e8f0); overflow-wrap: anywhere; font-size: .9375rem; }
+    li strong { color: var(--lw-color-primary, #2a4365); }
+    [role="alert"] { color: var(--lw-color-error, #b42318); }
+    footer:not(:empty) { display: flex; flex-wrap: wrap; gap: .75rem; margin-block-start: 1.25rem; }
+}
+
+.lw-simplePopUp__container:has(.lw-calendarInvitationImport) {
+    width: min(42rem, calc(100vw - 3rem));
 }

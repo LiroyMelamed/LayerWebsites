@@ -58,7 +58,7 @@ test('different actual text items stay untagged and visibly block authoring inst
 test('the keyboard fallback selects exact UTF16 offsets of an already verified item without editing the document', async () => {
     const authoring = create(); mockContent = { items: authoring.pages[0].items.map(({ text, ...rest }) => ({ ...rest, str: text })) };
     const onSelect = jest.fn(); render(<WordSourceViewer authoring={authoring} pdfFile={new Blob(['%PDF'])} bindings={[]} onSelect={onSelect} fieldLabel={value => value} text={value => value} />);
-    fireEvent.click(screen.getByText('selectionOptions')); fireEvent.click(screen.getByText('keyboardSelection'));
+    fireEvent.click(screen.getByText('keyboardSelection'));
     await waitFor(() => expect(screen.getByLabelText('selectExcerptText')).toBeEnabled());
     const input = screen.getByLabelText('selectExcerptText'); input.focus(); input.setSelectionRange(3, 8);
     fireEvent.keyUp(input, { key: 'ArrowRight', shiftKey: true }); fireEvent.click(screen.getByText('confirmTextSelection'));
@@ -78,7 +78,7 @@ test('an immediate cached-child page-count failure is retained before parent pas
     const authoring = create(); mockPageCount = 2; mockContent = { items: authoring.pages[0].items.map(({ text, ...rest }) => ({ ...rest, str: text })) };
     const onError = jest.fn(); render(<WordSourceViewer authoring={authoring} pdfFile={new Blob(['%PDF'])} bindings={[]} onSelect={jest.fn()} onError={onError} fieldLabel={value => value} text={value => value} />);
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('authoringMismatch'));
-    expect(onError).toHaveBeenCalledWith('authoringMismatch'); expect(screen.getByLabelText('selectExcerptText')).toBeDisabled();
+    expect(onError).toHaveBeenCalledWith('authoringMismatch'); fireEvent.click(screen.getByText('keyboardSelection')); expect(screen.getByLabelText('selectExcerptText')).toBeDisabled();
 });
 
 

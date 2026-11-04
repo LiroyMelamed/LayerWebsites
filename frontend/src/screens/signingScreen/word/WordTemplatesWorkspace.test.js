@@ -128,8 +128,7 @@ test('explicit manage mode imports DOCX, safely maps a blank and saves version w
     expect(payload).toEqual(expect.objectContaining({ bindingSchemaVersion: 2, authoringRenderId: 'render-a', authoringMapHash: 'e'.repeat(64) }));
     expect(payload.bindings).toEqual([expect.objectContaining({ selector: { kind: 'range', start: { itemId: 'p1-i0', offset: 7 }, end: { itemId: 'p1-i0', offset: 13 } }, field: 'client.fullName', required: true })]);
     expect(payload).not.toHaveProperty('inputs'); expect(payload).not.toHaveProperty('pdf');
-    fireEvent.click(screen.getByText('templateHelp'));
-    expect(screen.getByText('finalSigningFieldsHelp')).toBeVisible();
+    expect(screen.getByText('signatureFlowHelp')).toBeVisible();
 });
 
 test('preview sends explicit string overrides and references; final PDF load and review are both required', async () => {
@@ -270,7 +269,6 @@ test('reopening a412 conflict loads the current saved source before rendering an
     expect(api.load).toHaveBeenCalledTimes(2); expect(api.load).toHaveBeenLastCalledWith(latest.id);
     expect(api.authoringRender).toHaveBeenLastCalledWith(latest.id, { expectedVersion: 4, sourceHash: latest.sourceHash });
     expect(screen.queryByText('conflict')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('templateSettings'));
     expect(screen.getByLabelText('name')).toHaveValue(latest.name);
     expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ source: latest, bindings: latest.bindings, dirty: false,
         inputs: expect.objectContaining({ clientId: '23', caseId: '32', clientRecord: { id: '23', label: 'Selected 23' }, caseRecord: { id: '32', label: 'Selected 32' } }) }));
@@ -284,7 +282,6 @@ test('reopen confirms before discarding dirty edits and cancellation preserves e
     api.authoringRender.mockRejectedValueOnce({ status: 412 });
     await open(mapped(), { initialContext: context(), onDraftChange });
     fireEvent.click(screen.getByText('manageTemplates')); await screen.findByText('conflict');
-    fireEvent.click(screen.getByText('templateSettings'));
     fireEvent.change(screen.getByLabelText('name'), { target: { value: 'Unsaved local name' } });
     api.load.mockResolvedValue({ source: latest });
     fireEvent.click(screen.getByText('retryAuthoring'));
@@ -401,7 +398,7 @@ test.each([
     api.load.mockResolvedValue({ source: persisted });
     fireEvent.change(screen.getByLabelText('library'), { target: { value: original.id } });
     await waitFor(() => expect(api.load).toHaveBeenCalledTimes(2));
-    const list = screen.getByRole('list', { name: 'bindings' });
+    const list = await screen.findByRole('list', { name: 'bindings' });
     expect(within(list).getByText(/insertionSelected/)).toBeInTheDocument();
     expect(within(list).queryByText('beforeSelection')).not.toBeInTheDocument();
     expect(within(list).queryByText('afterSelection')).not.toBeInTheDocument();
@@ -463,16 +460,14 @@ test('field controls wait for verified selection and a page error cancels the pe
     expect(screen.queryByText('removeBinding')).not.toBeInTheDocument();
 });
 
-test('the document comes before collapsed template settings and role setup; opening settings does not dirty the template', async () => {
+test('template name, roles and bindings share the document workspace without accordions or incidental writes', async () => {
     const onDraftChange = jest.fn(); await open(source(), { onDraftChange }, true);
-    const documentView = screen.getByTestId('original-pdf');
-    for (const label of ['templateSettings', 'roles', 'templateHelp', 'bindingsSummary']) {
-        const summary = screen.getByText(label); expect(summary.closest('details')).not.toHaveAttribute('open');
-        expect(documentView.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    }
-    expect(screen.queryByLabelText('field')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('templateSettings')); expect(screen.getByLabelText('name')).toBeVisible();
-    fireEvent.click(screen.getByText('roles')); expect(screen.getByText('addRole')).toBeVisible();
+    const rail = screen.getByRole('complementary', { name: 'mapping' });
+    expect(within(rail).getByText('addRole')).toBeVisible();
+    expect(within(rail).getByRole('list', { name: 'bindings' })).toBeInTheDocument();
+    expect(rail.querySelector('details')).toBeNull();
+    expect(screen.getByLabelText('name')).toBeVisible();
+    expect(screen.getByTestId('original-pdf')).toBeVisible();
     expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: false }));
     fireEvent.click(screen.getByText('addRole'));
     expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: true, roles: [expect.objectContaining({ key: 'role1' })] }));
