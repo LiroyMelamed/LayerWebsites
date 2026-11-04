@@ -1,3 +1,4 @@
+import SimpleInput from '../../../components/simpleComponents/SimpleInput';
 import SigningSelect from './SigningSelect';
 import React from 'react';
 import BlockDateInput from '../../../components/simpleComponents/BlockDateInput';
@@ -16,7 +17,7 @@ export default function TemplateDataValueInput({ field, label, value, onChange }
             <option value="">{t('signingV2.compose.data.choose')}</option>
             {missing && <option value={String(value)}>{t('signingV2.authoring.unavailableValue', { value: String(value) })}</option>}
             {options.map((option, index) => <option key={index} value={String(option)}>{field.type === 'boolean' ? t(`signingV2.compose.data.${option ? 'yes' : 'no'}`) : option}</option>)}
-        </SigningSelect> : <input type="text" autoComplete="off" value={value ?? ''} maxLength={field.maxLength || 2000}
+        </SigningSelect> : <SimpleInput timeToWaitInMilli={0} acceptExternalValueWhileFocused type="text" autoComplete="off" value={value ?? ''} maxLength={field.maxLength || 2000}
             inputMode={field.type === 'decimal' ? 'decimal' : undefined} dir={['decimal', 'identifier'].includes(field.type) ? 'ltr' : direction}
             onChange={event => onChange(event.target.value)} />}
     </label>;

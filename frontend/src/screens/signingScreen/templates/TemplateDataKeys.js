@@ -1,3 +1,5 @@
+import SimpleTextArea from '../../../components/simpleComponents/SimpleTextArea';
+import SimpleInput from '../../../components/simpleComponents/SimpleInput';
 import SigningSelect from './SigningSelect';
 import React from 'react';
 import useSigningLocale from './useSigningLocale';
@@ -14,11 +16,11 @@ export default function TemplateDataKeys({ draft, onChange }) {
         {(draft.dataKeys || []).map(field => <fieldset key={field.key} className="lw-templates__dataKey">
             <legend>{field.label || text('newData')}</legend>
             <div className="lw-templates__setup">
-                <label>{text('label')}<input dir="auto" value={field.label || ''} maxLength={120} onChange={event => update(field.key, { label: event.target.value })} /></label>
+                <label>{text('label')}<SimpleInput timeToWaitInMilli={0} acceptExternalValueWhileFocused dir="auto" value={field.label || ''} maxLength={120} onChange={event => update(field.key, { label: event.target.value })} /></label>
                 <label>{text('type')}<SigningSelect dir={direction} value={field.type} disabled={usedByCondition(field.key)} onChange={event => update(field.key, { type: event.target.value, defaultValue: undefined, options: event.target.value === 'enum' ? [] : undefined })}>
                     {['text','identifier','decimal','date','boolean','enum'].map(type => <option key={type} value={type}>{text(`types.${type}`)}</option>)}
                 </SigningSelect></label>
-                {field.type === 'enum' && <label>{text('options')}<textarea dir="auto" value={(field.options || []).join('\n')} onChange={event => update(field.key, { options: event.target.value.split('\n') })} /></label>}
+                {field.type === 'enum' && <label>{text('options')}<SimpleTextArea dir="auto" value={(field.options || []).join('\n')} onChange={value => update(field.key, { options: value.split('\n') })} /></label>}
                 <label className="lw-templates__check"><input type="checkbox" checked={!!field.required} onChange={event => update(field.key, { required: event.target.checked })} />{text('required')}</label>
             </div>
             <details className="lw-templates__defaults" open={field.defaultValue !== undefined ? true : undefined}>

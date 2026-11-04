@@ -23,3 +23,16 @@ test('channel defaults are independent, filtered, and preserve explicit empty ch
     expect(normalizeSelectedChannels(value,['email']).client.sms).toBe(false);
     expect(parseStoredChannels({sms:true,email:false,push:false})).toEqual({sms:true,email:false,push:false});
 });
+
+ test('cleared available channels and timings remain empty, including JSON storage', () => {
+    const { parseAllowedChannelsFromSettings, parseAllowedOptionsFromSettings, configuredReminderChannels } = require('./eventReminders');
+    for (const effectiveValue of ['', [], '[]', {}, '{"email":false,"sms":false,"push":false}']) {
+        const allowed = parseAllowedChannelsFromSettings({ CALENDAR_REMINDER_CHANNELS: { effectiveValue } });
+        expect(allowed).toEqual([]);
+        expect(configuredReminderChannels({}, allowed).email).toBe(false);
+        expect(configuredReminderChannels({}, allowed).sms).toBe(false);
+    }
+    expect(parseAllowedChannelsFromSettings({})).toEqual(['push','sms','email']);
+    expect(parseAllowedChannelsFromSettings({ CALENDAR_REMINDER_CHANNELS: { effectiveValue: '["sms","email"]' } })).toEqual(['sms','email']);
+    expect(parseAllowedOptionsFromSettings({ CALENDAR_REMINDER_OPTIONS: { effectiveValue: '' } })).toEqual([]);
+ });
