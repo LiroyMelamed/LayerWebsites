@@ -1,3 +1,4 @@
+import SimpleInput from '../../../components/simpleComponents/SimpleInput';
 import SigningBackButton from './SigningBackButton';
 import React, { useRef, useState } from 'react';
 import api from '../../../api/signingTemplatesApi';
@@ -38,7 +39,7 @@ export default function BatchComposer({ template, onBack, onCreated }) {
         <header className="lw-templates__heading"><div><h1>שליחה מתבנית</h1><p>{template.name} · גרסה {template.version} · {definition.documents.length} מסמכים בכל חבילה</p></div></header>
         {error && <StatusNotice><p>{error}</p></StatusNotice>}
         <fieldset disabled={busy || locked} className="lw-templates__unboxed">
-            <label>שם השליחה<input value={name} maxLength={120} onChange={e => setName(e.target.value)} /></label>
+            <label>שם השליחה<SimpleInput timeToWaitInMilli={0} acceptExternalValueWhileFocused value={name} maxLength={120} onChange={e => setName(e.target.value)} /></label>
             {roles.some(r => r.shared) && <><h2>חותמים קבועים לכל החבילות</h2><p>כל אחד יקבל קישור אחד שמרכז את המסמכים שלו.</p>{roles.filter(r => r.shared).map(role => <RecipientFields key={role.id} role={role} value={shared[role.id]} onChange={value => setShared(prev => ({ ...prev, [role.id]: value }))} />)}</>}
             <div className="lw-templates__heading"><div><h2>נמעני החבילות</h2><p>כל שורה יוצרת חבילה נפרדת. אפשר לערוך את הנמענים לפני יצירתה.</p></div><div className="lw-templates__actions">
                 <button type="button" onClick={async () => { try { await downloadBlobAsFile(await api.workbook(template.id), 'recipients.xlsx'); } catch (e) { setError(e.message); } }}>הורדת קובץ Excel למילוי</button>
@@ -48,7 +49,7 @@ export default function BatchComposer({ template, onBack, onCreated }) {
             {importPreview && <div className="lw-templates__importPreview"><h3>נמצאו {importPreview.length} חבילות תקינות</h3><ul>{importPreview.map((row, i) => <li key={i}>{row.label} — {Object.values(row.signers).map(s => s.name).join(', ')}</li>)}</ul><button type="button" className="is-primary" onClick={() => { setRows(importPreview);setImportPreview(null); }}>החלפת הרשימה בנמענים מהקובץ</button><button type="button" onClick={() => setImportPreview(null)}>ביטול הייבוא</button></div>}
             {rows.map((row, index) => <section className="lw-templates__package" key={index}>
                 <div className="lw-templates__heading"><h3>חבילה {index + 1}</h3><button type="button" disabled={rows.length === 1} onClick={() => setRows(prev => prev.filter((_, i) => i !== index))}>הסרת החבילה</button></div>
-                <label>שם החבילה<input value={row.label} maxLength={120} placeholder={`חבילה ${index + 1}`} onChange={e => editRow(index, { label: e.target.value })} /></label>
+                <label>שם החבילה<SimpleInput timeToWaitInMilli={0} acceptExternalValueWhileFocused value={row.label} maxLength={120} placeholder={`חבילה ${index + 1}`} onChange={e => editRow(index, { label: e.target.value })} /></label>
                 {roles.filter(r => !r.shared).map(role => <RecipientFields key={role.id} role={role} value={row.signers[role.id]} onChange={value => editRow(index, { signers: { ...row.signers, [role.id]: value } })} />)}
             </section>)}
             <button type="button" disabled={rows.length >= 50 || (rows.length + 1) * definition.documents.length > 200} onClick={() => setRows(prev => [...prev, emptyRow()])}>הוספת חבילה</button>

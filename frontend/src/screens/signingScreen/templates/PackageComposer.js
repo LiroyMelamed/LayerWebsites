@@ -1,3 +1,4 @@
+import SimpleInput from '../../../components/simpleComponents/SimpleInput';
 import SigningSelect from './SigningSelect';
 import SigningBackButton from './SigningBackButton';
 import { ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
@@ -127,7 +128,7 @@ function PersonFields({ scope, roleKey, person, errors, onChange, compact, caseP
     };
     const manualField = (name, props = {}) => <Field key={name} id={fieldId(scope, roleKey, name)}
         label={t(`signingV2.compose.fields.${name}`)} error={errors?.[name]}>
-        <input value={person[name] || ''} onChange={event => onChange(roleKey, name, event.target.value)} dir={direction} {...props} />
+        <SimpleInput timeToWaitInMilli={0} acceptExternalValueWhileFocused value={person[name] || ''} onChange={event => onChange(roleKey, name, event.target.value)} dir={direction} {...props} />
     </Field>;
     const hasAlias = (!representative && otherRoles.length > 0) || person.sameAsRole;
     const channel = t(`signingV2.compose.channel.${person.channel || 'auto'}`);
@@ -248,7 +249,7 @@ function DocumentDataFields({ row, fields, errors, onChange }) {
                     {(field.type === 'boolean' ? [true, false] : field.options).map(option => <option key={String(option)} value={String(option)}>
                         {field.type === 'boolean' ? t(`signingV2.compose.data.${option ? 'yes' : 'no'}`) : option}
                     </option>)}
-                </SigningSelect> : <input type="text" value={value} maxLength={field.maxLength || 2000}
+                </SigningSelect> : <SimpleInput timeToWaitInMilli={0} acceptExternalValueWhileFocused type="text" value={value} maxLength={field.maxLength || 2000}
                     inputMode={field.type === 'decimal' ? 'decimal' : undefined} dir={['date', 'decimal', 'identifier'].includes(field.type) ? 'ltr' : direction}
                     onChange={event => change(event.target.value)} autoComplete="off" />}
             </Field>;
@@ -334,7 +335,7 @@ function TemplateStep({ api, selected, onSelect }) {
                 <h3 id="compose-legacy-title">{t('signingV2.compose.template.legacyHeading')}</h3>
                 <p>{t('signingV2.compose.template.legacyHelp')}</p>
                 {catalog.legacy.length > 6 && <Field id="compose-legacy-filter" className="is-wide" label={t('signingV2.compose.template.filter')}>
-                    <input type="search" value={filter} autoComplete="off" onChange={event => setFilter(event.target.value)} />
+                    <SimpleInput timeToWaitInMilli={0} acceptExternalValueWhileFocused type="search" value={filter} autoComplete="off" onChange={event => setFilter(event.target.value)} />
                 </Field>}
                 {needle && <p className="lw-signingPackages__caption" aria-live="polite">{t('signingV2.compose.template.matches', { count: legacy.length, formattedCount: number(legacy.length) })}</p>}
                 <ul>{legacy.map(item => <li key={item.id}>
@@ -956,7 +957,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             <SimpleCard className="lw-signingCompose__card">
                 <h2>{t('signingV2.compose.details')}</h2>
                 <Field id="compose-run-name" className="is-wide" label={t('signingV2.compose.runName')} help={t('signingV2.compose.runNameHelp')}>
-                    <input value={name} maxLength={300} onChange={event => { setName(event.target.value); invalidate(); }} />
+                    <SimpleInput timeToWaitInMilli={0} acceptExternalValueWhileFocused value={name} maxLength={300} onChange={event => { setName(event.target.value); invalidate(); }} />
                 </Field>
                 <p className="lw-signingPackages__caption">{t('signingV2.compose.templateSummary', { name: template.name })}</p>
                 {template.approvalRequired && <ApprovalReviewerField api={api} value={reviewerUserId} soloAllowed={template.soloApproval} validationError={errorEntries.find(item=>item.path==='reviewerUserId')?.code} onChange={value=>{setReviewerUserId(value);invalidate();}}/>}
