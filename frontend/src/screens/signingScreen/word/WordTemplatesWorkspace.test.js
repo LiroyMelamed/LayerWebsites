@@ -7,9 +7,9 @@ let mockPdfReadyCallbacks = [];
 
 jest.mock('../../../api/wordTemplatesApi', () => ({ __esModule: true, default: { list: jest.fn(), create: jest.fn(), load: jest.fn(), save: jest.fn(), preview: jest.fn(), pdf: jest.fn(), authoringRender: jest.fn(), authoringPdf: jest.fn(), resolveSelection: jest.fn() } }));
 jest.mock('./wordAuthoringSelection', () => ({ ...jest.requireActual('./wordAuthoringSelection'), verifyPdfBlob: jest.fn(blob => Promise.resolve(blob)) }));
-jest.mock('./WordSourceViewer', () => ({ onSelect, onError, authoring, bindings, activeBindingId, onSelectBinding }) => <div data-testid="original-pdf">
+jest.mock('./WordSourceViewer', () => ({ onSelect, onError, authoring, bindings, activeBindingId, onSelectBinding, fieldColorClass }) => <div data-testid="original-pdf">
     <button onClick={() => onError('authoringMismatch')}>failPage</button>
-    {bindings.map(item => <button key={item.id} aria-pressed={activeBindingId === item.id} onClick={() => onSelectBinding(item.id)}>marker {item.id}</button>)}
+    {bindings.map(item => <button key={item.id} className={fieldColorClass?.(item.field)} aria-pressed={activeBindingId === item.id} onClick={() => onSelectBinding(item.id)}>marker {item.id}</button>)}
     <button onClick={() => onSelect({ kind: 'range', start: { itemId: 'p1-i0', offset: 7 }, end: { itemId: 'p1-i0', offset: 13 } })}>chooseBlank</button>
     <button onClick={() => onSelect({ kind: 'insert', start: { itemId: authoring.pages[0].items[0].id,
         offset: authoring.pages[0].items[0].text.length }, affinity: 'before' })}>chooseEndInsertion</button>
@@ -21,7 +21,7 @@ jest.mock('./WordSourceViewer', () => ({ onSelect, onError, authoring, bindings,
             item.text.length, item.text.length, 'insert', 'after'));
     }}>chooseEndCaret</button>
 </div>);
-jest.mock('./WordDataFieldPanel', () => ({ value, onChange, definitions, disabled }) => <label>field<select disabled={disabled} value={value} onChange={event => onChange(event.target.value)}>{definitions.map(item => <option key={item.key} value={item.key}>{item.key}</option>)}</select></label>);
+jest.mock('./WordDataFieldPanel', () => ({ value, group, onChange, definitions, disabled }) => <label>field<select data-group={group} disabled={disabled} value={value} onChange={event => onChange(event.target.value)}><option value="" disabled>chooseReplacementField</option>{definitions.filter(item => item.key.startsWith(`${group}.`)).map(item => <option key={item.key} value={item.key}>{item.key}</option>)}</select></label>);
 jest.mock('../../../utils/fileUploadUtils', () => ({ uploadFileToR2: jest.fn() }));
 jest.mock('../templates/useSigningLocale', () => () => ({ direction: 'rtl', number: String, t: (key, values = {}) => key.replace(/^signingWord\./, '') + (values.role ? ` ${values.role}` : '') + (values.field ? ` ${values.field}` : '') }));
 jest.mock('../templates/SigningBackButton', () => ({ onPress, children }) => <button onClick={onPress}>{children}</button>);
@@ -29,9 +29,9 @@ jest.mock('../templates/SigningSelect', () => ({ children, onChange, value, disa
 jest.mock('./WordRecordPicker', () => ({ label, value, onChange, disabled }) => <label>{label}<input value={value?.id || ''} disabled={disabled} onChange={event => onChange(event.target.value ? { id: event.target.value, label: `Selected ${event.target.value}` } : null)} /></label>);
 jest.mock('../../../components/simpleComponents/SimpleInput', () => ({ title, value, onChange, disabled, type = 'text', ...props }) => <label>{title}<input aria-label={props['aria-label'] || title} type={type} value={value} disabled={disabled} onChange={onChange} /></label>);
 jest.mock('../../../components/styledComponents/fileUpload/FileUploadBox', () => ({ label, onFileSelected, disabled }) => <label>{label}<input type="file" disabled={disabled} onChange={event => onFileSelected(event.target.files[0])} /></label>);
-jest.mock('../../../components/styledComponents/buttons/PrimaryButton', () => ({ children, onPress, disabled }) => <button disabled={disabled} onClick={onPress}>{children}</button>);
-jest.mock('../../../components/styledComponents/buttons/SecondaryButton', () => ({ children, onPress, disabled }) => <button disabled={disabled} onClick={onPress}>{children}</button>);
-jest.mock('../../../components/styledComponents/buttons/TertiaryButton', () => ({ children, onPress, disabled }) => <button disabled={disabled} onClick={onPress}>{children}</button>);
+jest.mock('../../../components/styledComponents/buttons/PrimaryButton', () => ({ children, onPress, disabled, ...props }) => <button {...props} disabled={disabled} onClick={onPress}>{children}</button>);
+jest.mock('../../../components/styledComponents/buttons/SecondaryButton', () => ({ children, onPress, disabled, ...props }) => <button {...props} disabled={disabled} onClick={onPress}>{children}</button>);
+jest.mock('../../../components/styledComponents/buttons/TertiaryButton', () => ({ children, onPress, disabled, ...props }) => <button {...props} disabled={disabled} onClick={onPress}>{children}</button>);
 jest.mock('../../../components/specializedComponents/text/AllTextKindFile', () => ({ Text14: ({ children }) => <span>{children}</span>, TextBold18: ({ children }) => <span>{children}</span>, TextBold24: ({ children }) => <span>{children}</span> }));
 jest.mock('../../../components/specializedComponents/signFiles/pdfViewer/PdfViewer', () => ({ onDocumentReady, pdfSource, spots, signers }) => {
     mockPdfReadyCallbacks.push(onDocumentReady);
@@ -151,9 +151,9 @@ test('conflict preserves edits and switching out of manage confirms or discards 
     const onDraftChange = jest.fn(); await open(source(), { onDraftChange }, true);
     fireEvent.click(screen.getByText('chooseBlank')); await chooseReplacement();
     api.save.mockRejectedValue({ status: 409 }); fireEvent.click(screen.getByText('save'));
-    await waitFor(() => expect(screen.getByText('conflict')).toBeInTheDocument()); expect(screen.getByText('removeBinding')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('conflict')).toBeInTheDocument()); expect(screen.getByTestId('original-pdf').querySelector('[aria-pressed]')).not.toBeNull();
     fireEvent.click(screen.getByText('useTemplates')); expect(screen.getByRole('dialog')).toBeInTheDocument(); fireEvent.click(screen.getByText('keepEditing'));
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument(); expect(screen.getByText('removeBinding')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument(); expect(screen.getByTestId('original-pdf').querySelector('[aria-pressed]')).not.toBeNull();
     fireEvent.click(screen.getByText('useTemplates')); fireEvent.click(screen.getByText('discard'));
     await waitFor(() => expect(screen.getByText('useIntro')).toBeInTheDocument());
     expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: false, bindings: [], mode: 'use' }));
@@ -398,10 +398,8 @@ test.each([
     api.load.mockResolvedValue({ source: persisted });
     fireEvent.change(screen.getByLabelText('library'), { target: { value: original.id } });
     await waitFor(() => expect(api.load).toHaveBeenCalledTimes(2));
-    const list = await screen.findByRole('list', { name: 'bindings' });
-    expect(within(list).getByText(/insertionSelected/)).toBeInTheDocument();
-    expect(within(list).queryByText('beforeSelection')).not.toBeInTheDocument();
-    expect(within(list).queryByText('afterSelection')).not.toBeInTheDocument();
+    expect(await screen.findByText(`marker ${persisted.bindings[0].id}`)).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'bindings' })).not.toBeInTheDocument();
     expect(api.preview).not.toHaveBeenCalled();
 });
 
@@ -415,8 +413,8 @@ test('a data-field click adds the chosen field to the verified selection in one 
         bindings: [expect.objectContaining({ field: 'client.identityNumber', start: 7, end: 13, authoringRenderId: 'render-a' })] }));
     expect(api.save).not.toHaveBeenCalled();
     expect(screen.queryByLabelText('replacementPicker')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('bindingsSummary'));
-    expect(screen.getAllByText('removeBinding')).toHaveLength(1);
+    expect(screen.queryByRole('list', { name: 'bindings' })).not.toBeInTheDocument();
+    expect(screen.queryByText('removeBinding')).not.toBeInTheDocument();
 });
 
 test('opening a slow template keeps a visible loading status through source loading and authoring', async () => {
@@ -463,12 +461,13 @@ test('field controls wait for verified selection and a page error cancels the pe
 test('template name, roles and bindings share the document workspace without accordions or incidental writes', async () => {
     const onDraftChange = jest.fn(); await open(source(), { onDraftChange }, true);
     const rail = screen.getByRole('complementary', { name: 'mapping' });
-    expect(within(rail).getByText('addRole')).toBeVisible();
-    expect(within(rail).getByRole('list', { name: 'bindings' })).toBeInTheDocument();
+    expect(within(rail).getByText('editPeople')).toBeVisible();
+    expect(within(rail).queryByRole('list', { name: 'bindings' })).not.toBeInTheDocument();
     expect(rail.querySelector('details')).toBeNull();
     expect(screen.getByLabelText('name')).toBeVisible();
     expect(screen.getByTestId('original-pdf')).toBeVisible();
     expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: false }));
+    fireEvent.click(screen.getByText('editPeople'));
     fireEvent.click(screen.getByText('addRole'));
     expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: true, roles: [expect.objectContaining({ key: 'role1' })] }));
     fireEvent.click(screen.getByText('useTemplates')); expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -498,8 +497,7 @@ test('editing an existing marker changes only its replacement metadata and saves
     expect(screen.getByText('marker bound')).toHaveAttribute('aria-pressed', 'true');
     fireEvent.click(screen.getByText('cancelSelection'));
     expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: false, bindings: [original] }));
-    fireEvent.click(screen.getByText('bindingsSummary'));
-    fireEvent.click(within(screen.getByRole('list', { name: 'bindings' })).getByRole('button', { name: 'fieldLabel fields.fullName' }));
+    fireEvent.click(screen.getByText('marker bound'));
     fireEvent.click(screen.getByLabelText('required')); await chooseReplacement('client.identityNumber');
     const changed = { ...original, required: false, field: 'client.identityNumber' };
     expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: true, bindings: [changed] }));
@@ -522,8 +520,7 @@ test('an invalid server selection leaves no replacement picker and a page mismat
     fireEvent.click(screen.getByText('failPage')); await screen.findByText('authoringMismatch');
     fireEvent.click(screen.getByText('marker client.identityNumber'));
     expect(screen.queryByLabelText('field')).not.toBeInTheDocument(); expect(screen.getByText('save')).toBeDisabled();
-    fireEvent.click(screen.getByText('bindingsSummary'));
-    expect(within(screen.getByRole('list', { name: 'bindings' })).getByText('removeBinding')).toBeDisabled();
+    expect(screen.queryByText('removeBinding')).not.toBeInTheDocument();
     expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: false, bindings: mapped().bindings }));
 });
 
@@ -607,4 +604,37 @@ test('a signature-only Word source prepares the exact empty-data payload and req
     expect(onContinue).toHaveBeenCalledWith(expect.objectContaining({ id: 'preview-a', sourceId: saved.id,
         sourceVersion: saved.version, pdfHash: 'd'.repeat(64), fileBlob: expect.any(Blob), requiresFreshSigningGeometry: true }));
     expect(api.create).not.toHaveBeenCalled(); expect(api.save).not.toHaveBeenCalled();
+});
+
+
+test('the chosen role persists for new fields, existing markers restore their role, and roles have distinct colors', async () => {
+    const saved = { ...source(), roles: [{ key: 'tenant', label: 'Tenant' }, { key: 'owner', label: 'Owner' }],
+        bindings: [binding('role.tenant.fullName', 'tenant-name'), binding('role.owner.identityNumber', 'owner-id')] };
+    const onDraftChange = jest.fn(); await open(saved, { onDraftChange }, true);
+    expect(screen.getByRole('button', { name: 'Tenant', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Owner', exact: true }));
+    expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ dirty: false }));
+    fireEvent.click(screen.getByText('marker tenant-name'));
+    expect(screen.getByLabelText('field')).toHaveAttribute('data-group', 'role.tenant');
+    expect(screen.queryByRole('option', { name: 'role.owner.fullName' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Owner', exact: true }));
+    await chooseReplacement('role.owner.fullName');
+    expect(onDraftChange).toHaveBeenLastCalledWith(expect.objectContaining({ bindings: [expect.objectContaining({ id: 'tenant-name', field: 'role.owner.fullName' }), saved.bindings[1]] }));
+    expect(screen.getByRole('button', { name: 'Owner', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Tenant', exact: true }).className)
+        .not.toBe(screen.getByRole('button', { name: 'Owner', exact: true }).className);
+    fireEvent.click(screen.getByText('marker owner-id')); fireEvent.click(screen.getByText('removeBinding'));
+    expect(screen.queryByText('marker owner-id')).not.toBeInTheDocument();
+    expect(api.save).not.toHaveBeenCalled();
+});
+
+test('each role uses its explicitly chosen person in the preview payload', async () => {
+    const saved = { ...source(), roles: [{ key: 'tenant', label: 'Tenant' }, { key: 'owner', label: 'Owner' }],
+        bindings: [binding('role.tenant.fullName'), binding('role.tenant.identityNumber'), binding('role.owner.fullName'), binding('role.owner.identityNumber')] };
+    await open(saved);
+    fireEvent.change(screen.getByLabelText('roleClientId Tenant'), { target: { value: '23' } });
+    fireEvent.change(screen.getByLabelText('roleClientId Owner'), { target: { value: '24' } });
+    fireEvent.click(screen.getByText('preview'));
+    await waitFor(() => expect(api.preview).toHaveBeenCalledTimes(1));
+    expect(api.preview.mock.calls[0][1].inputs.roleClientIds).toEqual({ tenant: 23, owner: 24 });
 });
