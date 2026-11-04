@@ -109,7 +109,7 @@ export default function AllClientsScreen() {
                     customerList={displayList}
                     rePerformRequest={reperformAfterSave}
                     isPerforming={isPerforming}
-                    hideButtons={!canEditClients && !canDeleteClients}
+                    hideButtons
                     allowEdit={canEditClients}
                     allowDelete={canDeleteClients}
                 />
