@@ -67,7 +67,59 @@ function personalCalendarSql(lawyerParamIdx) {
     )`;
 }
 
+/** Same match as lawyerMatchSql, for several lawyers at once (`$n::int[]`). */
+function lawyerMatchAnySql(lawyerParamIdx) {
+    const p = `$${lawyerParamIdx}::int[]`;
+    return `(
+        ce.owner_id = ANY(${p})
+        OR ce.manager_user_id = ANY(${p})
+        OR EXISTS (
+            SELECT 1 FROM calendar_event_managers cem
+            WHERE cem.event_id = ce.id AND cem.user_id = ANY(${p})
+        )
+        OR (
+            ce.manager_user_id IS NULL
+            AND ce.manager_name IS NOT NULL
+            AND ce.manager_name IN (SELECT name FROM users WHERE userid = ANY(${p}))
+        )
+    )`;
+}
+
+/**
+ * Accept legacy lawyer_id and lawyer_ids (comma list or repeated query values).
+ * Returns { ids } or { error }.
+ */
+function parseLawyerIdList(...sources) {
+    const ids = [];
+    const seen = new Set();
+    const visit = (value) => {
+        if (value == null || value === '') return null;
+        const parts = Array.isArray(value) ? value : [value];
+        for (const part of parts) {
+            for (const bit of String(part).split(',')) {
+                const text = bit.trim();
+                if (!text) continue;
+                const id = Number(text);
+                if (!Number.isInteger(id) || id <= 0) return 'invalid';
+                if (!seen.has(id)) {
+                    seen.add(id);
+                    ids.push(id);
+                }
+            }
+        }
+        return null;
+    };
+    for (const source of sources) {
+        const error = visit(source);
+        if (error) return { error };
+    }
+    if (ids.length > 40) return { error: 'too_many' };
+    return { ids };
+}
+
 module.exports = {
     lawyerMatchSql,
+    lawyerMatchAnySql,
+    parseLawyerIdList,
     personalCalendarSql,
 };

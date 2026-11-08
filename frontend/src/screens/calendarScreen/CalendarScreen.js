@@ -348,6 +348,22 @@ function _currentRole() {
 }
 function _isFirmManager(role) { return role && role !== "User"; }
 
+function _lawyerRecordId(manager) {
+    const id = Number(manager?.userid ?? manager?.UserId ?? manager?.id);
+    return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+function _lawyerRecordName(manager) {
+    return String(manager?.name ?? manager?.Name ?? "").trim();
+}
+
+function _parseLawyerIdParam(value) {
+    return String(value || "")
+        .split(",")
+        .map((part) => parseInt(part, 10))
+        .filter((id) => Number.isInteger(id) && id > 0);
+}
+
 function _canPickEmployeeCalendar(role) {
     if (role === "Admin" || role === "Lawyer" || role === "PlatformAdmin") return true;
     try {
@@ -441,7 +457,7 @@ export default function CalendarScreen() {
     viewRef.current = view;
     const [scope, setScope] = useState(SCOPE_MINE);
     const [filters, setFilters] = useState({
-        lawyer_id: null,
+        lawyer_ids: [],
         client_id: null,
         case_id: null,
         event_type: EVENT_TYPE_ALL, // 'all' is UI-only; we don't send it to the API
@@ -452,16 +468,13 @@ export default function CalendarScreen() {
     useEffect(() => {
         if (!canUseFirmView || urlCalendarInitRef.current) return;
         urlCalendarInitRef.current = true;
-        const urlLawyerId = searchParams.get("lawyer_id");
+        const urlLawyerIds = _parseLawyerIdParam(searchParams.get("lawyer_ids") || searchParams.get("lawyer_id"));
         const urlScope = searchParams.get("scope");
-        if (urlScope === SCOPE_FIRM || urlLawyerId) {
+        if (urlScope === SCOPE_FIRM || urlLawyerIds.length) {
             setScope(SCOPE_FIRM);
         }
-        if (urlLawyerId) {
-            const id = parseInt(urlLawyerId, 10);
-            if (Number.isFinite(id) && id > 0) {
-                setFilters((prev) => ({ ...prev, lawyer_id: id }));
-            }
+        if (urlLawyerIds.length) {
+            setFilters((prev) => ({ ...prev, lawyer_ids: urlLawyerIds }));
         }
     }, [canUseFirmView, searchParams]);
 
@@ -534,26 +547,13 @@ export default function CalendarScreen() {
 
     useEffect(() => {
         if (!canUseFirmView) return;
-        if (filters.lawyer_id && lawyers.length) {
-            const match = lawyers.find((l) => {
-                const id = l.userid ?? l.UserId ?? l.id;
-                return Number(id) === Number(filters.lawyer_id);
-            });
-            const name = match?.name ?? match?.Name;
-            if (name && name !== managerFilterLabel) {
-                setManagerFilterLabel(name);
-            }
-        }
-    }, [canUseFirmView, filters.lawyer_id, lawyers, managerFilterLabel]);
-
-    useEffect(() => {
-        if (!canUseFirmView) return;
         const next = new URLSearchParams(window.location.search);
-        if (scope === SCOPE_FIRM && filters.lawyer_id) {
+        next.delete("lawyer_id");
+        if (scope === SCOPE_FIRM && filters.lawyer_ids.length) {
             next.set("scope", SCOPE_FIRM);
-            next.set("lawyer_id", String(filters.lawyer_id));
+            next.set("lawyer_ids", filters.lawyer_ids.join(","));
         } else {
-            next.delete("lawyer_id");
+            next.delete("lawyer_ids");
             if (scope === SCOPE_FIRM) next.set("scope", SCOPE_FIRM);
             else next.delete("scope");
         }
@@ -562,15 +562,17 @@ export default function CalendarScreen() {
         if (nextStr !== currentStr) {
             setSearchParams(next, { replace: true });
         }
-    }, [canUseFirmView, scope, filters.lawyer_id, setSearchParams]);
+    }, [canUseFirmView, scope, filters.lawyer_ids, setSearchParams]);
 
     // ── Filter assembly ─────────────────────────────────────────────────────
     const apiFilters = useMemo(() => {
         const f = {};
         const isFirmScope = canUseFirmView && scope === SCOPE_FIRM;
         f.scope = isFirmScope ? SCOPE_FIRM : SCOPE_MINE;
-        // Lawyer pin is firm-view only — must not leak into "היומן שלי".
-        if (isFirmScope && filters.lawyer_id) f.lawyer_id = filters.lawyer_id;
+        // Lawyer pins are firm-view only — must not leak into "היומן שלי".
+        if (isFirmScope && filters.lawyer_ids.length) {
+            f.lawyer_ids = [...filters.lawyer_ids].sort((a, b) => a - b);
+        }
         if (filters.client_id) f.client_id = filters.client_id;
         if (filters.case_id) f.case_id = filters.case_id;
         if (filters.event_type && filters.event_type !== EVENT_TYPE_ALL) {
@@ -643,14 +645,28 @@ export default function CalendarScreen() {
         setLoading(true);
         setLoadError(false);
         try {
-            const [list, holidaysRes] = await Promise.all([
-                loadCalendarPages(calendarApi.listEvents, { from, to, ...apiFilters }, isCurrent),
+            const { lawyer_ids: selectedLawyerIds = [], ...sharedFilters } = apiFilters;
+            const eventRequests = selectedLawyerIds.length
+                ? selectedLawyerIds.map((lawyerId) => loadCalendarPages(
+                    calendarApi.listEvents,
+                    { from, to, ...sharedFilters, lawyer_id: lawyerId },
+                    isCurrent,
+                ))
+                : [loadCalendarPages(calendarApi.listEvents, { from, to, ...sharedFilters }, isCurrent)];
+            const [lists, holidaysRes] = await Promise.all([
+                Promise.all(eventRequests),
                 calendarApi.listHolidays({
                     from: String(from).slice(0, 10),
                     to: String(to).slice(0, 10),
                 }).catch(() => null),
             ]);
-            if (!isCurrent() || !list) return;
+            if (!isCurrent() || lists.some((page) => !page)) return;
+            const merged = new Map();
+            lists.forEach((page) => page.forEach((event) => merged.set(String(event.id), event)));
+            const list = [...merged.values()].sort((a, b) => {
+                const byStart = String(a.startTime || "").localeCompare(String(b.startTime || ""));
+                return byStart || Number(a.id) - Number(b.id);
+            });
             const scopeKey = apiFilters.scope || SCOPE_MINE;
             const built = list.map((ev) => buildFullCalendarEvent(ev, { scope: scopeKey }));
             const holidayHints = (holidaysRes?.data?.holidays || [])
@@ -704,10 +720,10 @@ export default function CalendarScreen() {
 
     // Lawyer filter is firm-view only — drop it if scope is personal.
     useEffect(() => {
-        if (scope !== SCOPE_MINE || !filters.lawyer_id) return;
-        setFilters((prev) => ({ ...prev, lawyer_id: null }));
+        if (scope !== SCOPE_MINE || !filters.lawyer_ids.length) return;
+        setFilters((prev) => ({ ...prev, lawyer_ids: [] }));
         setManagerFilterLabel("");
-    }, [scope, filters.lawyer_id]);
+    }, [scope, filters.lawyer_ids]);
 
     useEffect(() => {
         const googleConnected = searchParams.get("google_connected") === "1";
@@ -930,29 +946,38 @@ export default function CalendarScreen() {
 
     const switchToMineScope = useCallback(() => {
         setScope(SCOPE_MINE);
-        setFilters((prev) => (prev.lawyer_id ? { ...prev, lawyer_id: null } : prev));
+        setFilters((prev) => (prev.lawyer_ids.length ? { ...prev, lawyer_ids: [] } : prev));
         setManagerFilterLabel("");
     }, []);
 
     const switchToFirmScope = useCallback(() => setScope(SCOPE_FIRM), []);
     const clearAllFilters = () => {
         setQuery("");
-        setFilters({ lawyer_id: null, client_id: null, case_id: null, event_type: EVENT_TYPE_ALL });
+        setFilters({ lawyer_ids: [], client_id: null, case_id: null, event_type: EVENT_TYPE_ALL });
         setManagerFilterLabel("");
         setClientFilterLabel("");
         setCaseFilterLabel("");
     };
     const hasActiveFilters =
-        !!filters.lawyer_id || !!filters.client_id || !!filters.case_id ||
+        filters.lawyer_ids.length > 0 || !!filters.client_id || !!filters.case_id ||
         (filters.event_type && filters.event_type !== EVENT_TYPE_ALL);
 
     // ── Derived dropdown data ──────────────────────────────────────────────
 
+    const toggleLawyerFilter = useCallback((id) => {
+        const numeric = Number(id);
+        if (!Number.isInteger(numeric) || numeric <= 0) return;
+        setFilters((prev) => {
+            const has = prev.lawyer_ids.some((current) => Number(current) === numeric);
+            const lawyer_ids = has
+                ? prev.lawyer_ids.filter((current) => Number(current) !== numeric)
+                : [...prev.lawyer_ids, numeric];
+            return { ...prev, lawyer_ids };
+        });
+    }, []);
+
     const handleManagerFilterSearch = useCallback((name) => {
         setManagerFilterLabel(name);
-        if (!String(name || "").trim()) {
-            setFilter("lawyer_id", null);
-        }
         searchAdmins(name);
     }, [searchAdmins]);
 
@@ -960,12 +985,15 @@ export default function CalendarScreen() {
         const selectedAdmin = resultItem || (Array.isArray(adminResults)
             ? adminResults.find((a) => a.name?.trim() === selectedName?.trim())
             : null);
-        const id = selectedAdmin?.userid ?? selectedAdmin?.UserId ?? selectedAdmin?.id;
-        const name = selectedAdmin?.name ?? selectedAdmin?.Name ?? selectedName ?? "";
+        const id = _lawyerRecordId(selectedAdmin);
         if (id == null) return;
         setScope(SCOPE_FIRM);
-        setFilter("lawyer_id", id);
-        setManagerFilterLabel(name);
+        setFilters((prev) => (
+            prev.lawyer_ids.some((current) => Number(current) === id)
+                ? prev
+                : { ...prev, lawyer_ids: [...prev.lawyer_ids, id] }
+        ));
+        setManagerFilterLabel("");
     }, [adminResults]);
 
     const handleClientFilterSearch = useCallback((name) => {
@@ -1007,9 +1035,11 @@ export default function CalendarScreen() {
     }, [caseResults]);
 
     // ── Lookups for active-filter chips ────────────────────────────────────
-    const activeManagerName = filters.lawyer_id
-        ? (managerFilterLabel || `#${filters.lawyer_id}`)
-        : null;
+    const selectedManagers = filters.lawyer_ids.map((id) => {
+        const match = lawyers.find((lawyer) => _lawyerRecordId(lawyer) === Number(id));
+        return { id: Number(id), name: _lawyerRecordName(match) || `#${id}` };
+    });
+    const activeManagerName = selectedManagers.map((manager) => manager.name).join(", ");
     const activeClientName = filters.client_id
         ? (clientFilterLabel || `#${filters.client_id}`)
         : null;
@@ -1019,9 +1049,8 @@ export default function CalendarScreen() {
     const viewingOtherEmployee = Boolean(
         canPickEmployeeCalendar
         && scope === SCOPE_FIRM
-        && filters.lawyer_id
-        && currentUserId
-        && Number(filters.lawyer_id) !== Number(currentUserId)
+        && selectedManagers.length > 0
+        && selectedManagers.some((manager) => !currentUserId || Number(manager.id) !== Number(currentUserId))
     );
 
     const visibleEvents = useMemo(() => {
@@ -1105,8 +1134,8 @@ export default function CalendarScreen() {
                     <SimpleContainer className="lw-calendarScreen__employeeBanner">
                         <Text14>
                             {t("calendar.viewingEmployeeCalendar", {
-                                name: activeManagerName || `#${filters.lawyer_id}`,
-                                defaultValue: `צפייה ביומן של ${activeManagerName || filters.lawyer_id} — לעריכה יש לפתוח את האירוע (הרשאות קיימות חלות).`,
+                                name: activeManagerName,
+                                defaultValue: `צפייה ביומן של ${activeManagerName} — לעריכה יש לפתוח את האירוע (הרשאות קיימות חלות).`,
                             })}
                         </Text14>
                         <SecondaryButton size={buttonSizes.SMALL} onPress={switchToMineScope}>
@@ -1119,14 +1148,11 @@ export default function CalendarScreen() {
                 {hasActiveFilters && (
                     <SimpleContainer className="lw-calendarScreen__chips">
                         <Text12 color="#4C6690">{t("calendar.activeFilters")}:</Text12>
-                        {activeManagerName && (
-                            <button type="button" className="lw-calendarScreen__chip" onClick={() => {
-                                setFilter("lawyer_id", null);
-                                setManagerFilterLabel("");
-                            }}>
-                                {activeManagerName} ✕
+                        {selectedManagers.map((manager) => (
+                            <button key={manager.id} type="button" className="lw-calendarScreen__chip" onClick={() => toggleLawyerFilter(manager.id)}>
+                                {manager.name} ✕
                             </button>
-                        )}
+                        ))}
                         {activeClientName && (
                             <button type="button" className="lw-calendarScreen__chip" onClick={() => {
                                 setFilter("client_id", null);
@@ -1240,23 +1266,25 @@ export default function CalendarScreen() {
                                 <Search size={18} aria-hidden="true" />
                             </div>
                 {canUseFirmView && scope === SCOPE_FIRM && lawyers.length > 0 && (
+                    <div className="lw-calendarRedesign__managerPicker">
                     <div className="lw-calendarRedesign__managers" aria-label={t("calendar.lawyersLegend")}>
-                        <SimpleButton type="button" className={`lw-calendarRedesign__manager${!filters.lawyer_id ? " is-active" : ""}`}
-                            aria-pressed={!filters.lawyer_id} onPress={() => { setFilter("lawyer_id", null); setManagerFilterLabel(""); }}>
+                        <SimpleButton type="button" className={`lw-calendarRedesign__manager${!filters.lawyer_ids.length ? " is-active" : ""}`}
+                            aria-pressed={!filters.lawyer_ids.length} onPress={() => { setFilter("lawyer_ids", []); setManagerFilterLabel(""); }}>
                             {t("calendar.eventTypeAll")}
                         </SimpleButton>
                         {lawyers.map((manager) => {
-                            const id = manager.userid ?? manager.UserId ?? manager.id;
-                            const name = manager.name ?? manager.Name;
-                            return <SimpleButton key={id} type="button" className={`lw-calendarRedesign__manager${Number(filters.lawyer_id) === Number(id) ? " is-active" : ""}`}
-                                aria-pressed={Number(filters.lawyer_id) === Number(id)} onPress={() => {
-                                    const next = Number(filters.lawyer_id) === Number(id) ? null : id;
-                                    setFilter("lawyer_id", next); setManagerFilterLabel(next ? name : "");
-                                }}>
+                            const id = _lawyerRecordId(manager);
+                            const name = _lawyerRecordName(manager);
+                            if (id == null) return null;
+                            const selected = filters.lawyer_ids.some((current) => Number(current) === id);
+                            return <SimpleButton key={id} type="button" className={`lw-calendarRedesign__manager${selected ? " is-active" : ""}`}
+                                aria-pressed={selected} onPress={() => toggleLawyerFilter(id)}>
                                 <CalendarOwners event={{ extendedProps: { managers: [{ userId: id, name }] } }} lawyers={lawyers} small />
                                 <span>{name}</span>
                             </SimpleButton>;
                         })}
+                    </div>
+                    <Text12 color="#4C6690">{t("calendar.managerMultiSelectHint")}</Text12>
                     </div>
                 )}
 
@@ -1290,14 +1318,14 @@ export default function CalendarScreen() {
                             {canPickEmployeeCalendar && (
                                 <div className="lw-calendarScreen__filterGroup">
                                     <SearchInput
-                                        title={t("calendar.employeeCalendarPicker", { defaultValue: "יומן של עובד" })}
+                                        title={t("calendar.employeeCalendarPicker", { defaultValue: "הוספת עובד ליומן" })}
                                         value={managerFilterLabel}
                                         onSearch={handleManagerFilterSearch}
                                         isPerforming={isSearchingAdmins}
                                         queryResult={adminResults}
                                         getButtonTextFunction={(item) => item.name}
                                         buttonPressFunction={handleManagerFilterSelected}
-                                        clearOnSelect={false}
+                                        clearOnSelect={true}
                                     />
                                 </div>
                             )}
