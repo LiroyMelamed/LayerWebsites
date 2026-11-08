@@ -535,11 +535,17 @@ export default function CalendarScreen() {
     useEffect(() => {
         if (!canUseFirmView) return;
         let cancelled = false;
+        const asList = (payload) => (
+            Array.isArray(payload) ? payload
+                : Array.isArray(payload?.data) ? payload.data
+                : Array.isArray(payload?.admins) ? payload.admins
+                : []
+        );
         (async () => {
             try {
-                const res = await adminApi.getAllAdmins();
-                const list = res?.data?.admins || res?.data || [];
-                if (!cancelled && Array.isArray(list)) setLawyers(list);
+                const staff = asList((await adminApi.getStaffByName(""))?.data);
+                const list = staff.length ? staff : asList((await adminApi.getAllAdmins())?.data);
+                if (!cancelled) setLawyers(list);
             } catch { /* swallow — filter just stays empty */ }
         })();
         return () => { cancelled = true; };
@@ -986,7 +992,15 @@ export default function CalendarScreen() {
             ? adminResults.find((a) => a.name?.trim() === selectedName?.trim())
             : null);
         const id = _lawyerRecordId(selectedAdmin);
+        const name = _lawyerRecordName(selectedAdmin);
         if (id == null) return;
+        if (name) {
+            setLawyers((prev) => (
+                prev.some((lawyer) => _lawyerRecordId(lawyer) === id)
+                    ? prev
+                    : [...prev, { userid: id, name }]
+            ));
+        }
         setScope(SCOPE_FIRM);
         setFilters((prev) => (
             prev.lawyer_ids.some((current) => Number(current) === id)
