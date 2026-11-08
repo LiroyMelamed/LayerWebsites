@@ -330,7 +330,7 @@
     "parallelEvents_one": "One meeting",
     "parallelEvents_other": "{{count}} simultaneous meetings",
     "parallelEvents_two": "{{count}} simultaneous meetings",
-    "participantsHint": "You can add registered clients and prospective clients to the same meeting",
+    "participantsHint": "Choose a registered client in Who is in the meeting. Add a prospective client here.",
     "participantsSection": "Meeting participants",
     "personalSyncHint": "These settings apply only to your account, not to the whole office.",
     "personalSyncTitle": "Personal sync",

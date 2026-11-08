@@ -342,7 +342,7 @@
     "parallelEvents_other": "{{count}} اجتماع متزامن",
     "parallelEvents_two": "اجتماعان متزامنان",
     "parallelEvents_zero": "لا توجد اجتماعات متزامنة",
-    "participantsHint": "يمكن إضافة عملاء مسجلين وعملاء محتملين إلى الاجتماع نفسه",
+    "participantsHint": "يُختار العميل المسجل في حقل من في الاجتماع. يُضاف العميل المحتمل هنا.",
     "participantsSection": "المشاركون في الاجتماع",
     "personalSyncHint": "تسري هذه الإعدادات على حسابك فقط، ولا تشمل المكتب كله.",
     "personalSyncTitle": "المزامنة الشخصية",

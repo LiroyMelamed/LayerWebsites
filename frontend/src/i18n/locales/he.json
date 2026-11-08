@@ -345,7 +345,7 @@
     "parallelEvents_one": "פגישה אחת",
     "parallelEvents_other": "{{count}} פגישות במקביל",
     "parallelEvents_two": "{{count}} פגישות במקביל",
-    "participantsHint": "ניתן לשייך לקוחות רשומים ולקוחות פוטנציאליים באותה פגישה",
+    "participantsHint": "לקוח רשום נבחר בשדה מי בפגישה. לקוח פוטנציאלי נוסף כאן.",
     "participantsSection": "משתתפים בפגישה",
     "personalSyncHint": "הגדרות אלו משויכות לחשבון שלך בלבד — לא לכל המשרד.",
     "personalSyncTitle": "סנכרון אישי",
