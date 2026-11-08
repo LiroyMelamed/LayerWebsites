@@ -223,6 +223,37 @@ export function calendarEventSearchText(event, lawyers = []) {
         .filter(Boolean).join(' ').toLocaleLowerCase();
 }
 
+/** Snap a pointer on the day timeline to a whole hour inside the visible range. */
+export function agendaHourFromPointer(clientY, anchors, { min = 8 * 60, max = 19 * 60 } = {}) {
+    const timed = (Array.isArray(anchors) ? anchors : [])
+        .filter((anchor) => Number.isFinite(anchor?.minutes) && Number.isFinite(anchor?.y))
+        .sort((a, b) => a.y - b.y || a.minutes - b.minutes);
+    if (!timed.length || !Number.isFinite(clientY)) return null;
+    let minutes;
+    if (timed.length === 1) {
+        minutes = timed[0].minutes + ((clientY - timed[0].y) / 72) * 60;
+    } else if (clientY <= timed[0].y) {
+        const span = timed[1].y - timed[0].y;
+        const rate = span ? (timed[1].minutes - timed[0].minutes) / span : 0;
+        minutes = timed[0].minutes + (clientY - timed[0].y) * rate;
+    } else {
+        const next = timed.findIndex((anchor, index) => index > 0 && clientY <= anchor.y);
+        if (next > 0) {
+            const span = timed[next].y - timed[next - 1].y;
+            const ratio = span ? (clientY - timed[next - 1].y) / span : 0;
+            minutes = timed[next - 1].minutes + ratio * (timed[next].minutes - timed[next - 1].minutes);
+        } else {
+            const last = timed[timed.length - 1];
+            const prev = timed[timed.length - 2];
+            const span = last.y - prev.y;
+            const rate = span ? (last.minutes - prev.minutes) / span : 0;
+            minutes = last.minutes + (clientY - last.y) * rate;
+        }
+    }
+    const snapped = Math.round(minutes / 60) * 60;
+    return Math.min(max - 60, Math.max(min, snapped));
+}
+
 export function calendarEventTypeKey(event) {
     const type = calendarRawEvent(event).eventType || calendarRawEvent(event).event_type || 'appointment';
     return { appointment: 'eventTypeAppointmentSingular', leave: 'eventTypeLeaveSingular', hearing: 'eventTypeHearing', reminder: 'eventTypeReminder', holiday: 'eventTypeHolidaySingular' }[type] || 'eventTypeAppointmentSingular';
