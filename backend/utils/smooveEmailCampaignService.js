@@ -18,6 +18,7 @@ const FORCE_SEND_EMAIL_ALL = process.env.FORCE_SEND_EMAIL_ALL === 'true';
 const { getEmailTemplate, getSetting } = require('../services/settingsService');
 const { getAttachmentBuffers } = require('../controllers/templateAttachmentController');
 const { getLawFirmNameHe, getEmailFromName, getEmailFromEmail } = require('../lib/firmBranding');
+const { resolveInviteReplyAddress } = require('../lib/calendarInviteReplyTo');
 
 async function resolveEmailFromName() {
     return getEmailFromName();
@@ -267,9 +268,16 @@ async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shou
     // CC list: optional array of email strings passed by callers (replaces old global CEO CC)
     const ccList = (Array.isArray(ccEmails) ? ccEmails : []).map(e => String(e || '').trim()).filter(Boolean);
     const ccEmail = ccList.length > 0 ? ccList.join(', ') : '';
+    const verifiedFrom = String(await getEmailFromEmail() || '').trim();
+    const inviteReplyTo = calendarInvitation
+        ? resolveInviteReplyAddress(
+            replyTo || await getSetting('messaging', 'INVITE_REPLY_TO_EMAIL', ''),
+            verifiedFrom
+        )
+        : String(replyTo || '').trim();
     const { fromEmail: smtpFrom, replyTo: safeReplyTo } = await resolveVerifiedFromAndReplyTo(
         fromEmailOverride,
-        replyTo
+        inviteReplyTo
     );
     const replyToEmail = String(safeReplyTo || '').trim();
 
@@ -317,7 +325,7 @@ async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shou
             ...(calendarInvitation ? { icalEvent: buildCalendarInvitation({
                 event: calendarInvitation,
                 recipientEmail: email,
-                organizerEmail: smtpFrom,
+                organizerEmail: replyToEmail || smtpFrom,
                 organizerName: fromName,
                 domain: process.env.WEBSITE_DOMAIN,
             }) } : {}),
