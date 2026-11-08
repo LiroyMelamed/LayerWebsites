@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const ICAL = require('ical.js');
 const nodemailer = require('nodemailer');
 const { buildCalendarInvitation } = require('../lib/calendarInvitation');
+const { defaultOfficeReplyTo, resolveInviteReplyAddress } = require('../lib/calendarInviteReplyTo');
 const { parseInvitationFile } = require('../lib/calendarInvitationImport');
 const { responsiveEmailHtml } = require('../lib/responsiveEmailHtml');
 const now = Date.parse('2026-11-04T00:00:00Z');
@@ -49,6 +50,13 @@ test('cancellation with UID and no times is accepted; replies, oversized and mal
     assert.throws(() => parseInvitationFile(envelope('').replace('METHOD:REQUEST', 'METHOD:REPLY'), now), /תגובה/);
     assert.throws(() => parseInvitationFile('a'.repeat(512 * 1024 + 1), now), /512KB/);
     assert.throws(() => parseInvitationFile('invalid', now), /אינו תקין/);
+});
+test('noreply invitations reply to office@ on the same domain unless a manager set another address', () => {
+    assert.equal(defaultOfficeReplyTo('Noreply@melamedlaw.co.il'), 'office@melamedlaw.co.il');
+    assert.equal(defaultOfficeReplyTo('no-reply@example.invalid'), 'office@example.invalid');
+    assert.equal(defaultOfficeReplyTo('lawyer@example.invalid'), '');
+    assert.equal(resolveInviteReplyAddress('  desk@example.invalid  ', 'noreply@example.invalid'), 'desk@example.invalid');
+    assert.equal(resolveInviteReplyAddress('not-an-email', 'noreply@example.invalid'), 'office@example.invalid');
 });
 test('calendar text cannot add attendees or fetch remote attachments', () => {
     const out = invitation({ ...sample, title: 'hello\r\nATTENDEE:mailto:other@example.invalid' });
