@@ -1016,7 +1016,7 @@ body.lw-fromApp .lw-calendarRedesign.has-nativeFooter .lw-calendarScreen__scroll
     padding-block: 1rem;
     margin-block-end: 1rem;
     border-block: 1px solid var(--lw-color-disabled);
-    .lw-calendarScreen__sidebarHeader, .lw-calendarScreen__filterRow, .lw-calendarRedesign__managers { grid-column: 1 / -1; }
+    .lw-calendarScreen__sidebarHeader, .lw-calendarScreen__filterRow, .lw-calendarRedesign__managers, .lw-calendarRedesign__managerPicker { grid-column: 1 / -1; }
     .lw-calendarRedesign__managers { flex-wrap: wrap; margin: 0; padding: 0; overflow: visible; }
     .lw-calendarScreen__filterRow { margin: 0; gap: 1.5rem; }
     .lw-calendarScreen__filterTools { display: flex; flex-wrap: wrap; align-items: end; gap: .5rem; }
