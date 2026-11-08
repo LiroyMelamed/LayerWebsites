@@ -1,10 +1,19 @@
 import {
-    calendarAddDays, calendarConflictOwners, calendarDateKey, calendarEventConflict, calendarEventSearchText,
+    agendaHourFromPointer, calendarAddDays, calendarConflictOwners, calendarDateKey, calendarEventConflict, calendarEventSearchText,
     calendarEventsForDay, calendarFormatDate, calendarOwnerIds, calendarOwners,
     calendarRsvp, calendarWeekDates,
 } from './calendarPresentation';
 
 const event = (id, start, end, extra = {}) => ({ id: String(id), title: `Event ${id}`, start, end, extendedProps: { eventType: 'appointment', managers: [{ userId: 1, name: 'First manager' }], ...extra } });
+
+test('a pointer on the day line snaps to the hovered hour inside the visible range', () => {
+    const anchors = [{ minutes: 8 * 60, y: 100 }, { minutes: 10 * 60, y: 244 }];
+    expect(agendaHourFromPointer(100, anchors)).toBe(8 * 60);
+    expect(agendaHourFromPointer(172, anchors)).toBe(9 * 60);
+    expect(agendaHourFromPointer(244, anchors)).toBe(10 * 60);
+    expect(agendaHourFromPointer(20, anchors, { min: 8 * 60, max: 19 * 60 })).toBe(8 * 60);
+    expect(agendaHourFromPointer(900, anchors, { min: 8 * 60, max: 19 * 60 })).toBe(18 * 60);
+});
 
 test('Jerusalem dates and civil-day arithmetic stay stable over DST and UTC midnight', () => {
     expect(calendarDateKey('2026-10-24T22:30:00Z')).toBe('2026-10-25');
