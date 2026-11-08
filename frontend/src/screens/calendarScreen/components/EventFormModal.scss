@@ -722,13 +722,18 @@
 .lw-eventFormModal__managerChip {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.35rem;
     background: #2A4365;
     color: #fff;
     border-radius: 1rem;
-    padding: 0.125rem 0.625rem;
+    padding: 0.2rem 0.7rem;
     font-size: 0.85rem;
     line-height: 1.6;
+}
+
+.lw-eventFormModal__chipName {
+    color: #fff;
+    white-space: nowrap;
 }
 
 @media (max-width: 40rem) {

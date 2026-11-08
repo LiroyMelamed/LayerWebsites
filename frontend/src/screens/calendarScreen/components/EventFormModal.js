@@ -154,6 +154,38 @@ function managerDisplayName(manager, admins) {
     return staffRecordName(match);
 }
 
+function namedManagers(list, staff) {
+    return (Array.isArray(list) ? list : []).map((manager) => {
+        if (String(manager?.name || "").trim()) return manager;
+        const match = (Array.isArray(staff) ? staff : []).find((person) => staffRecordId(person) === Number(manager?.userId));
+        const name = staffRecordName(match);
+        return name ? { ...manager, name } : manager;
+    });
+}
+
+const CLIENT_PICKER_ROLES = new Set(["User", "ExternalSigner"]);
+
+function meetingPersonOptions(staffRows, clientRows, query) {
+    const byId = new Map();
+    (Array.isArray(staffRows) ? staffRows : []).forEach((person) => {
+        const id = staffRecordId(person);
+        const name = staffRecordName(person);
+        if (id == null || !name) return;
+        byId.set(id, { kind: "staff", id, name, label: staffPickerLabel(person), raw: person });
+    });
+    if (String(query || "").trim()) {
+        (Array.isArray(clientRows) ? clientRows : []).forEach((person) => {
+            const role = String(person?.Role || person?.role || "User");
+            if (!CLIENT_PICKER_ROLES.has(role)) return;
+            const id = Number(customerUserId(person));
+            const name = customerDisplayName(person);
+            if (!Number.isInteger(id) || id <= 0 || !name || byId.has(id)) return;
+            byId.set(id, { kind: "client", id, name, label: `${name} · לקוח`, raw: person });
+        });
+    }
+    return [...byId.values()];
+}
+
 /** Search result label for Admin / Lawyer / PlatformAdmin pickers. */
 function staffPickerLabel(item) {
     const name = staffRecordName(item);
@@ -519,6 +551,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const [managers, setManagers] = useState(() => _initialManagers(event));
     const [managerSearch, setManagerSearch] = useState("");
     const [managerSearchActive, setManagerSearchActive] = useState(false);
+    const staffRef = useRef([]);
     const [caseId, setCaseId] = useState(event?.caseId || null);
     const [caseName, setCaseName] = useState(event?.caseName || "");
 
@@ -665,21 +698,15 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const eventIdentity = event?.id ?? `${event?.startTime || ""}|${event?.endTime || ""}|new`;
 
     useEffect(() => {
-        if (isEdit) return;
-        if (!Array.isArray(admins) || !admins.length) return;
+        const staff = Array.isArray(admins) ? admins : [];
+        staffRef.current = staff;
+        if (!staff.length) return;
         setManagers((prev) => {
-            let changed = false;
-            const next = prev.map((manager) => {
-                if (String(manager?.name || "").trim()) return manager;
-                const match = admins.find((person) => staffRecordId(person) === Number(manager.userId));
-                const name = staffRecordName(match);
-                if (!name) return manager;
-                changed = true;
-                return { ...manager, name };
-            });
+            const next = namedManagers(prev, staff);
+            const changed = next.some((manager, index) => manager.name !== prev[index]?.name);
             return changed ? next : prev;
         });
-    }, [isEdit, admins]);
+    }, [admins]);
 
     useEffect(() => {
         const s = _formStateFromEvent(event);
@@ -700,7 +727,10 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setClientSearch("");
         setClientName(s.clientName);
         setClientUserId(s.clientUserId);
-        setManagers(isEdit ? _initialManagers(event) : _defaultManagersForForm(event));
+        setManagers(namedManagers(
+            isEdit ? _initialManagers(event) : _defaultManagersForForm(event),
+            staffRef.current,
+        ));
         setManagerSearch("");
         setManagerSearchActive(false);
         setCaseId(s.caseId);
@@ -1115,11 +1145,20 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         .filter(Boolean)
         .join(", ");
     const managerFieldValue = managerSearchActive ? managerSearch : (selectedManagerLabel || managerSearch);
+    const meetingOptions = meetingPersonOptions(admins, customers, managerSearch);
     const searchManagers = (name) => {
         const typed = String(name || "");
         setManagerSearchActive(true);
         setManagerSearch(typed);
         searchAdmins(typed.trim() && typed.trim() !== selectedManagerLabel.trim() ? typed : "");
+    };
+    const searchMeetingPeople = (name) => {
+        const typed = String(name || "");
+        setManagerSearchActive(true);
+        setManagerSearch(typed);
+        const query = typed.trim();
+        searchAdmins(query);
+        if (query) searchCustomers(query);
     };
     const hasClientRecipient = clients.length > 0
         || leadParticipants.some((p) => p.name?.trim() || p.phone?.trim() || p.email?.trim())
@@ -1945,6 +1984,16 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         searchAdmins("");
     };
 
+    const handleMeetingPersonSelected = (selectedLabel, resultItem) => {
+        if (resultItem?.kind === "client") {
+            handleCustomerSelected(resultItem.name, resultItem.raw);
+            setManagerSearch("");
+            setManagerSearchActive(false);
+            return;
+        }
+        handleManagerSelected(resultItem?.label || selectedLabel, resultItem?.raw);
+    };
+
     const handleRemoveManager = (userId) => {
         setManagers((prev) => prev.filter((m) => Number(m.userId) !== Number(userId)));
         setManagerSearch("");
@@ -2627,32 +2676,55 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                         {isEdit && !isLeaveEventType && renderClientRsvpSection()}
                         <SearchInput
                             title={isLeaveEventType ? t("calendar.leaveWho") : t("calendar.manager")}
-                            value={managerFieldValue}
-                            onSearch={searchManagers}
-                            isPerforming={isSearchingAdmins}
-                            queryResult={admins}
-                            getButtonTextFunction={staffPickerLabel}
-                            buttonPressFunction={handleManagerSelected}
+                            value={isLeaveEventType ? managerFieldValue : managerSearch}
+                            onSearch={isLeaveEventType ? searchManagers : searchMeetingPeople}
+                            isPerforming={isSearchingAdmins || isSearchingCustomers}
+                            queryResult={isLeaveEventType ? admins : meetingOptions}
+                            getButtonTextFunction={isLeaveEventType ? staffPickerLabel : (item) => item.label}
+                            buttonPressFunction={isLeaveEventType ? handleManagerSelected : handleMeetingPersonSelected}
+                            clearOnSelect
                         />
                         {isLeaveEventType && (
                             <Text12 color="#718096">{t("calendar.leaveWhoHint")}</Text12>
                         )}
-                        {managers.length > 0 && (
+                        {(managers.length > 0 || (!isLeaveEventType && clients.length > 0)) && (
                             <SimpleContainer className="lw-eventFormModal__managerChips">
-                                {managers.map((m) => (
-                                    <span key={m.userId} className="lw-eventFormModal__managerChip">
-                                        {managerDisplayName(m, admins)}
-                                        <button
-                                            type="button"
-                                            className="lw-eventFormModal__chipRemove"
-                                            tabIndex={-1}
-                                            onClick={() => handleRemoveManager(m.userId)}
-                                            aria-label={t("calendar.removeManager")}
-                                        >
-                                            &times;
-                                        </button>
-                                    </span>
-                                ))}
+                                {managers.map((m) => {
+                                    const name = managerDisplayName(m, admins);
+                                    if (!name) return null;
+                                    return (
+                                        <span key={`staff-${m.userId}`} className="lw-eventFormModal__managerChip">
+                                            <span className="lw-eventFormModal__chipName">{name}</span>
+                                            <button
+                                                type="button"
+                                                className="lw-eventFormModal__chipRemove"
+                                                tabIndex={-1}
+                                                onClick={() => handleRemoveManager(m.userId)}
+                                                aria-label={t("calendar.removeManager")}
+                                            >
+                                                &times;
+                                            </button>
+                                        </span>
+                                    );
+                                })}
+                                {!isLeaveEventType && clients.map((c) => {
+                                    const name = clientChipLabel(c);
+                                    if (!name) return null;
+                                    return (
+                                        <span key={`client-${c.userId}`} className="lw-eventFormModal__managerChip">
+                                            <span className="lw-eventFormModal__chipName">{name}</span>
+                                            <button
+                                                type="button"
+                                                className="lw-eventFormModal__chipRemove"
+                                                tabIndex={-1}
+                                                onClick={() => handleRemoveClient(c.userId)}
+                                                aria-label={t("calendar.removeClient")}
+                                            >
+                                                &times;
+                                            </button>
+                                        </span>
+                                    );
+                                })}
                             </SimpleContainer>
                         )}
                     </SimpleContainer>
@@ -2667,7 +2739,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                             <Text14 color={NAVY}>{t("calendar.participantsSection", { defaultValue: "משתתפים בפגישה" })}</Text14>
                             <Text12 color="#718096">
                                 {t("calendar.participantsHint", {
-                                    defaultValue: "ניתן לשייך לקוחות רשומים ולקוחות פוטנציאליים באותה פגישה",
+                                    defaultValue: "לקוח רשום נבחר בשדה מי בפגישה. לקוח פוטנציאלי נוסף כאן.",
                                 })}
                             </Text12>
                         </div>
@@ -2676,58 +2748,6 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     {/* ─── Existing-client fields ─── */}
                     {showExistingClientFields && (
                         <>
-                            {!showClientAttachPanel && clients.length === 0 ? (
-                                <SecondaryButton onPress={handleOpenClientAttachPanel}>
-                                    {t("calendar.addClient")}
-                                </SecondaryButton>
-                            ) : (
-                                <>
-                                    <SearchInput
-                                        title={t("calendar.addClient")}
-                                        value={clientSearch}
-                                        onSearch={handleClientSearch}
-                                        isPerforming={isSearchingCustomers}
-                                        queryResult={customers}
-                                        getButtonTextFunction={(item) => {
-                                            const name = customerDisplayName(item);
-                                            const phone = customerPhone(item);
-                                            return phone ? `${name} · ${phone}` : name;
-                                        }}
-                                        buttonPressFunction={handleCustomerSelected}
-                                        clearOnSelect
-                                    />
-                                    {clients.length > 0 && (
-                                        <SimpleContainer className="lw-eventFormModal__managerChips lw-eventFormModal__clientChips">
-                                            {clients.map((c) => {
-                                                const st = c.inviteStatus || "none";
-                                                const rsvp = _clientRsvpLabel(st, t);
-                                                return (
-                                                    <span key={c.userId} className={`lw-eventFormModal__managerChip ${st !== "none" ? `is-rsvp-${st}` : ""}`}>
-                                                        {clientChipLabel(c)}
-                                                        {rsvp ? <em className="lw-eventFormModal__chipRsvp"> · {rsvp}</em> : null}
-                                                        <button
-                                                            type="button"
-                                                            className="lw-eventFormModal__chipRemove"
-                                                            tabIndex={-1}
-                                                            onClick={() => handleRemoveClient(c.userId)}
-                                                            aria-label={t("calendar.removeClient")}
-                                                        >
-                                                            &times;
-                                                        </button>
-                                                    </span>
-                                                );
-                                            })}
-                                        </SimpleContainer>
-                                    )}
-                                    <Text12 color="#718096">{t("calendar.clientsHint")}</Text12>
-                                    {clients.length === 0 && (
-                                        <SecondaryButton onPress={handleClearClientAttachPanel}>
-                                            {t("calendar.removeReminderClient")}
-                                        </SecondaryButton>
-                                    )}
-                                </>
-                            )}
-
                             {/* Linked-case display + grid ─── */}
                             {showCaseLinker && (
                                 <SimpleContainer className="lw-eventFormModal__caseLinker">
