@@ -2075,7 +2075,7 @@ export default function PlatformSettingsScreen() {
                                                 {t(`calendar.type_${typeKey}`, typeKey)}
                                             </TextBold14>
                                         </SimpleContainer>
-                                        <SimpleContainer className="lw-platformSettings__settingInput" style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                                        <SimpleContainer className="lw-platformSettings__colorSwatches">
                                             {presets.map((hex) => {
                                                 const selected = current.toUpperCase() === hex.toUpperCase();
                                                 return (
