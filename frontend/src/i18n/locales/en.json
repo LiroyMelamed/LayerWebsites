@@ -1416,6 +1416,7 @@
     "calendarLawyerDefaults": "Default lawyer reminders",
     "calendarClientDefaults": "Default client reminders",
     "calendarDefaultsHint": "Times selected for new events. No selection means no reminders for this audience. Existing events remain unchanged.",
+    "calendarDefaultChannelType": "Notification type",
     "calendarLawyerChannelDefaults": "Default channels for lawyers",
     "calendarClientChannelDefaults": "Default channels for clients",
     "calendarChannelDefaultsHint": "Preselected for new events. Each event can override these choices; existing events are unchanged."
