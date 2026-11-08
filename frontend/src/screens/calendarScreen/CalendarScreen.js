@@ -645,7 +645,10 @@ export default function CalendarScreen() {
         fetchRangeRef.current = { from, to };
 
         const fetchKey = `${from}|${to}|${JSON.stringify(apiFilters)}`;
-        if (!force && fetchKey === lastFetchKeyRef.current) return;
+        if (!force && fetchKey === lastFetchKeyRef.current) {
+            setLoading(false);
+            return;
+        }
         if (fetchInFlightKeyRef.current === fetchKey) return;
 
         fetchInFlightKeyRef.current = fetchKey;
@@ -1110,10 +1113,14 @@ export default function CalendarScreen() {
         if (view === "timeGridWeek") {
             const first = new Date(date); first.setUTCDate(first.getUTCDate() - first.getUTCDay());
             const last = new Date(first); last.setUTCDate(last.getUTCDate() + (phone && !calendarExpanded ? 4 : 6));
-            const options = phone
-                ? { day: "numeric", month: "numeric", timeZone: "UTC" }
-                : { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" };
-            return new Intl.DateTimeFormat(locale, options).formatRange(first, last);
+            if (phone) {
+                const day = (value) => value.getUTCDate();
+                const month = (value) => value.getUTCMonth() + 1;
+                return first.getUTCMonth() === last.getUTCMonth()
+                    ? `${day(first)}–${day(last)}.${month(first)}`
+                    : `${day(first)}.${month(first)}–${day(last)}.${month(last)}`;
+            }
+            return new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).formatRange(first, last);
         }
         if (phone) return new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "numeric", timeZone: "UTC" }).format(date);
         return new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(date);
