@@ -118,14 +118,15 @@ export function CalendarAgenda({ events = [], date, lawyers = [], onOpenEvent, o
             if (!event.target?.closest?.(".lw-calendarAgenda__add")) setAddAt(null);
             return;
         }
+        const min = clockMinutes(slotMin, 8 * 60);
+        const max = clockMinutes(slotMax, 19 * 60);
         const anchors = timelineAnchors(section);
-        const minutes = agendaHourFromPointer(event.clientY, anchors, {
-            min: clockMinutes(slotMin, 8 * 60),
-            max: clockMinutes(slotMax, 19 * 60),
-        });
+        let minutes = agendaHourFromPointer(event.clientY, anchors, { min, max });
         if (minutes == null) {
-            setAddAt(null);
-            return;
+            const box = timeCell.getBoundingClientRect();
+            const ratio = box.height ? (event.clientY - box.top) / box.height : 0;
+            const raw = min + (Math.min(1, Math.max(0, ratio)) * (max - min));
+            minutes = Math.min(max - 60, Math.max(min, Math.round(raw / 60) * 60));
         }
         const sectionBox = section.getBoundingClientRect();
         const column = timeCell.getBoundingClientRect();
