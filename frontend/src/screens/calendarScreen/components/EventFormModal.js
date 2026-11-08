@@ -163,7 +163,7 @@ function namedManagers(list, staff) {
     });
 }
 
-const CLIENT_PICKER_ROLES = new Set(["User", "ExternalSigner"]);
+const STAFF_PICKER_ROLES = new Set(["Admin", "Lawyer", "PlatformAdmin"]);
 
 function meetingPersonOptions(staffRows, clientRows, query) {
     const byId = new Map();
@@ -176,7 +176,7 @@ function meetingPersonOptions(staffRows, clientRows, query) {
     if (String(query || "").trim()) {
         (Array.isArray(clientRows) ? clientRows : []).forEach((person) => {
             const role = String(person?.Role || person?.role || "User");
-            if (!CLIENT_PICKER_ROLES.has(role)) return;
+            if (STAFF_PICKER_ROLES.has(role)) return;
             const id = Number(customerUserId(person));
             const name = customerDisplayName(person);
             if (!Number.isInteger(id) || id <= 0 || !name || byId.has(id)) return;
