@@ -1711,6 +1711,7 @@
     "calendarLawyerDefaults": "تذكيرات المحامين الافتراضية",
     "calendarClientDefaults": "تذكيرات العملاء الافتراضية",
     "calendarDefaultsHint": "الأوقات المحددة للمواعيد الجديدة. عدم الاختيار يعني عدم إرسال تذكيرات لهذه المجموعة. لا تتغير المواعيد الحالية.",
+    "calendarDefaultChannelType": "نوع التنبيه",
     "calendarReminderOptionsTitle": "أوقات التذكير المتاحة",
     "calendarReminderOptionsHint": "اختر أوقات التذكير المتاحة. تُحدد الأوقات الافتراضية للمحامين والعملاء بشكل منفصل أدناه.",
     "calendarLawyerChannelDefaults": "القنوات الافتراضية للمحامين",

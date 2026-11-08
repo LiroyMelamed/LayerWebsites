@@ -1916,8 +1916,11 @@ export default function PlatformSettingsScreen() {
                             </SimpleContainer>
                             {['LAWYER', 'CLIENT'].map((audience) => {
                                 const key = `CALENDAR_${audience}_REMINDER_DEFAULTS`;
+                                const channelKey = `CALENDAR_${audience}_REMINDER_CHANNEL_DEFAULTS`;
                                 const selected = new Set(parseOffsetsList(getVal(key, '30,60,120,1440,2880')));
                                 const allowed = new Set(parseOffsetsList(getVal('CALENDAR_REMINDER_OPTIONS', '0,15,30,60,120,1440,2880,10080')));
+                                const selectedChannels = new Set(parseChannelsList(getVal(channelKey, 'push,sms')));
+                                const allowedChannels = new Set(parseChannelsList(getVal('CALENDAR_REMINDER_CHANNELS', 'push,sms,email')));
                                 return <SimpleContainer key={key} className="lw-platformSettings__settingRow">
                                     <SimpleContainer className="lw-platformSettings__settingLabel">
                                         <TextBold14>{t(audience === 'LAWYER' ? 'platformSettings.calendarLawyerDefaults' : 'platformSettings.calendarClientDefaults')}</TextBold14>
@@ -1931,6 +1934,19 @@ export default function PlatformSettingsScreen() {
                                                 if (next.has(minutes)) next.delete(minutes); else next.add(minutes);
                                                 handleChange(key, [...next].join(','));
                                             }}><Text14>{t(labelKey)}</Text14></SimpleButton>)}
+                                    </SimpleContainer>
+                                    <SimpleContainer className="lw-platformSettings__settingLabel">
+                                        <TextBold14>{t('platformSettings.calendarDefaultChannelType')}</TextBold14>
+                                        <Text12>{t('platformSettings.calendarChannelDefaultsHint')}</Text12>
+                                    </SimpleContainer>
+                                    <SimpleContainer className="lw-platformSettings__reminderOptions">
+                                        {REMINDER_CHANNEL_OPTIONS.filter(c => allowedChannels.has(c.key)).map(channel => <SimpleButton key={channel.key}
+                                            className={`lw-platformSettings__dayChip ${selectedChannels.has(channel.key) ? 'lw-platformSettings__dayChip--active' : ''}`}
+                                            aria-pressed={selectedChannels.has(channel.key)} onPress={() => {
+                                                const next = new Set(selectedChannels);
+                                                if (next.has(channel.key)) next.delete(channel.key); else next.add(channel.key);
+                                                handleChange(channelKey, REMINDER_CHANNEL_OPTIONS.map(c => c.key).filter(k => next.has(k) && allowedChannels.has(k)).join(','));
+                                            }}><Text14>{t(channel.labelKey)}</Text14></SimpleButton>)}
                                     </SimpleContainer>
                                 </SimpleContainer>;
                             })}
@@ -1969,26 +1985,6 @@ export default function PlatformSettingsScreen() {
                                     })}
                                 </SimpleContainer>
                             </SimpleContainer>
-                            {['LAWYER', 'CLIENT'].map(audience => {
-                                const key = `CALENDAR_${audience}_REMINDER_CHANNEL_DEFAULTS`;
-                                const selected = new Set(parseChannelsList(getVal(key, 'push,sms')));
-                                const allowed = new Set(parseChannelsList(getVal('CALENDAR_REMINDER_CHANNELS', 'push,sms,email')));
-                                return <SimpleContainer key={key} className="lw-platformSettings__settingRow">
-                                    <SimpleContainer className="lw-platformSettings__settingLabel">
-                                        <TextBold14>{t(audience === 'LAWYER' ? 'platformSettings.calendarLawyerChannelDefaults' : 'platformSettings.calendarClientChannelDefaults')}</TextBold14>
-                                        <Text12>{t('platformSettings.calendarChannelDefaultsHint')}</Text12>
-                                    </SimpleContainer>
-                                    <SimpleContainer className="lw-platformSettings__reminderOptions">
-                                        {REMINDER_CHANNEL_OPTIONS.filter(c => allowed.has(c.key)).map(channel => <SimpleButton key={channel.key}
-                                            className={`lw-platformSettings__dayChip ${selected.has(channel.key) ? 'lw-platformSettings__dayChip--active' : ''}`}
-                                            aria-pressed={selected.has(channel.key)} onPress={() => {
-                                                const next = new Set(selected);
-                                                if (next.has(channel.key)) next.delete(channel.key); else next.add(channel.key);
-                                                handleChange(key, [...next].filter(k => allowed.has(k)).join(','));
-                                            }}><Text14>{t(channel.labelKey)}</Text14></SimpleButton>)}
-                                    </SimpleContainer>
-                                </SimpleContainer>;
-                            })}
                             <SimpleContainer className="lw-platformSettings__settingRow">
                                 <SimpleContainer className="lw-platformSettings__settingLabel">
                                     <TextBold14 className="lw-platformSettings__settingName">
