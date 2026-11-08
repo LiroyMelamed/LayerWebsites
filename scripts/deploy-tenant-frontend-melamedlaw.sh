@@ -20,6 +20,8 @@ source "$FTP_ENV"
 : "${MELAMED_LAW_FTP_USERNAME:?}"
 : "${MELAMED_LAW_FTP_PASSWORD:?}"
 : "${MELAMED_LAW_FTP_REMOTE_PATH:?}"
+FTP_ROOT="/${MELAMED_LAW_FTP_REMOTE_PATH#/}"
+FTP_ROOT="${FTP_ROOT%/}"
 
 cd "$ROOT/frontend"
 
@@ -39,9 +41,9 @@ export LFTP_PASSWORD="$MELAMED_LAW_FTP_PASSWORD"
 lftp -u "$MELAMED_LAW_FTP_USERNAME,$MELAMED_LAW_FTP_PASSWORD" "$MELAMED_LAW_FTP_SERVER" <<EOF || true
 set ssl:verify-certificate no
 set ftp:passive-mode true
-cd $MELAMED_LAW_FTP_REMOTE_PATH/static/js
+cd $FTP_ROOT/static/js
 mget -O "$PRESERVE_DIR" main.*.js
-cd $MELAMED_LAW_FTP_REMOTE_PATH/static/css
+cd $FTP_ROOT/static/css
 mget -O "$PRESERVE_DIR" main.*.css
 bye
 EOF
@@ -97,7 +99,7 @@ export LFTP_PASSWORD="$MELAMED_LAW_FTP_PASSWORD"
 lftp -u "$MELAMED_LAW_FTP_USERNAME,$MELAMED_LAW_FTP_PASSWORD" "$MELAMED_LAW_FTP_SERVER" <<EOF
 set ssl:verify-certificate no
 set ftp:passive-mode true
-cd $MELAMED_LAW_FTP_REMOTE_PATH
+cd $FTP_ROOT
 mirror -R --delete --verbose build/ .
 put public/tenants/melamedlaw/firm-logo.png -o firm-logo.png
 bye
