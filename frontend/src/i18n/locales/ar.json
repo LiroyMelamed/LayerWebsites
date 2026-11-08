@@ -3299,7 +3299,7 @@
     "intakeExistingClient": "عميل مسجل",
     "intakeNewLead": "عميل محتمل",
     "participantsSection": "المشاركون في الاجتماع",
-    "participantsHint": "يمكن إضافة عملاء مسجلين وعملاء محتملين إلى الاجتماع نفسه",
+    "participantsHint": "يُختار العميل المسجل في حقل من في الاجتماع. يُضاف العميل المحتمل هنا.",
     "leadName": "اسم العميل المحتمل",
     "leadPhone": "الهاتف",
     "leadEmail": "البريد الإلكتروني",
