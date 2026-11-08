@@ -136,9 +136,27 @@ function clientChipLabel(client) {
     return name || phone || "";
 }
 
+function staffRecordId(item) {
+    const id = item?.userid ?? item?.UserId ?? item?.userId ?? item?.id;
+    const n = Number(id);
+    return Number.isFinite(n) ? n : null;
+}
+
+function staffRecordName(item) {
+    return String(item?.name || item?.Name || "").trim();
+}
+
+function managerDisplayName(manager, admins) {
+    const named = String(manager?.name || "").trim();
+    if (named) return named;
+    const id = Number(manager?.userId);
+    const match = (Array.isArray(admins) ? admins : []).find((person) => staffRecordId(person) === id);
+    return staffRecordName(match);
+}
+
 /** Search result label for Admin / Lawyer / PlatformAdmin pickers. */
 function staffPickerLabel(item) {
-    const name = String(item?.name || item?.Name || "").trim();
+    const name = staffRecordName(item);
     const role = String(item?.role || "").trim();
     const roleHe = role === "Lawyer"
         ? "עו״ד"
@@ -500,6 +518,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     );
     const [managers, setManagers] = useState(() => _initialManagers(event));
     const [managerSearch, setManagerSearch] = useState("");
+    const [managerSearchActive, setManagerSearchActive] = useState(false);
     const [caseId, setCaseId] = useState(event?.caseId || null);
     const [caseName, setCaseName] = useState(event?.caseName || "");
 
@@ -647,17 +666,18 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
 
     useEffect(() => {
         if (isEdit) return;
-        const uid = _currentUserIdFromToken();
-        if (!uid || !Array.isArray(admins) || !admins.length) return;
+        if (!Array.isArray(admins) || !admins.length) return;
         setManagers((prev) => {
-            const idx = prev.findIndex((m) => Number(m.userId) === uid);
-            if (idx === -1 || prev[idx].name) return prev;
-            const me = admins.find((a) => Number(a.userid ?? a.UserId ?? a.id) === uid);
-            const name = me?.name ?? me?.Name ?? "";
-            if (!name) return prev;
-            const next = prev.slice();
-            next[idx] = { ...next[idx], name };
-            return next;
+            let changed = false;
+            const next = prev.map((manager) => {
+                if (String(manager?.name || "").trim()) return manager;
+                const match = admins.find((person) => staffRecordId(person) === Number(manager.userId));
+                const name = staffRecordName(match);
+                if (!name) return manager;
+                changed = true;
+                return { ...manager, name };
+            });
+            return changed ? next : prev;
         });
     }, [isEdit, admins]);
 
@@ -682,6 +702,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setClientUserId(s.clientUserId);
         setManagers(isEdit ? _initialManagers(event) : _defaultManagersForForm(event));
         setManagerSearch("");
+        setManagerSearchActive(false);
         setCaseId(s.caseId);
         setCaseName(s.caseName);
         setIntakeMode(s.intakeMode);
@@ -732,7 +753,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setReminderSubject("");
         setReminderTemplateKey("GENERAL");
         setReminderTemplateData({});
-    }, [eventIdentity, event, isEdit]);
+    }, [eventIdentity, isEdit]);
 
     // ─── Effect: load reminder email templates once ───────────────────────
     useEffect(() => {
@@ -1089,6 +1110,17 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     // Meeting attendees for appointments/hearings; leave picks who is away.
     // Reminder uses its own "את מי לתזכר" block; holiday has no person.
     const showManagersField = !isInternalScopedEventType(eventType) || isLeaveEventType;
+    const selectedManagerLabel = managers
+        .map((manager) => managerDisplayName(manager, admins))
+        .filter(Boolean)
+        .join(", ");
+    const managerFieldValue = managerSearchActive ? managerSearch : (selectedManagerLabel || managerSearch);
+    const searchManagers = (name) => {
+        const typed = String(name || "");
+        setManagerSearchActive(true);
+        setManagerSearch(typed);
+        searchAdmins(typed.trim() && typed.trim() !== selectedManagerLabel.trim() ? typed : "");
+    };
     const hasClientRecipient = clients.length > 0
         || leadParticipants.some((p) => p.name?.trim() || p.phone?.trim() || p.email?.trim())
         || !!(leadName.trim() || leadPhone.trim() || leadEmail.trim())
@@ -1891,23 +1923,32 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     }, [searchCustomers]);
 
     const handleManagerSelected = (selectedManagerName, resultItem) => {
+        const selectedLabel = String(selectedManagerName || "").trim();
         const selectedAdmin = resultItem || (Array.isArray(admins)
-            ? admins.find((a) => a.name?.trim() === selectedManagerName?.trim())
+            ? admins.find((person) => staffRecordName(person) === selectedLabel || staffPickerLabel(person) === selectedLabel)
             : null);
-        if (!selectedAdmin?.userid) return;
+        const userId = staffRecordId(selectedAdmin);
+        if (!userId) return;
+        const name = staffRecordName(selectedAdmin) || selectedLabel.split("·")[0].trim();
         setManagers((prev) => {
-            if (prev.some((m) => m.userId === selectedAdmin.userid)) return prev;
-            return [...prev, {
-                userId: selectedAdmin.userid,
-                name: selectedAdmin.name || selectedManagerName || "",
-            }];
+            if (prev.some((manager) => Number(manager.userId) === userId)) {
+                return prev.map((manager) => (
+                    Number(manager.userId) === userId && !String(manager.name || "").trim()
+                        ? { ...manager, name }
+                        : manager
+                ));
+            }
+            return [...prev, { userId, name }];
         });
         setManagerSearch("");
+        setManagerSearchActive(false);
         searchAdmins("");
     };
 
     const handleRemoveManager = (userId) => {
-        setManagers((prev) => prev.filter((m) => m.userId !== userId));
+        setManagers((prev) => prev.filter((m) => Number(m.userId) !== Number(userId)));
+        setManagerSearch("");
+        setManagerSearchActive(false);
     };
 
     const [markingRsvpUserId, setMarkingRsvpUserId] = useState(null);
@@ -2418,22 +2459,18 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
 
                             <SearchInput
                                 title={t("calendar.remindWho")}
-                                value={managerSearch}
-                                onSearch={(name) => {
-                                    setManagerSearch(name);
-                                    searchAdmins(name);
-                                }}
+                                value={managerFieldValue}
+                                onSearch={searchManagers}
                                 isPerforming={isSearchingAdmins}
                                 queryResult={admins}
                                 getButtonTextFunction={staffPickerLabel}
                                 buttonPressFunction={handleManagerSelected}
-                                clearOnSelect
                             />
                             {managers.length > 0 && (
                                 <SimpleContainer className="lw-eventFormModal__managerChips">
                                     {managers.map((m) => (
                                         <span key={m.userId} className="lw-eventFormModal__managerChip">
-                                            {m.name}
+                                            {managerDisplayName(m, admins)}
                                             <button
                                                 type="button"
                                                 className="lw-eventFormModal__chipRemove"
@@ -2590,16 +2627,12 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                         {isEdit && !isLeaveEventType && renderClientRsvpSection()}
                         <SearchInput
                             title={isLeaveEventType ? t("calendar.leaveWho") : t("calendar.manager")}
-                            value={managerSearch}
-                            onSearch={(name) => {
-                                setManagerSearch(name);
-                                searchAdmins(name);
-                            }}
+                            value={managerFieldValue}
+                            onSearch={searchManagers}
                             isPerforming={isSearchingAdmins}
                             queryResult={admins}
                             getButtonTextFunction={staffPickerLabel}
                             buttonPressFunction={handleManagerSelected}
-                            clearOnSelect
                         />
                         {isLeaveEventType && (
                             <Text12 color="#718096">{t("calendar.leaveWhoHint")}</Text12>
@@ -2608,7 +2641,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                             <SimpleContainer className="lw-eventFormModal__managerChips">
                                 {managers.map((m) => (
                                     <span key={m.userId} className="lw-eventFormModal__managerChip">
-                                        {m.name}
+                                        {managerDisplayName(m, admins)}
                                         <button
                                             type="button"
                                             className="lw-eventFormModal__chipRemove"
@@ -2947,8 +2980,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                             )}
 
                             {['lawyer', 'client'].map(audience => {
-                                const offsets = audience === 'lawyer' ? lawyerReminderOffsets : (hasClientRecipient ? clientReminderOffsets : []);
-                                if (!offsets.length) return null;
+                                if (audience === 'client' && !hasClientRecipient) return null;
                                 const channels = reminderChannels[audience] || reminderChannels;
                                 return <SimpleContainer key={audience} className="lw-eventFormModal__reminderChannels">
                                     <TextBold14 color={NAVY}>{t(audience === 'lawyer' ? 'calendar.lawyerReminderChannels' : 'calendar.clientReminderChannels')}</TextBold14>
