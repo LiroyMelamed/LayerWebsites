@@ -51,6 +51,20 @@ test('hovering the time line shows a plus and clicking it adds that hour', () =>
     expect(onCreateAt).toHaveBeenCalledWith(10 * 60, '2026-10-12');
 });
 
+test('a tap on the time line shows the plus without creating, and the next tap adds that hour', () => {
+    const onCreateAt = jest.fn();
+    const { container } = render(<CalendarAgenda events={events} date="2026-10-12" t={t} language="en" onCreateAt={onCreateAt} slotMin="08:00" slotMax="19:00" />);
+    const cell = container.querySelector('.lw-calendarTimeGroup__time');
+    const section = container.querySelector('.lw-calendarAgenda');
+    cell.getBoundingClientRect = () => ({ top: 100, bottom: 244, left: 300, right: 360, width: 60, height: 144, x: 300, y: 100, toJSON() { return {}; } });
+    cell.querySelector('i').getBoundingClientRect = () => ({ top: 140, bottom: 147, left: 326, right: 333, width: 7, height: 7, x: 326, y: 140, toJSON() { return {}; } });
+    section.getBoundingClientRect = () => ({ top: 80, left: 0, width: 400, height: 300, x: 0, y: 80, toJSON() { return {}; } });
+    fireEvent.click(cell, { clientY: 212, clientX: 330 });
+    expect(onCreateAt).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'calendar.addEvent 10:00' }));
+    expect(onCreateAt).toHaveBeenCalledWith(10 * 60, '2026-10-12');
+});
+
 test('an all-day line still offers an hour from where the pointer rests', () => {
     const onCreateAt = jest.fn();
     const holiday = { ...events[0], id: 'holiday', title: 'Display holiday', allDay: true, start: '2026-10-12', end: '2026-10-13', extendedProps: { hint: true, eventType: 'holiday' } };

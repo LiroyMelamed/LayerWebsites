@@ -138,8 +138,13 @@ export function CalendarAgenda({ events = [], date, lawyers = [], onOpenEvent, o
             label: `${hour}:00`,
         });
     };
+    const placeFromClick = (event) => {
+        if (event.target?.closest?.(".lw-calendarAgenda__add")) return;
+        trackPointer(event);
+    };
     return <section ref={sectionRef} className={`lw-calendarAgenda${onCreateAt ? " is-addable" : ""}`} aria-label={calendarFormatDate(day, language, { weekday: 'long', day: 'numeric', month: 'long' })}
-        onMouseMove={trackPointer} onPointerMove={trackPointer} onMouseLeave={() => setAddAt(null)} onPointerLeave={() => setAddAt(null)}>
+        onMouseMove={trackPointer} onPointerMove={trackPointer} onClick={placeFromClick}
+        onMouseLeave={() => setAddAt(null)} onPointerLeave={() => setAddAt(null)}>
         {heading && <div className="lw-calendarAgenda__heading">
             <strong>{calendarFormatDate(day, language, { weekday: 'long', day: 'numeric', month: 'long' })}</strong>
             <span>{t('calendar.eventsCount', { count: list.length })}</span>
