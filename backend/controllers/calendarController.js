@@ -51,7 +51,7 @@ const {
 } = require('../lib/calendarEventReminders');
 const { describeQuietDeferral } = require('../lib/shabbatDeferral');
 const { resolveShortLink } = require('../lib/publicShortLinks');
-const { lawyerMatchSql, personalCalendarSql } = require('../lib/calendarVisibility');
+const { lawyerMatchSql, lawyerMatchAnySql, parseLawyerIdList, personalCalendarSql } = require('../lib/calendarVisibility');
 const { isEventCancelled, normalizeEventStatus } = require('../lib/calendarEventStatus');
 const { signOAuthState, verifyOAuthState } = require('../lib/calendarOAuthState');
 const { sendMessage } = require('../utils/sendMessage');
@@ -808,7 +808,8 @@ async function _attachLinkedReminderId(sanitized) {
  *
  * Query parameters (all optional):
  *   • scope         'mine' (default) | 'firm' — mine = personal (managers/holidays); firm = all
- *   • lawyer_id     int   — pin to owner or manager (overrides scope)
+ *   • lawyer_id     int   — pin to one owner or manager (firm scope)
+ *   • lawyer_ids    csv   — pin to several owners or managers (firm scope)
  *   • client_id     int   — events linked to this client_user_id
  *   • case_id       int   — events for this case
  *   • event_type    'appointment' | 'leave' | 'hearing' | 'reminder' | 'holiday'
@@ -825,6 +826,7 @@ const listEvents = async (req, res) => {
         from,
         to,
         lawyer_id,
+        lawyer_ids,
         client_id,
         case_id,
         event_type,
@@ -837,20 +839,25 @@ const listEvents = async (req, res) => {
     let idx = 1;
 
     // Contextual privacy:
-    //   • lawyer_id wins (owner, legacy manager column, or junction managers)
+    //   • lawyer_id / lawyer_ids win (owner, legacy manager column, or junction managers)
     //   • else scope=mine  → holidays, manager-tagged, or owned with connected lawyers
     //   • else scope=firm  → no owner filter (firm-wide)
-    const requestedLawyerId = lawyer_id ? parseInt(lawyer_id, 10) : null;
-    if (lawyer_id && !Number.isFinite(requestedLawyerId)) {
+    const requestedLawyers = parseLawyerIdList(lawyer_id, lawyer_ids);
+    if (requestedLawyers.error) {
         return res.status(400).json({ message: 'מזהה עורך דין לא תקין' });
     }
-    if (requestedLawyerId) {
+    if (requestedLawyers.ids.length) {
         if (scope !== 'firm') {
             return res.status(400).json({ message: 'סינון עורך דין זמין רק בתצוגת משרד' });
         }
-        conditions.push(_lawyerMatchSql(idx));
+        if (requestedLawyers.ids.length === 1) {
+            conditions.push(_lawyerMatchSql(idx));
+            params.push(requestedLawyers.ids[0]);
+        } else {
+            conditions.push(lawyerMatchAnySql(idx));
+            params.push(requestedLawyers.ids);
+        }
         idx++;
-        params.push(requestedLawyerId);
     } else if (scope !== 'firm') {
         conditions.push(_personalCalendarSql(idx));
         idx++;
