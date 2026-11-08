@@ -12,8 +12,8 @@ export const WEEKDAY_LABELS = [
 
 const DEFAULT_START = "08:00";
 const DEFAULT_END = "18:00";
-const DEFAULT_VISIBLE_START = "05:00";
-const DEFAULT_VISIBLE_END = "21:00";
+const DEFAULT_VISIBLE_START = "08:00";
+const DEFAULT_VISIBLE_END = "19:00";
 
 function normalizeTime(str, fallback) {
     const m = /^(\d{2}):(\d{2})/.exec(String(str || ""));

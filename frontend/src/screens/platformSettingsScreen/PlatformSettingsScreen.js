@@ -1733,7 +1733,7 @@ export default function PlatformSettingsScreen() {
                                 <SimpleContainer className="lw-platformSettings__settingInput">
                                     <SettingInput
                                         setting={{ valueType: "time", label: t("platformSettings.calendarVisibleHoursStart") }}
-                                        value={getVal("CALENDAR_VISIBLE_HOURS_START", "05:00")}
+                                        value={getVal("CALENDAR_VISIBLE_HOURS_START", "08:00")}
                                         onChange={(val) => handleChange("CALENDAR_VISIBLE_HOURS_START", val)}
                                     />
                                 </SimpleContainer>
@@ -1747,7 +1747,7 @@ export default function PlatformSettingsScreen() {
                                 <SimpleContainer className="lw-platformSettings__settingInput">
                                     <SettingInput
                                         setting={{ valueType: "time", label: t("platformSettings.calendarVisibleHoursEnd") }}
-                                        value={getVal("CALENDAR_VISIBLE_HOURS_END", "22:00")}
+                                        value={getVal("CALENDAR_VISIBLE_HOURS_END", "19:00")}
                                         onChange={(val) => handleChange("CALENDAR_VISIBLE_HOURS_END", val)}
                                     />
                                 </SimpleContainer>
