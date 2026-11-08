@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Repeat2, MapPin, Check, Clock3, CircleAlert, X } from 'lucide-react';
+import React, { useMemo, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight, Repeat2, MapPin, Check, Clock3, CircleAlert, Plus, X } from 'lucide-react';
 import SimpleButton from '../../../components/simpleComponents/SimpleButton';
 import { colorForKey } from '../utils/lawyerColors';
 import { CalendarOwners } from './CalendarOwners';
@@ -7,7 +7,7 @@ import {
     calendarConflictOwners, calendarDateKey, calendarEventPeopleText, calendarEventStartTime,
     calendarEventsForDay, calendarEventTime, calendarEventTypeKey, calendarFormatDate,
     calendarIsCancelled, calendarIsDisplayOnly, calendarOwners, calendarRawEvent,
-    calendarRsvp, calendarRsvpLabel, calendarWeekDates,
+    calendarRsvp, calendarRsvpLabel, calendarWeekDates, agendaHourFromPointer,
 } from '../utils/calendarPresentation';
 import './CalendarAgenda.scss';
 export { CalendarOwners } from './CalendarOwners';
@@ -77,8 +77,29 @@ export function CalendarDayRibbon({ events = [], date, onSelectDate, t, language
     </div>;
 }
 
-export function CalendarAgenda({ events = [], date, lawyers = [], onOpenEvent, t, language, heading = false }) {
+function clockMinutes(value, fallback) {
+    const match = /^(\d{1,2}):(\d{2})/.exec(String(value || ""));
+    return match ? (Number(match[1]) * 60) + Number(match[2]) : fallback;
+}
+
+function timelineAnchors(section) {
+    return [...section.querySelectorAll(".lw-calendarTimeGroup__time")].map((cell) => {
+        const mark = cell.querySelector("i") || cell;
+        const box = mark.getBoundingClientRect();
+        const match = /^(\d{1,2}):(\d{2})/.exec((cell.querySelector("bdi")?.textContent || "").trim());
+        return {
+            minutes: match ? (Number(match[1]) * 60) + Number(match[2]) : null,
+            y: box.top + (box.height / 2),
+            left: cell.getBoundingClientRect().left,
+            width: cell.getBoundingClientRect().width,
+        };
+    });
+}
+
+export function CalendarAgenda({ events = [], date, lawyers = [], onOpenEvent, onCreateAt, slotMin = "08:00", slotMax = "19:00", t, language, heading = false }) {
     const day = calendarDateKey(date);
+    const sectionRef = useRef(null);
+    const [addAt, setAddAt] = useState(null);
     const list = useMemo(() => calendarEventsForDay(events, day), [events, day]);
     const groups = useMemo(() => {
         const grouped = new Map();
@@ -89,7 +110,35 @@ export function CalendarAgenda({ events = [], date, lawyers = [], onOpenEvent, t
         });
         return [...grouped.entries()];
     }, [list, day, language, t]);
-    return <section className="lw-calendarAgenda" aria-label={calendarFormatDate(day, language, { weekday: 'long', day: 'numeric', month: 'long' })}>
+    const trackPointer = (event) => {
+        if (!onCreateAt) return;
+        const section = sectionRef.current;
+        const timeCell = event.target?.closest?.(".lw-calendarTimeGroup__time");
+        if (!section || !timeCell || !section.contains(timeCell)) {
+            if (!event.target?.closest?.(".lw-calendarAgenda__add")) setAddAt(null);
+            return;
+        }
+        const anchors = timelineAnchors(section);
+        const minutes = agendaHourFromPointer(event.clientY, anchors, {
+            min: clockMinutes(slotMin, 8 * 60),
+            max: clockMinutes(slotMax, 19 * 60),
+        });
+        if (minutes == null) {
+            setAddAt(null);
+            return;
+        }
+        const sectionBox = section.getBoundingClientRect();
+        const column = timeCell.getBoundingClientRect();
+        const hour = String(Math.floor(minutes / 60)).padStart(2, "0");
+        setAddAt({
+            top: event.clientY - sectionBox.top,
+            left: (column.left + (column.width / 2)) - sectionBox.left,
+            minutes,
+            label: `${hour}:00`,
+        });
+    };
+    return <section ref={sectionRef} className={`lw-calendarAgenda${onCreateAt ? " is-addable" : ""}`} aria-label={calendarFormatDate(day, language, { weekday: 'long', day: 'numeric', month: 'long' })}
+        onMouseMove={trackPointer} onPointerMove={trackPointer} onMouseLeave={() => setAddAt(null)} onPointerLeave={() => setAddAt(null)}>
         {heading && <div className="lw-calendarAgenda__heading">
             <strong>{calendarFormatDate(day, language, { weekday: 'long', day: 'numeric', month: 'long' })}</strong>
             <span>{t('calendar.eventsCount', { count: list.length })}</span>
@@ -101,6 +150,11 @@ export function CalendarAgenda({ events = [], date, lawyers = [], onOpenEvent, t
                 {group.map((event) => <CalendarMeeting key={event.id} event={event} events={events} day={day} lawyers={lawyers} onOpenEvent={onOpenEvent} t={t} language={language} />)}
             </div>
         </div>)}
+        {addAt && <button type="button" className="lw-calendarAgenda__add" style={{ top: addAt.top, left: addAt.left }}
+            aria-label={`${t("calendar.addEvent")} ${addAt.label}`} title={addAt.label}
+            onClick={() => onCreateAt?.(addAt.minutes, day)}>
+            <Plus size={16} aria-hidden="true" />
+        </button>}
     </section>;
 }
 
