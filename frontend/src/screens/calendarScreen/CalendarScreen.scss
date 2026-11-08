@@ -905,8 +905,8 @@ $calendar-rsvp-desktop-min: 80rem;
     .lw-calendarScreen__expandBtn { min-block-size: 2.75rem; }
     .lw-calendarScreen__sidebar { margin: 0; position: static; max-block-size: none; }
     .lw-calendarScreen__chip { min-block-size: 2.75rem; }
-    .fc .fc-timegrid-slot { block-size: 2.5rem; }
-    .fc .fc-timegrid-event-harness .fc-event { min-block-size: 2.75rem; overflow: hidden; }
+    .fc .fc-timegrid-slot { block-size: auto; height: auto; }
+    .fc .fc-timegrid-event-harness .fc-event { min-block-size: 0; overflow: hidden; }
     .fc .fc-daygrid-event { min-block-size: 1.75rem; }
     .fc .fc-timegrid-slot-label-cushion { font-variant-numeric: tabular-nums; }
     .fc .fc-daygrid-day-number { min-block-size: 2.25rem; min-inline-size: 2.25rem; display: flex; align-items: center; justify-content: center; }

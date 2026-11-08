@@ -407,6 +407,8 @@ export default function CalendarScreen() {
     const urlCalendarInitRef = useRef(false);
 
     const calendarRef = useRef(null);
+    const engineRef = useRef(null);
+    const [timeGridHeight, setTimeGridHeight] = useState(640);
     const fetchRangeRef = useRef({ from: null, to: null });
     const hasAutoOpenedEventRef = useRef(false);
     const fetchEventsRef = useRef(null);
@@ -483,7 +485,7 @@ export default function CalendarScreen() {
             }
         });
         return () => cancelAnimationFrame(handle);
-    }, [calendarExpanded, view, phone, timeLayout]);
+    }, [calendarExpanded, view, phone, timeLayout, timeGridHeight]);
 
     // ── Working-hours config (per weekday) ─────────────────────────────────
     const [workingSchedule, setWorkingSchedule] = useState(() => defaultSchedule());
@@ -1030,6 +1032,27 @@ export default function CalendarScreen() {
         }) : events;
     }, [events, query, lawyers, i18n.language]);
     const agendaMode = !timeLayout && (view === "timeGridDay" || (phone && view === "timeGridWeek"));
+    const fitTimeGrid = view !== "dayGridMonth" && !agendaMode;
+    useEffect(() => {
+        if (!fitTimeGrid) return undefined;
+        const measure = () => {
+            const node = engineRef.current;
+            if (!node) return;
+            const scroll = node.closest(".lw-simpleScrollView");
+            const limit = scroll ? scroll.getBoundingClientRect().bottom : window.innerHeight;
+            const next = Math.max(320, Math.floor(limit - node.getBoundingClientRect().top - 8));
+            setTimeGridHeight((prev) => (prev === next ? prev : next));
+        };
+        measure();
+        const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+        const scroll = engineRef.current?.closest(".lw-simpleScrollView");
+        if (observer && scroll) observer.observe(scroll);
+        window.addEventListener("resize", measure);
+        return () => {
+            observer?.disconnect();
+            window.removeEventListener("resize", measure);
+        };
+    }, [fitTimeGrid, calendarExpanded, phone]);
     const locale = String(i18n.language || "he").startsWith("ar") ? "ar" : String(i18n.language || "he").startsWith("en") ? "en-GB" : "he-IL";
     const dateTitle = useMemo(() => {
         const date = new Date(`${selectedDate}T12:00:00Z`);
@@ -1322,7 +1345,7 @@ export default function CalendarScreen() {
                             {agendaMode && (view === "timeGridWeek"
                                 ? <CalendarWeekOverview {...agendaProps} onOpenDay={(date) => selectView("timeGridDay", date)} />
                                 : <CalendarAgenda {...agendaProps} />)}
-                            <div className={`lw-calendarRedesign__engine${agendaMode ? " is-hidden" : ""}${phone && view === "dayGridMonth" ? " is-phoneMonth" : ""}`}>
+                            <div ref={engineRef} className={`lw-calendarRedesign__engine${agendaMode ? " is-hidden" : ""}${phone && view === "dayGridMonth" ? " is-phoneMonth" : ""}`}>
                             <FullCalendar
                                 ref={calendarRef}
                                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, luxonPlugin]}
@@ -1491,9 +1514,10 @@ export default function CalendarScreen() {
                                 selectLongPressDelay={350}
                                 {...calendarEventInteractionOptions(phone)}
                                 hiddenDays={[]}
-                                height={view === "dayGridMonth" ? "auto" : (calendarExpanded ? "auto" : (phone ? 560 : 640))}
+                                height={fitTimeGrid ? timeGridHeight : "auto"}
                                 scrollTime="08:00:00"
                                 slotDuration="00:30:00"
+                                slotLabelInterval="01:00:00"
                                 expandRows
                                 businessHours={businessHours}
                                 slotMinTime={slotRange.min}
