@@ -51,6 +51,19 @@ test('hovering the time line shows a plus and clicking it adds that hour', () =>
     expect(onCreateAt).toHaveBeenCalledWith(10 * 60, '2026-10-12');
 });
 
+test('an all-day line still offers an hour from where the pointer rests', () => {
+    const onCreateAt = jest.fn();
+    const holiday = { ...events[0], id: 'holiday', title: 'Display holiday', allDay: true, start: '2026-10-12', end: '2026-10-13', extendedProps: { hint: true, eventType: 'holiday' } };
+    const { container } = render(<CalendarAgenda events={[holiday]} date="2026-10-12" t={t} language="en" onCreateAt={onCreateAt} slotMin="08:00" slotMax="19:00" />);
+    const cell = container.querySelector('.lw-calendarTimeGroup__time');
+    const section = container.querySelector('.lw-calendarAgenda');
+    cell.getBoundingClientRect = () => ({ top: 100, bottom: 210, left: 0, right: 60, width: 60, height: 110, x: 0, y: 100, toJSON() { return {}; } });
+    section.getBoundingClientRect = () => ({ top: 0, left: 0, width: 400, height: 300, x: 0, y: 0, toJSON() { return {}; } });
+    fireEvent.mouseMove(cell, { clientY: 100, clientX: 30 });
+    fireEvent.click(screen.getByRole('button', { name: 'calendar.addEvent 08:00' }));
+    expect(onCreateAt).toHaveBeenCalledWith(8 * 60, '2026-10-12');
+});
+
 test('computed holiday is readable but cannot call the editor', () => {
     const onOpenEvent = jest.fn();
     const holiday = { ...events[0], id: 'holiday', title: 'Display holiday', allDay: true, start: '2026-10-12', end: '2026-10-13', extendedProps: { hint: true, eventType: 'holiday' } };
