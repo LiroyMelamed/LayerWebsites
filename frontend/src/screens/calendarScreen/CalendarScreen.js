@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect, useMemo } from "react"
 import { useTranslation } from "react-i18next";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import FullCalendar from "@fullcalendar/react";
-import { ChevronLeft, ChevronRight, Search, RotateCw } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock, Filter, List, Maximize2, Minimize2, RotateCw, Search } from "lucide-react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -47,6 +47,8 @@ import EventFormModal from "./components/EventFormModal";
 import PersonalSyncModal from "./components/PersonalSyncModal";
 import CalendarInvitationImport from "./components/CalendarInvitationImport";
 import { colorForKey, colorKeyForEvent, leaveColor, holidayColor, getEventTypeDefaultColor, isStockEventColor } from "./utils/lawyerColors";
+
+const calendarIconButtonStyle = { padding: 0, minWidth: 0 };
 import { toastError, toastSuccess, toastWarning } from "../../components/ui/toast";
 import { buildNewEventPrefill } from "./utils/eventDefaults";
 import { calendarEventInteractionOptions } from "./utils/eventInteraction";
@@ -443,6 +445,7 @@ export default function CalendarScreen() {
     });
     const [query, setQuery] = useState("");
     const [timeLayout, setTimeLayout] = useState(false);
+    const [phoneWeekList, setPhoneWeekList] = useState(false);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
     const [holidayError, setHolidayError] = useState(false);
@@ -498,7 +501,7 @@ export default function CalendarScreen() {
             }
         });
         return () => cancelAnimationFrame(handle);
-    }, [calendarExpanded, view, phone, timeLayout, timeGridHeight]);
+    }, [calendarExpanded, view, phone, timeLayout, phoneWeekList, timeGridHeight]);
 
     // ── Working-hours config (per weekday) ─────────────────────────────────
     const [workingSchedule, setWorkingSchedule] = useState(() => defaultSchedule());
@@ -1074,7 +1077,11 @@ export default function CalendarScreen() {
             return words.every((word) => haystack.includes(word));
         }) : events;
     }, [events, query, lawyers, i18n.language]);
-    const agendaMode = !timeLayout && (view === "timeGridDay" || (phone && view === "timeGridWeek"));
+    const phoneWeek = phone && view === "timeGridWeek";
+    // A phone week opens on the same time grid as desktop. Friday and Saturday
+    // stay out until the calendar is expanded, so five workdays fit the width.
+    const agendaMode = phoneWeek ? phoneWeekList : (!timeLayout && view === "timeGridDay");
+    const hiddenDays = phoneWeek && !calendarExpanded ? [5, 6] : [];
     const fitTimeGrid = view !== "dayGridMonth" && !agendaMode;
     useEffect(() => {
         if (!fitTimeGrid) return undefined;
@@ -1102,11 +1109,15 @@ export default function CalendarScreen() {
         if (view === "dayGridMonth") return new Intl.DateTimeFormat(locale, { month: "long", year: "numeric", timeZone: "UTC" }).format(date);
         if (view === "timeGridWeek") {
             const first = new Date(date); first.setUTCDate(first.getUTCDate() - first.getUTCDay());
-            const last = new Date(first); last.setUTCDate(last.getUTCDate() + 6);
-            return new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).formatRange(first, last);
+            const last = new Date(first); last.setUTCDate(last.getUTCDate() + (phone && !calendarExpanded ? 4 : 6));
+            const options = phone
+                ? { day: "numeric", month: "numeric", timeZone: "UTC" }
+                : { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" };
+            return new Intl.DateTimeFormat(locale, options).formatRange(first, last);
         }
+        if (phone) return new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "numeric", timeZone: "UTC" }).format(date);
         return new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(date);
-    }, [selectedDate, view, locale]);
+    }, [selectedDate, view, locale, phone, calendarExpanded]);
     const selectDate = (date) => {
         setSelectedDate(date);
         calendarRef.current?.getApi()?.gotoDate(date);
@@ -1203,51 +1214,54 @@ export default function CalendarScreen() {
                         {/* Calendar */}
                         <SimpleCard className={`lw-calendarScreen__calendarCard${calendarExpanded ? " is-expanded" : ""}`}>
                             <SimpleContainer className="lw-calendarScreen__calendarToolbar">
-                                <div className="lw-calendarRedesign__primaryTools">
+                                <div className="lw-calendarRedesign__nav">
                                     <div className="lw-calendarRedesign__date">
                                         <SimpleButton type="button" aria-label={t("calendar.previousPeriod")} className="lw-calendarRedesign__arrow" onPress={() => moveDate(-1)}>
-                                            {locale === "en-GB" ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+                                            {locale === "en-GB" ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
                                         </SimpleButton>
                                         <h2>{dateTitle}</h2>
                                         <SimpleButton type="button" aria-label={t("calendar.nextPeriod")} className="lw-calendarRedesign__arrow" onPress={() => moveDate(1)}>
-                                            {locale === "en-GB" ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+                                            {locale === "en-GB" ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
                                         </SimpleButton>
                                     </div>
-                                    <div className="lw-calendarRedesign__quickTools">
-                                    <SecondaryButton size={buttonSizes.SMALL} onPress={() => selectDate(toLocalYmd(new Date()))}>{t("calendar.today")}</SecondaryButton>
-                                    <SimpleButton type="button" className="lw-calendarRedesign__arrow" onPress={() => fetchEvents(null, { force: true })} aria-label={t("calendar.refreshEvents")}><RotateCw size={18} /></SimpleButton>
-                                    {view !== "dayGridMonth" && <SecondaryButton size={buttonSizes.SMALL} onPress={() => setTimeLayout((value) => !value)} aria-pressed={timeLayout}>
-                                        {timeLayout ? t("calendar.agendaLayout") : t("calendar.hoursLayout")}
+                                    <SegmentedSwitch ariaLabel={t("calendar.viewAria")} value={view} onChange={selectView}
+                                        options={[
+                                            { value: "timeGridDay", label: t("calendar.dayView") },
+                                            { value: "timeGridWeek", label: t("calendar.weekView") },
+                                            { value: "dayGridMonth", label: t("calendar.monthView") },
+                                        ]} />
+                                    <div className="lw-calendarRedesign__navActions">
+                                    <SecondaryButton size={buttonSizes.SMALL} className="lw-calendarRedesign__iconBtn" style={calendarIconButtonStyle} onPress={() => selectDate(toLocalYmd(new Date()))} aria-label={t("calendar.today")} title={t("calendar.today")}>
+                                        <CalendarDays size={18} aria-hidden="true" />
+                                    </SecondaryButton>
+                                    <SimpleButton type="button" className="lw-calendarRedesign__arrow" onPress={() => fetchEvents(null, { force: true })} aria-label={t("calendar.refreshEvents")} title={t("calendar.refreshEvents")}><RotateCw size={18} /></SimpleButton>
+                                    {view !== "dayGridMonth" && <SecondaryButton size={buttonSizes.SMALL} className="lw-calendarRedesign__iconBtn" style={calendarIconButtonStyle} onPress={() => {
+                                        if (phoneWeek) setPhoneWeekList((value) => !value);
+                                        else setTimeLayout((value) => !value);
+                                    }} aria-pressed={phoneWeek ? !phoneWeekList : timeLayout} aria-label={phoneWeek ? (phoneWeekList ? t("calendar.hoursLayout") : t("calendar.agendaLayout")) : (timeLayout ? t("calendar.agendaLayout") : t("calendar.hoursLayout"))} title={phoneWeek ? (phoneWeekList ? t("calendar.hoursLayout") : t("calendar.agendaLayout")) : (timeLayout ? t("calendar.agendaLayout") : t("calendar.hoursLayout"))}>
+                                        {(phoneWeek ? phoneWeekList : !timeLayout) ? <Clock size={18} aria-hidden="true" /> : <List size={18} aria-hidden="true" />}
                                     </SecondaryButton>}
+                                    <SecondaryButton
+                                        size={buttonSizes.SMALL}
+                                        className="lw-calendarRedesign__iconBtn lw-calendarScreen__expandBtn"
+                                        style={calendarIconButtonStyle}
+                                        onPress={() => setCalendarExpanded((v) => !v)}
+                                        aria-label={calendarExpanded ? t("calendar.collapseCalendarAria") : t("calendar.expandCalendarAria")}
+                                        title={calendarExpanded ? t("calendar.collapseCalendar") : t("calendar.expandCalendar")}
+                                    >
+                                        {calendarExpanded ? <Minimize2 size={18} aria-hidden="true" /> : <Maximize2 size={18} aria-hidden="true" />}
+                                    </SecondaryButton>
+                                    <SecondaryButton size={buttonSizes.SMALL}
+                                        className={`lw-calendarRedesign__iconBtn${hasActiveFilters || query ? " lw-calendarScreen__filtersActive" : ""}`}
+                                        style={calendarIconButtonStyle}
+                                        onPress={() => setFiltersPanelOpen((v) => !v)}
+                                        aria-expanded={filtersPanelOpen} aria-controls="calendar-advanced-filters"
+                                        aria-pressed={filtersPanelOpen}
+                                        aria-label={filtersPanelOpen ? t("calendar.closeFiltersAria") : t("calendar.openFiltersAria")}
+                                        title={t("calendar.filtersTitle")}>
+                                        <Filter size={18} aria-hidden="true" />
+                                    </SecondaryButton>
                                     </div>
-                                </div>
-                <div className="lw-calendarRedesign__controls">
-
-                    <SegmentedSwitch ariaLabel={t("calendar.viewAria")} value={view} onChange={selectView}
-                        options={[
-                            { value: "timeGridDay", label: t("calendar.dayView") },
-                            { value: "timeGridWeek", label: t("calendar.weekView") },
-                            { value: "dayGridMonth", label: t("calendar.monthView") },
-                        ]} />
-
-
-                </div>
-                                <div className="lw-calendarRedesign__tools">
-                                <SecondaryButton
-                                    size={buttonSizes.SMALL}
-                                    className="lw-calendarScreen__expandBtn"
-                                    onPress={() => setCalendarExpanded((v) => !v)}
-                                    aria-label={calendarExpanded ? t("calendar.collapseCalendarAria") : t("calendar.expandCalendarAria")}
-                                >
-                                    {calendarExpanded ? t("calendar.collapseCalendar") : t("calendar.expandCalendar")}
-                                </SecondaryButton>
-                    <SecondaryButton size={buttonSizes.SMALL}
-                        onPress={() => setFiltersPanelOpen((v) => !v)}
-                        aria-expanded={filtersPanelOpen} aria-controls="calendar-advanced-filters"
-                        aria-label={filtersPanelOpen ? t("calendar.closeFiltersAria") : t("calendar.openFiltersAria")}
-                        className={hasActiveFilters || query ? "lw-calendarScreen__filtersActive" : undefined}>
-                        {t("calendar.filtersTitle")}{hasActiveFilters || query ? " •" : ""}
-                    </SecondaryButton>
                                 </div>
                             </SimpleContainer>
                     {/* Advanced filters stay inside the calendar, including fullscreen. */}
@@ -1387,7 +1401,7 @@ export default function CalendarScreen() {
                             {agendaMode && (view === "timeGridWeek"
                                 ? <CalendarWeekOverview {...agendaProps} onOpenDay={(date) => selectView("timeGridDay", date)} />
                                 : <CalendarAgenda {...agendaProps} />)}
-                            <div ref={engineRef} className={`lw-calendarRedesign__engine${agendaMode ? " is-hidden" : ""}${phone && view === "dayGridMonth" ? " is-phoneMonth" : ""}`}>
+                            <div ref={engineRef} className={`lw-calendarRedesign__engine${agendaMode ? " is-hidden" : ""}${phone && view === "dayGridMonth" ? " is-phoneMonth" : ""}${phoneWeek && !agendaMode ? " is-compactWeek" : ""}${phoneWeek && calendarExpanded && !agendaMode ? " is-phoneWeekWide" : ""}`}>
                             <FullCalendar
                                 ref={calendarRef}
                                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, luxonPlugin]}
@@ -1555,7 +1569,8 @@ export default function CalendarScreen() {
                                 longPressDelay={350}
                                 selectLongPressDelay={350}
                                 {...calendarEventInteractionOptions(phone)}
-                                hiddenDays={[]}
+                                hiddenDays={hiddenDays}
+                                {...(phoneWeek ? { dayHeaderFormat: { weekday: "narrow", day: "numeric", omitCommas: true } } : {})}
                                 height={fitTimeGrid ? timeGridHeight : "auto"}
                                 scrollTime="08:00:00"
                                 slotDuration="00:30:00"
