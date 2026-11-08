@@ -47,8 +47,6 @@ import EventFormModal from "./components/EventFormModal";
 import PersonalSyncModal from "./components/PersonalSyncModal";
 import CalendarInvitationImport from "./components/CalendarInvitationImport";
 import { colorForKey, colorKeyForEvent, leaveColor, holidayColor, getEventTypeDefaultColor, isStockEventColor } from "./utils/lawyerColors";
-
-const calendarIconButtonStyle = { padding: 0, minWidth: 0 };
 import { toastError, toastSuccess, toastWarning } from "../../components/ui/toast";
 import { buildNewEventPrefill } from "./utils/eventDefaults";
 import { calendarEventInteractionOptions } from "./utils/eventInteraction";
@@ -62,6 +60,8 @@ import {
 } from "./utils/workingHours";
 
 import "./CalendarScreen.scss";
+
+const calendarIconButtonStyle = { padding: 0, minWidth: 0 };
 
 export const CalendarScreenName = "/CalendarScreen";
 
