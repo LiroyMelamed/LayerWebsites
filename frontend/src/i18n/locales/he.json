@@ -2341,7 +2341,8 @@
     "calendarInviteRsvpHint": "הזמנת הגעה נשלחת בהקדם. תזכורות נשלחות לפי לוח הזמנים שנבחר — ללא תלות בסטטוס RSVP.",
     "calendarLawyerDefaults": "ברירת מחדל — תזכורות לעורכי דין",
     "calendarClientDefaults": "ברירת מחדל — תזכורות ללקוחות",
-    "calendarDefaultsHint": "הזמנים שיסומנו מראש באירוע חדש. ללא בחירה לא יישלחו תזכורות לקבוצה זו. אירועים קיימים אינם משתנים.",
+    "calendarDefaultsHint": "הזמנים וסוג ההתראה שיסומנו מראש באירוע חדש. ללא בחירת זמן לא יישלחו תזכורות לקבוצה זו. אירועים קיימים אינם משתנים.",
+    "calendarDefaultChannelType": "סוג ההתראה",
     "calendarLawyerChannelDefaults": "ערוצי ברירת מחדל לעורכי דין",
     "calendarClientChannelDefaults": "ערוצי ברירת מחדל ללקוחות",
     "calendarChannelDefaultsHint": "נבחרים מראש באירוע חדש. אפשר לשנות בכל אירוע; אירועים קיימים נשארים כפי שנשמרו."
