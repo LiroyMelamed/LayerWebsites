@@ -3007,7 +3007,7 @@
     "intakeExistingClient": "Existing client",
     "intakeNewLead": "Prospective client",
     "participantsSection": "Meeting participants",
-    "participantsHint": "You can add registered clients and prospective clients to the same meeting",
+    "participantsHint": "Choose a registered client in Who is in the meeting. Add a prospective client here.",
     "leadName": "Prospective client's name",
     "leadPhone": "Phone",
     "leadEmail": "Email",

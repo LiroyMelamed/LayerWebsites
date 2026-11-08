@@ -116,6 +116,7 @@ const getStaffByName = async (req, res) => {
 
     try {
         const hidden = _getHiddenAdminIds();
+        const selfId = Number(req.user?.UserId);
         const params = [STAFF_ROLES];
         let query = `
             SELECT userid, name, email, phonenumber, companyname, role, createdat
@@ -124,7 +125,13 @@ const getStaffByName = async (req, res) => {
         `;
         if (hidden.length > 0) {
             params.push(hidden);
-            query += ` AND userid <> ALL($${params.length}::int[])`;
+            const hiddenIdx = params.length;
+            if (Number.isInteger(selfId) && selfId > 0) {
+                params.push(selfId);
+                query += ` AND (userid <> ALL($${hiddenIdx}::int[]) OR userid = $${params.length})`;
+            } else {
+                query += ` AND userid <> ALL($${hiddenIdx}::int[])`;
+            }
         }
         if (name) {
             params.push(`%${name}%`);
