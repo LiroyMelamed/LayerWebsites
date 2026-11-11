@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Repeat2, MapPin, Check, Clock3, CircleAlert, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Repeat2, MapPin, Check, Clock3, CircleAlert, X, Plus } from 'lucide-react';
 import SimpleButton from '../../../components/simpleComponents/SimpleButton';
 import { colorForKey } from '../utils/lawyerColors';
 import { CalendarOwners } from './CalendarOwners';
@@ -77,7 +77,13 @@ export function CalendarDayRibbon({ events = [], date, onSelectDate, t, language
     </div>;
 }
 
-export function CalendarAgenda({ events = [], date, lawyers = [], onOpenEvent, t, language, heading = false }) {
+function clockMinutes(value, fallback) {
+    const match = /^(\d{1,2}):(\d{2})/.exec(String(value || ""));
+    return match ? (Number(match[1]) * 60) + Number(match[2]) : fallback;
+}
+
+
+export function CalendarAgenda({ events = [], date, lawyers = [], onOpenEvent, onCreateAt, slotMin = "08:00", slotMax = "19:00", t, language, heading = false }) {
     const day = calendarDateKey(date);
     const list = useMemo(() => calendarEventsForDay(events, day), [events, day]);
     const groups = useMemo(() => {
@@ -89,12 +95,26 @@ export function CalendarAgenda({ events = [], date, lawyers = [], onOpenEvent, t
         });
         return [...grouped.entries()];
     }, [list, day, language, t]);
+    const firstHour = Math.ceil(clockMinutes(slotMin, 8 * 60) / 60);
+    const lastHour = Math.floor(clockMinutes(slotMax, 19 * 60) / 60);
     return <section className="lw-calendarAgenda" aria-label={calendarFormatDate(day, language, { weekday: 'long', day: 'numeric', month: 'long' })}>
         {heading && <div className="lw-calendarAgenda__heading">
             <strong>{calendarFormatDate(day, language, { weekday: 'long', day: 'numeric', month: 'long' })}</strong>
             <span>{t('calendar.eventsCount', { count: list.length })}</span>
         </div>}
-        {!list.length ? <div className="lw-calendarAgenda__empty">{t('calendar.noMeetingsOnDay')}</div> : groups.map(([time, group]) => <div key={time} className="lw-calendarTimeGroup">
+        {!list.length ? <div className="lw-calendarAgenda__empty">
+            <p>{t('calendar.noMeetingsOnDay')}</p>
+            {onCreateAt && <div className="lw-calendarAgenda__emptyHours">
+                {Array.from({ length: Math.max(0, lastHour - firstHour) }, (_, index) => {
+                    const hour = firstHour + index;
+                    const label = `${String(hour).padStart(2, "0")}:00`;
+                    return <SimpleButton key={hour} type="button" aria-label={`${t("calendar.addEvent")} ${label}`}
+                        onPress={() => onCreateAt(hour * 60, day)}>
+                        <Plus size={14} aria-hidden="true" /> <bdi>{label}</bdi>
+                    </SimpleButton>;
+                })}
+            </div>}
+        </div> : groups.map(([time, group]) => <div key={time} className="lw-calendarTimeGroup">
             <div className="lw-calendarTimeGroup__time"><bdi>{time}</bdi><i aria-hidden="true" /></div>
             <div className="lw-calendarTimeGroup__events">
                 {group.filter((event) => !event.allDay && !calendarIsCancelled(event)).length > 1 && <span className="lw-calendarTimeGroup__parallel">{t('calendar.parallelEvents', { count: group.filter((event) => !event.allDay && !calendarIsCancelled(event)).length })}</span>}

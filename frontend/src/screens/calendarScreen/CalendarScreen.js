@@ -1061,7 +1061,16 @@ export default function CalendarScreen() {
         selectDate(date.toISOString().slice(0, 10));
     };
     const openAgendaEvent = (event) => openEditModal({ event });
-    const agendaProps = { events: visibleEvents, date: selectedDate, lawyers, onOpenEvent: openAgendaEvent, t, language: i18n.language };
+    const createAgendaEventAt = (minutes) => {
+        const [year, month, day] = selectedDate.split("-").map(Number);
+        const start = zonedJerusalemInstant(year, month, day, Math.floor(minutes / 60), minutes % 60, 0);
+        openCreateModal({ start, end: new Date(start.getTime() + (60 * 60 * 1000)), allDay: false });
+    };
+    const agendaProps = {
+        events: visibleEvents, date: selectedDate, lawyers, onOpenEvent: openAgendaEvent, t, language: i18n.language,
+        onCreateAt: canManageCalendar ? createAgendaEventAt : undefined,
+        slotMin: slotRange.min, slotMax: slotRange.max,
+    };
 
     if (!calendarEnabled) return null;
 

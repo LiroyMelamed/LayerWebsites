@@ -68,3 +68,12 @@ test('failed manager photo falls back to initials and every manager remains acce
     expect(screen.getByText('AC')).toBeInTheDocument();
     expect(screen.getByText('Dana Levy · Avi Cohen')).toBeInTheDocument();
 });
+
+
+test('an empty day lets a calendar manager create the first meeting by hour', () => {
+    const onCreateAt = jest.fn();
+    render(<CalendarAgenda events={[]} date="2026-10-12" t={t} language="en" onCreateAt={onCreateAt} slotMin="08:00" slotMax="19:00" />);
+    fireEvent.click(screen.getByRole('button', { name: 'calendar.addEvent 10:00' }));
+    expect(onCreateAt).toHaveBeenCalledWith(600, '2026-10-12');
+    expect(screen.queryByRole('button', { name: 'calendar.addEvent 19:00' })).toBeNull();
+});
