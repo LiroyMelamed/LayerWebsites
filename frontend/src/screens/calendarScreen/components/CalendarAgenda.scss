@@ -40,6 +40,13 @@
 }
 .lw-calendarAgenda__heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; padding-block-end: 12px; margin-block-end: 16px; border-block-end: 1px solid var(--lw-color-disabled); strong { font-size: 16px; color: var(--lw-color-primary); } span { font-size: 13px; color: var(--lw-color-winter); } }
 .lw-calendarAgenda__empty { padding: 28px 16px; text-align: center; color: var(--lw-color-winter); }
+.lw-calendarAgenda__emptyHours {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+}
 .lw-calendarTimeGroup { display: grid; grid-template-columns: 60px minmax(0, 1fr); gap: 12px; padding-block-end: 24px; }
 .lw-calendarTimeGroup__time {
     position: relative; display: flex; flex-direction: column; align-items: center; padding-block-start: 16px;
