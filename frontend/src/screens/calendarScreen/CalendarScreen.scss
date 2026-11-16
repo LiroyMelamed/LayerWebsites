@@ -1067,7 +1067,7 @@ body.lw-fromApp .lw-calendarRedesign.has-nativeFooter .lw-calendarScreen__scroll
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
-    .lw-calendarRedesign__nav { flex: 1 1 auto; justify-content: space-between; }
+    .lw-calendarRedesign__nav { display: flex; align-items: center; gap: .5rem; min-inline-size: 0; flex: 1 1 auto; justify-content: space-between; }
     .lw-calendarRedesign__date { flex: 0 0 auto; }
     .lw-calendarRedesign__navActions { flex: 0 0 auto; justify-content: flex-end; }
     .lw-calendarRedesign__nav .lw-segmentedSwitch { flex: 0 0 auto; min-inline-size: 0; }
@@ -1085,4 +1085,19 @@ body.lw-fromApp .lw-calendarRedesign.has-nativeFooter .lw-calendarScreen__scroll
         .lw-segmentedSwitch__option { min-inline-size: 0; padding-inline: .2rem; font-size: .6875rem; }
         .lw-calendarRedesign__iconBtn { inline-size: 1.75rem; block-size: 1.75rem; min-inline-size: 1.75rem; min-block-size: 1.75rem; }
     }
+}
+
+/* Shared plain buttons keep the icon toolbar compact without boxed chrome. */
+.lw-calendarRedesign .lw-calendarScreen__calendarToolbar {
+    margin-block-end: .5rem;
+    .lw-calendarRedesign__navActions { display: flex; align-items: center; gap: 0; flex-wrap: nowrap; }
+    .lw-calendarRedesign__navActions > button {
+        display: inline-flex; align-items: center; justify-content: center;
+        flex: 0 0 auto; padding: .25rem; inline-size: 2rem; block-size: 2rem;
+        border: 0; box-shadow: none; background: transparent; color: var(--lw-color-primary);
+    }
+    .lw-calendarRedesign__navActions > button:hover,
+    .lw-calendarRedesign__navActions > button[aria-pressed="true"] { background: var(--lw-color-secondary-highlighted); }
+    .lw-calendarRedesign__navActions > button:focus-visible { outline: 2px solid var(--lw-color-primary); outline-offset: 1px; }
+    .lw-calendarRedesign__navActions > .lw-calendarScreen__filtersActive { box-shadow: inset 0 -2px var(--lw-color-primary); }
 }

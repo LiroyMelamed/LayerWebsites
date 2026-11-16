@@ -61,8 +61,6 @@ import {
 
 import "./CalendarScreen.scss";
 
-const calendarIconButtonStyle = { padding: 0, minWidth: 0 };
-
 export const CalendarScreenName = "/CalendarScreen";
 
 /** FullCalendar locale must follow the website language (i18next), not the OS. */
@@ -938,7 +936,7 @@ export default function CalendarScreen() {
     }, [events, searchParams, openPopup, closePopup, upsertLocally, handleEventSaved]);
 
     // ── View switcher ──────────────────────────────────────────────────────
-    
+
 
     const renderNowIndicatorContent = useCallback((arg) => {
         if (!arg.isAxis) return null;
@@ -1247,36 +1245,36 @@ export default function CalendarScreen() {
                                             { value: "dayGridMonth", label: t("calendar.monthView") },
                                         ]} />
                                     <div className="lw-calendarRedesign__navActions">
-                                    <SecondaryButton size={buttonSizes.SMALL} className="lw-calendarRedesign__iconBtn" style={calendarIconButtonStyle} onPress={() => selectDate(toLocalYmd(new Date()))} aria-label={t("calendar.today")} title={t("calendar.today")}>
+                                    <SimpleButton type="button" className="lw-calendarRedesign__iconBtn"  onPress={() => selectDate(toLocalYmd(new Date()))} aria-label={t("calendar.today")} title={t("calendar.today")}>
                                         <CalendarDays size={18} aria-hidden="true" />
-                                    </SecondaryButton>
+                                    </SimpleButton>
                                     <SimpleButton type="button" className="lw-calendarRedesign__arrow" onPress={() => fetchEvents(null, { force: true })} aria-label={t("calendar.refreshEvents")} title={t("calendar.refreshEvents")}><RotateCw size={18} /></SimpleButton>
-                                    {view !== "dayGridMonth" && <SecondaryButton size={buttonSizes.SMALL} className="lw-calendarRedesign__iconBtn" style={calendarIconButtonStyle} onPress={() => {
+                                    {view !== "dayGridMonth" && <SimpleButton type="button" className="lw-calendarRedesign__iconBtn"  onPress={() => {
                                         if (phoneWeek) setPhoneWeekList((value) => !value);
                                         else setTimeLayout((value) => !value);
                                     }} aria-pressed={phoneWeek ? !phoneWeekList : timeLayout} aria-label={phoneWeek ? (phoneWeekList ? t("calendar.hoursLayout") : t("calendar.agendaLayout")) : (timeLayout ? t("calendar.agendaLayout") : t("calendar.hoursLayout"))} title={phoneWeek ? (phoneWeekList ? t("calendar.hoursLayout") : t("calendar.agendaLayout")) : (timeLayout ? t("calendar.agendaLayout") : t("calendar.hoursLayout"))}>
                                         {(phoneWeek ? phoneWeekList : !timeLayout) ? <Clock size={18} aria-hidden="true" /> : <List size={18} aria-hidden="true" />}
-                                    </SecondaryButton>}
-                                    <SecondaryButton
-                                        size={buttonSizes.SMALL}
+                                    </SimpleButton>}
+                                    <SimpleButton
+                                        type="button"
                                         className="lw-calendarRedesign__iconBtn lw-calendarScreen__expandBtn"
-                                        style={calendarIconButtonStyle}
+
                                         onPress={() => setCalendarExpanded((v) => !v)}
                                         aria-label={calendarExpanded ? t("calendar.collapseCalendarAria") : t("calendar.expandCalendarAria")}
                                         title={calendarExpanded ? t("calendar.collapseCalendar") : t("calendar.expandCalendar")}
                                     >
                                         {calendarExpanded ? <Minimize2 size={18} aria-hidden="true" /> : <Maximize2 size={18} aria-hidden="true" />}
-                                    </SecondaryButton>
-                                    <SecondaryButton size={buttonSizes.SMALL}
+                                    </SimpleButton>
+                                    <SimpleButton type="button"
                                         className={`lw-calendarRedesign__iconBtn${hasActiveFilters || query ? " lw-calendarScreen__filtersActive" : ""}`}
-                                        style={calendarIconButtonStyle}
+
                                         onPress={() => setFiltersPanelOpen((v) => !v)}
                                         aria-expanded={filtersPanelOpen} aria-controls="calendar-advanced-filters"
                                         aria-pressed={filtersPanelOpen}
                                         aria-label={filtersPanelOpen ? t("calendar.closeFiltersAria") : t("calendar.openFiltersAria")}
                                         title={t("calendar.filtersTitle")}>
                                         <Filter size={18} aria-hidden="true" />
-                                    </SecondaryButton>
+                                    </SimpleButton>
                                     </div>
                                 </div>
                             </SimpleContainer>

@@ -6,8 +6,11 @@ const router = express.Router();
 const run = fn => (req,res,next) => Promise.resolve().then(()=>fn(req,res)).catch(next);
 
 const PROJECT_ID = 'layerwebsites';
-const SERVICE_KEY =
-  process.env.CENTRAL_SERVICE_KEY?.trim() || '';
+const DEPLOYMENT_TICKET_KEY = process.env.CENTRAL_TICKET_KEY;
+const TICKET_KEY = DEPLOYMENT_TICKET_KEY ?? process.env.CENTRAL_SERVICE_KEY?.trim() ?? '';
+const TICKETS_CONFIGURED = DEPLOYMENT_TICKET_KEY === undefined
+  ? TICKET_KEY.length >= 32
+  : /^[a-f0-9]{64}$/.test(TICKET_KEY);
 const CENTRAL_API_URL = (
   process.env.CENTRAL_API_URL ||
   process.env.REACT_APP_CENTRAL_API_URL ||
@@ -28,7 +31,7 @@ function firmSlug() {
 function centralHeaders(actor) {
   const slug = firmSlug();
   const headers = {
-    Authorization: `Bearer ${SERVICE_KEY}`,
+    Authorization: `Bearer ${TICKET_KEY}`,
     'Content-Type': 'application/json',
     'X-Central-Project-Id': PROJECT_ID,
     'X-Central-Tenant-Slug': slug,
@@ -55,7 +58,7 @@ async function proxyJson(res, path, init = {}) {
 }
 
 router.use(authMiddleware, requireFirmAction('support', 'view', { legacy: 'admin' }));
-router.use((_req,res,next)=>SERVICE_KEY.length>=32?next():res.status(503).json({error:'SUPPORT_UNAVAILABLE'}));
+router.use((_req,res,next)=>TICKETS_CONFIGURED?next():res.status(503).json({error:'SUPPORT_UNAVAILABLE'}));
 
 router.get('/tickets', run(async (req, res) => {
   const slug = firmSlug();

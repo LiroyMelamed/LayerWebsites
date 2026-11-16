@@ -43,6 +43,8 @@ git tag PROD_DD_MM_YYYY_LIROY && git push origin PROD_DD_MM_YYYY_LIROY
 
 Backend deploy runs `npm ci --omit=dev` when `backend/package-lock.json` changes on the server.
 
+Provision a distinct `CENTRAL_TICKET_KEY` in each backend environment and register its digest and office slugs in Central. Verify opening a ticket and adding a follow-up from Melamedia before migrating the client deployments. Leave the shared key configured for its other integrations during the ticket migration. A configured but invalid ticket key fails closed.
+
 ## Branding (per tenant — do not mix)
 
 | Committed (yes) | Build scratch (never commit) |
