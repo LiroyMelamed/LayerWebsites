@@ -44,6 +44,7 @@ import { loadCalendarPages, calendarRequestGate } from "./utils/calendarLoading"
 import { calendarNativeCapabilities } from "./utils/calendarNativeBridge";
 
 import EventFormModal from "./components/EventFormModal";
+import { openCalendarDayEvents } from "./components/CalendarDayEventsPopup";
 import PersonalSyncModal from "./components/PersonalSyncModal";
 import CalendarInvitationImport from "./components/CalendarInvitationImport";
 import { colorForKey, colorKeyForEvent, leaveColor, holidayColor, getEventTypeDefaultColor, isStockEventColor } from "./utils/lawyerColors";
@@ -1346,6 +1347,7 @@ export default function CalendarScreen() {
                                 firstDay={0}
                                 fixedWeekCount={false}
                                 dayMaxEvents={3}
+                                moreLinkClick={(info) => openCalendarDayEvents(info, openPopup, { lawyers, onOpenEvent: openAgendaEvent, t, language: i18n.language })}
                                 navLinks
                                 navLinkDayClick={(date) => selectView("timeGridDay", toLocalYmd(date))}
                                 dayCellClassNames={(arg) => toLocalYmd(arg.date) === selectedDate ? ["lw-calendarRedesign__selectedDate"] : []}

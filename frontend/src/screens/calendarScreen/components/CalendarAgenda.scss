@@ -147,3 +147,5 @@
     .lw-calendarMeeting__main > .lw-calendarOwners .lw-calendarOwners__avatars { max-width: 42px; }
     .lw-calendarMeeting--compact { padding: 10px; .lw-calendarMeeting__title { font-size: 13px; } .lw-calendarMeeting__main > .lw-calendarOwners .lw-calendarOwners__avatars { max-width: 26px; } }
 }
+
+.lw-calendarDayEventsPopup { inline-size: min(52rem, calc(90vw - 2rem)); max-inline-size: 100%; min-inline-size: 0; }
