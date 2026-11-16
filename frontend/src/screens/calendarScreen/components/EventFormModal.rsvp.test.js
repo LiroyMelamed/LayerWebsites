@@ -25,3 +25,10 @@ test('first send updates the open popup without parent prop changes and preserve
  expect(screen.getByRole('textbox',{name:'calendar.officeNotes'})).toHaveValue('Unsaved draft');
  await waitFor(()=>expect(onUpdated).toHaveBeenCalledTimes(1));
 });
+
+
+test('a duplicated draft preserves explicitly empty reminders and its chosen channels', async()=>{
+ render(<EventFormModal event={{...event,id:undefined,reminderChannels:{push:false,sms:false,email:true},reminderTargets:{client:false,managers:false}}}/>);
+ expect(screen.getAllByRole('button',{name:'calendar.reminder30m'}).every(button=>button.getAttribute('aria-pressed')!=='true')).toBe(true);
+ expect(screen.getAllByText('calendar.eventRemindersNone')).toHaveLength(2);
+});
