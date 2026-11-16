@@ -199,8 +199,7 @@ function aggregateInviteStatus(ev) {
     const clients = Array.isArray(ev?.clients) ? ev.clients : null;
     if (clients?.length) {
         const statuses = clients
-            .map((c) => c.inviteStatus || c.invite_status)
-            .filter((s) => s && s !== "none");
+            .map((c) => c.inviteStatus || c.invite_status || "none");
         if (!statuses.length) {
             const legacy = ev?.inviteStatus;
             return legacy && legacy !== "none" ? legacy : null;
