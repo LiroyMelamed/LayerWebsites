@@ -1056,31 +1056,40 @@ body.lw-fromApp .lw-calendarRedesign.has-nativeFooter .lw-calendarScreen__scroll
 /* Keep the date and actions in one row, with the view switch centered. */
 .lw-calendarRedesign .lw-calendarScreen__calendarCard { container-type: inline-size; }
 .lw-calendarRedesign .lw-calendarScreen__calendarToolbar {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    display: flex;
+    flex-wrap: nowrap;
     align-items: center;
-    .lw-calendarRedesign__primaryTools { grid-column: 1; display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+    .lw-calendarRedesign__nav { display: flex; align-items: center; gap: .5rem; min-inline-size: 0; flex: 1 1 auto; justify-content: space-between; }
     .lw-calendarRedesign__date { flex: 0 0 auto; }
-    .lw-calendarRedesign__quickTools { display: flex; gap: .25rem; align-items: center; }
-    .lw-calendarRedesign__controls { grid-column: 2; order: initial; justify-self: center; }
-    .lw-calendarRedesign__tools { grid-column: 3; order: initial; justify-self: end; flex-wrap: nowrap; }
+    .lw-calendarRedesign__navActions { flex: 0 0 auto; justify-content: flex-end; }
+    .lw-calendarRedesign__nav .lw-segmentedSwitch { flex: 0 0 auto; min-inline-size: 0; }
+    .lw-calendarRedesign__nav .lw-segmentedSwitch__track { inline-size: auto; width: auto; min-block-size: 1.75rem; }
+    .lw-calendarRedesign__nav .lw-segmentedSwitch__option { flex: 0 0 auto; overflow: visible; }
+    .lw-calendarRedesign__arrow { min-inline-size: 1.75rem; min-block-size: 1.75rem; }
+    .lw-calendarRedesign__iconBtn { min-inline-size: 2rem; min-block-size: 2rem; }
 }
-@container (max-width: 58rem) {
+@container (max-width: 40rem) {
     .lw-calendarRedesign .lw-calendarScreen__calendarToolbar {
-        grid-template-columns: minmax(0, 1fr) auto;
-        .lw-calendarRedesign__primaryTools { display: contents; }
-        .lw-calendarRedesign__date { grid-column: 1; grid-row: 1; justify-self: start; justify-content: start; }
-        .lw-calendarRedesign__controls { grid-column: 2; grid-row: 1; justify-self: end; }
-        .lw-calendarRedesign__quickTools { grid-column: 1; grid-row: 2; flex-wrap: wrap; }
-        .lw-calendarRedesign__tools { grid-column: 2; grid-row: 2; flex-wrap: wrap; justify-content: end; }
+        gap: .25rem;
+        .lw-calendarRedesign__date { gap: 0; flex: 0 0 auto; }
+        .lw-calendarRedesign__date h2 { font-size: .75rem; }
+        .lw-calendarRedesign__date button { min-inline-size: 1.5rem; min-block-size: 1.75rem; padding-inline: .125rem; }
+        .lw-segmentedSwitch__option { min-inline-size: 0; padding-inline: .2rem; font-size: .6875rem; }
+        .lw-calendarRedesign__iconBtn { inline-size: 1.75rem; block-size: 1.75rem; min-inline-size: 1.75rem; min-block-size: 1.75rem; }
     }
 }
-@container (max-width: 26rem) {
-    .lw-calendarRedesign .lw-calendarScreen__calendarToolbar {
-        gap: .375rem .25rem;
-        .lw-calendarRedesign__date { gap: 0; }
-        .lw-calendarRedesign__date h2 { font-size: .75rem; white-space: normal; }
-        .lw-calendarRedesign__date button { min-inline-size: 1.5rem; padding-inline: .125rem; }
-        .lw-segmentedSwitch__option { padding-inline: .25rem; }
+
+/* Shared plain buttons keep the icon toolbar compact without boxed chrome. */
+.lw-calendarRedesign .lw-calendarScreen__calendarToolbar {
+    margin-block-end: .5rem;
+    .lw-calendarRedesign__navActions { display: flex; align-items: center; gap: 0; flex-wrap: nowrap; }
+    .lw-calendarRedesign__navActions > button {
+        display: inline-flex; align-items: center; justify-content: center;
+        flex: 0 0 auto; padding: .25rem; inline-size: 2rem; block-size: 2rem;
+        border: 0; box-shadow: none; background: transparent; color: var(--lw-color-primary);
     }
+    .lw-calendarRedesign__navActions > button:hover,
+    .lw-calendarRedesign__navActions > button[aria-pressed="true"] { background: var(--lw-color-secondary-highlighted); }
+    .lw-calendarRedesign__navActions > button:focus-visible { outline: 2px solid var(--lw-color-primary); outline-offset: 1px; }
+    .lw-calendarRedesign__navActions > .lw-calendarScreen__filtersActive { box-shadow: inset 0 -2px var(--lw-color-primary); }
 }
