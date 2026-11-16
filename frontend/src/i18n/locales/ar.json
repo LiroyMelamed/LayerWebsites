@@ -3131,7 +3131,7 @@
     "inviteStatusPending": "بانتظار تأكيد العميل",
     "inviteStatusAccepted": "أكد العميل الحضور",
     "inviteStatusDeclined": "اعتذر العميل عن الحضور",
-    "inviteStatusNone": "لم تُرسل دعوة",
+    "inviteStatusNone": "لم تُرسل دعوة لتأكيد الحضور",
     "inviteResend": "إعادة إرسال الدعوة",
     "inviteResendDeferred": "ستُرسل بعد انتهاء ساعات الهدوء",
     "inviteDeferredNight": "ستُرسل الدعوة بعد انتهاء ساعات الهدوء الليلية (الساعة {{time}})",
@@ -3388,7 +3388,17 @@
     "googleUsePlatform": "الاحتفاظ بإصدار المنصة",
     "googleUseGoogle": "الاحتفاظ بإصدار Google",
     "googleCancelledVersion": "أُلغي الحدث",
-    "googleConflictResolved": "تم حفظ اختيارك ومزامنة التقويمين."
+    "googleConflictResolved": "تم حفظ اختيارك ومزامنة التقويمين.",
+    "officeNotes": "ملاحظات داخلية للمكتب",
+    "officeNotesHint": "لفريق المكتب فقط. لا تظهر للعميل ولا تُرسل في الدعوة أو مزامنة التقويم.",
+    "inviteSend": "إرسال دعوة لتأكيد الحضور",
+    "inviteSending": "جارٍ إرسال الدعوة…",
+    "inviteDelivery": {
+      "sent": "أُرسلت الدعوة عبر {{channels}}.",
+      "unsent": "لا يوجد إرسال دعوة مسجل. التذكير بالموعد منفصل عن تأكيد الحضور.",
+      "deferred": "ستُرسل الدعوة بعد انتهاء ساعات الهدوء.",
+      "uncertain": "تعذر التحقق من نتيجة الإرسال. يرجى التحقق قبل الإرسال مجددًا."
+    }
   },
   "clientPortal": {
     "home": "صفحتي الرئيسية",

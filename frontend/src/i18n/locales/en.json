@@ -2827,7 +2827,7 @@
     "inviteStatusPending": "Awaiting client confirmation",
     "inviteStatusAccepted": "Client confirmed",
     "inviteStatusDeclined": "Client declined",
-    "inviteStatusNone": "No invitation sent",
+    "inviteStatusNone": "Attendance invitation not sent",
     "inviteResend": "Resend invitation",
     "inviteResendDeferred": "Will be sent after quiet hours",
     "inviteDeferredNight": "The invitation will be sent after overnight quiet hours (at {{time}})",
@@ -3087,7 +3087,17 @@
     "googleUsePlatform": "Keep platform version",
     "googleUseGoogle": "Keep Google version",
     "googleCancelledVersion": "Event cancelled",
-    "googleConflictResolved": "Your choice was saved and the calendars synchronized."
+    "googleConflictResolved": "Your choice was saved and the calendars synchronized.",
+    "officeNotes": "Office notes",
+    "officeNotesHint": "Office staff only. Excluded from client invitations and external calendar sync.",
+    "inviteSend": "Send attendance invitation",
+    "inviteSending": "Sending invitation…",
+    "inviteDelivery": {
+      "sent": "Invitation sent via {{channels}}.",
+      "unsent": "No invitation send is recorded. A meeting reminder is separate from attendance confirmation.",
+      "deferred": "Invitation queued until quiet hours end.",
+      "uncertain": "Delivery outcome could not be confirmed. Check before sending again."
+    }
   },
   "clientPortal": {
     "home": "My home",
