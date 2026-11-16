@@ -267,7 +267,7 @@
     "inviteStatusBadgePending": "بانتظار الرد",
     "inviteStatusDeclined": "اعتذر العميل عن الحضور",
     "inviteStatusLabel": "الحالة",
-    "inviteStatusNone": "لم تُرسل دعوة",
+    "inviteStatusNone": "لم تُرسل دعوة لتأكيد الحضور",
     "inviteStatusPartial": "أكد {{accepted}} من أصل {{count}}",
     "inviteStatusPending": "بانتظار تأكيد العميل",
     "inviteWhen": "الموعد",
@@ -469,7 +469,17 @@
     "googleUsePlatform": "الاحتفاظ بإصدار المنصة",
     "googleUseGoogle": "الاحتفاظ بإصدار Google",
     "googleCancelledVersion": "أُلغي الحدث",
-    "googleConflictResolved": "تم حفظ اختيارك ومزامنة التقويمين."
+    "googleConflictResolved": "تم حفظ اختيارك ومزامنة التقويمين.",
+    "officeNotes": "ملاحظات داخلية للمكتب",
+    "officeNotesHint": "لفريق المكتب فقط. لا تظهر للعميل ولا تُرسل في الدعوة أو مزامنة التقويم.",
+    "inviteSend": "إرسال دعوة لتأكيد الحضور",
+    "inviteSending": "جارٍ إرسال الدعوة…",
+    "inviteDelivery": {
+      "sent": "أُرسلت الدعوة عبر {{channels}}.",
+      "unsent": "لا يوجد إرسال دعوة مسجل. التذكير بالموعد منفصل عن تأكيد الحضور.",
+      "deferred": "ستُرسل الدعوة بعد انتهاء ساعات الهدوء.",
+      "uncertain": "تعذر التحقق من نتيجة الإرسال. يرجى التحقق قبل الإرسال مجددًا."
+    }
   },
   "caseTypes": {
     "addStage": "إضافة مرحلة",

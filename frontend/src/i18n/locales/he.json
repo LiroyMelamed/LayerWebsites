@@ -276,7 +276,7 @@
     "inviteStatusBadgePending": "ממתין",
     "inviteStatusDeclined": "הלקוח דחה",
     "inviteStatusLabel": "סטטוס",
-    "inviteStatusNone": "לא נשלחה הזמנה",
+    "inviteStatusNone": "טרם נשלחה הזמנה לאישור הגעה",
     "inviteStatusPartial": "{{accepted}} מתוך {{count}} אישרו",
     "inviteStatusPending": "ממתין לאישור הלקוח",
     "inviteWhen": "מועד",
@@ -458,7 +458,17 @@
     "googleUsePlatform": "שמירת גרסת הפלטפורמה",
     "googleUseGoogle": "שמירת גרסת Google",
     "googleCancelledVersion": "האירוע בוטל",
-    "googleConflictResolved": "הבחירה נשמרה והיומנים סונכרנו."
+    "googleConflictResolved": "הבחירה נשמרה והיומנים סונכרנו.",
+    "officeNotes": "הערות משרדיות",
+    "officeNotesHint": "לצוות המשרד בלבד. לא יוצגו ללקוח ולא ייכללו בזימון או בסנכרון היומן.",
+    "inviteSend": "שליחת הזמנה לאישור הגעה",
+    "inviteSending": "שולח הזמנה…",
+    "inviteDelivery": {
+      "sent": "הזמנה נשלחה באמצעות {{channels}}.",
+      "unsent": "אין שליחת הזמנה רשומה. תזכורת לפגישה אינה אישור הגעה.",
+      "deferred": "שליחת ההזמנה ממתינה לסיום שעות השקט.",
+      "uncertain": "לא ניתן לאמת את תוצאת השליחה. יש לבדוק לפני שליחה נוספת."
+    }
   },
   "caseTypes": {
     "addStage": "הוסף שלב",
