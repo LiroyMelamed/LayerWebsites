@@ -802,72 +802,13 @@ $calendar-rsvp-desktop-min: 80rem;
     opacity: 0.88;
 }
 
-/* Below 1280px: borders only, full-width text (no circle layout). */
-@media (max-width: #{$calendar-rsvp-desktop-min - 0.01rem}) {
-    .fc .fc-event .lw-fcEventContent {
-        gap: 0;
-        align-items: stretch;
-    }
-
-    .fc .fc-event .lw-fcEventContent .fc-event-title {
-        width: 100%;
-        max-width: 100%;
-        text-align: start;
-    }
-
-    .lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--inviteAccepted,
-    .fc .fc-event.lw-fcEvent--inviteAccepted {
-        border: 1px solid rgba(47, 133, 90, 0.75) !important;
-        box-shadow:
-            0 0 0 1px rgba(47, 133, 90, 0.25),
-            0 0 10px rgba(47, 133, 90, 0.45),
-            inset 0 0 6px rgba(47, 133, 90, 0.12) !important;
-    }
-
-    .lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--invitePartial,
-    .fc .fc-event.lw-fcEvent--invitePartial {
-        border: 1px solid transparent !important;
-        box-shadow:
-            0 0 0 1px rgba(47, 133, 90, 0.25),
-            0 0 0 1px rgba(214, 158, 46, 0.22),
-            0 0 10px rgba(47, 133, 90, 0.45),
-            0 0 10px rgba(214, 158, 46, 0.42),
-            inset 0 0 6px rgba(47, 133, 90, 0.12),
-            inset 0 0 6px rgba(214, 158, 46, 0.1) !important;
-
-        &::after {
-            content: "";
-            position: absolute;
-            inset: -2px;
-            border-radius: inherit;
-            padding: 3px;
-            background: linear-gradient(to left, rgba(47, 133, 90, 0.88) 50%, rgba(214, 158, 46, 0.88) 50%);
-            -webkit-mask:
-                linear-gradient(#fff 0 0) content-box,
-                linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            pointer-events: none;
-            z-index: 2;
-        }
-    }
-
-    .lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--invitePending,
-    .fc .fc-event.lw-fcEvent--invitePending {
-        border: 1px solid rgba(214, 158, 46, 0.8) !important;
-        box-shadow:
-            0 0 0 1px rgba(214, 158, 46, 0.22),
-            0 0 10px rgba(214, 158, 46, 0.42),
-            inset 0 0 6px rgba(214, 158, 46, 0.1) !important;
-    }
-
-    .lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--inviteDeclined,
-    .fc .fc-event.lw-fcEvent--inviteDeclined {
-        border: 1px solid rgba(197, 48, 48, 0.78) !important;
-        box-shadow:
-            0 0 0 1px rgba(197, 48, 48, 0.22),
-            0 0 10px rgba(197, 48, 48, 0.38),
-            inset 0 0 6px rgba(197, 48, 48, 0.1) !important;
+/* RSVP surrounds the event at every width, independently of its category color.
+   A solid ring remains legible on small screens without a diffuse glow. */
+@each $state, $color in (Accepted: #23834c, Pending: #c28a12, Partial: #c28a12, Declined: #c53030) {
+    .lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--invite#{$state},
+    .fc .fc-event.lw-fcEvent--invite#{$state} {
+        border: 2px solid $color !important;
+        box-shadow: inset 0 0 0 1px #fff !important;
     }
 }
 
@@ -1059,7 +1000,9 @@ body.lw-fromApp .lw-calendarRedesign.has-nativeFooter .lw-calendarScreen__scroll
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
-    .lw-calendarRedesign__nav { display: flex; align-items: center; gap: .5rem; min-inline-size: 0; flex: 1 1 auto; justify-content: space-between; }
+    .lw-calendarRedesign__nav { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: .5rem; min-inline-size: 0; flex: 1 1 auto; }
+    .lw-calendarRedesign__nav > .lw-segmentedSwitch { justify-self: center; }
+    .lw-calendarRedesign__navActions { justify-self: end; }
     .lw-calendarRedesign__date { flex: 0 0 auto; }
     .lw-calendarRedesign__navActions { flex: 0 0 auto; justify-content: flex-end; }
     .lw-calendarRedesign__nav .lw-segmentedSwitch { flex: 0 0 auto; min-inline-size: 0; }
@@ -1098,7 +1041,7 @@ body.lw-fromApp .lw-calendarRedesign.has-nativeFooter .lw-calendarScreen__scroll
     .lw-calendarRedesign .lw-calendarScreen__calendarToolbar {
         .lw-calendarRedesign__nav {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) auto auto;
+            grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
             gap: .125rem;
             inline-size: 100%;
         }
@@ -1107,7 +1050,7 @@ body.lw-fromApp .lw-calendarRedesign.has-nativeFooter .lw-calendarScreen__scroll
         .lw-calendarRedesign__date button { min-inline-size: 1.25rem; inline-size: 1.25rem; padding: 0; }
         .lw-calendarRedesign__nav > .lw-segmentedSwitch { justify-self: center; }
         .lw-calendarRedesign__navActions { justify-self: end; }
-        .lw-calendarRedesign__navActions > button { inline-size: 1.5rem; block-size: 1.75rem; min-inline-size: 1.5rem; min-block-size: 1.75rem; padding: .125rem; }
+        .lw-calendarRedesign__navActions > button { inline-size: clamp(1.25rem, 5.8cqw, 1.5rem); block-size: 1.75rem; min-inline-size: 0; min-block-size: 1.75rem; padding: .125rem; }
         .lw-calendarRedesign__navActions svg { width: 1.125rem; height: 1.125rem; }
     }
 }

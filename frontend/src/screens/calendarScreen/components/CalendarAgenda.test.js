@@ -93,3 +93,14 @@ test.each(['none', 'pending', 'accepted', 'declined'])('grid exposes %s RSVP ind
     expect(container.querySelector(`.lw-calendarGridEvent__status--${status}`)).toHaveAttribute('aria-label');
     expect(container.querySelector('[class*="conflict"]')).toBeNull();
 });
+
+// Unsent is not pending: the grid must never imply a request was delivered.
+test.each(['timeGridWeek', 'dayGridMonth'])('RSVP has visible labels and no ambiguous envelope in %s', view => {
+    const { container } = render(<>{['none', 'accepted', 'pending', 'declined'].map(status => <CalendarGridEventContent key={status} info={{ event: { ...events[0], extendedProps: { eventType: 'appointment', clients: [{ inviteStatus: status }] } }, view: { type: view } }} t={t} language="he" />)}</>);
+    expect(container.querySelector('.lucide-mail')).toBeNull();
+    expect(container.querySelector('.lw-calendarGridEvent__status--none')).toHaveTextContent('calendar.inviteCompactNone');
+    expect(container.querySelector('.lw-calendarGridEvent__status--none svg')).toBeNull();
+    expect(container.querySelector('.lw-calendarGridEvent__status--accepted .lucide-check')).not.toBeNull();
+    expect(container.querySelector('.lw-calendarGridEvent__status--pending .lucide-clock-3')).not.toBeNull();
+    expect(container.querySelectorAll('.lw-calendarGridEvent.has-rsvp')).toHaveLength(4);
+});

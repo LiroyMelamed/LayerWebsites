@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Repeat2, MapPin, Check, Clock3, Mail, X, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Repeat2, MapPin, Check, Clock3, X, Plus } from 'lucide-react';
 import SimpleButton from '../../../components/simpleComponents/SimpleButton';
 import { colorForKey } from '../utils/lawyerColors';
 import { CalendarOwners } from './CalendarOwners';
@@ -148,7 +148,8 @@ export function CalendarGridEventContent({ info, lawyers = [], events = [], t, l
     const month = info.view?.type === 'dayGridMonth';
     const status = calendarRsvp(event);
     const title = event.title || '';
-    return <div className={`lw-calendarGridEvent${month ? ' lw-calendarGridEvent--month' : ''}`} title={[title, calendarOwners(event, lawyers).map((person) => person.name).join(' · '), calendarRsvpLabel(event, t)].filter(Boolean).join(' — ')}>
+    const statusLabel = status?.status === 'partial' ? `${status.accepted}/${status.count}` : t(`calendar.inviteCompact${({ accepted: 'Accepted', pending: 'Pending', declined: 'Declined', none: 'None' })[status?.status] || 'None'}`);
+    return <div className={`lw-calendarGridEvent${month ? ' lw-calendarGridEvent--month' : ''}${status && !calendarIsCancelled(event) ? ' has-rsvp' : ''}`} title={[title, calendarOwners(event, lawyers).map((person) => person.name).join(' · '), calendarRsvpLabel(event, t)].filter(Boolean).join(' — ')}>
         <span className="lw-calendarGridEvent__header">
             {!event.allDay && <bdi>{calendarEventStartTime(event, language, t)}</bdi>}
             <CalendarOwners event={event} lawyers={lawyers} small />
@@ -156,7 +157,8 @@ export function CalendarGridEventContent({ info, lawyers = [], events = [], t, l
         <strong>{title}</strong>
         {calendarIsCancelled(event) ? <span className="lw-calendarGridEvent__cancelled" title={t('calendar.meetingCancelled')}>{t('calendar.meetingCancelled')}</span>
             : status && <span className={`lw-calendarGridEvent__status lw-calendarGridEvent__status--${status.status}`} title={calendarRsvpLabel(event, t)} aria-label={calendarRsvpLabel(event, t)}>
-                {status.status === 'none' ? <Mail size={12} aria-hidden="true" /> : status.status === 'accepted' ? <Check size={12} aria-hidden="true" /> : status.status === 'partial' ? `${status.accepted}/${status.count}` : status.status === 'declined' ? <X size={12} aria-hidden="true" /> : <Clock3 size={12} aria-hidden="true" />}
+                {status.status === 'accepted' ? <Check size={12} aria-hidden="true" /> : status.status === 'declined' ? <X size={12} aria-hidden="true" /> : ['pending', 'partial'].includes(status.status) ? <Clock3 size={12} aria-hidden="true" /> : null}
+                <span className="lw-calendarGridEvent__statusLabel">{statusLabel}</span>
             </span>}
     </div>;
 }

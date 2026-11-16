@@ -107,13 +107,31 @@
 @container (max-width: 56px) {
     .lw-calendarGridEvent__header .lw-calendarOwners { display: none; }
 }
-.lw-calendarGridEvent__status { position: absolute; bottom: 1px; inset-inline-end: 3px; color: white; font-size: 9px; font-weight: 600; &--pending { opacity: .7; } &--partial { color: #f6e05e; } &--declined { color: #feb2b2; } }
+// Reserve space for RSVP so long titles never cover the status on narrow events.
+.lw-calendarGridEvent.has-rsvp { padding-block-end: 19px; }
+.lw-calendarGridEvent__status {
+    position: absolute; bottom: 2px; inset-inline-end: 2px; max-width: calc(100% - 4px);
+    display: inline-flex; align-items: center; gap: 3px; box-sizing: border-box;
+    padding: 1px 3px; border-radius: 4px; background: #fff; color: #344054;
+    font-size: 10px; line-height: 14px; font-weight: 700; white-space: nowrap;
+    svg { flex: 0 0 12px; }
+    &--accepted { color: #17643d; }
+    &--pending, &--partial { color: #795000; }
+    &--declined { color: #a12323; }
+    &--none { background: rgba(255,255,255,.92); font-weight: 500; }
+}
+.lw-calendarGridEvent__statusLabel { overflow: hidden; text-overflow: ellipsis; }
+@container (max-width: 56px) {
+    .lw-calendarGridEvent__status:not(.lw-calendarGridEvent__status--none):not(.lw-calendarGridEvent__status--partial) .lw-calendarGridEvent__statusLabel { display: none; }
+    .lw-calendarGridEvent__status--none { font-size: 8px; padding-inline: 1px; }
+}
 .lw-calendarGridEvent__cancelled { color: inherit; font-size: 9px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .lw-calendarGridEvent__conflict { position: absolute; bottom: 1px; inset-inline-start: 2px; color: #9b2c2c; background: white; border-radius: 3px; padding: 0 3px; font-size: 9px; font-weight: 700; }
 .lw-calendarGridEvent--month { flex-direction: row; align-items: center; gap: 4px; min-height: 26px;
     .lw-calendarGridEvent__header { width: auto; flex: 0 0 auto; }
     > strong { flex: 1; display: block; white-space: nowrap; text-overflow: ellipsis; }
-    .lw-calendarGridEvent__status { display: none; }
+    .lw-calendarGridEvent__status { position: static; flex: 0 0 auto; max-width: 40%; }
+    &.has-rsvp { padding-block-end: 3px; }
 }
 @media (max-width: 767px) {
     .lw-calendarDayRibbon { width: 100%; gap: 4px; }
