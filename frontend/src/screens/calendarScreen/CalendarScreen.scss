@@ -1101,3 +1101,19 @@ body.lw-fromApp .lw-calendarRedesign.has-nativeFooter .lw-calendarScreen__scroll
     .lw-calendarRedesign__navActions > button:focus-visible { outline: 2px solid var(--lw-color-primary); outline-offset: 1px; }
     .lw-calendarRedesign__navActions > .lw-calendarScreen__filtersActive { box-shadow: inset 0 -2px var(--lw-color-primary); }
 }
+
+@container (max-width: 30rem) {
+    .lw-calendarRedesign .lw-calendarScreen__calendarToolbar {
+        .lw-calendarRedesign__nav {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: .125rem .25rem;
+            inline-size: 100%;
+        }
+        .lw-calendarRedesign__date { grid-column: 1; min-inline-size: 0; }
+        .lw-calendarRedesign__date h2 { white-space: normal; }
+        .lw-calendarRedesign__nav > .lw-segmentedSwitch { grid-column: 2; justify-self: end; }
+        .lw-calendarRedesign__navActions { grid-column: 1 / -1; justify-self: end; }
+        .lw-calendarRedesign__navActions > button { inline-size: 1.75rem; block-size: 1.75rem; min-inline-size: 1.75rem; min-block-size: 1.75rem; }
+    }
+}
