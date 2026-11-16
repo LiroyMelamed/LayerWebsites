@@ -1998,6 +1998,19 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const [markingRsvpUserId, setMarkingRsvpUserId] = useState(null);
 
     const [sendingInvitation, setSendingInvitation] = useState(false);
+    const [invitationState, setInvitationState] = useState(event);
+    useEffect(() => { setInvitationState(event); }, [event]);
+    // Popup content retains its original props. Refresh only RSVP data so an
+    // invitation response cannot erase unsaved title, notes or participant edits.
+    const applyInvitationResult = (saved) => {
+        if (!saved) return;
+        setInvitationState(saved);
+        setClients(prev => prev.map(client => {
+            const fresh = saved.clients?.find(item => Number(item.userId) === Number(client.userId));
+            return fresh ? { ...client, inviteStatus: fresh.inviteStatus, inviteRespondedAt: fresh.inviteRespondedAt } : client;
+        }));
+        onUpdated?.(saved);
+    };
     const handleResendInvite = async () => {
         if (!isEdit || !event?.id || sendingInvitation) return;
         setSendingInvitation(true);
@@ -2005,6 +2018,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         try {
             const res = await calendarApi.resendInvite(event.id);
             if (!res?.success) {
+                applyInvitationResult(res?.data?.event);
                 notifyError(
                     res?.data?.message
                     || res?.message
@@ -2018,7 +2032,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             } else {
                 notifySuccess(t("calendar.inviteResendSuccess"));
             }
-            if (data.event) onUpdated?.(data.event);
+            applyInvitationResult(data.event);
         } catch (e) {
             notifyError(
                 e?.response?.data?.message
@@ -2052,7 +2066,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             try {
                 const refreshed = await calendarApi.getEvent(event.id);
                 const saved = refreshed?.data?.event || refreshed?.data;
-                if (saved) onUpdated?.(saved);
+                applyInvitationResult(saved);
             } catch {
                 /* best-effort refresh */
             }
@@ -2071,14 +2085,14 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             : [{
                 userId: event?.clientUserId || "legacy",
                 name: event?.clientName || event?.clientDisplayName || leadParticipants.map(p => p.name).filter(Boolean).join(" · ") || leadName || "לקוח",
-                inviteStatus: event?.inviteStatus,
+                inviteStatus: invitationState?.inviteStatus,
             }];
 
         return (
             <SimpleContainer className="lw-eventFormModal__inviteStatus lw-eventFormModal__inviteStatus--breakdown">
                 <TextBold14 color={NAVY}>{t("calendar.clientRsvpBreakdown")}</TextBold14>
-                {event?.invitationDelivery && <Text12 role="status">{t(`calendar.inviteDelivery.${event.invitationDelivery.status}`, {
-                    channels: event.invitationDelivery.channels.map(channel => channel === 'sms' ? 'SMS' : t('calendar.channelEmail')).join(' · '),
+                {invitationState?.invitationDelivery && <Text12 role="status">{t(`calendar.inviteDelivery.${invitationState.invitationDelivery.status}`, {
+                    channels: invitationState.invitationDelivery.channels.map(channel => channel === 'sms' ? 'SMS' : t('calendar.channelEmail')).join(' · '),
                 })}</Text12>}
                 <SimpleContainer className="lw-eventFormModal__rsvpList">
                     {rsvpClients.map((c) => {
