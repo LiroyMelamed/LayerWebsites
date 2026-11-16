@@ -39,7 +39,7 @@ import SegmentedSwitch from "../../components/styledComponents/SegmentedSwitch";
 import SimpleInput from "../../components/simpleComponents/SimpleInput";
 import FloatingAddField from "../../components/specializedComponents/signFiles/fieldToolbar/FloatingAddField";
 import { CalendarAgenda, CalendarWeekOverview, CalendarDayRibbon, CalendarOwners, CalendarGridEventContent } from "./components/CalendarAgenda";
-import { calendarEventsForDay, calendarEventSearchText, calendarInstant } from "./utils/calendarPresentation";
+import { calendarEventsForDay, calendarEventSearchText, calendarInstant, calendarIsCancelled } from "./utils/calendarPresentation";
 import { loadCalendarPages, calendarRequestGate } from "./utils/calendarLoading";
 import { calendarNativeCapabilities } from "./utils/calendarNativeBridge";
 
@@ -216,6 +216,7 @@ function aggregateInviteStatus(ev) {
 }
 
 function inviteStatusClass(inviteStatus, ev) {
+    if (calendarIsCancelled(ev)) return null;
     const eventType = String(ev?.eventType || ev?.event_type || "").trim().toLowerCase();
     if (eventType !== "appointment" && eventType !== "hearing") return null;
     if (inviteStatus === "accepted") return "lw-fcEvent--inviteAccepted";
@@ -1444,6 +1445,7 @@ export default function CalendarScreen() {
                                     day: t("calendar.dayView"),
                                 }}
                                 slotEventOverlap={false}
+                                eventMinHeight={44}
                                 events={visibleEvents}
                                 selectable={canManageCalendar}
                                 selectMirror
