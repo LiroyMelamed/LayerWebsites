@@ -1,10 +1,10 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Repeat2, MapPin, Check, Clock3, CircleAlert, Plus, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Repeat2, MapPin, Check, Clock3, Mail, Plus, X } from 'lucide-react';
 import SimpleButton from '../../../components/simpleComponents/SimpleButton';
 import { colorForKey } from '../utils/lawyerColors';
 import { CalendarOwners } from './CalendarOwners';
 import {
-    calendarConflictOwners, calendarDateKey, calendarEventPeopleText, calendarEventStartTime,
+    calendarDateKey, calendarEventPeopleText, calendarEventStartTime,
     calendarEventsForDay, calendarEventTime, calendarEventTypeKey, calendarFormatDate,
     calendarIsCancelled, calendarIsDisplayOnly, calendarOwners, calendarRawEvent,
     calendarRsvp, calendarRsvpLabel, calendarWeekDates, agendaHourFromPointer,
@@ -32,8 +32,6 @@ function CalendarMeeting({ event, events, lawyers, onOpenEvent, t, language, com
     const displayOnly = calendarIsDisplayOnly(event);
     const people = calendarEventPeopleText(event) || raw.clientName;
     const owners = calendarOwners(event, lawyers);
-    const conflictOwners = calendarConflictOwners(event, events, lawyers);
-    const conflictLabel = t('calendar.overlapNotice', { names: conflictOwners.map((person) => person.name).filter(Boolean).join(' · ') });
     const Chevron = /^(he|ar)(?:-|$)/.test(language || 'he') ? ChevronLeft : ChevronRight;
     const classes = `lw-calendarMeeting${compact ? ' lw-calendarMeeting--compact' : ''}${calendarIsCancelled(event) ? ' is-cancelled' : ''}${displayOnly ? ' is-displayOnly' : ''}`;
     const content = <>
@@ -53,7 +51,6 @@ function CalendarMeeting({ event, events, lawyers, onOpenEvent, t, language, com
             {!displayOnly && <Chevron className="lw-calendarMeeting__chevron" size={17} aria-hidden="true" />}
         </span>
         <EventIndicators event={event} t={t} />
-        {conflictOwners.length > 0 && <span className="lw-calendarMeeting__conflict">{conflictLabel}</span>}
     </>;
     if (displayOnly) return <div className={classes} style={{ '--calendar-event-color': event.backgroundColor || colorForKey(owners[0]?.id) }}>{content}</div>;
     return <SimpleButton type="button" className={classes}
@@ -205,8 +202,6 @@ export function CalendarGridEventContent({ info, lawyers = [], events = [], t, l
     const month = info.view?.type === 'dayGridMonth';
     const status = calendarRsvp(event);
     const title = event.title || '';
-    const conflictOwners = calendarConflictOwners(event, events, lawyers);
-    const conflictLabel = t('calendar.overlapNotice', { names: conflictOwners.map((person) => person.name).filter(Boolean).join(' · ') });
     return <div className={`lw-calendarGridEvent${month ? ' lw-calendarGridEvent--month' : ''}`} title={[title, calendarOwners(event, lawyers).map((person) => person.name).join(' · '), calendarRsvpLabel(event, t)].filter(Boolean).join(' — ')}>
         <span className="lw-calendarGridEvent__header">
             {!event.allDay && <bdi>{calendarEventStartTime(event, language, t)}</bdi>}
@@ -214,10 +209,9 @@ export function CalendarGridEventContent({ info, lawyers = [], events = [], t, l
         </span>
         <strong>{title}</strong>
         {calendarIsCancelled(event) ? <span className="lw-calendarGridEvent__cancelled" title={t('calendar.meetingCancelled')}>{t('calendar.meetingCancelled')}</span>
-            : status && status.status !== 'none' && <span className={`lw-calendarGridEvent__status lw-calendarGridEvent__status--${status.status}`} title={calendarRsvpLabel(event, t)} aria-label={calendarRsvpLabel(event, t)}>
-                {status.status === 'accepted' ? <Check size={12} aria-hidden="true" /> : status.status === 'partial' ? `${status.accepted}/${status.count}` : status.status === 'declined' ? <X size={12} aria-hidden="true" /> : <Clock3 size={12} aria-hidden="true" />}
+            : status && <span className={`lw-calendarGridEvent__status lw-calendarGridEvent__status--${status.status}`} title={calendarRsvpLabel(event, t)} aria-label={calendarRsvpLabel(event, t)}>
+                {status.status === 'none' ? <Mail size={12} aria-hidden="true" /> : status.status === 'accepted' ? <Check size={12} aria-hidden="true" /> : status.status === 'partial' ? `${status.accepted}/${status.count}` : status.status === 'declined' ? <X size={12} aria-hidden="true" /> : <Clock3 size={12} aria-hidden="true" />}
             </span>}
-        {conflictOwners.length > 0 && <span className="lw-calendarGridEvent__conflict" title={conflictLabel} aria-label={conflictLabel}><CircleAlert size={12} aria-hidden="true" /></span>}
     </div>;
 }
 

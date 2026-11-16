@@ -340,6 +340,7 @@ function _sanitizeEvent(row) {
         caseName: row.case_name ?? null,
         title: row.title,
         description: row.description,
+        officeNotes: row.office_notes || "",
         location: row.location,
         meetingType: row.meeting_type ?? null,
         eventType: row.event_type || 'appointment',
@@ -373,6 +374,7 @@ function _sanitizeEvent(row) {
         reminderTargets: parseReminderTargets(row.reminder_targets),
         remindersSentOffsets: parseStoredOffsets(row.reminders_sent_offsets),
         inviteStatus: row.invite_status || 'none',
+        invitationDelivery: require('../lib/calendarInviteDelivery').invitationDelivery(row),
         inviteToken: row.invite_token || null,
         inviteRespondedAt: row.invite_responded_at || null,
         clientReminderSms: row.client_reminder_sms ?? null,
@@ -947,13 +949,10 @@ const listEvents = async (req, res) => {
 const getTodayAndTomorrow = async (req, res) => {
     const userId = req.user.UserId;
     try {
-        const firmWide = await settingsService.isPlatformAdmin(userId);
-        const params = [];
-        let visibilityClause = '';
-        if (!firmWide) {
-            params.push(userId);
-            visibilityClause = `AND ${_personalCalendarSql(1)}`;
-        }
+        // The home widget always represents the signed-in person's calendar.
+        // Firm-wide access belongs to the explicit office calendar screen.
+        const params = [userId];
+        const visibilityClause = `AND ${_personalCalendarSql(1)}`;
 
         const { rows } = await pool.query(
             `SELECT ce.* FROM calendar_events ce
@@ -1103,6 +1102,9 @@ const updateDailyAgendaSettings = async (req, res) => {
  * Registered clients and leads may appear on the same meeting.
  */
 const createEvent = async (req, res) => {
+    if (req.body?.office_notes != null && (typeof req.body.office_notes !== 'string' || req.body.office_notes.length > 10000)) {
+        return res.status(400).json({ message: 'הערות משרדיות חייבות להיות טקסט באורך עד 10,000 תווים' });
+    }
     const userId = req.user.UserId;
     const ownerCheck = await _requireExistingOwner(userId);
     if (!ownerCheck.ok) {
@@ -1290,10 +1292,10 @@ const createEvent = async (req, res) => {
                     lead_name, lead_phone, lead_email, lead_case_name, lead_participants,
                     reminder_offsets, reminder_channels, reminder_targets, reminders_sent_offsets,
                     invite_status, invite_token, client_reminder_sms, invite_sms,
-                    lawyer_reminder_offsets, client_reminder_offsets, updated_by)
+                    lawyer_reminder_offsets, client_reminder_offsets, updated_by, office_notes)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
                          $21::jsonb, $22::jsonb, $23::jsonb, $24::jsonb, '[]'::jsonb, $25, $26, $27, $28,
-                         $29::jsonb, $30::jsonb, $31)
+                         $29::jsonb, $30::jsonb, $31, $32)
                  RETURNING *`,
                 [
                     ownerId,
@@ -1327,6 +1329,7 @@ const createEvent = async (req, res) => {
                     offsetsToJson(storedLawyerOffsets),
                     offsetsToJson(storedClientOffsets),
                     userId,
+                    req.body.office_notes?.trim() || null,
                 ]
             );
             const created = rows[0];
@@ -1431,6 +1434,10 @@ const createEvent = async (req, res) => {
             }
         }
 
+        if (firstCreated && inviteSendResult) {
+            const fresh = (await pool.query('SELECT * FROM calendar_events WHERE id = $1', [firstCreated.id])).rows[0];
+            if (fresh) firstSanitized.invitationDelivery = require('../lib/calendarInviteDelivery').invitationDelivery(fresh);
+        }
         invalidateOperationalDashboardCaches();
         return res.status(201).json({
             event: firstSanitized,
@@ -1485,6 +1492,9 @@ const getEvent = async (req, res) => {
  * Resets sent-reminder state when time or reminder selection changes.
  */
 const updateEvent = async (req, res) => {
+    if (req.body?.office_notes != null && (typeof req.body.office_notes !== 'string' || req.body.office_notes.length > 10000)) {
+        return res.status(400).json({ message: 'הערות משרדיות חייבות להיות טקסט באורך עד 10,000 תווים' });
+    }
     const userId = req.user.UserId;
     const eventId = parseInt(req.params.id, 10);
     if (!Number.isFinite(eventId)) return res.status(400).json({ message: 'מזהה אירוע לא תקין' });
@@ -1735,7 +1745,8 @@ const updateEvent = async (req, res) => {
                invite_sms             = $28,
                lawyer_reminder_offsets = $30::jsonb,
                client_reminder_offsets = $31::jsonb,
-               updated_by             = $32
+               updated_by             = $32,
+               office_notes           = $33
              WHERE id = $29
              RETURNING *`,
             [
@@ -1776,6 +1787,7 @@ const updateEvent = async (req, res) => {
                 offsetsToJson(REMINDABLE_EVENT_TYPES.has(newEventType) ? nextLawyerOffsets : []),
                 offsetsToJson(REMINDABLE_EVENT_TYPES.has(newEventType) ? nextClientOffsets : []),
                 userId,
+                req.body.office_notes !== undefined ? (req.body.office_notes?.trim() || null) : ev.office_notes,
             ]
         );
         let updated = rows[0];
@@ -3653,7 +3665,8 @@ const resendInvite = async (req, res) => {
             _fetchEventManagers([eventId]),
             _fetchEventClients([eventId]),
         ]);
-        const sanitized = _sanitizeEventWithManagers(ev, managersMap, refreshedClientsMap);
+        const freshEvent = (await pool.query('SELECT * FROM calendar_events WHERE id = $1', [eventId])).rows[0] || ev;
+        const sanitized = _sanitizeEventWithManagers(freshEvent, managersMap, refreshedClientsMap);
 
         if (!sendResult.sentSms && !sendResult.sentEmail && !sendResult.deferred) {
             return res.status(400).json({
@@ -3705,7 +3718,7 @@ const duplicateEvent = async (req, res) => {
                 invite_status, invite_token, invite_responded_at,
                 client_reminder_sms, invite_sms,
                 lawyer_reminder_offsets, client_reminder_offsets,
-                last_reminder_sent_at, invite_deferred_until, lead_participants, updated_by)
+                last_reminder_sent_at, invite_deferred_until, lead_participants, updated_by, office_notes)
              VALUES (
                 $1, $2, $3, $4, $5, $6, $7,
                 $8, $9, $10, $11, $12,
@@ -3715,7 +3728,7 @@ const duplicateEvent = async (req, res) => {
                 $24, $25, NULL,
                 $26, $27,
                 $28::jsonb, $29::jsonb,
-                NULL, NULL, $30::jsonb, $31
+                NULL, NULL, $30::jsonb, $31, $32
              )
              RETURNING *`,
             [
@@ -3758,6 +3771,7 @@ const duplicateEvent = async (req, res) => {
                 ),
                 _leadParticipantsToJson(src.lead_participants),
                 userId,
+                src.office_notes || null,
             ]
         );
         const created = rows[0];

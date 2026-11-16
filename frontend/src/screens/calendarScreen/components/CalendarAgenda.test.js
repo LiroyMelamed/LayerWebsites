@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { CalendarAgenda, CalendarDayRibbon, CalendarOwners, CalendarWeekOverview } from './CalendarAgenda';
+import { CalendarAgenda, CalendarDayRibbon, CalendarOwners, CalendarWeekOverview, CalendarGridEventContent } from './CalendarAgenda';
 
 const messages = {
     'calendar.openEventAria': 'Open {{title}} at {{time}}', 'calendar.allDay': 'All day',
@@ -116,4 +116,20 @@ test('an empty day lets a calendar manager create the first meeting by hour', ()
     fireEvent.click(screen.getByRole('button', { name: 'calendar.addEvent 10:00' }));
     expect(onCreateAt).toHaveBeenCalledWith(600, '2026-10-12');
     expect(screen.queryByRole('button', { name: 'calendar.addEvent 19:00' })).toBeNull();
+});
+
+
+test('overlapping meetings keep RSVP badges without an overlap alert', () => {
+    const overlapping = events.map(e => ({ ...e, extendedProps: { ...e.extendedProps, managers: [{ userId: 1, name: 'Same manager' }] } }));
+    const { container } = render(<CalendarAgenda events={overlapping} date="2026-10-12" t={t} language="he" />);
+    expect(container.querySelector('[class*="conflict"]')).toBeNull();
+    expect(screen.queryByText(/Overlap/)).toBeNull();
+    expect(screen.getAllByText('1 of 2 accepted')).toHaveLength(4);
+});
+
+test.each(['none', 'pending', 'accepted', 'declined'])('grid exposes %s RSVP independently from overlap', status => {
+    const meeting = { ...events[0], extendedProps: { ...events[0].extendedProps, clients: [{ name: 'Client', inviteStatus: status }] } };
+    const { container } = render(<CalendarGridEventContent info={{ event: meeting, view: { type: 'timeGridWeek' } }} events={[meeting, { ...meeting, id: 'overlap' }]} t={t} language="he" />);
+    expect(container.querySelector(`.lw-calendarGridEvent__status--${status}`)).toHaveAttribute('aria-label');
+    expect(container.querySelector('[class*="conflict"]')).toBeNull();
 });
