@@ -207,13 +207,13 @@ export function CalendarGridEventContent({ info, lawyers = [], events = [], t, l
         <span className="lw-calendarGridEvent__header">
             {!event.allDay && <bdi>{calendarEventStartTime(event, language, t)}</bdi>}
             <CalendarOwners event={event} lawyers={lawyers} small />
-        </span>
-        <strong>{title}</strong>
-        {calendarIsCancelled(event) ? <span className="lw-calendarGridEvent__cancelled" title={t('calendar.meetingCancelled')}>{t('calendar.meetingCancelled')}</span>
-            : status && <span className={`lw-calendarGridEvent__status lw-calendarGridEvent__status--${status.status}`} title={calendarRsvpLabel(event, t)} aria-label={calendarRsvpLabel(event, t)}>
+            {!calendarIsCancelled(event) && status && <span className={`lw-calendarGridEvent__status lw-calendarGridEvent__status--${status.status}`} title={calendarRsvpLabel(event, t)} aria-label={calendarRsvpLabel(event, t)}>
                 {status.status === 'accepted' ? <Check size={12} aria-hidden="true" /> : status.status === 'declined' ? <X size={12} aria-hidden="true" /> : ['pending', 'partial'].includes(status.status) ? <Clock3 size={12} aria-hidden="true" /> : null}
                 <span className="lw-calendarGridEvent__statusLabel">{statusLabel}</span>
             </span>}
+        </span>
+        <strong>{title}</strong>
+        {calendarIsCancelled(event) && <span className="lw-calendarGridEvent__cancelled" title={t('calendar.meetingCancelled')}>{t('calendar.meetingCancelled')}</span>}
     </div>;
 }
 

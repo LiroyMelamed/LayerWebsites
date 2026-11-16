@@ -1445,7 +1445,7 @@ export default function CalendarScreen() {
                                     day: t("calendar.dayView"),
                                 }}
                                 slotEventOverlap={false}
-                                eventMinHeight={60}
+                                eventMinHeight={44}
                                 events={visibleEvents}
                                 selectable={canManageCalendar}
                                 selectMirror
