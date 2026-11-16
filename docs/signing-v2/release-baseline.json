@@ -52,7 +52,7 @@
     "frontend/src/screens/signingScreen/SigningSpotsPreviewScreen.js": "25a3befbf69ebdd7926c6c53c7f62e70a68ba50935f20b242a7b718607786577",
     "frontend/src/screens/signingScreen/SigningSpotsPreviewScreen.scss": "87584fdefaaa03039f44896fc2015ae7b236b4fc8d5ee68626d8004c1162b308",
     "frontend/src/screens/signingScreen/UploadFileForSigningScreen.js": "a36d9ee87d153f38dc117f5db880177be95692a9f490b95ae544d3b066c283c5",
-    "frontend/src/screens/signingScreen/UploadFileForSigningScreen.scss": "12572f5061c4f85c795b37651b75154bbf090c411e70cb218caa2ec38db6b9fe",
+    "frontend/src/screens/signingScreen/UploadFileForSigningScreen.scss": "c98b5403774d171a4bb6e3b33d676fc80cb95a53ed2fea66b2051438c41bba08",
     "frontend/src/screens/signingScreen/publicV2/CompletedPackageCopy.js": "c2b9175e4a602a8ebc820847b4a1dad0e89b932284b5b2b1184bd4810c630d77",
     "frontend/src/screens/signingScreen/publicV2/PublicPackageSigning.js": "c3e7c41fbaec5ef1fe640eddefc213898c39a5d93861c328b41dd2eb18133d31",
     "frontend/src/screens/signingScreen/publicV2/SignaturePad.js": "b646e4b0e94e1731d17ed3c9c0f0a64c95370c2613dd0d562927d5a735bc2bcb",
