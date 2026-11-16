@@ -243,7 +243,7 @@ function _resolveSplitReminderOffsets(event, isEdit, isCreateCapable) {
     const clientRaw = event?.clientReminderOffsets ?? event?.client_reminder_offsets;
     const hasSplit = lawyerRaw != null || clientRaw != null;
 
-    if (isEdit) {
+    if (isEdit || hasSplit) {
         const targets = parseReminderTargets(event?.reminderTargets ?? event?.reminder_targets);
         return {
             lawyerReminderOffsets: !targets.managers ? [] : hasSplit
@@ -436,7 +436,7 @@ function _formStateFromEvent(event) {
         leadCaseName: event?.leadCaseName || "",
         lawyerReminderOffsets: splitReminders.lawyerReminderOffsets,
         clientReminderOffsets: splitReminders.clientReminderOffsets,
-        reminderChannels: isEdit
+        reminderChannels: isEdit || event?.reminderChannels != null
             ? parseStoredChannels(event?.reminderChannels)
             : (isCreateCapable || isReminderCapableEventType(event?.eventType)
                 ? defaultReminderChannels()
@@ -689,7 +689,11 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setDraftLeadPhoneError(null);
         setDraftLeadEmailError(null);
         setOptionalConvertCaseName(s.leadCaseName || "");
-        reminderOffsetsTouchedRef.current = { lawyer: false, client: false };
+        reminderOffsetsTouchedRef.current = {
+            lawyer: event?.lawyerReminderOffsets != null || event?.lawyer_reminder_offsets != null,
+            client: event?.clientReminderOffsets != null || event?.client_reminder_offsets != null,
+        };
+        reminderChannelsTouchedRef.current = event?.reminderChannels != null;
         setLawyerReminderOffsets(s.lawyerReminderOffsets);
         setClientReminderOffsets(s.clientReminderOffsets);
         setReminderChannels(s.reminderChannels);
