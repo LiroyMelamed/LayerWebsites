@@ -97,3 +97,8 @@
     min-width: 0;
     max-width: 100%;
 }
+// Route guards render notices without a SimpleScreen. Reserve the sidebar's
+// actual width only when it is present, including RTL and app layouts.
+.lw-topAndRightNavBar__sidebar ~ .lw-topAndRightNavBar__content > .lw-statusNotice {
+    margin-inline-start: calc(15.625rem + .75rem);
+}
