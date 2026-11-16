@@ -479,7 +479,11 @@
       "unsent": "لا يوجد إرسال دعوة مسجل. التذكير بالموعد منفصل عن تأكيد الحضور.",
       "deferred": "ستُرسل الدعوة بعد انتهاء ساعات الهدوء.",
       "uncertain": "تعذر التحقق من نتيجة الإرسال. يرجى التحقق قبل الإرسال مجددًا."
-    }
+    },
+    "inviteCompactAccepted": "مقبول",
+    "inviteCompactPending": "بانتظار الرد",
+    "inviteCompactDeclined": "مرفوض",
+    "inviteCompactNone": "لم تُرسل"
   },
   "caseTypes": {
     "addStage": "إضافة مرحلة",

@@ -467,7 +467,11 @@
       "unsent": "No invitation send is recorded. A meeting reminder is separate from attendance confirmation.",
       "deferred": "Invitation queued until quiet hours end.",
       "uncertain": "Delivery outcome could not be confirmed. Check before sending again."
-    }
+    },
+    "inviteCompactAccepted": "Accepted",
+    "inviteCompactPending": "Pending",
+    "inviteCompactDeclined": "Declined",
+    "inviteCompactNone": "Not sent"
   },
   "caseTypes": {
     "addStage": "Add stage",
