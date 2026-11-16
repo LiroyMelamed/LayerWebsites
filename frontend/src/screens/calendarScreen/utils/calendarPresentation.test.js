@@ -62,9 +62,9 @@ test('participant list retains all managers, deduplicates identity and uses prof
     expect(calendarOwners(meeting, [{ UserId: 2, Name: 'Second manager', PhotoUrl: '/avatar.png' }])[0]).toEqual({ id: '2', name: 'Second manager', photo: '/avatar.png' });
 });
 
-test('RSVP totals include all invited clients while uninvited clients are not counted', () => {
+test('RSVP totals include uninvited recipients so partial acceptance is accurate', () => {
     const meeting = event(1, '2026-10-12T09:00', '2026-10-12T10:00', { clients: [{ inviteStatus: 'accepted' }, { invite_status: 'pending' }, { inviteStatus: 'none' }] });
-    expect(calendarRsvp(meeting)).toEqual({ status: 'partial', accepted: 1, count: 2 });
+    expect(calendarRsvp(meeting)).toEqual({ status: 'partial', accepted: 1, count: 3 });
     expect(calendarRsvp(event(2, meeting.start, meeting.end, { eventType: 'leave' }))).toBeNull();
 });
 
@@ -104,4 +104,10 @@ test('FullCalendar all-day civil strings take priority over browser-zone Date ob
     const holiday = {id:'1',allDay:true,startStr:'2026-10-12',endStr:'2026-10-13',start:new Date('2026-10-12T07:00Z'),end:new Date('2026-10-13T07:00Z')};
     expect(calendarEventsForDay([holiday],'2026-10-12')).toEqual([holiday]);
     expect(calendarEventsForDay([holiday],'2026-10-13')).toEqual([]);
+});
+
+
+test('an uninvited recipient prevents a misleading all-accepted badge', () => {
+    const meeting = event(1, '2026-10-12T09:00', '2026-10-12T10:00', { clients: [{ inviteStatus: 'accepted' }, { inviteStatus: 'none' }] });
+    expect(calendarRsvp(meeting)).toEqual({ status: 'partial', accepted: 1, count: 2 });
 });

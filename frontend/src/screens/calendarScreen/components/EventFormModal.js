@@ -237,15 +237,6 @@ function RsvpCheckIcon() {
     );
 }
 
-function RsvpResendIcon() {
-    return (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M1 4v6h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-    );
-}
-
 function _resolveSplitReminderOffsets(event, isEdit, isCreateCapable) {
     const legacy = parseOffsetsList(event?.reminderOffsets);
     const lawyerRaw = event?.lawyerReminderOffsets ?? event?.lawyer_reminder_offsets;
@@ -423,6 +414,7 @@ function _formStateFromEvent(event) {
         eventType: event?.eventType || EVENT_TYPE_APPT,
         title: event?.title || "",
         description: event?.description || "",
+        officeNotes: event?.officeNotes || "",
         location: event?.location || "",
         startTime: toDatetimeLocal(event?.startTime) || "",
         endTime: toDatetimeLocal(event?.endTime) || "",
@@ -474,13 +466,14 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const [eventType, setEventType] = useState(event?.eventType || EVENT_TYPE_APPT);
     const [title, setTitle] = useState(event?.title || "");
     const [description, setDescription] = useState(event?.description || "");
+    const [officeNotes, setOfficeNotes] = useState(event?.officeNotes || "");
     const [location, setLocation] = useState(event?.location || "");
     const [meetingType, setMeetingType] = useState(event?.meetingType || event?.meeting_type || "");
     const [startTime, setStartTime] = useState(toDatetimeLocal(event?.startTime) || "");
     const [endTime, setEndTime] = useState(toDatetimeLocal(event?.endTime) || "");
     const [allDay, setAllDay] = useState(event?.allDay || false);
     const [recurring, setRecurring] = useState(false);
-    const [sendInvitation, setSendInvitation] = useState(false);
+    const [sendInvitation, setSendInvitation] = useState(true);
     const [recurrenceFreq, setRecurrenceFreq] = useState("weekly");
     const [recurrenceUntil, setRecurrenceUntil] = useState("");
     const [color, setColor] = useState(() => resolveFormColor(event, event?.eventType || EVENT_TYPE_APPT));
@@ -666,12 +659,13 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setEventType(s.eventType);
         setTitle(s.title);
         setDescription(s.description);
+        setOfficeNotes(s.officeNotes);
         setLocation(s.location);
         setStartTime(s.startTime);
         setEndTime(s.endTime);
         endTimeTouchedRef.current = Boolean(isEdit && s.endTime);
         setAllDay(s.allDay);
-        setSendInvitation(false);
+        setSendInvitation(true);
         setRecurring(false);
         setRecurrenceUntil("");
         setColor(s.color);
@@ -1412,6 +1406,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                             ? t("calendar.holidayLabel")
                             : ""),
                 description: description || null,
+                office_notes: officeNotes.trim() || null,
                 location: isLeaveOrHolidayEventType(eventType) || meetingType === "phone"
                     ? null
                     : (location || null),
@@ -1912,8 +1907,10 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
 
     const [markingRsvpUserId, setMarkingRsvpUserId] = useState(null);
 
+    const [sendingInvitation, setSendingInvitation] = useState(false);
     const handleResendInvite = async () => {
-        if (!isEdit || !event?.id) return;
+        if (!isEdit || !event?.id || sendingInvitation) return;
+        setSendingInvitation(true);
         clearNotices();
         try {
             const res = await calendarApi.resendInvite(event.id);
@@ -1937,6 +1934,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 e?.response?.data?.message
                 || t("calendar.inviteResendFailed")
             );
+        } finally {
+            setSendingInvitation(false);
         }
     };
 
@@ -1975,34 +1974,34 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     };
 
     const renderClientRsvpSection = () => {
-        const hasInvite = clients.some((c) => c.inviteStatus && c.inviteStatus !== "none")
-            || (event?.inviteStatus && event.inviteStatus !== "none");
-        if (!isEdit || !hasInvite) return null;
+        if (!isEdit || !supportsCalendarInviteSms(eventType) || !hasClientRecipient) return null;
 
         const rsvpClients = clients.length
             ? clients
             : [{
                 userId: event?.clientUserId || "legacy",
-                name: event?.clientName || event?.clientDisplayName || "לקוח",
+                name: event?.clientName || event?.clientDisplayName || leadParticipants.map(p => p.name).filter(Boolean).join(" · ") || leadName || "לקוח",
                 inviteStatus: event?.inviteStatus,
             }];
 
         return (
             <SimpleContainer className="lw-eventFormModal__inviteStatus lw-eventFormModal__inviteStatus--breakdown">
                 <TextBold14 color={NAVY}>{t("calendar.clientRsvpBreakdown")}</TextBold14>
+                {event?.invitationDelivery && <Text12 role="status">{t(`calendar.inviteDelivery.${event.invitationDelivery.status}`, {
+                    channels: event.invitationDelivery.channels.map(channel => channel === 'sms' ? 'SMS' : t('calendar.channelEmail')).join(' · '),
+                })}</Text12>}
                 <SimpleContainer className="lw-eventFormModal__rsvpList">
                     {rsvpClients.map((c) => {
-                        const st = c.inviteStatus || "pending";
-                        const label = _clientRsvpLabel(st, t);
+                        const st = c.inviteStatus || "none";
+                        const label = st === "none" ? t("calendar.inviteStatusNone") : _clientRsvpLabel(st, t);
                         if (!label) return null;
                         const canMark = st === "pending" && c.userId && c.userId !== "legacy";
-                        const canResend = st === "pending" || st === "declined";
                         return (
                             <SimpleContainer key={c.userId} className={`lw-eventFormModal__rsvpRow is-${st}`}>
                                 <Text14 className="lw-eventFormModal__rsvpLabel">
                                     <strong>{c.name || "לקוח"}:</strong> {label}
                                 </Text14>
-                                {(canMark || canResend) && (
+                                {canMark && (
                                     <SimpleContainer className="lw-eventFormModal__rsvpActions">
                                         {canMark && (
                                             <InviteIconButton
@@ -2018,22 +2017,17 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                                 )}
                                             </InviteIconButton>
                                         )}
-                                        {canResend && (
-                                            <InviteIconButton
-                                                label={t("calendar.inviteResend")}
-                                                onPress={handleResendInvite}
-                                                disabled={!!markingRsvpUserId}
-                                                className="lw-eventFormModal__rsvpIconBtn"
-                                            >
-                                                <RsvpResendIcon />
-                                            </InviteIconButton>
-                                        )}
                                     </SimpleContainer>
                                 )}
                             </SimpleContainer>
                         );
                     })}
                 </SimpleContainer>
+                {rsvpClients.some(c => c.inviteStatus !== "accepted") && (
+                    <SecondaryButton onPress={handleResendInvite} disabled={!!markingRsvpUserId || sendingInvitation}>
+                        {t(sendingInvitation ? "calendar.inviteSending" : rsvpClients.every(c => !c.inviteStatus || c.inviteStatus === "none") ? "calendar.inviteSend" : "calendar.inviteResend")}
+                    </SecondaryButton>
+                )}
             </SimpleContainer>
         );
     };
@@ -2045,6 +2039,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             eventType,
             title: copyTitle ? `${copyTitle} (עותק)` : t("calendar.duplicateEvent"),
             description,
+            officeNotes,
             location,
             meetingType,
             startTime: parseDatetimeLocal(startTime)?.toISOString() || event?.startTime,
@@ -3063,6 +3058,15 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     </SimpleContainer>
                     )}
 
+                    <SimpleTextArea
+                        title={t("calendar.officeNotes")}
+                        aria-label={t("calendar.officeNotes")}
+                        value={officeNotes}
+                        onChange={setOfficeNotes}
+                        rows={2}
+                        maxLength={10000}
+                    />
+                    <Text12 color="#718096">{t("calendar.officeNotesHint")}</Text12>
                     <SimpleTextArea
                         title={t("calendar.description")}
                         value={description}

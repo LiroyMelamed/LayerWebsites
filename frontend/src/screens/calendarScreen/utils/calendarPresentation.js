@@ -171,8 +171,8 @@ export function calendarRsvp(event) {
     const type = raw.eventType || raw.event_type || 'appointment';
     if (!['appointment', 'hearing'].includes(type)) return null;
     const clients = Array.isArray(raw.clients) ? raw.clients : [];
-    const statuses = clients.map((client) => client.inviteStatus || client.invite_status)
-        .filter((status) => status && status !== 'none');
+    if (!clients.length && !raw.clientUserId && !raw.clientName && !raw.leadName && !raw.leadPhone && !raw.leadEmail && !raw.leadParticipants?.length && (!raw.inviteStatus || raw.inviteStatus === 'none')) return null;
+    const statuses = clients.map((client) => client.inviteStatus || client.invite_status || 'none');
     const accepted = statuses.filter((status) => status === 'accepted').length;
     const count = statuses.length;
     if (count) {
