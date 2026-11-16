@@ -547,7 +547,7 @@
     width: fit-content;
     position: sticky;
     top: v.$space-2;
-    z-index: 4000;
+    z-index: 35;
     background: var(--lw-color-white);
     padding: v.$space-2;
     border-radius: 0.5rem;
@@ -673,4 +673,15 @@
     padding: 0;
     border: 0;
     background: none;
+}
+
+/* Keep document tools inside the space above the fixed send/back actions. */
+.lw-uploadSigningScreen .lw-addFieldPanel--inline {
+    z-index: 30;
+    max-block-size: calc(100dvh - 10rem - env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+}
+.lw-uploadSigningScreen .lw-addFieldPanel--popup {
+    max-block-size: calc(100dvh - 11rem - env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
 }
