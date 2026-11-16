@@ -3,6 +3,6 @@
 export function calendarEventInteractionOptions(isSmallScreen) {
     return {
         eventLongPressDelay: 600,
-        ...(isSmallScreen ? { eventMinHeight: 60 } : {}),
+        ...(isSmallScreen ? { eventMinHeight: 44 } : {}),
     };
 }
