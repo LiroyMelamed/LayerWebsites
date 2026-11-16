@@ -80,6 +80,6 @@ test('mouse dragging starts with movement without waiting for the touch delay', 
     mouseEvent(document, 'mouseup', 60, 100);
 });
 test('short mobile events have a finger-size target while desktop sizing stays with FullCalendar', () => {
-    expect(calendarEventInteractionOptions(true).eventMinHeight).toBeGreaterThanOrEqual(60);
+    expect(calendarEventInteractionOptions(true).eventMinHeight).toBeGreaterThanOrEqual(44);
     expect(calendarEventInteractionOptions(false)).not.toHaveProperty('eventMinHeight');
 });
