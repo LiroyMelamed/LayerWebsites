@@ -35,7 +35,8 @@
     "new": "New",
     "noResultsFound": "No results found",
     "submit": "Submit",
-    "simpleImageAlt": "Image"
+    "simpleImageAlt": "Image",
+    "continue": "Continue"
   },
   "auth": {
     "login": "Log in",

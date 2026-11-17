@@ -65,7 +65,8 @@
       "contactText": "أتواصل بخصوص الملف \"{{caseName}}\""
     },
     "chooseFilePrompt": "انقر أو اسحب ملفًا إلى هنا",
-    "uploading": "جارٍ الرفع..."
+    "uploading": "جارٍ الرفع...",
+    "continue": "متابعة"
   },
   "auth": {
     "login": "تسجيل الدخول",
