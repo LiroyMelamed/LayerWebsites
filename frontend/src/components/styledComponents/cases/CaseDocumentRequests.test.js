@@ -11,13 +11,14 @@ const row={id:'request',description_id:101,version:3,items:[{id:'item',title:'Id
 beforeEach(()=>{jest.clearAllMocks();mockOpen.mockImplementation(element=>{mockConfirmation=element;});api.list.mockResolvedValue({requests:[row],policy:{available:['sms','email'],defaults:['email']}});api.save.mockResolvedValue({});api.action.mockResolvedValue({});});
 test('client sees shared completion status with no write or send controls',async()=>{
  render(<CaseDocumentRequests caseId={10} descriptionId={101} active isClient/>);
- await screen.findByText('Identity');expect(screen.getByText('documentRequests.missing')).toBeInTheDocument();
+ expect(await screen.findByRole('checkbox',{name:'Identity'})).toBeDisabled();
+ expect(screen.getByRole('checkbox',{name:'Identity'})).not.toBeChecked();
  expect(screen.queryByRole('textbox')).toBeNull();expect(screen.queryByText('documentRequests.send')).toBeNull();expect(api.save).not.toHaveBeenCalled();
 });
 test('received status can be saved without requiring a file and uses the shared version',async()=>{
  render(<CaseDocumentRequests caseId={10} descriptionId={101} active/>);
- const select=await screen.findByLabelText('Identity — documentRequests.status');fireEvent.click(select);fireEvent.pointerDown(screen.getByRole('option',{name:'documentRequests.received'}));
- fireEvent.click(screen.getByRole('button',{name:'common.save'}));
+ fireEvent.click(await screen.findByRole('checkbox',{name:'Identity'}));
+ expect(screen.queryByRole('combobox')).toBeNull();
  await waitFor(()=>expect(api.save).toHaveBeenCalledWith(10,{descriptionId:101,version:3,items:[{...row.items[0],status:'received'}]}));
  expect(api.action).not.toHaveBeenCalled();
 });
@@ -26,4 +27,20 @@ test('manual delivery requires explicit confirmation and sends selected channels
  fireEvent.click(await screen.findByRole('button',{name:'documentRequests.send'}));expect(api.action).not.toHaveBeenCalled();expect(mockOpen).toHaveBeenCalled();
  await act(async()=>mockConfirmation.props.onConfirm());
  await waitFor(()=>expect(api.action).toHaveBeenCalledWith(10,'request',{version:3,action:'send',channels:['sms'],confirmUnknown:false}));
+});
+
+test('list editing keeps not-required distinct from received',async()=>{
+ render(<CaseDocumentRequests caseId={10} descriptionId={101} active/>);
+ fireEvent.click(await screen.findByRole('button',{name:'documentRequests.editList'}));
+ fireEvent.click(screen.getByRole('checkbox',{name:'Identity — documentRequests.not_required'}));
+ expect(api.save).not.toHaveBeenCalled();
+ fireEvent.click(screen.getByRole('button',{name:'common.save'}));
+ await waitFor(()=>expect(api.save).toHaveBeenCalledWith(10,{descriptionId:101,version:3,items:[{...row.items[0],status:'not_required'}]}));
+});
+test('failed status save does not claim the document was received',async()=>{
+ api.save.mockRejectedValueOnce(new Error('offline'));
+ render(<CaseDocumentRequests caseId={10} descriptionId={101} active/>);
+ fireEvent.click(await screen.findByRole('checkbox',{name:'Identity'}));
+ await screen.findByText('documentRequests.saveFailed');
+ expect(screen.getByRole('checkbox',{name:'Identity'})).not.toBeChecked();
 });
