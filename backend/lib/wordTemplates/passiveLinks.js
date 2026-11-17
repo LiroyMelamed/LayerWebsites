@@ -5,6 +5,7 @@ const { readZip, writeZip } = require('./zip');
 const { WordTemplateError, reject } = require('./errors');
 const REL = 'http://schemas.openxmlformats.org/package/2006/relationships';
 const OFFICE = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+const OFFICE_NAMESPACES = new Set([OFFICE, 'http://purl.oclc.org/ooxml/officeDocument/relationships']);
 const WORD = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 
 function scan(data, open, close) {
@@ -50,7 +51,7 @@ function normalizePassiveLinks(buffer) {
             const id = attr(node, 'Id');
             if (!id || allIds.has(id)) reject('INVALID_XML');
             allIds.add(id);
-            if (attr(node, 'Type') === `${OFFICE}/hyperlink` && attr(node, 'TargetMode') === 'External'
+            if ([...OFFICE_NAMESPACES].some(ns => attr(node, 'Type') === `${ns}/hyperlink`) && attr(node, 'TargetMode') === 'External'
                 && passiveTarget(attr(node, 'Target'))) ids.add(id);
         }, (item, _closeStart, end) => {
             if (item.node.uri === REL && item.node.local === 'Relationship' && ids.has(attr(item.node, 'Id'))) removals.push([item.start, end]);
@@ -61,7 +62,7 @@ function normalizePassiveLinks(buffer) {
         if (!source) reject('BROKEN_PACKAGE_RELATIONSHIP');
         const tags = [];
         const body = scan(source.data, item => {
-            const refs = Object.values(item.node.attributes).filter(a => a.uri === OFFICE && ids.has(a.value));
+            const refs = Object.values(item.node.attributes).filter(a => OFFICE_NAMESPACES.has(a.uri) && ids.has(a.value));
             if (!refs.length) return;
             if (item.node.uri !== WORD || item.node.local !== 'hyperlink' || refs.some(a => a.local !== 'id')) reject('EXTERNAL_OR_ACTIVE_RELATIONSHIP');
             item.unwrap = true; tags.push([item.start, item.end]);
