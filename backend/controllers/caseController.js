@@ -1,3 +1,4 @@
+const documentRequests = require('../services/caseDocumentRequests');
 const { queryScopedCases } = require('../lib/firmPermissions/caseScope');
 const pool = require("../config/db"); // Direct import of the pg pool
 const { formatPhoneNumber } = require("../utils/phoneUtils");
@@ -692,6 +693,7 @@ const addCase = async (req, res) => {
             }
         }
 
+        await documentRequests.initialize(client, (await client.query('SELECT * FROM cases WHERE caseid=$1',[caseId])).rows[0], req.user.UserId);
         // Persist automation in the same transaction as the new case. No network
         // calls here: a WhatsApp failure must not turn a saved case into a retry.
         await saveCaseCourtNumber(client, caseId, req.firmTenantId || null, req.body.CourtCaseNumber);
@@ -842,6 +844,7 @@ const updateCase = async (req, res) => {
             return res.status(404).json({ message: "תיק לא נמצא" });
         }
         const oldCase = oldCaseResult.rows[0];
+        await documentRequests.beforeTransition(client, {...oldCase,caseid:Number(caseId)}, CurrentStage, IsClosed, req.body.ConfirmMissingDocuments === true);
         const oldDescriptionId = process.env.SIGNING_V2_ENABLED === 'true'
             ? await stageDocuments.stageIdentity(client, caseId, oldCase.currentstage) : null;
 
@@ -975,6 +978,7 @@ const updateCase = async (req, res) => {
             }
         }
 
+        await documentRequests.afterTransition(client, (await client.query('SELECT * FROM cases WHERE caseid=$1',[caseId])).rows[0], req.user.UserId);
         await stageDocuments.recordTransition(client, { caseId, oldDescriptionId, oldCurrentStage: oldCase.currentstage, oldClosed: Boolean(oldCase.isclosed),
             newClosed: effectiveIsClosed, actorId });
         await client.query('COMMIT');
@@ -1170,6 +1174,7 @@ const updateStage = async (req, res) => {
         }
 
         const currentRow = currentData.rows[0];
+        await documentRequests.beforeTransition(client, (await client.query('SELECT * FROM cases WHERE caseid=$1 FOR UPDATE',[caseId])).rows[0], CurrentStage, IsClosed, req.body.ConfirmMissingDocuments === true);
         const oldDescriptionId = process.env.SIGNING_V2_ENABLED === 'true'
             ? await stageDocuments.stageIdentity(client, caseId, currentRow.currentstage) : null;
         const currentStageValue = currentRow?.currentstage;
@@ -1257,6 +1262,7 @@ const updateStage = async (req, res) => {
             channelType = 'CASE_REOPENED';
         }
 
+        await documentRequests.afterTransition(client, (await client.query('SELECT * FROM cases WHERE caseid=$1',[caseId])).rows[0], req.user.UserId);
         await stageDocuments.recordTransition(client, { caseId, oldDescriptionId, oldCurrentStage: currentStageValue, oldClosed: Boolean(currentlyClosed),
             newClosed: Boolean(IsClosed), actorId });
         await client.query('COMMIT');
@@ -1284,6 +1290,7 @@ const updateStage = async (req, res) => {
         if (client) {
             await client.query('ROLLBACK');
         }
+        if (error.httpStatus >= 400 && error.httpStatus < 500) return respondPermissionError(res, error);
         res.status(500).json({ message: "שגיאה בעדכון שלב" });
     } finally {
         if (client) {

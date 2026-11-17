@@ -1253,7 +1253,10 @@
       "pending": "Pending",
       "sent": "Sent",
       "failed": "Failed",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "unknown": "Needs review",
+      "simulated": "Test delivery",
+      "sending": "Sending"
     },
     "col": {
       "clientName": "Client Name",
@@ -3576,7 +3579,8 @@
       "address_city": "City",
       "address_postalCode": "Postal code",
       "address_country": "Country",
-      "courtNumber": "Court case number"
+      "courtNumber": "Court case number",
+      "clientPhones": "Case clients’ phone numbers"
     },
     "missingValues": "Some data is missing or invalid. Check required values and mappings before generating again.",
     "importLoading": "Loading the filled document and checking access…",
@@ -3689,7 +3693,13 @@
     "editReplacement": "Edit field: {{field}}",
     "fieldUpdated": "Field updated on the document",
     "converterBusy": "Document preparation is busy. Please try again shortly.",
-    "signatureFlowHelp": "To add signatures, fill any details needed, prepare the document and review the result."
+    "signatureFlowHelp": "To add signatures, fill any details needed, prepare the document and review the result.",
+    "fieldTitle": "Field title",
+    "saveField": "Save field",
+    "missingRecordValue": "Missing in the record — complete for this document only",
+    "checkingValues": "Checking values…",
+    "valuesCheckFailed": "Could not check the values. Select the record again.",
+    "useRecordValue": "Use record value"
   },
   "stageAutomation": {
     "title": "Automatic documents by case stage",
@@ -3756,5 +3766,60 @@
     "loadError": "Your message preference could not be loaded. Other subscription actions remain available.",
     "confirmationRequired": "To receive updates, confirm your choice again by selecting the option and saving.",
     "withdrawPrevious": "Withdraw previous consent"
+  },
+  "documentRequests": {
+    "title": "Stage documents",
+    "progress": "{{received}} of {{total}} complete",
+    "loading": "Loading documents…",
+    "documentTitle": "Document name",
+    "status": "Status",
+    "missing": "Missing",
+    "received": "Received",
+    "not_required": "Not required",
+    "add": "Add document",
+    "file": "Attached file",
+    "noFile": "No attached file",
+    "channels": "Delivery channels",
+    "email": "Email",
+    "sms": "SMS",
+    "push": "Push",
+    "send": "Send request",
+    "sendAgain": "Send again",
+    "stop": "Stop reminders",
+    "next": "Next delivery:",
+    "history": "Request history",
+    "loadFailed": "Could not load the document request.",
+    "saveFailed": "The action did not complete. Refresh and try again.",
+    "changed": "The list changed. Refresh before saving.",
+    "sendConfirm": "Send the case clients a request for the missing documents only?",
+    "unknownConfirm": "Delivery of the previous message is unknown. Check before sending again to avoid a duplicate. Continue?",
+    "defaults": "Required documents — one per line",
+    "sendOnEntry": "Send a request on entering this stage",
+    "transitionTitle": "Documents are still missing",
+    "transitionConfirm": "Continue to the next stage and stop reminders? The list will be kept.",
+    "retry": "Retry delivery",
+    "retryConfirm": "Send again only to this recipient through this channel? Only documents still missing will be included.",
+    "unknownRetryConfirm": "It is unknown whether the earlier message arrived. Retrying may send it twice. Continue for this recipient and channel only?",
+    "actions": {
+      "created": "Request created",
+      "checklist_updated": "Checklist updated",
+      "cancelled": "Reminders stopped",
+      "send_requested": "Delivery requested",
+      "send_blocked": "Delivery blocked — check recipients and channels",
+      "stage_left": "Stage changed — reminders stopped",
+      "sent": "Delivery completed",
+      "delivery_attention": "Delivery needs attention",
+      "retry_requested": "Retry requested"
+    },
+    "delivery": {
+      "PENDING": "Pending",
+      "SENDING": "Sending",
+      "SENT": "Sent",
+      "SIMULATED": "Test delivery only",
+      "FAILED": "Not sent — contact details missing",
+      "UNKNOWN": "Delivery needs checking",
+      "CANCELLED": "Cancelled"
+    },
+    "remove": "Remove"
   }
 }

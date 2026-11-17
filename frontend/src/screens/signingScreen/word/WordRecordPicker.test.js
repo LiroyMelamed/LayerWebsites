@@ -8,7 +8,7 @@ import wordApi from '../../../api/wordTemplatesApi';
 
 jest.mock('../../../api/signingTemplatesApi', () => ({ __esModule: true, default: { contacts: jest.fn() } }));
 jest.mock('../../../api/signingPackagesApi', () => ({ __esModule: true, default: { cases: jest.fn() } }));
-jest.mock('../../../api/wordTemplatesApi', () => ({ __esModule: true, default: { list: jest.fn(), load: jest.fn(), preview: jest.fn(), pdf: jest.fn() } }));
+jest.mock('../../../api/wordTemplatesApi', () => ({ __esModule: true, default: { list: jest.fn(), load: jest.fn(), resolveInputs: jest.fn().mockResolvedValue({fields:[]}), preview: jest.fn(), pdf: jest.fn() } }));
 jest.mock('./wordAuthoringSelection', () => ({ ...jest.requireActual('./wordAuthoringSelection'), verifyPdfBlob: jest.fn(blob => Promise.resolve(blob)) }));
 jest.mock('../../../utils/fileUploadUtils', () => ({ uploadFileToR2: jest.fn() }));
 jest.mock('../templates/useSigningLocale', () => () => ({ direction: 'rtl', number: String, t: (key, values = {}) => key.replace(/^signingWord\./, '') + (values.role ? ` ${values.role}` : '') + (values.field ? ` ${values.field}` : '') }));
@@ -23,7 +23,7 @@ jest.mock('../../../components/specializedComponents/signFiles/pdfViewer/PdfView
 jest.mock('../../../components/specializedComponents/containers/SearchInput', () => ({ title, value, onSearch, queryResult = [], buttonPressFunction, getButtonTextFunction, getSelectValueFunction, disabled }) => <div><label>{title}<input value={value} disabled={disabled} onChange={event => onSearch(event.target.value)} onFocus={() => onSearch(value || '')} /></label>{queryResult.map((item, index) => <button key={index} disabled={disabled} onClick={() => { const text = getSelectValueFunction(item); buttonPressFunction(text, item); onSearch(text); }}>{getButtonTextFunction(item)}</button>)}</div>);
 
 beforeEach(() => {
-    jest.clearAllMocks(); URL.createObjectURL = jest.fn(() => 'blob:human-selection'); URL.revokeObjectURL = jest.fn();
+    jest.clearAllMocks(); wordApi.resolveInputs.mockImplementation(async (id, payload) => ({sourceId:id,sourceVersion:payload.expectedVersion,fields:[]})); URL.createObjectURL = jest.fn(() => 'blob:human-selection'); URL.revokeObjectURL = jest.fn();
     Object.defineProperty(globalThis, 'crypto', { configurable: true, value: { randomUUID: () => '4f7890f6-619b-4d94-b5ec-48d41be634d6' } });
 });
 
@@ -82,19 +82,19 @@ test('primary context selects clients only while role selection includes manager
     expect(screen.queryByText(/Office manager · contactManager/)).not.toBeInTheDocument(); expect(screen.queryByText(/Staff member · contactStaff/)).not.toBeInTheDocument();
     expect(templatesApi.contacts).toHaveBeenLastCalledWith('Tenant', 'client');
     fireEvent.click(screen.getByText(/Tenant client · contactClient/)); expect(screen.getByLabelText('clientId')).toHaveValue('Tenant client');
-    fireEvent.change(screen.getByLabelText('roleClientId Tenant'), { target: { value: 'Office' } });
+    fireEvent.change(screen.getByLabelText('Tenant'), { target: { value: 'Office' } });
     await waitFor(() => expect(screen.getByText(/Office manager · contactManager/)).toBeInTheDocument());
     expect(screen.getByText(/Tenant client · contactClient/)).toBeInTheDocument(); expect(screen.getByText(/Staff member · contactStaff/)).toBeInTheDocument();
     expect(templatesApi.contacts).toHaveBeenLastCalledWith('Office'); fireEvent.click(screen.getByText(/Office manager · contactManager/));
-    fireEvent.click(screen.getByRole('button', { name: 'preview' })); await waitFor(() => expect(screen.getByTestId('final-pdf')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('button', {name:'preview'})).toBeEnabled()); fireEvent.click(screen.getByRole('button', { name: 'preview' })); await waitFor(() => expect(screen.getByTestId('final-pdf')).toBeInTheDocument());
     expect(wordApi.preview).toHaveBeenLastCalledWith('s', expect.objectContaining({ inputs: { clientId: 42, roleClientIds: { tenant: 41 }, manualValues: {} } }), expect.any(String));
     fireEvent.change(screen.getByLabelText('clientId'), { target: { value: 'New external person' } });
     expect(screen.getByLabelText('clientId')).toHaveValue('New external person'); expect(screen.queryByTestId('final-pdf')).not.toBeInTheDocument(); expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:human-selection');
     // Explicit manual mode clears the query and saved ID without creating a DB contact.
-    fireEvent.click(screen.getByText('withoutClient')); expect(screen.getByLabelText('clientId')).toHaveValue('');
+    fireEvent.click(screen.getAllByText('manualPerson')[0]); expect(screen.getByLabelText('clientId')).toHaveValue('');
     expect(screen.getByRole('button', { name: 'preview' })).toBeDisabled();
     fireEvent.change(screen.getByLabelText('fieldLabel fields.fullName'), { target: { value: 'Document-only client' } });
-    fireEvent.click(screen.getByRole('button', { name: 'preview' })); await waitFor(() => expect(wordApi.preview).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.getByRole('button', {name:'preview'})).toBeEnabled()); fireEvent.click(screen.getByRole('button', { name: 'preview' })); await waitFor(() => expect(wordApi.preview).toHaveBeenCalledTimes(2));
     expect(wordApi.preview.mock.calls[1][1].inputs).not.toHaveProperty('clientId');
     expect(wordApi.preview.mock.calls[1][1].inputs.roleClientIds).toEqual({ tenant: 41 });
     expect(wordApi.preview.mock.calls[1][1].inputs.manualValues).toEqual({ 'client.fullName': 'Document-only client' });

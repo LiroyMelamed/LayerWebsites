@@ -12,6 +12,7 @@ import remindersApi from "../../../api/remindersApi";
 import { formatDateTimeForInput, parseDateTimeInput, toNativeDateTimeValue } from "../../../functions/date/formatDateForInput";
 import { parseDatetimeLocal } from "../../../functions/date/datetimeLocal";
 import "./ReminderDetailPopup.scss";
+import ConfirmationDialog from "../../../components/styledComponents/popups/ConfirmationDialog";
 
 function wallToIso(wallValue) {
     if (!wallValue) return undefined;
@@ -32,10 +33,17 @@ function DetailRow({ label, children }) {
 export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCancel, onDelete, onUpdated, resolveTemplateLabel, readOnly = false }) {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const isDocumentRequest = reminder?.source === "document_request";
     const isCalendarReminder = reminder?.source === "calendar";
     const isPending = reminder?.status === "PENDING";
     const isSigningReminder = reminder?.source === "signing" || String(reminder?.id || "").startsWith("sfr-");
 
+    const [retryError,setRetryError] = useState(false);
+    const [confirmRetry, setConfirmRetry] = useState(false);
+    const { isPerforming: isRetrying, performRequest: retryDelivery } = useHttpRequest(
+        () => remindersApi.retryDocumentReminder(reminder.id, reminder.status === "UNKNOWN"),
+        () => { onUpdated?.(); closePopUpFunction?.(); }, () => { setConfirmRetry(false); setRetryError(true); }
+    );
     const [editing, setEditing] = useState(false);
     const [editData, setEditData] = useState({
         client_name: reminder?.client_name || "",
@@ -80,11 +88,16 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
     };
 
     if (!reminder) return null;
+    if (confirmRetry) return <ConfirmationDialog title={t('documentRequests.retry')}
+        message={t(reminder.status==='UNKNOWN'?'documentRequests.unknownRetryConfirm':'documentRequests.retryConfirm')}
+        confirmText={t('documentRequests.retry')} cancelText={t('common.cancel')}
+        isPerforming={isRetrying} onCancel={()=>setConfirmRetry(false)} onConfirm={()=>{if(!isRetrying)retryDelivery();}}/>;
 
     const statusKey = (reminder.status || "").toLowerCase();
 
     return (
         <SimpleContainer className="lw-reminderDetail">
+            {retryError && <p role="alert">{t("documentRequests.saveFailed")}</p>}
             <Text20 className="lw-reminderDetail__title">{t("reminders.detail.title")}</Text20>
 
             <SimpleContainer className="lw-reminderDetail__card">
@@ -161,6 +174,7 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
                 )}
             </SimpleContainer>
 
+            {isDocumentRequest && <p>{t('documentRequests.title')}: {reminder.subject} · {(reminder.channels || []).map(channel=>t(`documentRequests.${channel}`)).join(', ')}</p>}
             {isCalendarReminder && (
                 <SimpleContainer className="lw-reminderDetail__delivery">
                     <dl className="lw-reminderDetail__deliveryInfo">
@@ -193,6 +207,8 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
                     </>
                 ) : (
                     <>
+                        {!readOnly && isDocumentRequest && ['FAILED','UNKNOWN'].includes(reminder.status) && <PrimaryButton onPress={()=>setConfirmRetry(true)}>{t('documentRequests.retry')}</PrimaryButton>}
+                        {!readOnly && isDocumentRequest && isPending && onCancel && <SecondaryButton onPress={()=>{onCancel(reminder.id);closePopUpFunction?.();}}>{t('documentRequests.stop')}</SecondaryButton>}
                         {isCalendarReminder && (
                             <SecondaryButton
                                 className="lw-reminderDetail__calendarButton"
@@ -202,17 +218,17 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
                                 פתח את האירוע ביומן
                             </SecondaryButton>
                         )}
-                        {!readOnly && !isCalendarReminder && isPending && (
+                        {!readOnly && !isCalendarReminder && !isDocumentRequest && isPending && (
                             <PrimaryButton onPress={() => setEditing(true)}>
                                 {t("reminders.detail.edit")}
                             </PrimaryButton>
                         )}
-                        {!isCalendarReminder && isPending && onCancel && (
+                        {!isCalendarReminder && !isDocumentRequest && isPending && onCancel && (
                             <PrimaryButton onPress={() => { onCancel(reminder.id); closePopUpFunction?.(); }}>
                                 {t("reminders.cancel")}
                             </PrimaryButton>
                         )}
-                        {!isCalendarReminder && onDelete && (
+                        {!isCalendarReminder && !isDocumentRequest && onDelete && (
                             <PrimaryButton
                                 className="lw-reminderDetail__deleteBtn"
                                 onPress={() => { onDelete(reminder.id); closePopUpFunction?.(); }}

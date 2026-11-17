@@ -379,3 +379,14 @@ test('Strict OOXML retains text binding and active-content checks in its own nam
         'word/_rels/document.xml.rels': `<Relationships xmlns="${R}"><Relationship Id="t" Type="${office}/hyperlink" Target="tel:+972000000000" TargetMode="External"/></Relationships>` }));
     assert.equal(importDocx(normalizePassiveLinks(link)).parts[0].paragraphs[0].text, 'Phone ____');
 });
+
+test('display titles never infer a source or merge independent manual fields', () => {
+    const bytes=fixture(paragraph('AAA BBB')); const model=importDocx(bytes);
+    const first=bind(model,'manual.first',0,3,{fieldLabel:'גוש'});
+    const second=bind(model,'manual.second',4,7,{fieldLabel:'גוש'});
+    const output=materializeDocx(bytes,{sourceHash:model.sourceHash,bindings:[first,second],values:{'manual.first':'12','manual.second':'34'}});
+    assert.equal(importDocx(output.buffer).parts[0].paragraphs[0].text,'12 34');
+    const person=bind(model,'client.identityNumber',0,3,{fieldLabel:'גוש'});
+    assert.equal(person.field,'client.identityNumber');assert.equal(person.fieldLabel,'גוש');
+    assert.throws(()=>bind(model,'client.fullName',0,3,{fieldLabel:'bad\nlabel'}),code('INVALID_BINDING'));
+});

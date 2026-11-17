@@ -19,7 +19,7 @@ const getCaseTypes = async (req, res) => {
                 ct.numberofstages,
                 cd.casetypedescriptionid,
                 cd.stage,
-                cd.text
+                cd.text, cd.document_request_defaults
             FROM casetypes ct
             LEFT JOIN casetypedescriptions cd ON ct.casetypeid = cd.casetypeid
         `;
@@ -61,7 +61,7 @@ const getCaseTypes = async (req, res) => {
                 caseTypesMap.get(caseTypeId).Descriptions.push({
                     CaseTypeDescriptionId: row.casetypedescriptionid,
                     Stage: row.stage,
-                    Text: row.text
+                    Text: row.text, DocumentRequestDefaults: row.document_request_defaults
                 });
             }
         });
@@ -189,7 +189,7 @@ const getCaseTypeByName = async (req, res) => {
                 ct.numberofstages,
                 cd.casetypedescriptionid,
                 cd.stage,
-                cd.text
+                cd.text, cd.document_request_defaults
             FROM casetypes ct
             LEFT JOIN casetypedescriptions cd ON ct.casetypeid = cd.casetypeid
         `;
@@ -244,7 +244,7 @@ const getCaseTypeByName = async (req, res) => {
                 caseTypesMap.get(caseTypeId).Descriptions.push({
                     CaseTypeDescriptionId: row.casetypedescriptionid,
                     Stage: row.stage,
-                    Text: row.text
+                    Text: row.text, DocumentRequestDefaults: row.document_request_defaults
                 });
             }
         });
@@ -316,10 +316,10 @@ const addCaseType = async (req, res) => {
             for (const desc of Descriptions) {
                 await client.query(
                     `
-                    INSERT INTO casetypedescriptions (casetypeid, stage, text)
-                    VALUES ($1, $2, $3)
+                    INSERT INTO casetypedescriptions (casetypeid, stage, text, document_request_defaults)
+                    VALUES ($1, $2, $3, $4)
                     `,
-                    [caseTypeId, desc.Stage, desc.Text]
+                    [caseTypeId, desc.Stage, desc.Text, JSON.stringify(require('../services/caseDocumentRequests').defaults(desc.DocumentRequestDefaults || {items:[],sendOnEntry:false}))]
                 );
             }
         }
@@ -373,18 +373,18 @@ const updateCaseType = async (req, res) => {
                 await client.query(
                     `
                     UPDATE casetypedescriptions
-                    SET text = $1
+                    SET text = $1, document_request_defaults = COALESCE($3::jsonb,document_request_defaults)
                     WHERE casetypedescriptionid = $2
                     `,
-                    [desc.Text, existingDescriptionsMap.get(desc.Stage)]
+                    [desc.Text, existingDescriptionsMap.get(desc.Stage), desc.DocumentRequestDefaults ? JSON.stringify(require('../services/caseDocumentRequests').defaults(desc.DocumentRequestDefaults)) : null]
                 );
             } else {
                 await client.query(
                     `
-                    INSERT INTO casetypedescriptions (casetypeid, stage, text)
-                    VALUES ($1, $2, $3)
+                    INSERT INTO casetypedescriptions (casetypeid, stage, text, document_request_defaults)
+                    VALUES ($1, $2, $3, $4)
                     `,
-                    [caseTypeIdInt, desc.Stage, desc.Text]
+                    [caseTypeIdInt, desc.Stage, desc.Text, JSON.stringify(require('../services/caseDocumentRequests').defaults(desc.DocumentRequestDefaults || {items:[],sendOnEntry:false}))]
                 );
             }
         }

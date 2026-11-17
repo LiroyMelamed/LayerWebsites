@@ -221,7 +221,7 @@ async function resolveValues(db, scope, inputs, lock = false, fields = new Set()
     if (inputs.clientId) Object.assign(values, (await clientRow(db, scope, inputs.clientId, false, lock, fields)).values);
     for (const [key, id] of Object.entries(inputs.roleClientIds)) {
         const person = await clientRow(db, scope, id, true, lock);
-        for (const field of ['fullName', 'companyName', 'identityNumber', 'companyNumber']) {
+        for (const field of ['fullName', 'companyName', 'identityNumber', 'companyNumber', 'phone', 'email', 'address']) {
             const value = person.values[`client.${field}`];
             if (value !== undefined) values[`role.${key}.${field}`] = value;
         }
@@ -234,6 +234,18 @@ async function resolveValues(db, scope, inputs, lock = false, fields = new Set()
         [inputs.caseId, scope.tenantId, scope.caseAll, scope.userId])).rows[0];
         if (!row) fail('NOT_FOUND', 404);
         values['case.reference'] = String(row.caseid); values['case.title'] = row.casename || '';
+        if (fields.has('case.clientPhones')) {
+            const clients = (await db.query(`/*word:case-phones*/ SELECT u.userid,u.phonenumber FROM case_users cu
+                JOIN users u ON u.userid=cu.userid WHERE cu.caseid=$1
+                AND u.law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid AND u.role IN ('Client','User')
+                ORDER BY u.userid ${lock ? 'FOR SHARE OF u,cu' : ''}`, [inputs.caseId, scope.tenantId])).rows;
+            const seen = new Set();
+            values['case.clientPhones'] = clients.map(item => String(item.phonenumber || '').trim()).filter(value => {
+                const key = value.replace(/[\s()-]/g, '').replace(/^\+972/, '0');
+                if (!key || seen.has(key)) return false;
+                seen.add(key); return true;
+            }).join(', ');
+        }
         if (fields.has('case.courtNumber')) {
             const present = (await db.query("/*word:court-table*/ SELECT to_regclass('public.court_case_links') AS relation")).rows[0]?.relation;
             const links = present ? (await db.query(`/*word:court-number*/ SELECT court_number FROM court_case_links
@@ -282,6 +294,21 @@ async function previewAccess(db, scope, row) {
     // References are persisted, not raw values; every read rechecks current access.
     await resolveValues(db, scope, { clientId: row.client_id, caseId: row.case_id, roleClientIds: refs.roleClientIds, manualValues: {} });
     return row;
+}
+// Preflight returns only fields used by this private template, with the exact
+// same record authorization and resolver as final generation. It writes nothing.
+async function resolveInputs(pool, scope, id, input) {
+    scopeCheck(scope); expect(plain(input), 'INVALID_WORD_INPUTS'); version(input.expectedVersion);
+    const row = await source(pool, scope, id);
+    if (Number(row.version) !== input.expectedVersion || row.bindings_hash !== input.bindingsHash) fail('VERSION_CHANGED', 412);
+    const inputs = inputsFor(row, input);
+    const fields = new Set(row.bindings.map(binding => binding.field));
+    const resolved = await resolveValues(pool, scope, inputs, false, fields);
+    return { sourceId: id, sourceVersion: Number(row.version), fields: [...fields].map(key => ({
+        key, value: String(resolved[key] ?? ''),
+        required: row.bindings.some(binding => binding.field === key && binding.required),
+        missing: !String(resolved[key] ?? '').trim(),
+    })) };
 }
 async function preview(pool, scope, id, input, { storage, convertDocxToPdf } = {}) {
     scopeCheck(scope); expect(plain(input), 'INVALID_WORD_INPUTS'); version(input.expectedVersion);
@@ -471,5 +498,5 @@ async function archive(pool, scope, id, input) {
     });
 }
 
-module.exports = { list, importSource, load, save, preview, previewInfo, previewPdf, archive, signingMaterial, assertPreviewReferences,
+module.exports = { resolveInputs, list, importSource, load, save, preview, previewInfo, previewPdf, archive, signingMaterial, assertPreviewReferences,
     authoringRender, authoringInfo, authoringPdf, authoringSelection, fieldCatalog: catalog };
