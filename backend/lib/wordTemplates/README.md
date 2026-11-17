@@ -204,3 +204,8 @@ External images, attached templates, embedded objects, active fields and unsafe
 URL schemes remain rejected by the unchanged strict package validator. A
 hyperlink relationship reused by an image or another non-hyperlink element is
 rejected rather than converted. No target URL is fetched.
+
+Both standard WordprocessingML namespace variants (Transitional and Strict OOXML)
+are recognized when reading paragraphs, fields and the main document relationship.
+Strict sources retain their original namespace and markup when filling text;
+the same active-field and embedded-content checks apply to both variants.
