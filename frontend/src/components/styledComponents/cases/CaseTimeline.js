@@ -1,3 +1,4 @@
+import CaseDocumentRequests from './CaseDocumentRequests';
 import React from "react";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { Text12, TextBold12 } from "../../specializedComponents/text/AllTextKindFile";
@@ -104,6 +105,8 @@ export default function CaseTimeline({ stages, currentStage, isClosed = false, t
                                             {t('cases.stageUpdatedBy')}: {stage.UpdatedByName}
                                         </Text12>
                                     )}
+                                    {caseId && stage.DescriptionId && !isFuture && <CaseDocumentRequests caseId={caseId} descriptionId={stage.DescriptionId}
+                                        active={isCurrent} isClient={isClient} stageFiles={(stageFiles || []).filter(file=>Number(file.stage)===index+1)} />}
                                     {caseId && stageFiles && (
                                         <StageFileUpload
                                             caseId={caseId}

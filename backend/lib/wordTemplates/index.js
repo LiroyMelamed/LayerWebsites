@@ -22,7 +22,7 @@ const xmlEscape = value => value.replace(/&/gu, '&amp;').replace(/</gu, '&lt;').
 function validField(field) {
     return typeof field === 'string' && (FIELD_NAMES.includes(field)
         || /^manual\.[A-Za-z0-9_-]{1,64}$/u.test(field)
-        || /^role\.[A-Za-z0-9_-]{1,64}\.(?:fullName|companyName|identityNumber|companyNumber|capacity|authority)$/u.test(field));
+        || /^role\.[A-Za-z0-9_-]{1,64}\.(?:fullName|companyName|identityNumber|companyNumber|phone|email|address|capacity|authority)$/u.test(field));
 }
 function xmlString(data) {
     const value = data.toString('utf8');
@@ -180,9 +180,9 @@ function createBinding(model, spec) {
     if (!spec || !/^[A-Za-z0-9_-]{1,64}$/u.test(spec.id || '') || !validField(spec.field)
         || (spec.required !== undefined && typeof spec.required !== 'boolean')) reject('INVALID_BINDING');
     const manual = spec.field.startsWith('manual.');
-    if (manual && (typeof spec.fieldLabel !== 'string' || !spec.fieldLabel.trim() || spec.fieldLabel.length > 80
+    if ((manual || spec.fieldLabel !== undefined) && (typeof spec.fieldLabel !== 'string' || !spec.fieldLabel.trim() || spec.fieldLabel.length > 80
         || /[\u0000-\u001f\u007f]/u.test(spec.fieldLabel))) reject('INVALID_BINDING');
-    const label = manual ? { fieldLabel: spec.fieldLabel.trim() } : {};
+    const label = spec.fieldLabel !== undefined ? { fieldLabel: spec.fieldLabel.trim() } : {};
     const p = findParagraph(model, spec.part, spec.paragraphId);
     if (spec.kind === 'insert') {
         const offset = spec.start;

@@ -73,9 +73,7 @@ export default function WordRecordPicker({ kind = 'person', label, value, onChan
                 setQuery(name); setResults([]); setBusy(false); setFailed(false);
                 expectedValue.current = { id, label: name }; latest.current.onChange({ id, label: name });
             }} />
-        {value ? <p className="lw-word__pickerSelection" role="status">{text('selectedRecord')} <bdi>{value.label}</bdi></p>
-            : <p className="lw-word__pickerHelp">{text(kind === 'case' ? 'caseSearchHelp' : kind === 'client' ? 'clientSearchHelp' : 'personSearchHelp')}</p>}
-        {(value || query) && <TertiaryButton disabled={disabled} onPress={manual}>{text(kind === 'case' ? 'withoutCase' : kind === 'client' ? 'withoutClient' : 'manualPerson')}</TertiaryButton>}
+        <TertiaryButton disabled={disabled} onPress={manual}>{text(kind === 'case' ? 'withoutCase' : 'manualPerson')}</TertiaryButton>
         {failed && <StatusNotice embedded><p>{text('searchFailed')}</p></StatusNotice>}
     </div>;
 }

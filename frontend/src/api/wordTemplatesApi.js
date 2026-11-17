@@ -6,6 +6,7 @@ const wordTemplatesApi = {
     create: payload => signingRequest('post', root, payload),
     load: id => signingRequest('get', `${root}/${encodeURIComponent(id)}`),
     save: (id, payload) => signingRequest('put', `${root}/${encodeURIComponent(id)}`, payload),
+    resolveInputs: (id, payload) => signingRequest('post', `${root}/${encodeURIComponent(id)}/inputs`, payload),
     preview: (id, payload, idempotencyKey) => signingRequest('post', `${root}/${encodeURIComponent(id)}/previews`, payload,
         { headers: { 'Idempotency-Key': idempotencyKey } }),
     pdf: id => signingRequest('get', `${root}/previews/${encodeURIComponent(id)}/pdf`, null, { responseType: 'blob' }),

@@ -65,6 +65,7 @@ const server = app.listen(PORT, HOST, async () => {
     initBirthdayGreetingsScheduler();
     await initCalendarReminderScheduler();
     initSignReminderScheduler();
+    require('./tasks/documentRequests/scheduler').start();
     initSignPendingCleanupScheduler();
     startDailyAgendaScheduler();
     startHebcalHolidaysScheduler();
