@@ -321,3 +321,61 @@ test('named manual fields reuse the original template with different per-documen
     assert.throws(() => bind(model, 'manual.block', 4, 8, { fieldLabel: 'x'.repeat(81) }), code('INVALID_BINDING'));
     assert.throws(() => materializeDocx(original, { sourceHash: model.sourceHash, bindings: [block,parcel], values: { 'manual.block':'12' } }), code('MISSING_REQUIRED_VALUE'));
 });
+
+test('passive Word links become formatted text before strict import, while active relationships stay blocked', () => {
+    const { normalizePassiveLinks } = require('../lib/wordTemplates/passiveLinks');
+    const { readZip } = require('../lib/wordTemplates/zip');
+    const office = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    const doc = target => fixture(`<w:p><w:hyperlink xmlns:r="${office}" r:id="link1"><w:r><w:rPr><w:b/></w:rPr><w:t>Contact ____</w:t></w:r></w:hyperlink></w:p>`, {
+        'word/_rels/document.xml.rels': `<Relationships xmlns="${R}"><Relationship Id="link1" Type="${office}/hyperlink" Target="${target}" TargetMode="External"/></Relationships>` });
+    for (const target of ['mailto:qa@example.invalid', 'tel:+972000000000', 'https://example.invalid/', 'http://example.invalid/']) {
+        const original = doc(target); const normalized = normalizePassiveLinks(original);
+        const model = importDocx(normalized);
+        assert.equal(model.parts[0].paragraphs[0].text, 'Contact ____');
+        const entries = readZip(normalized);
+        assert.ok(entries.get('word/document.xml').data.toString().includes('<w:b/>'));
+        assert.ok(!entries.get('word/document.xml').data.toString().includes('hyperlink'));
+        assert.ok(!entries.get('word/_rels/document.xml.rels').data.toString().includes('External'));
+        assert.deepEqual(normalizePassiveLinks(normalized), normalized);
+        assert.throws(() => importDocx(original), code('EXTERNAL_OR_ACTIVE_RELATIONSHIP'));
+    }
+    for (const target of ['file:///etc/passwd','javascript:alert(1)','data:text/plain,abc','smb://host/private']) {
+        assert.throws(() => importDocx(normalizePassiveLinks(doc(target))), code('EXTERNAL_OR_ACTIVE_RELATIONSHIP'));
+    }
+    for (const type of ['image','attachedTemplate','oleObject']) {
+        const bytes = fixture(paragraph('____'), { 'word/_rels/document.xml.rels': `<Relationships xmlns="${R}"><Relationship Id="link1" Type="${office}/${type}" Target="https://example.invalid/" TargetMode="External"/></Relationships>` });
+        assert.throws(() => importDocx(normalizePassiveLinks(bytes)), code('EXTERNAL_OR_ACTIVE_RELATIONSHIP'));
+    }
+    const disguisedImage = fixture(`<w:p><w:r><w:drawing xmlns:r="${office}" r:embed="link1"/></w:r></w:p>`, {
+        'word/_rels/document.xml.rels': `<Relationships xmlns="${R}"><Relationship Id="link1" Type="${office}/hyperlink" Target="https://example.invalid/" TargetMode="External"/></Relationships>` });
+    assert.throws(() => normalizePassiveLinks(disguisedImage), code('EXTERNAL_OR_ACTIVE_RELATIONSHIP'));
+    const strictRelationship = fixture(`<w:p><w:hyperlink xmlns:r="${office}" r:id="link1"><w:r><w:t>Phone ____</w:t></w:r></w:hyperlink></w:p>`, {
+        'word/_rels/document.xml.rels': `<Relationships xmlns="${R}"><Relationship Id="link1" Type="http://purl.oclc.org/ooxml/officeDocument/relationships/hyperlink" Target="tel:+972-00000000" TargetMode="External"/></Relationships>` });
+    assert.equal(importDocx(normalizePassiveLinks(strictRelationship)).parts[0].paragraphs[0].text, 'Phone ____');
+    const plain = fixture(paragraph('plain ____'));
+    assert.strictEqual(normalizePassiveLinks(plain), plain);
+});
+
+test('Strict OOXML retains text binding and active-content checks in its own namespaces', () => {
+    const { normalizePassiveLinks } = require('../lib/wordTemplates/passiveLinks');
+    const strict = bytes => {
+        const zip = new AdmZip(bytes);
+        for (const e of zip.getEntries()) if (/\.(xml|rels)$/.test(e.entryName)) zip.updateFile(e.entryName, Buffer.from(e.getData().toString()
+            .replaceAll(W, 'http://purl.oclc.org/ooxml/wordprocessingml/main')
+            .replaceAll('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'http://purl.oclc.org/ooxml/officeDocument/relationships')));
+        return zip.toBuffer();
+    };
+    const original = strict(fixture(paragraph('Client ____')));
+    const model = importDocx(original);
+    assert.equal(model.parts[0].paragraphs[0].text, 'Client ____');
+    const binding = createBinding(model, { id: 'name', part: 'word/document.xml', paragraphId: 'p0', start: 7, end: 11, field: 'client.fullName' });
+    const filled = materializeDocx(original, { sourceHash: model.sourceHash, bindings: [binding], values: { 'client.fullName': 'QA Person' } });
+    assert.equal(importDocx(filled.buffer).parts[0].paragraphs[0].text, 'Client QA Person');
+    for (const body of ['<w:p><w:fldSimple w:instr="DDEAUTO danger"><w:r><w:t>____</w:t></w:r></w:fldSimple></w:p>', '<w:p><w:object/></w:p>']) {
+        assert.throws(() => importDocx(normalizePassiveLinks(strict(fixture(body)))), e => ['ACTIVE_WORD_FIELD_UNSUPPORTED','ACTIVE_CONTENT_UNSUPPORTED'].includes(e.code));
+    }
+    const office = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    const link = strict(fixture(`<w:p><w:hyperlink xmlns:r="${office}" r:id="t"><w:r><w:t>Phone ____</w:t></w:r></w:hyperlink></w:p>`, {
+        'word/_rels/document.xml.rels': `<Relationships xmlns="${R}"><Relationship Id="t" Type="${office}/hyperlink" Target="tel:+972000000000" TargetMode="External"/></Relationships>` }));
+    assert.equal(importDocx(normalizePassiveLinks(link)).parts[0].paragraphs[0].text, 'Phone ____');
+});
