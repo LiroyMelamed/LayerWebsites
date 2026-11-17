@@ -44,3 +44,25 @@ test('failed status save does not claim the document was received',async()=>{
  await screen.findByText('documentRequests.saveFailed');
  expect(screen.getByRole('checkbox',{name:'Identity'})).not.toBeChecked();
 });
+
+test('empty stage reveals the list only after adding a document request and cancels cleanly',async()=>{
+ api.list.mockResolvedValue({requests:[],policy:{available:['sms'],defaults:['sms']}});
+ render(<CaseDocumentRequests caseId={10} descriptionId={101} active/>);
+ const add=await screen.findByRole('button',{name:'documentRequests.addRequest'});
+ expect(screen.queryByText('documentRequests.title')).toBeNull();
+ expect(screen.queryByRole('textbox')).toBeNull();
+ fireEvent.click(add);
+ expect(screen.getByRole('textbox',{name:'documentRequests.documentTitle'})).toBeVisible();
+ expect(screen.getByRole('button',{name:'documentRequests.add'})).toBeVisible();
+ expect(api.save).not.toHaveBeenCalled();expect(api.action).not.toHaveBeenCalled();
+ fireEvent.click(screen.getByRole('button',{name:'common.cancel'}));
+ expect(screen.getByRole('button',{name:'documentRequests.addRequest'})).toBeVisible();
+ expect(screen.queryByText('documentRequests.title')).toBeNull();
+});
+test('empty saved request remains hidden for clients',async()=>{
+ api.list.mockResolvedValue({requests:[{...row,items:[]}],policy:{}});
+ render(<CaseDocumentRequests caseId={10} descriptionId={101} active isClient/>);
+ await waitFor(()=>expect(screen.queryByRole('status')).toBeNull());
+ expect(screen.queryByText('documentRequests.title')).toBeNull();
+ expect(screen.queryByRole('button')).toBeNull();
+});
