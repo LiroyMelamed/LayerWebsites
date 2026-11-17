@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../../../api/documentRequestsApi';
+import SmallAddButton from '../buttons/SmallAddButton';
 import SimpleInput from '../../simpleComponents/SimpleInput';
 import SimpleCheckbox from '../../simpleComponents/SimpleCheckbox';
 import StatusNotice from '../../ui/StatusNotice';
@@ -29,6 +30,7 @@ export default function CaseDocumentRequests({ caseId, descriptionId, active, is
     useEffect(()=>{let cancelled=false;setLoading(true);load().then(result=>{if(!cancelled)apply(result);}).catch(()=>{if(!cancelled)setError('loadFailed');}).finally(()=>{if(!cancelled)setLoading(false);});return()=>{cancelled=true;};},[load,apply]);
     async function run(action) {if(busy)return;setBusy(true);setError('');try {await action();apply(await load());return true;}catch(err){setError(err?.response?.data?.errorCode==='DOCUMENT_REQUEST_CHANGED'?'changed':'saveFailed');}finally{setBusy(false);}}
     const patch=(index,value)=>{setItems(previous=>previous.map((item,i)=>i===index?{...item,...value}:item));setDirty(true);};
+    const add=()=>{setEditing(true);setItems(previous=>[...previous,{title:'',status:'missing'}]);setDirty(true);};
     const save=async()=>{if(await run(()=>api.save(caseId,{descriptionId,version:data?.version,items})))setEditing(false);};
     const toggleReceived=(index,checked)=>run(()=>api.save(caseId,{descriptionId,version:data?.version,items:items.map((item,i)=>i===index?{...item,status:checked?'received':'missing'}:item)}));
     function send(){
@@ -42,7 +44,7 @@ export default function CaseDocumentRequests({ caseId, descriptionId, active, is
     if(!items.length && !editing && !error)return <SecondaryButton size={buttonSizes.MEDIUM} onPress={()=>{setEditing(true);setItems([{title:'',status:'missing'}]);setDirty(true);}}>{text('addRequest')}</SecondaryButton>;
     const missing=items.filter(item=>item.status==='missing').length;
     return <section className="lw-documentRequests" aria-label={text('title')}>
-        <header><strong>{text('title')}</strong><span>{text('progress',{received:items.length-missing,total:items.length})}</span></header>
+        <header><div className="lw-documentRequests__heading"><strong>{text('title')}</strong>{canEdit && <SmallAddButton label={text('add')} disabled={busy || items.length>=40} onPress={add}/>}</div><span>{text('progress',{received:items.length-missing,total:items.length})}</span></header>
         {error && <StatusNotice embedded><p>{text(error)}</p><TertiaryButton size={buttonSizes.MEDIUM} onPress={()=>run(async()=>{})}>{t('common.retry')}</TertiaryButton></StatusNotice>}
         <div className="lw-documentRequests__list" aria-busy={busy}>
         {items.map((item,index)=><div className={`lw-documentRequests__item${editing?' is-editing':''}`} key={item.id || `new-${index}`}>
@@ -61,7 +63,6 @@ export default function CaseDocumentRequests({ caseId, descriptionId, active, is
         </div>)}
         </div>
         {canEdit && <div className="lw-documentRequests__actions">
-            <SecondaryButton size={buttonSizes.MEDIUM} disabled={busy || items.length>=40} onPress={()=>{setEditing(true);setItems(previous=>[...previous,{title:'',status:'missing'}]);setDirty(true);}}>{text('add')}</SecondaryButton>
             {!editing && items.length>0 && <TertiaryButton size={buttonSizes.MEDIUM} disabled={busy} onPress={()=>setEditing(true)}>{text('editList')}</TertiaryButton>}
             {editing && <>
                 <PrimaryButton size={buttonSizes.MEDIUM} disabled={busy || !dirty || items.some(item=>!item.title.trim())} onPress={save}>{t('common.save')}</PrimaryButton>
