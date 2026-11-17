@@ -184,6 +184,13 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
     }
     function leave(action) { if (lock.current) return; if (dirty) setLeaveAction(() => () => { discardTemplateChanges(); action?.(); }); else action?.(); }
     function switchMode(next) { leave(() => setMode(next)); }
+    function addTemplate() {
+        leave(() => {
+            clearPreview(); cancelSelection(); setMode('manage'); setSource(null); setName('');
+            setRoles([]); setBindings([]); setSelectedFile(null); setSelectedGroup(null); setEditingRoles(false);
+            setDirty(false); setError(''); setNotice('');
+        });
+    }
     function receive(next, { preserveDocumentInputs = false } = {}) {
         const sameSource = preserveDocumentInputs && latestDraft.current.source?.id === next.id;
         clearPreview(); setSource(next); setName(next.name); setRoles(next.roles || []); setBindings(next.bindings || []);
@@ -397,7 +404,9 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
             <label>{text('library')}<SigningSelect value={source?.id || ''} disabled={busy} onChange={event => openSource(event.target.value)}>
                 <option value="">{text('chooseSource')}</option>{sources.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
             </SigningSelect></label>
-            {source && mode === 'manage' && <TertiaryButton size={buttonSizes.SMALL} disabled={busy} onPress={() => leave(() => { clearPreview(); cancelSelection(); setSource(null); setName(''); setRoles([]); setBindings([]); setSelectedFile(null); setSelectedGroup(null); setEditingRoles(false); })}>{text('upload')}</TertiaryButton>}
+            {(mode === 'use' || source) && <div className="lw-word__editorActions">
+                <PrimaryButton size={buttonSizes.SMALL} disabled={busy} onPress={addTemplate}>{text('addTemplate')}</PrimaryButton>
+            </div>}
             {!source && <Text14>{text(!listLoaded ? 'loadingTemplates' : sources.length ? 'chooseSourceHelp' : 'noTemplates')}</Text14>}
         </div>
         {mode === 'manage' && <>
