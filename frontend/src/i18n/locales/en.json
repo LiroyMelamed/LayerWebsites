@@ -3821,6 +3821,7 @@
       "UNKNOWN": "Delivery needs checking",
       "CANCELLED": "Cancelled"
     },
-    "remove": "Remove"
+    "remove": "Remove",
+    "editList": "Edit list"
   }
 }
