@@ -4073,6 +4073,7 @@
     "withdrawPrevious": "سحب الموافقة السابقة"
   },
   "documentRequests": {
+    "addRequest": "إضافة طلب مستندات",
     "title": "مستندات المرحلة",
     "progress": "اكتمل {{received}} من {{total}}",
     "loading": "جارٍ تحميل المستندات…",

@@ -20,7 +20,7 @@ export default function CaseDocumentRequests({ caseId, descriptionId, active, is
     const canEdit=!isClient && Boolean(permissions?.canAction('cases','edit'));
     const [data,setData]=useState(null);const [items,setItems]=useState([]);const [selected,setSelected]=useState([]);
     const [policy,setPolicy]=useState(null);const [dirty,setDirty]=useState(false);const [busy,setBusy]=useState(false);const [error,setError]=useState('');
-    const [loading,setLoading]=useState(true);const [editing,setEditing]=useState(false);const [historyOpen,setHistoryOpen]=useState(false);
+    const [loading,setLoading]=useState(true);const [editing,setEditing]=useState(false);
     const load=useCallback(async()=>{
         const result=await api.list(caseId); const row=result.requests.find(item=>Number(item.description_id)===Number(descriptionId)) || null;
         return {row,policy:result.policy};
@@ -38,7 +38,8 @@ export default function CaseDocumentRequests({ caseId, descriptionId, active, is
             onConfirm={()=>{closePopup();run(()=>api.action(caseId,data.id,{version:data.version,action:'send',channels:selected,confirmUnknown:!!unknown}));}}/>);
     }
     if(loading)return <p role="status">{text('loading')}</p>;
-    if(!data && !canEdit && !error)return null;
+    if(!items.length && !editing && !canEdit && !error)return null;
+    if(!items.length && !editing && !error)return <SecondaryButton size={buttonSizes.MEDIUM} onPress={()=>{setEditing(true);setItems([{title:'',status:'missing'}]);setDirty(true);}}>{text('addRequest')}</SecondaryButton>;
     const missing=items.filter(item=>item.status==='missing').length;
     return <section className="lw-documentRequests" aria-label={text('title')}>
         <header><strong>{text('title')}</strong><span>{text('progress',{received:items.length-missing,total:items.length})}</span></header>
@@ -75,10 +76,7 @@ export default function CaseDocumentRequests({ caseId, descriptionId, active, is
                 {data.state==='active' && <TertiaryButton size={buttonSizes.MEDIUM} disabled={busy} onPress={()=>run(()=>api.action(caseId,data.id,{version:data.version,action:'cancel'}))}>{text('stop')}</TertiaryButton>}
             </div>}
             {data.next_due && <p>{text('next')} {new Date(data.next_due).toLocaleString('he-IL')}</p>}
-            {data.history?.length>0 && <div className="lw-documentRequests__history"><TertiaryButton size={buttonSizes.MEDIUM} aria-expanded={historyOpen} onPress={()=>setHistoryOpen(value=>!value)}>{text('history')}</TertiaryButton><div hidden={!historyOpen}>
-                {data.deliveries?.map(job=><p key={job.id}>{job.client_name} · {text(job.channel)} · {text(`delivery.${job.status}`)} · {new Date(job.sent_at || job.scheduled_for).toLocaleString('he-IL')}</p>)}
-                {data.history.map(event=><p key={event.id}>{text(`actions.${event.action}`)} {event.actor_name || ''} · {new Date(event.created_at).toLocaleString('he-IL')}</p>)}
-            </div></div>}
+
         </>}
     </section>;
 }
