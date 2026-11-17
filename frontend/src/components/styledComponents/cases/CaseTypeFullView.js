@@ -63,7 +63,7 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
 
         const caseTypeToSend = {
             CaseTypeName: caseTypeName,
-            NumberOfStages: numberOfStages,
+            NumberOfStages: Number(numberOfStages),
             Descriptions: descriptions.map(description => ({ ...description, ...(description.DocumentRequestDefaults ? { DocumentRequestDefaults: { ...description.DocumentRequestDefaults, items: description.DocumentRequestDefaults.items.map(item => item.trim()).filter(Boolean) } } : {}) })),
         }
 
@@ -81,7 +81,8 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
 
     const handleAddStage = () => {
         if (!canManage) return;
-        setNumberOfStages(prev => prev + 1);
+        if (Number(numberOfStages) >= 15) return;
+        setNumberOfStages(prev => Number(prev) + 1);
 
         setDescriptions((prev) => {
             const newStage = prev.length + 1;
@@ -240,6 +241,7 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
                     )}
                     {canManage && <SecondaryButton
                         onPress={handleAddStage}
+                        disabled={Number(numberOfStages) >= 15}
                     >
                         {t('caseTypes.addStage')}
                     </SecondaryButton>}
