@@ -192,3 +192,15 @@ the other paragraphs retain explicit unsupported diagnostics. It verifies actual
 new DOCX bytes, unaffected OOXML parts/run/paragraph properties and actual filled
 PDF text. Shorter values or inserted text can wrap and move later content; neither
 this proof nor OOXML preservation guarantees pixel/layout identity or WYSIWYG.
+
+### Passive links in imported templates
+
+The import service normalizes ordinary OOXML `hyperlink` relationships for
+HTTP(S), email and telephone into plain formatted text before storing or
+converting a source. Visible runs and formatting remain; clickable link wrappers
+and external relationship targets are removed. The original uploaded object is
+not modified. Source hashes and bindings refer to the normalized private copy.
+External images, attached templates, embedded objects, active fields and unsafe
+URL schemes remain rejected by the unchanged strict package validator. A
+hyperlink relationship reused by an image or another non-hyperlink element is
+rejected rather than converted. No target URL is fetched.

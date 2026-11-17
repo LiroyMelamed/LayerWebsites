@@ -5,6 +5,7 @@
 const { randomUUID } = require('node:crypto');
 const path = require('node:path');
 const { importDocx, createBinding, materializeDocx, WordTemplateError } = require('../../lib/wordTemplates');
+const { normalizePassiveLinks } = require('../../lib/wordTemplates/passiveLinks');
 const { clientDocumentValues } = require('../../lib/wordTemplates/clientValues');
 const { catalog } = require('../../lib/wordTemplates/catalog');
 const visual = require('../../lib/wordTemplates/visual');
@@ -113,8 +114,9 @@ async function importSource(pool, scope, input, { storage } = {}) {
         && fileKey.endsWith('.docx') && !/[\\\u0000-\u0020?#%]/u.test(fileKey)
         && !fileKey.split('/').some(segment => !segment || segment === '.' || segment === '..'), 'INVALID_SOURCE');
     expect(storage && typeof storage.readUpload === 'function', 'WORD_STORAGE_UNAVAILABLE');
-    const bytes = await storage.readUpload(fileKey, MAX_SOURCE);
+    let bytes = await storage.readUpload(fileKey, MAX_SOURCE);
     expect(Buffer.isBuffer(bytes) && bytes.length > 0 && bytes.length <= MAX_SOURCE, 'INVALID_SOURCE');
+    bytes = word(() => normalizePassiveLinks(bytes));
     const model = word(() => importDocx(bytes));
     const hash = bytesHash(bytes);
     const objectKey = `signing-v2/${scope.contextId}/word/${scope.userId}/sources/${hash}.docx`;
