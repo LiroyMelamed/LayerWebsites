@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../../../api/documentRequestsApi';
+import StageActionButton from '../buttons/StageActionButton';
 import SmallAddButton from '../buttons/SmallAddButton';
 import SimpleInput from '../../simpleComponents/SimpleInput';
 import SimpleCheckbox from '../../simpleComponents/SimpleCheckbox';
@@ -41,7 +42,7 @@ export default function CaseDocumentRequests({ caseId, descriptionId, active, is
     }
     if(loading)return <p role="status">{text('loading')}</p>;
     if(!items.length && !editing && !canEdit && !error)return null;
-    if(!items.length && !editing && !error)return <SecondaryButton size={buttonSizes.MEDIUM} onPress={()=>{setEditing(true);setItems([{title:'',status:'missing'}]);setDirty(true);}}>{text('addRequest')}</SecondaryButton>;
+    if(!items.length && !editing && !error)return <StageActionButton label={text('addRequest')} onPress={()=>{setEditing(true);setItems([{title:'',status:'missing'}]);setDirty(true);}}/>;
     const missing=items.filter(item=>item.status==='missing').length;
     return <section className="lw-documentRequests" aria-label={text('title')}>
         <header><div className="lw-documentRequests__heading"><strong>{text('title')}</strong>{canEdit && <SmallAddButton label={text('add')} disabled={busy || items.length>=40} onPress={add}/>}</div><span>{text('progress',{received:items.length-missing,total:items.length})}</span></header>

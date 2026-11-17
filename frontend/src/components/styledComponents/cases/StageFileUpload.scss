@@ -55,22 +55,3 @@
 .lw-stageFileUpload__uploadRow {
     // margin-top: 0.25rem;
 }
-
-.lw-stageFileUpload__uploadBtn {
-    cursor: pointer;
-    background: none;
-    border: 0.0625rem dashed rgba(0, 0, 0, 0.2);
-    border-radius: 0.375rem;
-    padding: 0.25rem 0.625rem;
-    transition: background 0.2s, border-color 0.2s;
-}
-
-.lw-stageFileUpload__uploadBtn:hover {
-    background: rgba(0, 0, 0, 0.03);
-    border-color: rgba(0, 0, 0, 0.4);
-}
-
-.lw-stageFileUpload__uploadText {
-    color: var(--primary, #3b5998);
-    font-weight: 500;
-}

@@ -85,37 +85,41 @@ export default function CaseTimeline({ stages, currentStage, isClosed = false, t
                                                 : "lw-caseTimeline__stageDetails"
                                     }
                                 >
-                                    <SimpleContainer
-                                        className={
-                                            isCurrent
-                                                ? "lw-caseTimeline__timestampBadge lw-caseTimeline__timestampBadge--new"
-                                                : isFuture
-                                                    ? "lw-caseTimeline__timestampBadge lw-caseTimeline__timestampBadge--future"
-                                                    : "lw-caseTimeline__timestampBadge"
-                                        }
-                                    >
-                                        {isCurrent
-                                            ? <TextBold12>{badgeText}</TextBold12>
-                                            : <Text12>{badgeText}</Text12>
-                                        }
-                                    </SimpleContainer>
+                                    <div className="lw-caseTimeline__meta">
+                                        <SimpleContainer
+                                            className={
+                                                isCurrent
+                                                    ? "lw-caseTimeline__timestampBadge lw-caseTimeline__timestampBadge--new"
+                                                    : isFuture
+                                                        ? "lw-caseTimeline__timestampBadge lw-caseTimeline__timestampBadge--future"
+                                                        : "lw-caseTimeline__timestampBadge"
+                                            }
+                                        >
+                                            {isCurrent
+                                                ? <TextBold12>{badgeText}</TextBold12>
+                                                : <Text12>{badgeText}</Text12>
+                                            }
+                                        </SimpleContainer>
+                                        {!isClient && isPast && stage.UpdatedByName && (
+                                            <Text12 className="lw-caseTimeline__updatedBy">
+                                                {t('cases.stageUpdatedBy')}: {stage.UpdatedByName}
+                                            </Text12>
+                                        )}
+                                    </div>
                                     <TextBold12>{stage.Text}</TextBold12>
-                                    {!isClient && isPast && stage.UpdatedByName && (
-                                        <Text12 className="lw-caseTimeline__updatedBy">
-                                            {t('cases.stageUpdatedBy')}: {stage.UpdatedByName}
-                                        </Text12>
-                                    )}
-                                    {caseId && stage.DescriptionId && !isFuture && <CaseDocumentRequests caseId={caseId} descriptionId={stage.DescriptionId}
-                                        active={isCurrent} isClient={isClient} stageFiles={(stageFiles || []).filter(file=>Number(file.stage)===index+1)} />}
-                                    {caseId && stageFiles && (
-                                        <StageFileUpload
-                                            caseId={caseId}
-                                            stage={index + 1}
-                                            isClient={isClient}
-                                            stageFiles={stageFiles}
-                                            onFilesChanged={onStageFilesChanged}
-                                        />
-                                    )}
+                                    <div className="lw-caseTimeline__stageContent">
+                                        {caseId && stage.DescriptionId && !isFuture && <CaseDocumentRequests caseId={caseId} descriptionId={stage.DescriptionId}
+                                            active={isCurrent} isClient={isClient} stageFiles={(stageFiles || []).filter(file=>Number(file.stage)===index+1)} />}
+                                        {caseId && stageFiles && (
+                                            <StageFileUpload
+                                                caseId={caseId}
+                                                stage={index + 1}
+                                                isClient={isClient}
+                                                stageFiles={stageFiles}
+                                                onFilesChanged={onStageFilesChanged}
+                                            />
+                                        )}
+                                    </div>
                                 </SimpleContainer>
                             </SimpleContainer>
                         );
