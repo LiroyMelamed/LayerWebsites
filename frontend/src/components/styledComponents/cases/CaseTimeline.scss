@@ -122,3 +122,9 @@
   .lw-stageFileUpload__list { order: 2; flex: 1 0 100%; }
   &:empty { display: none; }
 }
+
+@media (max-width: 480px) {
+  .lw-caseTimeline__stageDetails { padding-inline: .25rem; }
+  .lw-caseTimeline__stageContent { gap: .375rem; }
+  .lw-caseTimeline__stageContent .lw-stageActionButton { padding-inline: .375rem; }
+}
