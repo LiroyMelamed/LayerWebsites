@@ -1,3 +1,4 @@
+import SmallAddButton from '../buttons/SmallAddButton';
 import documentRequestsApi from '../../../api/documentRequestsApi';
 import { caseClientPhones } from '../../../utils/caseClientPhones';
 import { useCallback, useMemo, useRef, useState } from 'react';
@@ -555,15 +556,10 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
                                 emptyActionText={t('cases.addNewClient', { defaultValue: '+ הוספת לקוח חדש' })}
                                 onEmptyAction={handleOpenAddClientPopup}
                             />
-                            <button
-                                type="button"
-                                className="lw-caseFullView__addClientBtn"
-                                onClick={() => handleOpenAddClientPopup()}
-                                title={t('cases.addNewClient', { defaultValue: '+ הוספת לקוח חדש' })}
-                                aria-label={t('cases.addNewClient', { defaultValue: '+ הוספת לקוח חדש' })}
-                            >
-                                +
-                            </button>
+                            <SmallAddButton className="lw-caseFullView__addClientBtn"
+                                onPress={handleOpenAddClientPopup}
+                                label={t('cases.addNewClient', { defaultValue: '+ הוספת לקוח חדש' })}/>
+
                         </SimpleContainer>
                         {caseData.Users.length > 0 && (
                             <SimpleContainer className="lw-caseFullView__clientChips">
