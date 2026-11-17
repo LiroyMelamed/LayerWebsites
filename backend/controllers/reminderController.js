@@ -1,3 +1,5 @@
+const { createAppError } = require('../utils/appError');
+const documentReminderListing = require('../lib/documentRequestReminderListing');
 /**
  * Reminder controller — handles:
  *   GET  /api/reminders/templates   – list available email templates
@@ -399,6 +401,8 @@ const listReminders = async (req, res, next) => {
             params.push(String(status).toUpperCase());
         }
 
+        const documents = documentReminderListing.listing(req,idx);
+        if(documents){params.push(...documents.params);idx+=documents.params.length;}
         const combinedSql = `
             SELECT * FROM (
                 SELECT
@@ -443,6 +447,7 @@ const listReminders = async (req, res, next) => {
                 LEFT JOIN signingfiles sf ON sf.signingfileid = sfr.signing_file_id
                 WHERE 1=1
                 ${canViewCalendar(req) ? `UNION ALL SELECT * FROM (${calendarReminderSql}) cal` : ''}
+                ${documents ? `UNION ALL ${documents.sql}` : ''}
             ) combined WHERE 1=1 ${statusFilter}
         `;
 
@@ -474,6 +479,13 @@ const listReminders = async (req, res, next) => {
 const getReminderById = async (req, res, next) => {
     try {
         const { id } = req.params;
+        if (String(id).startsWith('doc-')) {
+            const documents=documentReminderListing.listing(req);
+            if(!documents)return res.status(403).json({errorCode:'FORBIDDEN'});
+            const {rows}=await pool.query(`SELECT * FROM (${documents.sql}) docs WHERE id=$${documents.params.length+1}`,[...documents.params,id]);
+            if(!rows.length)return res.status(404).json({errorCode:'NOT_FOUND'});
+            return res.json({ok:true,reminder:rows[0]});
+        }
         if (String(id).startsWith('cal-')) {
             if (!canViewCalendar(req)) return res.status(403).json({ ok: false, error: 'Forbidden' });
             const { rows } = await pool.query(`SELECT * FROM (${calendarReminderSql}) cal WHERE id = $1`, [id]);
@@ -535,12 +547,37 @@ const getReminderById = async (req, res, next) => {
     }
 };
 
+async function editableDocumentRequest(req,id) {
+    if (!/^doc-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(id))) throw createAppError('INVALID_REQUEST',400);
+    await new Promise((resolve,reject)=>require('../middlewares/requireFirmAction')('cases','edit')(req,{},error=>error?reject(error):resolve()));
+    const documents=documentReminderListing.listing(req);
+    if (!documents) throw createAppError('FORBIDDEN',403);
+    const visible=await pool.query(`SELECT id FROM (${documents.sql}) docs WHERE id=$${documents.params.length+1}`,[...documents.params,id]);
+    if (!visible.rows.length) throw createAppError('NOT_FOUND',404);
+    const row=(await pool.query('SELECT r.* FROM case_document_requests r JOIN case_document_deliveries d ON d.request_id=r.id WHERE d.id=$1',[String(id).slice(4)])).rows[0];
+    const denied=await require('../lib/firmPermissions/caseAccess').assertCaseRecordAccess(req,row.case_id,'edit');
+    if(denied)throw denied;
+    return row;
+}
+const retryDocumentReminder=async(req,res,next)=>{
+    try {
+        const row=await editableDocumentRequest(req,req.params.id);
+        await require('../services/caseDocumentRequests').action(pool,req.user.UserId,row.case_id,row.id,{action:'retry',version:row.version,deliveryId:req.params.id.slice(4),confirmUnknown:req.body.confirmUnknown===true});
+        res.json({ok:true});
+    }catch(error){next(error);}
+};
+
 // ─── Cancel a reminder ───────────────────────────────────────────────
 
 const cancelReminder = async (req, res, next) => {
     try {
         const { id } = req.params;
-        if (String(id).startsWith('cal-')) {
+        if (String(id).startsWith('doc-')) {
+            const row=await editableDocumentRequest(req,id);
+            await require('../services/caseDocumentRequests').action(pool,req.user.UserId,row.case_id,row.id,{action:'cancel',version:row.version});
+            return res.json({ok:true});
+        }
+        if (String(id).startsWith('cal-') || String(id).startsWith('doc-')) {
             return res.status(409).json({ ok: false, errorCode: 'CALENDAR_MANAGED_REMINDER', message: 'יש לעדכן או לבטל תזכורת זו דרך האירוע ביומן.' });
         }
         const signingId = parseSigningReminderId(id);
@@ -582,7 +619,7 @@ const cancelReminder = async (req, res, next) => {
 const deleteReminder = async (req, res, next) => {
     try {
         const { id } = req.params;
-        if (String(id).startsWith('cal-')) {
+        if (String(id).startsWith('cal-') || String(id).startsWith('doc-')) {
             return res.status(409).json({ ok: false, errorCode: 'CALENDAR_MANAGED_REMINDER', message: 'יש לעדכן או לבטל תזכורת זו דרך האירוע ביומן.' });
         }
         const signingId = parseSigningReminderId(id);
@@ -624,7 +661,7 @@ const updateReminder = async (req, res, next) => {
         const { id } = req.params;
         const { client_name, to_email, subject, scheduled_for } = req.body;
 
-        if (String(id).startsWith('cal-')) {
+        if (String(id).startsWith('cal-') || String(id).startsWith('doc-')) {
             return res.status(409).json({ ok: false, errorCode: 'CALENDAR_MANAGED_REMINDER', message: 'יש לעדכן או לבטל תזכורת זו דרך האירוע ביומן.' });
         }
         const signingId = parseSigningReminderId(id);
@@ -973,7 +1010,7 @@ const downloadTemplateExcel = async (req, res, next) => {
 };
 
 module.exports = {
-    getTemplates, importReminders, listReminders, cancelReminder, deleteReminder, updateReminder,
+    getTemplates, importReminders, listReminders, retryDocumentReminder, cancelReminder, deleteReminder, updateReminder,
     listCustomTemplates, createCustomTemplate, updateCustomTemplate, deleteCustomTemplate,
     downloadTemplateExcel, createSingleReminder, getReminderById,
 };

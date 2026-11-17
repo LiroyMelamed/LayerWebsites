@@ -1,3 +1,5 @@
+import documentRequestsApi from '../../../api/documentRequestsApi';
+import { caseClientPhones } from '../../../utils/caseClientPhones';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SimpleContainer from '../../simpleComponents/SimpleContainer';
@@ -87,6 +89,7 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
     const [hasSubmitted, setHasSubmitted] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({});
     const [saveError, setSaveError] = useState('');
+    const savedStage = useRef({stage:caseDetails?.CurrentStage,closed:caseDetails?.IsClosed});
     const [caseData, setCaseData] = useState(() => _buildInitialCaseData(caseDetails, initialDraft));
     const isEditingExisting = !!caseDetails?.CaseId || (caseHasBeenChosen && !!caseData.CaseId);
     const canSaveCase = isEditingExisting ? canEditCases : canCreateCases;
@@ -346,7 +349,7 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
         saveCase(payload);
     };
 
-    const handleUpdateCase = () => {
+    const handleUpdateCase = async (confirmed = false) => {
         setSaveError('');
         setHasSubmitted(true);
         const errors = validateCaseData(caseData);
@@ -354,6 +357,17 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
         if (Object.keys(errors).length) return;
 
         const payload = { ...caseData, UserIds: caseData.Users.map(u => u.UserId) };
+        if (Number(savedStage.current.stage)!==Number(caseData.CurrentStage) || (caseData.IsClosed && !savedStage.current.closed)) {
+            try {
+                const {missing}=await documentRequestsApi.transition(caseData.CaseId);
+                if(missing.length && confirmed!==true) {
+                    openConfirm(<ConfirmationDialog title={t('documentRequests.transitionTitle')} message={t('documentRequests.transitionConfirm')}
+                        confirmText={t('common.continue')} cancelText={t('common.cancel')} onCancel={closeConfirm}
+                        onConfirm={()=>{closeConfirm();handleUpdateCase(true);}}/>);return;
+                }
+                payload.ConfirmMissingDocuments=confirmed===true;
+            } catch {setSaveError(t('documentRequests.loadFailed'));return;}
+        }
         saveCase(caseData.CaseId, payload);
     };
 
@@ -447,6 +461,7 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
 
         const caseDetails = resultItem || cases.find(c => c.CaseName?.trim() === selectedCase?.trim());
         if (caseDetails) {
+            savedStage.current={stage:caseDetails.CurrentStage,closed:caseDetails.IsClosed};
             setSelectedWordContext(savedCaseWordContext(caseDetails));
             setCaseHasBeenChosen(true);
             setCaseData({
@@ -573,7 +588,8 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
                     <SimpleInput
                         className="lw-caseFullView__field"
                         title={t('cases.phoneNumber')}
-                        value={caseData.PhoneNumber}
+                        value={caseData.Users?.length > 1 ? caseClientPhones(caseData).join(', ') : caseData.PhoneNumber}
+                        readOnly={caseData.Users?.length > 1} dir="ltr"
                         onChange={(e) => handleInputChange('PhoneNumber', e.target.value)}
                         error={fieldErrors?.PhoneNumber}
                     />

@@ -1,0 +1,11 @@
+.lw-documentRequests {
+  display: grid; gap: .5rem; margin-block: .75rem; min-inline-size: 0;
+  > header, &__actions { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
+  > header { justify-content: space-between; }
+  &__item { display: grid; grid-template-columns: minmax(0,1fr) minmax(7rem,auto); gap: .5rem; align-items: end; }
+  &__item > :nth-child(3) { grid-column: 1 / -1; }
+  &__actions label { display: inline-flex; align-items: center; gap: .25rem; margin-inline-end: .5rem; }
+  p { margin: .25rem 0; font-size: .8125rem; }
+  summary { cursor: pointer; }
+  @media (max-width: 28rem) { &__item { grid-template-columns: minmax(0,1fr); } }
+}
