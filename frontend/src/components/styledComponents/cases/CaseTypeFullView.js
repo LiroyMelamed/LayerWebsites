@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 
 import "./CaseTypeFullView.scss";
 import TertiaryButton from "../buttons/TertiaryButton";
+import StageDocumentDefaults from "./StageDocumentDefaults";
 
 export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, onFailureFunction, closePopUpFunction, initialValues, style: _style }) {
     const { t } = useTranslation();
@@ -62,7 +63,7 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
 
         const caseTypeToSend = {
             CaseTypeName: caseTypeName,
-            NumberOfStages: numberOfStages,
+            NumberOfStages: Number(numberOfStages),
             Descriptions: descriptions.map(description => ({ ...description, ...(description.DocumentRequestDefaults ? { DocumentRequestDefaults: { ...description.DocumentRequestDefaults, items: description.DocumentRequestDefaults.items.map(item => item.trim()).filter(Boolean) } } : {}) })),
         }
 
@@ -80,7 +81,8 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
 
     const handleAddStage = () => {
         if (!canManage) return;
-        setNumberOfStages(prev => prev + 1);
+        if (Number(numberOfStages) >= 15) return;
+        setNumberOfStages(prev => Number(prev) + 1);
 
         setDescriptions((prev) => {
             const newStage = prev.length + 1;
@@ -223,11 +225,8 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
                                 });
                             }}
                         />
-                        <SimpleTextArea disabled={!canManage} title={t('documentRequests.defaults')}
-                            value={(description.DocumentRequestDefaults?.items || []).join('\n')}
-                            onChange={value=>setDescriptions(previous=>previous.map((item,i)=>i===index?{...item,DocumentRequestDefaults:{...item.DocumentRequestDefaults,sendOnEntry:item.DocumentRequestDefaults?.sendOnEntry || false,items:value.split('\n')}}:item))}/>
-                        <label><input type="checkbox" disabled={!canManage} checked={description.DocumentRequestDefaults?.sendOnEntry || false}
-                            onChange={event=>{const checked=event.target.checked;setDescriptions(previous=>previous.map((item,i)=>i===index?{...item,DocumentRequestDefaults:{items:item.DocumentRequestDefaults?.items || [],sendOnEntry:checked}}:item));}}/>{t('documentRequests.sendOnEntry')}</label>
+                        <StageDocumentDefaults disabled={!canManage} value={description.DocumentRequestDefaults}
+                            onChange={value=>setDescriptions(previous=>previous.map((item,i)=>i===index?{...item,DocumentRequestDefaults:value}:item))}/>
                     </SimpleContainer>
                 ))}
 
@@ -242,6 +241,7 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
                     )}
                     {canManage && <SecondaryButton
                         onPress={handleAddStage}
+                        disabled={Number(numberOfStages) >= 15}
                     >
                         {t('caseTypes.addStage')}
                     </SecondaryButton>}

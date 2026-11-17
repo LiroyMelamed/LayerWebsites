@@ -3757,6 +3757,7 @@
     }
   },
   "documentRequests": {
+    "addRequest": "Add document request",
     "title": "Stage documents",
     "progress": "{{received}} of {{total}} complete",
     "loading": "Loading documents…",
