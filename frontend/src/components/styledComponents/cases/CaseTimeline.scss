@@ -100,3 +100,25 @@
 .lw-caseTimeline__timestampBadge--future {
   opacity: 0.6;
 }
+
+.lw-caseTimeline__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .25rem .75rem;
+}
+.lw-caseTimeline__updatedBy { margin: 0; }
+.lw-caseTimeline__stageContent {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+  width: 100%;
+  margin-block-start: .5rem;
+  > .lw-documentRequests { flex: 1 0 100%; margin-block: 0; }
+  > .lw-stageActionButton { order: 1; }
+  > .lw-stageFileUpload { display: contents; }
+  .lw-stageFileUpload__uploadRow { order: 1; }
+  .lw-stageFileUpload__list { order: 2; flex: 1 0 100%; }
+  &:empty { display: none; }
+}
