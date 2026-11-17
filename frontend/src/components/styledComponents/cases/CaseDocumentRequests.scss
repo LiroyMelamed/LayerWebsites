@@ -7,5 +7,12 @@
   &__actions label { display: inline-flex; align-items: center; gap: .25rem; margin-inline-end: .5rem; }
   p { margin: .25rem 0; font-size: .8125rem; }
   summary { cursor: pointer; }
-  @media (max-width: 28rem) { &__item { grid-template-columns: minmax(0,1fr); } }
+  &__item .lw-simpleInput { min-block-size: 2.75rem; margin-block-start: 0; }
+  &__item .lw-signingSelect .lw-textButtonWithTwoOptionalIcons {
+    min-block-size: 2.75rem; padding: .375rem .625rem !important;
+  }
+  @media (max-width: 28rem) {
+    &__item { grid-template-columns: minmax(0,1fr) 6.5rem; gap: .375rem; }
+    &__item .lw-signingSelect { font-size: .875rem; }
+  }
 }

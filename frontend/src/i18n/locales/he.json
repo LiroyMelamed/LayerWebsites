@@ -58,7 +58,8 @@
     "simpleImageAlt": "תמונה",
     "chooseFilePrompt": "לחץ או גרור קובץ לכאן",
     "uploading": "מעלה...",
-    "listTitleWithCount": "{{title}} ({{count}})"
+    "listTitleWithCount": "{{title}} ({{count}})",
+    "continue": "המשך"
   },
   "auth": {
     "login": "התחברות",
