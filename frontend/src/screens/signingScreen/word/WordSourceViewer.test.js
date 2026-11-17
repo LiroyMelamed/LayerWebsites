@@ -190,14 +190,14 @@ test('saved labels are accessible controls; selecting one never reuses native te
         expect(onSelectBinding).toHaveBeenCalledWith('saved-name'); expect(onSelect).not.toHaveBeenCalled();
         view.rerender(<WordSourceViewer {...props} activeBindingId="saved-name" />);
         await waitFor(() => expect(chip).toHaveFocus()); expect(chip).toHaveAttribute('aria-pressed', 'true');
-        expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledWith({ block: 'center', inline: 'nearest' });
+        expect(HTMLElement.prototype.scrollIntoView).not.toHaveBeenCalled();
         expect(view.container.querySelector('.lw-word-source__mark')).toHaveStyle({ left: '25px', top: '50px', width: '70px', height: '12px' });
         fireEvent.mouseUp(sourceText);
         expect(onSelect).toHaveBeenCalledWith({ kind: 'range', start: { itemId: 'p1_i0', offset: 0 }, end: { itemId: 'p1_i0', offset: 8 } });
         expect(binding).toEqual(props.bindings[0]);
         HTMLElement.prototype.scrollIntoView.mockClear();
         view.rerender(<WordSourceViewer {...props} activeBindingId={null} selection={{ kind: 'range', anchor: { ...binding, start: 0, end: 3 } }} />);
-        await waitFor(() => expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledWith({ block: 'center', inline: 'nearest' }));
+        await act(async () => {}); expect(HTMLElement.prototype.scrollIntoView).not.toHaveBeenCalled();
     } finally {
         view?.unmount(); HTMLElement.prototype.getBoundingClientRect = originalBounds; HTMLElement.prototype.scrollIntoView = originalScroll;
         Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });
@@ -223,7 +223,7 @@ test('only an actually verified RTL neutral layer receives caret presentation an
     expect(screen.getByTestId('source-page').querySelector('[data-word-verified]')).toBeNull();
 });
 
-test('an active saved label recenters once after desktop-to-mobile resize without stealing input focus or changing its anchor', async () => {
+test('an active saved label preserves scroll after desktop-to-mobile resize without stealing input focus or changing its anchor', async () => {
     const authoring = create(); mockContent = { items: authoring.pages[0].items.map(({ text, ...rest }) => ({ ...rest, str: text })) };
     const originalBounds = HTMLElement.prototype.getBoundingClientRect; const originalScroll = HTMLElement.prototype.scrollIntoView;
     const originalWidth = window.innerWidth; const originalObserver = global.ResizeObserver;
@@ -243,17 +243,17 @@ test('an active saved label recenters once after desktop-to-mobile resize withou
             onSelect={onSelect} fieldLabel={value => value} text={(key, values) => values?.field ? `${key} ${values.field}` : key} />);
         const chip = await screen.findByRole('button', { name: 'editReplacement client.fullName' });
         await waitFor(() => expect(chip).toHaveFocus());
-        expect(HTMLElement.prototype.scrollIntoView).toHaveBeenLastCalledWith({ block: 'nearest', inline: 'nearest' });
+        expect(HTMLElement.prototype.scrollIntoView).not.toHaveBeenCalled();
         const focus = jest.spyOn(chip, 'focus'); HTMLElement.prototype.scrollIntoView.mockClear();
         input = document.createElement('input'); document.body.append(input); input.focus();
         pageWidth = 278; Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
         fireEvent(window, new Event('resize'));
-        await waitFor(() => expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(1));
-        expect(HTMLElement.prototype.scrollIntoView).toHaveBeenLastCalledWith({ block: 'center', inline: 'nearest' });
+        await act(async () => {}); expect(HTMLElement.prototype.scrollIntoView).not.toHaveBeenCalled();
+        expect(HTMLElement.prototype.scrollIntoView).not.toHaveBeenCalled();
         expect(input).toHaveFocus(); expect(focus).not.toHaveBeenCalled();
         await act(async () => { [...callbacks].forEach(callback => callback()); });
         fireEvent(window, new Event('resize'));
-        expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(1);
+        expect(HTMLElement.prototype.scrollIntoView).not.toHaveBeenCalled();
         expect(binding).toEqual(before); expect(onSelect).not.toHaveBeenCalled(); focus.mockRestore();
     } finally {
         view?.unmount(); input?.remove(); global.ResizeObserver = originalObserver;

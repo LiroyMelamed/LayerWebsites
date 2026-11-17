@@ -33,6 +33,7 @@ router.post('/import', ...remManage, upload.single('file'), reminderController.i
 router.post('/', ...remManage, reminderController.createSingleReminder);
 router.get('/', ...remView, reminderController.listReminders);
 router.get('/:id', ...remView, reminderController.getReminderById);
+router.post('/:id/retry', ...remManage, reminderController.retryDocumentReminder);
 router.put('/:id/cancel', ...remManage, reminderController.cancelReminder);
 router.put('/:id', ...remManage, reminderController.updateReminder);
 router.delete('/:id', ...remManage, reminderController.deleteReminder);

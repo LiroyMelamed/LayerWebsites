@@ -2263,12 +2263,15 @@ export default function PlatformSettingsScreen() {
                                             )}
                                         </SimpleContainer>
                                         <SimpleContainer className="lw-platformSettings__settingInput">
-                                            <SettingInput
-                                                setting={setting}
-                                                value={editedValue}
-                                                onChange={(val) => handleSettingChange(activeTab, key, val)}
-                                                isTemplate={activeTab === "templates"}
-                                            />
+                                            {['DOCUMENT_REQUEST_CHANNELS','DOCUMENT_REQUEST_DEFAULT_CHANNELS'].includes(key) ? <div role="group" aria-label={setting.label}>
+                                                {['email','sms','push'].map(channel=><label key={channel}>
+                                                    <input type="checkbox" checked={String(currentValue).split(',').includes(channel)} onChange={event=>{
+                                                        const values=String(currentValue).split(',').filter(Boolean);
+                                                        handleSettingChange(activeTab,key,(event.target.checked?[...new Set([...values,channel])]:values.filter(value=>value!==channel)).join(','));
+                                                    }}/>{t(`documentRequests.${channel}`)}
+                                                </label>)}
+                                            </div> : <SettingInput setting={setting} value={editedValue}
+                                                onChange={(val) => handleSettingChange(activeTab, key, val)} isTemplate={activeTab === "templates"} /> }
                                             {activeTab === "templates" && SMS_TEMPLATE_VARS[key] && (
                                                 <SmsVarButtons
                                                     templateKey={key}

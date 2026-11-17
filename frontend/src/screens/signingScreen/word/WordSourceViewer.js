@@ -14,7 +14,6 @@ function PageMarks({ host, page, bindings, selection, activeBindingId, onSelectB
     const { marks } = measurement;
     const overlay = useRef(null);
     const focusedBinding = useRef(null);
-    const focusedSelection = useRef(null);
     const [layout, setLayout] = useState({ marks: null, positions: [] });
     useEffect(() => {
         if (!host || !page || !revision) { setMeasurement({ marks: [], width: 0, viewportWidth }); return undefined; }
@@ -42,7 +41,7 @@ function PageMarks({ host, page, bindings, selection, activeBindingId, onSelectB
                     });
                 });
                 if (boxes.length) {
-                    next.push({ id: binding.id, label: binding.pending ? text(binding.kind === 'insert' ? 'insertionSelected' : 'selectedLocation') : fieldLabel(binding.field), pending: binding.pending, colorClass: fieldColorClass?.(binding.pending ? pendingField : binding.field) || '', boxes });
+                    next.push({ id: binding.id, label: binding.pending ? text(binding.kind === 'insert' ? 'insertionSelected' : 'selectedLocation') : binding.fieldLabel || fieldLabel(binding.field), pending: binding.pending, colorClass: fieldColorClass?.(binding.pending ? pendingField : binding.field) || '', boxes });
                 }
             });
             setMeasurement({ marks: next, width: origin.width || displayWidth || 600, viewportWidth });
@@ -86,19 +85,8 @@ function PageMarks({ host, page, bindings, selection, activeBindingId, onSelectB
         if (chip && chip === firstChip) {
             if (focusedBinding.current?.id !== activeBindingId) chip.focus({ preventScroll: true });
             focusedBinding.current = { id: activeBindingId, key };
-            chip.scrollIntoView?.({ block: viewportWidth <= 768 ? 'center' : 'nearest', inline: 'nearest' });
         }
     }, [activeBindingId, marks, positions, measurement, viewportWidth, host]);
-    useEffect(() => {
-        if (!selection) { focusedSelection.current = null; return; }
-        if (viewportWidth > 768 || measurement.viewportWidth !== viewportWidth || !positions.length) return;
-        const key = JSON.stringify([selection.anchor, Math.round(measurement.width * 100), measurement.viewportWidth]);
-        if (focusedSelection.current === key) return;
-        const highlight = overlay.current?.querySelector('.lw-word-source__mark.is-pending');
-        if (highlight && highlight === host.closest('.lw-word-source')?.querySelector('.lw-word-source__mark.is-pending')) {
-            focusedSelection.current = key; highlight.scrollIntoView?.({ block: 'center', inline: 'nearest' });
-        }
-    }, [selection, marks, positions, host, measurement, viewportWidth]);
     return <div ref={overlay} className="lw-word-source__marks">
         <svg className="lw-word-source__leaders" aria-hidden="true">{positions.map((position, index) => position.leader &&
             <line key={marks[index].id} {...position.leader} className={`${marks[index].colorClass}${marks[index].pending ? ' is-pending' : ''}`} />)}</svg>
@@ -114,7 +102,7 @@ function PageMarks({ host, page, bindings, selection, activeBindingId, onSelectB
     </div>;
 }
 
-export default function WordSourceViewer({ authoring, pdfFile, paragraphs = [], bindings, selection, activeBindingId, onSelectBinding, disabled, onSelect, onError, fieldLabel, fieldColorClass, pendingField, text, controlsContainer }) {
+export default function WordSourceViewer({ authoring, pdfFile, paragraphs = [], bindings, selection, activeBindingId, onSelectBinding, disabled, onSelect, onSelectionStart, onError, fieldLabel, fieldColorClass, pendingField, text, controlsContainer }) {
     const root = useRef(null); const generation = useRef(0); const callbacks = useRef({ onSelect, onError });
     const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth);
     useEffect(() => {
@@ -171,22 +159,30 @@ export default function WordSourceViewer({ authoring, pdfFile, paragraphs = [], 
         } catch { if (token === generation.current && root.current?.contains(host)) pageError(pageNumber); }
     }, [authoring, paragraphs, pageError, setPageStates]);
 
+    const selecting = useRef(false);
+    const lastSelection = useRef(null);
     const readSelection = useCallback(event => {
-        if (disabled || !root.current) return;
+        if (disabled || selecting.current || !root.current) return;
         if (event?.target?.closest?.('button, input, textarea, select, summary') || (!event && document.activeElement?.closest?.('[data-word-binding-id], .lw-word__mappingForm')) || document.activeElement === accessibleText.current) return;
         const selection = window.getSelection();
         if (!selection?.anchorNode || !root.current.contains(selection.anchorNode)) return;
         if (selection.isCollapsed && selectionMode === 'range') return;
         try {
             const selector = selectorFromDom(root.current, selection, authoring, selectionMode, affinity);
+            const fingerprint = JSON.stringify([authoring.renderId, selector]);
+            if (fingerprint === lastSelection.current) return;
+            lastSelection.current = fingerprint;
             setSelectionError(false); callbacks.current.onSelect(selector);
         } catch { setSelectionError(true); }
     }, [authoring, disabled, selectionMode, affinity]);
     useEffect(() => {
         let timer;
-        const change = () => { clearTimeout(timer); timer = setTimeout(readSelection, 160); };
+        const change = () => { clearTimeout(timer); if (!selecting.current) timer = setTimeout(readSelection, 250); };
+        const release = () => { selecting.current = false; change(); };
+        document.addEventListener('pointerup', release);
+        document.addEventListener('pointercancel', release);
         document.addEventListener('selectionchange', change);
-        return () => { clearTimeout(timer); document.removeEventListener('selectionchange', change); };
+        return () => { clearTimeout(timer); document.removeEventListener('selectionchange', change); document.removeEventListener('pointerup', release); document.removeEventListener('pointercancel', release); };
     }, [readSelection]);
     const layer = useMemo(() => ({ onPageTextReady: verifyLayer, onPageError: pageError,
         renderPageOverlay: ({ pageNumber, host, displayWidth }) => <PageMarks host={host}
@@ -229,7 +225,8 @@ export default function WordSourceViewer({ authoring, pdfFile, paragraphs = [], 
         </div>
     );
     return <div className="lw-word-source" ref={root} data-disabled={disabled ? 'true' : undefined}
-        onMouseUp={readSelection} onKeyUp={readSelection} onTouchEnd={readSelection}>
+        onPointerDown={() => { selecting.current = true; lastSelection.current = null; onSelectionStart?.(); }}
+        onMouseUp={event => { selecting.current = false; readSelection(event); }} onKeyUp={readSelection}>
         {selectionError && <StatusNotice><p>{text('selectionInvalid')}</p></StatusNotice>}
         {Object.values(pageStates).includes('error') && <StatusNotice><p>{text('authoringMismatch')}</p></StatusNotice>}
         <PdfViewer pdfFile={pdfFile} spots={[]} signers={[]} authoringLayer={layer} />

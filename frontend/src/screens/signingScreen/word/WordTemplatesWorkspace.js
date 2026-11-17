@@ -66,7 +66,9 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
     const [selectedFile, setSelectedFile] = useState(null);
     const [selection, setSelection] = useState(null);
     const [activeBindingId, setActiveBindingId] = useState(null);
-    const [field, setField] = useState('client.fullName');
+    const [field, setField] = useState('');
+    const [bindingTitle, setBindingTitle] = useState('');
+    const [resolvedInputs, setResolvedInputs] = useState(null);
     const [selectedGroup, setSelectedGroup] = useState(null);
     const [editingRoles, setEditingRoles] = useState(false);
     const [required, setRequired] = useState(true);
@@ -159,20 +161,17 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
         if (!preview) return;
         previewHeading.current?.focus(); previewHeading.current?.scrollIntoView?.({ block: 'start', behavior: 'auto' });
     }, [preview]);
-    useEffect(() => {
-        if (selection) replacementHeading.current?.focus({ preventScroll: true });
-    }, [selection]);
 
     function edit(change) { if (lock.current) return; clearPreview(); setNotice(''); setError(''); change(); setDirty(true); }
     function cancelSelection() {
-        selectionGeneration.current += 1; setSelection(null); setActiveBindingId(null); setResolvingSelection(false);
+        selectionGeneration.current += 1; setSelection(null); setActiveBindingId(null); setResolvingSelection(false); setField(''); setBindingTitle('');
         window.getSelection()?.removeAllRanges?.();
     }
     function selectBinding(id) {
         if (lock.current || !authoring || authoringError || !bindings.some(binding => binding.id === id)) return;
         const target = bindings.find(binding => binding.id === id);
         setSelectedGroup(target.field.startsWith('role.') ? target.field.split('.').slice(0, 2).join('.') : target.field.split('.')[0]);
-        cancelSelection(); setActiveBindingId(id);
+        cancelSelection(); setActiveBindingId(id); setField(target.field); setBindingTitle(target.fieldLabel || fieldLabel(target.field));
     }
     function editInput(change) { if (lock.current) return; clearPreview(); setNotice(''); setError(''); setInputs(previous => change(previous)); }
     function discardTemplateChanges() {
@@ -299,7 +298,10 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
     const groupLabel = key => key.startsWith('role.') ? roles.find(role => `role.${role.key}` === key)?.label : text(`groups.${key}`);
     const fieldColorClass = value => signerPaletteClassByIndex(Math.max(0, groups.indexOf(value?.startsWith('role.') ? value.split('.').slice(0, 2).join('.') : value?.split('.')[0])));
     function fieldLabel(value, short = false) {
-        if (value.startsWith('manual.')) return bindings.find(binding => binding.field === value)?.fieldLabel || value;
+        if (!short || value.startsWith('manual.')) {
+            const title = bindings.find(binding => binding.field === value)?.fieldLabel;
+            if (title) return title;
+        }
         const pieces = value.split('.');
         const property = pieces[0] === 'role' ? pieces[2] : pieces.slice(1).join('.');
         const label = text(`fields.${property.replace(/\./g, '_')}`);
@@ -310,15 +312,15 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
         if (!selection || !authoring || authoringError || selection.renderId !== authoring.data.renderId || selection.mapHash !== authoring.data.mapHash || (!fields.includes(selectedField) && !customLabel) || lock.current || resolvingSelection) return;
         const { start, end, part, paragraphId } = selection.anchor;
         if (bindings.some(item => item.part === part && item.paragraphId === paragraphId &&
-            (start === end || item.start === item.end ? start >= item.start && start <= item.end || item.start >= start && item.start <= end : item.start < end && start < item.end))) { setError('selectionOverlap'); return; }
+            (start === end || item.start === item.end ? (start >= item.start && start <= item.end) || (item.start >= start && item.start <= end) : item.start < end && start < item.end))) { setError('selectionOverlap'); return; }
         edit(() => setBindings(previous => [...previous, { id: uuid(), ...selection.anchor, kind: selection.kind,
             selector: selection.selector, authoringRenderId: authoring.data.renderId, field: selectedField, ...(customLabel ? { fieldLabel: customLabel } : {}), required }])); cancelSelection(); setError(''); setNotice('fieldAdded');
     }
     function addManualField() {
         const label = manualFieldName.trim();
         if (!label || label.length > 80 || mappingDisabled || resolvingSelection) return;
-        const existing = customDefinitions.find(item => item.label === label);
-        const key = existing?.key || `manual.${uuid()}`;
+        // A title is presentation, not identity. Reuse is an explicit existing-field choice.
+        const key = `manual.${uuid()}`;
         if (activeBindingId) {
             edit(() => setBindings(previous => previous.map(binding => binding.id === activeBindingId ? { ...binding, field: key, fieldLabel: label } : binding)));
             cancelSelection(); setNotice('fieldUpdated');
@@ -326,11 +328,16 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
         setManualFieldName('');
     }
     function chooseDataField(value) {
-        if (lock.current || resolvingSelection || authoringError || !authoring || !fields.includes(value)) return;
+        if (lock.current || resolvingSelection || !fields.includes(value)) return;
+        setField(value); setBindingTitle(customDefinitions.find(item => item.key === value)?.label || fieldLabel(value, true));
+    }
+    function saveDataField() {
+        const label = bindingTitle.trim();
+        if (!fields.includes(field) || !label || label.length > 80 || mappingDisabled || resolvingSelection) return;
         if (activeBindingId) {
-            edit(() => setBindings(previous => previous.map(binding => binding.id === activeBindingId ? { ...binding, field: value, fieldLabel: customDefinitions.find(item => item.key === value)?.label } : binding)));
+            edit(() => setBindings(previous => previous.map(binding => binding.id === activeBindingId ? { ...binding, field, fieldLabel: label } : binding)));
             cancelSelection(); setNotice('fieldUpdated');
-        } else if (selection) { setField(value); addBinding(value, customDefinitions.find(item => item.key === value)?.label); }
+        } else addBinding(field, label);
     }
     const activeBinding = bindings.find(binding => binding.id === activeBindingId);
     const bindingText = binding => binding.kind === 'insert' ? text('insertionSelected') :
@@ -346,22 +353,41 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
         const [group, key, roleField] = value.split('.');
         if (group === 'office') return true;
         if (group === 'case') return definition?.resolver === 'case' ? !inputs.caseId : !['reference', 'title'].includes(key) || !inputs.caseId;
-        if (group === 'role') return !['fullName', 'companyName', 'identityNumber', 'companyNumber'].includes(roleField) || !inputs.roleClientIds[key];
+        if (group === 'role') return !['fullName', 'companyName', 'identityNumber', 'companyNumber', 'phone', 'email', 'address'].includes(roleField) || !inputs.roleClientIds[key];
         return group === 'client' && !inputs.clientId;
     }
+    const inputPayload = { expectedVersion: source?.version, bindingsHash: source?.bindingsHash, inputs: {
+        manualValues: Object.fromEntries(Object.entries(inputs.manualValues).filter(([key]) => uniqueFields.includes(key))),
+        roleClientIds: Object.fromEntries(neededRoles.filter(role => inputs.roleClientIds[role.key]).map(role => [role.key, Number(inputs.roleClientIds[role.key])])),
+        ...(inputs.clientId ? { clientId: Number(inputs.clientId) } : {}),
+        ...(inputs.caseId ? { caseId: Number(inputs.caseId) } : {}),
+    } };
+    const resolveKey = JSON.stringify([mode, source?.id, dirty, inputPayload]);
+    useEffect(() => {
+        if (mode !== 'use' || !source || dirty || !validReferences) return undefined;
+        let cancelled = false;
+        const timer = setTimeout(() => {
+            api.resolveInputs(source.id, inputPayload).then(result => {
+                if (result.sourceId !== source.id || result.sourceVersion !== source.version || !Array.isArray(result.fields)) throw new Error('Invalid input provenance');
+                if (!cancelled) setResolvedInputs({ key: resolveKey, fields: result.fields });
+            }).catch(() => { if (!cancelled) setResolvedInputs({ key: resolveKey, error: true }); });
+        }, 180);
+        return () => { cancelled = true; clearTimeout(timer); };
+        // The serialized key includes every resolver input and template version.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [resolveKey, validReferences]);
+    const currentResolution = resolvedInputs?.key === resolveKey ? resolvedInputs : null;
     const requiredManualFields = uniqueFields.filter(value => needsManualValue(value) && bindings.some(binding => binding.field === value && binding.required));
-    const visibleManualFields = uniqueFields.filter(value => value.startsWith('manual.') || requiredManualFields.includes(value));
+    const remoteMissing = currentResolution?.fields?.filter(item => item.missing && item.required).map(item => item.key) || [];
+    const visibleManualFields = uniqueFields.filter(value => needsManualValue(value) || remoteMissing.includes(value) || Object.hasOwn(inputs.manualValues, value));
     const overrideFields = uniqueFields.filter(value => !visibleManualFields.includes(value));
-    const missingManualFields = requiredManualFields.some(value => !String(inputs.manualValues[value] || '').trim());
+    const missingManualFields = requiredManualFields.some(value => !String(inputs.manualValues[value] || '').trim()) || remoteMissing.length > 0;
+    const resolvingInputs = !currentResolution;
     function generatePreview() {
-        if (!source || dirty || !validReferences || missingManualFields || !converterAvailable) return;
+        if (!source || dirty || !validReferences || missingManualFields || resolvingInputs || currentResolution?.error || !converterAvailable) return;
         clearPreview(); const token = generation.current; const snapshot = latestDraft.current;
         run(async () => {
-            const payload = { expectedVersion: snapshot.source.version, bindingsHash: snapshot.source.bindingsHash, inputs: {
-                manualValues: Object.fromEntries(Object.entries(snapshot.inputs.manualValues).filter(([key]) => snapshot.bindings.some(binding => binding.field === key))),
-                roleClientIds: Object.fromEntries(neededRoles.filter(role => snapshot.inputs.roleClientIds[role.key]).map(role => [role.key, Number(snapshot.inputs.roleClientIds[role.key])])),
-                ...(snapshot.inputs.clientId ? { clientId: Number(snapshot.inputs.clientId) } : {}), ...(snapshot.inputs.caseId ? { caseId: Number(snapshot.inputs.caseId) } : {}),
-            } };
+            const payload = inputPayload;
             const result = await api.preview(snapshot.source.id, payload, uuid());
             if (!alive.current || token !== generation.current) return;
             if (result.preview?.sourceId !== snapshot.source.id || result.preview.sourceVersion !== snapshot.source.version ||
@@ -383,9 +409,12 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
         setReadable(value => !value);
     }
 
-    const manualInput = value => <SimpleInput key={value} title={fieldLabel(value)} aria-label={fieldLabel(value)}
+    const manualInput = value => <div key={value}><SimpleInput title={fieldLabel(value)} aria-label={fieldLabel(value)}
+        error={remoteMissing.includes(value) && !needsManualValue(value) ? text('missingRecordValue') : undefined}
         value={inputs.manualValues[value] || ''} maxLength={4000} disabled={busy} timeToWaitInMilli={0}
-        containerDir={direction} onChange={event => editInput(previous => ({ ...previous, manualValues: { ...previous.manualValues, [value]: event.target.value } }))} />;
+        containerDir={direction} onChange={event => editInput(previous => ({ ...previous, manualValues: { ...previous.manualValues, [value]: event.target.value } }))} />
+        {!needsManualValue(value) && Object.hasOwn(inputs.manualValues,value) && <SecondaryButton size={buttonSizes.SMALL} disabled={busy} onPress={()=>editInput(previous=>{const manualValues={...previous.manualValues};delete manualValues[value];return {...previous,manualValues};})}>{text('useRecordValue')}</SecondaryButton>}</div>;
+    const withoutGroupOverrides = (previous, prefix) => Object.fromEntries(Object.entries(previous.manualValues).filter(([key])=>!key.startsWith(prefix)));
 
     return <section className={`lw-word${!source ? " lw-word--start" : ""}`} dir={direction} aria-label={text('title')}>
         <SigningBackButton onPress={() => leave(onBack)}>{text('back')}</SigningBackButton>
@@ -442,7 +471,7 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
                             <div className="lw-signing-pdfViewerRow lw-word__visualRow">
                                 <div className="lw-signing-pdfViewerMain">
                                     <WordSourceViewer key={authoring.data.renderId} authoring={authoring.data} pdfFile={authoring.pdfFile} paragraphs={paragraphs} bindings={bindings} selection={selection}
-                                        controlsContainer={selectionControls} fieldColorClass={fieldColorClass} pendingField={`${activeGroup}.fullName`} activeBindingId={activeBindingId} onSelectBinding={selectBinding} disabled={busy || !!authoringError} onSelect={resolveVisualSelection}
+                                        controlsContainer={selectionControls} fieldColorClass={fieldColorClass} pendingField={`${activeGroup}.fullName`} activeBindingId={activeBindingId} onSelectBinding={selectBinding} disabled={busy || !!authoringError} onSelect={resolveVisualSelection} onSelectionStart={() => { selectionGeneration.current += 1; }}
                                         onError={message => { cancelSelection(); setAuthoringError(message); }} fieldLabel={fieldLabel} text={text} />
                                 </div>
                                 <aside className="lw-word__mappingForm" aria-label={text('mapping')}>
@@ -478,8 +507,15 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
                                         }}>{text('removeBinding')}</TertiaryButton>}
                                     </div>
                                     {(selection || activeBinding) && <div className="lw-word__replacementChoices">
-                                        <WordDataFieldPanel definitions={definitions} group={activeGroup} value={activeBinding?.field || ''}
+                                        <WordDataFieldPanel definitions={definitions} group={activeGroup} value={field}
                                             disabled={mappingDisabled || resolvingSelection} onChange={chooseDataField} fieldLabel={fieldLabel} text={text} />
+                                        {field && field.startsWith(`${activeGroup}.`) && <div className="lw-word__manualField">
+                                            <SimpleInput title={text('fieldTitle')} aria-label={text('fieldTitle')} value={bindingTitle}
+                                                maxLength={80} timeToWaitInMilli={0} disabled={mappingDisabled || resolvingSelection}
+                                                onChange={event => setBindingTitle(event.target.value)} />
+                                            <SecondaryButton size={buttonSizes.SMALL} disabled={mappingDisabled || resolvingSelection || !bindingTitle.trim()}
+                                                onPress={saveDataField}>{text('saveField')}</SecondaryButton>
+                                        </div>}
                                         {activeGroup === 'manual' && <div className="lw-word__manualField">
                                             <SimpleInput title={text('customFieldName')} aria-label={text('customFieldName')} value={manualFieldName}
                                                 maxLength={80} timeToWaitInMilli={0} disabled={mappingDisabled || resolvingSelection}
@@ -515,21 +551,20 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
         </>}
         {mode === 'use' && source && <>
             <section className="lw-word__section" aria-label={text('fill')}>
-                <h2><TextBold18>{text('fill')}</TextBold18></h2><Text14>{text('fillHelp')}</Text14>
+                <h2><TextBold18>{text('fill')}</TextBold18></h2>
                 <div className="lw-word__references">
-                    <WordRecordPicker kind="client" label={text('clientId')} value={inputs.clientRecord} disabled={busy}
-                        onChange={value => editInput(previous => ({ ...previous, clientRecord: value, clientId: value ? String(value.id) : '' }))} />
-                    <WordRecordPicker kind="case" label={text('caseId')} value={inputs.caseRecord} disabled={busy}
-                        onChange={value => editInput(previous => ({ ...previous, caseRecord: value, caseId: value ? String(value.id) : '' }))} />
+                    {(inputs.clientRecord || uniqueFields.some(key => key.startsWith('client.'))) && <WordRecordPicker kind="client" label={text('clientId')} value={inputs.clientRecord} disabled={busy}
+                        onChange={value => editInput(previous => ({ ...previous, manualValues: withoutGroupOverrides(previous,'client.'), clientRecord: value, clientId: value ? String(value.id) : '' }))} />}
+                    {(inputs.caseRecord || uniqueFields.some(key => key.startsWith('case.'))) && <WordRecordPicker kind="case" label={text('caseId')} value={inputs.caseRecord} disabled={busy}
+                        onChange={value => editInput(previous => ({ ...previous, manualValues: withoutGroupOverrides(previous,'case.'), caseRecord: value, caseId: value ? String(value.id) : '' }))} />}
                 </div>
-                {neededRoles.length > 0 && <div className="lw-word__rolePeople"><h3>{text('peopleForFields')}</h3><Text14>{text('peopleForFieldsHelp')}</Text14>
-                    <div className="lw-word__references">{neededRoles.map(role => <WordRecordPicker key={role.key} label={text('roleClientId', { role: role.label })}
+                {neededRoles.length > 0 && <div className="lw-word__rolePeople">
+                    <div className="lw-word__references">{neededRoles.map(role => <WordRecordPicker key={role.key} label={role.label}
                         value={inputs.roleRecords[role.key]} disabled={busy} onChange={value => editInput(previous => ({ ...previous,
-                            roleRecords: { ...previous.roleRecords, [role.key]: value }, roleClientIds: { ...previous.roleClientIds, [role.key]: value ? String(value.id) : '' } }))} />)}</div>
+                            manualValues: withoutGroupOverrides(previous,`role.${role.key}.`), roleRecords: { ...previous.roleRecords, [role.key]: value }, roleClientIds: { ...previous.roleClientIds, [role.key]: value ? String(value.id) : '' } }))} />)}</div>
                 </div>}
                 {!validReferences && <p role="alert">{text('referenceInvalid')}</p>}
-                <Text14>{text('storedValuesHelp')}</Text14>
-                {visibleManualFields.length > 0 && <div className="lw-word__manualFields"><h3>{text('requiredDocumentValues')}</h3><Text14>{text('documentOnlyHelp')}</Text14>
+                {visibleManualFields.length > 0 && <div className="lw-word__manualFields"><h3>{text('requiredDocumentValues')}</h3>
                     <div className="lw-word__valueGrid">{visibleManualFields.map(manualInput)}</div>
                 </div>}
                 {overrideFields.length > 0 && <details className="lw-word__overrides" open={showOverrides} onToggle={event => setShowOverrides(event.currentTarget.open)}>
@@ -540,11 +575,13 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
                         })} />{text('manualField', { field: fieldLabel(value) })}</label>{overridden && manualInput(value)}
                     </div>; })}
                 </details>}
+                {currentResolution?.error && <StatusNotice><p>{text('valuesCheckFailed')}</p></StatusNotice>}
+                {resolvingInputs && !dirty && <p role="status">{text('checkingValues')}</p>}
                 {!converterAvailable && <StatusNotice><p>{text('converterUnavailable')}</p></StatusNotice>}
                 {dirty && <p>{text('saveFirst')}</p>}
                 {!bindings.length && <p>{text('noMappedFields')}</p>}
                 {missingManualFields && <p className="lw-word__muted">{text('completeRequiredValues')}</p>}
-                <div className="lw-word__actions"><PrimaryButton size={buttonSizes.SMALL} disabled={busy || dirty || !validReferences || missingManualFields || !converterAvailable} onPress={generatePreview}>{text('preview')}</PrimaryButton></div>
+                <div className="lw-word__actions"><PrimaryButton size={buttonSizes.SMALL} disabled={busy || dirty || !validReferences || missingManualFields || resolvingInputs || currentResolution?.error || !converterAvailable} onPress={generatePreview}>{text('preview')}</PrimaryButton></div>
             </section>
             {preview && <section className="lw-word__section" aria-label={text('finalPreview')}>
                 <h2 ref={previewHeading} tabIndex={-1}><TextBold18>{text('finalPreview')}</TextBold18></h2><Text14>{text('freshGeometry')}</Text14>

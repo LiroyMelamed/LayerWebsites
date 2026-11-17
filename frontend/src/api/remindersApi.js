@@ -3,6 +3,7 @@ import ApiUtils from "./apiUtils";
 const base = "reminders";
 
 const remindersApi = {
+    retryDocumentReminder: (id, confirmUnknown) => ApiUtils.post(`${base}/${id}/retry`, { confirmUnknown }),
     /** Fetch available email templates */
     getTemplates: async () => {
         return await ApiUtils.get(`${base}/templates`);

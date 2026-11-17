@@ -11,7 +11,7 @@ import { useCalendarModuleEnabled } from "../../../services/firmSettings";
 import { leaveColor } from "../../calendarScreen/utils/lawyerColors";
 import { CalendarOwners } from "../../calendarScreen/components/CalendarOwners";
 import { calendarAllDayRange, calendarEventsForDay, calendarEventStartTime, calendarOwners } from "../../calendarScreen/utils/calendarPresentation";
-import { useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import "./CalendarWidget.scss";
 
 const NAVY = "#2A4365";
@@ -113,12 +113,32 @@ export default function CalendarWidget({ events = [], isPerforming, onEventPress
     const buckets = useMemo(() => bucketEvents(events), [events]);
     const totalCount = buckets.today.length + buckets.tomorrow.length;
 
+    const [highlight, setHighlight] = useState(false);
+    useEffect(() => {
+        if (!calendarEnabled || isPerforming || !buckets.today.length) return undefined;
+        try {
+            // Identity is only a local animation preference, never an authorization check.
+            const token = localStorage.getItem('token');
+            const payload = token && JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+            const userId = payload?.userid || payload?.UserId || payload?.userId || payload?.sub;
+            if (!userId) return undefined;
+            const key = `calendar-intro:${window.location.host}:${userId}`;
+            const today = jerusalemDateKey(new Date());
+            if (localStorage.getItem(key) === today) return undefined;
+            localStorage.setItem(key, today);
+            if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return undefined;
+            setHighlight(true);
+            const timer = setTimeout(() => setHighlight(false), 800);
+            return () => { clearTimeout(timer); setHighlight(false); };
+        } catch { return undefined; }
+    }, [calendarEnabled, isPerforming, buckets.today.length]);
+
     if (!calendarEnabled) return null;
 
     const handleOpenCalendar = () => navigate(AdminStackName + CalendarScreenName);
 
     return (
-        <SimpleCard className="lw-calendarWidget lw-calendarWidget--home">
+        <SimpleCard className={`lw-calendarWidget lw-calendarWidget--home${highlight ? ' lw-calendarWidget--intro' : ''}`}>
             <SimpleContainer className="lw-calendarWidget__header">
                 <TextBold16 color={colors.primary}>{t("calendar.widgetTitle")}</TextBold16>
                 <SimpleButton type="button" className="lw-commandCenter__link" onPress={handleOpenCalendar}>

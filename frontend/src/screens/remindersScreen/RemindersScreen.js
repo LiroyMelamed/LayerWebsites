@@ -37,6 +37,9 @@ const STATUS_FILTERS = [
     { value: "PENDING", label: "pending" },
     { value: "SENT", label: "sent" },
     { value: "FAILED", label: "failed" },
+    { value: "UNKNOWN", label: "unknown" },
+    { value: "SENDING", label: "sending" },
+    { value: "SIMULATED", label: "simulated" },
     { value: "CANCELLED", label: "cancelled" },
 ];
 
@@ -68,6 +71,7 @@ export default function RemindersScreen() {
     }, []);
 
     const resolveTemplateLabel = useCallback((key) => {
+        if (key === "DOCUMENT_REQUEST") return t("documentRequests.title");
         const calendarLabels = { CALENDAR_APPOINTMENT: 'תזכורת לפגישה', CALENDAR_HEARING: 'תזכורת לדיון', CALENDAR_REMINDER: 'תזכורת יומן' };
         if (calendarLabels[key]) return calendarLabels[key];
         if (!key) return '—';

@@ -148,7 +148,7 @@
   .lw-word__keyboardSelection > label { display: grid; gap: .5rem; }
   @media (max-width: 48rem) {
     .lw-word__visualRow { grid-template-columns: minmax(0, 1fr); }
-    .lw-word__visualRow > .lw-word__mappingForm { grid-column: 1; grid-row: 1; position: static; max-block-size: none; overflow: visible; inset: auto; }
+    .lw-word__visualRow > .lw-word__mappingForm { grid-column: 1; grid-row: 1; position: static; block-size: 18rem; max-block-size: 35dvh; overflow-y: auto; overscroll-behavior: contain; inset: auto; }
     .lw-word__visualRow > .lw-signing-pdfViewerMain { grid-column: 1; grid-row: 2; max-block-size: 65dvh; }
     .lw-word__editor--choosing { padding-block-end: 0; }
     .lw-word__replacementChoices { overflow: visible; }
