@@ -1,6 +1,7 @@
 import { useFirmPermissions } from "../../../providers/FirmPermissionsProvider";
 import React, { useState, useRef, useCallback } from "react";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
+import StageActionButton from "../buttons/StageActionButton";
 import SimpleButton from "../../simpleComponents/SimpleButton";
 import SimpleLoader from "../../simpleComponents/SimpleLoader";
 import { Text12 } from "../../specializedComponents/text/AllTextKindFile";
@@ -167,19 +168,9 @@ export default function StageFileUpload({ caseId, stage, isClient, stageFiles = 
                         onChange={handleFileSelected}
                         accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.xlsx,.xls,.txt"
                     />
-                    <SimpleButton
-                        className="lw-stageFileUpload__uploadBtn"
-                        onPress={handleUploadClick}
-                        disabled={isUploading}
-                    >
-                        {isUploading ? (
-                            <Text12>{t("cases.uploadingFile")}</Text12>
-                        ) : (
-                            <Text12 className="lw-stageFileUpload__uploadText">
-                                + {t("cases.addStageFile")}
-                            </Text12>
-                        )}
-                    </SimpleButton>
+                    <StageActionButton onPress={handleUploadClick} disabled={isUploading}
+                        label={t(isUploading ? 'cases.uploadingFile' : 'cases.addStageFile')} showPlus={!isUploading}/>
+
                 </SimpleContainer>
             )}
         </SimpleContainer>
