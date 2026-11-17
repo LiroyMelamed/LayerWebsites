@@ -6,7 +6,8 @@ const { WordTemplateError, reject } = require('./errors');
 const REL = 'http://schemas.openxmlformats.org/package/2006/relationships';
 const OFFICE = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
 const OFFICE_NAMESPACES = new Set([OFFICE, 'http://purl.oclc.org/ooxml/officeDocument/relationships']);
-const WORD = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+const WORD_NAMESPACES = new Set(['http://schemas.openxmlformats.org/wordprocessingml/2006/main',
+    'http://purl.oclc.org/ooxml/wordprocessingml/main']);
 
 function scan(data, open, close) {
     const xml = data.toString('utf8');
@@ -64,7 +65,7 @@ function normalizePassiveLinks(buffer) {
         const body = scan(source.data, item => {
             const refs = Object.values(item.node.attributes).filter(a => OFFICE_NAMESPACES.has(a.uri) && ids.has(a.value));
             if (!refs.length) return;
-            if (item.node.uri !== WORD || item.node.local !== 'hyperlink' || refs.some(a => a.local !== 'id')) reject('EXTERNAL_OR_ACTIVE_RELATIONSHIP');
+            if (!WORD_NAMESPACES.has(item.node.uri) || item.node.local !== 'hyperlink' || refs.some(a => a.local !== 'id')) reject('EXTERNAL_OR_ACTIVE_RELATIONSHIP');
             item.unwrap = true; tags.push([item.start, item.end]);
         }, (item, start, end) => { if (item.unwrap && !item.node.isSelfClosing) tags.push([start, end]); });
         entry.data = remove(xml, removals); entry.changed = true;

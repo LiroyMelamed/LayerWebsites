@@ -6,7 +6,10 @@ const { SaxesParser } = require('saxes');
 const { readZip, writeZip } = require('./zip');
 const { WordTemplateError, reject } = require('./errors');
 
-const WORD = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+const WORD_NAMESPACES = new Set(['http://schemas.openxmlformats.org/wordprocessingml/2006/main',
+    'http://purl.oclc.org/ooxml/wordprocessingml/main']);
+const OFFICE_DOCUMENT_RELATIONSHIPS = new Set(['http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument',
+    'http://purl.oclc.org/ooxml/officeDocument/relationships/officeDocument']);
 const REL = 'http://schemas.openxmlformats.org/package/2006/relationships';
 const CONTENT = 'http://schemas.openxmlformats.org/package/2006/content-types';
 const MAIN_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml';
@@ -53,15 +56,15 @@ function validatePackage(entries) {
         let instructionDepth = 0;
         let instructions = '';
         parseXml(xml, node => {
-            if (node.uri === WORD && node.local === 'instrText') instructionDepth += 1;
-            if (node.uri === WORD && node.local === 'fldSimple') instructions += attribute(node, 'instr') || '';
+            if (WORD_NAMESPACES.has(node.uri) && node.local === 'instrText') instructionDepth += 1;
+            if (WORD_NAMESPACES.has(node.uri) && node.local === 'fldSimple') instructions += attribute(node, 'instr') || '';
             if (name === '[Content_Types].xml' && node.uri === CONTENT && node.local === 'Override') {
                 const type = attribute(node, 'ContentType');
                 if (/macroEnabled|oleObject|activeX|vbaProject/iu.test(type || '')) reject('ACTIVE_OR_SIGNED_PACKAGE_UNSUPPORTED');
                 if (attribute(node, 'PartName') === '/word/document.xml' && type === MAIN_TYPE) mainType = true;
             }
-            if (name === 'word/document.xml' && node.uri === WORD && node.local === 'document') rootDocument = true;
-            if (node.uri === WORD && ['altChunk', 'object'].includes(node.local)) reject('ACTIVE_CONTENT_UNSUPPORTED');
+            if (name === 'word/document.xml' && WORD_NAMESPACES.has(node.uri) && node.local === 'document') rootDocument = true;
+            if (WORD_NAMESPACES.has(node.uri) && ['altChunk', 'object'].includes(node.local)) reject('ACTIVE_CONTENT_UNSUPPORTED');
             // Raw legacy image/link references can resolve outside a package
             // even without a URI scheme. Internal OOXML images use r:embed/id.
             if (Object.values(node.attributes).some(a => ['src', 'href'].includes(a.local)
@@ -74,13 +77,13 @@ function validatePackage(entries) {
                 const base = name === '_rels/.rels' ? '' : path.dirname(path.dirname(name));
                 const resolved = target.startsWith('/') ? target.slice(1) : path.normalize(path.join(base, target));
                 if (resolved.startsWith('../') || !entries.has(resolved)) reject('BROKEN_PACKAGE_RELATIONSHIP');
-                if (name === '_rels/.rels' && type === 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument') {
+                if (name === '_rels/.rels' && OFFICE_DOCUMENT_RELATIONSHIPS.has(type)) {
                     if (rootRelationship || resolved !== 'word/document.xml') reject('UNSUPPORTED_MAIN_DOCUMENT');
                     rootRelationship = true;
                 }
             }
         }, text => { if (instructionDepth) instructions += text; }, node => {
-            if (node.uri === WORD && node.local === 'instrText') instructionDepth -= 1;
+            if (WORD_NAMESPACES.has(node.uri) && node.local === 'instrText') instructionDepth -= 1;
         });
         if (/\b(?:INCLUDETEXT|INCLUDEPICTURE|DDEAUTO|DDE|LINK|DATABASE)\b/iu.test(instructions)) reject('ACTIVE_WORD_FIELD_UNSUPPORTED');
     }
@@ -97,20 +100,20 @@ function storyModel(name, xml) {
     parser.on('opentag', node => {
         const item = { node, start: xml.lastIndexOf('<', parser.position - 1), contentStart: parser.position, value: '' };
         stack.push(item);
-        if (node.uri === WORD && node.local === 'p') {
-            const reasons = stack.filter(s => s.node.uri === WORD && UNSUPPORTED.has(s.node.local)).map(s => s.node.local);
+        if (WORD_NAMESPACES.has(node.uri) && node.local === 'p') {
+            const reasons = stack.filter(s => WORD_NAMESPACES.has(s.node.uri) && UNSUPPORTED.has(s.node.local)).map(s => s.node.local);
             if (complexFieldDepth) reasons.push('fldChar');
             paragraph = { id: `p${paragraphs.length}`, text: '', spans: [], unsupportedReasons: [...new Set(reasons)] };
             paragraphs.push(paragraph);
             item.paragraph = paragraph;
         }
-        if (node.uri === WORD && node.local === 'fldChar') {
+        if (WORD_NAMESPACES.has(node.uri) && node.local === 'fldChar') {
             const type = attribute(node, 'fldCharType');
             if (type === 'begin') complexFieldDepth += 1;
             else if (type === 'end' && complexFieldDepth) complexFieldDepth -= 1;
             else if (type !== 'separate' || !complexFieldDepth) malformedComplexField = true;
         }
-        if (!paragraph || node.uri !== WORD) return;
+        if (!paragraph || !WORD_NAMESPACES.has(node.uri)) return;
         if (UNSUPPORTED.has(node.local) && !paragraph.unsupportedReasons.includes(node.local)) paragraph.unsupportedReasons.push(node.local);
         if (['tab', 'br', 'cr'].includes(node.local)) {
             const start = paragraph.text.length;
@@ -118,11 +121,11 @@ function storyModel(name, xml) {
             paragraph.spans.push({ start, end: start + 1, editable: false });
         }
     });
-    parser.on('text', text => { const item = stack[stack.length - 1]; if (item?.node.uri === WORD && item.node.local === 't') item.value += text; });
+    parser.on('text', text => { const item = stack[stack.length - 1]; if (WORD_NAMESPACES.has(item?.node.uri) && item.node.local === 't') item.value += text; });
     parser.on('cdata', () => reject('UNSUPPORTED_XML_CDATA'));
     parser.on('closetag', node => {
         const item = stack.pop();
-        if (paragraph && node.uri === WORD && node.local === 't' && item.value.length) {
+        if (paragraph && WORD_NAMESPACES.has(node.uri) && node.local === 't' && item.value.length) {
             const start = paragraph.text.length;
             paragraph.text += item.value;
             paragraph.spans.push({ start, end: paragraph.text.length, editable: true,

@@ -355,3 +355,27 @@ test('passive Word links become formatted text before strict import, while activ
     const plain = fixture(paragraph('plain ____'));
     assert.strictEqual(normalizePassiveLinks(plain), plain);
 });
+
+test('Strict OOXML retains text binding and active-content checks in its own namespaces', () => {
+    const { normalizePassiveLinks } = require('../lib/wordTemplates/passiveLinks');
+    const strict = bytes => {
+        const zip = new AdmZip(bytes);
+        for (const e of zip.getEntries()) if (/\.(xml|rels)$/.test(e.entryName)) zip.updateFile(e.entryName, Buffer.from(e.getData().toString()
+            .replaceAll(W, 'http://purl.oclc.org/ooxml/wordprocessingml/main')
+            .replaceAll('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'http://purl.oclc.org/ooxml/officeDocument/relationships')));
+        return zip.toBuffer();
+    };
+    const original = strict(fixture(paragraph('Client ____')));
+    const model = importDocx(original);
+    assert.equal(model.parts[0].paragraphs[0].text, 'Client ____');
+    const binding = createBinding(model, { id: 'name', part: 'word/document.xml', paragraphId: 'p0', start: 7, end: 11, field: 'client.fullName' });
+    const filled = materializeDocx(original, { sourceHash: model.sourceHash, bindings: [binding], values: { 'client.fullName': 'QA Person' } });
+    assert.equal(importDocx(filled.buffer).parts[0].paragraphs[0].text, 'Client QA Person');
+    for (const body of ['<w:p><w:fldSimple w:instr="DDEAUTO danger"><w:r><w:t>____</w:t></w:r></w:fldSimple></w:p>', '<w:p><w:object/></w:p>']) {
+        assert.throws(() => importDocx(normalizePassiveLinks(strict(fixture(body)))), e => ['ACTIVE_WORD_FIELD_UNSUPPORTED','ACTIVE_CONTENT_UNSUPPORTED'].includes(e.code));
+    }
+    const office = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    const link = strict(fixture(`<w:p><w:hyperlink xmlns:r="${office}" r:id="t"><w:r><w:t>Phone ____</w:t></w:r></w:hyperlink></w:p>`, {
+        'word/_rels/document.xml.rels': `<Relationships xmlns="${R}"><Relationship Id="t" Type="${office}/hyperlink" Target="tel:+972000000000" TargetMode="External"/></Relationships>` }));
+    assert.equal(importDocx(normalizePassiveLinks(link)).parts[0].paragraphs[0].text, 'Phone ____');
+});
