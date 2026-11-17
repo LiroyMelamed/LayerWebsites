@@ -673,3 +673,37 @@ test('a named manual field can be marked, saved and filled without a client reco
     await waitFor(() => expect(api.preview).toHaveBeenCalled());
     expect(api.preview.mock.calls[0][1].inputs.manualValues[payload.bindings[0].field]).toBe('00123');
 });
+
+test('empty library exposes a direct add action without requiring a saved template', async () => {
+    render(<WordTemplatesWorkspace />);
+    await screen.findByText('noTemplates');
+    fireEvent.click(screen.getByRole('button', { name: 'addTemplate' }));
+    expect(screen.getByLabelText('upload')).toBeInTheDocument();
+    expect(screen.getByText('manageIntro')).toBeInTheDocument();
+    expect(api.create).not.toHaveBeenCalled();
+    expect(uploadFileToR2).not.toHaveBeenCalled();
+});
+
+test('adding from a selected template opens a blank upload without modifying the saved template', async () => {
+    await open(mapped());
+    fireEvent.click(screen.getByRole('button', { name: 'addTemplate' }));
+    expect(screen.getByLabelText('upload')).toBeInTheDocument();
+    expect(screen.getByLabelText('library')).toHaveValue('');
+    expect(screen.getByRole('option', { name: 'Rental original' })).toBeInTheDocument();
+    expect(api.save).not.toHaveBeenCalled();
+    expect(api.create).not.toHaveBeenCalled();
+});
+
+test('adding a template protects unsaved edits until the user confirms leaving', async () => {
+    await open(mapped(), {}, true);
+    fireEvent.change(screen.getByLabelText('name'), { target: { value: 'Unsaved name' } });
+    fireEvent.click(screen.getByRole('button', { name: 'addTemplate' }));
+    fireEvent.click(screen.getByText('keepEditing'));
+    expect(screen.getByLabelText('name')).toHaveValue('Unsaved name');
+    expect(screen.queryByLabelText('upload')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'addTemplate' }));
+    fireEvent.click(screen.getByText('discard'));
+    expect(screen.getByLabelText('upload')).toBeInTheDocument();
+    expect(screen.getByLabelText('library')).toHaveValue('');
+    expect(api.save).not.toHaveBeenCalled();
+});
