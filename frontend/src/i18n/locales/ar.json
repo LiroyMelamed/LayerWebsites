@@ -952,7 +952,8 @@
       "UNKNOWN": "يجب التحقق من التسليم",
       "CANCELLED": "أُلغي"
     },
-    "remove": "إزالة"
+    "remove": "إزالة",
+    "editList": "تعديل القائمة"
   },
   "errors": {
     "errorPrefix": "خطأ: ",
