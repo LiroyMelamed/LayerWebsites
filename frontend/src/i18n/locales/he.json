@@ -4344,6 +4344,7 @@
     }
   },
   "documentRequests": {
+    "addRequest": "הוספת דרישת מסמכים",
     "title": "מסמכים לשלב",
     "progress": "{{received}} מתוך {{total}} הושלמו",
     "loading": "טוענים מסמכים…",
