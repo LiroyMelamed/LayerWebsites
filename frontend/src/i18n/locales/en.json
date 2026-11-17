@@ -3365,7 +3365,7 @@
     "chooseBlank": "Select blank {{number}}",
     "chooseParagraph": "Choose paragraph",
     "chooseSource": "Choose a saved template",
-    "chooseSourceHelp": "Choose a template to begin. Add or edit templates in Manage templates.",
+    "chooseSourceHelp": "Choose a template to begin, or add a new Word template.",
     "clientId": "Choose the document client",
     "clientSearchHelp": "Choose a saved client for document values and context.",
     "closeReadablePreview": "Return to fitted view",
@@ -3478,7 +3478,7 @@
     "newRole": "Role {{number}}",
     "noMappedFields": "You can add signatures without replacement fields. Prepare and review the document before adding signatures.",
     "noMatchingFields": "No matching fields in this group.",
-    "noTemplates": "No saved Word templates yet. Open Manage templates to upload a source and prepare a template.",
+    "noTemplates": "No saved Word templates yet. Select “Add Word template” to begin.",
     "open": "Word templates and data filling",
     "openFromCase": "Create Word document for this case",
     "openFromClient": "Create Word document for this client",
@@ -3557,7 +3557,8 @@
     "customFieldName": "Field name, e.g. block or parcel",
     "addCustomField": "Add manual field",
     "customFieldHelp": "Enter a new value each time you use this template. Values belong only to that document.",
-    "editTemplate": "Edit template"
+    "editTemplate": "Edit template",
+    "addTemplate": "Add Word template"
   },
   "stageAutomation": {
     "active": "Active",

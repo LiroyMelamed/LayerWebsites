@@ -3952,7 +3952,7 @@
     "chooseBlank": "בחירת רווח {{number}}",
     "chooseParagraph": "בחירת פסקה",
     "chooseSource": "בחירת תבנית שמורה",
-    "chooseSourceHelp": "בחרו תבנית כדי להתחיל. הוספה ושינוי של תבניות זמינים בניהול התבניות.",
+    "chooseSourceHelp": "בחרו תבנית כדי להתחיל, או הוסיפו תבנית Word חדשה.",
     "clientId": "בחירת הלקוח של המסמך",
     "clientSearchHelp": "בחירת לקוח שמור לצורך נתוני המסמך והשיוך אליו.",
     "closeReadablePreview": "חזרה לתצוגה מותאמת",
@@ -4065,7 +4065,7 @@
     "newRole": "תפקיד {{number}}",
     "noMappedFields": "אפשר להוסיף חתימות גם בלי שדות מתחלפים. הכינו את המסמך ובדקו אותו לפני הוספת החתימות.",
     "noMatchingFields": "לא נמצאו נתונים בקבוצה הזו.",
-    "noTemplates": "עדיין אין תבניות Word שמורות. עברו לניהול תבניות כדי להעלות מקור ולהכין תבנית.",
+    "noTemplates": "עדיין אין תבניות Word שמורות. לחצו על ״הוספת תבנית Word״ כדי להתחיל.",
     "open": "תבניות Word ומילוי נתונים",
     "openFromCase": "מסמך Word לתיק",
     "openFromClient": "מסמך Word ללקוח",
@@ -4144,7 +4144,8 @@
     "customFieldName": "שם השדה, למשל גוש או חלקה",
     "addCustomField": "הוספת שדה ידני",
     "customFieldHelp": "בכל מסמך חדש מהתבנית מזינים ערך לשדה הזה. הוא נשמר במסמך בלבד.",
-    "editTemplate": "עריכת התבנית"
+    "editTemplate": "עריכת התבנית",
+    "addTemplate": "הוספת תבנית Word"
   },
   "stageAutomation": {
     "active": "פעיל",
