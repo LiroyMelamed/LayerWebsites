@@ -1,4 +1,5 @@
 import React from 'react';
+import SmallAddButton from '../buttons/SmallAddButton';
 import { useTranslation } from 'react-i18next';
 import SimpleInput from '../../simpleComponents/SimpleInput';
 import SimpleCheckbox from '../../simpleComponents/SimpleCheckbox';
@@ -14,13 +15,12 @@ export default function StageDocumentDefaults({ value, onChange, disabled }) {
     const add = () => update([...items, '']);
     if (!items.length) return disabled ? null : <SecondaryButton size={buttonSizes.MEDIUM} onPress={add}>{text('addRequest')}</SecondaryButton>;
     return <div className="lw-caseTypeFullView__documents">
-        <strong>{text('title')}</strong>
+        <div className="lw-caseTypeFullView__documentsHeader"><strong>{text('title')}</strong>{!disabled && <SmallAddButton label={text('add')} disabled={items.length >= 40} onPress={add}/>}</div>
         {items.map((title, index) => <div className="lw-caseTypeFullView__document" key={index}>
             <SimpleInput title={text('documentTitle')} aria-label={text('documentTitle')} value={title} maxLength={120} timeToWaitInMilli={0} disabled={disabled}
                 onChange={event => update(items.map((item, i) => i === index ? event.target.value : item))}/>
             {!disabled && <TertiaryButton size={buttonSizes.MEDIUM} aria-label={`${text('remove')}: ${title}`} onPress={() => update(items.filter((_, i) => i !== index))}>{text('remove')}</TertiaryButton>}
         </div>)}
-        {!disabled && <SecondaryButton size={buttonSizes.MEDIUM} disabled={items.length >= 40} onPress={add}>{text('add')}</SecondaryButton>}
         <SimpleCheckbox title={text('sendOnEntry')} checked={Boolean(value?.sendOnEntry)} disabled={disabled}
             onChange={event => onChange({ items, sendOnEntry: event.target.checked })}/>
     </div>;
