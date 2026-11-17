@@ -1,18 +1,17 @@
 .lw-documentRequests {
-  display: grid; gap: .5rem; margin-block: .75rem; min-inline-size: 0;
+  display: grid; gap: .75rem; margin-block: .75rem; min-inline-size: 0;
   > header, &__actions { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
   > header { justify-content: space-between; }
-  &__item { display: grid; grid-template-columns: minmax(0,1fr) minmax(7rem,auto); gap: .5rem; align-items: end; }
-  &__item > :nth-child(3) { grid-column: 1 / -1; }
-  &__actions label { display: inline-flex; align-items: center; gap: .25rem; margin-inline-end: .5rem; }
+  > header > span, &__muted { font-size: .8125rem; color: var(--lw-color-primary-highlighted); }
+  &__list { display: grid; gap: .25rem; }
+  &__item { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; min-inline-size: 0; }
+  &__check { flex: 1; min-inline-size: 0; }
+  &__check .lw-simpleCheckbox__label { min-block-size: 2.75rem; }
+  .lw-simpleCheckbox__text { overflow-wrap: anywhere; }
+  &__item.is-editing { display: grid; grid-template-columns: minmax(0,1fr) auto; padding-block: .375rem; }
+  &__optional, &__file { grid-column: 1 / -1; }
+  &__file { flex-basis: 100%; }
+  &__channels { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+  &__channels .lw-simpleCheckbox__label { min-block-size: 2.75rem; }
   p { margin: .25rem 0; font-size: .8125rem; }
-  summary { cursor: pointer; }
-  &__item .lw-simpleInput { min-block-size: 2.75rem; margin-block-start: 0; }
-  &__item .lw-signingSelect .lw-textButtonWithTwoOptionalIcons {
-    min-block-size: 2.75rem; padding: .375rem .625rem !important;
-  }
-  @media (max-width: 28rem) {
-    &__item { grid-template-columns: minmax(0,1fr) 6.5rem; gap: .375rem; }
-    &__item .lw-signingSelect { font-size: .875rem; }
-  }
 }
