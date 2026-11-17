@@ -407,7 +407,7 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
             {(mode === 'use' || source) && <div className="lw-word__editorActions">
                 <PrimaryButton size={buttonSizes.SMALL} disabled={busy} onPress={addTemplate}>{text('addTemplate')}</PrimaryButton>
             </div>}
-            {!source && <Text14>{text(!listLoaded ? 'loadingTemplates' : sources.length ? 'chooseSourceHelp' : 'noTemplates')}</Text14>}
+            {!source && mode === 'use' && <Text14>{text(!listLoaded ? 'loadingTemplates' : sources.length ? 'chooseSourceHelp' : 'noTemplates')}</Text14>}
         </div>
         {mode === 'manage' && <>
             {!source && <section className="lw-word__section" aria-label={text('importSection')}>
