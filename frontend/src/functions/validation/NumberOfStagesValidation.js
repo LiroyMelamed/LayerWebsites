@@ -4,7 +4,7 @@ export function NumberOfStagesValidation(numberOfStages) {
 
     if (!numberOfStages) return null;
 
-    if (typeof numberOfStages != 'number') return i18next.t('errors.numbersOnly');
+    if (!/^\d+$/.test(String(numberOfStages)) || Number(numberOfStages) < 1) return i18next.t('errors.numbersOnly');
 
     if (Number(numberOfStages) > 15) return i18next.t('errors.maxStages15');
 
