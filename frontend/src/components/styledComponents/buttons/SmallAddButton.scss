@@ -1,0 +1,23 @@
+.lw-smallAddButton {
+  position: relative;
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+  flex: 0 0 1.125rem;
+  border-radius: 999px;
+  border: none;
+  background: rgba(49, 130, 206, 0.12);
+  color: #3182CE;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.15s ease;
+  &::before { content: ''; position: absolute; inset: -0.4375rem; }
+  &:hover:not(:disabled) { background: rgba(49, 130, 206, 0.22); }
+  &:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+  &:disabled { opacity: .45; cursor: default; }
+}

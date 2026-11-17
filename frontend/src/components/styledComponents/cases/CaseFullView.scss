@@ -215,21 +215,6 @@
   inset-inline-end: 0;
   inset-block-start: 0.5rem;
   transform: translate(62%, -62%);
-  inline-size: 1.125rem;
-  block-size: 1.125rem;
-  border-radius: 999px;
-  border: none;
-  background: rgba(49, 130, 206, 0.12);
-  color: #3182CE;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  line-height: 1;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  transition: background 0.15s ease, transform 0.15s ease;
 
   &:hover {
     background: rgba(49, 130, 206, 0.22);

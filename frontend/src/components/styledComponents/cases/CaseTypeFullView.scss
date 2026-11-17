@@ -122,3 +122,5 @@
   > :first-child { flex: 1; min-width: 0; }
   > button { flex-shrink: 0; }
 }
+
+.lw-caseTypeFullView__documentsHeader { display: flex; align-items: center; gap: .75rem; }

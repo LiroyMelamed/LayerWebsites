@@ -1,6 +1,7 @@
 .lw-documentRequests {
   display: grid; gap: .75rem; margin-block: .75rem; min-inline-size: 0;
   > header, &__actions { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
+  &__heading { display: flex; align-items: center; gap: .75rem; }
   > header { justify-content: space-between; }
   > header > span, &__muted { font-size: .8125rem; color: var(--lw-color-primary-highlighted); }
   &__list { display: grid; gap: .25rem; }
