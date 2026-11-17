@@ -349,6 +349,9 @@ test('passive Word links become formatted text before strict import, while activ
     const disguisedImage = fixture(`<w:p><w:r><w:drawing xmlns:r="${office}" r:embed="link1"/></w:r></w:p>`, {
         'word/_rels/document.xml.rels': `<Relationships xmlns="${R}"><Relationship Id="link1" Type="${office}/hyperlink" Target="https://example.invalid/" TargetMode="External"/></Relationships>` });
     assert.throws(() => normalizePassiveLinks(disguisedImage), code('EXTERNAL_OR_ACTIVE_RELATIONSHIP'));
+    const strictRelationship = fixture(`<w:p><w:hyperlink xmlns:r="${office}" r:id="link1"><w:r><w:t>Phone ____</w:t></w:r></w:hyperlink></w:p>`, {
+        'word/_rels/document.xml.rels': `<Relationships xmlns="${R}"><Relationship Id="link1" Type="http://purl.oclc.org/ooxml/officeDocument/relationships/hyperlink" Target="tel:+972-00000000" TargetMode="External"/></Relationships>` });
+    assert.equal(importDocx(normalizePassiveLinks(strictRelationship)).parts[0].paragraphs[0].text, 'Phone ____');
     const plain = fixture(paragraph('plain ____'));
     assert.strictEqual(normalizePassiveLinks(plain), plain);
 });
