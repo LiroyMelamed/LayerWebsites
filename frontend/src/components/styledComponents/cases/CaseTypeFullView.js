@@ -63,7 +63,7 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
         const caseTypeToSend = {
             CaseTypeName: caseTypeName,
             NumberOfStages: numberOfStages,
-            Descriptions: descriptions || [{ Stage: 1, Text: "", Timestamp: "", New: false }],
+            Descriptions: descriptions.map(description => ({ ...description, ...(description.DocumentRequestDefaults ? { DocumentRequestDefaults: { ...description.DocumentRequestDefaults, items: description.DocumentRequestDefaults.items.map(item => item.trim()).filter(Boolean) } } : {}) })),
         }
 
         const apiCall = caseTypeDetails
@@ -223,6 +223,11 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
                                 });
                             }}
                         />
+                        <SimpleTextArea disabled={!canManage} title={t('documentRequests.defaults')}
+                            value={(description.DocumentRequestDefaults?.items || []).join('\n')}
+                            onChange={value=>setDescriptions(previous=>previous.map((item,i)=>i===index?{...item,DocumentRequestDefaults:{...item.DocumentRequestDefaults,sendOnEntry:item.DocumentRequestDefaults?.sendOnEntry || false,items:value.split('\n')}}:item))}/>
+                        <label><input type="checkbox" disabled={!canManage} checked={description.DocumentRequestDefaults?.sendOnEntry || false}
+                            onChange={event=>{const checked=event.target.checked;setDescriptions(previous=>previous.map((item,i)=>i===index?{...item,DocumentRequestDefaults:{items:item.DocumentRequestDefaults?.items || [],sendOnEntry:checked}}:item));}}/>{t('documentRequests.sendOnEntry')}</label>
                     </SimpleContainer>
                 ))}
 

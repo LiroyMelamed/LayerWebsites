@@ -1,3 +1,6 @@
+import documentRequestsApi from '../../../api/documentRequestsApi';
+import ConfirmationDialog from '../popups/ConfirmationDialog';
+import { toastFromApiError } from '../../ui/showAppToast';
 import { useFirmPermissions } from "../../../providers/FirmPermissionsProvider";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
@@ -60,8 +63,17 @@ export default function CaseMenuItem({
         setFullCaseListener(fullCase);
     }, [fullCase]);
 
-    function persistStageUpdate(updated) {
+    async function persistStageUpdate(updated) {
         if (!canEdit) return;
+        try {
+            const {missing}=await documentRequestsApi.transition(fullCaseListener.CaseId);
+            if(missing.length && !updated.ConfirmMissingDocuments) {
+                openPopup(<ConfirmationDialog title={t('documentRequests.transitionTitle')} message={t('documentRequests.transitionConfirm')}
+                    confirmText={t('common.continue')} cancelText={t('common.cancel')} onCancel={closePopup}
+                    onConfirm={()=>{closePopup();persistStageUpdate({...updated,ConfirmMissingDocuments:true});}}/>);
+                return;
+            }
+        } catch(error) {toastFromApiError(error);return;}
         revertSnapshotRef.current = fullCaseListener;
         setFullCaseListener(updated);
         setCase(fullCaseListener.CaseId, updated);

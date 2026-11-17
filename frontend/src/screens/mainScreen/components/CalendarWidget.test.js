@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent } from '@testing-library/react';
 import CalendarWidget, { bucketEvents } from './CalendarWidget';
 const mockNavigate = jest.fn();
 let mockCalendarEnabled = true;
@@ -38,4 +38,16 @@ test('compact card opens exact original appointment and keeps full long accessib
  fireEvent.click(screen.getByRole('button',{name:/Open Lease/}));
  expect(onEventPress).toHaveBeenCalledWith(event);
  expect(screen.getByText('DL')).toBeInTheDocument();
+});
+
+test('today introduction runs once per authenticated user per day and respects reduced motion',()=>{
+ localStorage.clear(); window.matchMedia=jest.fn(()=>({matches:false}));
+ localStorage.setItem('token',`x.${btoa(JSON.stringify({userid:42}))}.x`);
+ const first=render(<CalendarWidget events={[overnight]}/>);
+ expect(first.container.querySelector('.lw-calendarWidget--intro')).toBeInTheDocument();
+ act(()=>jest.advanceTimersByTime(800));expect(first.container.querySelector('.lw-calendarWidget--intro')).toBeNull();first.unmount();
+ const second=render(<CalendarWidget events={[overnight]}/>);expect(second.container.querySelector('.lw-calendarWidget--intro')).toBeNull();second.unmount();
+ localStorage.setItem('token',`x.${btoa(JSON.stringify({userid:43}))}.x`);window.matchMedia.mockReturnValue({matches:true});
+ const reduced=render(<CalendarWidget events={[overnight]}/>);expect(reduced.container.querySelector('.lw-calendarWidget--intro')).toBeNull();
+ localStorage.clear();
 });

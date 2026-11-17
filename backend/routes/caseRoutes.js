@@ -7,6 +7,11 @@ const requireAdmin = require("../middlewares/requireAdmin");
 const requireLawyerOrAdmin = require("../middlewares/requireLawyerOrAdmin");
 const requireFirmAction = require("../middlewares/requireFirmAction");
 
+const documentRequests = require('../controllers/caseDocumentRequestsController');
+router.get('/:caseId/document-requests', authMiddleware, documentRequests.list);
+router.get('/:caseId/document-requests/transition', authMiddleware, documentRequests.transition);
+router.put('/:caseId/document-requests', authMiddleware, requireFirmAction('cases','edit'), documentRequests.save);
+router.post('/:caseId/document-requests/:id/action', authMiddleware, requireFirmAction('cases','edit'), documentRequests.action);
 // Case APIs
 router.get("/GetCases", authMiddleware, caseController.getCases);
 router.get("/my", authMiddleware, requireFirmAction('cases', 'view', { legacy: 'lawyerOrAdmin' }), caseController.getMyCases);

@@ -1,3 +1,10 @@
+function validDocumentSetting(key,value) {
+    if (!key?.startsWith('DOCUMENT_REQUEST_')) return true;
+    if (key==='DOCUMENT_REQUEST_AUTO_ENABLED') return ['true','false'].includes(String(value));
+    if (['DOCUMENT_REQUEST_FIRST_HOURS','DOCUMENT_REQUEST_REPEAT_HOURS'].includes(key)) return Number.isInteger(Number(value)) && Number(value)>=1 && Number(value)<=2160;
+    if (['DOCUMENT_REQUEST_CHANNELS','DOCUMENT_REQUEST_DEFAULT_CHANNELS'].includes(key)) return typeof value==='string' && (!value || value.split(',').every(channel=>['email','sms','push'].includes(channel)));
+    return false;
+}
 /**
  * Platform Settings Controller
  * Manages dynamic platform settings, notification channels, and admin users.
@@ -66,6 +73,7 @@ const updateSettings = async (req, res) => {
 
         // Validate
         for (const s of settings) {
+            if (!validDocumentSetting(s.key,s.value)) return res.status(400).json({message:'הגדרת בקשת מסמכים אינה תקינה'});
             if (isRetiredConsentSetting(s.category, s.key)) {
                 return res.status(409).json(retiredConsentError);
             }
@@ -108,6 +116,7 @@ const updateSettings = async (req, res) => {
                 cancelAllAutoManagedPending,
             } = require('../lib/signingFileReminders');
             for (const s of settings) {
+            if (!validDocumentSetting(s.key,s.value)) return res.status(400).json({message:'הגדרת בקשת מסמכים אינה תקינה'});
                 if (s.category !== 'signing') continue;
                 if (s.key === 'SIGN_REMINDER_OFFSET_HOURS') {
                     await rescheduleUnmodifiedReminders(s.value);
@@ -140,6 +149,7 @@ const updateSettings = async (req, res) => {
 const updateSingleSetting = async (req, res) => {
     try {
         const { category, key, value } = req.body;
+        if (!validDocumentSetting(key,value)) return res.status(400).json({message:'הגדרת בקשת מסמכים אינה תקינה'});
         if (isRetiredConsentSetting(category, key)) {
             return res.status(409).json(retiredConsentError);
         }

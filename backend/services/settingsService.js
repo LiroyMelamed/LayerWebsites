@@ -19,7 +19,7 @@ const EMPTY_CALENDAR_CHOICES = new Set([
     'CALENDAR_LAWYER_REMINDER_CHANNEL_DEFAULTS', 'CALENDAR_CLIENT_REMINDER_CHANNEL_DEFAULTS',
 ]);
 function hasStoredValue(category, key, value) {
-    return value != null && (value !== '' || contractorPolicy.explicitRecipients(category, key) || (category === 'calendar' && EMPTY_CALENDAR_CHOICES.has(key)));
+    return value != null && (value !== '' || contractorPolicy.explicitRecipients(category, key) || (category === 'calendar' && EMPTY_CALENDAR_CHOICES.has(key)) || (category === 'reminders' && ['DOCUMENT_REQUEST_CHANNELS','DOCUMENT_REQUEST_DEFAULT_CHANNELS'].includes(key)));
 }
 
 // ── Cache ───────────────────────────────────────────────────────────

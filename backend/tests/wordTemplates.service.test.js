@@ -262,12 +262,14 @@ test('private Word library and per-use PDF service on isolated PostgreSQL', { sk
         assert.equal(results.filter(r => r.status === 'fulfilled').length, 1); assert.equal(results.find(r => r.status === 'rejected').reason.errorCode, 'IDEMPOTENCY_CONFLICT');
         assert.equal((await db.query('SELECT count(*)::int n FROM signing_word_previews WHERE idempotency_key=$1', [input.idempotencyKey])).rows[0].n, 1);
     });
-    await t.test('a private empty mapping is retained as a draft and cannot create an unmapped preview', async () => {
+    await t.test('a private signature-only source prepares its unchanged content with fresh PDF provenance', async () => {
         const fileKey = 'users/1/blank-mapping.docx'; storage.uploads.set(fileKey, docx(['office.phone']));
         const imported = await service.importSource(db, scope, { fileKey, name: 'Empty draft' }, { storage });
         const saved = await service.save(db, scope, imported.id, { expectedVersion: imported.version, sourceHash: imported.sourceHash, name: imported.name, roles: [], bindings: [] }, { storage });
         assert.deepEqual((await service.load(db, scope, saved.id, { storage })).bindings, []);
-        await assert.rejects(service.preview(db, scope, saved.id, request(saved), options), error('WORD_BINDINGS_REQUIRED'));
+        const preview=await service.preview(db, scope, saved.id, request(saved), options);
+        assert.equal(preview.requiresFreshSigningGeometry,true);
+        assert.equal(preview.sourceId,saved.id);
     });
     await t.test('same source imports deduplicate per author only and concurrent CAS writes keep one immutable winner', async () => {
         const fileKey = 'users/1/dedupe.docx'; const bytes = docx(['office.name', 'office.phone']); storage.uploads.set(fileKey, bytes);
@@ -349,4 +351,20 @@ test('private Word library and per-use PDF service on isolated PostgreSQL', { sk
         await assert.rejects(db.query('UPDATE signing_word_sources SET roles=$2 WHERE id=$1', [main.id, JSON.stringify(Array.from({ length: 41 }, () => ({})))]), { code: '23514' });
         await assert.rejects(db.query(`INSERT INTO signing_word_source_versions(id,owner_context_id,source_id,version,name,bindings_hash,roles,bindings,created_by) VALUES($1,$2,$3,1,'Foreign',$4,'[]','[]',1)`, [randomUUID(), CB, main.id, 'a'.repeat(64)]), { code: '23503' });
     });
+    await t.test('preflight reports missing person data without writing a profile and only returns bound fields', async () => {
+        await db.query('INSERT INTO case_users VALUES(101,4)');
+        const template=await create(['role.lawyer.identityNumber','role.lawyer.fullName','case.clientPhones']);
+        const input=request(template,{inputs:{caseId:101,roleClientIds:{lawyer:6},manualValues:{}}});
+        const result=await service.resolveInputs(db,scope,template.id,input);
+        assert.equal(result.fields.length,3);
+        assert.equal(result.fields.find(item=>item.key==='role.lawyer.identityNumber').missing,true);
+        assert.equal(result.fields.find(item=>item.key==='role.lawyer.fullName').value,'Office lawyer');
+        assert.ok(result.fields.find(item=>item.key==='case.clientPhones').value.includes('00004'));
+        const overridden=await service.resolveInputs(db,scope,template.id,{...input,inputs:{...input.inputs,manualValues:{'role.lawyer.identityNumber':'000777'}}});
+        assert.equal(overridden.fields.find(item=>item.key==='role.lawyer.identityNumber').value,'000777');
+        assert.equal((await service.resolveInputs(db,scope,template.id,input)).fields.find(item=>item.key==='role.lawyer.identityNumber').missing,true);
+        await assert.rejects(service.resolveInputs(db,foreign,template.id,input),error('NOT_FOUND'));
+        await assert.rejects(service.resolveInputs(db,scope,template.id,{...input,expectedVersion:0}),error('INVALID_PRECONDITION'));
+    });
+
 });
