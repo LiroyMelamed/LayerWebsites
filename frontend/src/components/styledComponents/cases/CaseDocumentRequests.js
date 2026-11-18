@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../../../api/documentRequestsApi';
 import StageActionButton from '../buttons/StageActionButton';
@@ -14,6 +14,8 @@ import { buttonSizes } from '../../../styles/buttons/buttonSizes';
 import { useFirmPermissions } from '../../../providers/FirmPermissionsProvider';
 import { usePopup } from '../../../providers/PopUpProvider';
 import ConfirmationDialog from '../popups/ConfirmationDialog';
+import SimpleButton from '../../simpleComponents/SimpleButton';
+import { icons } from '../../../assets/icons/icons';
 import './CaseDocumentRequests.scss';
 
 export default function CaseDocumentRequests({ caseId, descriptionId, active, isClient, stageFiles = [] }) {
@@ -23,6 +25,9 @@ export default function CaseDocumentRequests({ caseId, descriptionId, active, is
     const [data,setData]=useState(null);const [items,setItems]=useState([]);const [selected,setSelected]=useState([]);
     const [policy,setPolicy]=useState(null);const [dirty,setDirty]=useState(false);const [busy,setBusy]=useState(false);const [error,setError]=useState('');
     const [loading,setLoading]=useState(true);const [editing,setEditing]=useState(false);
+    const [expanded,setExpanded]=useState(false);
+    const contentId=useId();
+    useEffect(()=>setExpanded(false),[caseId,descriptionId]);
     const load=useCallback(async()=>{
         const result=await api.list(caseId); const row=result.requests.find(item=>Number(item.description_id)===Number(descriptionId)) || null;
         return {row,policy:result.policy};
@@ -31,7 +36,7 @@ export default function CaseDocumentRequests({ caseId, descriptionId, active, is
     useEffect(()=>{let cancelled=false;setLoading(true);load().then(result=>{if(!cancelled)apply(result);}).catch(()=>{if(!cancelled)setError('loadFailed');}).finally(()=>{if(!cancelled)setLoading(false);});return()=>{cancelled=true;};},[load,apply]);
     async function run(action) {if(busy)return;setBusy(true);setError('');try {await action();apply(await load());return true;}catch(err){setError(err?.response?.data?.errorCode==='DOCUMENT_REQUEST_CHANGED'?'changed':'saveFailed');}finally{setBusy(false);}}
     const patch=(index,value)=>{setItems(previous=>previous.map((item,i)=>i===index?{...item,...value}:item));setDirty(true);};
-    const add=()=>{setEditing(true);setItems(previous=>[...previous,{title:'',status:'missing'}]);setDirty(true);};
+    const add=()=>{setExpanded(true);setEditing(true);setItems(previous=>[...previous,{title:'',status:'missing'}]);setDirty(true);};
     const save=async()=>{if(await run(()=>api.save(caseId,{descriptionId,version:data?.version,items})))setEditing(false);};
     const toggleReceived=(index,checked)=>run(()=>api.save(caseId,{descriptionId,version:data?.version,items:items.map((item,i)=>i===index?{...item,status:checked?'received':'missing'}:item)}));
     function send(){
@@ -42,11 +47,20 @@ export default function CaseDocumentRequests({ caseId, descriptionId, active, is
     }
     if(loading)return <p role="status">{text('loading')}</p>;
     if(!items.length && !editing && !canEdit && !error)return null;
-    if(!items.length && !editing && !error)return <StageActionButton label={text('addRequest')} onPress={()=>{setEditing(true);setItems([{title:'',status:'missing'}]);setDirty(true);}}/>;
+    if(!items.length && !editing && !error)return <StageActionButton label={text('addRequest')} onPress={add}/>;
     const missing=items.filter(item=>item.status==='missing').length;
     return <section className="lw-documentRequests" aria-label={text('title')}>
-        <header><div className="lw-documentRequests__heading"><strong>{text('title')}</strong>{canEdit && <SmallAddButton label={text('add')} disabled={busy || items.length>=40} onPress={add}/>}</div><span>{text('progress',{received:items.length-missing,total:items.length})}</span></header>
+        <header><div className="lw-documentRequests__heading">
+            <SimpleButton type="button" className="lw-documentRequests__toggle" aria-expanded={expanded} aria-controls={contentId} onPress={()=>setExpanded(previous=>!previous)}>
+                <img className={`lw-documentRequests__chevron${expanded?' is-open':''}`} src={icons.Button.DownArrow} alt="" aria-hidden="true"/>
+                <strong>{text('title')}</strong>
+            </SimpleButton>
+            {canEdit && <span className={`lw-documentRequests__add${expanded?' is-open':''}`} aria-hidden={!expanded}>
+                <SmallAddButton label={text('add')} disabled={!expanded || busy || items.length>=40} tabIndex={expanded?0:-1} onPress={add}/>
+            </span>}
+        </div><span>{text('progress',{received:items.length-missing,total:items.length})}</span></header>
         {error && <StatusNotice embedded><p>{text(error)}</p><TertiaryButton size={buttonSizes.MEDIUM} onPress={()=>run(async()=>{})}>{t('common.retry')}</TertiaryButton></StatusNotice>}
+        <div id={contentId} className="lw-documentRequests__body" hidden={!expanded}>
         <div className="lw-documentRequests__list" aria-busy={busy}>
         {items.map((item,index)=><div className={`lw-documentRequests__item${editing?' is-editing':''}`} key={item.id || `new-${index}`}>
             {editing && canEdit ? <>
@@ -80,5 +94,6 @@ export default function CaseDocumentRequests({ caseId, descriptionId, active, is
             {data.next_due && <p>{text('next')} {new Date(data.next_due).toLocaleString('he-IL')}</p>}
 
         </>}
+        </div>
     </section>;
 }
