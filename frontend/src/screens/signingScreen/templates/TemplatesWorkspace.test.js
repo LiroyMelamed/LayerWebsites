@@ -8,12 +8,15 @@ import ar from '../../../i18n/locales/ar.json';
 import { downloadBlobAsFile } from '../../../utils/downloadBlobAsFile';
 import api from '../../../api/signingTemplatesApi';
 import packagesApi from '../../../api/signingPackagesApi';
+import recipesApi from '../../../api/packageRecipesApi';
 import BatchComposer from './BatchComposer';
 import TemplatesWorkspace from './TemplatesWorkspace';
 
 jest.mock('../../../api/signingTemplatesApi', () => ({ __esModule: true, default: {
     create: jest.fn(), list: jest.fn(), batches: jest.fn(), batch: jest.fn(), send: jest.fn(), contacts: jest.fn(), archive: jest.fn(), link: jest.fn(), downloadPackage: jest.fn(), completion: jest.fn(),
 } }));
+
+jest.mock('../../../api/packageRecipesApi',()=>({__esModule:true,default:{list:jest.fn(()=>Promise.reject(Object.assign(new Error('Not enabled'),{status:404})))}}));
 
 jest.mock('../../../api/signingPackagesApi', () => ({ __esModule: true, default: { authoringTemplates: jest.fn(), archiveTemplate: jest.fn() } }));
 jest.mock('./NativeTemplateBuilder', () => {
@@ -38,7 +41,7 @@ const deferred = () => { let resolve;const promise = new Promise(done => { resol
 // Both clicks land before React re-renders, so the disabled attribute cannot stop the second one.
 const doubleClick = button => act(() => { button.click();button.click(); });
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {jest.clearAllMocks();recipesApi.list.mockRejectedValue(Object.assign(new Error('Not enabled'),{status:404}));});
 
 test('a double click on create submits one batch with one idempotency key', async () => {
     const pending = deferred();api.create.mockReturnValue(pending.promise);

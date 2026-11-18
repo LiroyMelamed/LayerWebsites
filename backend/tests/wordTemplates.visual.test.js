@@ -148,3 +148,17 @@ test('RTL paint-order runs and reversed punctuation map only after an exact whol
     const ambiguous = visual.buildAuthoringMap(model, [page, repeated]);
     assert.equal(ambiguous.pages[0].items[1].segments.length, 0);
 });
+
+test('standalone signature label resolves only within two proven neighboring paragraphs', () => {
+    const source = core.importDocx(fixture(['הסכם עם המשכירה.', 'ולראיה חתמו הצדדים', 'המשכירה.', 'אישור עורך דין'].map(paragraph).join('')));
+    const map = visual.buildAuthoringMap(source, pages(['הסכם עם המשכירה.', 'ולראיה חתמו הצדדים', 'המשכירה.', 'אישור עורך דין']));
+    assert.equal(visual.resolveSelection(map, {kind:'range', start:point('p1_i2',0), end:point('p1_i2',7)}).anchor.paragraphId,'p2');
+    for (const texts of [
+        ['הסכם עם המשכירה.', 'ולראיה חתמו הצדדים', 'המשכירה.'],
+        ['הסכם עם המשכירה.', 'ולראיה חתמו הצדדים', 'המשכירה.', 'המשכירה.', 'אישור עורך דין'],
+        ['הסכם עם המשכירה.', 'אישור עורך דין', 'המשכירה.', 'ולראיה חתמו הצדדים'],
+    ]) {
+        const uncertain = visual.buildAuthoringMap(source, pages(texts));
+        assert.equal(uncertain.pages[0].items.some(item=>item.segments.some(segment=>segment.paragraphId==='p2')),false);
+    }
+});

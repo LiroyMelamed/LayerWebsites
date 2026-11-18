@@ -100,7 +100,7 @@ function rolesAndBindings(model, input, bytes) {
 async function list(db, scope) {
     scopeCheck(scope);
     const rows = (await db.query(`/*word:list*/ SELECT id,name,version,source_sha256,bindings_hash,roles,jsonb_array_length(bindings) AS binding_count,archived,updated_at
-        FROM signing_word_sources WHERE owner_context_id=$1 AND created_by=$2 ORDER BY updated_at DESC,id LIMIT 200`, [scope.contextId, scope.userId])).rows;
+        FROM signing_word_sources WHERE owner_context_id=$1 AND created_by=$2 AND working_copy_id IS NULL ORDER BY updated_at DESC,id LIMIT 200`, [scope.contextId, scope.userId])).rows;
     const executable = process.env.WORD_TEMPLATE_SOFFICE_PATH;
     return { catalog: catalog(), sources: rows.map(row => ({ id: row.id, name: row.name, version: Number(row.version), sourceHash: row.source_sha256,
         bindingsHash: row.bindings_hash, roles: row.roles, bindingCount: Number(row.binding_count), archived: row.archived, updatedAt: row.updated_at })),
@@ -125,10 +125,10 @@ async function importSource(pool, scope, input, { storage } = {}) {
         const emptyHash = digest({ roles: [], bindings: [] });
         const inserted = (await db.query(`/*word:import*/ INSERT INTO signing_word_sources
             (id,owner_context_id,created_by,source_sha256,object_key,bytes,name,bindings_hash)
-            VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(owner_context_id,created_by,source_sha256) DO NOTHING RETURNING *`,
+            VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(owner_context_id,created_by,source_sha256) WHERE working_copy_id IS NULL DO NOTHING RETURNING *`,
         [randomUUID(), scope.contextId, scope.userId, hash, objectKey, bytes.length, name, emptyHash])).rows[0];
         const row = inserted || (await db.query(`/*word:duplicate*/ SELECT * FROM signing_word_sources
-            WHERE owner_context_id=$1 AND created_by=$2 AND source_sha256=$3 FOR UPDATE`, [scope.contextId, scope.userId, hash])).rows[0];
+            WHERE owner_context_id=$1 AND created_by=$2 AND source_sha256=$3 AND working_copy_id IS NULL FOR UPDATE`, [scope.contextId, scope.userId, hash])).rows[0];
         if (!row || row.archived) fail('WORD_SOURCE_ARCHIVED', 409);
         if (inserted) await appendVersion(db, scope, row);
         return sourceView(row, model);
@@ -255,6 +255,12 @@ async function resolveValues(db, scope, inputs, lock = false, fields = new Set()
         }
     }
     return { ...values, ...inputs.manualValues };
+}
+// Shared by the recipe authoring layer; callers validate their own stable field
+// keys. All record reads still run as the actual actor, never the source owner.
+async function resolveRecordValues(db, scope, inputs, lock = false, fields = new Set()) {
+    scopeCheck(scope);
+    return resolveValues(db, scope, inputs, lock, fields);
 }
 async function pdfBytes(row, storage) {
     const size = Number(row.bytes);
@@ -484,6 +490,40 @@ async function authoringSelection(db, scope, sourceId, renderId, input, { storag
         || data.row.map_sha256 !== input.mapHash) fail('WORD_AUTHORING_RENDER_CHANGED', 412);
     return word(() => visual.resolveSelection(data.map, input.selector));
 }
+// A source-text revision creates new immutable source bytes. Existing previews,
+// templates and invitations continue to point at their original source.
+async function reviseSource(pool, scope, id, input, { storage } = {}) {
+    scopeCheck(scope); expect(plain(input), 'INVALID_WORD_INPUTS'); version(input.expectedVersion);
+    const row = await source(pool, scope, id);
+    if (Number(row.version) !== input.expectedVersion || row.source_sha256 !== input.sourceHash) fail('VERSION_CHANGED', 412);
+    const selected = await authoringSelection(pool, scope, id, input.renderId, input, { storage });
+    const bytes = await sourceBytes(row, storage);
+    const revision = word(() => require('../../lib/wordTemplates/reviseText').reviseText(bytes, {
+        sourceHash: row.source_sha256, anchor: selected.anchor, replacement: input.replacement, bindings: row.bindings,
+    }));
+    const objectKey = `signing-v2/${scope.contextId}/word/${scope.userId}/sources/${revision.outputHash}.docx`;
+    await writeVerified(storage, objectKey, revision.buffer);
+    return transaction(pool, async db => {
+        const current = await source(db, scope, id, { lock: true });
+        if (Number(current.version) !== input.expectedVersion || current.source_sha256 !== input.sourceHash) fail('VERSION_CHANGED', 412);
+        const bindingsHash = digest({ roles: row.roles, bindings: revision.bindings });
+        const inserted = (await db.query(`INSERT INTO signing_word_sources
+            (id,owner_context_id,created_by,source_sha256,object_key,bytes,name,roles,bindings,bindings_hash,working_copy_id,parent_source_id,parent_source_version)
+            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+            ON CONFLICT(owner_context_id,created_by,source_sha256) WHERE working_copy_id IS NULL DO NOTHING RETURNING *`,
+        [randomUUID(), scope.contextId, scope.userId, revision.outputHash, objectKey, revision.buffer.length,
+            row.name, JSON.stringify(row.roles), JSON.stringify(revision.bindings), bindingsHash,
+            row.working_copy_id ? randomUUID() : null, row.working_copy_id ? row.id : null, row.working_copy_id ? row.version : null])).rows[0];
+        const next = inserted || (await db.query(`SELECT * FROM signing_word_sources
+            WHERE owner_context_id=$1 AND created_by=$2 AND source_sha256=$3 AND working_copy_id IS NULL FOR SHARE`,
+        [scope.contextId, scope.userId, revision.outputHash])).rows[0];
+        if (!next || next.archived || next.bindings_hash !== bindingsHash) fail('WORD_REVISION_CONFLICT', 409);
+        if (inserted) await appendVersion(db, scope, next);
+        return { source: sourceView(next, revision.model), previousSourceId: id,
+            invalidatedBindingIds: revision.invalidatedBindingIds, requiresFreshSigningGeometry: true };
+    });
+}
+
 async function archive(pool, scope, id, input) {
     scopeCheck(scope); expect(plain(input) && typeof input.archived === 'boolean', 'INVALID_WORD_TEMPLATE'); version(input.expectedVersion);
     return transaction(pool, async db => {
@@ -498,5 +538,5 @@ async function archive(pool, scope, id, input) {
     });
 }
 
-module.exports = { resolveInputs, list, importSource, load, save, preview, previewInfo, previewPdf, archive, signingMaterial, assertPreviewReferences,
+module.exports = { resolveRecordValues, reviseSource, resolveInputs, list, importSource, load, save, preview, previewInfo, previewPdf, archive, signingMaterial, assertPreviewReferences,
     authoringRender, authoringInfo, authoringPdf, authoringSelection, fieldCatalog: catalog };

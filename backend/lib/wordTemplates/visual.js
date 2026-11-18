@@ -148,6 +148,7 @@ function buildAuthoringMap(model, inputPages) {
     const sourceCounts = new Map();
     for (const p of paragraphs) sourceCounts.set(p.sig.value, (sourceCounts.get(p.sig.value) || 0) + 1);
     const assignments = new Map(); const diagnostics = []; const invalid = new Set();
+    const contextual = [], proven = new Map();
     const paragraphKey = p => `${p.part}:${p.id}`;
     for (const p of paragraphs) {
         const key = paragraphKey(p);
@@ -163,7 +164,11 @@ function buildAuthoringMap(model, inputPages) {
             matches = occurrences(p.part === 'word/document.xml' ? readingBodyText : readingText, p.sig.value);
         }
         if (!reason && matches.length !== 1) reason = matches.length ? 'WORD_AUTHORING_AMBIGUOUS_TEXT' : 'WORD_AUTHORING_UNMAPPED_TEXT';
-        if (reason) { diagnostics.push({ part: p.part, paragraphId: p.id, reason }); continue; }
+        if (reason) {
+            if (reason === 'WORD_AUTHORING_AMBIGUOUS_TEXT' && p.editable && p.part === 'word/document.xml' && sourceCounts.get(p.sig.value) === 1) contextual.push(p);
+            diagnostics.push({ part: p.part, paragraphId: p.id, reason }); continue;
+        }
+        proven.set(key, candidates.slice(matches[0], matches[0] + p.sig.value.length));
         for (let i = 0; i < p.sig.value.length; i += 1) {
             const ref = candidates[matches[0] + i];
             if (ref.item.dir === 'ttb') { invalid.add(key); continue; }
@@ -173,6 +178,39 @@ function buildAuthoringMap(model, inputPages) {
                 invalid.add(key); invalid.add(`${existing.part}:${existing.paragraphId}`);
             } else assignments.set(ref, link);
         }
+    }
+    // Short standalone labels can also occur inside longer paragraphs. Resolve
+    // them only between two already-proven source paragraphs, with exactly one
+    // physical PDF occurrence and no character claimed by another paragraph.
+    // Repeated source paragraphs and missing/crossed context remain read-only.
+    const rank = new Map(refs.map((ref, index) => [ref, index]));
+    for (const p of contextual) {
+        const index = body.indexOf(p);
+        const neighbor = direction => {
+            for (let n = index + direction; n >= 0 && n < body.length; n += direction) {
+                const k = paragraphKey(body[n]);
+                if (proven.has(k) && !invalid.has(k)) return proven.get(k).map(ref => rank.get(ref));
+            }
+            return null;
+        };
+        const left = neighbor(-1), right = neighbor(1);
+        if (!left || !right) continue;
+        const low = left.reduce((a,b)=>Math.max(a,b),-Infinity), high = right.reduce((a,b)=>Math.min(a,b),Infinity);
+        if (low >= high) continue;
+        const candidates = new Map();
+        for (const [stream, text] of [[bodyRefs, bodyText], [readingBodyRefs, readingBodyText]]) {
+            for (const start of occurrences(text, p.sig.value)) {
+                const candidate = stream.slice(start, start + p.sig.value.length);
+                if (!candidate.every(ref => rank.get(ref) > low && rank.get(ref) < high && !assignments.has(ref) && ref.item.dir !== 'ttb')) continue;
+                candidates.set(candidate.map(ref => rank.get(ref)).join(','), candidate);
+            }
+        }
+        if (candidates.size !== 1) continue;
+        const candidate = candidates.values().next().value;
+        candidate.forEach((ref, i) => assignments.set(ref, {part:p.part, paragraphId:p.id, paragraphHash:p.textHash,
+            sourceStart:p.sig.offsets[i], sourceEnd:p.sig.offsets[i]+1}));
+        const diagnostic = diagnostics.findIndex(item => item.part === p.part && item.paragraphId === p.id);
+        if (diagnostic >= 0) diagnostics.splice(diagnostic, 1);
     }
     for (const [ref, link] of assignments) if (invalid.has(`${link.part}:${link.paragraphId}`)) assignments.delete(ref);
     for (const key of invalid) { const p = paragraphs.find(p => paragraphKey(p) === key); diagnostics.push({ part: p.part, paragraphId: p.id, reason: 'WORD_AUTHORING_AMBIGUOUS_LAYOUT' }); }
