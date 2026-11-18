@@ -127,3 +127,24 @@ test('expanded formatter does not fabricate default profile enums, split names o
     assert.equal(org['client.birthDate'], '2000-02-29'); assert.equal(org['client.companyRegistrationType'], 'nonprofit'); assert.equal(org['client.address.postalCode'], '00042');
     assert.equal(clientDocumentValues({ dateofbirth: '2001-02-29' }, { includeExtended: true })['client.birthDate'], '');
 });
+
+test('RTL paint-order runs and reversed punctuation map only after an exact whole-paragraph match', () => {
+    const text = 'המגרש בגוש 1234 בעיר בדיקה (להלן: "הנכס").';
+    const model = core.importDocx(fixture(paragraph(text)));
+    const page = pages(['המגרש בגוש', '1234', '(להלן: "', 'בעיר בדיקה', 'הנכס', '.)"'])[0];
+    const positions = [500, 450, 250, 320, 180, 150];
+    page.items.forEach((item, index) => { item.transform[4] = positions[index]; item.transform[5] = 700; item.width = 30; });
+    page.items[1].dir = 'ltr'; page.items[5].dir = 'ltr';
+    const map = visual.buildAuthoringMap(model, [page]);
+    const selected = visual.resolveSelection(map, { kind: 'range', start: point('p1_i1', 0), end: point('p1_i1', 4) });
+    assert.equal(selected.selectedText, '1234');
+    const bound = core.createBinding(model, { ...selected.anchor, id: 'plot', field: 'manual.plot', fieldLabel: 'גוש' });
+    const filled = core.materializeDocx(fixture(paragraph(text)), { sourceHash: model.sourceHash, bindings: [bound], values: { 'manual.plot': '9999' } });
+    assert.equal(core.importDocx(filled.buffer).parts[0].paragraphs[0].text, text.replace('1234', '9999'));
+    const changed = structuredClone(page); changed.items[4].text = 'אחר';
+    const mismatch = visual.buildAuthoringMap(model, [changed]);
+    assert.equal(mismatch.pages[0].items[1].segments.length, 0);
+    const repeated = structuredClone(page); repeated.pageNum = 2; repeated.items.forEach(item => { item.id = item.id.replace('p1', 'p2'); });
+    const ambiguous = visual.buildAuthoringMap(model, [page, repeated]);
+    assert.equal(ambiguous.pages[0].items[1].segments.length, 0);
+});

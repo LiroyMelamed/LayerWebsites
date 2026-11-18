@@ -4285,7 +4285,8 @@
     "signatureFlowHelp": "להוספת חתימות, מלאו פרטים לפי הצורך, הכינו את המסמך ובדקו את התוצאה.",
     "fieldTitle": "כותרת השדה",
     "saveField": "שמירת שדה",
-    "missingRecordValue": "חסר בכרטיס — השלמה למסמך זה בלבד",
+    "missingRecordValue": "חסר בנתוני {{source}} — להשלמה במסמך",
+    "documentOnlyValue": "למילוי במסמך זה בלבד",
     "checkingValues": "בודקים את הנתונים…",
     "valuesCheckFailed": "לא ניתן לבדוק את הנתונים. נסו לבחור שוב את הרשומה.",
     "useRecordValue": "חזרה לערך שבכרטיס"
