@@ -3721,7 +3721,8 @@
     "signatureFlowHelp": "لإضافة التوقيعات، أدخل البيانات حسب الحاجة، وحضّر المستند وراجع النتيجة.",
     "fieldTitle": "عنوان الحقل",
     "saveField": "حفظ الحقل",
-    "missingRecordValue": "ناقص في السجل — أكمله لهذا المستند فقط",
+    "missingRecordValue": "ناقص في بيانات {{source}} — أكمله لهذا المستند",
+    "documentOnlyValue": "لهذا المستند فقط",
     "checkingValues": "جارٍ التحقق من البيانات…",
     "valuesCheckFailed": "تعذر التحقق من البيانات. اختر السجل مجددًا.",
     "useRecordValue": "استخدام قيمة السجل"

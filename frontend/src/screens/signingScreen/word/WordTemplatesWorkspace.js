@@ -409,11 +409,18 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
         setReadable(value => !value);
     }
 
-    const manualInput = value => <div key={value}><SimpleInput title={fieldLabel(value)} aria-label={fieldLabel(value)}
-        error={remoteMissing.includes(value) && !needsManualValue(value) ? text('missingRecordValue') : undefined}
-        value={inputs.manualValues[value] || ''} maxLength={4000} disabled={busy} timeToWaitInMilli={0}
-        containerDir={direction} onChange={event => editInput(previous => ({ ...previous, manualValues: { ...previous.manualValues, [value]: event.target.value } }))} />
-        {!needsManualValue(value) && Object.hasOwn(inputs.manualValues,value) && <SecondaryButton size={buttonSizes.SMALL} disabled={busy} onPress={()=>editInput(previous=>{const manualValues={...previous.manualValues};delete manualValues[value];return {...previous,manualValues};})}>{text('useRecordValue')}</SecondaryButton>}</div>;
+    const manualInput = value => {
+        const missingRecord = remoteMissing.includes(value) && !needsManualValue(value);
+        const helperId = `word-value-help-${value}`;
+        const sourceGroup = value.startsWith('role.') ? value.split('.').slice(0, 2).join('.') : value.split('.')[0];
+        return <div key={value}><SimpleInput title={fieldLabel(value)} aria-label={fieldLabel(value)}
+            aria-describedby={helperId}
+            value={inputs.manualValues[value] || ''} maxLength={4000} disabled={busy} timeToWaitInMilli={0}
+            containerDir={direction} onChange={event => editInput(previous => ({ ...previous, manualValues: { ...previous.manualValues, [value]: event.target.value } }))} />
+            <p id={helperId} className="lw-word__pickerHelp"><Text14>{missingRecord
+                ? text('missingRecordValue', { source: groupLabel(sourceGroup) }) : text('documentOnlyValue')}</Text14></p>
+            {!needsManualValue(value) && Object.hasOwn(inputs.manualValues,value) && <SecondaryButton size={buttonSizes.SMALL} disabled={busy} onPress={()=>editInput(previous=>{const manualValues={...previous.manualValues};delete manualValues[value];return {...previous,manualValues};})}>{text('useRecordValue')}</SecondaryButton>}</div>;
+    };
     const withoutGroupOverrides = (previous, prefix) => Object.fromEntries(Object.entries(previous.manualValues).filter(([key])=>!key.startsWith(prefix)));
 
     return <section className={`lw-word${!source ? " lw-word--start" : ""}`} dir={direction} aria-label={text('title')}>
