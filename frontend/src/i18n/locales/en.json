@@ -3623,7 +3623,8 @@
     "signatureFlowHelp": "To add signatures, fill any details needed, prepare the document and review the result.",
     "fieldTitle": "Field title",
     "saveField": "Save field",
-    "missingRecordValue": "Missing in the record — complete for this document only",
+    "missingRecordValue": "Missing from {{source}} — complete for this document",
+    "documentOnlyValue": "For this document only",
     "checkingValues": "Checking values…",
     "valuesCheckFailed": "Could not check the values. Select the record again.",
     "useRecordValue": "Use record value"
