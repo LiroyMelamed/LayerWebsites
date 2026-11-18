@@ -180,7 +180,7 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, alwaysExpanded = fa
                     </SimpleContainer>
 
                     <SimpleContainer className={`lw-caseMenuItemOpen__timelineWrap${stagesExpanded ? " is-open" : ""}`} aria-hidden={!stagesExpanded} inert={!stagesExpanded ? '' : undefined}>
-                        <CaseTimeline
+                        {(isOpen || alwaysExpanded) && stagesExpanded && <CaseTimeline
                             stages={fullCase.Descriptions}
                             currentStage={fullCase.CurrentStage}
                             isClosed={fullCase.IsClosed}
@@ -189,7 +189,7 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, alwaysExpanded = fa
                             isClient={isClient}
                             stageFiles={stageFiles}
                             onStageFilesChanged={fetchStageFiles}
-                        />
+                        />}
                     </SimpleContainer>
                 </SimpleContainer>
 
