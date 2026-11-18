@@ -9,21 +9,27 @@ export function FirmPermissionsProvider({ children }) {
     const [error, setError] = useState(null);
 
     const requestRef = useRef(0);
+    const inFlight = useRef(null);
     const refresh = useCallback(async () => {
-        const requestId = ++requestRef.current;
         const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        if (token && inFlight.current?.token === token) return;
+        const requestId = ++requestRef.current;
         if (!token) {
+            inFlight.current = null;
             setScope(null);
             setError(null);
             setLoaded(true);
             return;
         }
+        const request = { token };
+        inFlight.current = request;
         try {
             const data = await staffRolesApi.getSessionScope();
             if (requestId === requestRef.current && token === localStorage.getItem("token")) { setScope(data); setError(null); }
         } catch (failure) {
             if (requestId === requestRef.current && token === localStorage.getItem("token")) { setScope(null); setError(failure); }
         } finally {
+            if (inFlight.current === request) inFlight.current = null;
             if (requestId === requestRef.current) {
                 if (token === localStorage.getItem("token")) setLoaded(true);
                 else void refresh();
@@ -41,9 +47,10 @@ export function FirmPermissionsProvider({ children }) {
         };
         window.addEventListener("focus", onFocus);
         document.addEventListener("visibilitychange", onVisibility);
-        const interval = setInterval(refresh, 60_000);
+        const interval = setInterval(onVisibility, 60_000);
         return () => {
             requestRef.current += 1;
+            inFlight.current = null;
             window.removeEventListener("focus", onFocus);
             window.removeEventListener("lw-auth-changed", onAuthChange);
             document.removeEventListener("visibilitychange", onVisibility);
