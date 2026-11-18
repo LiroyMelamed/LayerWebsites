@@ -11,9 +11,8 @@ jest.mock('../../providers/ScreenSizeProvider', () => ({ useScreenSize: () => ({
 jest.mock('../../providers/FirmPermissionsProvider', () => ({ useFirmPermissions: () => ({ loaded: true, permissionMode: 'legacy', canAction: () => true }) }));
 jest.mock('../../providers/FromAppProvider', () => ({ useFromApp: () => ({ isFromApp: false }) }));
 jest.mock('../../providers/PopUpProvider', () => ({ usePopup: () => ({ openPopup: jest.fn(), closePopup: jest.fn() }) }));
-jest.mock('../../hooks/useAutoHttpRequest', () => () => ({ ...mockFilesState, performRequest: mockReload }));
-jest.mock('../../hooks/useHttpRequest', () => () => ({ result: [], isPerforming: false, performRequest: jest.fn() }));
-jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key, options) => key === 'common.listTitleWithCount' ? `${options.title} (${options.count})` : key }) }));
+jest.mock('../../hooks/useHttpRequest', () => () => ({ ...mockFilesState, performRequest: mockReload }));
+jest.mock('react-i18next', () => ({ useTranslation: () => ({ i18n: { language: 'he', dir: () => 'rtl' }, t: (key, options) => key === 'common.listTitleWithCount' ? `${options.title} (${options.count})` : key }) }));
 jest.mock('../../services/firmSettings', () => ({ useSigningOtpEnabled: () => false }));
 jest.mock('../../api/apiUtils', () => ({ __esModule: true, default: { defaults: { baseURL: '' } } }));
 jest.mock('../../components/ui/toast', () => ({ toastError: jest.fn(), toastSuccess: jest.fn() }));
@@ -33,7 +32,7 @@ jest.mock('./word/WordSigningWorkflow', () => props => {
 });
 jest.mock('./templates/TemplatesWorkspace', () => props => {
     mockWorkspaceProps = props;
-    return <section aria-label="Existing template workspace"><button onClick={() => props.onWordContinue({ id: 'owned-preview', sourceId: 'owned-source', sourceVersion: 2, pdfHash: 'a'.repeat(64), clientId: 71, caseId: 41 })}>Continue reviewed Word document</button></section>;
+    return <section aria-label="Existing template workspace"><button onClick={props.onClose}>Close templates</button><button onClick={() => props.onWordContinue({ id: 'owned-preview', sourceId: 'owned-source', sourceVersion: 2, pdfHash: 'a'.repeat(64), clientId: 71, caseId: 41 })}>Continue reviewed Word document</button></section>;
 });
 
 const context = { clientRecord: { id: 71, label: 'Saved client' }, caseRecord: { id: 41, label: 'Saved case' } };
@@ -94,4 +93,23 @@ test('failed list keeps its title and working retry instead of blanking the page
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
     expect(mockReload.mock.calls.length).toBe(before + 1);
     mockFilesState = { result: { files: [] }, isPerforming: false, error: null };
+});
+
+
+test('legacy list loads once on entry, stays idle in templates, and reloads once on return', () => {
+    const first = render(<MemoryRouter><SigningManagerScreen /></MemoryRouter>);
+    expect(mockReload).toHaveBeenCalledTimes(1);
+    expect(mockReload).toHaveBeenCalledWith('mine');
+    first.unmount();
+    mockReload.mockClear();
+    mount({});
+    expect(mockReload).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Close templates' }));
+    expect(mockReload).toHaveBeenCalledTimes(1);
+    expect(mockReload).toHaveBeenCalledWith('mine');
+});
+
+test.each(['runs', 'compose', 'stage&caseId=41'])('legacy file list does not load behind %s', panel => {
+    render(<MemoryRouter initialEntries={['/AdminStack/SigningManagerScreen?panel=' + panel]}><SigningManagerScreen /></MemoryRouter>);
+    expect(mockReload).not.toHaveBeenCalled();
 });
