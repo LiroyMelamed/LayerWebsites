@@ -203,13 +203,17 @@ export default function AllCasesScreen() {
         setSelectedCompany(company);
     };
 
-    const caseNames = [...new Set((allCases || []).map(c => c.CaseName).filter(Boolean))].sort();
-    const clientNames = [...new Set((allCases || []).flatMap(c => {
-        if (Array.isArray(c.Users) && c.Users.length > 0) return c.Users.map(u => u.Name);
-        return [c.CustomerName];
-    }).filter(Boolean))].sort();
-    const managerNames = [...new Set((allCases || []).map(c => c.CaseManager).filter(Boolean))].sort();
-    const companyNames = [...new Set((allCases || []).map(c => c.CompanyName).filter(Boolean))].sort();
+    const { caseNames, clientNames, managerNames, companyNames } = useMemo(() => {
+        const cases = allCases || [];
+        const sortedNames = values => [...new Set(values.filter(Boolean))].sort();
+        return {
+            caseNames: sortedNames(cases.map(c => c.CaseName)),
+            clientNames: sortedNames(cases.flatMap(c => c.Users?.length && Array.isArray(c.Users)
+                ? c.Users.map(user => user.Name) : [c.CustomerName])),
+            managerNames: sortedNames(cases.map(c => c.CaseManager)),
+            companyNames: sortedNames(cases.map(c => c.CompanyName)),
+        };
+    }, [allCases]);
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>

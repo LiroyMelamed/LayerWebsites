@@ -431,6 +431,8 @@ export default function SigningPackagesWorkspace({ onClose, onCreate, api = sign
                         <span>{t('signingV2.packages', { count: batch.package_count, formattedCount: number(batch.package_count) })}</span>
                         <Progress accepted={batch.accepted_count} required={batch.required_count} />
                         <span>{t('signingV2.preparedFraction', { ready: number(batch.prepared_count), total: number(batch.document_count) })}</span>
+                        {batch.accepted_messages != null && <span>{t('signingV2.providerAcceptedCount', { formattedCount: number(batch.accepted_messages) })}</span>}
+                        {batch.delivered_messages != null && <span>{t('signingV2.confirmedDeliveryCount', { formattedCount: number(batch.delivered_messages) })}</span>}
                     </div>
                     <div className="lw-signingPackages__rowStatus">
                         {batch.attention_count > 0 ? <span className="lw-signingPackages__attention">{t('signingV2.needsAttention', { count: batch.attention_count, formattedCount: number(batch.attention_count) })}</span>

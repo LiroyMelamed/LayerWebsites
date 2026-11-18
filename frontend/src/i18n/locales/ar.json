@@ -1746,6 +1746,8 @@
     "packageDetails": "تفاصيل الحزمة",
     "notYet": "لم يُنفّذ بعد",
     "preparedFraction": "المستندات الجاهزة: {{ready}} من {{total}}",
+    "providerAcceptedCount": "رسائل قَبِلها المزوّد: {{formattedCount}}",
+    "confirmedDeliveryCount": "رسائل تأكد تسليمها: {{formattedCount}}",
     "informational": "ملحق معلومات — لا يتطلب توقيعًا",
     "uncertainHelp": "لم يصل تأكيد من المزوّد. يجب التحقق من حالة التسليم قبل إعادة الإرسال.",
     "authorizedSummary": "يشمل ملخّص الإرسال جميع الحزم التي يمكنك عرضها، بما فيها الحزم المكتملة. القائمة أدناه تخضع للتصفية.",
