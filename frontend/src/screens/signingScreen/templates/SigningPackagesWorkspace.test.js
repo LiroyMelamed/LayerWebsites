@@ -401,3 +401,24 @@ test('a reminder counts distinct PDFs and sits with the ready participation inst
     const row = screen.getAllByRole('listitem').find(item => within(item).queryByRole('button', { name: i18n.t('signingV2.action.reminder.open'), exact: true }));
     expect(within(row).getByText(i18n.t('signingV2.task.ready'))).toBeInTheDocument();
 });
+
+
+test('slow list requests are not superseded by polling and still finish loading', async () => {
+    jest.useFakeTimers();
+    try {
+        const i18n = await translations('en'), { api, batch } = fixture();
+        let finish;
+        api.list.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+        const view = render(<I18nextProvider i18n={i18n}><SigningPackagesWorkspace api={api} /></I18nextProvider>);
+        await act(async () => { jest.advanceTimersByTime(24000); });
+        expect(api.list).toHaveBeenCalledTimes(1);
+        expect(api.list).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({ timeout: 30000 }));
+        await act(async () => { finish({ rows: [batch], total: 1 }); });
+        expect(screen.getByText('October employees')).toBeVisible();
+        await act(async () => { jest.advanceTimersByTime(8000); });
+        expect(api.list).toHaveBeenCalledTimes(2);
+        view.unmount();
+        await act(async () => { jest.advanceTimersByTime(24000); });
+        expect(api.list).toHaveBeenCalledTimes(2);
+    } finally { jest.useRealTimers(); }
+});

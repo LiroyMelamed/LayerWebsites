@@ -63,10 +63,12 @@ export function BillingLockProvider({ children }) {
         void refresh();
         const onLocked = () => { setLock(prev => ({ ...prev, locked: true, loaded: true })); void refresh(); };
         const onAuthChanged = () => { setLock({ locked: false, canManageBilling: false, status: null, graceUntil: null, payUrl: null, loaded: false }); void refresh(); };
-        const timer = window.setInterval(refresh, 30000);
+        const onVisibility = () => { if (document.visibilityState === 'visible') void refresh(); };
+        const timer = window.setInterval(onVisibility, 30000);
+        document.addEventListener('visibilitychange', onVisibility);
         window.addEventListener('lw-billing-locked', onLocked);
         window.addEventListener('lw-auth-changed', onAuthChanged);
-        return () => { window.clearInterval(timer); window.removeEventListener('lw-billing-locked', onLocked); window.removeEventListener('lw-auth-changed', onAuthChanged); };
+        return () => { refreshing.current = null; document.removeEventListener('visibilitychange', onVisibility); window.clearInterval(timer); window.removeEventListener('lw-billing-locked', onLocked); window.removeEventListener('lw-auth-changed', onAuthChanged); };
     }, [applyLock, refresh]);
 
     const value = useMemo(

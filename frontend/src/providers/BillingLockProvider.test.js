@@ -32,3 +32,21 @@ test('a failed lock-status request cannot recursively flood the API',async()=>{
  expect(billingApi.getLockStatus.mock.calls.length).toBeLessThanOrEqual(2);
  expect(value().owner).toBe(false);
 });
+
+test('background polling pauses while hidden and visibility resumes lock verification', async () => {
+ jest.useFakeTimers();
+ try {
+  billingApi.getLockStatus.mockResolvedValue({success:true,data:{locked:false,canManageBilling:false}});
+  const view=render(<BillingLockProvider><State/></BillingLockProvider>);
+  await act(async()=>{});
+  Object.defineProperty(document,'visibilityState',{configurable:true,value:'hidden'});
+  await act(async()=>{jest.advanceTimersByTime(90000);});
+  expect(billingApi.getLockStatus).toHaveBeenCalledTimes(1);
+  Object.defineProperty(document,'visibilityState',{configurable:true,value:'visible'});
+  await act(async()=>{document.dispatchEvent(new Event('visibilitychange'));});
+  expect(billingApi.getLockStatus).toHaveBeenCalledTimes(2);
+  view.unmount();
+  await act(async()=>{document.dispatchEvent(new Event('visibilitychange'));jest.advanceTimersByTime(90000);});
+  expect(billingApi.getLockStatus).toHaveBeenCalledTimes(2);
+ } finally {delete document.visibilityState;jest.useRealTimers();}
+});

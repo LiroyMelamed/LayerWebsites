@@ -12,13 +12,15 @@ export default function SharedSignerSummary({ api, submissionId }) {
     const [error, setError] = useState(null), [busy, setBusy] = useState(false);
     useEffect(() => {
         if (!open) { setData(null); setError(null); setBusy(false); return undefined; }
-        let current = true, sequence = 0;
+        let current = true, sequence = 0, inFlight = false;
         const controllers = new Set();
         const load = async () => {
+            if (!current || inFlight) return;
+            inFlight = true;
             const request = ++sequence, controller = new AbortController();
             controllers.add(controller); setBusy(true);
             try {
-                const summary = await api.participantSummary(submissionId, { signal: controller.signal });
+                const summary = await api.participantSummary(submissionId, { signal: controller.signal, timeout: 30000 });
                 if (current && request === sequence) { setData(summary); setError(null); }
             } catch (failure) {
                 if (current && request === sequence && !controller.signal.aborted) {
@@ -26,6 +28,7 @@ export default function SharedSignerSummary({ api, submissionId }) {
                     setError(failure);
                 }
             } finally {
+                inFlight = false;
                 controllers.delete(controller);
                 if (current && request === sequence) setBusy(false);
             }

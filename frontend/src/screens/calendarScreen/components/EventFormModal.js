@@ -630,11 +630,6 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         performRequest: searchAdmins,
     } = useAutoHttpRequest(adminApi.getStaffByName, { onFailure: () => { } });
 
-    useEffect(() => {
-        if (isEdit) return;
-        searchAdmins("");
-    }, [isEdit, searchAdmins]);
-
     // ─── Effect: reset entire form when a different event is opened in the popup ─
     const eventIdentity = event?.id ?? `${event?.startTime || ""}|${event?.endTime || ""}|new`;
 
