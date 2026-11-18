@@ -10,7 +10,8 @@ jest.mock('../../../api/packageRecipesApi',()=>({__esModule:true,default:{inputs
 jest.mock('../../../api/signingPackagesApi',()=>({__esModule:true,default:{publishTemplateDraft:jest.fn()}}));
 jest.mock('../word/WordRecordPicker',()=>{const React=require('react');return ({label,onChange})=>React.createElement('button',{onClick:()=>onChange({id:22,label:'Second person'})},label);});
 jest.mock('../templates/PackageComposer',()=>{const React=require('react');return props=>React.createElement('div',{'data-testid':'existing-composer'},JSON.stringify(props.preparedData));});
-jest.mock('../../../components/specializedComponents/signFiles/pdfViewer/PdfViewer',()=>{const React=require('react');return ({onDocumentReady})=>{React.useEffect(()=>onDocumentReady(true),[onDocumentReady]);return React.createElement('div',null,'PDF');};});
+const mockPdfProps=jest.fn();
+jest.mock('../../../components/specializedComponents/signFiles/pdfViewer/PdfViewer',()=>{const React=require('react');return props=>{mockPdfProps(props);React.useEffect(()=>props.onDocumentReady(true),[props.onDocumentReady]);return React.createElement('div',null,'PDF');};});
 if(!window.crypto?.randomUUID)Object.defineProperty(window,'crypto',{value:require('crypto').webcrypto});
 const recipe={id:'recipe',version:1,definitionHash:'hash',name:'Package',definition:{dataRoles:[{key:'tenant',label:'שוכר'}],fields:[
     {key:'plot',label:'גוש',required:true,source:{kind:'manual'}},
@@ -34,12 +35,14 @@ test('changing the data person clears only that persons override and preserves m
 });
 test('prepare is deduplicated, every document is checked, and continuation uses the existing composer',async()=>{
     let complete;api.prepare.mockImplementation(()=>new Promise(resolve=>{complete=resolve;}));
-    const prepared={id:'prepared',definitionHash:'bound-hash',definition:{documents:[{key:'a',name:'A'},{key:'b',name:'B'}]},accessRefs:{},data:{plot:'12345'}};
+    const prepared={id:'prepared',definitionHash:'bound-hash',definition:{roles:[{key:'signer',label:'חותם'}],documents:[{key:'a',name:'A',fields:[{id:'sign',type:'signature',roleKey:'signer',required:true,pageNum:2,x:70,y:120,width:120,height:48}]},{key:'b',name:'B'}]},accessRefs:{},data:{plot:'12345'}};
     api.nativeDraft.mockResolvedValue({version:{id:'draft',editVersion:1,definitionHash:'bound-hash'}});
     signingApi.publishTemplateDraft.mockResolvedValue({version:{id:'published',version:1}});
     await show();fireEvent.change(screen.getByRole('textbox',{name:'גוש'}),{target:{value:'12345'}});fireEvent.change(screen.getByRole('textbox',{name:'תעודת זהות'}),{target:{value:'00999'}});
     const button=screen.getByRole('button',{name:'הכנת המסמכים לבדיקה'});act(()=>{button.click();button.click();});expect(api.prepare).toHaveBeenCalledTimes(1);
     await act(async()=>complete({preparation:prepared}));await screen.findByText('PDF');
+    expect(mockPdfProps.mock.calls.at(-1)[0]).toEqual(expect.objectContaining({spots:[expect.objectContaining({pageNum:2,x:70,y:120,signerName:'חותם',fieldType:'signature'})]}));
+    expect(mockPdfProps.mock.calls.at(-1)[0].onUpdateSpot).toBeUndefined();
     fireEvent.click(screen.getByRole('checkbox',{name:'בדקתי את המסמך הזה'}));
     expect(screen.getByRole('button',{name:'המשך לחותמים ושליחה'})).toBeDisabled();
     fireEvent.click(screen.getByRole('button',{name:'B'}));await waitFor(()=>expect(screen.getByRole('checkbox')).toBeEnabled());

@@ -71,7 +71,7 @@
     "frontend/src/screens/signingScreen/templates/DraftRecoveryList.js": "c0f9788db847b78fac2baf591be8ac5dfcc44907128388138d647140814744cf",
     "frontend/src/screens/signingScreen/templates/NativeTemplateBuilder.js": "af498f44ad20cd5321a05211b99bfcca783bd697bc8a4f5fc5491588e9ef396b",
     "frontend/src/screens/signingScreen/templates/PackageApprovalDialog.js": "5061efd320d0c13e5314605a9f8bf647fed5ca928bf10f991049425d39ce17bd",
-    "frontend/src/screens/signingScreen/templates/PackageComposer.js": "2e21f3ade4a03c91dcb8f1a11f4247587760b3bb2976f75b8b5fe3662f965a5d",
+    "frontend/src/screens/signingScreen/templates/PackageComposer.js": "7c19ed4aacd3c0ce54f36e34e392c46cbde5cc66d4b5e704107b034cc6421a87",
     "frontend/src/screens/signingScreen/templates/PackageLifecycleDialog.js": "7765876c60b589298a7a822215318da25b63f9ca343a1d62a23b6eeaf0fb0bb2",
     "frontend/src/screens/signingScreen/templates/PackageReplacementDialog.js": "7d513b34b1852174f39623388277d06fc4d3de0f8b2e501b0f9e5e71e7ed4be8",
     "frontend/src/screens/signingScreen/templates/ParticipantActionDialog.js": "cded137133f1924a26c0d04ccbacaee8c156205e4f16cae15892b9620a5b67e4",
@@ -108,5 +108,5 @@
     "frontend/src/screens/signingScreen/templates/useSigningLocale.js": "dc6464889dab401ff9c3d10c5408dfef698e7f3f94c0fc9bd168775c5a31227e",
     "frontend/src/utils/signingSpotGeometry.js": "a0b23d9c4dba659e83df13c344ea6f24e3caf076c18c0ae818b46a59cb5e34cf"
   },
-  "note": " 18 November 2026 unified packages: changed protected modules locally qualified by work/unified-packages-20261118/LOCAL-QUALIFICATION.json. Feature remains disabled by default. This permits Melamedia candidate QA only; actual browser/signature/provider QA precedes any customer rollout. Updated paths: backend/routes/signingV2Routes.js, frontend/src/screens/signingScreen/SigningManagerScreen.js, frontend/src/screens/signingScreen/templates/PackageComposer.js, frontend/src/screens/signingScreen/templates/TemplateBuilder.js, frontend/src/screens/signingScreen/templates/TemplatesWorkspace.js."
+  "note": " 18 November 2026 unified packages: changed protected modules locally qualified by work/unified-packages-20261118/LOCAL-QUALIFICATION.json. Feature remains disabled by default. This permits Melamedia candidate QA only; actual browser/signature/provider QA precedes any customer rollout. Updated paths: backend/routes/signingV2Routes.js, frontend/src/screens/signingScreen/SigningManagerScreen.js, frontend/src/screens/signingScreen/templates/PackageComposer.js, frontend/src/screens/signingScreen/templates/TemplateBuilder.js, frontend/src/screens/signingScreen/templates/TemplatesWorkspace.js. QA UX follow-up: PackageComposer three-step prepared-package controls revalidated by unified-qa-three-step-ui.log (54 passing tests); live QA still in progress."
 }

@@ -36,10 +36,11 @@ export default function PackageRecipeEditor({recipe,resumeDraft,onBack,onSaved})
     const draftId=useRef(resumeDraft?.id||crypto.randomUUID()),draftVersion=useRef(resumeDraft?.version||0);
     const [draftSaved,setDraftSaved]=useState(false);
     const baseline=useRef(JSON.stringify(definition));
+    const baselineVisibility=useRef(visibility);
     const wordController=useRef(null);const [wordDirty,setWordDirty]=useState(false),[wordBusy,setWordBusy]=useState(false);
     const blocked=busy||wordBusy;
-    const dirty=wordDirty||baseline.current!==JSON.stringify(definition)||visibility!==(recipe?.visibility||'office');
-    useEffect(()=>{setReviewed(false);setDraftSaved(false);},[definition,visibility]);
+    const dirty=wordDirty||baseline.current!==JSON.stringify(definition)||visibility!==baselineVisibility.current;
+    useEffect(()=>{setReviewed(false);},[definition,visibility]);
     useEffect(()=>{const warn=e=>{if(dirty){e.preventDefault();e.returnValue='';}};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty]);
     const doc=definition.documents[active];
     async function run(action){if(lock.current)return;lock.current=true;setBusy(true);setError(null);try{await action();}catch(e){setError(e);}finally{lock.current=false;setBusy(false);}}
@@ -100,7 +101,7 @@ export default function PackageRecipeEditor({recipe,resumeDraft,onBack,onSaved})
     function saveDraft(){return run(async()=>{
         const current=await synchronizedDefinition();if(!current)return;
         const result=await api.saveDraft(draftId.current,{expectedVersion:draftVersion.current,recipeId:version?id:null,baseVersion:version,definition:current,visibility});
-        draftVersion.current=result.draft.version;setDraftSaved(true);
+        draftVersion.current=result.draft.version;baseline.current=JSON.stringify(current);baselineVisibility.current=visibility;setWordDirty(false);setDraftSaved(true);
     });}
     function save(){return run(async()=>{
         const current=await synchronizedDefinition();if(!current)return;
@@ -129,20 +130,20 @@ export default function PackageRecipeEditor({recipe,resumeDraft,onBack,onSaved})
         <SigningBackButton onPress={()=>dirty?setLeaving(true):onBack()} disabled={blocked}>{text('backLibrary')}</SigningBackButton>
         <header className="lw-packages__header"><h1>{text(recipe?'editPackage':'newPackage')}</h1>
             <SimpleInput title={text('name')} value={definition.name} maxLength={200} timeToWaitInMilli={0} onChange={e=>setDefinition(prev=>({...prev,name:e.target.value}))}/></header>
-        <nav className="lw-packages__steps" aria-label={text('steps')}>{['documents','signers','review'].map((key,index)=>{const Button=step===index?PrimaryButton:SecondaryButton;return <Button key={key} size={buttonSizes.SMALL} aria-current={step===index?'step':undefined} disabled={blocked} onPress={()=>navigate(()=>setStep(index))}>{index+1} · {text(key)}</Button>;})}</nav>
+        <nav className="lw-packages__steps" aria-label={text('steps')}>{['documents','signers','review'].map((key,index)=>{const Button=step===index?PrimaryButton:SecondaryButton;return <Button key={key} size={buttonSizes.MEDIUM} aria-current={step===index?'step':undefined} disabled={blocked} onPress={()=>navigate(()=>setStep(index))}>{`${index+1} · ${text(key)}`}</Button>;})}</nav>
         {error&&<StatusNotice><p>{error.code||error.errorCode?errorMessage(error):error.message}</p></StatusNotice>}
-        {draftSaved&&<p role="status">{text('draftSaved')}</p>}
+        {draftSaved&&!dirty&&<p role="status">{text('draftSaved')}</p>}
         {busy&&<p role="status">{text('working')}</p>}
         {step===0&&<>
             <FileUploadBox className={definition.documents.length?'lw-packages__compactUpload':''} label={text('addDocument')} hint={text('formats')} accept=".pdf,.docx" disabled={blocked||definition.documents.length>=10} onFileSelected={upload}/>
-            {definition.documents.length>1&&<nav className="lw-packages__documents" aria-label={text('documents')}>{definition.documents.map((item,index)=><SecondaryButton key={item.key} size={buttonSizes.SMALL} aria-pressed={active===index} disabled={blocked} onPress={()=>navigate(()=>setActive(index))}>{item.name}</SecondaryButton>)}</nav>}
+            {definition.documents.length>1&&<nav className="lw-packages__documents" aria-label={text('documents')}>{definition.documents.map((item,index)=><SecondaryButton key={item.key} size={buttonSizes.MEDIUM} aria-pressed={active===index} disabled={blocked} onPress={()=>navigate(()=>setActive(index))}>{item.name}</SecondaryButton>)}</nav>}
             <PackageFieldDefinitions definition={definition} onChange={setDefinition} disabled={blocked}/>
             {doc&&<><div className="lw-packages__documentHeading"><h2>{doc.name}</h2><div className="lw-packages__actions">
-                {definition.documents.length>1&&<><TertiaryButton size={buttonSizes.SMALL} disabled={blocked||active===0} onPress={()=>navigate(()=>moved(-1))}>{text('moveEarlier')}</TertiaryButton><TertiaryButton size={buttonSizes.SMALL} disabled={blocked||active===definition.documents.length-1} onPress={()=>navigate(()=>moved(1))}>{text('moveLater')}</TertiaryButton></>}
-                <TertiaryButton size={buttonSizes.SMALL} disabled={blocked} onPress={()=>{setDefinition(prev=>({...prev,documents:prev.documents.filter(d=>d.key!==doc.key)}));setActive(0);setWordDirty(false);setWordBusy(false);setWordEditing(false);}}>{text('removeDocument')}</TertiaryButton>
+                {definition.documents.length>1&&<><TertiaryButton size={buttonSizes.MEDIUM} disabled={blocked||active===0} onPress={()=>navigate(()=>moved(-1))}>{text('moveEarlier')}</TertiaryButton><TertiaryButton size={buttonSizes.MEDIUM} disabled={blocked||active===definition.documents.length-1} onPress={()=>navigate(()=>moved(1))}>{text('moveLater')}</TertiaryButton></>}
+                <TertiaryButton size={buttonSizes.MEDIUM} disabled={blocked} onPress={()=>{setDefinition(prev=>({...prev,documents:prev.documents.filter(d=>d.key!==doc.key)}));setActive(0);setWordDirty(false);setWordBusy(false);setWordEditing(false);}}>{text('removeDocument')}</TertiaryButton>
             </div></div>
-            {doc.source.kind==='word'?(wordEditor||<div className="lw-packages__wordSummary"><p>{text('wordHint')}</p><PrimaryButton size={buttonSizes.SMALL} disabled={blocked} onPress={editWord}>{text('editDocument')}</PrimaryButton>
-                <ul>{doc.signatureFields.map(field=><li key={field.key}>{text('signature')} · {definition.signing.roles.find(role=>role.key===field.roleKey)?.label}<TertiaryButton size={buttonSizes.SMALL} onPress={()=>updateDocument(doc.key,{signatureFields:doc.signatureFields.filter(f=>f.key!==field.key)})}>{text('remove')}</TertiaryButton></li>)}</ul>
+            {doc.source.kind==='word'?(wordEditor||<div className="lw-packages__wordSummary"><p>{text('wordHint')}</p><PrimaryButton size={buttonSizes.MEDIUM} disabled={blocked} onPress={editWord}>{text('editDocument')}</PrimaryButton>
+                <ul>{doc.signatureFields.map(field=><li key={field.key}>{text('signature')} · {definition.signing.roles.find(role=>role.key===field.roleKey)?.label}<TertiaryButton size={buttonSizes.MEDIUM} onPress={()=>updateDocument(doc.key,{signatureFields:doc.signatureFields.filter(f=>f.key!==field.key)})}>{text('remove')}</TertiaryButton></li>)}</ul>
             </div>):<TemplateBuilder key={`${doc.key}-${doc.source.hash}-${JSON.stringify(definition.signing)}-${JSON.stringify(definition.fields)}`} documentOnly template={pdfTemplate} adapter={pdfAdapter} onDefinitionChange={draft=>updateDocument(doc.key,{signatureFields:pdfRecipeFields(fromEditor(draft,language))})}/>}
             <details><summary>{text('replaceSource')}</summary><p>{text('replaceSourceHint')}</p><FileUploadBox label={text('replaceSource')} hint={text('formats')} accept=".pdf,.docx" disabled={blocked} onFileSelected={file=>upload(file,doc.key)}/></details>
             {doc.mappings.length>0&&<details><summary>{text('sharedFields')}</summary>{doc.mappings.map(mapping=><label key={mapping.bindingId}>{definition.fields.find(f=>f.key===mapping.fieldKey)?.label}<SigningSelect value={mapping.fieldKey} onChange={e=>updateDocument(doc.key,{mappings:doc.mappings.map(m=>m.bindingId===mapping.bindingId?{...m,fieldKey:e.target.value}:m)})}>{definition.fields.map(field=><option key={field.key} value={field.key}>{field.label} · {text(field.source.kind==='manual'?'manual':'linked')}</option>)}</SigningSelect></label>)}</details>}
@@ -154,13 +155,13 @@ export default function PackageRecipeEditor({recipe,resumeDraft,onBack,onSaved})
             }}/></details>
             {definition.signing.roles.map(role=><SimpleInput key={role.key} title={text('roleName')} value={role.label} timeToWaitInMilli={0} onChange={e=>setDefinition(prev=>({...prev,signing:{...prev.signing,roles:prev.signing.roles.map(r=>r.key===role.key?{...r,label:e.target.value}:r)}}))}/>)}
         </>}
-        {step===2&&<><h2>{definition.name}</h2><ul>{definition.documents.map(item=><li key={item.key}>{item.name} · {item.source.kind.toUpperCase()} · {item.signatureFields.length} {text('signatureFields')}</li>)}</ul>
+        {step===2&&<><h2>{definition.name}</h2><ul>{definition.documents.map(item=><li key={item.key}>{item.name} · {item.source.kind.toUpperCase()} · {item.signatureFields.length+item.mappings.length} {text('documentFields')}</li>)}</ul>
             <label>{text('sharing')}<SigningSelect value={visibility} onChange={e=>setVisibility(e.target.value)}><option value="office">{text('office')}</option><option value="private">{text('private')}</option></SigningSelect></label>
             <SimpleCheckbox checked={reviewed} onChange={e=>setReviewed(e.target.checked)} title={text(visibility==='office'?'reviewSource':'reviewPrivateSource')}/>
         </>}
-        <footer className="lw-packages__footer"><SecondaryButton size={buttonSizes.SMALL} disabled={blocked} onPress={saveDraft}>{text('saveDraft')}</SecondaryButton><SecondaryButton size={buttonSizes.SMALL} disabled={blocked||step===0} onPress={()=>navigate(()=>setStep(step-1))}>{text('back')}</SecondaryButton>
-            {step<2?<PrimaryButton size={buttonSizes.SMALL} disabled={blocked||!definition.name.trim()||definition.fields.some(field=>!field.label.trim())||!definition.documents.length} onPress={()=>navigate(()=>setStep(step+1))}>{text('continue')}</PrimaryButton>
-                :<PrimaryButton size={buttonSizes.SMALL} disabled={blocked||!reviewed||!definition.documents.length||!definition.name.trim()||definition.fields.some(field=>!field.label.trim())} onPress={save}>{text('savePackage')}</PrimaryButton>}
+        <footer className="lw-packages__footer"><SecondaryButton size={buttonSizes.MEDIUM} disabled={blocked} onPress={saveDraft}>{text('saveDraft')}</SecondaryButton><SecondaryButton size={buttonSizes.MEDIUM} disabled={blocked||step===0} onPress={()=>navigate(()=>setStep(step-1))}>{text('back')}</SecondaryButton>
+            {step<2?<PrimaryButton size={buttonSizes.MEDIUM} disabled={blocked||!definition.name.trim()||definition.fields.some(field=>!field.label.trim())||!definition.documents.length} onPress={()=>navigate(()=>setStep(step+1))}>{text('continue')}</PrimaryButton>
+                :<PrimaryButton size={buttonSizes.MEDIUM} disabled={blocked||!reviewed||!definition.documents.length||!definition.name.trim()||definition.fields.some(field=>!field.label.trim())} onPress={save}>{text('savePackage')}</PrimaryButton>}
         </footer>
         {signature&&<TemplateFieldDialog field={{id:signature.key,fieldType:signature.type,roleId:signature.roleKey,occurrence:signature.occurrence,isRequired:signature.required,fieldLabel:signature.label||'',inactiveTreatment:signature.inactiveTreatment}}
             roles={signingDraft.roles} busy={busy} canMoveField
@@ -170,7 +171,7 @@ export default function PackageRecipeEditor({recipe,resumeDraft,onBack,onSaved})
             onResize={(width,height)=>changeSignature({placement:{...signature.placement,width:Math.max(24,Math.min(600,signature.placement.width+width)),height:Math.max(24,Math.min(200,signature.placement.height+height))}})}
             onRemove={()=>{updateDocument(doc.key,{signatureFields:doc.signatureFields.filter(field=>field.key!==signature.key)});setEditingSignature(null);}} onClose={()=>setEditingSignature(null)}/>}
         {leaving&&<SimplePopUp isOpen onClose={()=>setLeaving(false)} role="dialog" aria-modal="true" aria-label={text('unsaved')}>
-            <p>{text('unsaved')}</p><div className="lw-packages__actions"><SecondaryButton size={buttonSizes.SMALL} onPress={()=>setLeaving(false)}>{text('stay')}</SecondaryButton><PrimaryButton size={buttonSizes.SMALL} onPress={onBack}>{text('discard')}</PrimaryButton></div>
+            <p>{text('unsaved')}</p><div className="lw-packages__actions"><SecondaryButton size={buttonSizes.MEDIUM} onPress={()=>setLeaving(false)}>{text('stay')}</SecondaryButton><PrimaryButton size={buttonSizes.MEDIUM} onPress={onBack}>{text('discard')}</PrimaryButton></div>
         </SimplePopUp>}
     </section>;
 }

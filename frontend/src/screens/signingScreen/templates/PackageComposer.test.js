@@ -262,6 +262,19 @@ test('a newer selected version is prepared once and opens recipients, never the 
     expect(api.create).not.toHaveBeenCalled();
 });
 
+test('reviewed mixed package keeps the three-step flow and hides bulk and template controls', async () => {
+    const i18n=await translations('en'),api=fakeApi(),back=jest.fn();
+    api.templates.mockResolvedValue({legacy:[],templates:[{...converted,origin:{kind:'package_preparation'}}]});
+    render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialTemplateId="t-1" preparedData={{plot:'12345'}} onBack={back}/></I18nextProvider>);
+    await screen.findByRole('heading',{name:en.signingV2.compose.rows.heading});
+    const steps=screen.getByRole('list',{name:en.signingV2.compose.stepsLabel});
+    expect(steps).toHaveTextContent(en.documentPackages.peopleAndDetails);
+    expect(steps).toHaveTextContent(en.documentPackages.sendStage);
+    expect(screen.queryByText(en.signingV2.compose.rows.excel)).not.toBeInTheDocument();
+    expect(screen.queryByText(en.signingV2.compose.signers.heading)).not.toBeInTheDocument();
+    expect(screen.getByText(en.documentPackages.preparedRecipientsHelp)).toBeInTheDocument();
+});
+
 test('a changed or missing selection is explained without picking another template silently', async () => {
     const i18n = await translations('en'), api = fakeApi();
     api.templates.mockResolvedValue({ legacy: [], templates: [{ ...converted, origin: { templateId: 'legacy-1', version: 2 } }] });

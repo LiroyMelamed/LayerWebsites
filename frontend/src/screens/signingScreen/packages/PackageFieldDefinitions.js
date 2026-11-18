@@ -29,10 +29,10 @@ export default function PackageFieldDefinitions({definition,onChange,disabled}) 
                 {(field.source.kind==='role'?catalog?.roleFields:catalog?.fields?.filter(item=>item.key.startsWith(`${field.source.kind}.`)))?.map(item=><option key={item.key||item.property} value={item.property||item.key.slice(field.source.kind.length+1)}>{item.label}</option>)}
             </SigningSelect>}
             <SimpleCheckbox title={text('required')} checked={field.required} disabled={disabled} onChange={event=>update(field.key,{required:event.target.checked})}/>
-            <TertiaryButton size={buttonSizes.SMALL} disabled={disabled||used(field.key)} onPress={()=>onChange({...definition,fields:definition.fields.filter(item=>item.key!==field.key)})}>{text('remove')}</TertiaryButton>
+            <TertiaryButton size={buttonSizes.MEDIUM} disabled={disabled||used(field.key)} onPress={()=>onChange({...definition,fields:definition.fields.filter(item=>item.key!==field.key)})}>{text('remove')}</TertiaryButton>
         </div>)}
-        <SecondaryButton size={buttonSizes.SMALL} disabled={disabled||definition.fields.length>=150} onPress={()=>onChange({...definition,fields:[...definition.fields,{key:newKey('value'),label:'',source:{kind:'manual'},required:true}]})}>{text('newDataField')}</SecondaryButton>
+        <SecondaryButton size={buttonSizes.MEDIUM} disabled={disabled||definition.fields.length>=150} onPress={()=>onChange({...definition,fields:[...definition.fields,{key:newKey('value'),label:'',source:{kind:'manual'},required:true}]})}>{text('newDataField')}</SecondaryButton>
         {definition.dataRoles.map(role=><SimpleInput key={role.key} title={text('dataRole')} value={role.label} maxLength={120} disabled={disabled} timeToWaitInMilli={0} onChange={event=>onChange({...definition,dataRoles:definition.dataRoles.map(item=>item.key===role.key?{...item,label:event.target.value}:item)})}/>)}
-        <SecondaryButton size={buttonSizes.SMALL} disabled={disabled||definition.dataRoles.length>=40} onPress={()=>onChange({...definition,dataRoles:[...definition.dataRoles,{key:newKey('person'),label:text('dataRole')}]})}>{text('addDataRole')}</SecondaryButton>
+        <SecondaryButton size={buttonSizes.MEDIUM} disabled={disabled||definition.dataRoles.length>=40} onPress={()=>onChange({...definition,dataRoles:[...definition.dataRoles,{key:newKey('person'),label:text('dataRole')}]})}>{text('addDataRole')}</SecondaryButton>
     </details>;
 }

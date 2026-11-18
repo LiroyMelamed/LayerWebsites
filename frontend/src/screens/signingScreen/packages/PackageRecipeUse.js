@@ -14,6 +14,7 @@ import PdfViewer from '../../../components/specializedComponents/signFiles/pdfVi
 import {buttonSizes} from '../../../styles/buttons/buttonSizes';
 import './packages.scss';
 import {referencedFieldKeys} from './recipeEditorModel';
+import PackageUseSteps from './PackageUseSteps';
 
 export default function PackageRecipeUse({recipe,onBack,onCreated}) {
     const {t,direction,errorMessage}=useSigningLocale(),text=key=>t(`documentPackages.${key}`);
@@ -74,12 +75,17 @@ export default function PackageRecipeUse({recipe,onBack,onCreated}) {
     const missing=fields.some(field=>field.required&&!(values[field.key]?.value??field.value).trim());
     const shown=fields.filter(field=>!field.linked||field.missing||field.overridden);
     const filled=fields.filter(field=>field.linked&&!field.missing&&!field.overridden);
+    const reviewRoles=prepared?.definition.roles||[];
+    const reviewSpots=(prepared?.definition.documents[active]?.fields||[]).map(field=>({...field,
+        fieldType:field.type,isRequired:field.required,fieldLabel:field.label||'',
+        signerIndex:reviewRoles.findIndex(role=>role.key===field.roleKey),signerName:reviewRoles.find(role=>role.key===field.roleKey)?.label}));
     function input(field){return <div key={field.key}><SimpleInput title={field.label} aria-label={field.label} value={values[field.key]?.value??field.value}
         required={field.required} maxLength={field.maxLength||10000} timeToWaitInMilli={0} disabled={busy||resolving} onChange={event=>changeValue(field,event.target.value)}/>
         {field.linked&&field.missing&&<small>{text('missingValue')} · {field.source.kind==='role'?definition.dataRoles.find(role=>role.key===field.source.roleKey)?.label:text(field.source.kind==='office'?'officeSource':field.source.kind)}</small>}</div>;}
     return <section className="lw-packages" dir={direction}>
         <SigningBackButton onPress={prepared?()=>{setPrepared(null);setReviewed({});}:onBack} disabled={busy}>{text(prepared?'backToDetails':'backLibrary')}</SigningBackButton>
         <header className="lw-packages__header"><h1>{recipe.name}</h1><p>{text(prepared?'reviewDocuments':'peopleAndDetails')}</p></header>
+        <PackageUseSteps current={prepared?1:0}/>
         {error&&<StatusNotice><p>{errorMessage(error)}</p></StatusNotice>}
         {!prepared?<>
             <div className="lw-packages__fields">
@@ -91,13 +97,13 @@ export default function PackageRecipeUse({recipe,onBack,onCreated}) {
                 <div className="lw-packages__fields">{shown.map(input)}</div>
                 {!!filled.length&&<details><summary>{text('filledValues')}</summary><div className="lw-packages__fields">{filled.map(input)}</div></details>}
             </>}
-            <footer className="lw-packages__footer"><PrimaryButton size={buttonSizes.SMALL} disabled={busy||resolving||resolveFailed||missing} onPress={prepare}>{text(busy?'working':'prepareDocuments')}</PrimaryButton></footer>
+            <footer className="lw-packages__footer"><PrimaryButton size={buttonSizes.MEDIUM} disabled={busy||resolving||resolveFailed||missing} onPress={prepare}>{text(busy?'working':'prepareDocuments')}</PrimaryButton></footer>
         </>:<>
-            {prepared.definition.documents.length>1&&<nav className="lw-packages__documents">{prepared.definition.documents.map((doc,index)=><SecondaryButton size={buttonSizes.SMALL} key={doc.key} aria-pressed={active===index} onPress={()=>setActive(index)}>{doc.name}{reviewed[doc.key]?' ✓':''}</SecondaryButton>)}</nav>}
-            {pdf?<PdfViewer key={`${prepared.id}-${active}`} pdfFile={pdf} spots={[]} signers={[]} onDocumentReady={setReady}/>:<p role="status">{text('working')}</p>}
+            {prepared.definition.documents.length>1&&<nav className="lw-packages__documents">{prepared.definition.documents.map((doc,index)=><SecondaryButton size={buttonSizes.MEDIUM} key={doc.key} aria-pressed={active===index} onPress={()=>setActive(index)}>{doc.name}{reviewed[doc.key]?' ✓':''}</SecondaryButton>)}</nav>}
+            {pdf?<PdfViewer key={`${prepared.id}-${active}`} pdfFile={pdf} spots={reviewSpots} signers={reviewRoles.map((role,index)=>({UserId:index+1,Name:role.label}))} onDocumentReady={setReady}/>:<p role="status">{text('working')}</p>}
             <SimpleCheckbox title={text('reviewedDocument')} checked={!!reviewed[prepared.definition.documents[active].key]} disabled={!ready||busy}
                 onChange={e=>setReviewed(previous=>({...previous,[prepared.definition.documents[active].key]:e.target.checked}))}/>
-            <footer className="lw-packages__footer"><PrimaryButton size={buttonSizes.SMALL} disabled={busy||!prepared.definition.documents.every(doc=>reviewed[doc.key])} onPress={continueSigning}>{text(busy?'working':'chooseSigners')}</PrimaryButton></footer>
+            <footer className="lw-packages__footer"><PrimaryButton size={buttonSizes.MEDIUM} disabled={busy||!prepared.definition.documents.every(doc=>reviewed[doc.key])} onPress={continueSigning}>{text(busy?'working':'chooseSigners')}</PrimaryButton></footer>
         </>}
     </section>;
 }
