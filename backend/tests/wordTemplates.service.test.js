@@ -74,6 +74,7 @@ test('private Word library and per-use PDF service on isolated PostgreSQL', { sk
     const migration = fs.readFileSync(path.resolve(__dirname, '../migrations/2026-10-23_01_signing_word_sources.sql'), 'utf8');
     await t.test('additive migration applies twice, copies signing grants and grants nothing to PUBLIC', async () => {
         await db.query(migration); await db.query(migration);
+        await db.query(fs.readFileSync(path.resolve(__dirname, '../migrations/2026-11-18_02_signing_word_working_copies.sql'), 'utf8'));
         assert.equal((await db.query(`SELECT count(*)::int n FROM information_schema.role_table_grants WHERE grantee='word_service_dml' AND table_name LIKE 'signing_word_%'`)).rows[0].n, 12);
         assert.equal((await db.query(`SELECT count(*)::int n FROM information_schema.role_table_grants WHERE grantee='PUBLIC' AND table_name LIKE 'signing_word_%'`)).rows[0].n, 0);
     });

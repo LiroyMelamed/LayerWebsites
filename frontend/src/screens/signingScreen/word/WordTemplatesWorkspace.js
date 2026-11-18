@@ -13,6 +13,7 @@ import PrimaryButton from '../../../components/styledComponents/buttons/PrimaryB
 import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
 import TertiaryButton from '../../../components/styledComponents/buttons/TertiaryButton';
 import SimpleLoader from '../../../components/simpleComponents/SimpleLoader';
+import SimpleTextArea from '../../../components/simpleComponents/SimpleTextArea';
 import SimpleInput from '../../../components/simpleComponents/SimpleInput';
 import FileUploadBox from '../../../components/styledComponents/fileUpload/FileUploadBox';
 import { Text14, TextBold18, TextBold24 } from '../../../components/specializedComponents/text/AllTextKindFile';
@@ -43,7 +44,7 @@ const isDirtyDraft = draft => draft?.dirty === true || !!(draft?.source &&
     JSON.stringify(draft.roles ?? draft.source.roles ?? []) !== JSON.stringify(draft.source.roles || []) ||
     JSON.stringify(draft.bindings ?? draft.source.bindings ?? []) !== JSON.stringify(draft.source.bindings || [])));
 
-export default function WordTemplatesWorkspace({ onBack, onContinue, initialContext, resumeDraft, onDraftChange }) {
+export default function WordTemplatesWorkspace({ onBack, onContinue, initialContext, resumeDraft, onDraftChange, authoringOnly = false, onSourceSaved, onSignatureAnchor, signatureAnchors = [], onEditSignature, onUpdateSignature, onRemoveSignature, authoringControllerRef }) {
     const { t, direction, number } = useSigningLocale();
     const text = (key, values) => t(`signingWord.${key}`, values);
     const [sources, setSources] = useState([]);
@@ -62,9 +63,10 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
     const [roles, setRoles] = useState(() => initialDraft.current?.roles || initialDraft.current?.source?.roles || []);
     const [bindings, setBindings] = useState(() => initialDraft.current?.bindings || initialDraft.current?.source?.bindings || []);
     const [dirty, setDirty] = useState(() => isDirtyDraft(initialDraft.current));
-    const [mode, setMode] = useState(() => isDirtyDraft(initialDraft.current) || initialDraft.current?.mode === 'manage' ? 'manage' : 'use');
+    const [mode, setMode] = useState(() => authoringOnly || isDirtyDraft(initialDraft.current) || initialDraft.current?.mode === 'manage' ? 'manage' : 'use');
     const [selectedFile, setSelectedFile] = useState(null);
     const [selection, setSelection] = useState(null);
+    const [textRevision, setTextRevision] = useState(null);
     const [activeBindingId, setActiveBindingId] = useState(null);
     const [field, setField] = useState('');
     const [bindingTitle, setBindingTitle] = useState('');
@@ -155,8 +157,8 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
         });
     }, [nextContext, initialContext, clearPreview]); // Equal context objects must not replace the user's later choices.
     useEffect(() => {
-        draftListener.current?.({ source, name, roles, bindings, inputs, dirty, mode });
-    }, [source, name, roles, bindings, inputs, dirty, mode]);
+        draftListener.current?.({ source, name, roles, bindings, inputs, dirty, mode, busy });
+    }, [source, name, roles, bindings, inputs, dirty, mode, busy]);
     useEffect(() => {
         if (!preview) return;
         previewHeading.current?.focus(); previewHeading.current?.scrollIntoView?.({ block: 'start', behavior: 'auto' });
@@ -202,7 +204,7 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
     async function run(operation, message = 'working') {
         if (lock.current) return;
         lock.current = true; setBusyMessage(message); setBusy(true); setError(''); setNotice('');
-        try { await operation(); }
+        try { return await operation(); }
         catch (err) {
             if (alive.current) {
                 const invalidSource = message === 'uploadingSource' && err?.status === 422;
@@ -257,7 +259,25 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
             if (!alive.current) return;
             // Saving mappings does not clear explicitly entered preview inputs.
             const savedInputs = snapshot.inputs;
-            receive(result.source); setInputs(savedInputs); setNotice('saved');
+            receive(result.source); setInputs(savedInputs); setNotice('saved'); onSourceSaved?.(result.source);
+            return result.source;
+        });
+    }
+    useEffect(() => {
+        if (!authoringControllerRef) return undefined;
+        authoringControllerRef.current = { dirty, busy, save: saveSource };
+        return () => { authoringControllerRef.current = null; };
+    });
+    function reviseSelectedText() {
+        if (!textRevision || dirty || busy) return;
+        const snapshot = textRevision;
+        return run(async () => {
+            const result = await api.reviseText(source.id, { expectedVersion: source.version, sourceHash: source.sourceHash,
+                renderId: snapshot.selection.renderId, mapHash: snapshot.selection.mapHash,
+                selector: snapshot.selection.selector, replacement: snapshot.value });
+            if (!alive.current) return;
+            receive(result.source); setTextRevision(null); onSourceSaved?.(result.source);
+            setNotice(result.invalidatedBindingIds.length ? 'textRevisedFieldsAffected' : 'textRevised');
         });
     }
     async function resolveVisualSelection(selector) {
@@ -423,20 +443,20 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
     };
     const withoutGroupOverrides = (previous, prefix) => Object.fromEntries(Object.entries(previous.manualValues).filter(([key])=>!key.startsWith(prefix)));
 
-    return <section className={`lw-word${!source ? " lw-word--start" : ""}`} dir={direction} aria-label={text('title')}>
-        <SigningBackButton onPress={() => leave(onBack)}>{text('back')}</SigningBackButton>
-        <header className="lw-word__heading">
+    return <section className={`lw-word${!source ? " lw-word--start" : ""}${authoringOnly ? " lw-word--package" : ""}`} dir={direction} aria-label={text('title')}>
+        {!authoringOnly && <SigningBackButton onPress={() => leave(onBack)}>{text('back')}</SigningBackButton>}
+        {!authoringOnly && <header className="lw-word__heading">
             <div><h1><TextBold24>{text('title')}</TextBold24></h1><Text14>{text(mode === 'use' ? 'useIntro' : 'manageIntro')}</Text14></div>
             <SecondaryButton size={buttonSizes.SMALL} onPress={() => switchMode(mode === 'use' ? 'manage' : 'use')} disabled={busy}>
                 {text(mode === 'use' ? (source ? 'editTemplate' : 'manageTemplates') : 'useTemplates')}
             </SecondaryButton>
-        </header>
+        </header>}
         {error && <StatusNotice><p>{text(error)}</p></StatusNotice>}
         {notice && <p role="status" className="lw-word__notice">{text(notice)}</p>}
         {(busy || !listLoaded) && !authoringLoading && <div className="lw-word__loading" role="status" aria-live="polite" aria-busy="true">
             <SimpleLoader /><Text14>{text(busy ? busyMessage : 'loadingTemplates')}</Text14>
         </div>}
-        <div className="lw-word__library">
+        {!authoringOnly && <div className="lw-word__library">
             <label>{text('library')}<SigningSelect value={source?.id || ''} disabled={busy} onChange={event => openSource(event.target.value)}>
                 <option value="">{text('chooseSource')}</option>{sources.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
             </SigningSelect></label>
@@ -444,7 +464,7 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
                 <PrimaryButton size={buttonSizes.SMALL} disabled={busy} onPress={addTemplate}>{text('addTemplate')}</PrimaryButton>
             </div>}
             {!source && mode === 'use' && <Text14>{text(!listLoaded ? 'loadingTemplates' : sources.length ? 'chooseSourceHelp' : 'noTemplates')}</Text14>}
-        </div>
+        </div>}
         {mode === 'manage' && <>
             {!source && <section className="lw-word__section" aria-label={text('importSection')}>
                 <h2><TextBold18>{text('importSection')}</TextBold18></h2>
@@ -462,7 +482,7 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
                             onChange={event => edit(() => setName(event.target.value))} />
                         <div className="lw-word__editorActions">
                             <PrimaryButton size={buttonSizes.SMALL} disabled={mappingDisabled || !dirty || !name.trim() || roles.some(role => !role.label.trim())} onPress={saveSource}>{text('save')}</PrimaryButton>
-                            <SecondaryButton size={buttonSizes.SMALL} disabled={busy} onPress={() => switchMode('use')}>{text('previewTemplate')}</SecondaryButton>
+                            <SecondaryButton size={buttonSizes.SMALL} disabled={busy || (authoringOnly && dirty)} onPress={() => authoringOnly ? onBack() : switchMode('use')}>{text(authoringOnly ? 'backToPackage' : 'previewTemplate')}</SecondaryButton>
                         </div>
                     </div>
                     <p className="lw-word__muted">{text('signatureFlowHelp')}</p>
@@ -477,8 +497,8 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
                         <div className="lw-signing-pdfViewerWrapper">
                             <div className="lw-signing-pdfViewerRow lw-word__visualRow">
                                 <div className="lw-signing-pdfViewerMain">
-                                    <WordSourceViewer key={authoring.data.renderId} authoring={authoring.data} pdfFile={authoring.pdfFile} paragraphs={paragraphs} bindings={bindings} selection={selection}
-                                        controlsContainer={selectionControls} fieldColorClass={fieldColorClass} pendingField={`${activeGroup}.fullName`} activeBindingId={activeBindingId} onSelectBinding={selectBinding} disabled={busy || !!authoringError} onSelect={resolveVisualSelection} onSelectionStart={() => { selectionGeneration.current += 1; }}
+                                    <WordSourceViewer key={authoring.data.renderId} authoring={authoring.data} pdfFile={authoring.pdfFile} paragraphs={paragraphs} bindings={bindings} signatureAnchors={signatureAnchors} onUpdateSignature={onUpdateSignature} onRemoveSignature={onRemoveSignature} onEditSignature={onEditSignature} selection={selection}
+                                        controlsContainer={selectionControls} fieldColorClass={fieldColorClass} pendingField={`${activeGroup}.fullName`} activeBindingId={activeBindingId} onSelectBinding={id=>signatureAnchors.some(field=>field.id===id)?onEditSignature?.(id):selectBinding(id)} disabled={busy || !!authoringError} onSelect={resolveVisualSelection} onSelectionStart={() => { selectionGeneration.current += 1; }}
                                         onError={message => { cancelSelection(); setAuthoringError(message); }} fieldLabel={fieldLabel} text={text} />
                                 </div>
                                 <aside className="lw-word__mappingForm" aria-label={text('mapping')}>
@@ -509,6 +529,10 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
                                                 else setRequired(checked);
                                             }} />{text('required')}</label>
                                         <TertiaryButton size={buttonSizes.SMALL} disabled={busy} onPress={cancelSelection}>{text('cancelSelection')}</TertiaryButton>
+                                        {selection?.kind === 'range' && onSignatureAnchor && <SecondaryButton size={buttonSizes.SMALL} disabled={busy || dirty} onPress={() => onSignatureAnchor(selection.anchor)}>{text('signatureHere')}</SecondaryButton>}
+                                        {selection?.kind === 'range' && <SecondaryButton size={buttonSizes.SMALL} disabled={busy || dirty}
+                                            onPress={() => setTextRevision({ selection, value: selection.selectedText })}>{text('editSelectedText')}</SecondaryButton>}
+                                        {selection?.kind === 'range' && dirty && <Text14>{text('saveBeforeTextEdit')}</Text14>}
                                         {activeBinding && <TertiaryButton size={buttonSizes.SMALL} disabled={mappingDisabled} onPress={() => {
                                             edit(() => setBindings(previous => previous.filter(binding => binding.id !== activeBinding.id))); cancelSelection();
                                         }}>{text('removeBinding')}</TertiaryButton>}
@@ -602,6 +626,18 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
                 <div className="lw-word__actions"><PrimaryButton size={buttonSizes.SMALL} disabled={busy || !pdfReady || !acknowledged || dirty || !onContinue} onPress={continueToSigning}>{text('continue')}</PrimaryButton></div>
             </section>}
         </>}
+        {textRevision && <SimplePopUp isOpen onClose={() => { if (!busy) setTextRevision(null); }} role="dialog" aria-modal="true" aria-label={text('editSelectedText')} dir={direction}>
+            <section className="lw-word__textRevision">
+                <h2><TextBold18>{text('editSelectedText')}</TextBold18></h2>
+                <Text14>{text('textRevisionHelp')}</Text14>
+                <SimpleTextArea title={text('newText')} aria-label={text('newText')} value={textRevision.value} maxLength={10000} disabled={busy}
+                    onChange={value => setTextRevision(previous => ({ ...previous, value }))} />
+                <div className="lw-word__actions">
+                    <SecondaryButton size={buttonSizes.SMALL} disabled={busy} onPress={() => setTextRevision(null)}>{text('cancelSelection')}</SecondaryButton>
+                    <PrimaryButton size={buttonSizes.SMALL} disabled={busy || textRevision.value === textRevision.selection.selectedText || /[\r\n\t]/.test(textRevision.value)} onPress={reviseSelectedText}>{text('saveTextRevision')}</PrimaryButton>
+                </div>
+            </section>
+        </SimplePopUp>}
         {leaveAction && <SimplePopUp isOpen onClose={() => setLeaveAction(null)} role="dialog" aria-modal="true" aria-label={text('discardTitle')} dir={direction}>
             <ConfirmationDialog title={text('discardTitle')} message={text('discardMessage')} confirmText={text('discard')} cancelText={text('keepEditing')}
                 onCancel={() => setLeaveAction(null)} onConfirm={() => { const action = leaveAction; setLeaveAction(null); action(); }} />

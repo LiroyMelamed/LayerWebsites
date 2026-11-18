@@ -287,3 +287,34 @@ test('Word package associations stay pinned to the private filled preview in pre
     assert.equal(await gate.assertWordPackageContext({ query() { throw new Error('generic flow must not query Word'); } }, scope,
         definition(false), [{ caseId: 99, clientId: 98 }]), null);
 });
+
+test('mixed Word sources retain independent immutable provenance through publication and reject cross-document substitution', async t => {
+    const { pool } = await fixture(t);
+    const second = { ...origin, sourceId: randomUUID(), previewId: randomUUID(), pdfHash: '2'.repeat(64) };
+    const secondArtifact = randomUUID();
+    await pool.query('INSERT INTO signing_word_sources VALUES($1,$2,11,2,$3,$4,false)', [second.sourceId, contextId, second.sourceHash, second.bindingsHash]);
+    await pool.query(`INSERT INTO signing_word_previews(id,owner_context_id,created_by,source_id,source_version,source_sha256,
+        bindings_hash,filled_docx_sha256,values_hash,inputs_hash,pdf_sha256) VALUES($1,$2,11,$3,2,$4,$5,$6,$7,$8,$9)`,
+    [second.previewId, contextId, second.sourceId, second.sourceHash, second.bindingsHash, second.filledDocxHash, second.valuesHash, second.inputsHash, second.pdfHash]);
+    await pool.query(`INSERT INTO signing_artifacts VALUES($1,$2,11,'source','ready',$3,$4,8,'second.pdf')`,
+    [secondArtifact, contextId, second.pdfHash, { pages: [{ width: 600, height: 800 }], wordOrigin: second }]);
+    const mixed = definition();
+    mixed.origin = { kind: 'word_documents' };
+    mixed.documents[0].wordOrigin = clone(origin);
+    mixed.documents.push({ ...clone(mixed.documents[0]), key: 'second', sourceArtifactId: secondArtifact, sourceHash: second.pdfHash,
+        wordOrigin: second, fields: [{ ...mixed.documents[0].fields[0], id: 'secondSignature' }] });
+    mixed.documents.push({ ...definition(false).documents[0], key: 'ordinary', fields: [{ ...definition(false).documents[0].fields[0], id: 'pdfSignature' }] });
+    const draft = await templates.createDraft(pool, scope, { definition: mixed });
+    const published = await templates.publish(pool, scope, draft.template_id, draft.id, draft.edit_version, draft.definition_hash);
+    assert.deepEqual(published.definition.documents.map(d => d.wordOrigin?.previewId), [origin.previewId, second.previewId, undefined]);
+    await rejects(authoring.loadVersion(pool, other, draft.id), 'NOT_FOUND');
+    const swapped = clone(mixed); swapped.documents[0].wordOrigin = second;
+    await rejects(templates.createDraft(pool, scope, { definition: swapped }), 'WORD_ORIGIN_CHANGED');
+    const stripped = clone(mixed); delete stripped.documents[1].wordOrigin;
+    await rejects(templates.createDraft(pool, scope, { definition: stripped }), 'INVALID_WORD_ORIGIN');
+    const relabeled = clone(mixed); relabeled.origin = clone(origin);
+    await rejects(templates.createDraft(pool, scope, { definition: relabeled }), 'WORD_ORIGIN_CHANGED');
+    await pool.query('UPDATE signing_word_sources SET version=3 WHERE id=$1', [second.sourceId]);
+    await rejects(authoring.loadVersion(pool, scope, published.id), 'WORD_SOURCE_CHANGED');
+    assert.equal((await creation.listTemplates(pool, scope)).templates.length, 0);
+});

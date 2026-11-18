@@ -5,7 +5,8 @@ const { expect, fail } = require('../../lib/signingV2/errors');
 const KEYS = ['kind', 'previewId', 'sourceId', 'sourceVersion', 'sourceHash', 'bindingsHash',
     'filledDocxHash', 'valuesHash', 'inputsHash', 'pdfHash', 'authorUserId'];
 const HASHES = ['sourceHash', 'bindingsHash', 'filledDocxHash', 'valuesHash', 'inputsHash', 'pdfHash'];
-const isWord = definition => definition?.origin?.kind === 'word_preview';
+const isWord = definition => ['word_preview', 'word_documents', 'package_preparation'].includes(definition?.origin?.kind);
+const isMixed = definition => definition?.origin?.kind === 'word_documents';
 const plain = value => value && typeof value === 'object' && !Array.isArray(value)
     && Object.getPrototypeOf(value) === Object.prototype;
 
@@ -21,17 +22,19 @@ function validateWordOrigin(origin) {
 // Arguments below are trusted SQL identifiers/parameter placeholders from callers.
 // Inspect source metadata too, so removing definition.origin cannot broaden access.
 function wordTemplateScopeSql(user, definition = 'v.definition', author = 'v.created_by', owner = 't.owner_userid', context = 'v.owner_context_id') {
-    return `(NOT (COALESCE(${definition}->'origin'->>'kind','')='word_preview' OR EXISTS (
+    return `(NOT (COALESCE(${definition}->'origin'->>'kind','') IN ('word_preview','word_documents','package_preparation') OR EXISTS (
         SELECT 1 FROM jsonb_array_elements(CASE WHEN jsonb_typeof(${definition}->'documents')='array'
             THEN ${definition}->'documents' ELSE '[]'::jsonb END) word_doc
         JOIN signing_artifacts word_asset ON word_asset.id::text=word_doc->>'sourceArtifactId'
             AND word_asset.owner_context_id=${context}
-        WHERE word_asset.metadata ? 'wordOrigin')) OR (${author}=${user} AND ${owner}=${user}))`;
+        WHERE word_asset.metadata ? 'wordOrigin' OR word_asset.metadata ? 'packagePreparation')) OR (${author}=${user} AND ${owner}=${user}))`;
 }
 
 function wordArtifactScopeSql(user, alias = 'a') {
-    return `(NOT COALESCE(${alias}.metadata ? 'wordOrigin',false) OR (${alias}.created_by=${user}
-        AND ${alias}.metadata->'wordOrigin'->>'authorUserId'=${user}::text))`;
+    return `((NOT COALESCE(${alias}.metadata ? 'wordOrigin',false) OR (${alias}.created_by=${user}
+        AND ${alias}.metadata->'wordOrigin'->>'authorUserId'=${user}::text))
+        AND (NOT COALESCE(${alias}.metadata ? 'packagePreparation',false) OR (${alias}.created_by=${user}
+        AND ${alias}.metadata->'packagePreparation'->>'authorUserId'=${user}::text)))`;
 }
 
 async function assertCurrentWordOrigin(db, scope, origin) {
@@ -53,6 +56,8 @@ async function assertCurrentWordOrigin(db, scope, origin) {
 }
 
 async function assertWordDefinition(db, scope, definition, { previousDefinition, sources } = {}) {
+    const preparation = await require('./packagePreparationOrigin').assertDefinition(db,scope,definition,{previousDefinition});
+    if (preparation) return preparation.origin;
     const documents = Array.isArray(definition?.documents) ? definition.documents : [];
     const previousDocuments = Array.isArray(previousDefinition?.documents) ? previousDefinition.documents : [];
     const ids = [...new Set([...documents, ...previousDocuments].map(doc => doc?.sourceArtifactId).filter(id => UUID.test(String(id))))];
@@ -62,38 +67,56 @@ async function assertWordDefinition(db, scope, definition, { previousDefinition,
         FROM signing_artifacts WHERE owner_context_id=$1 AND id=ANY($2::uuid[]) AND metadata ? 'wordOrigin' FOR SHARE`, [scope.contextId, ids])).rows : [];
     if (!isWord(definition) && !isWord(previousDefinition) && !rows.length) return null;
     expect(isWord(definition), 'WORD_ORIGIN_REQUIRED');
-    const origin = validateWordOrigin(definition.origin);
-    if (origin.authorUserId !== scope.userId) fail('NOT_FOUND', 404);
-    if (isWord(previousDefinition)) expect(canonical(origin) === canonical(validateWordOrigin(previousDefinition.origin)), 'WORD_ORIGIN_CHANGED');
+    const mixed = isMixed(definition);
+    if (mixed) expect(plain(definition.origin) && Object.keys(definition.origin).length === 1, 'INVALID_WORD_ORIGIN');
+    const legacyOrigin = mixed ? null : validateWordOrigin(definition.origin);
+    // An existing one-source materialization cannot be re-labelled as mixed (or
+    // vice versa) to discard its origin. A new preparation creates a new draft.
+    if (isWord(previousDefinition)) {
+        expect(mixed === isMixed(previousDefinition), 'WORD_ORIGIN_CHANGED');
+        if (!mixed) expect(canonical(legacyOrigin) === canonical(validateWordOrigin(previousDefinition.origin)), 'WORD_ORIGIN_CHANGED');
+    }
     const byId = new Map(rows.map(row => [row.id, row]));
-    let bound = 0;
+    const origins = [];
     for (const document of documents) {
         const source = byId.get(document.sourceArtifactId);
-        if (!source) continue;
+        if (!source) {
+            expect(!document.wordOrigin, 'WORD_ORIGIN_CHANGED');
+            continue;
+        }
+        const origin = mixed ? validateWordOrigin(document.wordOrigin) : legacyOrigin;
         const stored = validateWordOrigin(source.metadata.wordOrigin);
-        if (source.owner_context_id !== scope.contextId || source.created_by !== scope.userId || stored.authorUserId !== scope.userId) fail('NOT_FOUND', 404);
+        if (source.owner_context_id !== scope.contextId || source.created_by !== scope.userId || stored.authorUserId !== scope.userId
+            || origin.authorUserId !== scope.userId) fail('NOT_FOUND', 404);
         expect(source.kind === 'source' && source.state === 'ready' && canonical(stored) === canonical(origin), 'WORD_ORIGIN_CHANGED');
         expect(source.content_sha256 === origin.pdfHash && document.sourceHash === origin.pdfHash, 'WORD_ORIGIN_CHANGED');
-        bound += 1;
+        const previous = previousDocuments.find(item => item.key === document.key && item.sourceArtifactId === document.sourceArtifactId);
+        if (mixed && previous) expect(canonical(previous.wordOrigin) === canonical(origin), 'WORD_ORIGIN_CHANGED');
+        origins.push(origin);
     }
-    expect(bound > 0, 'WORD_ORIGIN_REQUIRED');
-    await assertCurrentWordOrigin(db, scope, origin);
-    return origin;
+    expect(origins.length > 0, 'WORD_ORIGIN_REQUIRED');
+    for (const origin of new Map(origins.map(item => [item.previewId, item])).values()) await assertCurrentWordOrigin(db, scope, origin);
+    return mixed ? origins : legacyOrigin;
 }
 
 async function assertWordPackageContext(db, scope, definition, packages) {
+    if (require('./packagePreparationOrigin').isPrepared(definition)) return require('./packagePreparationOrigin').assertContext(db,scope,definition,packages);
     if (!isWord(definition)) return null;
-    const origin = validateWordOrigin(definition.origin);
-    if (origin.authorUserId !== scope.userId) fail('NOT_FOUND', 404);
-    const preview = (await db.query(`/*word-origin:package-context*/ SELECT client_id,case_id FROM signing_word_previews
-        WHERE owner_context_id=$1 AND created_by=$2 AND id=$3 FOR SHARE`, [scope.contextId, scope.userId, origin.previewId])).rows[0];
-    if (!preview) fail('NOT_FOUND', 404);
-    // These are associations used to fill this exact immutable PDF, not signer
-    // identities. Representatives and additional signing roles remain explicit.
-    for (const [column, key] of [['client_id', 'clientId'], ['case_id', 'caseId']]) {
-        if (preview[column] != null && packages.some(item => item[key] !== Number(preview[column]))) fail('WORD_CONTEXT_CHANGED', 412);
+    const origins = isMixed(definition) ? definition.documents.filter(doc => doc.wordOrigin).map(doc => validateWordOrigin(doc.wordOrigin))
+        : [validateWordOrigin(definition.origin)];
+    expect(origins.length > 0, 'WORD_ORIGIN_REQUIRED');
+    const contexts = [];
+    for (const origin of origins) {
+        if (origin.authorUserId !== scope.userId) fail('NOT_FOUND', 404);
+        const preview = (await db.query(`/*word-origin:package-context*/ SELECT client_id,case_id FROM signing_word_previews
+            WHERE owner_context_id=$1 AND created_by=$2 AND id=$3 FOR SHARE`, [scope.contextId, scope.userId, origin.previewId])).rows[0];
+        if (!preview) fail('NOT_FOUND', 404);
+        for (const [column, key] of [['client_id', 'clientId'], ['case_id', 'caseId']]) {
+            if (preview[column] != null && packages.some(item => item[key] !== Number(preview[column]))) fail('WORD_CONTEXT_CHANGED', 412);
+        }
+        contexts.push({ clientId: preview.client_id ?? null, caseId: preview.case_id ?? null });
     }
-    return { clientId: preview.client_id ?? null, caseId: preview.case_id ?? null };
+    return isMixed(definition) ? contexts : contexts[0];
 }
 
 async function filterAvailableWordVersions(db, scope, rows) {
@@ -102,7 +125,7 @@ async function filterAvailableWordVersions(db, scope, rows) {
         if (isWord(row.definition)) {
             try { await assertWordDefinition(db, scope, row.definition); }
             catch (error) {
-                if (['NOT_FOUND', 'FORBIDDEN', 'WORD_SOURCE_CHANGED', 'INVALID_WORD_ORIGIN', 'WORD_ORIGIN_CHANGED', 'WORD_ORIGIN_REQUIRED'].includes(error.errorCode || error.code)) continue;
+                if (['NOT_FOUND', 'FORBIDDEN', 'WORD_SOURCE_CHANGED', 'INVALID_WORD_ORIGIN', 'WORD_ORIGIN_CHANGED', 'WORD_ORIGIN_REQUIRED','PACKAGE_SOURCE_CHANGED','PACKAGE_ORIGIN_CHANGED','PACKAGE_ORIGIN_REQUIRED'].includes(error.errorCode || error.code)) continue;
                 throw error;
             }
         }
@@ -111,5 +134,5 @@ async function filterAvailableWordVersions(db, scope, rows) {
     return available;
 }
 
-module.exports = { validateWordOrigin, assertWordDefinition, assertCurrentWordOrigin, assertWordPackageContext,
+module.exports = { isWord, validateWordOrigin, assertWordDefinition, assertCurrentWordOrigin, assertWordPackageContext,
     wordTemplateScopeSql, wordArtifactScopeSql, filterAvailableWordVersions };

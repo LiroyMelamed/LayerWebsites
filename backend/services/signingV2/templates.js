@@ -21,7 +21,7 @@ async function loadHead(db, scope, templateId, lock = false) {
     if (!result.rowCount) fail('NOT_FOUND', 404);
     if (lock && result.rows[0].owner_userid !== scope.userId && !scope.manage) fail('FORBIDDEN', 403);
     if (lock) await lockAvailableOrigin(db, scope, result.rows[0].definition);
-    else if (result.rows[0].definition?.origin?.kind === 'word_preview') await assertWordDefinition(db, scope, result.rows[0].definition);
+    else if (require('./wordOrigin').isWord(result.rows[0].definition)) await assertWordDefinition(db, scope, result.rows[0].definition);
     return result.rows[0];
 }
 
@@ -119,6 +119,14 @@ async function publish(pool, scope, templateId, versionId, expectedVersion, expe
         if (!result.rowCount) fail('NOT_FOUND', 404);
         const draft = result.rows[0];
         if (draft.created_by !== scope.userId) fail('NOT_FOUND', 404);
+        // A lost response must not strand an immutable, reviewed preparation.
+        // This narrow retry accepts only the exact version/hash just published
+        // by this actor; normal editable templates retain their existing contract.
+        if (draft.state === 'published' && draft.definition?.origin?.kind === 'package_preparation'
+            && draft.edit_version === expectedVersion + 1 && draft.definition_hash === expectedHash) {
+            await validateSources(db, scope, validateDefinition(draft.definition));
+            return draft;
+        }
         if (draft.state !== 'draft' || draft.edit_version !== expectedVersion || draft.definition_hash !== expectedHash) fail('VERSION_CHANGED', 412);
         const latest = (await db.query("SELECT id FROM signing_template_versions WHERE owner_context_id=$1 AND template_id=$2 AND state='published' ORDER BY version DESC LIMIT 1", [scope.contextId, templateId])).rows[0];
         if ((latest?.id || null) !== draft.base_version_id) fail('VERSION_CHANGED', 412);
