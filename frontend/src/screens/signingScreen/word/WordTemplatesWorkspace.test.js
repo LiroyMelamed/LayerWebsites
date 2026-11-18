@@ -716,6 +716,8 @@ test('a selected record with a missing required value offers a persistent docume
     await open(mapped(), { initialContext: {clientRecord:{id:42,label:'Client'}} });
     await waitFor(()=>expect(screen.getByLabelText('fieldLabel fields.identityNumber')).toBeInTheDocument());
     expect(screen.getByRole('button',{name:'preview'})).toBeDisabled();
+    expect(screen.getByText('missingRecordValue')).toBeInTheDocument();
+    expect(screen.getByText('fieldLabel fields.identityNumber')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('fieldLabel fields.identityNumber'),{target:{value:'000000018'}});
     await waitFor(()=>expect(screen.getByRole('button',{name:'preview'})).toBeEnabled());
     expect(screen.getByLabelText('fieldLabel fields.identityNumber')).toHaveValue('000000018');
@@ -730,4 +732,19 @@ test('input preflight from a different template cannot enable generation', async
     await waitFor(()=>expect(screen.getByText('valuesCheckFailed')).toBeInTheDocument());
     expect(screen.getByRole('button',{name:'preview'})).toBeDisabled();
     expect(api.preview).not.toHaveBeenCalled();
+});
+
+test('manual plot fields retain their titles and never claim missing client data', async () => {
+    const saved = { ...source(), bindings: [{ ...binding('manual.plot'), fieldLabel: 'גוש' }, { ...binding('manual.parcel'), fieldLabel: 'חלקה' }] };
+    api.resolveInputs.mockImplementation(async (id,payload)=>({ sourceId:id, sourceVersion:payload.expectedVersion,
+        fields:saved.bindings.map(item=>({ key:item.field, required:true, missing:!payload.inputs.manualValues[item.field] })) }));
+    await open(saved);
+    expect(await screen.findByLabelText('גוש')).toBeInTheDocument();
+    expect(screen.getByLabelText('חלקה')).toBeInTheDocument();
+    expect(screen.queryByText('missingRecordValue')).not.toBeInTheDocument();
+    expect(screen.getAllByText('documentOnlyValue')).toHaveLength(2);
+    fireEvent.change(screen.getByLabelText('גוש'),{target:{value:'12345'}});
+    fireEvent.change(screen.getByLabelText('חלקה'),{target:{value:'67'}});
+    await waitFor(()=>expect(screen.getByRole('button',{name:'preview'})).toBeEnabled());
+    expect(screen.queryByText('missingRecordValue')).not.toBeInTheDocument();
 });
