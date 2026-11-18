@@ -8,7 +8,8 @@
   &__header, &__documentHeading { justify-content: space-between; flex-wrap: wrap; }
   &__header > .lw-simpleInput { max-inline-size: 28rem; min-inline-size: 14rem; }
   &__steps { justify-content: center; margin-block: v.$space-4 v.$space-6; flex-wrap: wrap; }
-  &__steps [aria-current='step'] { background: var(--primary, #2a4365); color: white; }
+  &__compactUpload .lw-fileUploadBox__dropzone { min-block-size: 0; padding-block: .5rem; flex-direction: row; gap: 1rem; }
+  &__compactUpload .lw-fileUploadBox__hint { margin: 0; }
   &__documents { overflow-x: auto; padding-block: v.$space-3; }
   &__documents > * { flex: 0 0 auto; }
   &__actions { flex-wrap: wrap; }

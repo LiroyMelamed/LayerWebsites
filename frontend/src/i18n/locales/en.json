@@ -3720,7 +3720,8 @@
     "valuesCheckFailed": "Could not check the values. Select the record again.",
     "useRecordValue": "Use record value",
     "backToPackage": "Back to package",
-    "signatureHere": "Add signature here"
+    "signatureHere": "Add signature here",
+    "savePackageFields": "Save fields"
   },
   "stageAutomation": {
     "title": "Automatic documents by case stage",
@@ -3903,6 +3904,7 @@
     "unnamedDraft": "Unnamed package",
     "resume": "Resume editing",
     "officeSource": "Office",
-    "moveSignatureKeyboard": "Focus this instruction and use arrow keys to move the signature. Hold Shift for a larger step."
+    "moveSignatureKeyboard": "Focus this instruction and use arrow keys to move the signature. Hold Shift for a larger step.",
+    "reviewPrivateSource": "I reviewed the sources and fields. This package will remain private."
   }
 }

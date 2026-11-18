@@ -478,14 +478,14 @@ export default function WordTemplatesWorkspace({ onBack, onContinue, initialCont
                 <section className={`lw-word__section lw-word__editor${selection || activeBinding || resolvingSelection ? ' lw-word__editor--choosing' : ''}`} aria-label={text('mapping')}>
                     <div className="lw-word__editorHeader">
                         <div><h2><TextBold18>{text('mapping')}</TextBold18></h2><p className="lw-word__saveState" aria-live="polite">{text(dirty ? 'unsavedChanges' : 'allChangesSaved')}</p></div>
-                        <SimpleInput title={text('name')} aria-label={text('name')} value={name} maxLength={160} disabled={busy} timeToWaitInMilli={0}
-                            onChange={event => edit(() => setName(event.target.value))} />
+{!authoringOnly && <SimpleInput title={text('name')} aria-label={text('name')} value={name} maxLength={160} disabled={busy} timeToWaitInMilli={0}
+                            onChange={event => edit(() => setName(event.target.value))} />}
                         <div className="lw-word__editorActions">
-                            <PrimaryButton size={buttonSizes.SMALL} disabled={mappingDisabled || !dirty || !name.trim() || roles.some(role => !role.label.trim())} onPress={saveSource}>{text('save')}</PrimaryButton>
+                            <PrimaryButton size={buttonSizes.SMALL} disabled={mappingDisabled || !dirty || !name.trim() || roles.some(role => !role.label.trim())} onPress={saveSource}>{text(authoringOnly?'savePackageFields':'save')}</PrimaryButton>
                             <SecondaryButton size={buttonSizes.SMALL} disabled={busy || (authoringOnly && dirty)} onPress={() => authoringOnly ? onBack() : switchMode('use')}>{text(authoringOnly ? 'backToPackage' : 'previewTemplate')}</SecondaryButton>
                         </div>
                     </div>
-                    <p className="lw-word__muted">{text('signatureFlowHelp')}</p>
+                    {!authoringOnly && <p className="lw-word__muted">{text('signatureFlowHelp')}</p>}
                     {authoringLoading && <div className="lw-word__loading lw-word__documentLoading" role="status" aria-live="polite" aria-busy="true">
                         <SimpleLoader /><Text14>{text('authoringLoading')}</Text14>
                     </div>}
