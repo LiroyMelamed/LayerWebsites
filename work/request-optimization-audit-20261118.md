@@ -30,3 +30,19 @@ Calendar request-key deduplication, debounce and visible-only polling already ex
 `optimization-final-regressions.log` in `/Users/liroymelamed/.cache/melamedia-builds/document-workflow-20261117`: 71 tests in 10 suites passed, including request counts, 24-second deferred responses, identity isolation, startup token rotation, permission-denial clearing and the original case-loading regressions. Earlier attempts failed due to an incomplete i18n test double in the added stage-panel test; the final run passes. Existing React test warnings remain.
 
 Live QA and rollout will be recorded below; automated component tests are not a production load test.
+
+## Live QA and release
+
+Product `edffa386`; QA frontend `ca57a9e8`. Authenticated QA verified list entry, direct template reload, return to list, reminders/filter, new-event open/close, tracking and participant summary. Nginx snapshots show exactly one legacy-file read on entry and no extra legacy read on template reload; one reminders read per entry/filter; reopening the calendar form increments the staff-read count by one. Tracking and summary finish loading. Sampled responses were 200/304, with no 429. No invitations or saved records were created by this verification.
+
+Main component regression: 71/71. Melamed merged regression: 75/75, retaining four pre-existing tenant capability tests while resolving an append-only test conflict. Source files changed by this patch are identical between QA and client branches.
+
+Frontend releases:
+- QA: `ca57a9e8` (`main.d42f998a.js`)
+- MelamedLaw: `7cf0bb5b` (`main.099ef26b.js`)
+- AshrafEssa: `64a7e24d` (`main.39b558e5.js`)
+- MorLevi: `9d2199bb` (`main.d2f5db67.js`)
+
+All four sites' public HTTPS manifests and entrypoint bytes match their builds (`optimization-production-https.log`, `request-optimization-20261118/https-proof.json`). Post-deploy authenticated browser smoke: Melamed signing list loaded (0 pending, 3 signed); Ashraf reminders loaded with pagination (44); Mor reminders loaded its empty state. Existing root branding and old immutable chunks were preserved. Backends and customer data were unchanged. Tag: `production-request-optimization-20261118` on product commit.
+
+Evidence directory: `/Users/liroymelamed/.cache/melamedia-builds/document-workflow-20261117/request-optimization-20261118`. Includes sanitized request counts, QA screenshots, publication receipts and rollback entrypoints. No native-device run or full signing/send end-to-end is claimed for this request-only patch. Slow-response and identity-race proof comes from automated tests, not artificially throttled production traffic.
