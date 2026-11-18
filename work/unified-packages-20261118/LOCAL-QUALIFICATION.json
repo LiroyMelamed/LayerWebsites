@@ -1,6 +1,6 @@
 {
   "baseline": "d9f7b33c80284737dd245eac6a0bf022fc15d902",
-  "scope": "Local regression candidate only; live QA, production and Figma remain pending",
+  "scope": "Unified-package release qualification: 70 unchanged backend regressions; 172 current frontend tests; branded production build; actual QA admin/signer flow, inbox invitation, SMS OTP, two signed documents, evidence and recipient completed-copy download. Production rollout and Figma still pending.",
   "sources": {
     "backend/lib/wordTemplates/visual.js": "c42e598aae7f63ebfb2e4c7e375391b9c97018bd992f721afc223bded612aeb0",
     "backend/routes/signingV2Routes.js": "6c0b779a536317912209633812a0c06c392068ab56f571a29561a9b028869575",
@@ -17,18 +17,18 @@
     "backend/tests/wordTemplates.service.test.js": "7046c48faab963b856d634d15cd9adf42346f41e0b84d3eb90f2a09fdbb93f48",
     "backend/tests/wordTemplates.visual.test.js": "fa2687bb5afb1081437b5c4b01c067221e6135eaa6644adedcf209347cfaa33a",
     "frontend/src/api/wordTemplatesApi.js": "f3f75e4dd45886bda6450b94af8a442aec93cd856782811b06c1e4e5277293da",
-    "frontend/src/i18n/locales/ar.json": "1fe2d4cd421bcdd103ca07af821635e99a00c90fcfff9e9fbe03d1c7d2449bd8",
-    "frontend/src/i18n/locales/en.json": "769aa807214b2fd1d676f53fe428f559bad31ea743af08792f08695dae078ca3",
-    "frontend/src/i18n/locales/he.json": "c6d39ca0bd3aa555be39207ed8accda6fe0807c527bf316fe36e2600e1dca63b",
+    "frontend/src/i18n/locales/ar.json": "d563ab096c8f874431ad4d0267f52fac54414d98bdbf10a47b71bf2abe04fde6",
+    "frontend/src/i18n/locales/en.json": "5831ee975a099d0531ef511df7d52378c6a4b9d32970abbee39de30027701b6b",
+    "frontend/src/i18n/locales/he.json": "044137cf155df47d9f8075058046bea67805899f6f24045d1d6c725ce32b584e",
     "frontend/src/screens/signingScreen/SigningManagerScreen.js": "a24d984272955173582d15f14043ebc26b1967e27716556be6b7577f11634c3a",
-    "frontend/src/screens/signingScreen/templates/PackageComposer.js": "2e21f3ade4a03c91dcb8f1a11f4247587760b3bb2976f75b8b5fe3662f965a5d",
+    "frontend/src/screens/signingScreen/templates/PackageComposer.js": "7c19ed4aacd3c0ce54f36e34e392c46cbde5cc66d4b5e704107b034cc6421a87",
     "frontend/src/screens/signingScreen/templates/TemplateBuilder.js": "546761b00fdac89b2b8278885a8825cb18e4dd372da5861e91f062d6242f072e",
     "frontend/src/screens/signingScreen/templates/TemplatesWorkspace.js": "cf5744e3dc2c11bb9e56bfa5ac7eb0f9b50d7d2e58ec2b713024cc26bd87d191",
     "frontend/src/screens/signingScreen/templates/TemplatesWorkspace.test.js": "f26a33d2356340cec4905cef81a578ccc645c7d4182a22c8204468b29eb0611b",
     "frontend/src/screens/signingScreen/word/WordSourceViewer.js": "d184fb82992deb676d53a15d1faa83f63b63f9843e9e5befaa8cb36d3606fac1",
     "frontend/src/screens/signingScreen/word/WordSourceViewer.test.js": "54afc3e9d7e13b33ec914872184c77d4ad84acf1dd21fec60098210003e8e748",
-    "frontend/src/screens/signingScreen/word/WordTemplatesWorkspace.js": "e34d2e831a6e6f847526633f10c3613db05f3aef6fd3d5ae5a76c95818597d92",
-    "frontend/src/screens/signingScreen/word/WordTemplatesWorkspace.scss": "937e995267518cb91a527713488ef04f91a4df5a2024aa42b77093c23218e86b",
+    "frontend/src/screens/signingScreen/word/WordTemplatesWorkspace.js": "e3e1ba96ac76fdf918abd8691195c1546b3d2a25aa2d07e121f666f923bfbb4c",
+    "frontend/src/screens/signingScreen/word/WordTemplatesWorkspace.scss": "08b7bcdde612694c998661bf99eee12ae369c23b240e731ca42bda189b9ea973",
     "frontend/src/screens/signingScreen/word/WordTemplatesWorkspace.test.js": "3e55e7ef633f1786448ebc4399f1a3dcf1afa42df4a3793caaf10a015be87d82",
     "backend/lib/signingV2/packageRecipe.js": "2bd2e7f8d1ce2e5112e8f311fa01eb6173129673610642848be6c81734970de2",
     "backend/lib/wordTemplates/reviseText.js": "b845676b191b791c24fc3f314e414206b55eae04864aea7ab331523978cb17c6",
@@ -52,13 +52,13 @@
     "backend/tests/wordSignatureAnchors.test.js": "65535d53b6b0c6667fdeb44a885d41c464470fcbbcbd5f6937d826a003ddb1fe",
     "backend/tests/wordTextRevision.test.js": "0cebe32c817f1e8de475ae7afbde9fa046db1fc61f7e9c01bd00f20afdedc6d0",
     "frontend/src/api/packageRecipesApi.js": "9fceecabfa6c81f117787abc4a71053d521e98915cb9e19b971e80e4793e6286",
-    "frontend/src/screens/signingScreen/packages/PackageFieldDefinitions.js": "a2c9fd40c0d41ef6672d9290472428303162fbdcd043e93592f1ecd6334b2755",
-    "frontend/src/screens/signingScreen/packages/PackageRecipeEditor.js": "cd2fc13727e7f0d34357217b26cb93568f99ab043aa1647ffe2f126cd510833a",
-    "frontend/src/screens/signingScreen/packages/PackageRecipeEditor.test.js": "f61873a0758b944826eee0cde3fbc40d7fbc83043e93ec2ce671c097233fb851",
-    "frontend/src/screens/signingScreen/packages/PackageRecipeUse.js": "f0e8389a9c4614f2caee49f14618f43959455907383c9cc03e5cef6233c7a7fa",
-    "frontend/src/screens/signingScreen/packages/PackageRecipeUse.test.js": "77eeca4635a22fc58cf3b01af15960faa00542649b20665bedfeb6fc7fab6657",
-    "frontend/src/screens/signingScreen/packages/PackagesWorkspace.js": "7070395ce3579ff8571494ac3789031ef6c694a2955b504c33455cfc6fdaacf6",
-    "frontend/src/screens/signingScreen/packages/packages.scss": "3c3a90ef488f60096c889c4141d5df4002e38f5f7c5b9b65a099e141771f58f5",
+    "frontend/src/screens/signingScreen/packages/PackageFieldDefinitions.js": "db69d7b845f1a210c58c61edafd9a9cb3931242ce23695905e00ffb315917243",
+    "frontend/src/screens/signingScreen/packages/PackageRecipeEditor.js": "fee1a2ae270c7b7c42547858d77e201d3f553f25883b7d5af9c8ab21edb1dc46",
+    "frontend/src/screens/signingScreen/packages/PackageRecipeEditor.test.js": "8c6c54f24455bb86743ccd3c4e0068f4f8087ec3777561a009e49cb385e832f3",
+    "frontend/src/screens/signingScreen/packages/PackageRecipeUse.js": "0ac6b24278dce2be6cb40380cfd065b4dd34f722be93020b3fa399631361b8e3",
+    "frontend/src/screens/signingScreen/packages/PackageRecipeUse.test.js": "8082e2625a41b4bbf2cfc3e78879286e1b56ca13ff454c3d4f73abad30ebbf9d",
+    "frontend/src/screens/signingScreen/packages/PackagesWorkspace.js": "2d1e595a768e62824a306aa04308d179bafda2fc927e74dbdd7167e2f279aebe",
+    "frontend/src/screens/signingScreen/packages/packages.scss": "4be257d1186155be9eec18a723741444b33b9b9da8f9b51902bf149479924bc2",
     "frontend/src/screens/signingScreen/packages/recipeEditorModel.js": "4eaacacd3fd43dc1c88b31f359d60a53841e46887bb95a82d200d4cfc94a98f5",
     "frontend/src/screens/signingScreen/packages/recipeEditorModel.test.js": "462cde4496a20a8710de287ee9ee9f0c5b532f34ec8616bea134e7f59e045f14",
     "frontend/src/screens/signingScreen/templates/TemplateFieldDialog.js": "0956f47889f7a4b02367f20379207feb36206869f185cdaf1c343ea057ee6776",
@@ -85,6 +85,41 @@
     "unified-final-editor-controls": {
       "path": "/Users/liroymelamed/.cache/melamedia-builds/document-workflow-20261117/unified-final-editor-controls.log",
       "sha256": "9ec6c12d996e15f63a8074bb6c1f9a40ece6656e13750be304f05646eacbd907"
+    },
+    "unified-current-final-regression": {
+      "path": "/Users/liroymelamed/.cache/melamedia-builds/document-workflow-20261117/unified-current-final-regression.log",
+      "sha256": "548976cf56c433fa2031db6884fb825706e6707a93869866dcede0737cafe330"
+    },
+    "unified-qa-mobile-build": {
+      "path": "/Users/liroymelamed/.cache/melamedia-builds/document-workflow-20261117/unified-qa-mobile-build.log",
+      "sha256": "c6023dc10a13bbfacbb13c2dead269bdd5dcac33c4b22fc55883c6cd7d082d3d"
+    },
+    "unified-mobile-protected-gate": {
+      "path": "/Users/liroymelamed/.cache/melamedia-builds/document-workflow-20261117/unified-mobile-protected-gate.log",
+      "sha256": "370fb46c661c165fe256f91c9bb8668fdedf24014e877de410a6211dbfb92f5a"
+    },
+    "unified-live-artifacts": {
+      "path": "/Users/liroymelamed/.cache/melamedia-builds/document-workflow-20261117/unified-live-artifacts.log",
+      "sha256": "479c42aa84768a3bdb47717c669b3991b19e4f9f6c9312f56c0405b2cc4cc3b4"
     }
-  }
+  },
+  "candidate": "68c8f46b5f649bdddc5310445e521baa33acffa9",
+  "qaFrontend": "7294a1658f1a77af487c4beced65ae95baa75c73",
+  "qaBackend": "602a8fca6589d0ceeb7eec47649eb6d162f15b9f",
+  "frontendChangesCoveredByCurrentSuite": [
+    "frontend/src/i18n/locales/ar.json",
+    "frontend/src/i18n/locales/en.json",
+    "frontend/src/i18n/locales/he.json",
+    "frontend/src/screens/signingScreen/templates/PackageComposer.js",
+    "frontend/src/screens/signingScreen/word/WordTemplatesWorkspace.js",
+    "frontend/src/screens/signingScreen/word/WordTemplatesWorkspace.scss",
+    "frontend/src/screens/signingScreen/packages/PackageFieldDefinitions.js",
+    "frontend/src/screens/signingScreen/packages/PackageRecipeEditor.js",
+    "frontend/src/screens/signingScreen/packages/PackageRecipeEditor.test.js",
+    "frontend/src/screens/signingScreen/packages/PackageRecipeUse.js",
+    "frontend/src/screens/signingScreen/packages/PackageRecipeUse.test.js",
+    "frontend/src/screens/signingScreen/packages/PackagesWorkspace.js",
+    "frontend/src/screens/signingScreen/packages/packages.scss"
+  ],
+  "liveSubmission": "b8192dd2-e539-42f1-8058-0724136c25e6"
 }
