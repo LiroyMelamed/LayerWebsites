@@ -85,6 +85,35 @@ async function runPdfWorker(buffer, model) {
 const extractPdfPagesBounded = buffer => runPdfWorker(buffer);
 const buildAuthoringMapBounded = (model, buffer) => runPdfWorker(buffer, model);
 
+// PDF extraction may emit adjacent Hebrew runs in paint order and reverse a
+// punctuation-only run. This is only a candidate stream: no anchor is admitted
+// unless the complete source paragraph matches it exactly and uniquely.
+function rtlReadingRefs(pages, refs) {
+    const byItem = new Map();
+    for (const ref of refs) {
+        if (!byItem.has(ref.item)) byItem.set(ref.item, []);
+        byItem.get(ref.item).push(ref);
+    }
+    const result = [];
+    for (const page of pages) for (let start = 0; start < page.items.length;) {
+        let end = start + 1;
+        const first = page.items[start];
+        while (end < page.items.length && Math.abs(page.items[end].transform[5] - first.transform[5]) < 0.1) end += 1;
+        const line = page.items.slice(start, end);
+        const horizontal = line.every(item => Math.abs(item.transform[1]) < 0.01 && Math.abs(item.transform[2]) < 0.01);
+        const rtl = horizontal && line.filter(item => item.dir === 'rtl').reduce((sum, item) => sum + item.text.length, 0)
+            > line.filter(item => item.dir !== 'rtl').reduce((sum, item) => sum + item.text.length, 0);
+        if (rtl) line.sort((a, b) => (b.transform[4] + b.width) - (a.transform[4] + a.width));
+        for (const item of line) {
+            const itemRefs = byItem.get(item) || [];
+            const punctuation = /^[\s()[\]{}.,:;!?"'…־–—-]+$/u.test(item.text);
+            result.push(...(rtl && punctuation ? [...itemRefs].reverse() : itemRefs));
+        }
+        start = end;
+    }
+    return result;
+}
+
 function buildAuthoringMap(model, inputPages) {
     if (model?.version !== 1 || model.offsetUnit !== 'utf16' || !Array.isArray(inputPages)
         || inputPages.length > LIMITS.pages) reject('WORD_AUTHORING_INVALID_MODEL');
@@ -112,6 +141,10 @@ function buildAuthoringMap(model, inputPages) {
     }
     const bodyRefs = refs.filter(ref => !ignored.has(ref));
     const bodyText = bodyRefs.map(ref => ref.text).join('');
+    const readingRefs = rtlReadingRefs(pages, refs);
+    const readingBodyRefs = readingRefs.filter(ref => !ignored.has(ref));
+    const readingText = readingRefs.map(ref => ref.text).join('');
+    const readingBodyText = readingBodyRefs.map(ref => ref.text).join('');
     const sourceCounts = new Map();
     for (const p of paragraphs) sourceCounts.set(p.sig.value, (sourceCounts.get(p.sig.value) || 0) + 1);
     const assignments = new Map(); const diagnostics = []; const invalid = new Set();
@@ -122,9 +155,13 @@ function buildAuthoringMap(model, inputPages) {
         if (!p.editable) reason = 'WORD_AUTHORING_UNSUPPORTED_PARAGRAPH';
         else if (!p.sig.value) reason = 'WORD_AUTHORING_EMPTY_PARAGRAPH_UNSUPPORTED';
         else if (sourceCounts.get(p.sig.value) !== 1) reason = 'WORD_AUTHORING_AMBIGUOUS_TEXT';
-        const candidates = p.part === 'word/document.xml' ? bodyRefs : refs;
+        let candidates = p.part === 'word/document.xml' ? bodyRefs : refs;
         const text = p.part === 'word/document.xml' ? bodyText : compact;
-        const matches = reason ? [] : occurrences(text, p.sig.value);
+        let matches = reason ? [] : occurrences(text, p.sig.value);
+        if (!reason && !matches.length) {
+            candidates = p.part === 'word/document.xml' ? readingBodyRefs : readingRefs;
+            matches = occurrences(p.part === 'word/document.xml' ? readingBodyText : readingText, p.sig.value);
+        }
         if (!reason && matches.length !== 1) reason = matches.length ? 'WORD_AUTHORING_AMBIGUOUS_TEXT' : 'WORD_AUTHORING_UNMAPPED_TEXT';
         if (reason) { diagnostics.push({ part: p.part, paragraphId: p.id, reason }); continue; }
         for (let i = 0; i < p.sig.value.length; i += 1) {

@@ -433,7 +433,7 @@ async function authoringRender(pool, scope, id, input, { storage, convertDocxToP
     scopeCheck(scope); expect(plain(input), 'INVALID_WORD_INPUTS'); version(input.expectedVersion);
     const row = await source(pool, scope, id);
     if (Number(row.version) !== input.expectedVersion || row.source_sha256 !== input.sourceHash) fail('VERSION_CHANGED', 412);
-    const inputsHash = digest({ kind: 'word_authoring_v2', sourceId: id, sourceHash: row.source_sha256, mapVersion: 1 });
+    const inputsHash = digest({ kind: 'word_authoring_v2', sourceId: id, sourceHash: row.source_sha256, mapVersion: 1, alignmentRevision: 2 });
     const existing = (await pool.query(`/*word:authoring-existing*/ SELECT id FROM signing_word_authoring_renders
         WHERE owner_context_id=$1 AND created_by=$2 AND inputs_hash=$3`, [scope.contextId, scope.userId, inputsHash])).rows[0];
     const currentView = async renderId => {
