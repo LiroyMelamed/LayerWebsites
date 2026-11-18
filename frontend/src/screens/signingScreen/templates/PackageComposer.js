@@ -1,3 +1,4 @@
+import PackageUseSteps from '../packages/PackageUseSteps';
 import SimpleInput from '../../../components/simpleComponents/SimpleInput';
 import SigningSelect from './SigningSelect';
 import SigningBackButton from './SigningBackButton';
@@ -446,6 +447,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const [replacementConfirmed, setReplacementConfirmed] = useState(false);
     const [replacement, setReplacement] = useState(null);
     const [template, setTemplate] = useState(null);
+    const isPreparedPackage=!!preparedData||template?.origin?.kind==='package_preparation';
     const [reviewerUserId,setReviewerUserId] = useState(null);
     const [name, setName] = useState('');
     const [shared, setShared] = useState({});
@@ -915,7 +917,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             <p>{t(replacementSource.stopCurrent || replacementSource.sourceState === 'replacement_pending' ? 'signingV2.replacement.stoppedHelp' : 'signingV2.replacement.activeHelp')}</p>
             <p>{t('signingV2.replacement.reason')}: <bdi>{replacementSource.reason}</bdi></p>
         </StatusNotice>}
-        <Stepper step={['opening', 'replacementOpening'].includes(step) ? 'template' : step} />
+        {isPreparedPackage?<PackageUseSteps current={2} complete={step==='done'}/>:<Stepper step={['opening', 'replacementOpening'].includes(step) ? 'template' : step} />}
         <div className="lw-signingCompose__contextStrip" hidden={step === 'review' || step === 'done'}>
         {!replacementSource && api.clientContext && (initialClientId || clientContext) && step !== 'done' && <SimpleCard className="lw-signingCompose__card lw-signingCompose__context" hidden={step === 'review'}>
             <ClientSendContext key={String(clientRestored)} api={api} initialClientId={clientRestored ? null : initialClientId} value={clientContext}
@@ -961,7 +963,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 </Field>
                 <p className="lw-signingPackages__caption">{t('signingV2.compose.templateSummary', { name: template.name })}</p>
                 {template.approvalRequired && <ApprovalReviewerField api={api} value={reviewerUserId} soloAllowed={template.soloApproval} validationError={errorEntries.find(item=>item.path==='reviewerUserId')?.code} onChange={value=>{setReviewerUserId(value);invalidate();}}/>}
-                <details className="lw-signingCompose__optionalRoles"><summary>{t('signingV2.compose.signers.heading')}</summary>
+                {!isPreparedPackage&&<details className="lw-signingCompose__optionalRoles"><summary>{t('signingV2.compose.signers.heading')}</summary>
                 <p className="lw-signingCompose__hintLine">{t('signingV2.compose.signers.help')}</p>
                 <p className="lw-signingCompose__hintLine">{t('signingV2.compose.audience.help')}</p>
                 <ul className="lw-signingCompose__signers">
@@ -986,8 +988,8 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                         </li>)}
                     </ul>
                 </div>}
-                </details>
-                <SigningOrderFields mode={orderMode} roles={orderedRoles} groups={activeGroups} onMode={changeOrderMode} onMove={moveRole} onGroup={changeGroup} />
+                </details>}
+                {!isPreparedPackage&&<SigningOrderFields mode={orderMode} roles={orderedRoles} groups={activeGroups} onMode={changeOrderMode} onMove={moveRole} onGroup={changeGroup} />}
             </SimpleCard>
             {activeShare.length > 0 && <SimpleCard className="lw-signingCompose__card">
                 <h2>{t('signingV2.compose.shared.heading')}</h2>
@@ -1001,9 +1003,9 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 <div className="lw-signingCompose__rowsHeading">
                     <div>
                         <h2>{t('signingV2.compose.rows.heading')}</h2>
-                        <p>{replacementSource ? t('signingV2.replacement.rowHelp') : activeEach.length ? t('signingV2.compose.rows.help', { roles: activeEach.map(role => role.label).join(' · '), max: number(MAX_ROWS) }) : t('signingV2.compose.data.rowsHelp')}</p>
+                        <p>{isPreparedPackage ? t('documentPackages.preparedRecipientsHelp') : replacementSource ? t('signingV2.replacement.rowHelp') : activeEach.length ? t('signingV2.compose.rows.help', { roles: activeEach.map(role => role.label).join(' · '), max: number(MAX_ROWS) }) : t('signingV2.compose.data.rowsHelp')}</p>
                     </div>
-                    {!replacementSource && !preparedData && <SegmentedSwitch value={source} onChange={setSource} ariaLabel={t('signingV2.compose.rows.source')}
+                    {!replacementSource && !isPreparedPackage && <SegmentedSwitch value={source} onChange={setSource} ariaLabel={t('signingV2.compose.rows.source')}
                         options={[{ value: 'manual', label: t('signingV2.compose.rows.manual') }, { value: 'excel', label: t('signingV2.compose.rows.excel') }]} />}
                 </div>
                 {source === 'excel' && <div className="lw-signingCompose__excel">
@@ -1034,9 +1036,9 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                     {errorCount > 30 && <p>{t('signingV2.compose.moreErrors', { count: errorCount - 30, formattedCount: number(errorCount - 30) })}</p>}
                 </StatusNotice>}
                 {(activeEach.length > 0 || dataFields.length > 0) && busy !== 'upload' && <ol className="lw-signingCompose__rows">{rows.map((row, index) =>
-                    <RecipientRow key={row.id} row={row} index={index} roles={activeEach} errors={check?.indexed.byRow[row.id]} onChange={changeRow} onRemove={removeRow} canRemove={rows.length > 1} casePeople={contextPeople} peopleLabel={peopleLabel} allRoles={activeRoles} dataFields={preparedData ? [] : dataFields} onDataChange={changeData} />)}
+                    <RecipientRow key={row.id} row={row} index={index} roles={activeEach} errors={check?.indexed.byRow[row.id]} onChange={changeRow} onRemove={removeRow} canRemove={rows.length > 1} casePeople={contextPeople} peopleLabel={peopleLabel} allRoles={activeRoles} dataFields={isPreparedPackage ? [] : dataFields} onDataChange={changeData} />)}
                 </ol>}
-                {!replacementSource && !preparedData && <div className="lw-signingPackages__actions">
+                {!replacementSource && !isPreparedPackage && <div className="lw-signingPackages__actions">
                     <SecondaryButton onPress={() => {
                         const row = blankRow(activeEach.length ? activeEach : eachRoles);
                         pendingFocus.current = activeEach.length ? fieldId(row.id, activeEach[0].key, 'search') : fieldId(row.id, 'data', dataFields[0]?.key);
@@ -1046,7 +1048,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 </div>}
             </SimpleCard>}
             <footer className="lw-signingCompose__footer is-sticky">
-                <SigningBackButton onPress={() => setStep('template')} disabled={!!busy}>{t('signingV2.compose.previous')}</SigningBackButton>
+                <SigningBackButton onPress={isPreparedPackage?leave:() => setStep('template')} disabled={!!busy}>{t('signingV2.compose.previous')}</SigningBackButton>
                 <PrimaryButton onPress={runCheck} disabled={!!busy || casePending || clientPending || (replacementSource && ['VERSION_CHANGED', 'REPLACEMENT_CHANGED', 'REVISION_INACTIVE', 'PREVIEW_CHANGED'].includes(error?.code))}>{busy === 'check' ? t('signingV2.compose.checking') : t('signingV2.compose.check')}</PrimaryButton>
             </footer>
         </>}

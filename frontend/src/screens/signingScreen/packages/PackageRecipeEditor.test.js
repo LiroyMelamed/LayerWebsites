@@ -12,6 +12,7 @@ jest.mock('../../../api/wordTemplatesApi',()=>({__esModule:true,default:{list:je
 jest.mock('../templates/TemplateBuilder',()=>()=>null);
 jest.mock('../templates/TemplateRoles',()=>()=>null);
 const mockSave=jest.fn();
+const mockBack=jest.fn();
 jest.mock('../word/WordTemplatesWorkspace',()=>{const React=require('react');return props=>{
     const [dirty,setDirty]=React.useState(false);
     props.authoringControllerRef.current={dirty,busy:false,save:async()=>{
@@ -25,7 +26,7 @@ const source={id:'copy',version:1,sourceHash:'a'.repeat(64),name:'Word source',r
 async function show(){
     const i18n=createInstance();await i18n.use(initReactI18next).init({resources:{en:{translation:en}},lng:'en',interpolation:{escapeValue:false}});
     const definition={...emptyRecipe('en','Signer'),name:'Example',documents:[{key:'doc',name:'Word source',source:{kind:'word',id:'original',version:1,hash:source.sourceHash},mappings:[],signatureFields:[]}]};
-    render(<I18nextProvider i18n={i18n}><PackageRecipeEditor recipe={{id:'recipe',version:1,definition,visibility:'private'}} onBack={()=>{}}/></I18nextProvider>);
+    render(<I18nextProvider i18n={i18n}><PackageRecipeEditor recipe={{id:'recipe',version:1,definition,visibility:'private'}} onBack={mockBack}/></I18nextProvider>);
     fireEvent.click(screen.getByRole('button',{name:en.documentPackages.editDocument}));await screen.findByRole('button',{name:'Mark source dirty'});
 }
 beforeEach(()=>{wordApi.list.mockResolvedValue({catalog:{fields:[],roleFields:[]}});api.wordWorkingCopy.mockResolvedValue({source});api.saveDraft.mockResolvedValue({draft:{version:1}});mockSave.mockResolvedValue({...source,version:2});});
@@ -37,4 +38,10 @@ test('saving the package draft first saves pending Word mappings and pins the re
 test('failed Word save keeps the editor open and does not persist a stale package draft',async()=>{
     mockSave.mockResolvedValue(null);await show();fireEvent.click(screen.getByRole('button',{name:'Mark source dirty'}));fireEvent.click(screen.getByRole('button',{name:en.documentPackages.saveDraft}));
     await waitFor(()=>expect(mockSave).toHaveBeenCalledTimes(1));expect(api.saveDraft).not.toHaveBeenCalled();expect(screen.getByRole('button',{name:'Mark source dirty'})).toBeInTheDocument();
+});
+test('leaving after saving a Word draft does not warn that persisted changes will be lost',async()=>{
+    await show();fireEvent.click(screen.getByRole('button',{name:'Mark source dirty'}));fireEvent.click(screen.getByRole('button',{name:en.documentPackages.saveDraft}));
+    await screen.findByText(en.documentPackages.draftSaved);
+    fireEvent.click(screen.getByRole('button',{name:en.documentPackages.backLibrary}));
+    expect(mockBack).toHaveBeenCalledTimes(1);expect(screen.queryByText(en.documentPackages.unsaved)).not.toBeInTheDocument();
 });

@@ -26,6 +26,7 @@
   details > summary { cursor: pointer; padding-block: v.$space-3; }
   @media(max-width: 48rem) {
     padding: v.$space-3;
+    .lw-textButtonWithTwoOptionalIcons { min-block-size: 2.75rem; }
     &__header { align-items: stretch; flex-direction: column; }
     &__header > .lw-simpleInput { max-inline-size: none; }
     &__values, &__fields, &__fieldDefinition { grid-template-columns: minmax(0,1fr); }
