@@ -28,11 +28,21 @@
     padding: v.$space-3;
     .lw-textButtonWithTwoOptionalIcons { min-block-size: 2.75rem; }
     &__header { align-items: stretch; flex-direction: column; }
+    &__header h1 { font-size: 1.5rem; line-height: 1.4; overflow-wrap: anywhere; }
     &__header > .lw-simpleInput { max-inline-size: none; }
     &__values, &__fields, &__fieldDefinition { grid-template-columns: minmax(0,1fr); }
     &__library > li { align-items: flex-start; flex-direction: column; }
     &__steps { gap: v.$space-2; }
     &__wordSummary { padding: v.$space-4; }
     &__actions { gap: v.$space-2; }
+  }
+}
+@media(max-width: 48rem) {
+  .lw-signingCompose__steps.lw-packages__useSteps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .5rem;
+    li { flex-direction: column; text-align: center; gap: .375rem; font-size: .8125rem; }
+    li > span { flex-shrink: 0; }
   }
 }
