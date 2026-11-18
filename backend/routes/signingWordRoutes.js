@@ -90,6 +90,7 @@ function createSigningWordRouter({ pool, actorScope, service, storage, convertDo
     router.put('/:id', run(async (req, res, scope) => res.json({ source: await word.save(pool, scope, req.params.id, req.body || {}, { storage: store() }) })));
     router.post('/:id/authoring-renders', run(async (req, res, scope) => res.status(201).json({ authoring: await word.authoringRender(pool, scope, req.params.id, req.body || {}, { storage: store(), convertDocxToPdf: convert }) })));
     router.post('/:id/authoring-renders/:renderId/selections', run(async (req, res, scope) => res.json({ selection: await word.authoringSelection(pool, scope, req.params.id, req.params.renderId, req.body || {}, { storage: store() }) })));
+    router.post('/:id/text-revisions', run(async (req, res, scope) => res.status(201).json(await word.reviseSource(pool, scope, req.params.id, req.body || {}, { storage: store() }))));
     router.post('/:id/archive', run(async (req, res, scope) => res.json(await word.archive(pool, scope, req.params.id, req.body || {}))));
     router.post('/:id/inputs', run(async (req, res, scope) => res.json(await word.resolveInputs(pool, scope, req.params.id, req.body || {}))));
     router.post('/:id/previews', run(async (req, res, scope) => res.status(201).json({ preview: await word.preview(pool, scope, req.params.id,

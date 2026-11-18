@@ -406,7 +406,9 @@ export default function SigningManagerScreen() {
             setWordSigning(null);
             const next = new URLSearchParams(searchParams); next.set('panel', 'runs'); next.set('submission', id); next.delete('mode'); setSearchParams(next);
         }} />);
-    if (showTemplates) return panelShell(<TemplatesWorkspace nativeAvailable={signingV2Available} onSendTemplate={signingV2Available ? template => {
+    if (showTemplates) return panelShell(<TemplatesWorkspace onPackageCreated={id=>{
+        const next=new URLSearchParams(searchParams);next.set('panel','runs');next.set('submission',id);next.delete('mode');setSearchParams(next);
+    }} nativeAvailable={signingV2Available} onSendTemplate={signingV2Available ? template => {
         const next = new URLSearchParams(searchParams); next.set('panel', 'compose'); next.set('template', template.id); next.set('templateVersion', String(template.version)); setSearchParams(next);
     } : undefined} onWordContinue={continueWord}
         initialWordMode={searchParams.get('mode') === 'word'} initialContext={wordInitialContext}

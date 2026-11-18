@@ -40,7 +40,7 @@ async function fixture(t, { birthDate = true, court = false } = {}) {
     await pg.query('INSERT INTO signing_owner_contexts VALUES($1)', [contextId]);
     await pg.exec("INSERT INTO users(userid,name,role) VALUES(1,'Synthetic author','Admin'),(2,'Other synthetic author','Admin'),(3,'Synthetic client','Client'); INSERT INTO cases VALUES(9,'Synthetic case',null); INSERT INTO case_users VALUES(9,1);");
     if (court) await pg.exec('CREATE TABLE court_case_links(case_id integer,law_firm_tenant_id uuid,court_number text,is_primary boolean)');
-    const migrations = ['2026-10-23_01_signing_word_sources.sql', '2026-10-26_01_signing_word_authoring_renders.sql'];
+    const migrations = ['2026-10-23_01_signing_word_sources.sql', '2026-10-26_01_signing_word_authoring_renders.sql', '2026-11-18_02_signing_word_working_copies.sql'];
     const migrationHashes = {};
     for (const file of migrations) {
         const raw = fs.readFileSync(path.join(__dirname, '../migrations', file)); migrationHashes[file] = hash(raw); await pg.exec(raw.toString());
@@ -264,4 +264,34 @@ test('signature-only Word preview rejects changed source bytes and a concurrent 
             return f.dependencies.convertDocxToPdf(original);
         } }), error('VERSION_CHANGED'));
     assert.equal((await f.pg.query('SELECT count(*)::int AS n FROM signing_word_previews')).rows[0].n, 0);
+});
+
+test('text revisions preserve original bytes and require a verified current visual selection', async t => {
+    const f = await fixture(t), source = await f.imported();
+    const view = await service.authoringRender(f.pool, scope, source.id, { expectedVersion: 1, sourceHash: source.sourceHash }, f.dependencies);
+    const saved = await service.save(f.pool, scope, source.id, { expectedVersion: 1, sourceHash: source.sourceHash, name: source.name,
+        bindingSchemaVersion: 2, authoringRenderId: view.renderId, authoringMapHash: view.mapHash, roles: [],
+        bindings: [{ id: 'first', field: 'client.fullName', selector: selector(5, 16) },
+            { id: 'second', field: 'manual.tenant', fieldLabel: 'Tenant', selector: selector(21, 32) }] }, f.dependencies);
+    const input = { expectedVersion: saved.version, sourceHash: source.sourceHash, renderId: view.renderId,
+        mapHash: view.mapHash, selector: selector(5, 16), replacement: 'اسم ארוך 00123' };
+    const result = await service.reviseSource(f.pool, scope, source.id, input, f.dependencies);
+    assert.notEqual(result.source.id, source.id);
+    assert.notEqual(result.source.sourceHash, source.sourceHash);
+    assert.equal(result.source.version, 1);
+    assert.deepEqual(result.invalidatedBindingIds, ['first']);
+    assert.equal(result.source.bindings.length, 1);
+    const remaining = result.source.bindings[0];
+    const paragraph = result.source.model.parts[0].paragraphs[0];
+    assert.equal(paragraph.text, 'Name اسم ארוך 00123 and Ada Example');
+    assert.equal(paragraph.text.slice(remaining.start, remaining.end), 'Ada Example');
+    assert.equal(remaining.sourceHash, result.source.sourceHash);
+    const original = await service.load(f.pool, scope, source.id, f.dependencies);
+    assert.equal(original.sourceHash, source.sourceHash);
+    assert.equal(original.version, saved.version);
+    assert.equal(original.model.parts[0].paragraphs[0].text, 'Name Ada Example and Ada Example');
+    await assert.rejects(service.reviseSource(f.pool, scope, source.id, { ...input, expectedVersion: 1 }, f.dependencies), error('VERSION_CHANGED'));
+    await assert.rejects(service.reviseSource(f.pool, { ...scope, userId: 2 }, source.id, input, f.dependencies), error('NOT_FOUND'));
+    await assert.rejects(service.reviseSource(f.pool, scope, source.id, { ...input, mapHash: '0'.repeat(64) }, f.dependencies), error('WORD_AUTHORING_RENDER_CHANGED'));
+    await assert.rejects(service.reviseSource(f.pool, scope, source.id, { ...input, replacement: 'a\nb' }, f.dependencies), error('INVALID_FIELD_VALUE'));
 });

@@ -5,7 +5,7 @@ import api from '../../../api/wordTemplatesApi';
 import { uploadFileToR2 } from '../../../utils/fileUploadUtils';
 let mockPdfReadyCallbacks = [];
 
-jest.mock('../../../api/wordTemplatesApi', () => ({ __esModule: true, default: { list: jest.fn(), create: jest.fn(), load: jest.fn(), save: jest.fn(), preview: jest.fn(), pdf: jest.fn(), authoringRender: jest.fn(), authoringPdf: jest.fn(), resolveInputs: jest.fn(), resolveSelection: jest.fn() } }));
+jest.mock('../../../api/wordTemplatesApi', () => ({ __esModule: true, default: { list: jest.fn(), create: jest.fn(), load: jest.fn(), save: jest.fn(), preview: jest.fn(), pdf: jest.fn(), authoringRender: jest.fn(), authoringPdf: jest.fn(), resolveInputs: jest.fn(), resolveSelection: jest.fn(), reviseText: jest.fn() } }));
 jest.mock('./wordAuthoringSelection', () => ({ ...jest.requireActual('./wordAuthoringSelection'), verifyPdfBlob: jest.fn(blob => Promise.resolve(blob)) }));
 jest.mock('./WordSourceViewer', () => ({ onSelect, onError, authoring, bindings, activeBindingId, onSelectBinding, fieldColorClass }) => <div data-testid="original-pdf">
     <button onClick={() => onError('authoringMismatch')}>failPage</button>
@@ -747,4 +747,21 @@ test('manual plot fields retain their titles and never claim missing client data
     fireEvent.change(screen.getByLabelText('חלקה'),{target:{value:'67'}});
     await waitFor(()=>expect(screen.getByRole('button',{name:'preview'})).toBeEnabled());
     expect(screen.queryByText('missingRecordValue')).not.toBeInTheDocument();
+});
+
+
+test('editing verified selected text uses a source revision and never rewrites the current source or client record', async () => {
+    await open(source(), {}, true);
+    fireEvent.click(screen.getByText('chooseBlank'));
+    await screen.findByText('editSelectedText');
+    fireEvent.click(screen.getByText('editSelectedText'));
+    fireEvent.change(screen.getByLabelText('newText'), { target: { value: 'טקסט חדש' } });
+    api.reviseText.mockResolvedValue({ source: { ...source(), id: 'source-new', sourceHash: 'f'.repeat(64) }, invalidatedBindingIds: [] });
+    fireEvent.click(screen.getByText('saveTextRevision'));
+    await waitFor(() => expect(api.reviseText).toHaveBeenCalledWith('source-a', expect.objectContaining({
+        expectedVersion: 3, sourceHash: 'a'.repeat(64), renderId: 'render-a', mapHash: 'e'.repeat(64),
+        replacement: 'טקסט חדש', selector: { kind: 'range', start: { itemId: 'p1-i0', offset: 7 }, end: { itemId: 'p1-i0', offset: 13 } },
+    })));
+    expect(api.save).not.toHaveBeenCalled(); expect(api.preview).not.toHaveBeenCalled();
+    expect(await screen.findByText('textRevised')).toBeInTheDocument();
 });

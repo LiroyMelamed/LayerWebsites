@@ -28,6 +28,11 @@ const create = () => {
     return { renderId: 'render-a', mapHash: 'b'.repeat(64), geometryTolerance: 0.01, pages: [{ pageNum: 1, width: 600, height: 800, rotation: 0, userUnit: 1,
         viewBox: [0, 0, 600, 800], viewportTransform: [1, 0, 0, -1, 0, 800], textContentHash: hash(JSON.stringify(tuples)), items }] };
 };
+function openAccessibility() {
+    const details = screen.getByText('accessibilityOptions').closest('details');
+    details.open = true;
+    fireEvent(details, new Event('toggle'));
+}
 beforeEach(() => {
     Range.prototype.getClientRects = jest.fn(() => [{ left: 25, top: 50, width: 70, height: 12 }]);
     mockPageCount = 1;
@@ -58,7 +63,7 @@ test('different actual text items stay untagged and visibly block authoring inst
 test('the keyboard fallback selects exact UTF16 offsets of an already verified item without editing the document', async () => {
     const authoring = create(); mockContent = { items: authoring.pages[0].items.map(({ text, ...rest }) => ({ ...rest, str: text })) };
     const onSelect = jest.fn(); render(<WordSourceViewer authoring={authoring} pdfFile={new Blob(['%PDF'])} bindings={[]} onSelect={onSelect} fieldLabel={value => value} text={value => value} />);
-    fireEvent.click(screen.getByText('keyboardSelection'));
+    openAccessibility();
     await waitFor(() => expect(screen.getByLabelText('selectExcerptText')).toBeEnabled());
     const input = screen.getByLabelText('selectExcerptText'); input.focus(); input.setSelectionRange(3, 8);
     fireEvent.keyUp(input, { key: 'ArrowRight', shiftKey: true }); fireEvent.click(screen.getByText('confirmTextSelection'));
@@ -78,7 +83,7 @@ test('an immediate cached-child page-count failure is retained before parent pas
     const authoring = create(); mockPageCount = 2; mockContent = { items: authoring.pages[0].items.map(({ text, ...rest }) => ({ ...rest, str: text })) };
     const onError = jest.fn(); render(<WordSourceViewer authoring={authoring} pdfFile={new Blob(['%PDF'])} bindings={[]} onSelect={jest.fn()} onError={onError} fieldLabel={value => value} text={value => value} />);
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('authoringMismatch'));
-    expect(onError).toHaveBeenCalledWith('authoringMismatch'); fireEvent.click(screen.getByText('keyboardSelection')); expect(screen.getByLabelText('selectExcerptText')).toBeDisabled();
+    expect(onError).toHaveBeenCalledWith('authoringMismatch'); openAccessibility(); expect(screen.getByLabelText('selectExcerptText')).toBeDisabled();
 });
 
 

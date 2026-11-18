@@ -1,3 +1,4 @@
+import { signatureSpots } from './wordSignatureLayout';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import PdfViewer from '../../../components/specializedComponents/signFiles/pdfViewer/PdfViewer';
@@ -102,7 +103,7 @@ function PageMarks({ host, page, bindings, selection, activeBindingId, onSelectB
     </div>;
 }
 
-export default function WordSourceViewer({ authoring, pdfFile, paragraphs = [], bindings, selection, activeBindingId, onSelectBinding, disabled, onSelect, onSelectionStart, onError, fieldLabel, fieldColorClass, pendingField, text, controlsContainer }) {
+export default function WordSourceViewer({ authoring, pdfFile, paragraphs = [], bindings, selection, activeBindingId, onSelectBinding, disabled, onSelect, onSelectionStart, onError, fieldLabel, fieldColorClass, pendingField, text, controlsContainer, signatureAnchors = [], onUpdateSignature, onRemoveSignature, onEditSignature }) {
     const root = useRef(null); const generation = useRef(0); const callbacks = useRef({ onSelect, onError });
     const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth);
     useEffect(() => {
@@ -190,6 +191,15 @@ export default function WordSourceViewer({ authoring, pdfFile, paragraphs = [], 
             activeBindingId={activeBindingId} onSelectBinding={onSelectBinding} disabled={disabled} viewportWidth={viewportWidth}
             revision={pageStates[pageNumber] === 'verified' ? `${identity}:${pageRevisions[pageNumber] || 0}` : null} displayWidth={displayWidth} />,
     }), [verifyLayer, pageError, authoring.pages, bindings, selection, fieldLabel, fieldColorClass, pendingField, text, pageStates, pageRevisions, identity, activeBindingId, onSelectBinding, disabled, viewportWidth]);
+    const spots=signatureSpots(authoring,signatureAnchors,pageStates);
+    const updateSignature=(index,patch)=>{
+        const spot=spots[index],anchor=signatureAnchors.find(item=>item.id===spot?.id);
+        if(!anchor||disabled)return;
+        onUpdateSignature?.(anchor.id,{...anchor.placement,
+            offsetX:anchor.placement.offsetX+(patch.x??spot.x)-spot.x,
+            offsetY:anchor.placement.offsetY+(patch.y??spot.y)-spot.y,
+            width:patch.width??spot.width,height:patch.height??spot.height});
+    };
     const accessibleItems = authoring.pages.filter(page => pageStates[page.pageNum] === 'verified').flatMap(page =>
         page.items.filter(item => item.text && item.segments.length && !item.readOnlyReason).map(item => ({ ...item, pageNum: page.pageNum })));
     const accessibleItem = accessibleItems.find(item => item.id === accessibleItemId) || accessibleItems[0];
@@ -212,7 +222,7 @@ export default function WordSourceViewer({ authoring, pdfFile, paragraphs = [], 
         </div>
         {selectionMode === 'insert' && <p>{text('insertionHelp')}</p>}
         {authoring.diagnostics?.length > 0 && <p>{text('partiallySupportedSource')}</p>}
-        <SecondaryButton onPress={() => setKeyboardOpen(value => !value)} aria-expanded={keyboardOpen}>{text('keyboardSelection')}</SecondaryButton>
+        <details open={keyboardOpen} onToggle={event => setKeyboardOpen(event.currentTarget.open)}><summary>{text('accessibilityOptions')}</summary>
         {keyboardOpen && <div className="lw-word__keyboardSelection"><p>{text('keyboardSelectionHelp')}</p>
             <label>{text('textExcerpt')}<SigningSelect value={accessibleItem?.id || ''} disabled={disabled || !accessibleItems.length}
                 onChange={event => setAccessibleItemId(event.target.value)}>
@@ -222,6 +232,7 @@ export default function WordSourceViewer({ authoring, pdfFile, paragraphs = [], 
             <SimpleTextArea textareaRef={accessibleText} title={text('selectExcerptText')} key={accessibleItem?.id} readOnly aria-label={text('selectExcerptText')} value={accessibleItem?.text || ''} disabled={disabled || !accessibleItem} />
             <SecondaryButton disabled={disabled || !accessibleItem} onPress={chooseAccessibleRange}>{text('confirmTextSelection')}</SecondaryButton>
         </div>}
+        </details>
         </div>
     );
     return <div className="lw-word-source" ref={root} data-disabled={disabled ? 'true' : undefined}
@@ -229,7 +240,11 @@ export default function WordSourceViewer({ authoring, pdfFile, paragraphs = [], 
         onMouseUp={event => { selecting.current = false; readSelection(event); }} onKeyUp={readSelection}>
         {selectionError && <StatusNotice><p>{text('selectionInvalid')}</p></StatusNotice>}
         {Object.values(pageStates).includes('error') && <StatusNotice><p>{text('authoringMismatch')}</p></StatusNotice>}
-        <PdfViewer pdfFile={pdfFile} spots={[]} signers={[]} authoringLayer={layer} />
+        <PdfViewer pdfFile={pdfFile} spots={spots} signers={[]} authoringLayer={layer}
+            onUpdateSpot={disabled?undefined:updateSignature}
+            onSelectSpot={index=>onEditSignature?.(spots[index]?.id)} onEditSpot={index=>onEditSignature?.(spots[index]?.id)}
+            onRemoveSpot={index=>!disabled&&onRemoveSignature?.(spots[index]?.id)} onRequestRemove={index=>!disabled&&onRemoveSignature?.(spots[index]?.id)}/>
+
         {controlsContainer ? createPortal(selectionControls, controlsContainer) : selectionControls}
     </div>;
 }

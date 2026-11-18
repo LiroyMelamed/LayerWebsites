@@ -1,0 +1,36 @@
+@use '../../../styles/variables' as v;
+.lw-packages {
+  max-inline-size: 90rem;
+  margin-inline: auto;
+  padding: v.$space-4;
+  color: var(--text-primary, #2d3748);
+  &__header, &__documentHeading, &__actions, &__steps, &__documents, &__footer { display: flex; align-items: center; gap: v.$space-3; }
+  &__header, &__documentHeading { justify-content: space-between; flex-wrap: wrap; }
+  &__header > .lw-simpleInput { max-inline-size: 28rem; min-inline-size: 14rem; }
+  &__steps { justify-content: center; margin-block: v.$space-4 v.$space-6; flex-wrap: wrap; }
+  &__steps [aria-current='step'] { background: var(--primary, #2a4365); color: white; }
+  &__documents { overflow-x: auto; padding-block: v.$space-3; }
+  &__documents > * { flex: 0 0 auto; }
+  &__actions { flex-wrap: wrap; }
+  &__fieldDefinition { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: v.$space-3; padding-block: v.$space-4; border-block-end: 1px solid var(--lw-color-secondary-highlighted); }
+  &__wordSummary { padding: v.$space-6; border: 1px solid var(--border-color, #e2e8f0); border-radius: 1rem; background: white; }
+  &__footer { justify-content: space-between; margin-block-start: v.$space-6; padding-block: v.$space-4; border-block-start: 1px solid #e2e8f0; }
+  &__values, &__fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: v.$space-5; }
+  &__library { list-style: none; padding: 0; display: grid; gap: v.$space-3; }
+  &__library > li { display: flex; justify-content: space-between; align-items: center; gap: v.$space-4; padding: v.$space-4; border: 1px solid #e2e8f0; border-radius: 1rem; background: white; }
+  &__library p, &__hint { margin-block: .25rem; color: #718096; font-size: .875rem; }
+  &__review { max-inline-size: 70rem; margin-inline: auto; }
+  &__review .lw-signing-pdfViewer { max-block-size: 65dvh; overflow: auto; }
+  > details { margin-block: v.$space-4; }
+  details > summary { cursor: pointer; padding-block: v.$space-3; }
+  @media(max-width: 48rem) {
+    padding: v.$space-3;
+    &__header { align-items: stretch; flex-direction: column; }
+    &__header > .lw-simpleInput { max-inline-size: none; }
+    &__values, &__fields, &__fieldDefinition { grid-template-columns: minmax(0,1fr); }
+    &__library > li { align-items: flex-start; flex-direction: column; }
+    &__steps { gap: v.$space-2; }
+    &__wordSummary { padding: v.$space-4; }
+    &__actions { gap: v.$space-2; }
+  }
+}
