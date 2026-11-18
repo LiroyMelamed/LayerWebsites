@@ -52,6 +52,7 @@ test('private Word service integrates actual configured conversion and protected
         (4,'Ada Example','person@example.invalid','00004','Synthetic Company','User',$1,$2)`, [TENANT, profile]);
     await db.query('INSERT INTO signing_owner_contexts VALUES($1)', [CONTEXT]);
     await db.query(await fs.readFile(path.join(__dirname, '../migrations/2026-10-23_01_signing_word_sources.sql'), 'utf8'));
+    await db.query(await fs.readFile(path.join(__dirname, '../migrations/2026-11-18_02_signing_word_working_copies.sql'), 'utf8'));
     const scope = { contextId: CONTEXT, tenantId: TENANT, userId: 1, send: true, all: true, clientView: true, caseView: true, caseAll: true };
     const foreignAuthor = { ...scope, userId: 2 };
     const original = await fs.readFile(path.join(OUT, 'source.docx'));

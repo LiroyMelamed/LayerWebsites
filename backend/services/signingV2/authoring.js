@@ -22,7 +22,7 @@ async function loadVersion(db, scope, id) {
         AND (v.state='published' OR v.created_by=$4) AND ${availableOriginSql}
         AND ${wordTemplateScopeSql('$4')}`, [scope.contextId, id, scope.all, scope.userId])).rows[0];
     if (!row) fail('NOT_FOUND', 404);
-    if (row.definition?.origin?.kind === 'word_preview') await assertWordDefinition(db, scope, row.definition);
+    if (require('./wordOrigin').isWord(row.definition)) await assertWordDefinition(db, scope, row.definition);
     return row;
 }
 

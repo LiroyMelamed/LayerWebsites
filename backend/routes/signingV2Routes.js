@@ -37,6 +37,7 @@ router.use((req, res, next) => (process.env.SIGNING_V2_ENABLED === 'true' ? next
 router.use((req, res, next) => { res.set('Cache-Control', 'private, no-store'); next(); });
 router.use(auth, requireSigningEnabledForUser);
 
+router.use('/recipes', view, require('./signingPackageRecipeRoutes')({ pool, actorScope }));
 router.use('/word', send, require('./signingWordRoutes')({ pool, actorScope }));
 
 const stageDocuments = require('../services/signingV2/caseStageAutomation');

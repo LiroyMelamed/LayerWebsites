@@ -60,7 +60,7 @@ async function fixture(t) {
         (7,'Deleted synthetic client','','','','Deleted',null,$1,null),
         (8,'Missing profile client','','','','Client',null,'{}',null)`, [profileA, profileB, foreignTenant]);
     await pg.exec("INSERT INTO cases VALUES(9,'תיק בדיקה א',null),(10,'Unassigned synthetic case',null); INSERT INTO case_users VALUES(9,1); INSERT INTO court_case_links VALUES(9,null,'00042-10-2026',true)");
-    for (const name of ['2026-10-23_01_signing_word_sources.sql', '2026-10-26_01_signing_word_authoring_renders.sql']) {
+    for (const name of ['2026-10-23_01_signing_word_sources.sql', '2026-10-26_01_signing_word_authoring_renders.sql', '2026-11-18_02_signing_word_working_copies.sql']) {
         await pg.exec(fs.readFileSync(path.join(backend, 'migrations', name), 'utf8'));
     }
     const objects = new Map(), uploads = new Map(), conversions = [];

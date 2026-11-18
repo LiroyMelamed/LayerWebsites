@@ -13,9 +13,11 @@ import SegmentedSwitch from '../../../components/styledComponents/SegmentedSwitc
 import StatusNotice from '../../../components/ui/StatusNotice';
 import WordTemplatesWorkspace from '../word/WordTemplatesWorkspace';
 import './templates.scss';
+import recipesApi from '../../../api/packageRecipesApi';
+import PackagesWorkspace from '../packages/PackagesWorkspace';
 
-export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSendTemplate, onWordContinue, nativeAvailable = false, view = 'templates',
-    initialWordMode = false, initialContext, resumeDraft, onDraftChange, onWordBack }) {
+function LegacyTemplatesWorkspace({ onClose, canUpload, canManage, onSendTemplate, onWordContinue, nativeAvailable = false, view = 'templates',
+    initialWordMode = false, initialContext, resumeDraft, onDraftChange, onWordBack, embedded = false }) {
     const legacyRunsOnly = view === 'legacy-runs';
     const showBatches = legacyRunsOnly || !nativeAvailable;
     const { t, direction, number, date, errorMessage } = useSigningLocale();
@@ -142,13 +144,13 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSe
     if (legacyRunsOnly && mode === 'list' && !batches.length && !busy && !error) return null;
 
     return <><section className="lw-templates" dir={direction} aria-label={text(legacyRunsOnly ? 'previousBatches' : 'title')}>
-        {(!legacyRunsOnly || mode === 'batch') && <SigningBackButton onPress={mode === 'batch' ? back : onClose}>
+        {!embedded && (!legacyRunsOnly || mode === 'batch') && <SigningBackButton onPress={mode === 'batch' ? back : onClose}>
             {mode === 'batch' ? text(legacyRunsOnly ? 'backToRuns' : 'backToTemplates') : t('signingV2.backToDocuments')}
         </SigningBackButton>}
-        <header className="lw-templates__heading"><div>
+        {!embedded && <header className="lw-templates__heading"><div>
             {legacyRunsOnly && mode === 'list' ? <h2>{text('previousBatches')}</h2> : <h1>{mode === 'batch' ? <bdi>{batch.batch.name}</bdi> : text('title')}</h1>}
             {(!legacyRunsOnly || mode === 'batch') && <p>{text(mode === 'batch' ? 'batchSubtitle' : 'subtitle')}</p>}
-        </div></header>
+        </div></header>}
         {error && <StatusNotice onAction={() => mode === 'batch' ? openBatch(batch.batch.id) : refresh()} actionLabel={t('signingV2.refresh')}>
             <p>{error.code === 'CLIPBOARD_UNAVAILABLE' ? text('copyFailed') : errorMessage(error)}</p>
         </StatusNotice>}
@@ -157,7 +159,7 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSe
             {!legacyRunsOnly && <>
             <div className="lw-templates__toolbar">
                 <h2>{text('officeTemplates')}</h2>
-                {canUpload && <button type="button" className="is-primary" onClick={() => { setCurrent(null); setMode(nativeAvailable ? 'nativeBuilder' : 'builder'); }}>{text('newTemplate')}</button>}
+                {!embedded && canUpload && <button type="button" className="is-primary" onClick={() => { setCurrent(null); setMode(nativeAvailable ? 'nativeBuilder' : 'builder'); }}>{text('newTemplate')}</button>}
                 {nativeAvailable && canUpload && <button type="button" onClick={() => setMode('word')}>{t('signingWord.open')}</button>}
             </div>
             {nativeAvailable && <SegmentedSwitch value={showArchived ? 'archived' : 'active'} onChange={value => setShowArchived(value === 'archived')} ariaLabel={t('signingV2.authoring.library')}
@@ -237,4 +239,25 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSe
         {archiveConfirmation && <TemplateArchiveConfirmation version={archiveConfirmation} busy={busy} onConfirm={() => archiveConfirmation.legacy ? archive(archiveConfirmation) : archiveNative(archiveConfirmation)}
             onCancel={() => { if (!archiving.current) setArchiveConfirmation(null); }} />}
     </>;
+}
+
+// A disabled deployment keeps the incumbent workflow; a network error never
+// silently selects a different library or loses the current editing context.
+export default function TemplatesWorkspace(props) {
+    const [available,setAvailable]=useState(null),[error,setError]=useState(null);
+    const {t,errorMessage}=useSigningLocale();
+    const legacy=props.view==='legacy-runs'||!props.nativeAvailable||props.initialWordMode||!!props.resumeDraft;
+    useEffect(()=>{
+        if(legacy)return undefined;
+        let live=true;
+        recipesApi.list().then(result=>{if(live)setAvailable(result.recipes);}).catch(error=>{
+            if(!live)return;
+            if(error.code==='NOT_FOUND'||error.status===404||error.response?.status===404)setAvailable(false);else setError(error);
+        });return()=>{live=false;};
+    },[legacy]);
+    if(legacy||available===false)return <LegacyTemplatesWorkspace {...props}/>;
+    if(error)return <StatusNotice><p>{errorMessage(error)}</p></StatusNotice>;
+    if(available===null)return <p role="status">{t('common.loading')}</p>;
+    return <PackagesWorkspace initialRecipes={available} canUpload={props.canUpload} onClose={props.onClose} onCreated={props.onPackageCreated}
+        legacy={<LegacyTemplatesWorkspace {...props} embedded/>}/>;
 }
