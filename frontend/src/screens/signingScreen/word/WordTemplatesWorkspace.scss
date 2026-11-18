@@ -210,3 +210,13 @@
 }
 
 .lw-word__manualField { display: grid; gap: .75rem; margin-block-start: .75rem; }
+
+@media (max-width: 48rem) {
+  .lw-word--package .lw-word__visualRow > .lw-signing-pdfViewerMain { grid-row: 1; }
+  .lw-word--package .lw-word__visualRow > .lw-word__mappingForm { grid-row: 2; block-size: 18rem; position: static; }
+}
+
+.lw-word--package {
+  padding: 0;
+  > .lw-word__section { border-block-start: 0; padding-block-start: .5rem; margin-block-start: .5rem; }
+}

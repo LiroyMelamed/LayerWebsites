@@ -298,6 +298,7 @@ test('new stage and Word tables inherit shared-office RLS, immutable owners and 
  const role='stage_iso_'+randomUUID().replaceAll('-','');await f.pool.query(`CREATE ROLE ${role} NOLOGIN;GRANT USAGE ON SCHEMA public TO ${role};GRANT INSERT ON signingfiles TO ${role}`);
  f.cleanup.push(async()=>{await f.pool.query(`DROP OWNED BY ${role};DROP ROLE ${role}`);});
  await f.pool.query(fs.readFileSync(path.join(__dirname,'../migrations/2026-10-23_01_signing_word_sources.sql'),'utf8'));
+ await f.pool.query(fs.readFileSync(path.join(__dirname,'../migrations/2026-11-18_02_signing_word_working_copies.sql'),'utf8'));
  const owners=[[f.f.contextId,f.scope.userId],[other.contextId,other.scope.userId]];
  for(const [context,owner] of owners) {
   const source=randomUUID();
