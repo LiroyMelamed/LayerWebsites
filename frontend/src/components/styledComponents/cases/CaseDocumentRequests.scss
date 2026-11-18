@@ -4,6 +4,21 @@
   &__heading { display: flex; align-items: center; gap: .75rem; }
   > header { justify-content: space-between; }
   > header > span, &__muted { font-size: .8125rem; color: var(--lw-color-primary-highlighted); }
+  &__toggle.lw-simpleButton {
+    display: inline-flex; align-items: center; gap: .5rem;
+    border: 0; padding: .375rem 0; background: transparent; color: inherit;
+    font: inherit; min-inline-size: 0; text-align: start; box-shadow: none;
+    &:focus-visible { outline: 2px solid var(--lw-color-primary); outline-offset: 3px; }
+  }
+  &__chevron { inline-size: .875rem; block-size: .875rem; object-fit: contain; transition: transform 180ms ease; }
+  &__chevron.is-open { transform: rotate(180deg); }
+  &__add { display: inline-flex; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 180ms ease, visibility 0s 180ms; }
+  &__add.is-open { opacity: 1; visibility: visible; pointer-events: auto; transition-delay: 0s; }
+  &__body { display: grid; gap: .75rem; min-inline-size: 0; }
+  &__body[hidden] { display: none; }
+  @media (prefers-reduced-motion: reduce) {
+    &__chevron, &__add { transition: none; }
+  }
   &__list { display: grid; gap: .25rem; }
   &__item { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; min-inline-size: 0; }
   &__check { flex: 1; min-inline-size: 0; }
