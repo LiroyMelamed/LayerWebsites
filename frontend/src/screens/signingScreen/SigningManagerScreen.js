@@ -3,7 +3,6 @@ import { downloadBlobAsFile } from "../../utils/downloadBlobAsFile";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
-import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import useHttpRequest from "../../hooks/useHttpRequest";
 import signingFilesApi from "../../api/signingFilesApi";
 import { customersApi } from "../../api/customersApi";
@@ -88,6 +87,7 @@ export default function SigningManagerScreen() {
     };
     const showTemplates = panel.startsWith("template");
     const showRuns = panel === "runs" || panel === "compose";
+    const showFileList = !showTemplates && !showRuns && !(panel === "stage" && searchParams.get("caseId"));
     const wordInitialContext = location.state?.wordInitialContext || null;
     const wordContextKey = `${wordInitialContext?.clientRecord?.id || ''}:${wordInitialContext?.caseRecord?.id || ''}`;
     const wordSession = useRef({ contextKey: wordContextKey, draft: draftForWordContext(location.state?.wordResumeDraft, wordInitialContext) });
@@ -110,16 +110,15 @@ export default function SigningManagerScreen() {
 
     const [, setIsDownloadingSigned] = useState(false);
 
-    const { result: lawyerFilesData, isPerforming, performRequest: reloadFilesRaw, error } = useAutoHttpRequest(
+    const { result: lawyerFilesData, isPerforming, performRequest: reloadFilesRaw, error } = useHttpRequest(
         signingFilesApi.getLawyerSigningFiles
     );
 
     const reloadFiles = React.useCallback(() => reloadFilesRaw(scope), [reloadFilesRaw, scope]);
 
     useEffect(() => {
-        reloadFilesRaw(scope);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [scope]);
+        if (showFileList) reloadFilesRaw(scope);
+    }, [scope, showFileList, reloadFilesRaw]);
 
     const files = useMemo(() => lawyerFilesData?.files || [], [lawyerFilesData]);
 
@@ -414,8 +413,8 @@ export default function SigningManagerScreen() {
         initialWordMode={searchParams.get('mode') === 'word'} initialContext={wordInitialContext}
         resumeDraft={wordSession.current.draft} onDraftChange={rememberWordDraft}
         onWordBack={() => { const next = new URLSearchParams(searchParams); next.delete('mode'); setSearchParams(next); }}
-        canUpload={canSignUpload} canManage={canSignManage} onClose={() => { setPanel(null); reloadFiles(); }} />);
-    if (showRuns) return panelShell(<SigningPackagesHub canCreate={canSignUpload} canManage={canSignManage} onClose={() => { setPanel(null); reloadFiles(); }} />);
+        canUpload={canSignUpload} canManage={canSignManage} onClose={() => setPanel(null)} />);
+    if (showRuns) return panelShell(<SigningPackagesHub canCreate={canSignUpload} canManage={canSignManage} onClose={() => setPanel(null)} />);
 
     return (
         <SimpleScreen

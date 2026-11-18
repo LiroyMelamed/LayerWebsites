@@ -91,10 +91,6 @@ export default function RemindersScreen() {
         onSuccess: () => { },
     });
 
-    useEffect(() => {
-        performRequest();
-    }, [statusFilter, page, performRequest]);
-
     const reminders = useMemo(() => result?.reminders || [], [result]);
     const total = result?.total || 0;
     const totalPages = Math.ceil(total / limit) || 1;
