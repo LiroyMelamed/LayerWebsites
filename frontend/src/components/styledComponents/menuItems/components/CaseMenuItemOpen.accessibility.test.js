@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import CaseMenuItemOpen from './CaseMenuItemOpen';
+import CaseTimeline from '../../cases/CaseTimeline';
 
 jest.mock('react-i18next', () => ({ ...jest.requireActual('react-i18next'), useTranslation: () => ({ t: (key) => key }) }));
 jest.mock('../../../../providers/FirmPermissionsProvider', () => ({ useFirmPermissions: () => null }));
@@ -8,9 +9,25 @@ jest.mock('../../../../providers/PopUpProvider', () => ({ usePopup: () => ({ ope
 jest.mock('../../../../hooks/useHttpRequest', () => () => ({ isPerforming: false, performRequest: jest.fn() }));
 jest.mock('../../../../services/firmSettings', () => ({ useFirmPhone: () => '0500000000' }));
 jest.mock('../../../../api/filesApi', () => ({ getStageFiles: jest.fn(async () => ({ data: [] })) }));
-jest.mock('../../cases/CaseTimeline', () => () => <button type="button">קובץ הדגמה</button>);
+jest.mock('../../cases/CaseTimeline', () => jest.fn(() => <button type="button">קובץ הדגמה</button>));
 
 const fullCase = { CaseId: 1, CaseName: 'תיק הדגמה', Descriptions: [], CurrentStage: 0, IsClosed: false };
+
+beforeEach(() => {
+    jest.clearAllMocks();
+    CaseTimeline.mockImplementation(() => <button type="button">קובץ הדגמה</button>);
+});
+
+test('a large collapsed case list never mounts timelines or their network effects', () => {
+    const { rerender } = render(<>{Array.from({ length: 240 }, (_, i) =>
+        <CaseMenuItemOpen key={i} fullCase={{ ...fullCase, CaseId: i + 1 }} isOpen={false} isClient />)}</>);
+    expect(CaseTimeline).not.toHaveBeenCalled();
+    rerender(<CaseMenuItemOpen fullCase={fullCase} isOpen isClient />);
+    expect(CaseTimeline).toHaveBeenCalledTimes(1);
+    CaseTimeline.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: 'סגירת שלבי התיק: תיק הדגמה' }));
+    expect(CaseTimeline).not.toHaveBeenCalled();
+});
 
 test('collapsed case actions leave the accessibility tree and return when expanded', () => {
     const { rerender, container } = render(<CaseMenuItemOpen fullCase={fullCase} isOpen={false} isClient />);

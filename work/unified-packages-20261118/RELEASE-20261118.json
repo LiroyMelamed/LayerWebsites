@@ -1,0 +1,103 @@
+{
+  "productCommit": "9b70d6d748eb7280847324ab2116fc09814c6a74",
+  "tag": "production-unified-packages-20261118",
+  "tenants": [
+    {
+      "tenant": "ashrafessa",
+      "sha": "624f7fd7cdf4528f62b3e2913c116bda00e6e8be",
+      "migrations": 3,
+      "recipesEnabled": true,
+      "healthy": true
+    },
+    {
+      "tenant": "morlevy",
+      "sha": "c2e8549833bc0f877f03402eacd9ce44cbe78e3c",
+      "migrations": 3,
+      "recipesEnabled": true,
+      "healthy": true
+    },
+    {
+      "tenant": "melamedlaw",
+      "sha": "63563fa017adc7d9d46b49de37a2fbf3cbc66773",
+      "migrations": 3,
+      "recipesEnabled": true,
+      "healthy": true
+    }
+  ],
+  "web": [
+    {
+      "tenant": "melamedia",
+      "entrypoints": [
+        "static/js/vendor-pdf.e30fc73f.js",
+        "static/js/vendor-i18n.75804709.js",
+        "static/js/vendor-react.97f5e900.js",
+        "static/js/vendor.ad5f7bde.js",
+        "static/css/main.2393656e.css",
+        "static/js/main.de4fc53e.js"
+      ],
+      "httpsBytesMatch": true
+    },
+    {
+      "tenant": "ashrafessa",
+      "entrypoints": [
+        "static/js/vendor-pdf.e30fc73f.js",
+        "static/js/vendor-i18n.75804709.js",
+        "static/js/vendor-react.97f5e900.js",
+        "static/js/vendor.ad5f7bde.js",
+        "static/css/main.0cfdff73.css",
+        "static/js/main.83f9644b.js"
+      ],
+      "httpsBytesMatch": true
+    },
+    {
+      "tenant": "morlevy",
+      "entrypoints": [
+        "static/js/vendor-pdf.e30fc73f.js",
+        "static/js/vendor-i18n.75804709.js",
+        "static/js/vendor-react.97f5e900.js",
+        "static/js/vendor.ad5f7bde.js",
+        "static/css/main.0cfdff73.css",
+        "static/js/main.9702d1a5.js"
+      ],
+      "httpsBytesMatch": true
+    },
+    {
+      "tenant": "melamedlaw",
+      "entrypoints": [
+        "static/js/vendor-pdf.e30fc73f.js",
+        "static/js/vendor-i18n.75804709.js",
+        "static/js/vendor-react.97f5e900.js",
+        "static/js/vendor.ad5f7bde.js",
+        "static/css/main.0cfdff73.css",
+        "static/js/main.c581e1f7.js"
+      ],
+      "httpsBytesMatch": true
+    }
+  ],
+  "authenticatedBrowserSmoke": {
+    "ashrafessa": "library and new-package editor visible",
+    "morlevy": "library and new-package editor visible; existing configured demo login",
+    "melamedlaw": "library and new-package editor visible; existing configured demo login"
+  },
+  "figma": {
+    "file": "qnclFuKDylmbBZ9ASZiTet",
+    "frames": [
+      "133:7025",
+      "133:7197",
+      "133:7754",
+      "133:7781",
+      "133:7393",
+      "133:7575",
+      "133:7821",
+      "133:7858"
+    ],
+    "editable": true,
+    "method": "Existing RunJSOnce desktop plugin; normal connector quota exhausted",
+    "review": "Library/editor desktop and people/review mobile inspected; shared button instances; original frames retained."
+  },
+  "limitations": [
+    "Production smoke did not send customer documents. Full real-provider signing was exercised in QA.",
+    "Historical two-Google-account/Gmail/native-iOS checks are outside this feature qualification."
+  ],
+  "evidenceDirectory": "/Users/liroymelamed/.cache/melamedia-builds/document-workflow-20261117/live-qa"
+}
