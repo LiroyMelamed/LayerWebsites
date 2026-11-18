@@ -46,15 +46,17 @@ function usePagedResource(load, dependencies) {
     const loadRef = useRef(load);
     loadRef.current = load;
     useEffect(() => {
-        let disposed = false;
+        let disposed = false, inFlight = false;
         let sequence = 0;
         const controllers = new Set();
         const refresh = async (showBusy = false) => {
+            if (disposed || inFlight) return;
+            inFlight = true;
             const request = ++sequence;
             const controller = new AbortController(); controllers.add(controller);
             if (showBusy) setBusy(true);
             try {
-                const next = await loadRef.current({ signal: controller.signal });
+                const next = await loadRef.current({ signal: controller.signal, timeout: 30000 });
                 if (!disposed && request === sequence) { setData(next); setError(null); }
             } catch (failure) {
                 if (!disposed && request === sequence && !controller.signal.aborted) {
@@ -62,6 +64,7 @@ function usePagedResource(load, dependencies) {
                     setError(failure);
                 }
             } finally {
+                inFlight = false;
                 controllers.delete(controller);
                 if (!disposed && request === sequence) setBusy(false);
             }

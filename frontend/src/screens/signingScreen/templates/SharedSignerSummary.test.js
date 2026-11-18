@@ -76,3 +76,22 @@ test('new focused-run summary retains the submission scope when only one logical
     await screen.findByText('Represented company');
     expect(api.participantSummary).toHaveBeenCalledWith('authorized-run', expect.any(Object));
 });
+
+
+test('slow participant summary stays single-flight and renders its completed result', async () => {
+    jest.useFakeTimers();
+    try {
+        let finish;
+        const api = { participantSummary: jest.fn().mockImplementation(() => new Promise(resolve => { finish = resolve; })) };
+        const i = await mount(api);
+        const details = screen.getByRole('group', { name: i.t('signingV2.sharedSummary.title') });
+        details.open = true;
+        fireEvent(details, new Event('toggle'));
+        await act(async () => { jest.advanceTimersByTime(24000); });
+        expect(api.participantSummary).toHaveBeenCalledTimes(1);
+        await act(async () => { finish(summary); });
+        expect(screen.getByText('Represented company')).toBeVisible();
+        await act(async () => { jest.advanceTimersByTime(8000); });
+        expect(api.participantSummary).toHaveBeenCalledTimes(2);
+    } finally { jest.useRealTimers(); }
+});
