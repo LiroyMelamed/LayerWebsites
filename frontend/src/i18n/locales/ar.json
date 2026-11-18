@@ -4025,7 +4025,8 @@
     "valuesCheckFailed": "تعذر التحقق من البيانات. اختر السجل مجددًا.",
     "useRecordValue": "استخدام قيمة السجل",
     "backToPackage": "العودة إلى الحزمة",
-    "signatureHere": "إضافة توقيع هنا"
+    "signatureHere": "إضافة توقيع هنا",
+    "savePackageFields": "حفظ الحقول"
   },
   "stageAutomation": {
     "title": "مستندات تلقائية حسب مرحلة الملف",
@@ -4221,6 +4222,7 @@
     "unnamedDraft": "حزمة بلا اسم",
     "resume": "متابعة التعديل",
     "officeSource": "المكتب",
-    "moveSignatureKeyboard": "ركّز هنا واستخدم الأسهم لتحريك التوقيع. Shift لخطوة أكبر."
+    "moveSignatureKeyboard": "ركّز هنا واستخدم الأسهم لتحريك التوقيع. Shift لخطوة أكبر.",
+    "reviewPrivateSource": "راجعت المصادر والحقول. ستبقى الحزمة خاصة."
   }
 }

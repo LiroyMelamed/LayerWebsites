@@ -4308,7 +4308,8 @@
     "valuesCheckFailed": "לא ניתן לבדוק את הנתונים. נסו לבחור שוב את הרשומה.",
     "useRecordValue": "חזרה לערך שבכרטיס",
     "backToPackage": "חזרה לחבילה",
-    "signatureHere": "הוספת חתימה כאן"
+    "signatureHere": "הוספת חתימה כאן",
+    "savePackageFields": "שמירת שדות"
   },
   "stageAutomation": {
     "title": "מסמכים אוטומטיים לפי שלב",
@@ -4504,6 +4505,7 @@
     "unnamedDraft": "חבילה ללא שם",
     "resume": "המשך עריכה",
     "officeSource": "המשרד",
-    "moveSignatureKeyboard": "הזזת החתימה בחצי המקלדת כשההוראה הזו במיקוד. Shift לתזוזה גדולה יותר."
+    "moveSignatureKeyboard": "הזזת החתימה בחיצי המקלדת כשההוראה הזו במיקוד. Shift לתזוזה גדולה יותר.",
+    "reviewPrivateSource": "בדקתי את המקורות והשדות. החבילה תישמר לשימושי הפרטי."
   }
 }

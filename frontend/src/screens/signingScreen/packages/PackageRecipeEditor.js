@@ -129,12 +129,12 @@ export default function PackageRecipeEditor({recipe,resumeDraft,onBack,onSaved})
         <SigningBackButton onPress={()=>dirty?setLeaving(true):onBack()} disabled={blocked}>{text('backLibrary')}</SigningBackButton>
         <header className="lw-packages__header"><h1>{text(recipe?'editPackage':'newPackage')}</h1>
             <SimpleInput title={text('name')} value={definition.name} maxLength={200} timeToWaitInMilli={0} onChange={e=>setDefinition(prev=>({...prev,name:e.target.value}))}/></header>
-        <nav className="lw-packages__steps" aria-label={text('steps')}>{['documents','signers','review'].map((key,index)=><SecondaryButton key={key} size={buttonSizes.SMALL} aria-current={step===index?'step':undefined} disabled={blocked} onPress={()=>navigate(()=>setStep(index))}>{index+1} · {text(key)}</SecondaryButton>)}</nav>
+        <nav className="lw-packages__steps" aria-label={text('steps')}>{['documents','signers','review'].map((key,index)=>{const Button=step===index?PrimaryButton:SecondaryButton;return <Button key={key} size={buttonSizes.SMALL} aria-current={step===index?'step':undefined} disabled={blocked} onPress={()=>navigate(()=>setStep(index))}>{index+1} · {text(key)}</Button>;})}</nav>
         {error&&<StatusNotice><p>{error.code||error.errorCode?errorMessage(error):error.message}</p></StatusNotice>}
         {draftSaved&&<p role="status">{text('draftSaved')}</p>}
         {busy&&<p role="status">{text('working')}</p>}
         {step===0&&<>
-            <FileUploadBox label={text('addDocument')} hint={text('formats')} accept=".pdf,.docx" disabled={blocked||definition.documents.length>=10} onFileSelected={upload}/>
+            <FileUploadBox className={definition.documents.length?'lw-packages__compactUpload':''} label={text('addDocument')} hint={text('formats')} accept=".pdf,.docx" disabled={blocked||definition.documents.length>=10} onFileSelected={upload}/>
             {definition.documents.length>1&&<nav className="lw-packages__documents" aria-label={text('documents')}>{definition.documents.map((item,index)=><SecondaryButton key={item.key} size={buttonSizes.SMALL} aria-pressed={active===index} disabled={blocked} onPress={()=>navigate(()=>setActive(index))}>{item.name}</SecondaryButton>)}</nav>}
             <PackageFieldDefinitions definition={definition} onChange={setDefinition} disabled={blocked}/>
             {doc&&<><div className="lw-packages__documentHeading"><h2>{doc.name}</h2><div className="lw-packages__actions">
@@ -156,7 +156,7 @@ export default function PackageRecipeEditor({recipe,resumeDraft,onBack,onSaved})
         </>}
         {step===2&&<><h2>{definition.name}</h2><ul>{definition.documents.map(item=><li key={item.key}>{item.name} · {item.source.kind.toUpperCase()} · {item.signatureFields.length} {text('signatureFields')}</li>)}</ul>
             <label>{text('sharing')}<SigningSelect value={visibility} onChange={e=>setVisibility(e.target.value)}><option value="office">{text('office')}</option><option value="private">{text('private')}</option></SigningSelect></label>
-            <SimpleCheckbox checked={reviewed} onChange={e=>setReviewed(e.target.checked)} title={text('reviewSource')}/>
+            <SimpleCheckbox checked={reviewed} onChange={e=>setReviewed(e.target.checked)} title={text(visibility==='office'?'reviewSource':'reviewPrivateSource')}/>
         </>}
         <footer className="lw-packages__footer"><SecondaryButton size={buttonSizes.SMALL} disabled={blocked} onPress={saveDraft}>{text('saveDraft')}</SecondaryButton><SecondaryButton size={buttonSizes.SMALL} disabled={blocked||step===0} onPress={()=>navigate(()=>setStep(step-1))}>{text('back')}</SecondaryButton>
             {step<2?<PrimaryButton size={buttonSizes.SMALL} disabled={blocked||!definition.name.trim()||definition.fields.some(field=>!field.label.trim())||!definition.documents.length} onPress={()=>navigate(()=>setStep(step+1))}>{text('continue')}</PrimaryButton>
