@@ -14,6 +14,15 @@ jest.mock('../../../components/specializedComponents/signFiles/pdfViewer/PdfView
 if (!window.crypto) Object.defineProperty(window, 'crypto', { value: require('crypto').webcrypto });
 
 const resources = { he: { translation: he }, ar: { translation: ar }, en: { translation: en } };
+
+test('creation, document preparation, provider acceptance and confirmed delivery remain separate', async () => {
+    const i18n = await translations('he'), { api, batch } = fixture();
+    Object.assign(batch, { prepared_count: 12, accepted_messages: 3, delivered_messages: 1 });
+    render(<I18nextProvider i18n={i18n}><SigningPackagesWorkspace api={api} /></I18nextProvider>);
+    expect(await screen.findByText(i18n.t('signingV2.preparedFraction', { ready: '12', total: '600' }))).toBeVisible();
+    expect(screen.getByText(i18n.t('signingV2.providerAcceptedCount', { formattedCount: '3' }))).toBeVisible();
+    expect(screen.getByText(i18n.t('signingV2.confirmedDeliveryCount', { formattedCount: '1' }))).toBeVisible();
+});
 async function translations(language) {
     const instance = createInstance();
     await instance.use(initReactI18next).init({ resources, lng: language, fallbackLng: false, interpolation: { escapeValue: false } });

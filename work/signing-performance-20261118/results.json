@@ -1,0 +1,277 @@
+{
+  "baseCommit": "5c3b69e68611915d70c29d733148d41e510596b7",
+  "environment": {
+    "host": "QA backend VPS, isolated schema-only database",
+    "cpuQuota": "150% of one CPU on 3-vCPU host",
+    "memoryLimit": "2 GiB",
+    "renderWorkers": 2,
+    "storage": "local disk or QA R2 as labelled",
+    "provider": "synthetic only; 100ms per handoff"
+  },
+  "scenarios": {
+    "candidate": {
+      "sampleCount": 30,
+      "workload": {
+        "packages": 200,
+        "documentsPerPackage": 3,
+        "pagesPerDocument": 3,
+        "totalDocuments": 600
+      },
+      "boundaries": {
+        "creation": "loopback HTTP draft save + submit; real router, auth, quota queries (complimentary fixture) and committed PostgreSQL rows; excludes browser/TLS/network",
+        "rendering": "real Chromium + pdf-lib, private local disk with hash read-back; excludes R2 latency",
+        "transport": "synthetic adapter with 100 ms latency; NOT real provider acceptance or delivery"
+      },
+      "target": "PASS_FOR_RECORDED_BOUNDARY",
+      "p50Ms": 706.7133325000009,
+      "p95Ms": 858.9771009999968,
+      "maxMs": 878.1442750000024,
+      "queryCounts": [
+        68
+      ],
+      "eventLoopMaxMs": 184.418303,
+      "background": {
+        "allDocumentsReadyMs": 60906.13305999999,
+        "allSyntheticHandoffsMs": 61951.812569,
+        "syntheticProviderCalls": 200,
+        "fromConfirmationToReadyMs": 61577.06387299999,
+        "fromConfirmationToSyntheticHandoffsMs": 62622.743382
+      },
+      "storage": {
+        "sourceReads": 1,
+        "writes": 601,
+        "verifications": 600
+      },
+      "creationSamplesMs": [
+        857.54891,
+        659.0440309999999,
+        714.922959,
+        774.3328689999998,
+        659.1316320000005,
+        634.1825120000003,
+        704.9257559999996,
+        657.7745439999999,
+        759.5423210000008,
+        685.6151239999999,
+        650.170881,
+        660.7187110000013,
+        689.0916230000003,
+        835.9521559999994,
+        727.9316639999979,
+        708.5009090000021,
+        833.8883400000013,
+        878.1442750000024,
+        858.9771009999968,
+        716.2209970000004,
+        671.0709959999986,
+        776.514314,
+        719.2196670000012,
+        675.0814310000023,
+        723.0500159999974,
+        613.9834930000034,
+        760.499366,
+        632.5706559999999,
+        702.8563969999959,
+        670.930812999999
+      ],
+      "rawEvidence": "/Users/liroymelamed/.cache/melamedia-builds/signing-performance-20261118/evidence/candidate.json"
+    },
+    "candidate-2000": {
+      "sampleCount": 30,
+      "workload": {
+        "packages": 200,
+        "documentsPerPackage": 10,
+        "pagesPerDocument": 3,
+        "totalDocuments": 2000
+      },
+      "boundaries": {
+        "creation": "loopback HTTP draft save + submit; real router, auth, quota queries (complimentary fixture) and committed PostgreSQL rows; excludes browser/TLS/network",
+        "rendering": "real Chromium + pdf-lib, private local disk with hash read-back; excludes R2 latency",
+        "transport": "synthetic adapter with 100 ms latency; NOT real provider acceptance or delivery"
+      },
+      "target": "PASS_FOR_RECORDED_BOUNDARY",
+      "p50Ms": 1586.5346434999965,
+      "p95Ms": 2062.4298939999935,
+      "maxMs": 2089.264561,
+      "queryCounts": [
+        68
+      ],
+      "eventLoopMaxMs": 399.245311,
+      "background": null,
+      "storage": {
+        "sourceReads": 0,
+        "writes": 1,
+        "verifications": 0
+      },
+      "creationSamplesMs": [
+        2089.264561,
+        1697.6443900000004,
+        1578.737078,
+        1654.8010880000002,
+        1586.6010939999996,
+        1471.9783769999995,
+        1436.9116900000008,
+        1577.2816039999998,
+        1775.3030209999997,
+        1646.2753059999995,
+        1476.7917790000029,
+        1521.420127999998,
+        1481.1713110000055,
+        1662.3988059999974,
+        1454.339731,
+        1501.3329069999963,
+        2031.8790729999964,
+        2062.4298939999935,
+        1785.6779760000063,
+        1837.1335299999992,
+        1482.6192379999993,
+        1442.7674219999972,
+        1503.4111809999958,
+        1459.5658709999989,
+        1619.2153990000006,
+        1628.2738420000096,
+        1431.8068620000122,
+        1587.5580950000003,
+        1906.7661820000067,
+        1586.4681929999933
+      ],
+      "rawEvidence": "/Users/liroymelamed/.cache/melamedia-builds/signing-performance-20261118/evidence/candidate-2000.json"
+    },
+    "baseline": {
+      "sampleCount": 30,
+      "workload": {
+        "packages": 200,
+        "documentsPerPackage": 3,
+        "pagesPerDocument": 3,
+        "totalDocuments": 600
+      },
+      "boundaries": {
+        "creation": "loopback HTTP draft save + submit; real router, auth, quota queries (complimentary fixture) and committed PostgreSQL rows; excludes browser/TLS/network",
+        "rendering": "real Chromium + pdf-lib, private local disk with hash read-back; excludes R2 latency",
+        "transport": "synthetic adapter with 100 ms latency; NOT real provider acceptance or delivery"
+      },
+      "target": "PASS_FOR_RECORDED_BOUNDARY",
+      "p50Ms": 778.234752999999,
+      "p95Ms": 985.2317830000029,
+      "maxMs": 1017.7167599999993,
+      "queryCounts": [
+        68
+      ],
+      "eventLoopMaxMs": 240.910335,
+      "background": {
+        "allDocumentsReadyMs": 156748.97899700003,
+        "allSyntheticHandoffsMs": 156748.97899700003,
+        "syntheticProviderCalls": 200,
+        "fromConfirmationToReadyMs": 157766.69575700004,
+        "fromConfirmationToSyntheticHandoffsMs": 157766.69575700004
+      },
+      "storage": null,
+      "creationSamplesMs": [
+        919.2240859999999,
+        708.309002,
+        774.228517,
+        938.155471,
+        773.6540150000001,
+        678.5036880000007,
+        845.6477299999997,
+        892.5585150000006,
+        823.0725229999989,
+        665.3678949999994,
+        858.5838100000001,
+        783.198343,
+        795.112129000001,
+        768.7064429999991,
+        892.5337380000001,
+        720.089046000001,
+        698.2986230000006,
+        694.3748290000003,
+        985.2317830000029,
+        909.7313619999986,
+        748.6726320000016,
+        713.2619320000013,
+        751.2701129999987,
+        657.6958149999991,
+        728.9003789999988,
+        708.0755050000007,
+        899.7590039999995,
+        979.3793949999999,
+        782.2409889999981,
+        1017.7167599999993
+      ],
+      "rawEvidence": "/Users/liroymelamed/.cache/melamedia-builds/signing-performance-20261118/evidence/baseline.json"
+    },
+    "candidate-r2": {
+      "sampleCount": 30,
+      "workload": {
+        "packages": 200,
+        "documentsPerPackage": 3,
+        "pagesPerDocument": 3,
+        "totalDocuments": 600
+      },
+      "boundaries": {
+        "creation": "loopback HTTP draft save + submit; real router, auth, quota queries (complimentary fixture) and committed PostgreSQL rows; excludes browser/TLS/network",
+        "rendering": "real Chromium + pdf-lib and QA R2 with hash read-back",
+        "transport": "synthetic adapter with 100 ms latency; NOT real provider acceptance or delivery"
+      },
+      "target": "PASS_FOR_RECORDED_BOUNDARY",
+      "p50Ms": 804.9971765000046,
+      "p95Ms": 1816.5519299999978,
+      "maxMs": 1849.079727999997,
+      "queryCounts": [
+        68
+      ],
+      "eventLoopMaxMs": 468.975615,
+      "background": {
+        "allDocumentsReadyMs": 128380.074092,
+        "allSyntheticHandoffsMs": 128380.074092,
+        "syntheticProviderCalls": 200,
+        "fromConfirmationToReadyMs": 129204.82533699999,
+        "fromConfirmationToSyntheticHandoffsMs": 129204.82533699999
+      },
+      "storage": {
+        "sourceReads": 1,
+        "writes": 601,
+        "verifications": 600
+      },
+      "creationSamplesMs": [
+        1242.842498,
+        968.8621640000001,
+        1034.50482,
+        940.6593989999992,
+        737.944442,
+        696.924497,
+        732.2373150000003,
+        713.344212,
+        782.8121879999999,
+        748.1358170000003,
+        825.9492890000001,
+        757.8811910000004,
+        719.4503119999972,
+        750.5490549999995,
+        817.0733939999991,
+        848.3844040000004,
+        1816.5519299999978,
+        1849.079727999997,
+        905.0942900000009,
+        800.6810620000033,
+        838.0917599999957,
+        912.7894229999947,
+        804.009275000004,
+        805.9850780000052,
+        781.1954540000006,
+        760.8253289999993,
+        828.2712249999968,
+        784.0559659999999,
+        719.299721000003,
+        824.7512449999995
+      ],
+      "rawEvidence": "/Users/liroymelamed/.cache/melamedia-builds/signing-performance-20261118/evidence/candidate-r2.json"
+    }
+  },
+  "candidateSourceSha256": {
+    "backend/services/signingV2/runtime.js": "fdcc45fa23bf4709fa9ba3871c865da6ca4b21b3631aee70ff2526c3a8c8fdc3",
+    "backend/services/signingV2/leaseHeartbeat.js": "7dbc8af94348efec63e29580b0cadbed8b40f7cf3fb493575696fefd6a294cfd",
+    "backend/lib/background/workLoop.js": "d1481c8dd61f21366ea4afc4d5315958840209e9b2dcbfea91a53ec9f1d33f47",
+    "backend/scripts/bench-signing-v2-batch.js": "879331585d3876af6bbcb5555ecead2daf80618e39b1cc35277b89fdffcc902c"
+  }
+}

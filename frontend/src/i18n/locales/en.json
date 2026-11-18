@@ -1543,6 +1543,8 @@
     "packageDetails": "Package details",
     "notYet": "Not yet",
     "preparedFraction": "Documents ready: {{ready}} of {{total}}",
+    "providerAcceptedCount": "Messages accepted by provider: {{formattedCount}}",
+    "confirmedDeliveryCount": "Messages with delivery confirmation: {{formattedCount}}",
     "informational": "Information annex — no signature required",
     "uncertainHelp": "The provider has not confirmed the outcome. Check delivery before sending again.",
     "authorizedSummary": "This summary includes all packages you can access, including completed packages. Filters apply to the list below.",

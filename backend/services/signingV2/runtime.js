@@ -12,6 +12,9 @@ const { createDeliveryService, markAbandonedDispatches } = require('./delivery')
 const { createCompletionService } = require('./completion');
 const { createPublicSigningService } = require('./publicSigning');
 const { RenderPool } = require('./renderPool');
+const { createWorkLoop } = require('../../lib/background/workLoop');
+const { withLeaseHeartbeat } = require('./leaseHeartbeat');
+const RENDER_KINDS = new Set(['prepare_document', 'render_stage', 'finalize_document', 'render_evidence']);
 
 function objectStorage({ client, bucket }) {
     expect(client && typeof bucket === 'string' && bucket.length > 0, 'STORAGE_REQUIRED');
@@ -184,10 +187,16 @@ function createRuntime({ pool, env = process.env, storage, provider, renderer, a
     // Without an explicit provider, invitations stay queued; nothing is sent and nothing is marked failed.
     if (provider) handlers.dispatch_delivery = createDeliveryService({ pool, grantService, provider, linkFor: linkFor(env) });
     const workerId = `signing-v2:${os.hostname()}:${process.pid}:${randomUUID().slice(0, 8)}`.slice(0, 100);
-    let timer = null, inFlight = null, stopped = false, recoveredAt = 0;
+    let loop = null, inFlight = null, stopped = false, recoveredAt = 0;
 
     async function runLease(kind, lease) {
-        try { await handlers[kind](lease); }
+        try {
+            if (RENDER_KINDS.has(kind)) {
+                await withLeaseHeartbeat(pool, lease, () => handlers[kind](lease), {
+                    onError: error => log.error('[signing-v2] lease heartbeat failed', error?.code || 'ERROR'),
+                });
+            } else await handlers[kind](lease);
+        }
         catch (error) {
             const code = /^[A-Z][A-Z0-9_]{1,79}$/.test(error?.errorCode || '') ? error.errorCode : 'WORKER_ERROR';
             if (code === 'WORKER_LEASE_LOST') return;
@@ -224,7 +233,7 @@ function createRuntime({ pool, env = process.env, storage, provider, renderer, a
             }
             for (const kind of ['prepare_document', 'validate_package', 'activate_package', 'render_stage', 'finalize_document', 'render_evidence', 'dispatch_delivery']) {
                 if (!handlers[kind]) continue;
-                const rendering = ['prepare_document', 'render_stage', 'finalize_document', 'render_evidence'].includes(kind);
+                const rendering = RENDER_KINDS.has(kind);
                 const batch = await jobs.claim(pool, { workerId, kinds: [kind], limit: rendering ? Math.min(8, pool_.concurrency * 2) : 8, contextIds });
                 processed += batch.length;
                 await Promise.all(batch.map(lease => runLease(kind, lease)));
@@ -250,15 +259,16 @@ function createRuntime({ pool, env = process.env, storage, provider, renderer, a
         // Drains until a full pass finds nothing; used by QA harnesses and measurements.
         async drain() { let total = 0; for (let count = await tick(); count; count = await tick()) total += count; return total; },
         start(intervalMs = Number(env.SIGNING_V2_WORKER_INTERVAL_MS) || 1000) {
-            if (timer) return;
-            timer = setInterval(tick, intervalMs);
-            timer.unref?.();
+            if (loop || stopped) return;
+            loop = createWorkLoop({ run: tick, idleMs: intervalMs,
+                onError: error => log.error('[signing-v2] worker loop failed', error?.code || 'ERROR') });
+            loop.start();
             alerts?.start();
         },
         async stop() {
             stopped = true;
-            if (timer) clearInterval(timer);
-            timer = null;
+            await loop?.stop();
+            loop = null;
             await inFlight;
             await alerts?.stop();
             if (!renderer) await pool_.close();
