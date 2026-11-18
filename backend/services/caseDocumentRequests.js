@@ -54,9 +54,23 @@ async function list(db, caseId, {client = false} = {}) {
     await caseRow(db,caseId);
     const requests = (await db.query('SELECT * FROM case_document_requests WHERE case_id=$1 AND law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid ORDER BY created_at,id',[caseId,getCurrentTenantId()])).rows;
     if (client) return { requests: requests.map(row=>({id:row.id,description_id:row.description_id,stage_title:row.stage_title,items:row.items.map(({id,title,status})=>({id,title,status}))})) };
-    for (const row of requests) {
-        row.history = (await db.query('SELECT e.*,u.name AS actor_name FROM case_document_request_events e LEFT JOIN users u ON u.userid=e.actor_id WHERE request_id=$1 ORDER BY e.id DESC LIMIT 40',[row.id])).rows;
-        row.deliveries = (await db.query('SELECT d.*,u.name AS client_name FROM case_document_deliveries d LEFT JOIN users u ON u.userid=d.user_id WHERE request_id=$1 ORDER BY d.created_at DESC LIMIT 80',[row.id])).rows;
+    if (requests.length) {
+        const byId = new Map(requests.map(row => {
+            row.history = [];
+            row.deliveries = [];
+            return [row.id, row];
+        }));
+        const ids = requests.map(row => row.id);
+        const history = await db.query(`SELECT recent.* FROM unnest($1::uuid[]) AS r(id)
+            CROSS JOIN LATERAL (SELECT e.*,u.name AS actor_name FROM case_document_request_events e
+                LEFT JOIN users u ON u.userid=e.actor_id WHERE e.request_id=r.id ORDER BY e.id DESC LIMIT 40) recent
+            ORDER BY recent.request_id,recent.id DESC`, [ids]);
+        const deliveries = await db.query(`SELECT recent.* FROM unnest($1::uuid[]) AS r(id)
+            CROSS JOIN LATERAL (SELECT d.*,u.name AS client_name FROM case_document_deliveries d
+                LEFT JOIN users u ON u.userid=d.user_id WHERE d.request_id=r.id ORDER BY d.created_at DESC,d.id DESC LIMIT 80) recent
+            ORDER BY recent.request_id,recent.created_at DESC,recent.id DESC`, [ids]);
+        for (const event of history.rows) byId.get(event.request_id).history.push(event);
+        for (const delivery of deliveries.rows) byId.get(delivery.request_id).deliveries.push(delivery);
     }
     return { requests, policy: await policy() };
 }
@@ -152,8 +166,7 @@ async function authorizedCreator(db,row,record) {
     return getCasesDataScope(permissions)==='all_firm' || record.casemanagerid===row.created_by ||
         (await db.query('SELECT 1 FROM case_users WHERE caseid=$1 AND userid=$2',[record.caseid,row.created_by])).rows.length>0;
 }
-async function active(db,row) {
-    const record=await caseRow(db,row.case_id,true);
+async function active(db,row,record) {
     const stage=(await db.query('SELECT stage FROM casedescriptions WHERE descriptionid=$1',[row.description_id])).rows[0];
     return !record.isclosed && stage && Number(stage.stage)===Number(record.currentstage) && row.state==='active' && missing(row).length && await authorizedCreator(db,row,record);
 }
@@ -163,9 +176,9 @@ async function processDue(pool,{notify, now = new Date()} = {}) {
     await pool.query("UPDATE case_document_deliveries SET status='UNKNOWN',error='DELIVERY_UNCONFIRMED' WHERE status='SENDING' AND claimed_at < now()-interval '10 minutes'");
     const due=(await pool.query("SELECT id,case_id FROM case_document_requests WHERE state='active' AND next_due<=$1 ORDER BY next_due LIMIT 30",[now])).rows;
     for (const candidate of due) await transaction(pool,async db=>{
-        await caseRow(db,candidate.case_id,true); const row=await requestRow(db,candidate.case_id,candidate.id);
+        const record=await caseRow(db,candidate.case_id,true); const row=await requestRow(db,candidate.case_id,candidate.id);
         if (!row.next_due || new Date(row.next_due)>now || row.state!=='active') return;
-        if (!await active(db,row) || (!row.manual_pending && (!row.automatic || !settings.enabled))) {
+        if (!await active(db,row,record) || (!row.manual_pending && (!row.automatic || !settings.enabled))) {
             await db.query("UPDATE case_document_requests SET state='paused',next_due=NULL WHERE id=$1",[row.id]); return;
         }
         const recipients=(await db.query(`SELECT u.userid FROM case_users cu JOIN users u ON u.userid=cu.userid
@@ -174,25 +187,27 @@ async function processDue(pool,{notify, now = new Date()} = {}) {
             await db.query("UPDATE case_document_requests SET state='paused',next_due=NULL WHERE id=$1",[row.id]);
             await audit(db,row,null,'send_blocked',{reason:recipients.length?'NO_CHANNELS':'NO_RECIPIENTS'}); return;
         }
-        for (const person of recipients) for (const channel of row.channels.filter(channel=>settings.available.includes(channel))) {
-            await db.query(`INSERT INTO case_document_deliveries(id,law_firm_tenant_id,request_id,cycle,user_id,channel,manual) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(request_id,cycle,user_id,channel) DO NOTHING`,[randomUUID(),row.law_firm_tenant_id,row.id,row.cycle,person.userid,channel,row.manual_pending]);
-        }
+        await db.query(`INSERT INTO case_document_deliveries(id,law_firm_tenant_id,request_id,cycle,user_id,channel,manual)
+            SELECT gen_random_uuid(),$1,$2,$3,person,channel,$4
+            FROM unnest($5::integer[]) AS recipient(person) CROSS JOIN unnest($6::text[]) AS chosen(channel)
+            ON CONFLICT(request_id,cycle,user_id,channel) DO NOTHING`,
+        [row.law_firm_tenant_id,row.id,row.cycle,row.manual_pending,recipients.map(person => person.userid),
+            row.channels.filter(channel => settings.available.includes(channel))]);
         await db.query('UPDATE case_document_requests SET next_due=NULL,manual_pending=false WHERE id=$1',[row.id]);
     });
     const pending=(await pool.query("SELECT d.id,r.case_id,r.id AS request_id FROM case_document_deliveries d JOIN case_document_requests r ON r.id=d.request_id WHERE d.status='PENDING' ORDER BY d.scheduled_for LIMIT 100")).rows;
     for (const candidate of pending) {
         const dispatch=await transaction(pool,async db=>{
-            await caseRow(db,candidate.case_id,true); const row=await requestRow(db,candidate.case_id,candidate.request_id);
+            const record=await caseRow(db,candidate.case_id,true); const row=await requestRow(db,candidate.case_id,candidate.request_id);
             const job=(await db.query("SELECT * FROM case_document_deliveries WHERE id=$1 AND status='PENDING' FOR UPDATE",[candidate.id])).rows[0];
             if (!job) return null;
             const person=(await db.query(`SELECT u.* FROM users u JOIN case_users cu ON cu.userid=u.userid WHERE cu.caseid=$1 AND u.userid=$2
                 AND u.role IN ('User','Client') AND u.law_firm_tenant_id IS NOT DISTINCT FROM $3::uuid`,[row.case_id,job.user_id,row.law_firm_tenant_id])).rows[0];
-            if (!await active(db,row) || !person || !settings.available.includes(job.channel) || (!job.manual && (!row.automatic || !settings.enabled))) {
+            if (!await active(db,row,record) || !person || !settings.available.includes(job.channel) || (!job.manual && (!row.automatic || !settings.enabled))) {
                 await db.query("UPDATE case_document_deliveries SET status='CANCELLED',cancelled_at=now() WHERE id=$1",[job.id]);return null;
             }
             const items=missing(row).map(item=>item.title);
             await db.query("UPDATE case_document_deliveries SET status='SENDING',claimed_at=now(),content_items=$2 WHERE id=$1",[job.id,JSON.stringify(items)]);
-            const record=await caseRow(db,row.case_id);
             return {row,job,person,items,record};
         });
         if (!dispatch) continue;
@@ -217,12 +232,12 @@ async function processDue(pool,{notify, now = new Date()} = {}) {
         AND EXISTS(SELECT 1 FROM case_document_deliveries d WHERE d.request_id=r.id AND d.cycle=r.cycle)
         AND NOT EXISTS(SELECT 1 FROM case_document_deliveries d WHERE d.request_id=r.id AND d.cycle=r.cycle AND d.status IN ('PENDING','SENDING')) LIMIT 100`)).rows;
     for(const candidate of finished) await transaction(pool,async db=>{
-        await caseRow(db,candidate.case_id,true);const row=await requestRow(db,candidate.case_id,candidate.id);
+        const record=await caseRow(db,candidate.case_id,true);const row=await requestRow(db,candidate.case_id,candidate.id);
         if (row.state!=='active' || row.next_due) return;
         const jobs=(await db.query('SELECT status FROM case_document_deliveries WHERE request_id=$1 AND cycle=$2',[row.id,row.cycle])).rows;
         if (!jobs.length || jobs.some(job=>['PENDING','SENDING'].includes(job.status))) return;
         const delivered=jobs.every(job=>['SENT','SIMULATED'].includes(job.status));
-        const again=delivered && row.automatic && settings.enabled && await active(db,row);
+        const again=delivered && row.automatic && settings.enabled && await active(db,row,record);
         await db.query(`UPDATE case_document_requests SET state=$2,next_due=CASE WHEN $3 THEN now()+($4*interval '1 hour') ELSE NULL END,
             first_sent_at=CASE WHEN $5 THEN COALESCE(first_sent_at,now()) ELSE first_sent_at END,cycle=cycle+1 WHERE id=$1`,
         [row.id,again?'active':'paused',!!again,row.first_sent_at?settings.repeatHours:settings.firstHours,delivered]);

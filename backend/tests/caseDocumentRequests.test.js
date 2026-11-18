@@ -32,6 +32,29 @@ test('document collection lifecycle on socket-only synthetic database',{skip:pro
  await db.query(migration);await db.query(migration);
  const values={DOCUMENT_REQUEST_AUTO_ENABLED:'true',DOCUMENT_REQUEST_FIRST_HOURS:'24',DOCUMENT_REQUEST_REPEAT_HOURS:'48',DOCUMENT_REQUEST_CHANNELS:'email,sms,push',DOCUMENT_REQUEST_DEFAULT_CHANNELS:'email,sms'};
  t.mock.method(settings,'getSetting',async(category,key,fallback)=>values[key]??fallback);
+ await t.test('manager reads 200 requests in four case-data queries with per-request history limits', async t=>{
+  await db.query(fs.readFileSync(path.join(__dirname,'../migrations/2026-11-18_03_document_request_history_indexes.sql'),'utf8'));
+  const client=await db.connect();
+  try {
+   await client.query('BEGIN');
+   await client.query("INSERT INTO case_document_requests(id,case_id,stage_title) SELECT gen_random_uuid(),20,'Load test' FROM generate_series(1,200)");
+   await client.query("INSERT INTO case_document_request_events(request_id,action) SELECT r.id,'fixture' FROM case_document_requests r CROSS JOIN generate_series(1,45) WHERE case_id=20");
+   await client.query("INSERT INTO case_document_deliveries(id,request_id,user_id,cycle,channel) SELECT gen_random_uuid(),r.id,2,n,'email' FROM case_document_requests r CROSS JOIN generate_series(1,85) n WHERE case_id=20");
+   const timings=[];
+   for(let run=0;run<10;run++){
+    let queries=0;
+    const start=performance.now();
+    const {requests}=await service.list({query:(...args)=>{queries++;return client.query(...args);}},20);
+    timings.push(performance.now()-start);
+    assert.equal(queries,4);assert.equal(requests.length,200);
+    for(const request of requests){
+     assert.equal(request.history.length,40);assert.equal(request.deliveries.length,80);
+     assert.ok([...request.history,...request.deliveries].every(entry=>entry.request_id===request.id));
+    }
+   }
+   t.diagnostic('local PostgreSQL service times (ms), settings mocked: '+timings.map(Math.round).join(', '));
+  }finally{await client.query('ROLLBACK');client.release();}
+ });
  let row;
  await t.test('create one shared list, optimistic updates, and file ownership',async()=>{
   row=await service.save(db,1,10,{descriptionId:101,items:[{title:'ID card',status:'missing'},{title:'Contract',status:'missing'}]});
