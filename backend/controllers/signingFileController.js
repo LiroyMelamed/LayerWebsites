@@ -6669,6 +6669,10 @@ async function runSigningFinalize({
     req,
 }) {
     const t0 = Date.now();
+    // One completed-file event may target the owner, an explicit completion
+    // address, the signer and configured CC roles. Share one set so a person
+    // occupying multiple roles receives the signed-document email only once.
+    const finalizedEmailRecipients = new Set();
     let signedPdfKey = null;
     let signedPdfBuffer = null;
     try {
@@ -6757,6 +6761,7 @@ async function runSigningFinalize({
             recipientUserId: file.LawyerId,
             notificationType: 'DOC_SIGNED',
             caseId: file.CaseId || null,
+            emailDedupeSet: finalizedEmailRecipients,
             push: {
                 title: '✓ קובץ חתום',
                 body: message,
@@ -6794,6 +6799,7 @@ async function runSigningFinalize({
                     recipientEmail: completionEmail,
                     notificationType: 'DOC_SIGNED',
                     skipAdminCc: true,
+                    emailDedupeSet: finalizedEmailRecipients,
                     email: {
                         campaignKey: 'DOC_SIGNED',
                         attachments: emailAttachments || [],
@@ -6849,6 +6855,7 @@ async function runSigningFinalize({
                 recipientUserId: signerUserId,
                 notificationType: 'DOC_SIGNED',
                 skipAdminCc: true,
+                emailDedupeSet: finalizedEmailRecipients,
                 push: {
                     title: '✓ מסמך נחתם בהצלחה',
                     body: signerMessage,
