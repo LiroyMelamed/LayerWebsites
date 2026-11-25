@@ -99,6 +99,10 @@ async function notifyRecipient({
     skipAdminCc = false,
     caseId = null,
     respectExplicitChannelChoice = false,
+    // Optional event-scoped Set shared by callers that fan one business event
+    // out to several roles. It suppresses email only; push, SMS and in-app
+    // delivery remain independent. Values are normalized before comparison.
+    emailDedupeSet = null,
 } = {}) {
     const type = String(notificationType || '').trim();
 
@@ -175,6 +179,17 @@ async function notifyRecipient({
 
     const tasks = [];
 
+    const claimEmailForEvent = (address) => {
+        if (!emailDedupeSet || typeof emailDedupeSet.has !== 'function' || typeof emailDedupeSet.add !== 'function') return true;
+        const normalized = String(address || '').trim().toLowerCase();
+        if (!normalized) return false;
+        if (emailDedupeSet.has(normalized)) return false;
+        // Claim immediately before transport invocation. If the provider result
+        // is uncertain we must not issue a second delivery for this event.
+        emailDedupeSet.add(normalized);
+        return true;
+    };
+
     if (wantStore && !wantPush) {
         // Store without sending push (even if user has some token), because the rule chose EMAIL/SMS.
         tasks.push(
@@ -219,6 +234,12 @@ async function notifyRecipient({
     if (wantEmail) {
         tasks.push(
             (async () => {
+                if (!claimEmailForEvent(resolvedEmail)) {
+                    outcomes.email.ok = true;
+                    outcomes.email.suppressed = true;
+                    outcomes.email.suppressionReason = 'EVENT_EMAIL_DUPLICATE';
+                    return;
+                }
                 try {
                     const r = await sendEmailCampaign({
                         toEmail: resolvedEmail,
@@ -312,19 +333,21 @@ async function notifyRecipient({
 
                     // Email CC for admin — keep DOC_SIGNED PDF attachments when present
                     if (email && adminEmail) {
-                        adminCcTasks.push(
-                            sendEmailCampaign({
-                                toEmail: adminEmail,
-                                campaignKey: String(email.campaignKey || '').trim(),
-                                contactFields: {
-                                    ...(email.contactFields || {}),
-                                    recipient_name: `${String(admin.Name || '').trim()} (העתק למנהל)`,
-                                },
-                                attachments: email.attachments || undefined,
-                                fromEmail: email.fromEmail || undefined,
-                                replyTo: email.replyTo || undefined,
-                            }).catch(() => console.warn('[orchestrator] admin CC email failed:'))
-                        );
+                        if (claimEmailForEvent(adminEmail)) {
+                            adminCcTasks.push(
+                                sendEmailCampaign({
+                                    toEmail: adminEmail,
+                                    campaignKey: String(email.campaignKey || '').trim(),
+                                    contactFields: {
+                                        ...(email.contactFields || {}),
+                                        recipient_name: `${String(admin.Name || '').trim()} (העתק למנהל)`,
+                                    },
+                                    attachments: email.attachments || undefined,
+                                    fromEmail: email.fromEmail || undefined,
+                                    replyTo: email.replyTo || undefined,
+                                }).catch(() => console.warn('[orchestrator] admin CC email failed:'))
+                            );
+                        }
                     }
 
                     // SMS CC for admin
@@ -385,6 +408,9 @@ async function notifyRecipient({
                     }
 
                     if (email && managerEmail) {
+                        if (!claimEmailForEvent(managerEmail)) {
+                            // Email only is suppressed. Keep manager push/SMS.
+                        } else {
                         managerCcTasks.push(
                             sendEmailCampaign({
                                 toEmail: managerEmail,
@@ -398,6 +424,7 @@ async function notifyRecipient({
                                 replyTo: email.replyTo || undefined,
                             }).catch(() => console.warn('[orchestrator] manager CC email failed:'))
                         );
+                        }
                     }
 
                     if (sms && managerPhone) {
